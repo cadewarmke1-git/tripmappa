@@ -35,7 +35,7 @@ const CSS = `
   .nav.transparent .nav-logo { color: #fff; }
   .nav.solid .nav-logo { color: var(--ink); }
   .nav.transparent .nav-logo span { color: rgba(255,210,140,0.9); }
-  .nav.solid .nav-logo span { color: var(--accent); }
+  .nav.solid .nav-logo span { color: rgba(255,210,140,0.9); }
   .nav-center { display: flex; gap: 1px; border-radius: 8px; padding: 3px; }
   .nav.transparent .nav-center { background: rgba(255,255,255,0.12); }
   .nav.solid .nav-center { background: var(--border); }
@@ -88,9 +88,15 @@ const CSS = `
   }
   .star {
     position: absolute; border-radius: 50%; background: #fff;
-    animation: twinkle var(--dur) ease-in-out infinite alternate;
+    animation: twinkle var(--dur) ease-in-out infinite alternate, drift var(--drift) ease-in-out infinite;
   }
   @keyframes twinkle { from { opacity: var(--lo); } to { opacity: var(--hi); } }
+  @keyframes drift {
+    0% { transform: translate(0px, 0px); }
+    33% { transform: translate(2px, -3px); }
+    66% { transform: translate(-2px, -4px); }
+    100% { transform: translate(0px, 0px); }
+  }
 
   /* Horizon glow — river shimmer */
   .hero-glow {
@@ -198,10 +204,10 @@ const CSS = `
     animation: heroIn 1s 0.5s cubic-bezier(0.16,1,0.3,1) both;
   }
   .hero-pill {
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 99px; padding: 7px 16px;
-    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75);
-    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 99px; padding: 6px 14px;
+    font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.6);
+    pointer-events: none; user-select: none;
   }
 
   /* Night/Day toggle switch */
@@ -374,19 +380,22 @@ const STOPS_DATA = [
 ];
 
 // Generate stars
+// Stars generated once outside component so they never rerender
+const STAR_DATA = Array.from({length:80},(_,i)=>({
+  id:i, top:`${Math.random()*65}%`, left:`${Math.random()*100}%`,
+  size: Math.random()<0.3 ? 2.5 : Math.random()<0.6 ? 1.5 : 1,
+  lo: (Math.random()*0.2+0.1).toFixed(2), hi: (Math.random()*0.6+0.4).toFixed(2),
+  dur: `${(Math.random()*3+2).toFixed(1)}s`,
+  drift: `${(Math.random()*12+8).toFixed(1)}s`,
+}));
+
 function Stars() {
-  const stars = Array.from({length:80},(_,i)=>({
-    id:i, top:`${Math.random()*65}%`, left:`${Math.random()*100}%`,
-    size: Math.random()<0.3 ? 2 : Math.random()<0.6 ? 1.5 : 1,
-    lo: (Math.random()*0.3+0.1).toFixed(2), hi: (Math.random()*0.5+0.5).toFixed(2),
-    dur: `${(Math.random()*3+2).toFixed(1)}s`,
-  }));
   return (
     <div className="hero-stars">
-      {stars.map(s=>(
+      {STAR_DATA.map(s=>(
         <div key={s.id} className="star" style={{
           top:s.top, left:s.left, width:s.size, height:s.size,
-          '--lo':s.lo, '--hi':s.hi, '--dur':s.dur,
+          '--lo':s.lo, '--hi':s.hi, '--dur':s.dur, '--drift':s.drift,
         }}/>
       ))}
     </div>
@@ -413,7 +422,7 @@ export default function App() {
   const [groceryInput, setGroceryInput] = useState("");
   const [groceryItems, setGroceryItems] = useState([]);
   const [scrolled, setScrolled] = useState(false);
-  const [heroTheme, setHeroTheme] = useState("day"); // "day" | "night"
+  const [heroTheme, setHeroTheme] = useState("day");
 
   const convoEndRef = useRef(null);
   useEffect(()=>{ convoEndRef.current?.scrollIntoView({behavior:"smooth"}); },[convo]);
@@ -779,11 +788,6 @@ export default function App() {
             </div>
           </div>
 
-          <div className="hero-pills">
-            {["Flights","Hotels","Restaurants","Fuel & EV stops","Live location sharing","Truck & RV routing","Grocery delivery"].map(p=>(
-              <div key={p} className="hero-pill">{p}</div>
-            ))}
-          </div>
         </div>
 
         <div className="scroll-indicator">
@@ -798,29 +802,283 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      <nav className="nav solid">
-        <div className="nav-logo">Trip<span>Mappa</span></div>
-        <div className="nav-center">
-          {[["plan","Plan"],["stops","Stops"],["share","Share"]].map(([k,l])=>(
-            <button key={k} className={"nav-tab"+(tab===k?" active":"")} onClick={()=>setTab(k)}>{l}</button>
-          ))}
-        </div>
-        <div className="nav-right">
-          <button className="nav-btn" onClick={()=>toast_("Trip saved")}>Save trip</button>
-          <button className="nav-btn nav-btn-primary" onClick={()=>toast_("Link copied")}>Share</button>
-        </div>
-      </nav>
+      <style>{`
+        /* ── App theme: Day ── */
+        .app-wrap.day .nav-app { background: rgba(255,255,255,0.95); border-bottom: 1px solid #ebebeb; transition: background 1.8s ease, border-color 1.8s ease; }
+        .app-wrap.day .nav-app .nav-logo { color: #0f1923; }
+        .app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
+        .app-wrap.day .nav-app .nav-tab { color: #a0a0a0; }
+        .app-wrap.day .nav-app .nav-tab.active { background: #fff; color: #0f1923; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .app-wrap.day .nav-app .nav-btn { background: none; border-color: #ebebeb; color: #a0a0a0; }
+        .app-wrap.day .nav-app .nav-btn-primary { background: #0f1923; color: #fff; border-color: #0f1923; }
+        .app-wrap.day .sidebar-inner { border-right: 1px solid rgba(0,0,0,0.06); }
+        .app-wrap.night .sidebar-inner { border-right: 1px solid rgba(255,255,255,0.05); }
+        .app-wrap.day .chat-title { color: #0f1923; }
+        .app-wrap.day .chat-sub { color: #a0a0a0; }
+        .app-wrap.day .route-input { background: #fafafa; border-color: #ebebeb; color: #0f1923; }
+        .app-wrap.day .ai-bubble { background: #fafafa; border-color: #ebebeb; color: #0f1923; }
+        .app-wrap.day .user-bubble { background: #0f1923; color: #fff; }
+        .app-wrap.day .qr-btn { background: #fff; border-color: #ebebeb; color: #0f1923; }
+        .app-wrap.day .btn-generate-app { background: #0f1923; color: #fff; }
+        .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
 
-      <div className="app">
-        <div className="sidebar">
-          {tab==="plan"&&planPanel}
-          {tab==="stops"&&<StopsPanel/>}
-          {tab==="share"&&<SharePanel/>}
-        </div>
-        <div className="map-area">
-          <div className="map-placeholder">
-            <div className="map-placeholder-text">{generated?`${origin} → ${dest}`:"Your route will appear here"}</div>
-            <div className="map-placeholder-sub">{generated?`${stops.length} stops · Real map coming in Phase 2`:"Plan your trip to get started"}</div>
+        /* ── App theme: Night ── */
+        .app-wrap.night .nav-app { background: rgba(5,13,42,0.97); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
+        .app-wrap.night .nav-app .nav-logo { color: #fff; }
+        .app-wrap.night .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
+        .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
+        .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
+        .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
+        .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
+        .app-wrap.night .nav-app .nav-btn-primary { background: #e07c3a; color: #fff; border-color: #e07c3a; }
+        .app-wrap.night .sidebar-inner { border-right: 1px solid rgba(255,255,255,0.05); }
+        .app-wrap.night .chat-title { color: #fff; }
+        .app-wrap.night .chat-sub { color: rgba(255,255,255,0.45); }
+        .app-wrap.night .route-wrap { border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.night .route-input { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .app-wrap.night .route-input::placeholder { color: rgba(255,255,255,0.25); }
+        .app-wrap.night .route-line { background: rgba(255,255,255,0.1); }
+        .app-wrap.night .route-dot { background: #fff; }
+        .app-wrap.night .route-dot.dest { background: #e07c3a; }
+        .app-wrap.night .convo-wrap { background: #0a1228; }
+        .app-wrap.night .ai-name { color: rgba(255,255,255,0.35); }
+        .app-wrap.night .ai-bubble { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.08); color: #fff; }
+        .app-wrap.night .user-bubble { background: #e07c3a; color: #fff; }
+        .app-wrap.night .qr-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #fff; }
+        .app-wrap.night .qr-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+        .app-wrap.night .qr-btn.yes { border-color: #2abf6e; color: #2abf6e; }
+        .app-wrap.night .qr-btn.yes:hover { background: #2abf6e; color: #fff; }
+        .app-wrap.night .qr-btn.no { border-color: #e05c2a; color: #e05c2a; }
+        .app-wrap.night .qr-btn.no:hover { background: #e05c2a; color: #fff; }
+        .app-wrap.night .answer-input { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: #fff; }
+        .app-wrap.night .answer-input::placeholder { color: rgba(255,255,255,0.25); }
+        .app-wrap.night .answer-send { background: #e07c3a; }
+        .app-wrap.night .summary-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .generate-wrap { border-top: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.night .btn-generate { background: #e07c3a; }
+        .app-wrap.night .chat-header { background: rgba(2,8,24,0.85); border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.day .chat-header { background: rgba(184,220,245,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .app-wrap.night .chat-wrap { background: transparent; }
+        .app-wrap.day .chat-wrap { background: transparent; }
+        .app-wrap.night .route-wrap { background: rgba(2,8,24,0.85); border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.day .route-wrap { background: rgba(168,212,238,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .app-wrap.night .map-placeholder-text { color: rgba(255,255,255,0.2); }
+        .app-wrap.night .map-placeholder-sub { color: rgba(255,255,255,0.12); }
+        .app-wrap.night .stop-card { background: #0d1935; border-color: rgba(255,255,255,0.08); }
+        .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); }
+        .app-wrap.night .stop-city { color: #fff; }
+        .app-wrap.night .stop-meta { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .stop-num { background: #e07c3a; }
+        .app-wrap.night .item-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
+        .app-wrap.night .item-row:hover { background: rgba(255,255,255,0.08); }
+        .app-wrap.night .item-name { color: #fff; }
+        .app-wrap.night .item-meta { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .item-price { color: #fff; }
+        .app-wrap.night .stop-section-label { color: rgba(255,255,255,0.3); }
+        .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
+        .app-wrap.night .action-btn-primary { background: #e07c3a; border-color: #e07c3a; }
+        .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
+        .app-wrap.night .empty-title { color: #fff; }
+        .app-wrap.night .empty-sub { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .share-title { color: #fff; }
+        .app-wrap.night .share-sub { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .person-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+        .app-wrap.night .person-name { color: #fff; }
+        .app-wrap.night .person-status { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .stops-wrap { background: #0a1228; }
+        .app-wrap.night .fuel-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
+        .app-wrap.night .fuel-label { color: #fff; }
+        .app-wrap.night .fuel-meta-txt { color: rgba(255,255,255,0.4); }
+
+        /* Sidebar gradient backgrounds */
+        .app-wrap.day .sidebar-inner {
+          background: linear-gradient(180deg, #f0f8ff 0%, #e8f4f0 40%, #f5f5f0 100%);
+          border-right: 1px solid rgba(0,0,0,0.06);
+        }
+        .app-wrap.night .sidebar-inner {
+          background: linear-gradient(180deg, #020818 0%, #050d2a 30%, #0a1840 60%, #0d2255 100%);
+          border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Logo fix */
+        .app-wrap.day .nav-logo { color: #0f1923 !important; }
+        .app-wrap.day .nav-logo span { color: rgba(255,210,140,0.9) !important; }
+        .app-wrap.night .nav-logo { color: #ffffff !important; }
+        .app-wrap.night .nav-logo span { color: rgba(255,210,140,0.9) !important; }
+
+        /* Route dots */
+        .app-wrap.night .route-dot { background: rgba(255,255,255,0.7) !important; }
+        .app-wrap.night .route-dot.dest { background: rgba(255,210,140,0.9) !important; }
+        .app-wrap.day .route-dot { background: #0f1923 !important; }
+        .app-wrap.day .route-dot.dest { background: rgba(255,210,140,0.9) !important; }
+
+        /* Stars in night sidebar */
+        .app-wrap.night .sidebar-inner {
+          position: relative; overflow: hidden;
+          background: linear-gradient(180deg, #020818 0%, #050d2a 30%, #0a1840 60%, #0d2255 80%, #1a1a2e 100%) !important;
+        }
+        .app-wrap.night .sidebar-inner::before {
+          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+          background-image:
+            radial-gradient(1.5px 1.5px at 15% 8%, rgba(255,255,255,0.8) 0%, transparent 100%),
+            radial-gradient(1px 1px at 30% 5%, rgba(255,255,255,0.5) 0%, transparent 100%),
+            radial-gradient(2px 2px at 52% 4%, rgba(255,255,255,0.9) 0%, transparent 100%),
+            radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,0.4) 0%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 85% 6%, rgba(255,255,255,0.7) 0%, transparent 100%),
+            radial-gradient(1px 1px at 8% 18%, rgba(255,255,255,0.3) 0%, transparent 100%),
+            radial-gradient(2px 2px at 42% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+            radial-gradient(1px 1px at 75% 22%, rgba(255,255,255,0.4) 0%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 22% 28%, rgba(255,255,255,0.5) 0%, transparent 100%),
+            radial-gradient(1px 1px at 60% 25%, rgba(255,255,255,0.3) 0%, transparent 100%),
+            radial-gradient(2px 2px at 92% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
+            radial-gradient(1px 1px at 5% 38%, rgba(255,255,255,0.4) 0%, transparent 100%),
+            radial-gradient(1.5px 1.5px at 48% 32%, rgba(255,255,255,0.5) 0%, transparent 100%);
+        }
+        .app-wrap.night .sidebar-inner::after {
+          content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 35%;
+          background: linear-gradient(to top, rgba(150,70,15,0.35) 0%, rgba(110,50,10,0.15) 50%, transparent 100%);
+          pointer-events: none; z-index: 0;
+        }
+        .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap { position: relative; z-index: 1; }
+
+        /* Day sidebar — more saturated sky to meadow */
+        .app-wrap.day .sidebar-inner {
+          position: relative; overflow: hidden;
+          background: linear-gradient(180deg, #b8dcf5 0%, #a8d4ee 15%, #b8e8cc 40%, #98d4a0 65%, #78c080 85%, #5aaa60 100%) !important;
+        }
+        .app-wrap.day .sidebar-inner::after {
+          content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 25%;
+          background: linear-gradient(to top, rgba(40,100,30,0.18) 0%, transparent 100%);
+          pointer-events: none; z-index: 0;
+        }
+        .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
+
+        /* Two-layer opacity crossfade — same technique as hero */
+        .app-wrap .sidebar-day-layer, .app-wrap .sidebar-night-layer {
+          position: absolute; inset: 0; pointer-events: none;
+          transition: opacity 1.8s ease;
+          z-index: 0;
+        }
+        .app-wrap .map-day-layer, .app-wrap .map-night-layer {
+          position: absolute; inset: 0; pointer-events: none;
+          transition: opacity 1.8s ease;
+          z-index: 0;
+        }
+        .app-wrap .map-day-layer { background: linear-gradient(150deg, #e4eef5 0%, #d2e4f0 60%, #c0d6e8 100%); }
+        .app-wrap .map-night-layer { background: linear-gradient(150deg, #020818 0%, #050d2a 50%, #0a1840 100%); }
+        .app-wrap .map-placeholder { background: transparent !important; position: relative; }
+        .app-wrap .map-placeholder-text, .app-wrap .map-placeholder-sub { position: relative; z-index: 1; }
+
+        /* Force all color changes to sync at 1.8s */
+        .app-wrap .ai-bubble,
+        .app-wrap .user-bubble,
+        .app-wrap .route-input,
+        .app-wrap .qr-btn,
+        .app-wrap .answer-input,
+        .app-wrap .answer-send,
+        .app-wrap .btn-generate,
+        .app-wrap .chat-title,
+        .app-wrap .chat-sub,
+        .app-wrap .ai-name,
+        .app-wrap .stop-card,
+        .app-wrap .stop-card-head,
+        .app-wrap .stop-city,
+        .app-wrap .stop-meta,
+        .app-wrap .stop-num,
+        .app-wrap .item-row,
+        .app-wrap .item-name,
+        .app-wrap .item-meta,
+        .app-wrap .item-price,
+        .app-wrap .action-btn,
+        .app-wrap .fuel-row,
+        .app-wrap .fuel-label,
+        .app-wrap .empty-title,
+        .app-wrap .empty-sub,
+        .app-wrap .share-title,
+        .app-wrap .share-sub,
+        .app-wrap .person-row,
+        .app-wrap .person-name,
+        .app-wrap .summary-card,
+        .app-wrap .stops-wrap,
+        .app-wrap .convo-wrap,
+        .app-wrap .generate-wrap,
+        .app-wrap .chat-header,
+        .app-wrap .route-wrap,
+        .app-wrap .route-line,
+        .app-wrap .route-dot,
+        .app-wrap .section-sep {
+          transition: background 1.8s ease, background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease !important;
+        }
+
+        /* Override CSS vars per theme so var(--ink) etc all transition together */
+        .app-wrap.day { --ink: #0f1923; --surface: #fafaf8; --card: #ffffff; --border: #ebebeb; --muted: #a0a0a0; }
+        .app-wrap.night { --ink: #ffffff; --surface: rgba(255,255,255,0.07); --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.1); --muted: rgba(255,255,255,0.4); }
+
+        /* All non-interactive elements transition at 1.8s */
+        .app-wrap .ai-bubble, .app-wrap .user-bubble, .app-wrap .route-input,
+        .app-wrap .qr-btn, .app-wrap .answer-input, .app-wrap .answer-send,
+        .app-wrap .btn-generate, .app-wrap .chat-title, .app-wrap .chat-sub,
+        .app-wrap .ai-name, .app-wrap .stop-card, .app-wrap .stop-card-head,
+        .app-wrap .stop-city, .app-wrap .stop-meta, .app-wrap .stop-num,
+        .app-wrap .item-row, .app-wrap .item-name, .app-wrap .item-meta,
+        .app-wrap .item-price, .app-wrap .action-btn, .app-wrap .fuel-row,
+        .app-wrap .fuel-label, .app-wrap .empty-title, .app-wrap .empty-sub,
+        .app-wrap .share-title, .app-wrap .share-sub, .app-wrap .person-row,
+        .app-wrap .person-name, .app-wrap .summary-card, .app-wrap .stops-wrap,
+        .app-wrap .convo-wrap, .app-wrap .generate-wrap, .app-wrap .chat-header,
+        .app-wrap .chat-wrap,
+        .app-wrap .route-wrap, .app-wrap .route-line, .app-wrap .route-dot,
+        .app-wrap .section-sep, .app-wrap .map-placeholder-text,
+        .app-wrap .map-placeholder-sub, .app-wrap .nav-logo,
+        .app-wrap .nav-tab, .app-wrap .nav-center-wrap {
+          transition: background 1.8s ease, background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease !important;
+        }
+        /* Sidebar and map layers use opacity */
+        .app-wrap .sidebar-day-layer, .app-wrap .sidebar-night-layer,
+        .app-wrap .map-day-layer, .app-wrap .map-night-layer {
+          transition: opacity 1.8s ease !important;
+        }
+      `}</style>
+
+      <div className={`app-wrap ${heroTheme}`} style={{
+        display:"flex", flexDirection:"column", height:"100vh",
+        transition: "color 1.8s ease",
+      }}>
+        <nav className="nav-app nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,height:"var(--nav-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",backdropFilter:"blur(12px)"}}>
+          <div className="nav-logo">Trip<span>Mappa</span></div>
+          <div className="nav-center-wrap nav-center" style={{display:"flex",gap:"1px",borderRadius:8,padding:3}}>
+            {[["plan","Plan"],["stops","Stops"],["share","Share"]].map(([k,l])=>(
+              <button key={k} className={"nav-tab"+(tab===k?" active":"")} onClick={()=>setTab(k)}>{l}</button>
+            ))}
+          </div>
+          <div className="nav-right" style={{display:"flex",gap:8,alignItems:"center"}}>
+            <div className="theme-switch" onClick={()=>setHeroTheme(t=>t==="day"?"night":"day")}>
+              <div className={`theme-switch-track ${heroTheme}`}>
+                <div className={`theme-switch-thumb ${heroTheme}`}>{heroTheme==="day"?"☀️":"🌙"}</div>
+              </div>
+            </div>
+            <button className="nav-btn" onClick={()=>toast_("Trip saved")}>Save trip</button>
+            <button className="nav-btn nav-btn-primary" onClick={()=>toast_("Link copied")}>Share</button>
+          </div>
+        </nav>
+
+        <div className="app" style={{paddingTop:"var(--nav-h)"}}>
+          <div className="sidebar sidebar-inner" style={{position:"relative"}}>
+            <div className="sidebar-day-layer" style={{opacity: heroTheme==="day"?1:0}}/>
+            <div className="sidebar-night-layer" style={{opacity: heroTheme==="night"?1:0}}/>
+            {tab==="plan"&&planPanel}
+            {tab==="stops"&&<StopsPanel/>}
+            {tab==="share"&&<SharePanel/>}
+          </div>
+          <div className="map-area" style={{position:"relative"}}>
+            <div className="map-day-layer" style={{opacity: heroTheme==="day"?1:0}}/>
+            <div className="map-night-layer" style={{opacity: heroTheme==="night"?1:0}}/>
+            <div className="map-placeholder">
+              <div className="map-placeholder-text">{generated?`${origin} → ${dest}`:"Your route will appear here"}</div>
+              <div className="map-placeholder-sub">{generated?`${stops.length} stops · Real map coming in Phase 2`:"Plan your trip to get started"}</div>
+            </div>
           </div>
         </div>
       </div>
