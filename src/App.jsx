@@ -60,18 +60,19 @@ const CSS = `
     position: relative; min-height: 100vh;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     overflow: hidden;
-    background: linear-gradient(
-      180deg,
-      #87CEEB 0%,
-      #a8d8ea 18%,
-      #c8e8c0 38%,
-      #a8c878 52%,
-      #8ab560 62%,
-      #6d9e4a 72%,
-      #4a7a6a 82%,
-      #2d5a52 92%,
-      #1a3d38 100%
-    );
+  }
+  .hero.day {
+    background: linear-gradient(180deg,#87CEEB 0%,#a8d8ea 18%,#c8e8c0 38%,#a8c878 52%,#8ab560 62%,#6d9e4a 72%,#4a7a6a 82%,#2d5a52 92%,#1a3d38 100%);
+  }
+  .hero.night {
+    background: linear-gradient(180deg,#020818 0%,#050d2a 20%,#0a1840 40%,#0d2255 55%,#1a3a6a 65%,#3a2a15 78%,#6b3d10 88%,#8a5020 95%,#020818 100%);
+  }
+  /* Pseudo-element trick for smooth background transition */
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: inherit;
+    transition: opacity 1.4s ease;
+    z-index: 0;
   }
 
   /* Road SVG overlay */
@@ -109,6 +110,7 @@ const CSS = `
   .hero-content {
     position: relative; z-index: 10;
     text-align: center; padding: 0 20px;
+    width: 100%; max-width: 620px;
     animation: heroIn 1s cubic-bezier(0.16,1,0.3,1) both;
   }
   @keyframes heroIn { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
@@ -121,7 +123,7 @@ const CSS = `
 
   .hero-title {
     font-family: 'Syne', sans-serif; font-weight: 900;
-    font-size: clamp(48px, 8vw, 86px);
+    font-size: clamp(36px, 7vw, 86px);
     line-height: 1.0; letter-spacing: -2px;
     color: #fff; margin-bottom: 16px;
     text-shadow: 0 2px 20px rgba(0,0,0,0.2), 0 4px 60px rgba(0,0,0,0.15);
@@ -142,9 +144,18 @@ const CSS = `
     background: rgba(255,255,255,0.97);
     border-radius: 16px; padding: 10px 10px 10px 20px;
     display: flex; align-items: center; gap: 12px;
-    max-width: 560px; margin: 0 auto 20px;
+    width: 100%; max-width: 560px; margin: 0 auto 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
     animation: heroIn 1s 0.2s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @media (max-width: 540px) {
+    .hero-search { flex-direction: column; padding: 14px; border-radius: 14px; gap: 8px; }
+    .hero-search-divider { width: 100%; height: 1px; }
+    .hero-input-wrap { width: 100%; }
+    .hero-go-btn { width: 100%; text-align: center; justify-content: center; }
+    .hero-title { letter-spacing: -1px; }
+    .hero-auth-btns { flex-wrap: wrap; }
+    .hero-pill { font-size: 11px; padding: 5px 12px; }
   }
   .hero-search-divider { width: 1px; height: 28px; background: #e8e4de; flex-shrink: 0; }
   .hero-input-wrap { flex: 1; display: flex; flex-direction: column; }
@@ -675,30 +686,45 @@ export default function App() {
             </div>
           </div>
           <button className="nav-btn" onClick={()=>setView("app")}>Log in</button>
-          <button className="nav-btn nav-btn-primary" onClick={()=>setView("app")}>Sign up free</button>
+          <button className="nav-btn nav-btn-primary" onClick={()=>setView("app")}>Sign up</button>
         </div>
       </nav>
 
       {/* Hero */}
-      <div className="hero" style={{ background: heroTheme === "night"
-        ? "linear-gradient(180deg,#020818 0%,#050d2a 20%,#0a1840 40%,#0d2255 55%,#1a3a6a 65%,#3a2a15 78%,#6b3d10 88%,#8a5020 95%,#020818 100%)"
-        : "linear-gradient(180deg,#87CEEB 0%,#a8d8ea 18%,#c8e8c0 38%,#a8c878 52%,#8ab560 62%,#6d9e4a 72%,#4a7a6a 82%,#2d5a52 92%,#1a3d38 100%)"
-      }}>
+      <div className={`hero ${heroTheme}`}>
+        {/* Day background layer */}
+        <div style={{
+          position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
+          background:"linear-gradient(180deg,#87CEEB 0%,#a8d8ea 18%,#c8e8c0 38%,#a8c878 52%,#8ab560 62%,#6d9e4a 72%,#4a7a6a 82%,#2d5a52 92%,#1a3d38 100%)",
+          opacity: heroTheme === "day" ? 1 : 0,
+          transition: "opacity 1.8s ease",
+        }}/>
+        {/* Night background layer */}
+        <div style={{
+          position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
+          background:"linear-gradient(180deg,#020818 0%,#050d2a 20%,#0a1840 40%,#0d2255 55%,#1a3a6a 65%,#3a2a15 78%,#6b3d10 88%,#8a5020 95%,#020818 100%)",
+          opacity: heroTheme === "night" ? 1 : 0,
+          transition: "opacity 1.8s ease",
+        }}/>
         {heroTheme === "night" && <Stars/>}
-        <div className="hero-glow" style={{ background: heroTheme === "night"
-          ? "radial-gradient(ellipse at center bottom, rgba(220,120,40,0.5) 0%, rgba(180,80,20,0.25) 45%, transparent 75%)"
-          : "radial-gradient(ellipse at center, rgba(150,210,200,0.35) 0%, rgba(100,180,170,0.15) 50%, transparent 80%)"
+        <div className="hero-glow" style={{
+          background: heroTheme === "night"
+            ? "radial-gradient(ellipse at center bottom, rgba(220,120,40,0.5) 0%, rgba(180,80,20,0.25) 45%, transparent 75%)"
+            : "radial-gradient(ellipse at center, rgba(150,210,200,0.35) 0%, rgba(100,180,170,0.15) 50%, transparent 80%)",
+          opacity: 1,
+          transition: "opacity 1.8s ease",
         }}/>
 
         {/* Day: River SVG / Night: Road SVG */}
-        {heroTheme === "day" ? (
+        <div style={{opacity: heroTheme==="day"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
           <svg className="hero-road-svg" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M200 400 Q300 300 250 200 Q200 100 350 50 Q450 20 500 0" stroke="rgba(100,180,200,0.5)" strokeWidth="60" fill="none" strokeLinecap="round"/>
             <path d="M200 400 Q300 300 250 200 Q200 100 350 50 Q450 20 500 0" stroke="rgba(150,210,220,0.3)" strokeWidth="80" fill="none" strokeLinecap="round"/>
             <path d="M0 320 Q200 280 400 320 Q600 360 900 300" stroke="rgba(100,160,80,0.15)" strokeWidth="2" fill="none"/>
             <path d="M0 350 Q250 310 500 350 Q700 380 900 340" stroke="rgba(100,160,80,0.12)" strokeWidth="2" fill="none"/>
           </svg>
-        ) : (
+        </div>
+        <div style={{opacity: heroTheme==="night"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
           <svg className="hero-road-svg" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M450 400 L200 0" stroke="white" strokeWidth="80" strokeOpacity="0.05"/>
             <path d="M450 400 L700 0" stroke="white" strokeWidth="80" strokeOpacity="0.05"/>
@@ -706,7 +732,7 @@ export default function App() {
             <path d="M450 400 L200 0" stroke="white" strokeWidth="1.5" strokeOpacity="0.15"/>
             <path d="M450 400 L700 0" stroke="white" strokeWidth="1.5" strokeOpacity="0.15"/>
           </svg>
-        )}
+        </div>
 
         {/* Day/Night Toggle removed — now in nav */}
 
