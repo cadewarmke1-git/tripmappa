@@ -819,8 +819,8 @@ export default function App() {
     );
   }
 
-  const isOvernightTrip = answers.trip_type === "Road trip" || answers.overnight === "Yes";
-  const isDayOrHomeTrip = answers.trip_type === "Driving home" || answers.trip_type === "Day trip";
+  const isOvernightTrip = (answers.trip_type === "Road trip" && answers.overnight !== "No") || answers.overnight === "Yes";
+  const isDayOrHomeTrip = answers.trip_type === "Driving home" || answers.trip_type === "Day trip" || answers.overnight === "No";
 
   const planPanel = (
     <div className="chat-wrap">
@@ -996,93 +996,6 @@ export default function App() {
             {loading?<><span className="spinner"/>Planning your trip…</>:generated?"Trip Planned ✓":"Generate Trip Plan"}
           </button>
         </div>
-      )}
-    </div>
-  );
-
-  const StopsPanel = ()=>(
-    <div className="stops-wrap">
-      {!generated?(
-        <div className="empty-state">
-          <div className="empty-title">No trip yet</div>
-          <div className="empty-sub">Go to Plan, answer the questions,<br/>and hit Generate Trip Plan.</div>
-        </div>
-      ):(
-        <>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontFamily:"Syne",fontWeight:700,fontSize:15}}>{origin} → {dest}</div>
-            <button className="action-btn" style={{flex:"none",padding:"5px 12px",fontSize:11}} onClick={resetPlan}>Edit trip</button>
-          </div>
-          <div className="section-sep"/>
-          <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:8}}>
-            {isDayOrHomeTrip ? "Stops along the way" : "Overnight stops"}
-          </div>
-          {stops.map((stop,i)=>(
-            <div className="stop-card" key={i} style={{animationDelay:i*0.07+"s"}}>
-              <div className="stop-card-head">
-                <div className="stop-num">{i+1}</div>
-                <div style={{flex:1}}>
-                  <div className="stop-city">{stop.city}</div>
-                  <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
-                </div>
-                {stop.why&&<div style={{fontSize:10,color:"var(--muted)",fontStyle:"italic",maxWidth:90,textAlign:"right"}}>{stop.why}</div>}
-              </div>
-              <div className="stop-body">
-                {isOvernightTrip&&stop.hotels?.length>0&&(
-                  <>
-                    <div className="stop-section-label">Hotels</div>
-                    {stop.hotels.map((h,hi)=>(
-                      <div className="item-row" key={hi} onClick={()=>toast_(`Booking ${h.name}`)}>
-                        <div className="item-info">
-                          <div className="item-name">{h.name}</div>
-                          <div className="item-meta">{h.stars}-star{h.pet?" · Pet-friendly":""}</div>
-                        </div>
-                        <div className="item-price">{h.price}</div>
-                      </div>
-                    ))}
-                  </>
-                )}
-                {answers.restaurants==="Yes"&&stop.restaurants?.length>0&&(
-                  <>
-                    <div className="stop-section-label">Restaurants</div>
-                    {stop.restaurants.map((r,ri)=>(
-                      <div className="item-row" key={ri} onClick={()=>toast_(`Booking ${r.name}`)}>
-                        <div className="item-info">
-                          <div className="item-name">{r.name}</div>
-                          <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
-                        </div>
-                        <div className="item-time">{r.time}</div>
-                      </div>
-                    ))}
-                  </>
-                )}
-                <div className="stop-actions">
-                  {isOvernightTrip&&(
-                    <button className="action-btn action-btn-primary" onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>
-                  )}
-                  {isDayOrHomeTrip&&(
-                    <button className="action-btn action-btn-primary" onClick={()=>toast_("Added to route!")}>Add to route</button>
-                  )}
-                  {answers.grocery==="Yes"&&isOvernightTrip&&(
-                    <button className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>
-                  )}
-                  <button className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {tripTips.length>0&&(
-            <div style={{marginTop:16,padding:"14px",background:"var(--surface)",borderRadius:"var(--r)",border:"1px solid var(--border)"}}>
-              <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:10}}>Trip Tips</div>
-              {tripTips.map((tip,i)=>(
-                <div key={i} style={{display:"flex",gap:8,marginBottom:7,fontSize:12.5,lineHeight:1.5}}>
-                  <span style={{color:"var(--accent)",fontWeight:700,flexShrink:0}}>→</span>
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
       )}
     </div>
   );
