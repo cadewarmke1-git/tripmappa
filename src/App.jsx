@@ -1124,6 +1124,8 @@ export default function App() {
       )}
     </div>
   );
+
+  const SharePanel = ()=>(
     <div className="share-wrap">
       <div className="share-title">Live sharing</div>
       <div className="share-sub">Share your location in real time. Friends and family get a live map link — no app needed.</div>
