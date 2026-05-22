@@ -592,7 +592,21 @@ export default function App() {
     if(!origin||!dest){toast_("Enter origin and destination first");return;}
     const first=nextQ(0,{});
     setQIndex(first);
-    setConvo([{role:"ai",text:`Planning your trip from ${origin} to ${dest}. A few quick questions:`},{role:"ai",text:QUESTIONS[first].ask}]);
+
+    // Use real route data if available
+    let openingMsg;
+    if (routeInfo) {
+      const hours = parseInt(routeInfo.duration);
+      const suggestedStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 18 ? 3 : 4;
+      openingMsg = `${routeInfo.distance} from ${routeInfo.start} to ${routeInfo.end} — about ${routeInfo.duration} of driving. I'd suggest ${suggestedStops} overnight stop${suggestedStops > 1 ? "s" : ""} along the way. Let me ask a few quick questions to personalize your trip.`;
+    } else {
+      openingMsg = `Planning your trip from ${origin} to ${dest}. A few quick questions:`;
+    }
+
+    setConvo([
+      {role:"ai", text:openingMsg},
+      {role:"ai", text:QUESTIONS[first].ask}
+    ]);
   }
 
   function submitAnswer(value) {
@@ -601,14 +615,28 @@ export default function App() {
     setAnswers(na); setTextInput("");
     const nc=[...convo,{role:"user",text:value}];
     const next=nextQ(qIndex+1,na);
-    if(next===-2) { setConvo([...nc,{role:"ai",text:"Perfect — here's what I've got. Ready to plan your trip?"}]); setQIndex(-2); setConvoComplete(true); }
+    if(next===-2) {
+      const summary = routeInfo
+        ? `Perfect — ${routeInfo.distance}, ${routeInfo.duration} drive. Here's your trip summary:`
+        : "Perfect — here's what I've got. Ready to plan your trip?";
+      setConvo([...nc,{role:"ai",text:summary}]);
+      setQIndex(-2); setConvoComplete(true);
+    }
     else { setConvo([...nc,{role:"ai",text:QUESTIONS[next].ask}]); setQIndex(next); }
   }
 
   async function generateTrip() {
     setLoading(true); setTab("stops");
     await new Promise(r=>setTimeout(r,1800));
-    setStops(STOPS_DATA); setLoading(false); setGenerated(true);
+
+    // Use real route duration to determine stops
+    let numStops = 3;
+    if (routeInfo) {
+      const hours = parseInt(routeInfo.duration);
+      numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
+    }
+    setStops(STOPS_DATA.slice(0, numStops));
+    setLoading(false); setGenerated(true);
     toast_("Trip planned");
   }
 
