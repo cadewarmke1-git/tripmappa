@@ -9,42 +9,41 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing origin or destination" });
   }
 
-  const systemPrompt = `You are TripMappa, an expert AI travel planner. 
-You help users plan road trips with personalized hotel stops, restaurant recommendations, and route advice.
-Always respond with a JSON object only — no markdown, no extra text.
-Be specific, practical, and enthusiastic about travel.`;
+  const systemPrompt = `You are TripMappa, a concise AI travel planner.
+Respond with a JSON object only — no markdown, no extra text.
+Keep all text extremely short and scannable. No long sentences.`;
 
-  const userPrompt = `Plan a road trip with these details:
+  const userPrompt = `Plan a road trip:
 - From: ${origin}
 - To: ${destination}
 - Distance: ${routeInfo?.distance || "unknown"}
 - Drive time: ${routeInfo?.duration || "unknown"}
 - Vehicle: ${answers?.vehicle || "Car"}
-- Fuel type: ${answers?.fuel || "Gasoline"}
+- Fuel: ${answers?.fuel || "Gasoline"}
 - Pets: ${answers?.pets === "Yes" ? `Yes — ${answers?.pet_desc}` : "No"}
-- Lodging preference: ${answers?.lodging || "Mid-range"}
+- Lodging: ${answers?.lodging || "Mid-range"}
 - Restaurants: ${answers?.restaurants || "No"}
-- Grocery delivery: ${answers?.grocery || "No"}
-- Extra notes: ${answers?.extra || "None"}
+- Grocery: ${answers?.grocery || "No"}
+- Notes: ${answers?.extra || "None"}
 
-Return a JSON object with this exact structure:
+Return this JSON exactly:
 {
-  "greeting": "A warm, personalized opening message referencing their specific route and vehicle",
+  "greeting": "One short sentence, max 15 words, mentioning the route",
   "stops": [
     {
       "city": "City, State",
-      "distance": "XXX miles from origin",
-      "eta": "Xh Xm drive",
-      "why": "One sentence why this is a great stop",
+      "distance": "XXX miles",
+      "eta": "Xh Xm",
+      "why": "5 words max",
       "hotels": [
-        { "name": "Hotel Name", "stars": 4, "price": "$XXX/night", "pet": true, "why": "Brief reason" }
+        { "name": "Hotel Name", "stars": 4, "price": "$XXX/night", "pet": true }
       ],
       "restaurants": [
-        { "name": "Restaurant Name", "cuisine": "Type", "rating": "4.5", "time": "7:00 PM", "why": "Brief reason" }
+        { "name": "Restaurant Name", "cuisine": "Type", "rating": "4.5", "time": "7:00 PM" }
       ]
     }
   ],
-  "tips": ["Tip 1 specific to their vehicle/route", "Tip 2", "Tip 3"]
+  "tips": ["Short tip 1", "Short tip 2", "Short tip 3"]
 }`;
 
   try {
@@ -57,7 +56,7 @@ Return a JSON object with this exact structure:
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
       }),
