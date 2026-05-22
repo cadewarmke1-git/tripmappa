@@ -1,4 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { GoogleMap, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+
+const GOOGLE_LIBRARIES = ["places", "routes"];
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap');
@@ -238,11 +241,75 @@ const CSS = `
   @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
   .scroll-arrow { width: 18px; height: 18px; border-right: 1.5px solid rgba(255,255,255,0.35); border-bottom: 1.5px solid rgba(255,255,255,0.35); transform: rotate(45deg); margin-top: -4px; }
 
-  /* ── App layout (post-hero) ── */
-  .app { padding-top: var(--nav-h); display: flex; height: 100vh; }
-  .sidebar { width: var(--sidebar-w); height: calc(100vh - var(--nav-h)); overflow-y: auto; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-  .sidebar::-webkit-scrollbar { width: 0px; }
+  .pac-container {
+    z-index: 99999 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+    border: 1px solid var(--border) !important;
+    font-family: 'Inter', sans-serif !important;
+    margin-top: 4px !important;
+  }
+  .pac-item {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+  }
+  .pac-item:hover { background: var(--surface) !important; }
+  .pac-item-query { font-weight: 600 !important; color: var(--ink) !important; }
+  .pac-matched { font-weight: 700 !important; }
   .map-area { flex: 1; position: relative; overflow: hidden; }
+  .gmap-wrap { width: 100%; height: 100%; }
+  .map-loading { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e8eff5; font-family: 'Inter', sans-serif; font-size: 13px; color: #888; }
+  .route-info-bar {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: rgba(15,25,35,0.92); backdrop-filter: blur(12px);
+    border-radius: 12px; padding: 12px 24px;
+    display: flex; gap: 24px; align-items: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    z-index: 10; white-space: nowrap;
+  }
+  .route-info-bar .rib-item { text-align: center; }
+  .route-info-bar .rib-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
+  .route-info-bar .rib-label { font-size: 10px; color: rgba(255,255,255,0.45); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 1px; }
+  /* ── App layout — full screen map with floating card ── */
+  .app { padding-top: var(--nav-h); position: relative; height: 100vh; }
+  .map-full { position: absolute; inset: 0; top: var(--nav-h); }
+  .gmap-wrap { width: 100%; height: 100%; }
+
+  /* Floating card */
+  .float-card {
+    position: absolute; top: calc(var(--nav-h) + 16px); left: 16px;
+    width: 360px; max-height: calc(100vh - var(--nav-h) - 32px);
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
+    border-radius: 18px; border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column;
+    overflow: hidden; z-index: 50;
+    transition: transform 0.4s cubic-bezier(0.34,1.2,0.64,1), opacity 0.3s ease, width 0.3s ease;
+  }
+  .float-card.night {
+    background: rgba(5,13,42,0.88); border-color: rgba(255,255,255,0.1);
+  }
+  .float-card.collapsed {
+    max-height: 60px; overflow: hidden;
+  }
+  .float-card-scroll { overflow-y: auto; flex: 1; }
+  .float-card-scroll::-webkit-scrollbar { width: 0; }
+
+  /* Card header / collapse toggle */
+  .float-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer; user-select: none;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .float-card.night .float-card-header { border-bottom-color: rgba(255,255,255,0.07); }
+  .float-card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; }
+  .float-card.night .float-card-title { color: #fff; }
+  .float-card-chevron { font-size: 11px; color: var(--muted); transition: transform 0.3s; }
+  .float-card-chevron.open { transform: rotate(180deg); }
+
+  /* Map placeholder */
   .map-placeholder { width: 100%; height: 100%; background: linear-gradient(150deg, #e4eef5 0%, #d2e4f0 60%, #c0d6e8 100%); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
   .map-placeholder-text { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: rgba(0,0,0,0.2); }
   .map-placeholder-sub { font-size: 12px; color: rgba(0,0,0,0.15); }
@@ -423,6 +490,65 @@ export default function App() {
   const [groceryItems, setGroceryItems] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const [heroTheme, setHeroTheme] = useState("day");
+  const [cardCollapsed, setCardCollapsed] = useState(false);
+
+  // ── Google Maps ──
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
+    libraries: GOOGLE_LIBRARIES,
+  });
+  const [directions, setDirections] = useState(null);
+  const [routeInfo, setRouteInfo] = useState(null);
+  const [routePath, setRoutePath] = useState(null);
+  const [mapCenter, setMapCenter] = useState({ lat: 37.0902, lng: -95.7129 });
+  const originRef = useRef(null);
+  const destRef = useRef(null);
+  const heroOriginRef = useRef(null);
+  const heroDestRef = useRef(null);
+  const mapRef = useRef(null);
+  const polylineRef = useRef(null);
+
+  const fetchDirections = useCallback(() => {
+    const originVal = originRef.current?.value;
+    const destVal = destRef.current?.value;
+    if (!originVal || !destVal) return;
+
+    const service = new window.google.maps.DirectionsService();
+    service.route({
+      origin: originVal,
+      destination: destVal,
+      travelMode: window.google.maps.TravelMode.DRIVING,
+    }, (result, status) => {
+      if (status === "OK") {
+        const leg = result.routes[0].legs[0];
+        setRouteInfo({
+          distance: leg.distance.text,
+          duration: leg.duration.text,
+          start: leg.start_address.split(",")[0],
+          end: leg.end_address.split(",")[0],
+        });
+        setOrigin(originVal);
+        setDest(destVal);
+
+        // Draw route as polyline
+        const path = window.google.maps.geometry
+          ? window.google.maps.geometry.encoding.decodePath(result.routes[0].overview_polyline)
+          : result.routes[0].overview_path;
+
+        setRoutePath(result.routes[0].overview_path);
+
+        // Fit map to route bounds
+        if (mapRef.current) {
+          const bounds = new window.google.maps.LatLngBounds();
+          result.routes[0].legs[0].steps.forEach(step => {
+            bounds.extend(step.start_location);
+            bounds.extend(step.end_location);
+          });
+          mapRef.current.fitBounds(bounds, { padding: 60 });
+        }
+      }
+    });
+  }, []);
 
   const convoEndRef = useRef(null);
   useEffect(()=>{ convoEndRef.current?.scrollIntoView({behavior:"smooth"}); },[convo]);
@@ -436,18 +562,24 @@ export default function App() {
   function toast_(msg) { setToast(msg); setTimeout(()=>setToast(null),2400); }
 
   function launchFromHero() {
-    if (!heroOrigin || !heroDest) { toast_("Enter your starting point and destination"); return; }
-    setOrigin(heroOrigin); setDest(heroDest);
+    const from = heroOriginRef.current?.value || heroOrigin;
+    const to = heroDestRef.current?.value || heroDest;
+    if (!from || !to) { toast_("Enter your starting point and destination"); return; }
+    setHeroOrigin(from); setHeroDest(to);
+    setOrigin(from); setDest(to);
     setView("app");
     window.scrollTo(0,0);
     setTimeout(()=>{
+      if (originRef.current) originRef.current.value = from;
+      if (destRef.current) destRef.current.value = to;
+      if (isLoaded && window.google) fetchDirections();
       const first = nextQ(0,{});
       setQIndex(first);
       setConvo([
-        {role:"ai", text:`Let's plan your trip from ${heroOrigin} to ${heroDest}. A few quick questions:`},
+        {role:"ai", text:`Let's plan your trip from ${from} to ${to}. A few quick questions:`},
         {role:"ai", text:QUESTIONS[first].ask}
       ]);
-    }, 100);
+    }, 300);
   }
 
   function nextQ(from, ans) {
@@ -519,12 +651,24 @@ export default function App() {
       <div className="route-wrap">
         <div className="route-input-wrap">
           <div className="route-dot"/>
-          <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
+          {isLoaded ? (
+            <Autocomplete onPlaceChanged={fetchDirections} options={{types:["geocode","establishment"]}}>
+              <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
+            </Autocomplete>
+          ) : (
+            <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
+          )}
         </div>
         <div className="route-line"/>
         <div className="route-input-wrap">
           <div className="route-dot dest"/>
-          <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
+          {isLoaded ? (
+            <Autocomplete onPlaceChanged={fetchDirections} options={{types:["geocode","establishment"]}}>
+              <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
+            </Autocomplete>
+          ) : (
+            <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
+          )}
         </div>
       </div>
       <div className="convo-wrap">
@@ -759,12 +903,24 @@ export default function App() {
           <div className="hero-search">
             <div className="hero-input-wrap">
               <div className="hero-input-label">From</div>
-              <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+              {isLoaded ? (
+                <Autocomplete onPlaceChanged={()=>{ if(heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value); }} options={{types:["geocode","establishment"]}}>
+                  <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+                </Autocomplete>
+              ) : (
+                <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+              )}
             </div>
             <div className="hero-search-divider"/>
             <div className="hero-input-wrap">
               <div className="hero-input-label">To</div>
-              <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e=>setHeroDest(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+              {isLoaded ? (
+                <Autocomplete onPlaceChanged={()=>{ if(heroDestRef.current) setHeroDest(heroDestRef.current.value); }} options={{types:["geocode","establishment"]}}>
+                  <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles, CA" defaultValue={heroDest} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+                </Autocomplete>
+              ) : (
+                <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e=>setHeroDest(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+              )}
             </div>
             <button className="hero-go-btn" onClick={launchFromHero}>Plan my trip →</button>
           </div>
@@ -1064,21 +1220,91 @@ export default function App() {
           </div>
         </nav>
 
-        <div className="app" style={{paddingTop:"var(--nav-h)"}}>
-          <div className="sidebar sidebar-inner" style={{position:"relative"}}>
-            <div className="sidebar-day-layer" style={{opacity: heroTheme==="day"?1:0}}/>
-            <div className="sidebar-night-layer" style={{opacity: heroTheme==="night"?1:0}}/>
-            {tab==="plan"&&planPanel}
-            {tab==="stops"&&<StopsPanel/>}
-            {tab==="share"&&<SharePanel/>}
+        <div className="app" style={{position:"relative",height:"calc(100vh - var(--nav-h))"}}>
+          {/* Full screen map */}
+          <div className="map-full">
+            {isLoaded ? (
+              <>
+                <GoogleMap
+                  mapContainerClassName="gmap-wrap"
+                  center={mapCenter}
+                  zoom={4}
+                  onLoad={map => {
+                    mapRef.current = map;
+                    if (polylineRef.current) polylineRef.current.setMap(null);
+                  }}
+                  options={{
+                    disableDefaultUI: false,
+                    zoomControl: true,
+                    zoomControlOptions: { position: window.google?.maps?.ControlPosition?.RIGHT_CENTER },
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl: false,
+                    styles: heroTheme === "night" ? [
+                      {elementType:"geometry",stylers:[{color:"#0a1628"}]},
+                      {elementType:"labels.text.fill",stylers:[{color:"#a0a0b0"}]},
+                      {elementType:"labels.text.stroke",stylers:[{color:"#0a1628"}]},
+                      {featureType:"road",elementType:"geometry",stylers:[{color:"#1a2d45"}]},
+                      {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#2a4060"}]},
+                      {featureType:"water",elementType:"geometry",stylers:[{color:"#050d2a"}]},
+                      {featureType:"poi",stylers:[{visibility:"off"}]},
+                      {featureType:"transit",stylers:[{visibility:"off"}]},
+                    ] : [
+                      {featureType:"poi",stylers:[{visibility:"off"}]},
+                      {featureType:"transit",stylers:[{visibility:"off"}]},
+                    ],
+                  }}
+                >
+                  {routePath && (() => {
+                    if (mapRef.current) {
+                      if (polylineRef.current) polylineRef.current.setMap(null);
+                      polylineRef.current = new window.google.maps.Polyline({
+                        path: routePath,
+                        geodesic: true,
+                        strokeColor: "#e07c3a",
+                        strokeOpacity: 0.9,
+                        strokeWeight: 5,
+                        map: mapRef.current,
+                      });
+                    }
+                    return null;
+                  })()}
+                </GoogleMap>
+                {routeInfo && (
+                  <div className="route-info-bar">
+                    <div className="rib-item"><div className="rib-val">{routeInfo.distance}</div><div className="rib-label">Distance</div></div>
+                    <div style={{width:1,height:32,background:"rgba(255,255,255,0.1)"}}/>
+                    <div className="rib-item"><div className="rib-val">{routeInfo.duration}</div><div className="rib-label">Drive Time</div></div>
+                    <div style={{width:1,height:32,background:"rgba(255,255,255,0.1)"}}/>
+                    <div className="rib-item"><div className="rib-val" style={{fontSize:12}}>{routeInfo.start} → {routeInfo.end}</div><div className="rib-label">Route</div></div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="map-placeholder">
+                <div className="map-placeholder-text">Loading map…</div>
+                <div className="map-placeholder-sub">Connecting to Google Maps</div>
+              </div>
+            )}
           </div>
-          <div className="map-area" style={{position:"relative"}}>
-            <div className="map-day-layer" style={{opacity: heroTheme==="day"?1:0}}/>
-            <div className="map-night-layer" style={{opacity: heroTheme==="night"?1:0}}/>
-            <div className="map-placeholder">
-              <div className="map-placeholder-text">{generated?`${origin} → ${dest}`:"Your route will appear here"}</div>
-              <div className="map-placeholder-sub">{generated?`${stops.length} stops · Real map coming in Phase 2`:"Plan your trip to get started"}</div>
+
+          {/* Floating glass card */}
+          <div className={`float-card ${heroTheme} ${cardCollapsed?"collapsed":""}`}>
+            <div className="float-card-header" onClick={()=>setCardCollapsed(c=>!c)}>
+              <div className="float-card-title" style={{color: heroTheme==="night"?"#fff":"var(--ink)"}}>
+                {tab==="plan"?"Plan Your Trip":tab==="stops"?"Your Stops":"Live Sharing"}
+              </div>
+              <span className={`float-card-chevron ${cardCollapsed?"":"open"}`}>▼</span>
             </div>
+            {!cardCollapsed && (
+              <div className="float-card-scroll">
+                <div className="sidebar-inner" style={{background:"transparent"}}>
+                  {tab==="plan"&&planPanel}
+                  {tab==="stops"&&<StopsPanel/>}
+                  {tab==="share"&&<SharePanel/>}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
