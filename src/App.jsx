@@ -484,6 +484,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [stops, setStops] = useState([]);
+  const [tripTips, setTripTips] = useState([]);
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
   const [groceryInput, setGroceryInput] = useState("");
@@ -608,9 +609,9 @@ export default function App() {
     if (routeInfo) {
       const hours = parseInt(routeInfo.duration);
       const suggestedStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 18 ? 3 : 4;
-      openingMsg = `${routeInfo.distance} from ${routeInfo.start} to ${routeInfo.end} — about ${routeInfo.duration} of driving. I'd suggest ${suggestedStops} overnight stop${suggestedStops > 1 ? "s" : ""} along the way. I'll also optimize your route based on your vehicle. A few quick questions:`;
+      openingMsg = `${routeInfo.distance} · ${routeInfo.duration} drive · ${suggestedStops} suggested stop${suggestedStops > 1 ? "s" : ""}`;
     } else {
-      openingMsg = `Planning your trip from ${origin} to ${dest}. A few quick questions:`;
+      openingMsg = `Planning your trip from ${origin} to ${dest}.`;
     }
 
     setConvo([
@@ -626,10 +627,7 @@ export default function App() {
     const nc=[...convo,{role:"user",text:value}];
     const next=nextQ(qIndex+1,na);
     if(next===-2) {
-      const summary = routeInfo
-        ? `Perfect — ${routeInfo.distance}, ${routeInfo.duration} drive. Here's your trip summary:`
-        : "Perfect — here's what I've got. Ready to plan your trip?";
-      setConvo([...nc,{role:"ai",text:summary}]);
+      setConvo([...nc,{role:"ai",text:"Got it. Ready to generate your trip plan?"}]);
       setQIndex(-2); setConvoComplete(true);
     }
     else { setConvo([...nc,{role:"ai",text:QUESTIONS[next].ask}]); setQIndex(next); }
@@ -682,16 +680,8 @@ export default function App() {
       }));
 
       setStops(aiStops);
-
-      // Show AI greeting in conversation
-      if (data.greeting) {
-        setConvo(prev => [...prev, { role: "ai", text: data.greeting }]);
-      }
-
-      // Show travel tips
-      if (data.tips?.length) {
-        setConvo(prev => [...prev, { role: "ai", text: "Travel tips for your trip:\n• " + data.tips.join("\n• ") }]);
-      }
+      if (data.tips?.length) setTripTips(data.tips);
+      // AI works silently — no chat messages after generation
 
     } catch (err) {
       console.error("Generate trip error:", err);
@@ -709,7 +699,7 @@ export default function App() {
 
   function resetPlan() {
     setConvo([]); setAnswers({}); setQIndex(-1);
-    setConvoComplete(false); setGenerated(false); setStops([]);
+    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]);
   }
 
   const currentQ = qIndex>=0 ? QUESTIONS[qIndex] : null;
@@ -776,7 +766,7 @@ export default function App() {
         {convo.map((msg,i)=>(
           msg.role==="ai"?(
             <div className="ai-msg" key={i}>
-              {i===0&&<div className="ai-name">TripMappa</div>}
+              {i===0&&<div className="ai-name" style={{display:"none"}}>TripMappa</div>}
               <div className="ai-bubble">{msg.text}</div>
             </div>
           ):(
@@ -787,6 +777,32 @@ export default function App() {
         ))}
         {currentQ&&(
           <div className="ai-msg">
+            {/* Back button */}
+            {qIndex > 0 && (
+              <button
+                onClick={() => {
+                  // Find previous applicable question
+                  let prev = qIndex - 1;
+                  while (prev > 0 && QUESTIONS[prev].onlyIf && !QUESTIONS[prev].onlyIf(answers)) prev--;
+                  const prevQ = QUESTIONS[prev];
+                  // Remove last user message and AI question from convo
+                  setConvo(c => c.slice(0, -2));
+                  // Remove last answer
+                  const newAnswers = {...answers};
+                  delete newAnswers[prevQ.id];
+                  setAnswers(newAnswers);
+                  setQIndex(prev);
+                  setTextInput("");
+                }}
+                style={{
+                  background:"none", border:"none", cursor:"pointer",
+                  fontSize:11, color:"var(--muted)", padding:"2px 0",
+                  display:"flex", alignItems:"center", gap:4, marginBottom:4
+                }}
+              >
+                ← Back
+              </button>
+            )}
             {currentQ.type==="yesno"&&(
               <div className="quick-replies">
                 <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
@@ -812,9 +828,10 @@ export default function App() {
       </div>
       {convoComplete&&(
         <div className="generate-wrap">
-          <button className="btn-generate" onClick={generateTrip} disabled={loading}>
-            {loading?<><span className="spinner"/>Planning your trip…</>:"Generate Trip Plan"}
+          <button className="btn-generate" onClick={generateTrip} disabled={loading||generated}>
+            {loading?<><span className="spinner"/>Planning your trip…</>:generated?"Trip Generated ✓":"Generate Trip Plan"}
           </button>
+          {generated&&<div style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:8}}>Go to Stops tab to view your plan · <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={()=>setTab("stops")}>View now</span></div>}
         </div>
       )}
     </div>
@@ -839,14 +856,15 @@ export default function App() {
             <div className="stop-card" key={i} style={{animationDelay:i*0.07+"s"}}>
               <div className="stop-card-head">
                 <div className="stop-num">{i+1}</div>
-                <div>
+                <div style={{flex:1}}>
                   <div className="stop-city">{stop.city}</div>
                   <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
                 </div>
+                {stop.why && <div style={{fontSize:10,color:"var(--muted)",fontStyle:"italic",maxWidth:90,textAlign:"right"}}>{stop.why}</div>}
               </div>
               <div className="stop-body">
                 <div className="stop-section-label">Hotels</div>
-                {stop.hotels.map((h,hi)=>(
+                {stop.hotels?.map((h,hi)=>(
                   <div className="item-row" key={hi} onClick={()=>toast_(`Booking ${h.name}`)}>
                     <div className="item-info">
                       <div className="item-name">{h.name}</div>
@@ -855,7 +873,7 @@ export default function App() {
                     <div className="item-price">{h.price}</div>
                   </div>
                 ))}
-                {answers.restaurants==="Yes"&&(
+                {answers.restaurants==="Yes"&&stop.restaurants?.length>0&&(
                   <>
                     <div className="stop-section-label">Restaurants</div>
                     {stop.restaurants.map((r,ri)=>(
@@ -877,6 +895,19 @@ export default function App() {
               </div>
             </div>
           ))}
+
+          {/* Travel tips */}
+          {tripTips.length>0&&(
+            <div style={{marginTop:16,padding:"14px",background:"var(--surface)",borderRadius:"var(--r)",border:"1px solid var(--border)"}}>
+              <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:10}}>Trip Tips</div>
+              {tripTips.map((tip,i)=>(
+                <div key={i} style={{display:"flex",gap:8,marginBottom:7,fontSize:12.5,lineHeight:1.5}}>
+                  <span style={{color:"var(--accent)",fontWeight:700,flexShrink:0}}>→</span>
+                  <span>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
