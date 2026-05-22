@@ -508,17 +508,33 @@ export default function App() {
   const mapRef = useRef(null);
   const polylineRef = useRef(null);
 
-  const fetchDirections = useCallback(() => {
+  const fetchDirections = useCallback((vehicleType, trailerDetail) => {
     const originVal = originRef.current?.value;
     const destVal = destRef.current?.value;
     if (!originVal || !destVal) return;
 
-    const service = new window.google.maps.DirectionsService();
-    service.route({
+    // Build route request based on vehicle type
+    const routeRequest = {
       origin: originVal,
       destination: destVal,
       travelMode: window.google.maps.TravelMode.DRIVING,
-    }, (result, status) => {
+    };
+
+    // For trucks and trailers avoid highways with restrictions
+    if (vehicleType === "Semi Truck" || vehicleType === "Trailer") {
+      routeRequest.avoidFerries = true;
+      routeRequest.avoidTolls = false;
+      // Use alternative routes to find truck-safe paths
+      routeRequest.provideRouteAlternatives = true;
+    }
+
+    if (vehicleType === "RV / Camper") {
+      routeRequest.avoidFerries = true;
+      routeRequest.provideRouteAlternatives = true;
+    }
+
+    const service = new window.google.maps.DirectionsService();
+    service.route(routeRequest, (result, status) => {
       if (status === "OK") {
         const leg = result.routes[0].legs[0];
         setRouteInfo({
@@ -526,18 +542,13 @@ export default function App() {
           duration: leg.duration.text,
           start: leg.start_address.split(",")[0],
           end: leg.end_address.split(",")[0],
+          vehicleType: vehicleType || "Car",
+          trailerDetail: trailerDetail || null,
         });
         setOrigin(originVal);
         setDest(destVal);
-
-        // Draw route as polyline
-        const path = window.google.maps.geometry
-          ? window.google.maps.geometry.encoding.decodePath(result.routes[0].overview_polyline)
-          : result.routes[0].overview_path;
-
         setRoutePath(result.routes[0].overview_path);
 
-        // Fit map to route bounds
         if (mapRef.current) {
           const bounds = new window.google.maps.LatLngBounds();
           result.routes[0].legs[0].steps.forEach(step => {
@@ -593,12 +604,11 @@ export default function App() {
     const first=nextQ(0,{});
     setQIndex(first);
 
-    // Use real route data if available
     let openingMsg;
     if (routeInfo) {
       const hours = parseInt(routeInfo.duration);
       const suggestedStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 18 ? 3 : 4;
-      openingMsg = `${routeInfo.distance} from ${routeInfo.start} to ${routeInfo.end} — about ${routeInfo.duration} of driving. I'd suggest ${suggestedStops} overnight stop${suggestedStops > 1 ? "s" : ""} along the way. Let me ask a few quick questions to personalize your trip.`;
+      openingMsg = `${routeInfo.distance} from ${routeInfo.start} to ${routeInfo.end} — about ${routeInfo.duration} of driving. I'd suggest ${suggestedStops} overnight stop${suggestedStops > 1 ? "s" : ""} along the way. I'll also optimize your route based on your vehicle. A few quick questions:`;
     } else {
       openingMsg = `Planning your trip from ${origin} to ${dest}. A few quick questions:`;
     }
@@ -627,16 +637,73 @@ export default function App() {
 
   async function generateTrip() {
     setLoading(true); setTab("stops");
-    await new Promise(r=>setTimeout(r,1800));
 
-    // Use real route duration to determine stops
-    let numStops = 3;
-    if (routeInfo) {
-      const hours = parseInt(routeInfo.duration);
-      numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
+    // Re-fetch directions with vehicle type from answers
+    if (isLoaded && window.google && originRef.current?.value && destRef.current?.value) {
+      fetchDirections(answers.vehicle, answers.trailer_detail);
     }
-    setStops(STOPS_DATA.slice(0, numStops));
-    setLoading(false); setGenerated(true);
+
+    try {
+      const response = await fetch("/api/plan-trip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin,
+          destination: dest,
+          answers,
+          routeInfo,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "Failed to generate trip");
+
+      // Map Claude response to stops format
+      const aiStops = (data.stops || []).map(stop => ({
+        city: stop.city,
+        distance: stop.distance,
+        eta: stop.eta,
+        why: stop.why,
+        hotels: (stop.hotels || []).map(h => ({
+          name: h.name,
+          stars: h.stars,
+          price: h.price,
+          pet: h.pet,
+          why: h.why,
+        })),
+        restaurants: (stop.restaurants || []).map(r => ({
+          name: r.name,
+          cuisine: r.cuisine,
+          rating: r.rating,
+          time: r.time,
+          why: r.why,
+        })),
+      }));
+
+      setStops(aiStops);
+
+      // Show AI greeting in conversation
+      if (data.greeting) {
+        setConvo(prev => [...prev, { role: "ai", text: data.greeting }]);
+      }
+
+      // Show travel tips
+      if (data.tips?.length) {
+        setConvo(prev => [...prev, { role: "ai", text: "Travel tips for your trip:\n• " + data.tips.join("\n• ") }]);
+      }
+
+    } catch (err) {
+      console.error("Generate trip error:", err);
+      toast_("Something went wrong — try again");
+      // Fall back to placeholder data
+      const hours = routeInfo ? parseInt(routeInfo.duration) : 10;
+      const numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
+      setStops(STOPS_DATA.slice(0, numStops));
+    }
+
+    setLoading(false);
+    setGenerated(true);
     toast_("Trip planned");
   }
 
@@ -1286,10 +1353,16 @@ export default function App() {
                   {routePath && (() => {
                     if (mapRef.current) {
                       if (polylineRef.current) polylineRef.current.setMap(null);
+                      // Color route based on vehicle type
+                      const color = routeInfo?.vehicleType === "Semi Truck" || routeInfo?.vehicleType === "Trailer"
+                        ? "#4a9fd4" // blue for trucks
+                        : routeInfo?.vehicleType === "RV / Camper"
+                        ? "#2abf6e" // green for RV
+                        : "#e07c3a"; // orange default
                       polylineRef.current = new window.google.maps.Polyline({
                         path: routePath,
                         geodesic: true,
-                        strokeColor: "#e07c3a",
+                        strokeColor: color,
                         strokeOpacity: 0.9,
                         strokeWeight: 5,
                         map: mapRef.current,
@@ -1304,7 +1377,34 @@ export default function App() {
                     <div style={{width:1,height:32,background:"rgba(255,255,255,0.1)"}}/>
                     <div className="rib-item"><div className="rib-val">{routeInfo.duration}</div><div className="rib-label">Drive Time</div></div>
                     <div style={{width:1,height:32,background:"rgba(255,255,255,0.1)"}}/>
-                    <div className="rib-item"><div className="rib-val" style={{fontSize:12}}>{routeInfo.start} → {routeInfo.end}</div><div className="rib-label">Route</div></div>
+                    <div className="rib-item">
+                      <div className="rib-val" style={{fontSize:11}}>
+                        {routeInfo.vehicleType === "Semi Truck" ? "🚛 Truck Route" :
+                         routeInfo.vehicleType === "Trailer" ? "🚛 Trailer Route" :
+                         routeInfo.vehicleType === "RV / Camper" ? "🚐 RV Route" :
+                         routeInfo.vehicleType === "Motorcycle" ? "🏍 Moto Route" :
+                         "🚗 Car Route"}
+                      </div>
+                      <div className="rib-label">{routeInfo.start} → {routeInfo.end}</div>
+                    </div>
+                    {(routeInfo.vehicleType === "Semi Truck" || routeInfo.vehicleType === "Trailer") && (
+                      <>
+                        <div style={{width:1,height:32,background:"rgba(255,255,255,0.1)"}}/>
+                        <div className="rib-item">
+                          <div className="rib-val" style={{fontSize:10,color:"#4a9fd4"}}>TRUCK SAFE</div>
+                          <div className="rib-label">Avoids restrictions</div>
+                        </div>
+                      </>
+                    )}
+                    {routeInfo.vehicleType === "RV / Camper" && (
+                      <>
+                        <div style={{width:1,height:32,background:"rgba(255,255,255,0.1)"}}/>
+                        <div className="rib-item">
+                          <div className="rib-val" style={{fontSize:10,color:"#2abf6e"}}>RV FRIENDLY</div>
+                          <div className="rib-label">RV optimized</div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </>
