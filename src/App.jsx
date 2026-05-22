@@ -330,7 +330,10 @@ const CSS = `
   .convo-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
   .ai-msg { display: flex; flex-direction: column; gap: 8px; animation: fadeUp 0.2s ease both; }
-  @keyframes fadeUp { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+  .results-view { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+  .plan-view { animation: fadeUp 0.2s ease both; }
   .ai-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 12px 12px 12px 3px; padding: 11px 14px; font-size: 13.5px; line-height: 1.55; color: var(--ink); max-width: 92%; }
   .ai-name { font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: 0.3px; margin-bottom: 2px; }
   .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease both; }
@@ -547,6 +550,30 @@ export default function App() {
   const [generated, setGenerated] = useState(false);
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
+  const [savedTrips, setSavedTrips] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
+  });
+
+  function saveTrip() {
+    if (!origin || !dest || !stops.length) return;
+    const trip = {
+      id: Date.now(),
+      origin, dest,
+      date: new Date().toLocaleDateString(),
+      stops, tripTips, answers, routeInfo,
+    };
+    const updated = [trip, ...savedTrips];
+    setSavedTrips(updated);
+    try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
+    toast_("Trip saved");
+  }
+
+  function deleteSavedTrip(id) {
+    const updated = savedTrips.filter(t => t.id !== id);
+    setSavedTrips(updated);
+    try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
+    toast_("Trip removed");
+  }
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
   const [groceryInput, setGroceryInput] = useState("");
@@ -825,70 +852,19 @@ export default function App() {
         </div>
       </div>
       <div className="convo-wrap">
-        {qIndex===-1&&convo.length===0&&(
-          <div style={{textAlign:"center",padding:"32px 0"}}>
-            <div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>Enter your route above, then tap below to get started.</div>
-            <button className="btn-generate" style={{width:"auto",padding:"10px 28px",display:"inline-block"}} onClick={startConvo}>Start planning</button>
-          </div>
-        )}
-        {convo.map((msg,i)=>(
-          msg.role==="ai"?(
-            <div className="ai-msg" key={i}>
-              <div className="ai-bubble">{msg.text}</div>
-            </div>
-          ):(
-            <div className="user-msg" key={i}>
-              <div className="user-bubble">{msg.text}</div>
-            </div>
-          )
-        ))}
-        {currentQ&&(
-          <div className="ai-msg">
-            {qIndex > 0 && (
-              <button onClick={() => {
-                let prev = qIndex - 1;
-                while (prev > 0 && QUESTIONS[prev].onlyIf && !QUESTIONS[prev].onlyIf(answers)) prev--;
-                const prevQ = QUESTIONS[prev];
-                setConvo(c => c.slice(0, -2));
-                const newAnswers = {...answers};
-                delete newAnswers[prevQ.id];
-                setAnswers(newAnswers);
-                setQIndex(prev);
-                setTextInput("");
-              }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
-                ← Back
+        {/* RESULTS VIEW — shown after generating */}
+        {generated&&stops.length>0 ? (
+          <div className="results-view">
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+              <button onClick={resetPlan} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center",gap:4,padding:0}}>
+                ← Start over
               </button>
-            )}
-            {currentQ.type==="yesno"&&(
-              <div className="quick-replies">
-                <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
-                <button className="qr-btn no" onClick={()=>submitAnswer("No")}>No</button>
-              </div>
-            )}
-            {currentQ.type==="choice"&&(
-              <div className="quick-replies">
-                {currentQ.choices.map(c=><button key={c} className="qr-btn" onClick={()=>submitAnswer(c)}>{c}</button>)}
-              </div>
-            )}
-            {currentQ.type==="text"&&(
-              <div className="answer-input-wrap">
-                <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
-                {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
-                <button className="answer-send" onClick={()=>textInput.trim()&&submitAnswer(textInput.trim())}>Send</button>
-              </div>
-            )}
-          </div>
-        )}
-        {convoComplete&&<div className="ai-msg"><SummaryCard/></div>}
-
-        {/* Inline trip results — appear below conversation after generating */}
-        {generated&&stops.length>0&&(
-          <div style={{marginTop:16}}>
-            <div className="section-sep"/>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <div style={{fontFamily:"Syne",fontWeight:700,fontSize:14}}>{origin} → {dest}</div>
-              <button className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11}} onClick={resetPlan}>Edit</button>
+              <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center"}}>{origin} → {dest}</div>
+              <button onClick={saveTrip} style={{background:"var(--accent)",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                Save
+              </button>
             </div>
+            <div className="section-sep"/>
             <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:8}}>
               {isDayOrHomeTrip ? "Stops along the way" : "Overnight stops"}
             </div>
@@ -903,7 +879,6 @@ export default function App() {
                   {stop.why&&<div style={{fontSize:10,color:"var(--muted)",fontStyle:"italic",maxWidth:90,textAlign:"right"}}>{stop.why}</div>}
                 </div>
                 <div className="stop-body">
-                  {/* Only show hotels for overnight trips */}
                   {isOvernightTrip&&stop.hotels?.length>0&&(
                     <>
                       <div className="stop-section-label">Hotels</div>
@@ -933,21 +908,14 @@ export default function App() {
                     </>
                   )}
                   <div className="stop-actions">
-                    {isOvernightTrip&&(
-                      <button className="action-btn action-btn-primary" onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>
-                    )}
-                    {isDayOrHomeTrip&&(
-                      <button className="action-btn action-btn-primary" onClick={()=>toast_("Added to route!")}>Add to route</button>
-                    )}
-                    {answers.grocery==="Yes"&&isOvernightTrip&&(
-                      <button className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>
-                    )}
+                    {isOvernightTrip&&<button className="action-btn action-btn-primary" onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>}
+                    {isDayOrHomeTrip&&<button className="action-btn action-btn-primary" onClick={()=>toast_("Added to route!")}>Add to route</button>}
+                    {answers.grocery==="Yes"&&isOvernightTrip&&<button className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>}
                     <button className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
                   </div>
                 </div>
               </div>
             ))}
-            {/* Travel tips */}
             {tripTips.length>0&&(
               <div style={{marginTop:12,padding:"14px",background:"var(--surface)",borderRadius:"var(--r)",border:"1px solid var(--border)"}}>
                 <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:10}}>Trip Tips</div>
@@ -960,8 +928,67 @@ export default function App() {
               </div>
             )}
           </div>
+        ) : (
+          /* CONVERSATION VIEW — shown while planning */
+          <div className="plan-view">
+            {qIndex===-1&&convo.length===0&&(
+              <div style={{textAlign:"center",padding:"32px 0"}}>
+                <div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>Enter your route above, then tap below to get started.</div>
+                <button className="btn-generate" style={{width:"auto",padding:"10px 28px",display:"inline-block"}} onClick={startConvo}>Start planning</button>
+              </div>
+            )}
+            {convo.map((msg,i)=>(
+              msg.role==="ai"?(
+                <div className="ai-msg" key={i}>
+                  <div className="ai-bubble">{msg.text}</div>
+                </div>
+              ):(
+                <div className="user-msg" key={i}>
+                  <div className="user-bubble">{msg.text}</div>
+                </div>
+              )
+            ))}
+            {currentQ&&(
+              <div className="ai-msg">
+                {qIndex > 0 && (
+                  <button onClick={() => {
+                    let prev = qIndex - 1;
+                    while (prev > 0 && QUESTIONS[prev].onlyIf && !QUESTIONS[prev].onlyIf(answers)) prev--;
+                    const prevQ = QUESTIONS[prev];
+                    setConvo(c => c.slice(0, -2));
+                    const newAnswers = {...answers};
+                    delete newAnswers[prevQ.id];
+                    setAnswers(newAnswers);
+                    setQIndex(prev);
+                    setTextInput("");
+                  }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
+                    ← Back
+                  </button>
+                )}
+                {currentQ.type==="yesno"&&(
+                  <div className="quick-replies">
+                    <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
+                    <button className="qr-btn no" onClick={()=>submitAnswer("No")}>No</button>
+                  </div>
+                )}
+                {currentQ.type==="choice"&&(
+                  <div className="quick-replies">
+                    {currentQ.choices.map(c=><button key={c} className="qr-btn" onClick={()=>submitAnswer(c)}>{c}</button>)}
+                  </div>
+                )}
+                {currentQ.type==="text"&&(
+                  <div className="answer-input-wrap">
+                    <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
+                    {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
+                    <button className="answer-send" onClick={()=>textInput.trim()&&submitAnswer(textInput.trim())}>Send</button>
+                  </div>
+                )}
+              </div>
+            )}
+            {convoComplete&&<div className="ai-msg"><SummaryCard/></div>}
+            <div ref={convoEndRef}/>
+          </div>
         )}
-        <div ref={convoEndRef}/>
       </div>
       {convoComplete&&(
         <div className="generate-wrap">
@@ -1060,7 +1087,43 @@ export default function App() {
     </div>
   );
 
-  const SharePanel = ()=>(
+  const TripsPanel = () => (
+    <div className="stops-wrap">
+      <div style={{fontFamily:"Syne",fontWeight:800,fontSize:17,marginBottom:4}}>Saved Trips</div>
+      <div style={{fontSize:12,color:"var(--muted)",marginBottom:16}}>Your planned trips, ready to go.</div>
+      {savedTrips.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-title">No saved trips</div>
+          <div className="empty-sub">Plan a trip and tap Save to keep it here.</div>
+        </div>
+      ) : (
+        savedTrips.map(trip => (
+          <div key={trip.id} className="stop-card" style={{marginBottom:10}}>
+            <div className="stop-card-head">
+              <div style={{flex:1}}>
+                <div className="stop-city">{trip.origin} → {trip.dest}</div>
+                <div className="stop-meta">{trip.date} · {trip.stops.length} stop{trip.stops.length !== 1 ? "s" : ""} · {trip.routeInfo?.distance || ""}</div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11}} onClick={() => {
+                  setOrigin(trip.origin);
+                  setDest(trip.dest);
+                  setStops(trip.stops);
+                  setTripTips(trip.tripTips || []);
+                  setAnswers(trip.answers || {});
+                  setGenerated(true);
+                  setConvoComplete(true);
+                  setTab("plan");
+                  toast_("Trip loaded");
+                }}>View</button>
+                <button className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11,color:"#e05c2a",borderColor:"#e05c2a"}} onClick={() => deleteSavedTrip(trip.id)}>✕</button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
     <div className="share-wrap">
       <div className="share-title">Live sharing</div>
       <div className="share-sub">Share your location in real time. Friends and family get a live map link — no app needed.</div>
@@ -1478,7 +1541,7 @@ export default function App() {
         <nav className="nav-app nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,height:"var(--nav-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",backdropFilter:"blur(12px)"}}>
           <div className="nav-logo">Trip<span>Mappa</span></div>
           <div className="nav-center-wrap nav-center" style={{display:"flex",gap:"1px",borderRadius:8,padding:3}}>
-            {[["plan","Plan"],["stops","Stops"],["share","Share"]].map(([k,l])=>(
+            {[["plan","Plan"],["trips","Trips"],["share","Share"]].map(([k,l])=>(
               <button key={k} className={"nav-tab"+(tab===k?" active":"")} onClick={()=>setTab(k)}>{l}</button>
             ))}
           </div>
@@ -1598,7 +1661,7 @@ export default function App() {
           <div className={`float-card ${heroTheme} ${cardCollapsed?"collapsed":""}`}>
             <div className="float-card-header" onClick={()=>setCardCollapsed(c=>!c)}>
               <div className="float-card-title" style={{color: heroTheme==="night"?"#fff":"var(--ink)"}}>
-                {tab==="plan"?"Plan Your Trip":tab==="stops"?"Your Stops":"Live Sharing"}
+                {tab==="plan"?"Plan Your Trip":tab==="trips"?"Saved Trips":"Live Sharing"}
               </div>
               <span className={`float-card-chevron ${cardCollapsed?"":"open"}`}>▼</span>
             </div>
@@ -1606,7 +1669,7 @@ export default function App() {
               <div className="float-card-scroll">
                 <div className="sidebar-inner" style={{background:"transparent"}}>
                   {tab==="plan"&&planPanel}
-                  {tab==="stops"&&<StopsPanel/>}
+                  {tab==="trips"&&<TripsPanel/>}
                   {tab==="share"&&<SharePanel/>}
                 </div>
               </div>
