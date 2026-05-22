@@ -9,41 +9,40 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing origin or destination" });
   }
 
+  const tripType = answers?.trip_type || "Road trip";
+  const needsOvernight = answers?.overnight === "Yes" || tripType === "Road trip";
+
   const systemPrompt = `You are TripMappa, a concise AI travel planner.
 Respond with a JSON object only — no markdown, no extra text.
-Keep all text extremely short and scannable. No long sentences.`;
+Keep all text extremely short and scannable.`;
 
-  const userPrompt = `Plan a road trip:
-- From: ${origin}
-- To: ${destination}
+  const userPrompt = `Plan a ${tripType.toLowerCase()} from ${origin} to ${destination}.
 - Distance: ${routeInfo?.distance || "unknown"}
 - Drive time: ${routeInfo?.duration || "unknown"}
 - Vehicle: ${answers?.vehicle || "Car"}
 - Fuel: ${answers?.fuel || "Gasoline"}
 - Pets: ${answers?.pets === "Yes" ? `Yes — ${answers?.pet_desc}` : "No"}
-- Lodging: ${answers?.lodging || "Mid-range"}
+- Overnight stops needed: ${needsOvernight ? "Yes" : "No"}
+- Lodging: ${answers?.lodging || "N/A"}
 - Restaurants: ${answers?.restaurants || "No"}
 - Grocery: ${answers?.grocery || "No"}
 - Notes: ${answers?.extra || "None"}
 
+${needsOvernight ? `Return stops with hotels and restaurants.` : `Return fuel/rest stops only — no hotels needed.`}
+
 Return this JSON exactly:
 {
-  "greeting": "One short sentence, max 15 words, mentioning the route",
   "stops": [
     {
       "city": "City, State",
       "distance": "XXX miles",
       "eta": "Xh Xm",
       "why": "5 words max",
-      "hotels": [
-        { "name": "Hotel Name", "stars": 4, "price": "$XXX/night", "pet": true }
-      ],
-      "restaurants": [
-        { "name": "Restaurant Name", "cuisine": "Type", "rating": "4.5", "time": "7:00 PM" }
-      ]
+      "hotels": ${needsOvernight ? `[{ "name": "Hotel Name", "stars": 4, "price": "$XXX/night", "pet": true }]` : "[]"},
+      "restaurants": ${answers?.restaurants === "Yes" ? `[{ "name": "Restaurant Name", "cuisine": "Type", "rating": "4.5", "time": "7:00 PM" }]` : "[]"}
     }
   ],
-  "tips": ["Short tip 1", "Short tip 2", "Short tip 3"]
+  "tips": ["Short tip 1", "Short tip 2"]
 }`;
 
   try {

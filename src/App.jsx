@@ -423,15 +423,77 @@ const CSS = `
 `;
 
 const QUESTIONS = [
-  { id:"vehicle", ask:"What are you traveling in?", type:"choice", choices:["Car","RV / Camper","Semi Truck","Motorcycle","Trailer"] },
-  { id:"trailer_detail", ask:"Got it — what's the trailer weight and length?", type:"text", placeholder:"e.g. 14,000 lbs, 40 ft", onlyIf:(a)=>a.vehicle==="Trailer"||a.vehicle==="Semi Truck" },
-  { id:"fuel", ask:"Does your vehicle run on gasoline or electric?", type:"choice", choices:["Gasoline","Electric (EV)"] },
-  { id:"pets", ask:"Traveling with any pets?", type:"yesno" },
-  { id:"pet_desc", ask:"Tell us about your pet — type, size, anything we should know.", type:"text", placeholder:"e.g. large golden retriever", onlyIf:(a)=>a.pets==="Yes" },
-  { id:"lodging", ask:"What kind of lodging do you prefer?", type:"choice", choices:["Budget","Mid-range","Upscale","Luxury","Campground","RV Park"] },
-  { id:"restaurants", ask:"Want restaurant recommendations at each stop?", type:"yesno" },
-  { id:"grocery", ask:"Would you like grocery delivery to your hotel?", type:"yesno" },
-  { id:"extra", ask:"Anything else we should know? (optional)", type:"text", placeholder:"e.g. traveling with kids, need wide parking…", skippable:true },
+  {
+    id: "trip_type",
+    ask: "What kind of trip is this?",
+    type: "choice",
+    choices: ["Road trip", "Driving home", "Day trip", "Work / Delivery"],
+  },
+  {
+    id: "vehicle",
+    ask: "What are you traveling in?",
+    type: "choice",
+    choices: ["Car", "RV / Camper", "Semi Truck", "Motorcycle", "Trailer"],
+  },
+  {
+    id: "trailer_detail",
+    ask: "What's the trailer weight and length?",
+    type: "text",
+    placeholder: "e.g. 14,000 lbs, 40 ft",
+    onlyIf: (a) => a.vehicle === "Trailer" || a.vehicle === "Semi Truck",
+  },
+  {
+    id: "fuel",
+    ask: "Does your vehicle run on gasoline or electric?",
+    type: "choice",
+    choices: ["Gasoline", "Electric (EV)"],
+  },
+  {
+    id: "pets",
+    ask: "Traveling with any pets?",
+    type: "yesno",
+    onlyIf: (a) => a.trip_type !== "Work / Delivery",
+  },
+  {
+    id: "pet_desc",
+    ask: "Tell us about your pet — type and size.",
+    type: "text",
+    placeholder: "e.g. large golden retriever",
+    onlyIf: (a) => a.pets === "Yes",
+  },
+  {
+    id: "overnight",
+    ask: "Will you need overnight stops?",
+    type: "yesno",
+    onlyIf: (a) => a.trip_type === "Road trip" || a.trip_type === "Work / Delivery",
+  },
+  {
+    id: "lodging",
+    ask: "What kind of lodging do you prefer?",
+    type: "choice",
+    choices: ["Budget", "Mid-range", "Upscale", "Luxury", "Campground", "RV Park"],
+    onlyIf: (a) => a.overnight === "Yes" || a.trip_type === "Road trip" && a.overnight !== "No",
+  },
+  {
+    id: "restaurants",
+    ask: "Want restaurant recommendations at each stop?",
+    type: "yesno",
+    onlyIf: (a) => a.overnight === "Yes" || a.trip_type === "Road trip",
+  },
+  {
+    id: "grocery",
+    ask: "Would you like grocery delivery to your hotel?",
+    type: "yesno",
+    onlyIf: (a) => a.overnight === "Yes" && a.lodging !== "Campground" && a.lodging !== "RV Park",
+  },
+  {
+    id: "extra",
+    ask: "Anything else we should know? (optional)",
+    type: "text",
+    placeholder: "e.g. need wide parking, traveling with kids…",
+    skippable: true,
+    onlyIf: (a) => a.trip_type !== "Driving home" && a.trip_type !== "Day trip",
+  },
 ];
 
 const STOPS_DATA = [
@@ -706,14 +768,16 @@ export default function App() {
 
   function SummaryCard() {
     const rows=[
-      ["Vehicle",answers.vehicle],
-      answers.trailer_detail&&["Trailer",answers.trailer_detail],
-      ["Fuel",answers.fuel],
-      ["Pets",answers.pets==="Yes"?`Yes — ${answers.pet_desc||""}`:"No"],
-      ["Lodging",answers.lodging],
-      ["Restaurants",answers.restaurants],
-      ["Grocery",answers.grocery],
-      answers.extra&&answers.extra!=="skip"&&["Notes",answers.extra],
+      ["Trip", answers.trip_type],
+      ["Vehicle", answers.vehicle],
+      answers.trailer_detail&&["Trailer", answers.trailer_detail],
+      ["Fuel", answers.fuel],
+      answers.pets&&["Pets", answers.pets==="Yes"?`Yes — ${answers.pet_desc||""}`:"No"],
+      answers.overnight&&["Overnight", answers.overnight],
+      answers.lodging&&["Lodging", answers.lodging],
+      answers.restaurants&&["Restaurants", answers.restaurants],
+      answers.grocery&&["Grocery", answers.grocery],
+      answers.extra&&answers.extra!=="skip"&&["Notes", answers.extra],
     ].filter(Boolean);
     return (
       <div className="summary-card">
