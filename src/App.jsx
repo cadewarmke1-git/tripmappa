@@ -64,12 +64,8 @@ const CSS = `
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     overflow: hidden;
   }
-  .hero.day {
-    background: #87CEEB;
-    transition: background 1.8s ease;
-  }
-  .hero.night {
-    background: #020818;
+  .hero.day, .hero.night {
+    background: transparent;
     transition: background 1.8s ease;
   }
   /* Road SVG overlay */
@@ -161,12 +157,17 @@ const CSS = `
   }
   .hero-search-divider { width: 1px; height: 30px; background: #e2ddd7; flex-shrink: 0; }
   .hero-input-wrap { flex: 1; display: flex; flex-direction: column; }
-  .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #b8b0a8; margin-bottom: 3px; }
+  .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #b8b0a8; margin-bottom: 5px; }
+  .hero.night .hero-input-label { color: rgba(255,255,255,0.55); }
   .hero-input {
     border: none; outline: none; font-family: 'DM Sans', sans-serif;
     font-size: 15px; font-weight: 500; color: var(--ink);
     background: transparent; width: 100%; padding: 0; letter-spacing: -0.01em;
   }
+  .hero.night .hero-input { color: #fff; }
+  .hero.night .hero-input::placeholder { color: rgba(255,255,255,0.35); }
+  .hero.night .hero-search { background: rgba(12,20,48,0.94); box-shadow: 0 8px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.1); }
+  .hero.night .hero-search-divider { background: rgba(255,255,255,0.12); }
   .hero-input::placeholder { color: #c0b8b0; font-weight: 400; }
   .hero-go-btn {
     background: var(--ink);
@@ -205,25 +206,6 @@ const CSS = `
     pointer-events: none; user-select: none;
   }
 
-  /* Night/Day toggle switch */
-  .theme-switch { display: flex; align-items: center; cursor: pointer; user-select: none; }
-  .theme-switch-track {
-    width: 52px; height: 28px; border-radius: 99px;
-    position: relative; transition: background 0.35s;
-    border: 1px solid rgba(255,255,255,0.2);
-    flex-shrink: 0;
-  }
-  .theme-switch-track.day { background: rgba(135,206,235,0.5); }
-  .theme-switch-track.night { background: rgba(10,20,60,0.6); }
-  .theme-switch-thumb {
-    position: absolute; top: 3px;
-    width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; transition: left 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.35s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  }
-  .theme-switch-thumb.day { left: 3px; background: #fff9e0; }
-  .theme-switch-thumb.night { left: 27px; background: #1a2744; }
   .scroll-indicator {
     position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -288,7 +270,7 @@ const CSS = `
     box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
   }
   .float-card.collapsed { max-height: 62px; overflow: hidden; }
-  .float-card-scroll { overflow-y: auto; flex: 1; }
+  .float-card-scroll { overflow-y: auto; flex: 1; min-height: 0; }
   .float-card-scroll::-webkit-scrollbar { width: 0; }
 
   /* Mobile responsive */
@@ -310,7 +292,7 @@ const CSS = `
   /* Card header */
   .float-card-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 18px; cursor: pointer; user-select: none;
+    padding: 18px 20px; cursor: pointer; user-select: none;
     border-bottom: 1px solid rgba(0,0,0,0.05);
     flex-shrink: 0;
   }
@@ -326,11 +308,11 @@ const CSS = `
   .map-placeholder-sub { font-size: 12px; color: rgba(0,0,0,0.12); }
 
   /* ── Chat panel ── */
-  .chat-wrap { display: flex; flex-direction: column; height: 100%; }
-  .chat-header { padding: 22px 20px 16px; border-bottom: 1px solid var(--border); }
-  .chat-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 900; color: var(--ink); margin-bottom: 4px; letter-spacing: -0.5px; line-height: 1.2; }
-  .chat-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
-  .route-wrap { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+  .chat-wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .chat-header { padding: 24px 22px 18px; border-bottom: 1px solid var(--border); }
+  .chat-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 900; color: var(--ink); margin-bottom: 6px; letter-spacing: -0.5px; line-height: 1.2; }
+  .chat-sub { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .route-wrap { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
   .route-input-wrap { position: relative; }
   .route-dot { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
   .route-dot.dest { background: var(--accent); }
@@ -338,20 +320,19 @@ const CSS = `
   .route-input:focus { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 3px rgba(10,12,16,0.06); }
   .route-input::placeholder { color: #c0bab4; }
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
-  .convo-wrap { flex: 1; overflow-y: auto; padding: 20px 16px 20px; display: flex; flex-direction: column; gap: 28px; }
+  .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 20px 24px; display: flex; flex-direction: column; gap: 36px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
-  .ai-msg { display: flex; flex-direction: column; gap: 10px; animation: fadeUp 0.2s ease both; padding-bottom: 4px; }
-  .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+  .ai-msg { display: flex; flex-direction: column; gap: 14px; animation: fadeUp 0.2s ease both; padding-bottom: 8px; }
+  .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
   .results-view { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
   .plan-view { animation: fadeUp 0.2s ease both; }
-  .ai-bubble { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px 14px 14px 4px; padding: 12px 16px; font-size: 14px; line-height: 1.6; color: var(--ink); max-width: 94%; }
-  .ai-name { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px; }
-  .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease both; }
-  .user-bubble { background: var(--ink); color: #fff; border-radius: 14px 14px 4px 14px; padding: 10px 16px; font-size: 14px; max-width: 80%; line-height: 1.5; }
-  .quick-replies { display: flex; flex-wrap: wrap; gap: 6px; }
-  .qr-btn { border: 1.5px solid var(--border); background: #fff; border-radius: 99px; padding: 7px 16px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.14s; color: var(--ink); letter-spacing: -0.01em; }
+  .ai-bubble { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px 14px 14px 4px; padding: 14px 18px; font-size: 14px; line-height: 1.65; color: var(--ink); max-width: 94%; }
+  .ai-name { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease both; margin-top: 4px; }
+  .user-bubble { background: var(--ink); color: #fff; border-radius: 14px 14px 4px 14px; padding: 12px 18px; font-size: 14px; max-width: 80%; line-height: 1.55; }
+  .qr-btn { border: 1.5px solid var(--border); background: #fff; border-radius: 99px; padding: 9px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.14s; color: var(--ink); letter-spacing: -0.01em; }
   .qr-btn:hover { border-color: var(--ink); background: var(--surface); }
   .qr-btn.yes { border-color: var(--accent3); color: var(--accent3); }
   .qr-btn.yes:hover { background: var(--accent3); color: #fff; }
@@ -365,7 +346,7 @@ const CSS = `
   .summary-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.7; }
   .summary-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 7px; }
   .summary-key { font-weight: 600; min-width: 84px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px; }
-  .generate-wrap { padding: 12px 18px 18px; border-top: 1px solid var(--border); }
+  .generate-wrap { padding: 16px 20px 20px; border-top: 1px solid var(--border); }
   .btn-generate { width: 100%; padding: 13px; border: none; cursor: pointer; background: var(--ink); color: #fff; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; transition: background 0.15s, transform 0.12s; letter-spacing: -0.01em; }
   .btn-generate:hover { background: #1a1a1a; transform: translateY(-1px); }
   .btn-generate:active { transform: translateY(0); }
@@ -530,6 +511,17 @@ const STAR_DATA = Array.from({length:80},(_,i)=>({
   drift: `${(Math.random()*12+8).toFixed(1)}s`,
 }));
 
+function computeAutoTheme() {
+  if (typeof window === "undefined") return "day";
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const sunset = 18 * 60 + 30; // 6:30 PM
+  const sunrise = 6 * 60 + 30;  // 6:30 AM
+  const isNightHours = mins >= sunset || mins < sunrise;
+  return prefersDark || isNightHours ? "night" : "day";
+}
+
 function Stars() {
   return (
     <div className="hero-stars">
@@ -565,18 +557,8 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
 
-  function saveTrip() {
-    if (!origin || !dest || (!stops.length && !roadStops.length)) return;
-    const trip = {
-      id: Date.now(),
-      origin, dest,
-      date: new Date().toLocaleDateString(),
-      stops, tripTips, answers, routeInfo,
-    };
-    const updated = [trip, ...savedTrips];
-    setSavedTrips(updated);
-    try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
-    toast_("Trip saved");
+  function saveTripComingSoon() {
+    toast_("Sign in to save trips — coming in Phase 6");
   }
 
   function deleteSavedTrip(id) {
@@ -590,7 +572,7 @@ export default function App() {
   const [groceryInput, setGroceryInput] = useState("");
   const [groceryItems, setGroceryItems] = useState([]);
   const [scrolled, setScrolled] = useState(false);
-  const [heroTheme, setHeroTheme] = useState(() => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "day");
+  const [theme, setTheme] = useState(computeAutoTheme);
   const [cardCollapsed, setCardCollapsed] = useState(false);
 
   // ── Google Maps ──
@@ -670,6 +652,26 @@ export default function App() {
     window.addEventListener("scroll", onScroll);
     return ()=>window.removeEventListener("scroll", onScroll);
   },[]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateTheme = () => setTheme(computeAutoTheme());
+    mq.addEventListener("change", updateTheme);
+    const interval = setInterval(updateTheme, 60_000);
+    return () => {
+      mq.removeEventListener("change", updateTheme);
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (generated && (stops.length > 0 || roadStops.length > 0)) {
+      setCardCollapsed(false);
+      requestAnimationFrame(() => {
+        convoEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      });
+    }
+  }, [generated, stops, roadStops]);
 
   function toast_(msg) { setToast(msg); setTimeout(()=>setToast(null),2400); }
 
@@ -758,28 +760,28 @@ export default function App() {
 
       if (!response.ok) throw new Error(data.error || "Failed to generate trip");
 
-      // Map Claude response to stops format
-      if (data.road_stops && !data.stops) {
-        // Day trip / driving home — categorized road stops only
-        setRoadStops(data.road_stops);
-        setStops([]);
-      } else if (data.stops) {
-        // Overnight trip — hotel stops + optional road stops
-        const aiStops = (data.stops || []).map(stop => ({
+      const apiStops = Array.isArray(data.stops) ? data.stops : [];
+      const apiRoadStops = Array.isArray(data.road_stops) ? data.road_stops : [];
+
+      if (apiStops.length > 0) {
+        setStops(apiStops.map(stop => ({
           city: stop.city,
           distance: stop.distance,
           eta: stop.eta,
           why: stop.why,
           hotels: (stop.hotels || []).map(h => ({ name: h.name, stars: h.stars, price: h.price, pet: h.pet })),
           restaurants: (stop.restaurants || []).map(r => ({ name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time })),
-        }));
-        setStops(aiStops);
-        // Also set road stops if Claude returned them for overnight trips
-        if (data.road_stops?.length) setRoadStops(data.road_stops);
-        else setRoadStops([]);
+        })));
+        setRoadStops(apiRoadStops);
+      } else if (apiRoadStops.length > 0) {
+        setRoadStops(apiRoadStops);
+        setStops([]);
+      } else {
+        throw new Error("No stops in response");
       }
 
       if (data.tips?.length) setTripTips(data.tips);
+      else setTripTips([]);
       setGenerated(true);
       // AI works silently — no chat messages after generation
 
@@ -863,14 +865,15 @@ export default function App() {
       </div>
       <div className="convo-wrap">
         {/* RESULTS VIEW — shown after generating */}
-        {generated && (stops.length > 0 || roadStops.length > 0) ? (
+        {generated ? (
+          (stops.length > 0 || roadStops.length > 0) ? (
           <div className="results-view">
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
               <button onClick={resetPlan} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center",gap:4,padding:0}}>
                 ← Start over
               </button>
               <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center"}}>{origin} → {dest}</div>
-              <button onClick={saveTrip} style={{background:"var(--accent)",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+              <button onClick={saveTripComingSoon} style={{background:"var(--accent)",color:"#fff",border:"none",borderRadius:6,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                 Save
               </button>
             </div>
@@ -1026,6 +1029,13 @@ export default function App() {
               </div>
             )}
           </div>
+          ) : (
+            <div className="empty-state" style={{padding:"40px 16px"}}>
+              <div className="empty-title">No stops returned</div>
+              <div className="empty-sub" style={{marginBottom:16}}>Something went wrong loading your plan. Try generating again.</div>
+              <button className="btn-generate" style={{width:"auto",padding:"10px 24px",display:"inline-block"}} onClick={()=>{ setGenerated(false); generateTrip(); }}>Try again</button>
+            </div>
+          )
         ) : (
           /* CONVERSATION VIEW — shown while planning */
           <div className="plan-view">
@@ -1047,7 +1057,7 @@ export default function App() {
               )
             ))}
             {currentQ&&(
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {qIndex > 0 && (
                   <button onClick={() => {
                     let prev = qIndex - 1;
@@ -1182,37 +1192,30 @@ export default function App() {
       <nav className={`nav ${scrolled?"solid":"transparent"}`}>
         <div className="nav-logo">Trip<span>Mappa</span></div>
         <div className="nav-right">
-          <div className="theme-switch" onClick={()=>setHeroTheme(t=>t==="day"?"night":"day")}>
-            <div className={`theme-switch-track ${heroTheme}`}>
-              <div className={`theme-switch-thumb ${heroTheme}`}>
-                {heroTheme === "day" ? "☀️" : "🌙"}
-              </div>
-            </div>
-          </div>
           <button className="nav-btn" onClick={()=>setView("app")}>Log in</button>
           <button className="nav-btn nav-btn-primary" onClick={()=>setView("app")}>Sign up</button>
         </div>
       </nav>
 
       {/* Hero */}
-      <div className={`hero ${heroTheme}`}>
+      <div className={`hero ${theme}`}>
         {/* Day background layer */}
         <div style={{
           position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-          background:"linear-gradient(180deg,#87CEEB 0%,#a8d8ea 18%,#c8e8c0 38%,#a8c878 52%,#8ab560 62%,#6d9e4a 72%,#4a7a6a 82%,#2d5a52 92%,#1a3d38 100%)",
-          opacity: heroTheme === "day" ? 1 : 0,
+          background:"linear-gradient(180deg, #7ec8e8 0%, #9dd4ea 14%, #b5e4d4 30%, #a8d890 48%, #88c068 62%, #6aaa58 74%, #4a8870 86%, #2d6060 94%, #1a4040 100%)",
+          opacity: theme === "day" ? 1 : 0,
           transition: "opacity 1.8s ease",
         }}/>
         {/* Night background layer */}
         <div style={{
           position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-          background:"linear-gradient(180deg,#020818 0%,#050d2a 20%,#0a1840 40%,#0d2255 55%,#1a3a6a 65%,#3a2a15 78%,#6b3d10 88%,#8a5020 95%,#020818 100%)",
-          opacity: heroTheme === "night" ? 1 : 0,
+          background:"linear-gradient(180deg, #020818 0%, #061228 16%, #0a2048 34%, #102858 50%, #1a3868 64%, #2a4858 76%, #4a3828 88%, #5a4020 94%, #081018 100%)",
+          opacity: theme === "night" ? 1 : 0,
           transition: "opacity 1.8s ease",
         }}/>
-        {heroTheme === "night" && <Stars/>}
+        {theme === "night" && <Stars/>}
         <div className="hero-glow" style={{
-          background: heroTheme === "night"
+          background: theme === "night"
             ? "radial-gradient(ellipse at center bottom, rgba(220,120,40,0.5) 0%, rgba(180,80,20,0.25) 45%, transparent 75%)"
             : "radial-gradient(ellipse at center, rgba(150,210,200,0.35) 0%, rgba(100,180,170,0.15) 50%, transparent 80%)",
           opacity: 1,
@@ -1220,7 +1223,7 @@ export default function App() {
         }}/>
 
         {/* Day: River SVG / Night: Road SVG */}
-        <div style={{opacity: heroTheme==="day"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
+        <div style={{opacity: theme==="day"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
           <svg className="hero-road-svg" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M200 400 Q300 300 250 200 Q200 100 350 50 Q450 20 500 0" stroke="rgba(100,180,200,0.5)" strokeWidth="60" fill="none" strokeLinecap="round"/>
             <path d="M200 400 Q300 300 250 200 Q200 100 350 50 Q450 20 500 0" stroke="rgba(150,210,220,0.3)" strokeWidth="80" fill="none" strokeLinecap="round"/>
@@ -1228,7 +1231,7 @@ export default function App() {
             <path d="M0 350 Q250 310 500 350 Q700 380 900 340" stroke="rgba(100,160,80,0.12)" strokeWidth="2" fill="none"/>
           </svg>
         </div>
-        <div style={{opacity: heroTheme==="night"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
+        <div style={{opacity: theme==="night"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
           <svg className="hero-road-svg" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M450 400 L200 0" stroke="white" strokeWidth="80" strokeOpacity="0.05"/>
             <path d="M450 400 L700 0" stroke="white" strokeWidth="80" strokeOpacity="0.05"/>
@@ -1237,8 +1240,6 @@ export default function App() {
             <path d="M450 400 L700 0" stroke="white" strokeWidth="1.5" strokeOpacity="0.15"/>
           </svg>
         </div>
-
-        {/* Day/Night Toggle removed — now in nav */}
 
         <div className="hero-content">
           <div className="hero-eyebrow">TripMappa</div>
@@ -1316,8 +1317,9 @@ export default function App() {
         .app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
         .app-wrap.day .nav-app .nav-tab { color: #a0a0a0; }
         .app-wrap.day .nav-app .nav-tab.active { background: #fff; color: #0f1923; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-        .app-wrap.day .nav-app .nav-btn { background: none; border-color: #ebebeb; color: #a0a0a0; }
-        .app-wrap.day .nav-app .nav-btn-primary { background: #0f1923; color: #fff; border-color: #0f1923; }
+        .nav-app .nav-btn { color: #a0a0a0; }
+        .app-wrap.day .nav-app .nav-btn { background: none; border-color: #ebebeb; color: #a0a0a0 !important; }
+        .app-wrap.day .nav-app .nav-btn-primary { background: #0f1923; color: #fff !important; border-color: #0f1923; }
         .app-wrap.day .sidebar-inner { border-right: 1px solid rgba(0,0,0,0.06); }
         .app-wrap.night .sidebar-inner { border-right: 1px solid rgba(255,255,255,0.05); }
         .app-wrap.day .chat-title { color: #0f1923; }
@@ -1336,8 +1338,10 @@ export default function App() {
         .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
         .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
         .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
-        .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
-        .app-wrap.night .nav-app .nav-btn-primary { background: #e07c3a; color: #fff; border-color: #e07c3a; }
+        .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85) !important; }
+        .app-wrap.night .nav-app .nav-btn-primary { background: #e07c3a; color: #fff !important; border-color: #e07c3a; }
+        .app-wrap.night .float-card .route-input { color: #fff !important; }
+        .app-wrap.night .float-card .route-input::placeholder { color: rgba(255,255,255,0.35) !important; }
         .app-wrap.night .sidebar-inner { border-right: 1px solid rgba(255,255,255,0.05); }
         .app-wrap.night .chat-title { color: #fff; }
         .app-wrap.night .chat-sub { color: rgba(255,255,255,0.45); }
@@ -1573,7 +1577,7 @@ export default function App() {
         }
       `}</style>
 
-      <div className={`app-wrap ${heroTheme}`} style={{
+      <div className={`app-wrap ${theme}`} style={{
         display:"flex", flexDirection:"column", height:"100vh",
         transition: "color 1.8s ease",
       }}>
@@ -1585,12 +1589,7 @@ export default function App() {
             ))}
           </div>
           <div className="nav-right" style={{display:"flex",gap:8,alignItems:"center"}}>
-            <div className="theme-switch" onClick={()=>setHeroTheme(t=>t==="day"?"night":"day")}>
-              <div className={`theme-switch-track ${heroTheme}`}>
-                <div className={`theme-switch-thumb ${heroTheme}`}>{heroTheme==="day"?"☀️":"🌙"}</div>
-              </div>
-            </div>
-            <button className="nav-btn" onClick={()=>toast_("Trip saved")}>Save trip</button>
+            <button className="nav-btn" onClick={saveTripComingSoon}>Save trip</button>
             <button className="nav-btn nav-btn-primary" onClick={()=>toast_("Link copied")}>Share</button>
           </div>
         </nav>
@@ -1615,7 +1614,7 @@ export default function App() {
                     streetViewControl: false,
                     mapTypeControl: false,
                     fullscreenControl: false,
-                    styles: heroTheme === "night" ? [
+                    styles: theme === "night" ? [
                       {elementType:"geometry",stylers:[{color:"#0a1628"}]},
                       {elementType:"labels.text.fill",stylers:[{color:"#a0a0b0"}]},
                       {elementType:"labels.text.stroke",stylers:[{color:"#0a1628"}]},
@@ -1697,9 +1696,9 @@ export default function App() {
           </div>
 
           {/* Floating glass card */}
-          <div className={`float-card ${heroTheme} ${cardCollapsed?"collapsed":""}`}>
+          <div className={`float-card ${theme} ${cardCollapsed?"collapsed":""}`}>
             <div className="float-card-header" onClick={()=>setCardCollapsed(c=>!c)}>
-              <div className="float-card-title" style={{color: heroTheme==="night"?"#fff":"var(--ink)"}}>
+              <div className="float-card-title" style={{color: theme==="night"?"#fff":"var(--ink)"}}>
                 {tab==="plan"?"Plan Your Trip":tab==="trips"?"Saved Trips":"Live Sharing"}
               </div>
               <span className={`float-card-chevron ${cardCollapsed?"":"open"}`}>▼</span>
