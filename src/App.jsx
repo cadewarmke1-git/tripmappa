@@ -297,6 +297,22 @@ const CSS = `
   .float-card-scroll { overflow-y: auto; flex: 1; }
   .float-card-scroll::-webkit-scrollbar { width: 0; }
 
+  /* Mobile responsive */
+  @media (max-width: 600px) {
+    .float-card {
+      left: 8px; right: 8px; width: calc(100vw - 16px);
+      top: calc(var(--nav-h) + 8px);
+      max-height: calc(100vh - var(--nav-h) - 16px);
+      border-radius: 16px;
+    }
+    .chat-title { font-size: 18px !important; }
+    .chat-header { padding: 16px 16px 12px !important; }
+    .route-wrap { padding: 12px 16px !important; }
+    .convo-wrap { padding: 12px 14px !important; }
+    .generate-wrap { padding: 10px 14px 14px !important; }
+    .stops-wrap { padding: 12px 12px 20px !important; }
+  }
+
   /* Card header */
   .float-card-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -328,7 +344,7 @@ const CSS = `
   .route-input:focus { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 3px rgba(10,12,16,0.06); }
   .route-input::placeholder { color: #c0bab4; }
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
-  .convo-wrap { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .convo-wrap { flex: 1; overflow-y: auto; padding: 18px 18px; display: flex; flex-direction: column; gap: 14px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
   .ai-msg { display: flex; flex-direction: column; gap: 8px; animation: fadeUp 0.2s ease both; }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
@@ -849,7 +865,7 @@ export default function App() {
       </div>
       <div className="convo-wrap">
         {/* RESULTS VIEW — shown after generating */}
-        {generated&&stops.length>0 ? (
+        {generated && (stops.length > 0 || roadStops.length > 0) ? (
           <div className="results-view">
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
               <button onClick={resetPlan} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center",gap:4,padding:0}}>
@@ -1298,7 +1314,8 @@ export default function App() {
         .app-wrap.night .route-line { background: rgba(255,255,255,0.1); }
         .app-wrap.night .route-dot { background: #fff; }
         .app-wrap.night .route-dot.dest { background: #e07c3a; }
-        .app-wrap.night .convo-wrap { background: #0a1228; }
+        .app-wrap.night .convo-wrap { background: rgba(8,14,38,0.98); }
+        .app-wrap.day .convo-wrap { background: #ffffff; }
         .app-wrap.night .ai-name { color: rgba(255,255,255,0.35); }
         .app-wrap.night .ai-bubble { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.08); color: #fff; }
         .app-wrap.night .user-bubble { background: #e07c3a; color: #fff; }
@@ -1313,14 +1330,15 @@ export default function App() {
         .app-wrap.night .answer-send { background: #e07c3a; }
         .app-wrap.night .summary-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #fff; }
         .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .generate-wrap { border-top: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.night .generate-wrap { border-top: 1px solid rgba(255,255,255,0.07); background: rgba(8,14,38,0.98); }
+        .app-wrap.day .generate-wrap { background: #ffffff; }
         .app-wrap.night .btn-generate { background: #e07c3a; }
-        .app-wrap.night .chat-header { background: rgba(2,8,24,0.85); border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .app-wrap.day .chat-header { background: rgba(184,220,245,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .app-wrap.night .chat-header { background: rgba(8,14,38,0.98); border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.day .chat-header { background: #ffffff; border-bottom: 1px solid var(--border); }
         .app-wrap.night .chat-wrap { background: transparent; }
         .app-wrap.day .chat-wrap { background: transparent; }
-        .app-wrap.night .route-wrap { background: rgba(2,8,24,0.85); border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .app-wrap.day .route-wrap { background: rgba(168,212,238,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .app-wrap.night .route-wrap { background: rgba(8,14,38,0.98); border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.day .route-wrap { background: #ffffff; border-bottom: 1px solid var(--border); }
         .app-wrap.night .map-placeholder-text { color: rgba(255,255,255,0.2); }
         .app-wrap.night .map-placeholder-sub { color: rgba(255,255,255,0.12); }
         .app-wrap.night .stop-card { background: #0d1935; border-color: rgba(255,255,255,0.08); }
@@ -1345,7 +1363,8 @@ export default function App() {
         .app-wrap.night .person-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
         .app-wrap.night .person-name { color: #fff; }
         .app-wrap.night .person-status { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .stops-wrap { background: #0a1228; }
+        .app-wrap.night .stops-wrap { background: rgba(8,14,38,0.98); }
+        .app-wrap.day .stops-wrap { background: #ffffff; }
         .app-wrap.night .fuel-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
         .app-wrap.night .fuel-label { color: #fff; }
         .app-wrap.night .fuel-meta-txt { color: rgba(255,255,255,0.4); }
