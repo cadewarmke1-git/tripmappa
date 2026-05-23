@@ -43,7 +43,7 @@ const CSS = `
     padding: 0 32px;
     transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
   }
-  .nav.transparent { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .nav.transparent { background: transparent !important; border-bottom: none !important; backdrop-filter: none !important; }
   .nav.solid { background: rgba(255,255,255,0.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
   .nav-logo { font-family: 'Syne', sans-serif; font-size: 21px; font-weight: 900; letter-spacing: -0.8px; }
   .nav.transparent .nav-logo { color: #fff; }
@@ -66,7 +66,11 @@ const CSS = `
   .nav-btn:active { transform: translateY(0); }
   .nav.transparent .nav-btn { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); color: #fff; }
   .nav.transparent .nav-btn:hover { background: rgba(255,255,255,0.22); }
-  .nav.transparent .nav-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .nav.transparent .nav-btn-ghost { background: none !important; border: none !important; color: rgba(255,255,255,0.92) !important; box-shadow: none !important; }
+  .nav.transparent .nav-btn-ghost:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+  .nav.transparent .nav-btn-signup { background: #F5C842 !important; border: none !important; color: #0c1222 !important; font-weight: 600 !important; box-shadow: 0 4px 16px rgba(245,200,66,0.35) !important; }
+  .nav.transparent .nav-btn-signup:hover { background: #F8D56A !important; transform: translateY(-1px); }
+  .nav.transparent .nav-btn-primary { background: #F5C842; border-color: #F5C842; color: #0c1222; }
   .nav.solid .nav-btn { background: none; border-color: var(--border); color: var(--muted); }
   .nav.solid .nav-btn:hover { border-color: #ccc; color: var(--ink); }
   .nav.solid .nav-btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
@@ -81,13 +85,6 @@ const CSS = `
     background: transparent;
     transition: background 1.8s ease;
   }
-  /* Road SVG overlay */
-  .hero-road {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
-    opacity: 0.18;
-    background: linear-gradient(to top, rgba(255,255,255,0.08), transparent);
-  }
-
   /* Stars */
   .hero-stars {
     position: absolute; inset: 0; overflow: hidden; pointer-events: none;
@@ -104,18 +101,18 @@ const CSS = `
     100% { transform: translate(0px, 0px); }
   }
 
-  /* Horizon glow — river shimmer */
+  /* Horizon glow */
   .hero-glow {
-    position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
-    width: 60%; height: 120px;
-    background: radial-gradient(ellipse at center, rgba(150,210,200,0.35) 0%, rgba(100,180,170,0.15) 50%, transparent 80%);
+    position: absolute; left: 50%; transform: translateX(-50%);
+    width: 90%; height: 55%; top: 30%;
     pointer-events: none;
+    z-index: 1;
   }
-
-  /* Road perspective */
-  .hero-road-svg {
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 900px; opacity: 0.22; pointer-events: none;
+  .hero.day .hero-glow {
+    background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(245, 200, 100, 0.22) 0%, rgba(180, 220, 160, 0.08) 45%, transparent 72%);
+  }
+  .hero.night .hero-glow {
+    background: radial-gradient(ellipse 75% 45% at 50% 72%, rgba(232, 140, 50, 0.28) 0%, rgba(200, 100, 40, 0.1) 40%, transparent 70%);
   }
 
   /* Hero content */
@@ -127,44 +124,43 @@ const CSS = `
   }
   @keyframes heroIn { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
 
-  .hero-eyebrow {
-    font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(255,255,255,0.9); margin-bottom: 16px;
-    font-family: 'Syne', sans-serif;
-  }
-
   .hero-title {
     font-family: 'Syne', sans-serif; font-weight: 900;
-    font-size: clamp(44px, 8vw, 96px);
+    font-size: clamp(48px, 8.5vw, 100px);
     line-height: 0.92; letter-spacing: -0.04em;
-    color: #fff; margin-bottom: 28px;
-    text-shadow: 0 4px 40px rgba(0,0,0,0.2);
+    color: #fff; margin: 24px 0 36px;
+    text-shadow: 0 4px 48px rgba(0,0,0,0.35);
   }
   .hero-title .highlight {
-    background: linear-gradient(135deg, #fde68a 0%, #fbbf24 50%, #f59e0b 100%);
+    background: linear-gradient(135deg, #F8E08A 0%, #F5C842 45%, #E8B84A 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero.night .hero-title .highlight {
+    background: linear-gradient(135deg, #FFE9A0 0%, #F5C842 50%, #FFD875 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .hero-sub {
-    font-size: 17px; color: rgba(255,255,255,0.78); max-width: 440px;
-    margin: 0 auto 44px; line-height: 1.65; font-weight: 400; letter-spacing: -0.015em;
+    font-size: 17px; color: rgba(255,255,255,0.8); max-width: 440px;
+    margin: 0 auto 52px; line-height: 1.65; font-weight: 400; letter-spacing: -0.015em;
   }
 
   /* Hero search bar */
   .hero-search {
     background: rgba(255,255,255,0.98);
-    border-radius: var(--r-xl); padding: 10px 10px 10px 24px;
+    border-radius: 24px; padding: 12px 12px 12px 26px;
     display: flex; align-items: center; gap: 16px;
-    width: 100%; max-width: 600px; margin: 0 auto 28px;
-    border: 1px solid rgba(255,255,255,0.9);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08);
+    width: 100%; max-width: 600px; margin: 0 auto 40px;
+    border: 1px solid rgba(255,255,255,0.95);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.28), 0 8px 24px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8) inset;
     animation: heroIn 1s 0.2s cubic-bezier(0.16,1,0.3,1) both;
     transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
   }
   .hero-search:focus-within {
-    box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 0 0 3px rgba(29, 78, 216, 0.25);
-    border-color: rgba(29, 78, 216, 0.35);
+    box-shadow: 0 28px 88px rgba(0,0,0,0.32), 0 0 0 3px rgba(245, 200, 66, 0.2);
+    border-color: rgba(255,255,255,1);
   }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; }
@@ -174,7 +170,7 @@ const CSS = `
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
   }
-  .hero-search-divider { width: 1px; height: 30px; background: #e2ddd7; flex-shrink: 0; }
+  .hero-search-divider { width: 1px; height: 30px; background: rgba(0,0,0,0.08); flex-shrink: 0; }
   .hero-input-wrap { flex: 1; display: flex; flex-direction: column; }
   .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #b8b0a8; margin-bottom: 5px; }
   .hero.night .hero-input-label { color: rgba(255,255,255,0.55); }
@@ -185,20 +181,26 @@ const CSS = `
   }
   .hero.night .hero-input { color: #fff; }
   .hero.night .hero-input::placeholder { color: rgba(255,255,255,0.35); }
-  .hero.night .hero-search { background: rgba(12,20,48,0.94); box-shadow: 0 8px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.1); }
-  .hero.night .hero-search-divider { background: rgba(255,255,255,0.12); }
+  .hero.night .hero-search {
+    background: rgba(15, 22, 40, 0.72); backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset;
+  }
+  .hero.night .hero-search:focus-within { border-color: rgba(255,255,255,0.2); box-shadow: 0 28px 72px rgba(0,0,0,0.55), 0 0 0 3px rgba(245, 200, 66, 0.15); }
+  .hero.night .hero-search-divider { background: rgba(255,255,255,0.1); }
   .hero-input::placeholder { color: #c0b8b0; font-weight: 400; }
   .hero-go-btn {
-    background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+    background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%);
     color: #fff; border: none; border-radius: var(--r-lg);
-    padding: 14px 26px; font-family: 'Syne', sans-serif;
+    padding: 15px 28px; font-family: 'Syne', sans-serif;
     font-size: 14px; font-weight: 800; cursor: pointer;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); white-space: nowrap;
     flex-shrink: 0; letter-spacing: -0.02em;
-    box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   }
-  .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(29, 78, 216, 0.45); }
-  .hero-go-btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35); }
+  .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4); }
+  .hero-go-btn:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
 
   .hero-hint {
     font-size: 12px; color: rgba(255,255,255,0.4);
@@ -207,7 +209,7 @@ const CSS = `
   .hero-hint span { color: rgba(255,210,140,0.7); }
 
   /* Auth buttons */
-  .hero-auth { margin-bottom: 32px; animation: heroIn 1s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+  .hero-auth { margin-top: 8px; margin-bottom: 40px; animation: heroIn 1s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
   .hero-auth-label { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; font-weight: 600; }
   .hero-auth-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .hero-auth-btn {
@@ -225,6 +227,15 @@ const CSS = `
   .hero-auth-btn-fb:hover { box-shadow: 0 6px 20px rgba(24,119,242,0.45); }
   .hero-auth-btn-apple { background: #000; color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
   .hero-auth-btn-apple:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
+  .hero.night .hero-auth-btn-google,
+  .hero.night .hero-auth-btn-fb,
+  .hero.night .hero-auth-btn-apple {
+    background: rgba(255,255,255,0.08); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.14); color: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  }
+  .hero.night .hero-auth-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
 
   /* Feature pills */
   .hero-pills {
@@ -419,10 +430,16 @@ const CSS = `
   .plan-view, .convo-wrap > .ai-msg, .convo-wrap > .user-msg { margin: 0; }
   .ai-msg { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.25s var(--ease) both; }
   .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.25s var(--ease) both; }
+  .plan-route-hint {
+    font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 16px;
+    padding: 10px 14px; background: var(--brand-soft); border-radius: var(--r);
+    font-weight: 500; letter-spacing: -0.01em;
+  }
+  .step-active { animation: fadeUp 0.3s var(--ease) both; }
   .question-choices {
-    margin-top: 14px; padding-top: 14px;
+    margin-top: 18px; padding-top: 18px;
     border-top: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 12px;
+    display: flex; flex-direction: column; gap: 14px;
   }
   .app-wrap.night .question-choices { border-top-color: rgba(255,255,255,0.1); }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -470,13 +487,13 @@ const CSS = `
   .generate-wrap { padding: 16px 20px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.5); }
   .btn-generate {
     width: 100%; padding: 15px 20px; border: none; cursor: pointer;
-    background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+    background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%);
     color: #fff; border-radius: var(--r-lg); font-family: 'DM Sans', sans-serif;
     font-size: 15px; font-weight: 700; letter-spacing: -0.02em;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
-    box-shadow: 0 4px 16px rgba(29, 78, 216, 0.35);
+    box-shadow: 0 6px 20px rgba(12, 18, 34, 0.35);
   }
-  .btn-generate:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(29, 78, 216, 0.4); }
+  .btn-generate:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(12, 18, 34, 0.4); }
   .btn-generate:active:not(:disabled) { transform: translateY(0); }
   .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
   .btn-generate-inline { width: auto; padding: 12px 28px; display: inline-block; }
@@ -708,7 +725,7 @@ function mapHotelStops(apiStops) {
 // Generate stars
 // Stars generated once outside component so they never rerender
 const STAR_DATA = Array.from({length:80},(_,i)=>({
-  id:i, top:`${Math.random()*65}%`, left:`${Math.random()*100}%`,
+  id:i, top:`${Math.random()*58}%`, left:`${Math.random()*100}%`,
   size: Math.random()<0.3 ? 2.5 : Math.random()<0.6 ? 1.5 : 1,
   lo: (Math.random()*0.2+0.1).toFixed(2), hi: (Math.random()*0.6+0.4).toFixed(2),
   dur: `${(Math.random()*3+2).toFixed(1)}s`,
@@ -854,7 +871,7 @@ export default function App() {
 
   const convoEndRef = useRef(null);
   const stopsEndRef = useRef(null);
-  useEffect(()=>{ convoEndRef.current?.scrollIntoView({behavior:"smooth"}); },[convo]);
+  useEffect(()=>{ convoEndRef.current?.scrollIntoView({behavior:"smooth"}); },[qIndex, generated]);
 
   useEffect(()=>{
     function onScroll() { setScrolled(window.scrollY > 40); }
@@ -876,11 +893,12 @@ export default function App() {
   useEffect(() => {
     if (generated && (stops.length > 0 || roadStops.length > 0)) {
       setCardCollapsed(false);
+      setTab("plan");
       requestAnimationFrame(() => {
-        (tab === "trips" ? stopsEndRef : convoEndRef).current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        convoEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
       });
     }
-  }, [generated, stops, roadStops, tab]);
+  }, [generated, stops, roadStops]);
 
   function toast_(msg) { setToast(msg); setTimeout(()=>setToast(null),2400); }
 
@@ -898,10 +916,9 @@ export default function App() {
       if (isLoaded && window.google) fetchDirections();
       const first = nextQ(0,{});
       setQIndex(first);
-      setConvo([
-        {role:"ai", text:`Let's plan your trip from ${from} to ${to}. A few quick questions:`},
-        {role:"ai", text:QUESTIONS[first].ask}
-      ]);
+      setConvo([]);
+      setConvoComplete(false);
+      setGenerated(false);
     }, 300);
   }
 
@@ -925,23 +942,28 @@ export default function App() {
       openingMsg = `Planning your trip from ${origin} to ${dest}.`;
     }
 
-    setConvo([
-      {role:"ai", text:openingMsg},
-      {role:"ai", text:QUESTIONS[first].ask}
-    ]);
+    setConvo([]);
+    setQIndex(first);
+  }
+
+  function getStepMessage() {
+    if (qIndex === -2) return "Got it. Ready to generate your trip plan?";
+    if (qIndex >= 0) return QUESTIONS[qIndex].ask;
+    return null;
   }
 
   function submitAnswer(value) {
-    const q=QUESTIONS[qIndex];
-    const na={...answers,[q.id]:value};
-    setAnswers(na); setTextInput("");
-    const nc=[...convo,{role:"user",text:value}];
-    const next=nextQ(qIndex+1,na);
-    if(next===-2) {
-      setConvo([...nc,{role:"ai",text:"Got it. Ready to generate your trip plan?"}]);
-      setQIndex(-2); setConvoComplete(true);
+    const q = QUESTIONS[qIndex];
+    const na = { ...answers, [q.id]: value };
+    setAnswers(na);
+    setTextInput("");
+    const next = nextQ(qIndex + 1, na);
+    if (next === -2) {
+      setQIndex(-2);
+      setConvoComplete(true);
+    } else {
+      setQIndex(next);
     }
-    else { setConvo([...nc,{role:"ai",text:QUESTIONS[next].ask}]); setQIndex(next); }
   }
 
   function applyFallbackTrip() {
@@ -978,7 +1000,7 @@ export default function App() {
     setTripTips(Array.isArray(data.tips) && data.tips.length ? data.tips : []);
     setGenerated(true);
     setStopCategory("all");
-    setTab("trips");
+    setTab("plan");
     setCardCollapsed(false);
   }
 
@@ -1017,7 +1039,7 @@ export default function App() {
       applyFallbackTrip();
       setGenerated(true);
       setStopCategory("all");
-      setTab("trips");
+      setTab("plan");
       setCardCollapsed(false);
     }
 
@@ -1032,22 +1054,28 @@ export default function App() {
 
   const currentQ = qIndex>=0 ? QUESTIONS[qIndex] : null;
 
+  function goBackOneQuestion() {
+    const newAnswers = { ...answers };
+    if (qIndex >= 0) delete newAnswers[QUESTIONS[qIndex].id];
+    let prev = qIndex - 1;
+    while (prev >= 0) {
+      const prevQ = QUESTIONS[prev];
+      if (!prevQ.onlyIf || prevQ.onlyIf(newAnswers)) {
+        setAnswers(newAnswers);
+        setQIndex(prev);
+        setTextInput("");
+        return;
+      }
+      prev--;
+    }
+  }
+
   function QuestionChoices() {
     if (!currentQ) return null;
     return (
       <div className="question-choices">
         {qIndex > 0 && (
-          <button onClick={() => {
-            let prev = qIndex - 1;
-            while (prev > 0 && QUESTIONS[prev].onlyIf && !QUESTIONS[prev].onlyIf(answers)) prev--;
-            const prevQ = QUESTIONS[prev];
-            setConvo(c => c.slice(0, -2));
-            const newAnswers = {...answers};
-            delete newAnswers[prevQ.id];
-            setAnswers(newAnswers);
-            setQIndex(prev);
-            setTextInput("");
-          }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4}}>
+          <button type="button" onClick={goBackOneQuestion} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4}}>
             ← Back
           </button>
         )}
@@ -1271,27 +1299,28 @@ export default function App() {
             </div>
           )
         ) : (
-          /* CONVERSATION VIEW */
+          /* Step-by-step planner — one question at a time */
           <div className="plan-view">
-            {qIndex===-1&&convo.length===0&&(
+            {qIndex === -1 && (
               <div className="convo-empty">
                 <p>Enter your route above, then tap below to get started.</p>
                 <button type="button" className="btn-generate btn-generate-inline" onClick={startConvo}>Start planning</button>
               </div>
             )}
-            {convo.map((msg,i)=>(
-              msg.role==="ai"?(
-                <div className="ai-msg" key={i}>
-                  <div className="ai-bubble">{msg.text}</div>
-                  {currentQ && i === convo.length - 1 && <QuestionChoices />}
-                </div>
-              ):(
-                <div className="user-msg" key={i}>
-                  <div className="user-bubble">{msg.text}</div>
-                </div>
-              )
-            ))}
-            {convoComplete&&<div className="ai-msg"><SummaryCard/></div>}
+            {(qIndex >= 0 || qIndex === -2) && (
+              <div className="ai-msg step-active">
+                {qIndex >= 0 && routeInfo && (
+                  <div className="plan-route-hint">{routeInfo.distance} · {routeInfo.duration} drive</div>
+                )}
+                <div className="ai-bubble">{getStepMessage()}</div>
+                {qIndex >= 0 && <QuestionChoices />}
+                {qIndex === -2 && (
+                  <div className="question-choices" style={{borderTop:"none",paddingTop:12,marginTop:12}}>
+                    <SummaryCard/>
+                  </div>
+                )}
+              </div>
+            )}
             <div ref={convoEndRef}/>
           </div>
         )}
@@ -1306,34 +1335,25 @@ export default function App() {
     </div>
   );
 
-  const StopsPanel = () => (
+  const TripsPanel = () => (
     <div className="stops-wrap">
       <div className="stops-panel-head">
-        <h2 className="stops-panel-title">Your Stops</h2>
-        <p className="stops-panel-sub">Hotels, fuel, and food along your route.</p>
+        <h2 className="stops-panel-title">Trips</h2>
+        <p className="stops-panel-sub">Your saved trips will appear here.</p>
       </div>
-      {!generated && savedTrips.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon" aria-hidden="true">📍</div>
-          <div className="empty-title">No stops yet</div>
-          <div className="empty-sub">Complete the planning flow on the Plan tab and generate your trip to see stops here.</div>
-          <button type="button" className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Start planning</button>
-        </div>
-      ) : generated && (stops.length > 0 || roadStops.length > 0) ? (
-        <StopsResults showHeader={false} />
-      ) : savedTrips.length > 0 ? (
+      {savedTrips.length > 0 ? (
         savedTrips.map(trip => (
           <div key={trip.id} className="stop-card" style={{marginBottom:10}}>
             <div className="stop-card-head">
               <div style={{flex:1}}>
                 <div className="stop-city">{trip.origin} → {trip.dest}</div>
-                <div className="stop-meta">{trip.date} · {trip.stops.length} stop{trip.stops.length !== 1 ? "s" : ""} · {trip.routeInfo?.distance || ""}</div>
+                <div className="stop-meta">{trip.date} · {trip.stops?.length || 0} stop{(trip.stops?.length || 0) !== 1 ? "s" : ""} · {trip.routeInfo?.distance || ""}</div>
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button type="button" className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11}} onClick={() => {
                   setOrigin(trip.origin);
                   setDest(trip.dest);
-                  setStops(trip.stops);
+                  setStops(trip.stops || []);
                   setTripTips(trip.tripTips || []);
                   setAnswers(trip.answers || {});
                   setGenerated(true);
@@ -1348,10 +1368,10 @@ export default function App() {
         ))
       ) : (
         <div className="empty-state">
-          <div className="empty-icon" aria-hidden="true">📍</div>
-          <div className="empty-title">No stops yet</div>
-          <div className="empty-sub">Generate a trip plan to see your stops.</div>
-          <button type="button" className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Go to Plan</button>
+          <div className="empty-icon" aria-hidden="true">🗺️</div>
+          <div className="empty-title">No saved trips yet</div>
+          <div className="empty-sub">Your saved trips will appear here. Sign in to save your trips.</div>
+          <button type="button" className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Plan a trip</button>
         </div>
       )}
     </div>
@@ -1401,58 +1421,31 @@ export default function App() {
       <nav className={`nav ${scrolled?"solid":"transparent"}`}>
         <div className="nav-logo">Trip<span>Mappa</span></div>
         <div className="nav-right">
-          <button className="nav-btn" onClick={()=>setView("app")}>Log in</button>
-          <button className="nav-btn nav-btn-primary" onClick={()=>setView("app")}>Sign up</button>
+          <button type="button" className="nav-btn nav-btn-ghost" onClick={()=>setView("app")}>Log in</button>
+          <button type="button" className="nav-btn nav-btn-signup" onClick={()=>setView("app")}>Sign up</button>
         </div>
       </nav>
 
       {/* Hero */}
       <div className={`hero ${theme}`}>
-        {/* Day background layer */}
+        {/* Day background */}
         <div style={{
           position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-          background:"linear-gradient(180deg, #7ec8e8 0%, #9dd4ea 14%, #b5e4d4 30%, #a8d890 48%, #88c068 62%, #6aaa58 74%, #4a8870 86%, #2d6060 94%, #1a4040 100%)",
+          background:"linear-gradient(180deg, #0a1628 0%, #0f2847 18%, #143352 36%, #1a4a42 52%, #1f5c38 68%, #234d2e 84%, #1a3d28 100%)",
           opacity: theme === "day" ? 1 : 0,
           transition: "opacity 1.8s ease",
         }}/>
-        {/* Night background layer */}
+        {/* Night background */}
         <div style={{
           position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-          background:"linear-gradient(180deg, #020818 0%, #061228 16%, #0a2048 34%, #102858 50%, #1a3868 64%, #2a4858 76%, #4a3828 88%, #5a4020 94%, #081018 100%)",
+          background:"linear-gradient(180deg, #060d1a 0%, #0c1222 28%, #101827 55%, #0d1117 78%, #0a0e14 100%)",
           opacity: theme === "night" ? 1 : 0,
           transition: "opacity 1.8s ease",
         }}/>
         {theme === "night" && <Stars/>}
-        <div className="hero-glow" style={{
-          background: theme === "night"
-            ? "radial-gradient(ellipse at center bottom, rgba(220,120,40,0.5) 0%, rgba(180,80,20,0.25) 45%, transparent 75%)"
-            : "radial-gradient(ellipse at center, rgba(150,210,200,0.35) 0%, rgba(100,180,170,0.15) 50%, transparent 80%)",
-          opacity: 1,
-          transition: "opacity 1.8s ease",
-        }}/>
-
-        {/* Day: River SVG / Night: Road SVG */}
-        <div style={{opacity: theme==="day"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
-          <svg className="hero-road-svg" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M200 400 Q300 300 250 200 Q200 100 350 50 Q450 20 500 0" stroke="rgba(100,180,200,0.5)" strokeWidth="60" fill="none" strokeLinecap="round"/>
-            <path d="M200 400 Q300 300 250 200 Q200 100 350 50 Q450 20 500 0" stroke="rgba(150,210,220,0.3)" strokeWidth="80" fill="none" strokeLinecap="round"/>
-            <path d="M0 320 Q200 280 400 320 Q600 360 900 300" stroke="rgba(100,160,80,0.15)" strokeWidth="2" fill="none"/>
-            <path d="M0 350 Q250 310 500 350 Q700 380 900 340" stroke="rgba(100,160,80,0.12)" strokeWidth="2" fill="none"/>
-          </svg>
-        </div>
-        <div style={{opacity: theme==="night"?1:0, transition:"opacity 1.8s ease", position:"absolute", inset:0, zIndex:1, pointerEvents:"none"}}>
-          <svg className="hero-road-svg" viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M450 400 L200 0" stroke="white" strokeWidth="80" strokeOpacity="0.05"/>
-            <path d="M450 400 L700 0" stroke="white" strokeWidth="80" strokeOpacity="0.05"/>
-            <path d="M450 400 L450 0" stroke="white" strokeWidth="5" strokeOpacity="0.12" strokeDasharray="30 20"/>
-            <path d="M450 400 L200 0" stroke="white" strokeWidth="1.5" strokeOpacity="0.15"/>
-            <path d="M450 400 L700 0" stroke="white" strokeWidth="1.5" strokeOpacity="0.15"/>
-          </svg>
-        </div>
+        <div className="hero-glow"/>
 
         <div className="hero-content">
-          <div className="hero-eyebrow">TripMappa</div>
-
           <h1 className="hero-title">
             Travel<br/>
             <span className="highlight">Reimagined.</span>
@@ -1594,7 +1587,8 @@ export default function App() {
         .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); }
         .app-wrap.night .generate-wrap { border-top: 1px solid rgba(255,255,255,0.07); background: rgba(8,14,38,0.98); }
         .app-wrap.day .generate-wrap { background: rgba(240,248,255,0.85); }
-        .app-wrap.night .btn-generate { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); }
+        .app-wrap.night .btn-generate { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%); }
+        .app-wrap.night .plan-route-hint { background: rgba(245, 200, 66, 0.12); color: rgba(255,255,255,0.7); }
         .app-wrap.night .chat-header { background: rgba(8,14,38,0.98); border-bottom: 1px solid rgba(255,255,255,0.07); }
         .app-wrap.day .chat-header { background: rgba(240,248,255,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
         .app-wrap.night .chat-wrap { background: transparent; }
@@ -1806,7 +1800,7 @@ export default function App() {
         <nav className="nav-app nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,height:"var(--nav-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",backdropFilter:"blur(12px)"}}>
           <div className="nav-logo">Trip<span>Mappa</span></div>
           <div className="nav-center-wrap nav-center" style={{display:"flex",gap:"1px",borderRadius:8,padding:3}}>
-            {[["plan","Plan"],["trips","Stops"],["share","Share"]].map(([k,l])=>(
+            {[["plan","Plan"],["trips","Trips"],["share","Share"]].map(([k,l])=>(
               <button key={k} className={"nav-tab"+(tab===k?" active":"")} onClick={()=>setTab(k)}>{l}</button>
             ))}
           </div>
@@ -1935,7 +1929,7 @@ export default function App() {
               <div className="float-card-handle" aria-hidden="true"/>
               <div className="float-card-header-row">
                 <div className="float-card-title" style={{color: theme==="night"?"#fff":"var(--ink)"}}>
-                  {tab==="plan"?"Plan Your Trip":tab==="trips"?"Your Stops":"Live Sharing"}
+                  {tab==="plan"?"Plan Your Trip":tab==="trips"?"Trips":"Live Sharing"}
                 </div>
                 <span className={`float-card-chevron ${cardCollapsed?"":"open"}`}>▼</span>
               </div>
@@ -1944,7 +1938,7 @@ export default function App() {
               <div className="float-card-scroll">
                 <div className="sidebar-inner" style={{background:"transparent"}}>
                   {tab==="plan"&&planPanel}
-                  {tab==="trips"&&<StopsPanel/>}
+                  {tab==="trips"&&<TripsPanel/>}
                   {tab==="share"&&<SharePanel/>}
                 </div>
               </div>
