@@ -1317,7 +1317,7 @@ export default function App() {
         .app-wrap.night .route-dot { background: #fff; }
         .app-wrap.night .route-dot.dest { background: #e07c3a; }
         .app-wrap.night .convo-wrap { background: rgba(8,14,38,0.98); }
-        .app-wrap.day .convo-wrap { background: #ffffff; }
+        .app-wrap.day .convo-wrap { background: rgba(235,248,240,0.82); }
         .app-wrap.night .ai-name { color: rgba(255,255,255,0.35); }
         .app-wrap.night .ai-bubble { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.08); color: #fff; }
         .app-wrap.night .user-bubble { background: #e07c3a; color: #fff; }
@@ -1333,14 +1333,14 @@ export default function App() {
         .app-wrap.night .summary-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #fff; }
         .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); }
         .app-wrap.night .generate-wrap { border-top: 1px solid rgba(255,255,255,0.07); background: rgba(8,14,38,0.98); }
-        .app-wrap.day .generate-wrap { background: #ffffff; }
+        .app-wrap.day .generate-wrap { background: rgba(240,248,255,0.85); }
         .app-wrap.night .btn-generate { background: #e07c3a; }
         .app-wrap.night .chat-header { background: rgba(8,14,38,0.98); border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .app-wrap.day .chat-header { background: #ffffff; border-bottom: 1px solid var(--border); }
+        .app-wrap.day .chat-header { background: rgba(240,248,255,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
         .app-wrap.night .chat-wrap { background: transparent; }
         .app-wrap.day .chat-wrap { background: transparent; }
         .app-wrap.night .route-wrap { background: rgba(8,14,38,0.98); border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .app-wrap.day .route-wrap { background: #ffffff; border-bottom: 1px solid var(--border); }
+        .app-wrap.day .route-wrap { background: rgba(230,244,252,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
         .app-wrap.night .map-placeholder-text { color: rgba(255,255,255,0.2); }
         .app-wrap.night .map-placeholder-sub { color: rgba(255,255,255,0.12); }
         .app-wrap.night .stop-card { background: #0d1935; border-color: rgba(255,255,255,0.08); }
@@ -1366,29 +1366,29 @@ export default function App() {
         .app-wrap.night .person-name { color: #fff; }
         .app-wrap.night .person-status { color: rgba(255,255,255,0.4); }
         .app-wrap.night .stops-wrap { background: rgba(8,14,38,0.98); }
-        .app-wrap.day .stops-wrap { background: #ffffff; }
+        .app-wrap.day .stops-wrap { background: rgba(235,248,240,0.82); }
         .app-wrap.night .fuel-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
         .app-wrap.night .fuel-label { color: #fff; }
         .app-wrap.night .fuel-meta-txt { color: rgba(255,255,255,0.4); }
 
         /* Sidebar gradient backgrounds */
         .app-wrap.day .sidebar-inner {
-          background: transparent;
+          background: linear-gradient(180deg, #b8dcf5 0%, #a8d4ee 15%, #b8e8cc 40%, #98d4a0 65%, #78c080 85%, #5aaa60 100%);
           border-right: 1px solid rgba(0,0,0,0.06);
         }
         .app-wrap.night .sidebar-inner {
-          background: transparent;
+          background: linear-gradient(180deg, #020818 0%, #050d2a 30%, #0a1840 60%, #0d2255 100%);
           border-right: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Float card — fully opaque, no map bleed */
+        /* Float card — frosted glass, subtle color from map */
         .app-wrap.day .float-card {
-          background: #ffffff !important;
-          backdrop-filter: none !important;
+          background: rgba(255,255,255,0.92) !important;
+          backdrop-filter: blur(20px) saturate(1.4) !important;
         }
         .app-wrap.night .float-card {
-          background: #0a0e24 !important;
-          backdrop-filter: none !important;
+          background: rgba(5,10,32,0.88) !important;
+          backdrop-filter: blur(20px) saturate(1.4) !important;
         }
 
         /* Logo fix */
@@ -1432,13 +1432,15 @@ export default function App() {
         }
         .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap { position: relative; z-index: 1; }
 
-        /* Day sidebar — clean white */
+        /* Day sidebar */
         .app-wrap.day .sidebar-inner {
           position: relative; overflow: hidden;
-          background: transparent !important;
+          background: linear-gradient(180deg, #b8dcf5 0%, #a8d4ee 15%, #b8e8cc 40%, #98d4a0 65%, #78c080 85%, #5aaa60 100%) !important;
         }
         .app-wrap.day .sidebar-inner::after {
-          display: none;
+          content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 25%;
+          background: linear-gradient(to top, rgba(40,100,30,0.18) 0%, transparent 100%);
+          pointer-events: none; z-index: 0;
         }
         .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
 
