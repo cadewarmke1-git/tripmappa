@@ -216,27 +216,63 @@ const CSS = `
   .scroll-arrow { width: 18px; height: 18px; border-right: 1.5px solid rgba(255,255,255,0.35); border-bottom: 1.5px solid rgba(255,255,255,0.35); transform: rotate(45deg); margin-top: -4px; }
 
   .pac-container {
-    z-index: 99999 !important;
+    z-index: 100000 !important;
     border-radius: 14px !important;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08) !important;
     border: 1.5px solid var(--border) !important;
     font-family: 'DM Sans', sans-serif !important;
-    margin-top: 6px !important;
+    margin-top: 8px !important;
     overflow: hidden !important;
+    background: #fff !important;
   }
   .pac-item {
-    padding: 10px 16px !important;
+    padding: 12px 18px !important;
     font-size: 13.5px !important;
+    line-height: 1.45 !important;
     cursor: pointer !important;
     border-top: 1px solid var(--border) !important;
+    color: var(--ink) !important;
   }
   .pac-item:first-child { border-top: none !important; }
-  .pac-item:hover { background: var(--surface) !important; }
-  .pac-item-query { font-weight: 600 !important; color: var(--ink) !important; }
+  .pac-item:hover, .pac-item-selected { background: var(--surface) !important; }
+  .pac-item-query { font-weight: 600 !important; color: var(--ink) !important; font-family: 'DM Sans', sans-serif !important; }
   .pac-matched { font-weight: 700 !important; color: var(--accent) !important; }
+  .pac-icon { margin-top: 2px !important; }
   .map-area { flex: 1; position: relative; overflow: hidden; }
   .gmap-wrap { width: 100%; height: 100%; }
-  .map-loading { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e8eff5; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #888; }
+  .map-loading {
+    width: 100%; height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background: linear-gradient(150deg, #e4eef5 0%, #d2e4f0 60%, #c0d6e8 100%);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: #888;
+  }
+  .map-loading-skeleton { width: min(280px, 70%); display: flex; flex-direction: column; gap: 10px; opacity: 0.5; }
+  .map-skeleton-bar { height: 10px; border-radius: 99px; background: rgba(0,0,0,0.08); animation: skeletonPulse 1.4s ease-in-out infinite; }
+  .map-skeleton-bar:nth-child(1) { width: 100%; }
+  .map-skeleton-bar:nth-child(2) { width: 72%; animation-delay: 0.15s; }
+  .map-skeleton-bar:nth-child(3) { width: 48%; animation-delay: 0.3s; }
+  @keyframes skeletonPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.85; } }
+  .loading-spinner {
+    width: 28px; height: 28px; border: 2.5px solid rgba(0,0,0,0.08);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+  .loading-spinner.light {
+    border-color: rgba(255,255,255,0.2); border-top-color: #fff;
+  }
+  .route-loading-pill {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 15; display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.96); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 99px;
+    padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--ink);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .spinner-dark {
+    width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
   .route-info-bar {
     position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,16,0.88); backdrop-filter: blur(16px) saturate(1.5);
@@ -263,38 +299,62 @@ const CSS = `
     box-shadow: 0 4px 24px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
     display: flex; flex-direction: column;
     overflow: hidden; z-index: 50;
-    transition: transform 0.45s cubic-bezier(0.34,1.2,0.64,1), opacity 0.3s ease;
+    transition: max-height 0.45s cubic-bezier(0.34, 1.1, 0.64, 1), box-shadow 0.3s ease;
   }
   .float-card.night {
     background: rgba(8,14,38,0.92); border-color: rgba(255,255,255,0.08);
     box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
   }
-  .float-card.collapsed { max-height: 62px; overflow: hidden; }
-  .float-card-scroll { overflow-y: auto; flex: 1; min-height: 0; }
+  .float-card.collapsed { max-height: 62px; }
+  .float-card-body {
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: opacity 0.3s ease, flex 0.45s cubic-bezier(0.34, 1.1, 0.64, 1);
+  }
+  .float-card.collapsed .float-card-body {
+    flex: 0; opacity: 0; pointer-events: none;
+  }
+  .float-card:not(.collapsed) .float-card-body { opacity: 1; }
+  .float-card-scroll { overflow-y: auto; flex: 1; min-height: 0; -webkit-overflow-scrolling: touch; }
   .float-card-scroll::-webkit-scrollbar { width: 0; }
+  .float-card-handle { display: none; }
 
-  /* Mobile responsive */
+  /* Mobile — bottom sheet */
   @media (max-width: 600px) {
     .float-card {
-      left: 8px; right: 8px; width: calc(100vw - 16px);
-      top: calc(var(--nav-h) + 8px);
-      max-height: calc(100vh - var(--nav-h) - 16px);
-      border-radius: 16px;
+      left: 0; right: 0; top: auto; bottom: 0;
+      width: 100%; max-width: 100%;
+      max-height: 60vh;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.18), 0 -2px 8px rgba(0,0,0,0.08);
     }
+    .float-card.collapsed { max-height: 52px; }
+    .float-card-handle {
+      display: block; width: 36px; height: 4px; border-radius: 99px;
+      background: rgba(0,0,0,0.14); margin: 0 auto 10px; flex-shrink: 0;
+    }
+    .float-card.night .float-card-handle { background: rgba(255,255,255,0.22); }
+    .float-card-header { padding: 8px 16px 14px !important; flex-direction: column; align-items: stretch; }
+    .float-card-header-row { display: flex; align-items: center; justify-content: space-between; }
     .chat-title { font-size: 18px !important; }
     .chat-header { padding: 16px 16px 12px !important; }
     .route-wrap { padding: 12px 16px !important; }
-    .convo-wrap { padding: 12px 14px !important; gap: 28px !important; }
+    .convo-wrap { padding: 12px 16px !important; gap: 28px !important; }
     .generate-wrap { padding: 10px 14px 14px !important; }
     .stops-wrap { padding: 12px 12px 20px !important; }
+    .route-loading-pill { top: 12px; max-width: calc(100% - 24px); }
   }
 
   /* Card header */
   .float-card-header {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; flex-direction: column; align-items: stretch;
     padding: 18px 20px; cursor: pointer; user-select: none;
     border-bottom: 1px solid rgba(0,0,0,0.05);
     flex-shrink: 0;
+  }
+  .float-card-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
   }
   .float-card.night .float-card-header { border-bottom-color: rgba(255,255,255,0.06); }
   .float-card-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 0.2px; }
@@ -322,15 +382,23 @@ const CSS = `
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
   .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 20px 24px; display: flex; flex-direction: column; gap: 36px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
-  .ai-msg { display: flex; flex-direction: column; gap: 14px; animation: fadeUp 0.2s ease both; padding-bottom: 8px; }
-  .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
+  .ai-msg { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.2s ease both; padding-bottom: 4px; }
+  .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease both; margin-bottom: 8px; }
+  .user-msg + .ai-msg { margin-top: 20px; }
+  .question-choices {
+    margin-top: 18px; padding-top: 16px;
+    border-top: 1px dashed var(--border);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .app-wrap.night .question-choices { border-top-color: rgba(255,255,255,0.12); }
+  .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
   .results-view { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
   .plan-view { animation: fadeUp 0.2s ease both; }
   .ai-bubble { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px 14px 14px 4px; padding: 14px 18px; font-size: 14px; line-height: 1.65; color: var(--ink); max-width: 94%; }
   .ai-name { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
-  .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease both; margin-top: 4px; }
   .user-bubble { background: var(--ink); color: #fff; border-radius: 14px 14px 4px 14px; padding: 12px 18px; font-size: 14px; max-width: 80%; line-height: 1.55; }
   .qr-btn { border: 1.5px solid var(--border); background: #fff; border-radius: 99px; padding: 9px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.14s; color: var(--ink); letter-spacing: -0.01em; }
   .qr-btn:hover { border-color: var(--ink); background: var(--surface); }
@@ -356,9 +424,19 @@ const CSS = `
 
   /* ── Stops panel ── */
   .stops-wrap { padding: 16px 16px 24px; }
-  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state { text-align: center; padding: 48px 24px; }
+  .empty-icon {
+    width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+    background: var(--surface); border: 1.5px solid var(--border);
+  }
   .empty-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
-  .empty-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .empty-sub { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 260px; margin: 0 auto 18px; }
+  .empty-cta {
+    display: inline-block; padding: 10px 22px; border-radius: 10px;
+    background: var(--ink); color: #fff; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  }
   .stop-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.25s ease both; transition: box-shadow 0.2s; }
   .stop-card:hover { box-shadow: var(--shadow); }
   .stop-card-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1.5px solid var(--border); background: var(--surface); }
@@ -583,6 +661,7 @@ export default function App() {
   const [directions, setDirections] = useState(null);
   const [routeInfo, setRouteInfo] = useState(null);
   const [routePath, setRoutePath] = useState(null);
+  const [routeLoading, setRouteLoading] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 37.0902, lng: -95.7129 });
   const originRef = useRef(null);
   const destRef = useRef(null);
@@ -595,6 +674,8 @@ export default function App() {
     const originVal = originRef.current?.value;
     const destVal = destRef.current?.value;
     if (!originVal || !destVal) return;
+
+    setRouteLoading(true);
 
     // Build route request based on vehicle type
     const routeRequest = {
@@ -618,6 +699,7 @@ export default function App() {
 
     const service = new window.google.maps.DirectionsService();
     service.route(routeRequest, (result, status) => {
+      setRouteLoading(false);
       if (status === "OK") {
         const leg = result.routes[0].legs[0];
         setRouteInfo({
@@ -805,6 +887,47 @@ export default function App() {
   }
 
   const currentQ = qIndex>=0 ? QUESTIONS[qIndex] : null;
+
+  function QuestionChoices() {
+    if (!currentQ) return null;
+    return (
+      <div className="question-choices">
+        {qIndex > 0 && (
+          <button onClick={() => {
+            let prev = qIndex - 1;
+            while (prev > 0 && QUESTIONS[prev].onlyIf && !QUESTIONS[prev].onlyIf(answers)) prev--;
+            const prevQ = QUESTIONS[prev];
+            setConvo(c => c.slice(0, -2));
+            const newAnswers = {...answers};
+            delete newAnswers[prevQ.id];
+            setAnswers(newAnswers);
+            setQIndex(prev);
+            setTextInput("");
+          }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4}}>
+            ← Back
+          </button>
+        )}
+        {currentQ.type==="yesno"&&(
+          <div className="quick-replies">
+            <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
+            <button className="qr-btn no" onClick={()=>submitAnswer("No")}>No</button>
+          </div>
+        )}
+        {currentQ.type==="choice"&&(
+          <div className="quick-replies">
+            {currentQ.choices.map(c=><button key={c} className="qr-btn" onClick={()=>submitAnswer(c)}>{c}</button>)}
+          </div>
+        )}
+        {currentQ.type==="text"&&(
+          <div className="answer-input-wrap">
+            <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
+            {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
+            <button className="answer-send" onClick={()=>textInput.trim()&&submitAnswer(textInput.trim())}>Send</button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   function SummaryCard() {
     const rows=[
@@ -1049,6 +1172,7 @@ export default function App() {
               msg.role==="ai"?(
                 <div className="ai-msg" key={i}>
                   <div className="ai-bubble">{msg.text}</div>
+                  {currentQ && i === convo.length - 1 && <QuestionChoices />}
                 </div>
               ):(
                 <div className="user-msg" key={i}>
@@ -1056,45 +1180,6 @@ export default function App() {
                 </div>
               )
             ))}
-            {currentQ&&(
-              <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                {qIndex > 0 && (
-                  <button onClick={() => {
-                    let prev = qIndex - 1;
-                    while (prev > 0 && QUESTIONS[prev].onlyIf && !QUESTIONS[prev].onlyIf(answers)) prev--;
-                    const prevQ = QUESTIONS[prev];
-                    setConvo(c => c.slice(0, -2));
-                    const newAnswers = {...answers};
-                    delete newAnswers[prevQ.id];
-                    setAnswers(newAnswers);
-                    setQIndex(prev);
-                    setTextInput("");
-                  }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4}}>
-                    ← Back
-                  </button>
-                )}
-                {currentQ.type==="yesno"&&(
-                  <div className="quick-replies">
-                    <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
-                    <button className="qr-btn no" onClick={()=>submitAnswer("No")}>No</button>
-                  </div>
-                )}
-                {currentQ.type==="choice"&&(
-                  <div className="quick-replies">
-                    {currentQ.choices.map(c=><button key={c} className="qr-btn" onClick={()=>submitAnswer(c)}>{c}</button>)}
-                  </div>
-                )}
-                {currentQ.type==="text"&&(
-                  <>
-                    <div className="answer-input-wrap">
-                      <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
-                      {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
-                      <button className="answer-send" onClick={()=>textInput.trim()&&submitAnswer(textInput.trim())}>Send</button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
             {convoComplete&&<div className="ai-msg"><SummaryCard/></div>}
             <div ref={convoEndRef}/>
           </div>
@@ -1110,16 +1195,25 @@ export default function App() {
     </div>
   );
 
-  const TripsPanel = () => (
+  const StopsPanel = () => (
     <div className="stops-wrap">
-      <div style={{fontFamily:"Syne",fontWeight:800,fontSize:17,marginBottom:4}}>Saved Trips</div>
-      <div style={{fontSize:12,color:"var(--muted)",marginBottom:16}}>Your planned trips, ready to go.</div>
-      {savedTrips.length === 0 ? (
+      <div style={{fontFamily:"Syne",fontWeight:800,fontSize:17,marginBottom:4}}>Your Stops</div>
+      <div style={{fontSize:12,color:"var(--muted)",marginBottom:16}}>Hotels, fuel, and food along your route.</div>
+      {!generated && savedTrips.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-title">No saved trips</div>
-          <div className="empty-sub">Plan a trip and tap Save to keep it here.</div>
+          <div className="empty-icon" aria-hidden="true">📍</div>
+          <div className="empty-title">No stops yet</div>
+          <div className="empty-sub">Complete the planning flow on the Plan tab and generate your trip to see stops here.</div>
+          <button className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Start planning</button>
         </div>
-      ) : (
+      ) : generated && (stops.length > 0 || roadStops.length > 0) ? (
+        <div className="empty-state" style={{padding:"36px 20px"}}>
+          <div className="empty-icon" aria-hidden="true">✓</div>
+          <div className="empty-title">{stops.length + roadStops.length} stop{(stops.length + roadStops.length) !== 1 ? "s" : ""} ready</div>
+          <div className="empty-sub">{origin} → {dest}. Open your full plan for hotels, dining, and road stops.</div>
+          <button className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>View full plan</button>
+        </div>
+      ) : savedTrips.length > 0 ? (
         savedTrips.map(trip => (
           <div key={trip.id} className="stop-card" style={{marginBottom:10}}>
             <div className="stop-card-head">
@@ -1144,6 +1238,13 @@ export default function App() {
             </div>
           </div>
         ))
+      ) : (
+        <div className="empty-state">
+          <div className="empty-icon" aria-hidden="true">📍</div>
+          <div className="empty-title">No stops yet</div>
+          <div className="empty-sub">Generate a trip plan to see your stops.</div>
+          <button className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Go to Plan</button>
+        </div>
       )}
     </div>
   );
@@ -1342,6 +1443,19 @@ export default function App() {
         .app-wrap.night .nav-app .nav-btn-primary { background: #e07c3a; color: #fff !important; border-color: #e07c3a; }
         .app-wrap.night .float-card .route-input { color: #fff !important; }
         .app-wrap.night .float-card .route-input::placeholder { color: rgba(255,255,255,0.35) !important; }
+        .app-wrap.night .route-loading-pill {
+          background: rgba(8,14,38,0.95); border-color: rgba(255,255,255,0.1); color: #fff;
+        }
+        .app-wrap.night .spinner-dark {
+          border-color: rgba(255,255,255,0.15); border-top-color: #e07c3a;
+        }
+        .app-wrap.night .empty-icon { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+        .app-wrap.night .empty-cta { background: #e07c3a; color: #fff; }
+        .pac-container { z-index: 100000 !important; }
+        .app-wrap.night .pac-container { background: #0d1935 !important; border-color: rgba(255,255,255,0.12) !important; }
+        .app-wrap.night .pac-item { border-top-color: rgba(255,255,255,0.08) !important; color: #fff !important; }
+        .app-wrap.night .pac-item:hover, .app-wrap.night .pac-item-selected { background: rgba(255,255,255,0.08) !important; }
+        .app-wrap.night .pac-item-query { color: #fff !important; }
         .app-wrap.night .sidebar-inner { border-right: 1px solid rgba(255,255,255,0.05); }
         .app-wrap.night .chat-title { color: #fff; }
         .app-wrap.night .chat-sub { color: rgba(255,255,255,0.45); }
@@ -1584,7 +1698,7 @@ export default function App() {
         <nav className="nav-app nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,height:"var(--nav-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",backdropFilter:"blur(12px)"}}>
           <div className="nav-logo">Trip<span>Mappa</span></div>
           <div className="nav-center-wrap nav-center" style={{display:"flex",gap:"1px",borderRadius:8,padding:3}}>
-            {[["plan","Plan"],["trips","Trips"],["share","Share"]].map(([k,l])=>(
+            {[["plan","Plan"],["trips","Stops"],["share","Share"]].map(([k,l])=>(
               <button key={k} className={"nav-tab"+(tab===k?" active":"")} onClick={()=>setTab(k)}>{l}</button>
             ))}
           </div>
@@ -1688,9 +1802,21 @@ export default function App() {
                 )}
               </>
             ) : (
-              <div className="map-placeholder">
+              <div className="map-loading">
+                <div className="loading-spinner"/>
                 <div className="map-placeholder-text">Loading map…</div>
                 <div className="map-placeholder-sub">Connecting to Google Maps</div>
+                <div className="map-loading-skeleton" aria-hidden="true">
+                  <div className="map-skeleton-bar"/>
+                  <div className="map-skeleton-bar"/>
+                  <div className="map-skeleton-bar"/>
+                </div>
+              </div>
+            )}
+            {isLoaded && routeLoading && (
+              <div className="route-loading-pill">
+                <span className="spinner-dark"/>
+                Calculating route…
               </div>
             )}
           </div>
@@ -1698,20 +1824,23 @@ export default function App() {
           {/* Floating glass card */}
           <div className={`float-card ${theme} ${cardCollapsed?"collapsed":""}`}>
             <div className="float-card-header" onClick={()=>setCardCollapsed(c=>!c)}>
-              <div className="float-card-title" style={{color: theme==="night"?"#fff":"var(--ink)"}}>
-                {tab==="plan"?"Plan Your Trip":tab==="trips"?"Saved Trips":"Live Sharing"}
+              <div className="float-card-handle" aria-hidden="true"/>
+              <div className="float-card-header-row">
+                <div className="float-card-title" style={{color: theme==="night"?"#fff":"var(--ink)"}}>
+                  {tab==="plan"?"Plan Your Trip":tab==="trips"?"Your Stops":"Live Sharing"}
+                </div>
+                <span className={`float-card-chevron ${cardCollapsed?"":"open"}`}>▼</span>
               </div>
-              <span className={`float-card-chevron ${cardCollapsed?"":"open"}`}>▼</span>
             </div>
-            {!cardCollapsed && (
+            <div className="float-card-body">
               <div className="float-card-scroll">
                 <div className="sidebar-inner" style={{background:"transparent"}}>
                   {tab==="plan"&&planPanel}
-                  {tab==="trips"&&<TripsPanel/>}
+                  {tab==="trips"&&<StopsPanel/>}
                   {tab==="share"&&<SharePanel/>}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
