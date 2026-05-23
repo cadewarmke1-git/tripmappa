@@ -346,7 +346,8 @@ const CSS = `
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
   .convo-wrap { flex: 1; overflow-y: auto; padding: 18px 18px; display: flex; flex-direction: column; gap: 14px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
-  .ai-msg { display: flex; flex-direction: column; gap: 8px; animation: fadeUp 0.2s ease both; }
+  .ai-msg { display: flex; flex-direction: column; gap: 10px; animation: fadeUp 0.2s ease both; padding-bottom: 4px; }
+  .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
   .results-view { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
@@ -783,6 +784,7 @@ export default function App() {
       }
 
       if (data.tips?.length) setTripTips(data.tips);
+      setGenerated(true);
       // AI works silently — no chat messages after generation
 
     } catch (err) {
@@ -792,10 +794,10 @@ export default function App() {
       const hours = routeInfo ? parseInt(routeInfo.duration) : 10;
       const numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
       setStops(STOPS_DATA.slice(0, numStops));
+      setGenerated(true);
     }
 
     setLoading(false);
-    setGenerated(true);
     toast_("Trip planned");
   }
 
