@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { GoogleMap, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
 const GOOGLE_LIBRARIES = ["places", "routes"];
@@ -8,8 +8,81 @@ const STANDARD_MAP_STYLES = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-const HERO_PHOTO_DAY = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80";
-const HERO_PHOTO_NIGHT = "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=1920&q=80";
+const HERO_PHOTOS_DAY = [
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80",
+  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80",
+  "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&q=80",
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80",
+];
+
+const HERO_PHOTOS_NIGHT = [
+  "https://images.unsplash.com/photo-1475070929565-c985b496cb9f?w=1920&q=80",
+  "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1920&q=80",
+  "https://images.unsplash.com/photo-1493246318656-5bfd4cfb29b8?w=1920&q=80",
+];
+
+function HeroPhotoSlideshow({ photos, paused }) {
+  const startIdx = useMemo(() => Math.floor(Math.random() * photos.length), [photos]);
+  const indexRef = useRef(startIdx);
+  const [layerA, setLayerA] = useState({ idx: startIdx, opacity: 1 });
+  const [layerB, setLayerB] = useState({ idx: startIdx, opacity: 0 });
+  const aIsFrontRef = useRef(true);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    photos.forEach((url) => { new Image().src = url; });
+  }, [photos]);
+
+  useEffect(() => {
+    const preload = (idx) => { new Image().src = photos[(idx + 1) % photos.length]; };
+    preload(indexRef.current);
+  }, [photos, tick]);
+
+  useEffect(() => {
+    if (paused) return;
+
+    const timer = setTimeout(() => {
+      const nextIdx = (indexRef.current + 1) % photos.length;
+      indexRef.current = nextIdx;
+
+      if (aIsFrontRef.current) {
+        setLayerB({ idx: nextIdx, opacity: 1 });
+        setLayerA((l) => ({ ...l, opacity: 0 }));
+      } else {
+        setLayerA({ idx: nextIdx, opacity: 1 });
+        setLayerB((l) => ({ ...l, opacity: 0 }));
+      }
+      aIsFrontRef.current = !aIsFrontRef.current;
+      setTick((t) => t + 1);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [photos, paused, tick]);
+
+  const aOnTop = aIsFrontRef.current;
+
+  return (
+    <div className="hero-slideshow" aria-hidden="true">
+      <div
+        className="hero-bg-slide"
+        style={{
+          backgroundImage: `url(${photos[layerA.idx]})`,
+          opacity: layerA.opacity,
+          zIndex: aOnTop ? 2 : 1,
+        }}
+      />
+      <div
+        className="hero-bg-slide"
+        style={{
+          backgroundImage: `url(${photos[layerB.idx]})`,
+          opacity: layerB.opacity,
+          zIndex: aOnTop ? 1 : 2,
+        }}
+      />
+    </div>
+  );
+}
 
 const DARK_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: "#0a1628" }] },
@@ -114,6 +187,18 @@ const CSS = `
     position: absolute; inset: 0; z-index: 0;
     background-size: cover; background-position: center; background-repeat: no-repeat;
     transition: opacity 1.8s ease;
+  }
+  .hero-slideshow-set {
+    position: absolute; inset: 0; z-index: 0;
+    transition: opacity 1.8s ease;
+  }
+  .hero-slideshow {
+    position: absolute; inset: 0;
+  }
+  .hero-bg-slide {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+    transition: opacity 1.5s ease;
   }
   .hero-overlay {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -1020,6 +1105,7 @@ export default function App() {
   const [heroOrigin, setHeroOrigin] = useState("");
   const [heroDest, setHeroDest] = useState("");
   const [heroEmail, setHeroEmail] = useState("");
+  const [heroSearchHover, setHeroSearchHover] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
@@ -1817,20 +1903,12 @@ export default function App() {
 
       {/* Hero */}
       <div className={`hero ${theme}`}>
-        <div
-          className="hero-bg"
-          style={{
-            backgroundImage: `url(${HERO_PHOTO_DAY})`,
-            opacity: theme === "day" ? 1 : 0,
-          }}
-        />
-        <div
-          className="hero-bg"
-          style={{
-            backgroundImage: `url(${HERO_PHOTO_NIGHT})`,
-            opacity: theme === "night" ? 1 : 0,
-          }}
-        />
+        <div className="hero-slideshow-set" style={{ opacity: theme === "day" ? 1 : 0 }}>
+          <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={heroSearchHover || theme !== "day"} />
+        </div>
+        <div className="hero-slideshow-set" style={{ opacity: theme === "night" ? 1 : 0 }}>
+          <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={heroSearchHover || theme !== "night"} />
+        </div>
         <div className="hero-overlay" />
 
         <div className="hero-content">
@@ -1842,7 +1920,11 @@ export default function App() {
           <p className="hero-sub">Your next trip, planned in seconds.</p>
 
           {/* Search bar */}
-          <div className="hero-search">
+          <div
+            className="hero-search"
+            onMouseEnter={() => setHeroSearchHover(true)}
+            onMouseLeave={() => setHeroSearchHover(false)}
+          >
             <div className="hero-search-fields">
               <div className="hero-input-wrap">
                 <div className="hero-input-label">From</div>
