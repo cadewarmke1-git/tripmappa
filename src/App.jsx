@@ -344,7 +344,7 @@ const CSS = `
   .route-input:focus { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 3px rgba(10,12,16,0.06); }
   .route-input::placeholder { color: #c0bab4; }
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
-  .convo-wrap { flex: 1; overflow-y: auto; padding: 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .convo-wrap { flex: 1; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
   .ai-msg { display: flex; flex-direction: column; gap: 10px; animation: fadeUp 0.2s ease both; padding-bottom: 4px; }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
@@ -921,9 +921,9 @@ export default function App() {
                           </span>
                         </div>
                         <div style={{flex:1}}>
-                          <div style={{fontWeight:700,fontSize:13}}>{s.name}</div>
-                          <div style={{fontSize:11,color:"var(--muted)",marginTop:1}}>{s.location} · {s.distance}</div>
-                          {s.note && <div style={{fontSize:11,color:"var(--muted)",marginTop:1}}>{s.note}</div>}
+                          <div className="road-stop-name" style={{fontWeight:700,fontSize:13}}>{s.name}</div>
+                          <div className="road-stop-loc" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.location} · {s.distance}</div>
+                          {s.note && <div className="road-stop-note" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.note}</div>}
                         </div>
                         <div style={{fontSize:11,color:"var(--muted)",flexShrink:0}}>{s.eta}</div>
                       </div>
@@ -936,52 +936,68 @@ export default function App() {
                 }
               </>
             )}
-            {/* Overnight stops */}
+            {/* Overnight stops — same organized format */}
             {!isDayOrHomeTrip && stops.map((stop,i)=>(
-              <div className="stop-card" key={i} style={{animationDelay:i*0.07+"s"}}>
-                <div className="stop-card-head">
-                  <div className="stop-num">{i+1}</div>
+              <div className="stop-card" key={i} style={{marginBottom:8,animationDelay:i*0.07+"s"}}>
+                {/* Stop header */}
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:"1px solid var(--border)"}}>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:"var(--ink)",color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"Syne"}}>
+                    {i+1}
+                  </div>
                   <div style={{flex:1}}>
                     <div className="stop-city">{stop.city}</div>
                     <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
                   </div>
-                  {stop.why&&<div style={{fontSize:10,color:"var(--muted)",fontStyle:"italic",maxWidth:90,textAlign:"right"}}>{stop.why}</div>}
+                  {stop.why&&<div style={{fontSize:10,color:"var(--muted)",fontStyle:"italic",maxWidth:80,textAlign:"right"}}>{stop.why}</div>}
                 </div>
-                <div className="stop-body">
-                  {isOvernightTrip&&stop.hotels?.length>0&&(
-                    <>
-                      <div className="stop-section-label">Hotels</div>
-                      {stop.hotels.map((h,hi)=>(
-                        <div className="item-row" key={hi} onClick={()=>toast_(`Booking ${h.name}`)}>
-                          <div className="item-info">
-                            <div className="item-name">{h.name}</div>
-                            <div className="item-meta">{h.stars}-star{h.pet?" · Pet-friendly":""}</div>
-                          </div>
-                          <div className="item-price">{h.price}</div>
+
+                {/* Hotels */}
+                {stop.hotels?.length>0&&(
+                  <div style={{padding:"10px 14px 0"}}>
+                    <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"var(--muted)",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{width:28,height:20,borderRadius:4,background:"rgba(42,122,224,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <span style={{fontSize:8,fontWeight:700,color:"#2a7ae0",letterSpacing:0.5}}>HOTEL</span>
+                      </div>
+                      Lodging
+                    </div>
+                    {stop.hotels.map((h,hi)=>(
+                      <div className="item-row" key={hi} onClick={()=>toast_(`Booking ${h.name}`)}>
+                        <div className="item-info">
+                          <div className="item-name">{h.name}</div>
+                          <div className="item-meta">{h.stars}-star · {h.pet?"Pet-friendly":"No pets"}</div>
                         </div>
-                      ))}
-                    </>
-                  )}
-                  {answers.restaurants==="Yes"&&stop.restaurants?.length>0&&(
-                    <>
-                      <div className="stop-section-label">Restaurants</div>
-                      {stop.restaurants.map((r,ri)=>(
-                        <div className="item-row" key={ri} onClick={()=>toast_(`Booking ${r.name}`)}>
-                          <div className="item-info">
-                            <div className="item-name">{r.name}</div>
-                            <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
-                          </div>
-                          <div className="item-time">{r.time}</div>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                  <div className="stop-actions">
-                    {isOvernightTrip&&<button className="action-btn action-btn-primary" onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>}
-                    {isDayOrHomeTrip&&<button className="action-btn action-btn-primary" onClick={()=>toast_("Added to route!")}>Add to route</button>}
-                    {answers.grocery==="Yes"&&isOvernightTrip&&<button className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>}
-                    <button className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
+                        <div className="item-price">{h.price}</div>
+                      </div>
+                    ))}
                   </div>
+                )}
+
+                {/* Restaurants */}
+                {answers.restaurants==="Yes"&&stop.restaurants?.length>0&&(
+                  <div style={{padding:"10px 14px 0"}}>
+                    <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"var(--muted)",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{width:28,height:20,borderRadius:4,background:"rgba(42,191,110,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <span style={{fontSize:8,fontWeight:700,color:"#2abf6e",letterSpacing:0.5}}>FOOD</span>
+                      </div>
+                      Dining
+                    </div>
+                    {stop.restaurants.map((r,ri)=>(
+                      <div className="item-row" key={ri} onClick={()=>toast_(`Booking ${r.name}`)}>
+                        <div className="item-info">
+                          <div className="item-name">{r.name}</div>
+                          <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
+                        </div>
+                        <div className="item-time">{r.time}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{padding:"10px 14px 12px",display:"flex",gap:7,marginTop:4}}>
+                  <button className="action-btn action-btn-primary" style={{flex:2}} onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>
+                  {answers.grocery==="Yes"&&<button className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>}
+                  <button className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
                 </div>
               </div>
             ))}
@@ -1030,10 +1046,13 @@ export default function App() {
                     setAnswers(newAnswers);
                     setQIndex(prev);
                     setTextInput("");
-                  }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
+                  }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
                     ← Back
                   </button>
                 )}
+                {/* Visual separator between question and options */}
+                <div style={{width:"100%",height:"1px",background:"var(--border)",opacity:0.5,margin:"2px 0 6px"}}/>
+                <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:6}}>Choose one</div>
                 {currentQ.type==="yesno"&&(
                   <div className="quick-replies">
                     <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
@@ -1046,11 +1065,14 @@ export default function App() {
                   </div>
                 )}
                 {currentQ.type==="text"&&(
-                  <div className="answer-input-wrap">
-                    <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
-                    {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
-                    <button className="answer-send" onClick={()=>textInput.trim()&&submitAnswer(textInput.trim())}>Send</button>
-                  </div>
+                  <>
+                    <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:6}}>Your answer</div>
+                    <div className="answer-input-wrap">
+                      <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
+                      {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
+                      <button className="answer-send" onClick={()=>textInput.trim()&&submitAnswer(textInput.trim())}>Send</button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -1351,8 +1373,11 @@ export default function App() {
         .app-wrap.night .item-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
         .app-wrap.night .item-row:hover { background: rgba(255,255,255,0.08); }
         .app-wrap.night .item-name { color: #fff; }
-        .app-wrap.night .item-meta { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .item-meta { color: rgba(255,255,255,0.5); }
         .app-wrap.night .item-price { color: #fff; }
+        .app-wrap.night .road-stop-name { color: #fff !important; }
+        .app-wrap.night .road-stop-loc { color: rgba(255,255,255,0.5) !important; }
+        .app-wrap.night .road-stop-note { color: rgba(255,255,255,0.5) !important; }
         .app-wrap.night .stop-section-label { color: rgba(255,255,255,0.3); }
         .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
         .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
