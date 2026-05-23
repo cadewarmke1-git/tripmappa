@@ -6,20 +6,31 @@ const GOOGLE_LIBRARIES = ["places", "routes"];
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800;900&display=swap');
   :root {
-    --ink: #0a0c10;
-    --surface: #f4f1ec;
+    --ink: #0c1222;
+    --surface: #f4f6fa;
     --card: #ffffff;
-    --accent: #e05c2a;
-    --accent2: #2a7ae0;
-    --accent3: #2abf6e;
-    --muted: #9a9590;
-    --border: #e2ddd7;
+    --brand: #1d4ed8;
+    --brand-hover: #1e40af;
+    --brand-soft: rgba(29, 78, 216, 0.1);
+    --accent: #1d4ed8;
+    --accent2: #0ea5e9;
+    --accent3: #10b981;
+    --warm: #f59e0b;
+    --danger: #ef4444;
+    --muted: #64748b;
+    --border: #e2e8f0;
     --nav-h: 64px;
-    --r: 14px;
+    --r: 12px;
+    --r-lg: 16px;
+    --r-xl: 20px;
     --sidebar-w: 380px;
-    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
-    --shadow: 0 2px 16px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 12px 48px rgba(15, 23, 42, 0.14);
+    --shadow-glass: 0 8px 32px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.06);
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.85);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 14px; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
@@ -42,7 +53,7 @@ const CSS = `
   .nav-center { display: flex; gap: 1px; border-radius: 8px; padding: 3px; }
   .nav.transparent .nav-center { background: rgba(255,255,255,0.12); }
   .nav.solid .nav-center { background: var(--border); }
-  .nav-tab { background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; padding: 5px 14px; border-radius: 6px; transition: all 0.15s; }
+  .nav-tab { background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 8px; transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease); }
   .nav.transparent .nav-tab { color: rgba(255,255,255,0.65); }
   .nav.transparent .nav-tab:hover { background: rgba(255,255,255,0.1); color: #fff; }
   .nav.transparent .nav-tab.active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 600; }
@@ -50,7 +61,9 @@ const CSS = `
   .nav.solid .nav-tab:hover { color: var(--ink); }
   .nav.solid .nav-tab.active { background: #fff; color: var(--ink); font-weight: 600; box-shadow: var(--shadow-sm); }
   .nav-right { display: flex; gap: 8px; }
-  .nav-btn { border: 1px solid; cursor: pointer; border-radius: 7px; padding: 6px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+  .nav-btn { border: 1px solid; cursor: pointer; border-radius: 10px; padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; transition: background 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease); }
+  .nav-btn:hover { transform: translateY(-1px); }
+  .nav-btn:active { transform: translateY(0); }
   .nav.transparent .nav-btn { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); color: #fff; }
   .nav.transparent .nav-btn:hover { background: rgba(255,255,255,0.22); }
   .nav.transparent .nav-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -108,8 +121,8 @@ const CSS = `
   /* Hero content */
   .hero-content {
     position: relative; z-index: 10;
-    text-align: center; padding: 0 20px;
-    width: 100%; max-width: 620px;
+    text-align: center; padding: 0 28px;
+    width: 100%; max-width: 680px;
     animation: heroIn 1s cubic-bezier(0.16,1,0.3,1) both;
   }
   @keyframes heroIn { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
@@ -122,30 +135,36 @@ const CSS = `
 
   .hero-title {
     font-family: 'Syne', sans-serif; font-weight: 900;
-    font-size: clamp(40px, 7.5vw, 92px);
-    line-height: 0.95; letter-spacing: -3px;
-    color: #fff; margin-bottom: 20px;
-    text-shadow: 0 2px 30px rgba(0,0,0,0.15);
+    font-size: clamp(44px, 8vw, 96px);
+    line-height: 0.92; letter-spacing: -0.04em;
+    color: #fff; margin-bottom: 28px;
+    text-shadow: 0 4px 40px rgba(0,0,0,0.2);
   }
   .hero-title .highlight {
-    background: linear-gradient(135deg, #ffd060, #f09020);
+    background: linear-gradient(135deg, #fde68a 0%, #fbbf24 50%, #f59e0b 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .hero-sub {
-    font-size: 15px; color: rgba(255,255,255,0.65); max-width: 420px;
-    margin: 0 auto 36px; line-height: 1.6; font-weight: 400; letter-spacing: -0.01em;
+    font-size: 17px; color: rgba(255,255,255,0.78); max-width: 440px;
+    margin: 0 auto 44px; line-height: 1.65; font-weight: 400; letter-spacing: -0.015em;
   }
 
   /* Hero search bar */
   .hero-search {
     background: rgba(255,255,255,0.98);
-    border-radius: 18px; padding: 8px 8px 8px 22px;
-    display: flex; align-items: center; gap: 14px;
-    width: 100%; max-width: 580px; margin: 0 auto 24px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.15);
+    border-radius: var(--r-xl); padding: 10px 10px 10px 24px;
+    display: flex; align-items: center; gap: 16px;
+    width: 100%; max-width: 600px; margin: 0 auto 28px;
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08);
     animation: heroIn 1s 0.2s cubic-bezier(0.16,1,0.3,1) both;
+    transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
+  }
+  .hero-search:focus-within {
+    box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 0 0 3px rgba(29, 78, 216, 0.25);
+    border-color: rgba(29, 78, 216, 0.35);
   }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; }
@@ -170,15 +189,16 @@ const CSS = `
   .hero.night .hero-search-divider { background: rgba(255,255,255,0.12); }
   .hero-input::placeholder { color: #c0b8b0; font-weight: 400; }
   .hero-go-btn {
-    background: var(--ink);
-    color: #fff; border: none; border-radius: 12px;
-    padding: 13px 24px; font-family: 'Syne', sans-serif;
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+    color: #fff; border: none; border-radius: var(--r-lg);
+    padding: 14px 26px; font-family: 'Syne', sans-serif;
     font-size: 14px; font-weight: 800; cursor: pointer;
-    transition: transform 0.15s, background 0.15s; white-space: nowrap;
-    flex-shrink: 0; letter-spacing: -0.2px;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); white-space: nowrap;
+    flex-shrink: 0; letter-spacing: -0.02em;
+    box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4);
   }
-  .hero-go-btn:hover { transform: translateY(-1px); background: #1a1a1a; }
-  .hero-go-btn:active { transform: translateY(0); }
+  .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(29, 78, 216, 0.45); }
+  .hero-go-btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35); }
 
   .hero-hint {
     font-size: 12px; color: rgba(255,255,255,0.4);
@@ -187,11 +207,24 @@ const CSS = `
   .hero-hint span { color: rgba(255,210,140,0.7); }
 
   /* Auth buttons */
-  .hero-auth { margin-bottom: 28px; animation: heroIn 1s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
-  .hero-auth-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; font-weight: 600; }
-  .hero-auth-btns { display: flex; gap: 8px; justify-content: center; }
-  .hero-auth-btn { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.96); border: none; border-radius: 11px; padding: 10px 20px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.12); letter-spacing: -0.01em; }
-  .hero-auth-btn:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.16); }
+  .hero-auth { margin-bottom: 32px; animation: heroIn 1s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+  .hero-auth-label { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; font-weight: 600; }
+  .hero-auth-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hero-auth-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    border-radius: var(--r-lg); padding: 11px 22px; min-width: 132px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    letter-spacing: -0.01em; border: 1px solid transparent;
+  }
+  .hero-auth-btn:hover { transform: translateY(-2px); }
+  .hero-auth-btn:active { transform: translateY(0); }
+  .hero-auth-btn-google { background: #fff; color: #3c4043; border-color: #dadce0; box-shadow: 0 1px 3px rgba(60,64,67,0.15); }
+  .hero-auth-btn-google:hover { box-shadow: 0 4px 12px rgba(60,64,67,0.2); }
+  .hero-auth-btn-fb { background: #1877f2; color: #fff; box-shadow: 0 4px 14px rgba(24,119,242,0.35); }
+  .hero-auth-btn-fb:hover { box-shadow: 0 6px 20px rgba(24,119,242,0.45); }
+  .hero-auth-btn-apple { background: #000; color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+  .hero-auth-btn-apple:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
 
   /* Feature pills */
   .hero-pills {
@@ -293,17 +326,18 @@ const CSS = `
   /* Floating card */
   .float-card {
     position: absolute; top: calc(var(--nav-h) + 16px); left: 16px;
-    width: 370px; max-height: calc(100vh - var(--nav-h) - 32px);
-    background: rgba(255,255,255,0.96); backdrop-filter: blur(24px) saturate(1.8);
-    border-radius: 20px; border: 1px solid rgba(255,255,255,0.8);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
+    width: 390px; max-height: calc(100vh - var(--nav-h) - 32px);
+    background: var(--glass); backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    border-radius: var(--r-xl); border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
     display: flex; flex-direction: column;
     overflow: hidden; z-index: 50;
-    transition: max-height 0.45s cubic-bezier(0.34, 1.1, 0.64, 1), box-shadow 0.3s ease;
+    transition: max-height 0.45s var(--ease), box-shadow 0.3s var(--ease);
   }
   .float-card.night {
-    background: rgba(8,14,38,0.92); border-color: rgba(255,255,255,0.08);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
+    background: rgba(12, 18, 34, 0.82); border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
   }
   .float-card.collapsed { max-height: 62px; }
   .float-card-body {
@@ -339,7 +373,7 @@ const CSS = `
     .chat-title { font-size: 18px !important; }
     .chat-header { padding: 16px 16px 12px !important; }
     .route-wrap { padding: 12px 16px !important; }
-    .convo-wrap { padding: 12px 16px !important; gap: 28px !important; }
+    .convo-wrap { padding: 16px !important; gap: 20px !important; }
     .generate-wrap { padding: 10px 14px 14px !important; }
     .stops-wrap { padding: 12px 12px 20px !important; }
     .route-loading-pill { top: 12px; max-width: calc(100% - 24px); }
@@ -380,32 +414,51 @@ const CSS = `
   .route-input:focus { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 3px rgba(10,12,16,0.06); }
   .route-input::placeholder { color: #c0bab4; }
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
-  .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 24px 20px 24px; display: flex; flex-direction: column; gap: 36px; }
+  .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
-  .ai-msg { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.2s ease both; padding-bottom: 4px; }
-  .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease both; margin-bottom: 8px; }
-  .user-msg + .ai-msg { margin-top: 20px; }
+  .plan-view, .convo-wrap > .ai-msg, .convo-wrap > .user-msg { margin: 0; }
+  .ai-msg { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.25s var(--ease) both; }
+  .user-msg { display: flex; justify-content: flex-end; animation: fadeUp 0.25s var(--ease) both; }
   .question-choices {
-    margin-top: 18px; padding-top: 16px;
-    border-top: 1px dashed var(--border);
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
     display: flex; flex-direction: column; gap: 12px;
   }
-  .app-wrap.night .question-choices { border-top-color: rgba(255,255,255,0.12); }
-  .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
+  .app-wrap.night .question-choices { border-top-color: rgba(255,255,255,0.1); }
+  .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; }
+  .convo-empty { text-align: center; padding: 36px 0; }
+  .convo-empty p { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.55; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
   .results-view { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
   .plan-view { animation: fadeUp 0.2s ease both; }
-  .ai-bubble { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px 14px 14px 4px; padding: 14px 18px; font-size: 14px; line-height: 1.65; color: var(--ink); max-width: 94%; }
+  .ai-bubble {
+    background: rgba(255,255,255,0.9); border: 1px solid var(--border);
+    border-radius: var(--r-lg) var(--r-lg) var(--r-lg) 6px;
+    padding: 14px 18px; font-size: 14px; line-height: 1.6; color: var(--ink);
+    max-width: 92%; font-weight: 450; box-shadow: var(--shadow-sm);
+  }
   .ai-name { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
-  .user-bubble { background: var(--ink); color: #fff; border-radius: 14px 14px 4px 14px; padding: 12px 18px; font-size: 14px; max-width: 80%; line-height: 1.55; }
-  .qr-btn { border: 1.5px solid var(--border); background: #fff; border-radius: 99px; padding: 9px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.14s; color: var(--ink); letter-spacing: -0.01em; }
-  .qr-btn:hover { border-color: var(--ink); background: var(--surface); }
-  .qr-btn.yes { border-color: var(--accent3); color: var(--accent3); }
-  .qr-btn.yes:hover { background: var(--accent3); color: #fff; }
-  .qr-btn.no { border-color: var(--accent); color: var(--accent); }
-  .qr-btn.no:hover { background: var(--accent); color: #fff; }
+  .user-bubble {
+    background: linear-gradient(180deg, #0c1222 0%, #1e293b 100%);
+    color: #fff; border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg);
+    padding: 13px 18px; font-size: 14px; max-width: 82%; line-height: 1.55;
+    font-weight: 600; box-shadow: 0 4px 16px rgba(12, 18, 34, 0.2);
+  }
+  .qr-btn {
+    border: 1px solid var(--border); background: #fff; border-radius: 99px;
+    padding: 11px 20px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+    color: var(--ink); letter-spacing: -0.01em;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+  .qr-btn:hover { border-color: #cbd5e1; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1); }
+  .qr-btn:active { transform: translateY(0); }
+  .qr-btn.yes { border-color: #86efac; color: #059669; background: #f0fdf4; }
+  .qr-btn.yes:hover { background: #10b981; color: #fff; border-color: #10b981; }
+  .qr-btn.no { border-color: #fecaca; color: #dc2626; background: #fef2f2; }
+  .qr-btn.no:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
   .answer-input-wrap { display: flex; gap: 7px; }
   .answer-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: all 0.15s; background: #fff; }
   .answer-input:focus { border-color: var(--ink); }
@@ -414,11 +467,19 @@ const CSS = `
   .summary-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.7; }
   .summary-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 7px; }
   .summary-key { font-weight: 600; min-width: 84px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px; }
-  .generate-wrap { padding: 16px 20px 20px; border-top: 1px solid var(--border); }
-  .btn-generate { width: 100%; padding: 13px; border: none; cursor: pointer; background: var(--ink); color: #fff; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; transition: background 0.15s, transform 0.12s; letter-spacing: -0.01em; }
-  .btn-generate:hover { background: #1a1a1a; transform: translateY(-1px); }
-  .btn-generate:active { transform: translateY(0); }
-  .btn-generate:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .generate-wrap { padding: 16px 20px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.5); }
+  .btn-generate {
+    width: 100%; padding: 15px 20px; border: none; cursor: pointer;
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+    color: #fff; border-radius: var(--r-lg); font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: -0.02em;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    box-shadow: 0 4px 16px rgba(29, 78, 216, 0.35);
+  }
+  .btn-generate:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(29, 78, 216, 0.4); }
+  .btn-generate:active:not(:disabled) { transform: translateY(0); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-generate-inline { width: auto; padding: 12px 28px; display: inline-block; }
   .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -456,9 +517,45 @@ const CSS = `
   .stop-actions { display: flex; gap: 7px; margin-top: 12px; }
   .action-btn { flex: 1; padding: 8px 0; border-radius: 9px; border: 1.5px solid var(--border); background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; color: var(--ink); transition: all 0.14s; }
   .action-btn:hover { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.15); }
-  .action-btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .action-btn-primary:hover { background: #1a1a1a; border-color: #1a1a1a; }
-  .section-sep { height: 1px; background: var(--border); margin: 6px 0 14px; }
+  .action-btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .action-btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+  .section-sep { height: 1px; background: var(--border); margin: 6px 0 16px; }
+  .results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .results-back { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); padding: 0; font-weight: 500; }
+  .results-back:hover { color: var(--ink); }
+  .results-route { flex: 1; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; text-align: center; letter-spacing: -0.02em; }
+  .results-save { background: var(--brand); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.2s var(--ease); }
+  .results-save:hover { background: var(--brand-hover); }
+  .stops-panel-head { margin-bottom: 16px; }
+  .stops-panel-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.03em; margin-bottom: 4px; }
+  .stops-panel-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .stops-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; }
+  .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-tab { padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; background: transparent; color: var(--muted); transition: all 0.2s var(--ease); font-family: 'DM Sans', sans-serif; }
+  .filter-tab:hover { border-color: #cbd5e1; color: var(--ink); }
+  .filter-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .road-stop-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .road-cat-badge { width: 40px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; letter-spacing: 0.05em; flex-shrink: 0; }
+  .road-cat-badge.cat-fuel { background: rgba(29,78,216,0.12); color: var(--brand); }
+  .road-cat-badge.cat-food { background: rgba(16,185,129,0.12); color: #059669; }
+  .road-cat-badge.cat-charging { background: rgba(14,165,233,0.12); color: #0284c7; }
+  .road-cat-badge.cat-rest { background: rgba(100,116,139,0.12); color: var(--muted); }
+  .road-stop-info { flex: 1; min-width: 0; }
+  .road-stop-name { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+  .road-stop-loc, .road-stop-note { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  .road-stop-eta { font-size: 12px; color: var(--muted); flex-shrink: 0; font-weight: 500; }
+  .stop-card-actions { padding: 0 14px 14px; display: flex; gap: 8px; }
+  .stop-pin { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex-shrink: 0; margin-top: 6px; }
+  .stop-why { font-size: 11px; color: var(--muted); font-style: italic; max-width: 88px; text-align: right; line-height: 1.35; }
+  .stop-section { padding: 12px 16px 0; }
+  .stop-section-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 6px; font-size: 8px; font-weight: 800; letter-spacing: 0.05em; }
+  .badge-hotel { background: var(--brand-soft); color: var(--brand); }
+  .badge-food { background: rgba(16,185,129,0.12); color: #059669; }
+  .tips-card { margin-top: 16px; padding: 16px; background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); }
+  .tip-row { display: flex; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.55; }
+  .tip-row:last-child { margin-bottom: 0; }
+  .tip-arrow { color: var(--brand); font-weight: 700; flex-shrink: 0; }
 
   /* ── Share panel ── */
   .share-wrap { padding: 22px 18px; }
@@ -578,6 +675,35 @@ const STOPS_DATA = [
     hotels:[{name:"Little America Hotel",stars:4,price:"$159/night",pet:true},{name:"Drury Inn Flagstaff",stars:3,price:"$109/night",pet:false}],
     restaurants:[{name:"Tinderbox Kitchen",cuisine:"American",rating:"4.7",time:"7:00 PM"},{name:"Brix Restaurant",cuisine:"Fine Dining",rating:"4.6",time:"8:00 PM"}] },
 ];
+
+const ROAD_STOPS_FALLBACK = [
+  { location:"Amarillo, TX", distance:"180 mi", eta:"2h 45m", category:"fuel", name:"Buc-ee's", note:"120 pumps · clean restrooms · snacks" },
+  { location:"Tucumcari, NM", distance:"95 mi", eta:"1h 30m", category:"food", name:"Whataburger", note:"Quick bite · drive-thru" },
+  { location:"Albuquerque, NM", distance:"140 mi", eta:"2h 10m", category:"rest", name:"New Mexico Welcome Center", note:"Restrooms · picnic area" },
+  { location:"Gallup, NM", distance:"200 mi", eta:"3h", category:"fuel", name:"Love's Travel Stop", note:"Fuel · coffee · parking" },
+];
+
+function normalizeRoadStop(s) {
+  return {
+    location: s.location || s.city || "Along route",
+    distance: s.distance || "—",
+    eta: s.eta || "—",
+    category: ["fuel", "food", "rest", "charging"].includes(s.category) ? s.category : "rest",
+    name: s.name || "Rest stop",
+    note: s.note || "",
+  };
+}
+
+function mapHotelStops(apiStops) {
+  return apiStops.map(stop => ({
+    city: stop.city || "Stop",
+    distance: stop.distance || "—",
+    eta: stop.eta || "—",
+    why: stop.why || "",
+    hotels: (stop.hotels || []).map(h => ({ name: h.name, stars: h.stars, price: h.price, pet: h.pet })),
+    restaurants: (stop.restaurants || []).map(r => ({ name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time })),
+  }));
+}
 
 // Generate stars
 // Stars generated once outside component so they never rerender
@@ -727,6 +853,7 @@ export default function App() {
   }, []);
 
   const convoEndRef = useRef(null);
+  const stopsEndRef = useRef(null);
   useEffect(()=>{ convoEndRef.current?.scrollIntoView({behavior:"smooth"}); },[convo]);
 
   useEffect(()=>{
@@ -750,10 +877,10 @@ export default function App() {
     if (generated && (stops.length > 0 || roadStops.length > 0)) {
       setCardCollapsed(false);
       requestAnimationFrame(() => {
-        convoEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        (tab === "trips" ? stopsEndRef : convoEndRef).current?.scrollIntoView({ behavior: "smooth", block: "end" });
       });
     }
-  }, [generated, stops, roadStops]);
+  }, [generated, stops, roadStops, tab]);
 
   function toast_(msg) { setToast(msg); setTimeout(()=>setToast(null),2400); }
 
@@ -817,12 +944,56 @@ export default function App() {
     else { setConvo([...nc,{role:"ai",text:QUESTIONS[next].ask}]); setQIndex(next); }
   }
 
-  async function generateTrip() {
-    setLoading(true);
-    // Stay on plan tab — results appear below in same panel
+  function applyFallbackTrip() {
+    const isDayOrHome = answers.trip_type === "Driving home" || answers.trip_type === "Day trip" || answers.overnight === "No";
+    const hours = routeInfo ? parseInt(routeInfo.duration, 10) : 10;
+    if (isDayOrHome) {
+      setRoadStops(ROAD_STOPS_FALLBACK);
+      setStops([]);
+    } else {
+      const numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
+      setStops(STOPS_DATA.slice(0, numStops));
+      setRoadStops(ROAD_STOPS_FALLBACK.slice(0, 3).map(normalizeRoadStop));
+    }
+    setTripTips([
+      "Check weather and road conditions before you leave",
+      "Allow extra time at major interchanges",
+      "Keep water and snacks within reach",
+    ]);
+  }
 
-    // Re-fetch directions with vehicle type from answers
-    if (isLoaded && window.google && originRef.current?.value && destRef.current?.value) {
+  function applyTripData(data) {
+    const apiStops = Array.isArray(data.stops) ? data.stops.filter(s => s && (s.city || s.name)) : [];
+    const apiRoadStops = (Array.isArray(data.road_stops) ? data.road_stops : []).map(normalizeRoadStop);
+
+    if (apiStops.length > 0) {
+      setStops(mapHotelStops(apiStops));
+      setRoadStops(apiRoadStops);
+    } else if (apiRoadStops.length > 0) {
+      setRoadStops(apiRoadStops);
+      setStops([]);
+    } else {
+      applyFallbackTrip();
+    }
+    setTripTips(Array.isArray(data.tips) && data.tips.length ? data.tips : []);
+    setGenerated(true);
+    setStopCategory("all");
+    setTab("trips");
+    setCardCollapsed(false);
+  }
+
+  async function generateTrip() {
+    const tripOrigin = originRef.current?.value?.trim() || origin;
+    const tripDest = destRef.current?.value?.trim() || dest;
+    if (!tripOrigin || !tripDest) {
+      toast_("Enter origin and destination first");
+      return;
+    }
+    setOrigin(tripOrigin);
+    setDest(tripDest);
+    setLoading(true);
+
+    if (isLoaded && window.google) {
       fetchDirections(answers.vehicle, answers.trailer_detail);
     }
 
@@ -831,50 +1002,23 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          origin,
-          destination: dest,
+          origin: tripOrigin,
+          destination: tripDest,
           answers,
           routeInfo,
         }),
       });
 
       const data = await response.json();
-
       if (!response.ok) throw new Error(data.error || "Failed to generate trip");
-
-      const apiStops = Array.isArray(data.stops) ? data.stops : [];
-      const apiRoadStops = Array.isArray(data.road_stops) ? data.road_stops : [];
-
-      if (apiStops.length > 0) {
-        setStops(apiStops.map(stop => ({
-          city: stop.city,
-          distance: stop.distance,
-          eta: stop.eta,
-          why: stop.why,
-          hotels: (stop.hotels || []).map(h => ({ name: h.name, stars: h.stars, price: h.price, pet: h.pet })),
-          restaurants: (stop.restaurants || []).map(r => ({ name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time })),
-        })));
-        setRoadStops(apiRoadStops);
-      } else if (apiRoadStops.length > 0) {
-        setRoadStops(apiRoadStops);
-        setStops([]);
-      } else {
-        throw new Error("No stops in response");
-      }
-
-      if (data.tips?.length) setTripTips(data.tips);
-      else setTripTips([]);
-      setGenerated(true);
-      // AI works silently — no chat messages after generation
-
+      applyTripData(data);
     } catch (err) {
       console.error("Generate trip error:", err);
-      toast_("Something went wrong — try again");
-      // Fall back to placeholder data
-      const hours = routeInfo ? parseInt(routeInfo.duration) : 10;
-      const numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
-      setStops(STOPS_DATA.slice(0, numStops));
+      applyFallbackTrip();
       setGenerated(true);
+      setStopCategory("all");
+      setTab("trips");
+      setCardCollapsed(false);
     }
 
     setLoading(false);
@@ -957,6 +1101,134 @@ export default function App() {
   const isOvernightTrip = (answers.trip_type === "Road trip" && answers.overnight !== "No") || answers.overnight === "Yes";
   const isDayOrHomeTrip = answers.trip_type === "Driving home" || answers.trip_type === "Day trip" || answers.overnight === "No";
 
+  const StopsResults = ({ showHeader = true }) => (
+    <div className="results-view">
+      {showHeader && (
+        <>
+          <div className="results-header">
+            <button type="button" className="results-back" onClick={resetPlan}>← Start over</button>
+            <div className="results-route">{origin} → {dest}</div>
+            <button type="button" className="results-save" onClick={saveTripComingSoon}>Save</button>
+          </div>
+          <div className="section-sep"/>
+        </>
+      )}
+
+      {roadStops.length > 0 && (
+        <>
+          <div className="stops-section-label">
+            {isDayOrHomeTrip ? "Stops along the way" : "Road stops"}
+          </div>
+          <div className="filter-tabs">
+            {["all","fuel","food","rest","charging"].filter(cat =>
+              cat === "all" || roadStops.some(s => s.category === cat)
+            ).map(cat => (
+              <button key={cat} type="button" onClick={()=>setStopCategory(cat)} className={`filter-tab${stopCategory===cat?" active":""}`}>
+                {cat === "all" ? "All" : cat === "fuel" ? "Fuel" : cat === "food" ? "Food" : cat === "rest" ? "Rest" : "Charging"}
+              </button>
+            ))}
+          </div>
+          {roadStops
+            .filter(s => stopCategory === "all" || s.category === stopCategory)
+            .map((s,i) => (
+              <div key={`road-${i}`} className="stop-card road-stop-card" style={{animationDelay:i*0.07+"s"}}>
+                <div className="road-stop-row">
+                  <div className={`road-cat-badge cat-${s.category}`}>
+                    {s.category==="fuel"?"FUEL":s.category==="food"?"FOOD":s.category==="charging"?"EV":"REST"}
+                  </div>
+                  <div className="road-stop-info">
+                    <div className="road-stop-name">{s.name}</div>
+                    <div className="road-stop-loc">{s.location} · {s.distance}</div>
+                    {s.note&&<div className="road-stop-note">{s.note}</div>}
+                  </div>
+                  <div className="road-stop-eta">{s.eta}</div>
+                </div>
+                <div className="stop-card-actions">
+                  <button type="button" className="action-btn action-btn-primary" onClick={()=>toast_("Added to route!")}>Add to route</button>
+                  <button type="button" className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
+                </div>
+              </div>
+            ))
+          }
+        </>
+      )}
+
+      {!isDayOrHomeTrip && stops.length > 0 && (
+        <>
+          <div className="filter-tabs" style={{marginTop: roadStops.length > 0 ? 16 : 0}}>
+            {["all","hotel","food"].filter(cat =>
+              cat === "all" ||
+              (cat === "hotel" && stops.some(s => s.hotels?.length > 0)) ||
+              (cat === "food" && stops.some(s => s.restaurants?.length > 0))
+            ).map(cat => (
+              <button key={cat} type="button" onClick={()=>setStopCategory(cat)} className={`filter-tab${stopCategory===cat?" active":""}`}>
+                {cat === "all" ? "All" : cat === "hotel" ? "Hotels" : "Dining"}
+              </button>
+            ))}
+          </div>
+          {stops.map((stop,i)=>(
+            <div className="stop-card" key={`hotel-${i}`} style={{animationDelay:i*0.07+"s"}}>
+              <div className="stop-card-head">
+                <div className="stop-pin"/>
+                <div style={{flex:1}}>
+                  <div className="stop-city">{stop.city}</div>
+                  <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
+                </div>
+                {stop.why&&<div className="stop-why">{stop.why}</div>}
+              </div>
+              {(stopCategory==="all"||stopCategory==="hotel") && stop.hotels?.length>0&&(
+                <div className="stop-section">
+                  <div className="stop-section-head"><span className="badge badge-hotel">HOTEL</span> Lodging</div>
+                  {stop.hotels.map((h,hi)=>(
+                    <div className="item-row" key={hi} onClick={()=>toast_(`Booking ${h.name}`)}>
+                      <div className="item-info">
+                        <div className="item-name">{h.name}</div>
+                        <div className="item-meta">{h.stars}-star · {h.pet?"Pet-friendly":"No pets"}</div>
+                      </div>
+                      <div className="item-price">{h.price}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(stopCategory==="all"||stopCategory==="food") && answers.restaurants==="Yes"&&stop.restaurants?.length>0&&(
+                <div className="stop-section">
+                  <div className="stop-section-head"><span className="badge badge-food">FOOD</span> Dining</div>
+                  {stop.restaurants.map((r,ri)=>(
+                    <div className="item-row" key={ri} onClick={()=>toast_(`Booking ${r.name}`)}>
+                      <div className="item-info">
+                        <div className="item-name">{r.name}</div>
+                        <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
+                      </div>
+                      <div className="item-time">{r.time}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="stop-card-actions">
+                <button type="button" className="action-btn action-btn-primary" style={{flex:2}} onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>
+                {answers.grocery==="Yes"&&<button type="button" className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>}
+                <button type="button" className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {tripTips.length>0&&(
+        <div className="tips-card">
+          <div className="stops-section-label">Trip tips</div>
+          {tripTips.map((tip,i)=>(
+            <div key={i} className="tip-row">
+              <span className="tip-arrow">→</span>
+              <span>{tip}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div ref={stopsEndRef}/>
+    </div>
+  );
+
   const planPanel = (
     <div className="chat-wrap">
       <div className="chat-header">
@@ -990,182 +1262,21 @@ export default function App() {
         {/* RESULTS VIEW — shown after generating */}
         {generated ? (
           (stops.length > 0 || roadStops.length > 0) ? (
-          <div className="results-view">
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
-              <button onClick={resetPlan} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center",gap:4,padding:0}}>
-                ← Start over
-              </button>
-              <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center"}}>{origin} → {dest}</div>
-              <button onClick={saveTripComingSoon} style={{background:"var(--accent)",color:"#fff",border:"none",borderRadius:6,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-                Save
-              </button>
-            </div>
-            <div className="section-sep"/>
-
-            {/* Road stops — shown for ALL trip types */}
-            {roadStops.length > 0 && (
-              <>
-                <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:8,marginTop:!isDayOrHomeTrip&&stops.length>0?16:0}}>
-                  {isDayOrHomeTrip ? "Stops along the way" : "Road stops"}
-                </div>
-                <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-                  {["all","fuel","food","rest","charging"].filter(cat =>
-                    cat === "all" || roadStops.some(s => s.category === cat)
-                  ).map(cat => (
-                    <button key={cat} onClick={()=>setStopCategory(cat)} className={`filter-tab${stopCategory===cat?' active':''}`} style={{
-                      padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600,
-                      border:"1.5px solid", cursor:"pointer",
-                      background: stopCategory===cat ? "var(--ink)" : "transparent",
-                      color: stopCategory===cat ? "#fff" : "var(--muted)",
-                      borderColor: stopCategory===cat ? "var(--ink)" : "var(--border)",
-                      transition:"all 0.15s",
-                    }}>
-                      {cat === "all" ? "All" : cat === "fuel" ? "Fuel" : cat === "food" ? "Food" : cat === "rest" ? "Rest" : "Charging"}
-                    </button>
-                  ))}
-                </div>
-                {roadStops
-                  .filter(s => stopCategory === "all" || s.category === stopCategory)
-                  .map((s,i) => (
-                    <div key={i} className="stop-card" style={{marginBottom:8,animationDelay:i*0.07+"s"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px"}}>
-                        <div style={{
-                          width:36,height:22,borderRadius:6,flexShrink:0,
-                          background: s.category==="fuel"?"rgba(224,92,42,0.12)":s.category==="food"?"rgba(42,191,110,0.12)":s.category==="charging"?"rgba(42,122,224,0.12)":"rgba(138,138,138,0.1)",
-                          display:"flex",alignItems:"center",justifyContent:"center",
-                        }}>
-                          <span style={{fontSize:8,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",color:s.category==="fuel"?"#e05c2a":s.category==="food"?"#2abf6e":s.category==="charging"?"#2a7ae0":"#8a8a8a"}}>
-                            {s.category==="fuel"?"FUEL":s.category==="food"?"FOOD":s.category==="charging"?"EV":"REST"}
-                          </span>
-                        </div>
-                        <div style={{flex:1}}>
-                          <div className="road-stop-name" style={{fontWeight:700,fontSize:13}}>{s.name}</div>
-                          <div className="road-stop-loc" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.location} · {s.distance}</div>
-                          {s.note&&<div className="road-stop-note" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.note}</div>}
-                        </div>
-                        <div style={{fontSize:11,color:"var(--muted)",flexShrink:0}}>{s.eta}</div>
-                      </div>
-                      <div style={{padding:"0 14px 10px",display:"flex",gap:6}}>
-                        <button className="action-btn action-btn-primary" style={{flex:1}} onClick={()=>toast_("Added to route!")}>Add to route</button>
-                        <button className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
-                      </div>
-                    </div>
-                  ))
-                }
-              </>
-            )}
-            {/* Overnight stops — with filter tabs like day trips */}
-            {!isDayOrHomeTrip && stops.length > 0 && (
-              <>
-                <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-                  {["all","hotel","food"].filter(cat =>
-                    cat === "all" ||
-                    (cat === "hotel" && stops.some(s => s.hotels?.length > 0)) ||
-                    (cat === "food" && stops.some(s => s.restaurants?.length > 0))
-                  ).map(cat => (
-                    <button key={cat} onClick={()=>setStopCategory(cat)} className={`filter-tab${stopCategory===cat?' active':''}`} style={{
-                      padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600,
-                      border:"1.5px solid", cursor:"pointer",
-                      background: stopCategory===cat ? "var(--ink)" : "transparent",
-                      color: stopCategory===cat ? "#fff" : "var(--muted)",
-                      borderColor: stopCategory===cat ? "var(--ink)" : "var(--border)",
-                      transition:"all 0.15s",
-                    }}>
-                      {cat === "all" ? "All" : cat === "hotel" ? "Hotels" : "Dining"}
-                    </button>
-                  ))}
-                </div>
-
-                {stops.map((stop,i)=>(
-                  <div className="stop-card" key={i} style={{marginBottom:8,animationDelay:i*0.07+"s"}}>
-                    {/* Stop header */}
-                    <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:"1.5px solid var(--border)"}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:"var(--accent)",flexShrink:0,marginTop:4}}/>
-                      <div style={{flex:1}}>
-                        <div className="stop-city">{stop.city}</div>
-                        <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
-                      </div>
-                      {stop.why&&<div style={{fontSize:10,color:"var(--muted)",fontStyle:"italic",maxWidth:80,textAlign:"right"}}>{stop.why}</div>}
-                    </div>
-
-                    {/* Hotels */}
-                    {(stopCategory==="all"||stopCategory==="hotel") && stop.hotels?.length>0&&(
-                      <div style={{padding:"10px 14px 0"}}>
-                        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"var(--muted)",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>
-                          <div style={{width:34,height:20,borderRadius:4,background:"rgba(42,122,224,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                            <span style={{fontSize:8,fontWeight:700,color:"#2a7ae0",letterSpacing:0.5}}>HOTEL</span>
-                          </div>
-                          Lodging
-                        </div>
-                        {stop.hotels.map((h,hi)=>(
-                          <div className="item-row" key={hi} onClick={()=>toast_(`Booking ${h.name}`)}>
-                            <div className="item-info">
-                              <div className="item-name">{h.name}</div>
-                              <div className="item-meta">{h.stars}-star · {h.pet?"Pet-friendly":"No pets"}</div>
-                            </div>
-                            <div className="item-price">{h.price}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Restaurants */}
-                    {(stopCategory==="all"||stopCategory==="food") && answers.restaurants==="Yes"&&stop.restaurants?.length>0&&(
-                      <div style={{padding:"10px 14px 0"}}>
-                        <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"var(--muted)",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>
-                          <div style={{width:34,height:20,borderRadius:4,background:"rgba(42,191,110,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                            <span style={{fontSize:8,fontWeight:700,color:"#2abf6e",letterSpacing:0.5}}>FOOD</span>
-                          </div>
-                          Dining
-                        </div>
-                        {stop.restaurants.map((r,ri)=>(
-                          <div className="item-row" key={ri} onClick={()=>toast_(`Booking ${r.name}`)}>
-                            <div className="item-info">
-                              <div className="item-name">{r.name}</div>
-                              <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
-                            </div>
-                            <div className="item-time">{r.time}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div style={{padding:"10px 14px 12px",display:"flex",gap:7,marginTop:4}}>
-                      <button className="action-btn action-btn-primary" style={{flex:2}} onClick={()=>toast_("Hotel reserved!")}>Reserve hotel</button>
-                      {answers.grocery==="Yes"&&<button className="action-btn" onClick={()=>setModal({type:"grocery",city:stop.city})}>Grocery</button>}
-                      <button className="action-btn" onClick={()=>toast_("Stop added to map")}>Map</button>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-            {tripTips.length>0&&(
-              <div style={{marginTop:12,padding:"14px",background:"var(--surface)",borderRadius:"var(--r)",border:"1px solid var(--border)"}}>
-                <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:10}}>Trip Tips</div>
-                {tripTips.map((tip,i)=>(
-                  <div key={i} style={{display:"flex",gap:8,marginBottom:7,fontSize:12.5,lineHeight:1.5}}>
-                    <span style={{color:"var(--accent)",fontWeight:700,flexShrink:0}}>→</span>
-                    <span>{tip}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            <StopsResults />
           ) : (
             <div className="empty-state" style={{padding:"40px 16px"}}>
               <div className="empty-title">No stops returned</div>
               <div className="empty-sub" style={{marginBottom:16}}>Something went wrong loading your plan. Try generating again.</div>
-              <button className="btn-generate" style={{width:"auto",padding:"10px 24px",display:"inline-block"}} onClick={()=>{ setGenerated(false); generateTrip(); }}>Try again</button>
+              <button type="button" className="btn-generate" style={{width:"auto",padding:"10px 24px",display:"inline-block"}} onClick={()=>{ setGenerated(false); generateTrip(); }}>Try again</button>
             </div>
           )
         ) : (
-          /* CONVERSATION VIEW — shown while planning */
+          /* CONVERSATION VIEW */
           <div className="plan-view">
             {qIndex===-1&&convo.length===0&&(
-              <div style={{textAlign:"center",padding:"32px 0"}}>
-                <div style={{fontSize:13,color:"var(--muted)",marginBottom:14}}>Enter your route above, then tap below to get started.</div>
-                <button className="btn-generate" style={{width:"auto",padding:"10px 28px",display:"inline-block"}} onClick={startConvo}>Start planning</button>
+              <div className="convo-empty">
+                <p>Enter your route above, then tap below to get started.</p>
+                <button type="button" className="btn-generate btn-generate-inline" onClick={startConvo}>Start planning</button>
               </div>
             )}
             {convo.map((msg,i)=>(
@@ -1187,7 +1298,7 @@ export default function App() {
       </div>
       {convoComplete&&(
         <div className="generate-wrap">
-          <button className="btn-generate" onClick={generateTrip} disabled={loading||generated}>
+          <button type="button" className="btn-generate" onClick={generateTrip} disabled={loading||generated}>
             {loading?<><span className="spinner"/>Planning your trip…</>:generated?"Trip Planned ✓":"Generate Trip Plan"}
           </button>
         </div>
@@ -1197,22 +1308,19 @@ export default function App() {
 
   const StopsPanel = () => (
     <div className="stops-wrap">
-      <div style={{fontFamily:"Syne",fontWeight:800,fontSize:17,marginBottom:4}}>Your Stops</div>
-      <div style={{fontSize:12,color:"var(--muted)",marginBottom:16}}>Hotels, fuel, and food along your route.</div>
+      <div className="stops-panel-head">
+        <h2 className="stops-panel-title">Your Stops</h2>
+        <p className="stops-panel-sub">Hotels, fuel, and food along your route.</p>
+      </div>
       {!generated && savedTrips.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon" aria-hidden="true">📍</div>
           <div className="empty-title">No stops yet</div>
           <div className="empty-sub">Complete the planning flow on the Plan tab and generate your trip to see stops here.</div>
-          <button className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Start planning</button>
+          <button type="button" className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Start planning</button>
         </div>
       ) : generated && (stops.length > 0 || roadStops.length > 0) ? (
-        <div className="empty-state" style={{padding:"36px 20px"}}>
-          <div className="empty-icon" aria-hidden="true">✓</div>
-          <div className="empty-title">{stops.length + roadStops.length} stop{(stops.length + roadStops.length) !== 1 ? "s" : ""} ready</div>
-          <div className="empty-sub">{origin} → {dest}. Open your full plan for hotels, dining, and road stops.</div>
-          <button className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>View full plan</button>
-        </div>
+        <StopsResults showHeader={false} />
       ) : savedTrips.length > 0 ? (
         savedTrips.map(trip => (
           <div key={trip.id} className="stop-card" style={{marginBottom:10}}>
@@ -1222,7 +1330,7 @@ export default function App() {
                 <div className="stop-meta">{trip.date} · {trip.stops.length} stop{trip.stops.length !== 1 ? "s" : ""} · {trip.routeInfo?.distance || ""}</div>
               </div>
               <div style={{display:"flex",gap:6}}>
-                <button className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11}} onClick={() => {
+                <button type="button" className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11}} onClick={() => {
                   setOrigin(trip.origin);
                   setDest(trip.dest);
                   setStops(trip.stops);
@@ -1233,7 +1341,7 @@ export default function App() {
                   setTab("plan");
                   toast_("Trip loaded");
                 }}>View</button>
-                <button className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11,color:"#e05c2a",borderColor:"#e05c2a"}} onClick={() => deleteSavedTrip(trip.id)}>✕</button>
+                <button type="button" className="action-btn" style={{flex:"none",padding:"4px 10px",fontSize:11,color:"var(--danger)",borderColor:"var(--danger)"}} onClick={() => deleteSavedTrip(trip.id)}>✕</button>
               </div>
             </div>
           </div>
@@ -1243,7 +1351,7 @@ export default function App() {
           <div className="empty-icon" aria-hidden="true">📍</div>
           <div className="empty-title">No stops yet</div>
           <div className="empty-sub">Generate a trip plan to see your stops.</div>
-          <button className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Go to Plan</button>
+          <button type="button" className="empty-cta" onClick={() => { setTab("plan"); setCardCollapsed(false); }}>Go to Plan</button>
         </div>
       )}
     </div>
@@ -1382,15 +1490,15 @@ export default function App() {
           <div className="hero-auth">
             <div className="hero-auth-label">Sign up with</div>
             <div className="hero-auth-btns">
-              <button className="hero-auth-btn" onClick={()=>setView("app")}>
+              <button type="button" className="hero-auth-btn hero-auth-btn-google" onClick={()=>setView("app")}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                 Google
               </button>
-              <button className="hero-auth-btn" onClick={()=>setView("app")}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <button type="button" className="hero-auth-btn hero-auth-btn-fb" onClick={()=>setView("app")}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 Facebook
               </button>
-              <button className="hero-auth-btn" onClick={()=>setView("app")}>
+              <button type="button" className="hero-auth-btn hero-auth-btn-apple" onClick={()=>setView("app")}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                 Apple
               </button>
@@ -1433,14 +1541,14 @@ export default function App() {
         .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
 
         /* ── App theme: Night ── */
-        .app-wrap.night .nav-app { background: rgba(5,13,42,0.97); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
+        .app-wrap.night .nav-app { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
         .app-wrap.night .nav-app .nav-logo { color: #fff; }
         .app-wrap.night .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
         .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
         .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
         .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
         .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85) !important; }
-        .app-wrap.night .nav-app .nav-btn-primary { background: #e07c3a; color: #fff !important; border-color: #e07c3a; }
+        .app-wrap.night .nav-app .nav-btn-primary { background: var(--brand); color: #fff !important; border-color: var(--brand); }
         .app-wrap.night .float-card .route-input { color: #fff !important; }
         .app-wrap.night .float-card .route-input::placeholder { color: rgba(255,255,255,0.35) !important; }
         .app-wrap.night .route-loading-pill {
@@ -1450,7 +1558,7 @@ export default function App() {
           border-color: rgba(255,255,255,0.15); border-top-color: #e07c3a;
         }
         .app-wrap.night .empty-icon { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
-        .app-wrap.night .empty-cta { background: #e07c3a; color: #fff; }
+        .app-wrap.night .empty-cta { background: var(--brand); color: #fff; }
         .pac-container { z-index: 100000 !important; }
         .app-wrap.night .pac-container { background: #0d1935 !important; border-color: rgba(255,255,255,0.12) !important; }
         .app-wrap.night .pac-item { border-top-color: rgba(255,255,255,0.08) !important; color: #fff !important; }
@@ -1472,7 +1580,7 @@ export default function App() {
         .app-wrap.day .convo-wrap { background: rgba(235,248,240,0.82); }
         .app-wrap.night .ai-name { color: rgba(255,255,255,0.35); }
         .app-wrap.night .ai-bubble { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.08); color: #fff; }
-        .app-wrap.night .user-bubble { background: #e07c3a; color: #fff; }
+        .app-wrap.night .user-bubble { background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%); color: #fff; }
         .app-wrap.night .qr-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #fff; }
         .app-wrap.night .qr-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
         .app-wrap.night .qr-btn.yes { border-color: #2abf6e; color: #2abf6e; }
@@ -1486,7 +1594,7 @@ export default function App() {
         .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); }
         .app-wrap.night .generate-wrap { border-top: 1px solid rgba(255,255,255,0.07); background: rgba(8,14,38,0.98); }
         .app-wrap.day .generate-wrap { background: rgba(240,248,255,0.85); }
-        .app-wrap.night .btn-generate { background: #e07c3a; }
+        .app-wrap.night .btn-generate { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); }
         .app-wrap.night .chat-header { background: rgba(8,14,38,0.98); border-bottom: 1px solid rgba(255,255,255,0.07); }
         .app-wrap.day .chat-header { background: rgba(240,248,255,0.85); border-bottom: 1px solid rgba(0,0,0,0.06); }
         .app-wrap.night .chat-wrap { background: transparent; }
