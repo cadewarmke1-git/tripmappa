@@ -97,6 +97,13 @@ const CSS = `
   .nav.solid .nav-btn:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
   .nav.solid .nav-btn-primary { background: var(--gold); color: var(--charcoal); border-color: transparent; font-weight: 700; }
 
+  .nav-app {
+    background: rgba(15, 20, 40, 0.92);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
   /* ── Hero ── */
   .hero {
     position: relative; min-height: 100vh;
@@ -141,11 +148,12 @@ const CSS = `
 
   /* Hero search bar — frosted glass */
   .hero-search {
+    position: relative;
     background: rgba(255,255,255,0.15);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 24px; padding: 12px 12px 12px 26px;
-    display: flex; align-items: center; gap: 16px;
+    display: flex; align-items: stretch; gap: 16px;
     width: 100%; max-width: 600px; margin: 0 auto 40px;
     border: 1px solid rgba(255,255,255,0.3);
     box-shadow: 0 16px 48px rgba(0,0,0,0.2);
@@ -156,14 +164,14 @@ const CSS = `
     border-color: rgba(255,255,255,0.45);
     box-shadow: 0 20px 56px rgba(0,0,0,0.28), 0 0 0 3px rgba(255,255,255,0.08);
   }
-  .hero-search-fields { display: flex; align-items: stretch; gap: 12px; flex: 1; min-width: 0; }
-  .hero-search-divider-wrap {
-    position: relative; display: flex; align-items: center; justify-content: center;
-    width: 36px; flex-shrink: 0; align-self: stretch;
+  .hero-search-fields {
+    position: relative; flex: 1; min-width: 0;
+    display: grid; grid-template-columns: 1fr 1fr; align-items: center;
   }
   .hero-search-divider {
-    position: absolute; left: 50%; top: 6px; bottom: 6px; width: 1px;
-    transform: translateX(-50%); height: auto; background: rgba(255,255,255,0.3);
+    position: absolute; left: 50%; top: 8px; bottom: 8px; width: 1px;
+    transform: translateX(-50%); background: rgba(255,255,255,0.3);
+    pointer-events: none;
   }
   .hero-swap-btn {
     position: absolute; left: 50%; top: 50%; z-index: 2;
@@ -176,6 +184,7 @@ const CSS = `
     transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
   }
   .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
+  .hero-go-btn { align-self: center; }
   .timing-menu {
     position: absolute; top: calc(100% + 8px); left: 0; min-width: 180px;
     background: rgba(15,20,40,0.98); border: 1px solid rgba(255,255,255,0.12);
@@ -202,16 +211,18 @@ const CSS = `
   }
   .route-timing-btn:hover { border-color: rgba(255,210,140,0.4); background: rgba(255,255,255,0.12); }
   @media (max-width: 540px) {
-    .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; }
-    .hero-search-fields { flex-direction: column; width: 100%; gap: 10px; }
-    .hero-search-divider-wrap { width: 100%; height: 36px; align-self: auto; }
-    .hero-search-divider { top: 50%; bottom: auto; left: 0; right: 0; width: auto; height: 1px; transform: translateY(-50%); }
-    .hero-input-wrap { width: 100%; }
-    .hero-go-btn { width: 100%; text-align: center; justify-content: center; }
+    .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
+    .hero-search-fields { grid-template-columns: 1fr; grid-template-rows: auto auto; width: 100%; }
+    .hero-search-divider { top: 50%; bottom: auto; left: 16px; right: 16px; width: auto; height: 1px; transform: translateY(-50%); }
+    .hero-input-wrap:first-child,
+    .hero-input-wrap:last-child { padding-left: 0; padding-right: 0; }
+    .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
   }
-  .hero-input-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .hero-input-wrap { min-width: 0; padding: 0 18px; }
+  .hero-input-wrap:first-child { padding-left: 0; padding-right: 22px; }
+  .hero-input-wrap:last-child { padding-right: 0; padding-left: 22px; }
   .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 5px; }
   .hero-input {
     border: none; outline: none; font-family: 'Inter', sans-serif;
@@ -521,6 +532,9 @@ const CSS = `
     padding: 18px 20px; cursor: pointer; user-select: none;
     border-bottom: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
+    background: rgba(15, 20, 40, 0.92);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
   }
   .float-card-header-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -899,6 +913,105 @@ function computeAutoTheme() {
   return "day";
 }
 
+async function callAI(prompt, model = "claude-haiku-4-5-20251001") {
+  console.log("AI call →", model, prompt.slice(0, 60));
+  const response = await fetch("/api/claude", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, model }),
+  });
+  const data = await response.json();
+  return data.content?.[0]?.text || "";
+}
+
+function buildNextQuestionPrompt(answers, routeContext) {
+  const { origin, dest, routeInfo } = routeContext;
+  const routeLine = routeInfo
+    ? `${routeInfo.distance} · ${routeInfo.duration} drive`
+    : "distance unknown";
+
+  return `You are a friendly travel planning assistant for TripMappa. Write the NEXT single question for this user.
+
+Route: ${origin || "?"} → ${dest || "?"}
+${routeLine}
+Answers so far: ${JSON.stringify(answers)}
+
+Collect these fields before finishing (skip when rules say to):
+- trip_type: Road trip | Driving home | Day trip | Work / Delivery
+- vehicle: Car | RV / Camper | Semi Truck | Motorcycle | Trailer
+- trailer_detail: free text (Trailer or Semi Truck only)
+- fuel: Gasoline | Electric (EV)
+- pets: Yes | No (skip for Work / Delivery)
+- pet_desc: free text (only if pets is Yes)
+- overnight: Yes | No (Road trip or Work / Delivery only)
+- lodging: Budget | Mid-range | Upscale | Luxury | Campground | RV Park
+- restaurants: Yes | No
+- grocery: Yes | No
+- extra: optional free text
+
+Rules:
+- Day trip: skip lodging, grocery, and overnight
+- Driving home: skip lodging, restaurants, grocery, and extra
+- Car or Motorcycle: skip trailer_detail
+- pets is No: skip pet_desc
+- When all needed fields are collected, return {"done":true}
+
+Write "ask" in plain, casual, SHORT English (max 10 words). Tailor wording to their trip — mention route length when relevant.
+
+Return ONLY valid JSON, no markdown:
+{"done":false,"id":"vehicle","ask":"What are you driving?","type":"choice","choices":["Car","RV / Camper","Semi Truck","Motorcycle","Trailer"],"placeholder":"","skippable":false}
+
+Use type "choice", "yesno", or "text". For yesno you may omit choices. For text include placeholder. Only extra may have skippable true.`;
+}
+
+function fallbackNextQuestion(answers, lastQuestionId) {
+  const from = lastQuestionId ? QUESTIONS.findIndex(q => q.id === lastQuestionId) + 1 : 0;
+  const next = nextQ(from, answers);
+  if (next === -2) return { done: true };
+  const q = QUESTIONS[next];
+  return { done: false, id: q.id, ask: q.ask, type: q.type, choices: q.choices, placeholder: q.placeholder, skippable: q.skippable };
+}
+
+function parseAIQuestion(raw, answers, lastQuestionId) {
+  try {
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    if (parsed.done) return { done: true };
+
+    const template = QUESTIONS.find(q => q.id === parsed.id);
+    if (!template) throw new Error("unknown question id");
+    if (template.onlyIf && !template.onlyIf(answers)) throw new Error("question not applicable");
+    if (answers[parsed.id] !== undefined && answers[parsed.id] !== "") throw new Error("already answered");
+
+    return {
+      done: false,
+      id: parsed.id,
+      ask: String(parsed.ask || template.ask).slice(0, 120),
+      type: parsed.type || template.type,
+      choices: parsed.choices || template.choices,
+      placeholder: parsed.placeholder || template.placeholder || "",
+      skippable: parsed.skippable ?? template.skippable ?? false,
+    };
+  } catch {
+    return fallbackNextQuestion(answers, lastQuestionId);
+  }
+}
+
+async function fetchNextQuestion(answers, routeContext, lastQuestionId = null) {
+  const raw = await callAI(buildNextQuestionPrompt(answers, routeContext));
+  return parseAIQuestion(raw, answers, lastQuestionId);
+}
+
+function nextQ(from, ans) {
+  let i = from;
+  while (i < QUESTIONS.length) {
+    const q = QUESTIONS[i];
+    if (!q.onlyIf || q.onlyIf(ans)) return i;
+    i++;
+  }
+  return -2;
+}
+
 export default function App() {
   const [view, setView] = useState("hero"); // "hero" | "app"
   const [tab, setTab] = useState("plan");
@@ -919,6 +1032,9 @@ export default function App() {
   const [convo, setConvo] = useState([]);
   const [answers, setAnswers] = useState({});
   const [qIndex, setQIndex] = useState(-1);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [questionHistory, setQuestionHistory] = useState([]);
+  const [convoLoading, setConvoLoading] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [convoComplete, setConvoComplete] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1123,66 +1239,79 @@ export default function App() {
       if (originRef.current) originRef.current.value = from;
       if (destRef.current) destRef.current.value = to;
       if (isLoaded && window.google) fetchDirections();
-      const first = nextQ(0,{});
-      setQIndex(first);
+      setAnswers({});
       setConvo([]);
       setConvoComplete(false);
       setGenerated(false);
+      setQuestionHistory([]);
+      setCurrentQuestion(null);
+      loadNextQuestion({}, null, { origin: from, dest: to, routeInfo: null });
     }, 300);
   }
 
-  function nextQ(from, ans) {
-    let i=from;
-    while(i<QUESTIONS.length) { const q=QUESTIONS[i]; if(!q.onlyIf||q.onlyIf(ans)) return i; i++; }
-    return -2;
+  async function loadNextQuestion(newAnswers, lastQuestionId, routeOverride) {
+    setConvoLoading(true);
+    const ctx = routeOverride || { origin, dest, routeInfo };
+    try {
+      const result = await fetchNextQuestion(newAnswers, ctx, lastQuestionId);
+      if (result.done) {
+        setCurrentQuestion(null);
+        setQIndex(-2);
+        setConvoComplete(true);
+      } else {
+        setCurrentQuestion(result);
+        setQIndex(0);
+      }
+    } catch (err) {
+      console.error("AI question failed:", err);
+      const fallback = fallbackNextQuestion(newAnswers, lastQuestionId);
+      if (fallback.done) {
+        setCurrentQuestion(null);
+        setQIndex(-2);
+        setConvoComplete(true);
+      } else {
+        setCurrentQuestion(fallback);
+        setQIndex(0);
+      }
+    } finally {
+      setConvoLoading(false);
+    }
   }
 
-  function startConvo() {
-    if(!origin||!dest){toast_("Enter origin and destination first");return;}
-    const first=nextQ(0,{});
-    setQIndex(first);
-
-    let openingMsg;
-    if (routeInfo) {
-      const hours = parseInt(routeInfo.duration);
-      const suggestedStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 18 ? 3 : 4;
-      openingMsg = `${routeInfo.distance} · ${routeInfo.duration} drive · ${suggestedStops} suggested stop${suggestedStops > 1 ? "s" : ""}`;
-    } else {
-      openingMsg = `Planning your trip from ${origin} to ${dest}.`;
-    }
-
+  async function startConvo() {
+    if (!origin || !dest) { toast_("Enter origin and destination first"); return; }
     setConvo([]);
-    setQIndex(first);
+    setAnswers({});
+    setQuestionHistory([]);
+    setTextInput("");
+    setConvoComplete(false);
+    await loadNextQuestion({}, null);
   }
 
   function getStepMessage() {
     if (qIndex === -2) return "Got it. Ready to generate your trip plan?";
-    if (qIndex >= 0) return QUESTIONS[qIndex].ask;
+    if (convoLoading) return "One sec…";
+    if (currentQuestion) return currentQuestion.ask;
     return null;
   }
 
-  function submitAnswer(value) {
-    const q = QUESTIONS[qIndex];
-    const na = { ...answers, [q.id]: value };
+  async function submitAnswer(value) {
+    if (!currentQuestion) return;
+    const na = { ...answers, [currentQuestion.id]: value };
     setAnswers(na);
     setTextInput("");
-    const next = nextQ(qIndex + 1, na);
-    if (next === -2) {
-      setQIndex(-2);
-      setConvoComplete(true);
-    } else {
-      setQIndex(next);
-    }
+    setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
+    await loadNextQuestion(na, currentQuestion.id);
   }
 
   function pickAnswer(value) {
-    if (stepAnim) return;
+    if (stepAnim || convoLoading) return;
     setStepAnim({ answer: value, phase: "flash" });
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     stepAnimTimer.current = setTimeout(() => {
       setStepAnim(prev => prev ? { ...prev, phase: "exit" } : null);
-      stepAnimTimer.current = setTimeout(() => {
-        submitAnswer(value);
+      stepAnimTimer.current = setTimeout(async () => {
+        await submitAnswer(value);
         setStepAnim(null);
       }, 260);
     }, 380);
@@ -1252,6 +1381,7 @@ export default function App() {
           destination: tripDest,
           answers,
           routeInfo,
+          model: "claude-sonnet-4-20250514",
         }),
       });
 
@@ -1273,31 +1403,30 @@ export default function App() {
 
   function resetPlan() {
     setConvo([]); setAnswers({}); setQIndex(-1);
+    setCurrentQuestion(null); setQuestionHistory([]); setConvoLoading(false);
     setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setStopCategory("all");
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
   }
 
-  const currentQ = qIndex>=0 ? QUESTIONS[qIndex] : null;
+  const currentQ = currentQuestion;
 
   function goBackOneQuestion() {
+    if (questionHistory.length === 0) return;
+    const history = [...questionHistory];
+    const last = history.pop();
     const newAnswers = { ...answers };
-    if (qIndex >= 0) delete newAnswers[QUESTIONS[qIndex].id];
-    let prev = qIndex - 1;
-    while (prev >= 0) {
-      const prevQ = QUESTIONS[prev];
-      if (!prevQ.onlyIf || prevQ.onlyIf(newAnswers)) {
-        setAnswers(newAnswers);
-        setQIndex(prev);
-        setTextInput("");
-        return;
-      }
-      prev--;
-    }
+    delete newAnswers[last.question.id];
+    setAnswers(newAnswers);
+    setQuestionHistory(history);
+    setCurrentQuestion(last.question);
+    setQIndex(0);
+    setConvoComplete(false);
+    setTextInput(last.answer === "skip" ? "" : (last.answer || ""));
   }
 
   function QuestionChoices() {
-    if (!currentQ) return null;
+    if (!currentQ || convoLoading) return null;
     const frozen = !!stepAnim;
     const selected = stepAnim?.answer;
     const showChoices = stepAnim?.phase !== "exit";
@@ -1308,7 +1437,7 @@ export default function App() {
     if (!showChoices) return null;
     return (
       <div className={`question-choices${frozen ? " choices-frozen" : ""}`}>
-        {qIndex > 0 && !frozen && (
+        {questionHistory.length > 0 && !frozen && (
           <button type="button" onClick={goBackOneQuestion} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,letterSpacing:"0.04em"}}>
             ← Back
           </button>
@@ -1567,13 +1696,13 @@ export default function App() {
                 <button type="button" className="btn-generate btn-generate-inline" onClick={startConvo}>Start planning</button>
               </div>
             )}
-            {(qIndex >= 0 || qIndex === -2) && (
-              <div className={`ai-msg step-active${stepAnim?.phase === "exit" ? " step-exit" : ""}`} key={qIndex}>
-                {qIndex >= 0 && routeInfo && (
+            {(currentQuestion || qIndex === -2 || convoLoading) && (
+              <div className={`ai-msg step-active${stepAnim?.phase === "exit" ? " step-exit" : ""}`} key={currentQuestion?.id ?? qIndex}>
+                {currentQuestion && routeInfo && !convoLoading && (
                   <div className="plan-route-hint">{routeInfo.distance} · {routeInfo.duration} drive</div>
                 )}
                 <div className="ai-bubble">{getStepMessage()}</div>
-                {qIndex >= 0 && <QuestionChoices />}
+                {currentQuestion && !convoLoading && <QuestionChoices />}
                 {qIndex === -2 && (
                   <div className="question-choices" style={{borderTop:"none",paddingTop:16,marginTop:16}}>
                     <SummaryCard/>
@@ -1725,10 +1854,8 @@ export default function App() {
                   <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
                 )}
               </div>
-              <div className="hero-search-divider-wrap">
-                <div className="hero-search-divider"/>
-                <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
-              </div>
+              <div className="hero-search-divider" aria-hidden="true"/>
+              <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
               <div className="hero-input-wrap">
                 <div className="hero-input-label">To</div>
                 {isLoaded ? (
@@ -1805,7 +1932,7 @@ export default function App() {
       <style>{CSS}</style>
       <style>{`
         /* ── App theme: Day ── */
-        .app-wrap.day .nav-app { background: rgba(12,18,34,0.94); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
+        .app-wrap.day .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
         .app-wrap.day .nav-app .nav-logo { color: #fff; }
         .app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
         .app-wrap.day .nav-app .nav-tab { color: rgba(255,255,255,0.5); }
@@ -1828,7 +1955,7 @@ export default function App() {
         }
 
         /* ── App theme: Night ── */
-        .app-wrap.night .nav-app { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
+        .app-wrap.night .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
         .app-wrap.night .nav-app .nav-logo { color: #fff; }
         .app-wrap.night .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
         .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
@@ -2025,7 +2152,7 @@ export default function App() {
         display:"flex", flexDirection:"column", height:"100vh",
         transition: "color 1.8s ease",
       }}>
-        <nav className="nav-app nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,height:"var(--nav-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",backdropFilter:"blur(12px)"}}>
+        <nav className="nav-app nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,height:"var(--nav-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px"}}>
           <div className="nav-logo">Trip<span>Mappa</span></div>
           <div className="nav-center-wrap nav-center" style={{display:"flex",gap:"1px",borderRadius:8,padding:3}}>
             {[["plan","Plan"],["trips","Trips"],["share","Share"]].map(([k,l])=>(

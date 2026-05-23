@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { origin, destination, answers, routeInfo } = req.body;
+  const { origin, destination, answers, routeInfo, model = "claude-sonnet-4-20250514" } = req.body;
 
   if (!origin || !destination) {
     return res.status(400).json({ error: "Missing origin or destination" });
@@ -98,7 +98,7 @@ Return this JSON exactly — each stop must have a category:
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model,
         max_tokens: 1200,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
