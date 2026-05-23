@@ -1371,12 +1371,22 @@ export default function App() {
 
         /* Sidebar gradient backgrounds */
         .app-wrap.day .sidebar-inner {
-          background: linear-gradient(180deg, #f0f8ff 0%, #e8f4f0 40%, #f5f5f0 100%);
+          background: transparent;
           border-right: 1px solid rgba(0,0,0,0.06);
         }
         .app-wrap.night .sidebar-inner {
-          background: linear-gradient(180deg, #020818 0%, #050d2a 30%, #0a1840 60%, #0d2255 100%);
+          background: transparent;
           border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Float card — fully opaque, no map bleed */
+        .app-wrap.day .float-card {
+          background: #ffffff !important;
+          backdrop-filter: none !important;
+        }
+        .app-wrap.night .float-card {
+          background: #0a0e24 !important;
+          backdrop-filter: none !important;
         }
 
         /* Logo fix */
@@ -1420,15 +1430,13 @@ export default function App() {
         }
         .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap { position: relative; z-index: 1; }
 
-        /* Day sidebar — more saturated sky to meadow */
+        /* Day sidebar — clean white */
         .app-wrap.day .sidebar-inner {
           position: relative; overflow: hidden;
-          background: linear-gradient(180deg, #b8dcf5 0%, #a8d4ee 15%, #b8e8cc 40%, #98d4a0 65%, #78c080 85%, #5aaa60 100%) !important;
+          background: transparent !important;
         }
         .app-wrap.day .sidebar-inner::after {
-          content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 25%;
-          background: linear-gradient(to top, rgba(40,100,30,0.18) 0%, transparent 100%);
-          pointer-events: none; z-index: 0;
+          display: none;
         }
         .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
 
