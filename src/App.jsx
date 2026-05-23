@@ -66,9 +66,11 @@ const CSS = `
   }
   .hero.day {
     background: linear-gradient(180deg,#87CEEB 0%,#a8d8ea 18%,#c8e8c0 38%,#a8c878 52%,#8ab560 62%,#6d9e4a 72%,#4a7a6a 82%,#2d5a52 92%,#1a3d38 100%);
+    transition: background 1.8s ease;
   }
   .hero.night {
     background: linear-gradient(180deg,#020818 0%,#050d2a 20%,#0a1840 40%,#0d2255 55%,#1a3a6a 65%,#3a2a15 78%,#6b3d10 88%,#8a5020 95%,#020818 100%);
+    transition: background 1.8s ease;
   }
   /* Pseudo-element trick for smooth background transition */
   .hero::before {
@@ -344,7 +346,7 @@ const CSS = `
   .route-input:focus { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 3px rgba(10,12,16,0.06); }
   .route-input::placeholder { color: #c0bab4; }
   .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
-  .convo-wrap { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 24px; }
+  .convo-wrap { flex: 1; overflow-y: auto; padding: 20px 16px 20px; display: flex; flex-direction: column; gap: 28px; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
   .ai-msg { display: flex; flex-direction: column; gap: 10px; animation: fadeUp 0.2s ease both; padding-bottom: 4px; }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
@@ -596,7 +598,7 @@ export default function App() {
   const [groceryInput, setGroceryInput] = useState("");
   const [groceryItems, setGroceryItems] = useState([]);
   const [scrolled, setScrolled] = useState(false);
-  const [heroTheme, setHeroTheme] = useState("day");
+  const [heroTheme, setHeroTheme] = useState(() => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "day");
   const [cardCollapsed, setCardCollapsed] = useState(false);
 
   // ── Google Maps ──
@@ -765,12 +767,12 @@ export default function App() {
       if (!response.ok) throw new Error(data.error || "Failed to generate trip");
 
       // Map Claude response to stops format
-      if (data.road_stops) {
-        // Day trip / driving home — categorized road stops
+      if (data.road_stops && !data.stops) {
+        // Day trip / driving home — categorized road stops only
         setRoadStops(data.road_stops);
         setStops([]);
-      } else {
-        // Overnight trip — hotel stops
+      } else if (data.stops) {
+        // Overnight trip — hotel stops + optional road stops
         const aiStops = (data.stops || []).map(stop => ({
           city: stop.city,
           distance: stop.distance,
@@ -780,7 +782,9 @@ export default function App() {
           restaurants: (stop.restaurants || []).map(r => ({ name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time })),
         }));
         setStops(aiStops);
-        setRoadStops([]);
+        // Also set road stops if Claude returned them for overnight trips
+        if (data.road_stops?.length) setRoadStops(data.road_stops);
+        else setRoadStops([]);
       }
 
       if (data.tips?.length) setTripTips(data.tips);
@@ -873,7 +877,7 @@ export default function App() {
               <button onClick={resetPlan} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center",gap:4,padding:0}}>
                 ← Start over
               </button>
-              <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center"}}>{origin} → {dest}</div>
+              <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center",color:"inherit"}}>{origin} → {dest}</div>
               <button onClick={saveTrip} style={{background:"var(--accent)",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                 Save
               </button>
@@ -883,17 +887,19 @@ export default function App() {
               {isDayOrHomeTrip ? "Stops along the way" : "Overnight stops"}
             </div>
 
-            {/* Categorized road stops for day/home trips */}
-            {isDayOrHomeTrip && roadStops.length > 0 && (
+            {/* Road stops — shown for ALL trip types */}
+            {roadStops.length > 0 && (
               <>
-                {/* Category filter tabs */}
+                <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:8,marginTop:!isDayOrHomeTrip&&stops.length>0?16:0}}>
+                  {isDayOrHomeTrip ? "Stops along the way" : "Road stops"}
+                </div>
                 <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
                   {["all","fuel","food","rest","charging"].filter(cat =>
                     cat === "all" || roadStops.some(s => s.category === cat)
                   ).map(cat => (
                     <button key={cat} onClick={()=>setStopCategory(cat)} style={{
                       padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600,
-                      border: "1.5px solid", cursor:"pointer",
+                      border:"1.5px solid", cursor:"pointer",
                       background: stopCategory===cat ? "var(--ink)" : "transparent",
                       color: stopCategory===cat ? "#fff" : "var(--muted)",
                       borderColor: stopCategory===cat ? "var(--ink)" : "var(--border)",
@@ -909,21 +915,18 @@ export default function App() {
                     <div key={i} className="stop-card" style={{marginBottom:8,animationDelay:i*0.07+"s"}}>
                       <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px"}}>
                         <div style={{
-                          width:36,height:28,borderRadius:6,flexShrink:0,
-                          background: s.category==="fuel"?"rgba(224,124,58,0.12)":s.category==="food"?"rgba(42,191,110,0.12)":s.category==="charging"?"rgba(74,159,212,0.12)":"rgba(138,138,138,0.1)",
+                          width:36,height:22,borderRadius:6,flexShrink:0,
+                          background: s.category==="fuel"?"rgba(224,92,42,0.12)":s.category==="food"?"rgba(42,191,110,0.12)":s.category==="charging"?"rgba(42,122,224,0.12)":"rgba(138,138,138,0.1)",
                           display:"flex",alignItems:"center",justifyContent:"center",
                         }}>
-                          <span style={{
-                            fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",
-                            color: s.category==="fuel"?"#e07c3a":s.category==="food"?"#2abf6e":s.category==="charging"?"#4a9fd4":"#8a8a8a",
-                          }}>
+                          <span style={{fontSize:8,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",color:s.category==="fuel"?"#e05c2a":s.category==="food"?"#2abf6e":s.category==="charging"?"#2a7ae0":"#8a8a8a"}}>
                             {s.category==="fuel"?"FUEL":s.category==="food"?"FOOD":s.category==="charging"?"EV":"REST"}
                           </span>
                         </div>
                         <div style={{flex:1}}>
                           <div className="road-stop-name" style={{fontWeight:700,fontSize:13}}>{s.name}</div>
                           <div className="road-stop-loc" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.location} · {s.distance}</div>
-                          {s.note && <div className="road-stop-note" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.note}</div>}
+                          {s.note&&<div className="road-stop-note" style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{s.note}</div>}
                         </div>
                         <div style={{fontSize:11,color:"var(--muted)",flexShrink:0}}>{s.eta}</div>
                       </div>
@@ -962,9 +965,7 @@ export default function App() {
                   <div className="stop-card" key={i} style={{marginBottom:8,animationDelay:i*0.07+"s"}}>
                     {/* Stop header */}
                     <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:"1.5px solid var(--border)"}}>
-                      <div style={{width:26,height:26,borderRadius:"50%",background:"var(--ink)",color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"Syne"}}>
-                        {i+1}
-                      </div>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:"var(--accent)",flexShrink:0,marginTop:4}}/>
                       <div style={{flex:1}}>
                         <div className="stop-city">{stop.city}</div>
                         <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
@@ -1356,7 +1357,7 @@ export default function App() {
         .app-wrap.night .chat-title { color: #fff; }
         .app-wrap.night .chat-sub { color: rgba(255,255,255,0.45); }
         .app-wrap.night .route-wrap { border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .app-wrap.night .route-input { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: #ffffff !important; }
+        .app-wrap.night .route-input { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.1) !important; color: #ffffff !important; }
         .app-wrap.night .route-input::placeholder { color: rgba(255,255,255,0.25); }
         .app-wrap.night .route-line { background: rgba(255,255,255,0.1); }
         .app-wrap.night .route-dot { background: #fff; }
@@ -1389,7 +1390,8 @@ export default function App() {
         .app-wrap.night .map-placeholder-text { color: rgba(255,255,255,0.2); }
         .app-wrap.night .map-placeholder-sub { color: rgba(255,255,255,0.12); }
         .app-wrap.night .stop-card { background: #0d1935; border-color: rgba(255,255,255,0.08); }
-        .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); }
+        .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
+        .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
         .app-wrap.night .stop-city { color: #fff; }
         .app-wrap.night .stop-meta { color: rgba(255,255,255,0.4); }
         .app-wrap.night .stop-num { background: #e07c3a; }
