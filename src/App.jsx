@@ -110,12 +110,10 @@ const CSS = `
   }
   .hero-overlay {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 100%);
+    background: rgba(0, 0, 0, 0.35);
     transition: background 1.8s ease;
   }
-  .hero.night .hero-overlay {
-    background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.65) 100%);
-  }
+  .hero.night .hero-overlay { background: rgba(0, 0, 0, 0.55); }
 
   /* Hero content */
   .hero-content {
@@ -168,44 +166,41 @@ const CSS = `
     transform: translateX(-50%); height: auto; background: rgba(255,255,255,0.3);
   }
   .hero-swap-btn {
-    position: relative; z-index: 2;
+    position: absolute; left: 50%; top: 50%; z-index: 2;
     width: 30px; height: 30px; border-radius: 50%;
+    transform: translate(-50%, -50%);
     background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
     color: #fff; font-size: 13px; line-height: 1; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
   }
-  .hero-swap-btn:hover { transform: rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
+  .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
   .timing-menu {
     position: absolute; top: calc(100% + 8px); left: 0; min-width: 180px;
-    background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 200;
+    background: rgba(15,20,40,0.98); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); z-index: 200;
   }
-  .app-wrap.night .timing-menu { background: rgba(15,22,40,0.96); border-color: rgba(255,255,255,0.12); }
   .timing-menu-item {
     display: block; width: 100%; text-align: left; padding: 10px 14px;
     border: none; background: none; border-radius: 8px; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--charcoal);
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: #fff;
   }
-  .app-wrap.night .timing-menu-item { color: #fff; }
   .timing-menu-item:hover { background: rgba(255,210,140,0.12); }
-  .timing-menu-item.active { background: rgba(255,210,140,0.18); font-weight: 700; }
+  .timing-menu-item.active { background: rgba(255,210,140,0.18); font-weight: 700; color: rgba(255,210,140,0.9); }
   .route-arrive-picker {
     margin-top: 8px; padding: 10px 14px; width: 100%;
-    border: 1px solid rgba(255,210,140,0.25); border-radius: 12px;
-    background: rgba(255,255,255,0.85); color: var(--charcoal); font-family: 'Inter', sans-serif; font-size: 13px;
+    border: 1px solid rgba(255,210,140,0.2); border-radius: 12px;
+    background: rgba(255,255,255,0.08); color: #fff; font-family: 'Inter', sans-serif; font-size: 13px;
   }
-  .app-wrap.night .route-arrive-picker { background: rgba(255,255,255,0.06); border-color: rgba(255,210,140,0.2); color: #fff; }
   .route-timing-wrap { position: relative; margin-top: 8px; }
   .route-timing-btn {
-    background: rgba(255,255,255,0.7); border: 1px solid rgba(255,210,140,0.25);
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,210,140,0.2);
     border-radius: 99px; padding: 8px 16px; font-family: 'Inter', sans-serif;
-    font-size: 12px; font-weight: 400; color: var(--charcoal); cursor: pointer;
+    font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.9); cursor: pointer;
     transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
   }
-  .route-timing-btn:hover { border-color: rgba(255,210,140,0.45); background: rgba(255,255,255,0.9); }
-  .app-wrap.night .route-timing-btn { background: rgba(255,210,140,0.08); border-color: rgba(255,210,140,0.15); color: rgba(255,255,255,0.9); }
+  .route-timing-btn:hover { border-color: rgba(255,210,140,0.4); background: rgba(255,255,255,0.12); }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; }
     .hero-search-fields { flex-direction: column; width: 100%; gap: 10px; }
@@ -326,25 +321,22 @@ const CSS = `
   .float-card-help-wrap { position: relative; z-index: 200; }
   .float-card-help-btn {
     width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.06);
-    color: var(--charcoal); font-size: 14px; font-weight: 700; cursor: pointer;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
   }
-  .float-card-help-btn:hover { border-color: rgba(255,210,140,0.5); background: #fff; }
-  .float-card.night .float-card-help-btn { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); color: #fff; }
+  .float-card-help-btn:hover { border-color: rgba(255,210,140,0.5); background: rgba(255,255,255,0.16); }
   .help-menu {
     position: absolute; top: calc(100% + 8px); right: 0; min-width: 168px;
-    background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 300;
+    background: rgba(15,20,40,0.98); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); z-index: 300;
   }
-  .float-card.night .help-menu { background: rgba(12,18,34,0.98); border-color: rgba(255,255,255,0.12); }
   .help-menu-item {
     display: block; width: 100%; text-align: left; padding: 10px 14px;
     border: none; background: none; border-radius: 8px; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--charcoal);
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: #fff;
   }
-  .float-card.night .help-menu-item { color: #fff; }
   .help-menu-item:hover { background: rgba(255,210,140,0.12); }
   .report-textarea {
     width: 100%; min-height: 120px; padding: 12px; border: 1.5px solid var(--border);
@@ -392,12 +384,14 @@ const CSS = `
     line-height: 1.45 !important;
     cursor: pointer !important;
     border-top: 1px solid var(--border) !important;
-    color: var(--ink) !important;
+    color: #1a1a2e !important;
   }
   .pac-item:first-child { border-top: none !important; }
-  .pac-item:hover, .pac-item-selected { background: var(--surface) !important; }
-  .pac-item-query { font-weight: 600 !important; color: var(--ink) !important; font-family: 'Inter', sans-serif !important; }
-  .pac-matched { font-weight: 700 !important; color: var(--accent) !important; }
+  .pac-item:hover, .pac-item-selected { background: rgba(255,210,140,0.1) !important; }
+  .pac-item-query { font-weight: 600 !important; color: #1a1a2e !important; font-family: 'Inter', sans-serif !important; }
+  .pac-matched { font-weight: 700 !important; color: rgba(255,210,140,0.9) !important; }
+  .pac-item span { color: #1a1a2e !important; }
+  .pac-item-query .pac-matched { color: rgba(255,210,140,0.9) !important; }
   .pac-icon { margin-top: 2px !important; }
   .map-area { flex: 1; position: relative; overflow: hidden; }
   .gmap-wrap { width: 100%; height: 100%; }
@@ -436,11 +430,12 @@ const CSS = `
   }
   .route-info-bar {
     position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-    background: rgba(10,12,16,0.88); backdrop-filter: blur(16px) saturate(1.5);
+    background: rgba(15, 20, 40, 0.75); backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
     border-radius: 14px; padding: 12px 22px;
     display: flex; gap: 20px; align-items: center;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,210,140,0.15);
     z-index: 10; white-space: nowrap;
     max-width: calc(100vw - 32px);
     overflow: hidden;
@@ -466,35 +461,21 @@ const CSS = `
   .map-full { position: absolute; inset: 0; top: var(--nav-h); }
   .gmap-wrap { width: 100%; height: 100%; }
 
-  /* Floating card — frosted glass */
+  /* Floating card — moody mountain-lodge frosted glass */
   .float-card {
     position: absolute; top: calc(var(--nav-h) + 16px); left: 16px;
     width: 390px; max-height: calc(100vh - var(--nav-h) - 32px);
-    backdrop-filter: blur(32px) saturate(1.5);
-    -webkit-backdrop-filter: blur(32px) saturate(1.5);
+    background: rgba(15, 20, 40, 0.75);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border: 1px solid rgba(255, 210, 140, 0.15);
     border-radius: 22px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
     display: flex; flex-direction: column;
     overflow: hidden; z-index: 50;
-    transition: max-height 0.45s var(--ease), box-shadow 0.3s var(--ease), background 1.8s ease, border-color 1.8s ease;
+    transition: max-height 0.45s var(--ease), box-shadow 0.3s var(--ease);
   }
   .float-card > * { position: relative; z-index: 1; }
-  .float-card.day {
-    background: rgba(255, 253, 250, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    box-shadow: 0 20px 56px rgba(30, 90, 120, 0.1), 0 8px 24px rgba(20, 60, 90, 0.06), inset 0 1px 0 rgba(255,255,255,0.9);
-  }
-  .float-card.night {
-    background: rgba(8, 14, 32, 0.82);
-    border: 1px solid rgba(255,210,140,0.1);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,210,140,0.06);
-  }
-  .float-card.night::before {
-    content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
-    background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.35), transparent),
-      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.2), transparent),
-      radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,0.25), transparent);
-    opacity: 0.35;
-  }
   .float-card.collapsed { max-height: 62px; }
   .float-card-body {
     flex: 1; min-height: 0; display: flex; flex-direction: column;
@@ -521,9 +502,8 @@ const CSS = `
     .float-card.collapsed { max-height: 52px; }
     .float-card-handle {
       display: block; width: 36px; height: 4px; border-radius: 99px;
-      background: rgba(0,0,0,0.14); margin: 0 auto 10px; flex-shrink: 0;
+      background: rgba(255,255,255,0.22); margin: 0 auto 10px; flex-shrink: 0;
     }
-    .float-card.night .float-card-handle { background: rgba(255,255,255,0.22); }
     .float-card-header { padding: 8px 16px 14px !important; flex-direction: column; align-items: stretch; }
     .float-card-header-row { display: flex; align-items: center; justify-content: space-between; }
     .chat-title { font-size: 18px !important; }
@@ -539,17 +519,15 @@ const CSS = `
   .float-card-header {
     display: flex; flex-direction: column; align-items: stretch;
     padding: 18px 20px; cursor: pointer; user-select: none;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
   }
   .float-card-header-row {
     display: flex; align-items: center; justify-content: space-between;
     width: 100%;
   }
-  .float-card.night .float-card-header { border-bottom-color: rgba(255,255,255,0.06); }
-  .float-card-title { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; }
-  .float-card.night .float-card-title { color: #fff; }
-  .float-card-chevron { font-size: 10px; color: var(--muted); transition: transform 0.3s; }
+  .float-card-title { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; color: #fff; }
+  .float-card-chevron { font-size: 10px; color: rgba(255,255,255,0.45); transition: transform 0.3s; }
   .float-card-chevron.open { transform: rotate(180deg); }
 
   /* Map placeholder */
@@ -557,27 +535,51 @@ const CSS = `
   .map-placeholder-text { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.18); }
   .map-placeholder-sub { font-size: 12px; color: rgba(0,0,0,0.12); }
 
-  /* ── Chat panel — premium warm conversation ── */
-  .chat-wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; background: transparent; }
-  .chat-header { padding: 28px 24px 22px; border-bottom: 1px solid rgba(0,0,0,0.05); background: transparent; }
-  .chat-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 10px; letter-spacing: -0.02em; line-height: 1.3; }
-  .chat-sub { font-size: 14px; color: var(--muted); line-height: 1.65; font-weight: 400; }
-  .route-wrap { padding: 20px 24px 22px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 14px; background: transparent; }
+  /* ── Chat panel — mountain-lodge frosted glass ── */
+  .chat-wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; background: transparent; color: #fff; }
+  .chat-header { padding: 28px 24px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); background: transparent; }
+  .chat-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 10px; letter-spacing: -0.02em; line-height: 1.3; }
+  .chat-sub { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.65; font-weight: 400; }
+  .route-wrap { padding: 20px 24px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 14px; background: transparent; }
+  .route-fields { display: flex; flex-direction: column; gap: 0; }
+  .route-divider-wrap {
+    position: relative; height: 36px; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .route-divider {
+    position: absolute; top: 50%; left: 16px; right: 16px; height: 1px;
+    transform: translateY(-50%); background: rgba(255,255,255,0.2);
+  }
+  .route-swap-btn {
+    position: absolute; left: 50%; top: 50%; z-index: 2;
+    width: 30px; height: 30px; border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25);
+    color: #fff; font-size: 13px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+  }
+  .route-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,210,140,0.45); background: rgba(255,255,255,0.14); }
   .route-input-wrap { position: relative; }
-  .route-dot { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+  .route-dot { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.7); }
   .route-dot.dest { background: var(--gold); }
-  .route-input { width: 100%; padding: 12px 14px 12px 34px; border: 1px solid rgba(120,160,180,0.2); border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 14px; background: rgba(255,255,255,0.92); color: var(--charcoal); outline: none; transition: all 0.2s var(--ease); font-weight: 400; }
-  .route-input:focus { border-color: rgba(255,210,140,0.5); background: #fff; box-shadow: 0 0 0 3px rgba(255,210,140,0.12); }
-  .route-input::placeholder { color: #c0bab4; }
-  .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 16px; }
+  .route-input {
+    width: 100%; padding: 12px 14px 12px 34px; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    background: rgba(255,255,255,0.08); color: #fff; outline: none;
+    transition: all 0.2s var(--ease); font-weight: 400;
+  }
+  .route-input:focus { border-color: rgba(255,210,140,0.4); background: rgba(255,255,255,0.12); box-shadow: 0 0 0 3px rgba(255,210,140,0.1); }
+  .route-input::placeholder { color: rgba(255,255,255,0.35); }
   .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 28px 24px; display: flex; flex-direction: column; gap: 0; background: transparent; }
   .convo-wrap::-webkit-scrollbar { width: 0px; }
   .plan-view, .convo-wrap > .ai-msg, .convo-wrap > .user-msg { margin: 0; }
   .ai-msg { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
   .user-msg { display: flex; justify-content: flex-end; margin-top: 14px; animation: answerSlideIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
   .plan-route-hint {
-    font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 20px;
-    padding: 11px 16px; background: rgba(255,210,140,0.12); border-radius: 12px;
+    font-size: 11px; color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 20px;
+    padding: 11px 16px; background: rgba(255,210,140,0.1); border-radius: 12px;
     border: 1px solid rgba(255,210,140,0.18);
     font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
   }
@@ -587,83 +589,80 @@ const CSS = `
   @keyframes answerSlideIn { from { opacity: 0; transform: translateY(12px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .question-choices {
     margin-top: 22px; padding-top: 22px;
-    border-top: 1px solid rgba(0,0,0,0.06);
+    border-top: 1px solid rgba(255,255,255,0.08);
     display: flex; flex-direction: column; gap: 16px;
   }
-  .app-wrap.night .question-choices { border-top-color: rgba(255,255,255,0.08); }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
   .convo-empty { text-align: center; padding: 36px 0; }
-  .convo-empty p { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.55; }
+  .convo-empty p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 16px; line-height: 1.55; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
   @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
   .results-view { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
   .plan-view { animation: fadeUp 0.2s ease both; }
   .ai-bubble {
-    background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.95);
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px 20px 20px 6px;
-    padding: 20px 22px; font-size: 15px; line-height: 1.65; color: var(--charcoal);
+    padding: 20px 22px; font-size: 15px; line-height: 1.65; color: #fff;
     max-width: 100%; font-weight: 400;
-    box-shadow: 0 4px 18px rgba(15, 30, 50, 0.06);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.15);
   }
   .user-bubble {
-    background: linear-gradient(165deg, #1a2332 0%, var(--charcoal) 100%);
-    color: #fff; border-radius: 20px 20px 6px 20px;
+    background: #1a2744; color: #fff; border-radius: 20px 20px 6px 20px;
     padding: 16px 22px; font-size: 15px; max-width: 85%; line-height: 1.55;
     font-weight: 700;
-    box-shadow: 0 6px 20px rgba(12, 18, 34, 0.22);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   }
   .qr-btn {
-    border: 1px solid rgba(255,210,140,0.35); background: rgba(255,255,255,0.96); border-radius: 99px;
+    border: 1px solid rgba(255,210,140,0.4); background: rgba(255,255,255,0.08); border-radius: 99px;
     padding: 13px 24px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400;
     cursor: pointer;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
-    color: var(--charcoal);
-    box-shadow: 0 2px 10px rgba(15, 30, 50, 0.05);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
   }
-  .qr-btn:hover { border-color: rgba(255,210,140,0.55); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(15, 30, 50, 0.08); }
+  .qr-btn:hover { border-color: rgba(255,210,140,0.6); transform: translateY(-1px); background: rgba(255,255,255,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
   .qr-btn:active { transform: scale(0.98); }
   .qr-btn.qr-selected {
     animation: qrGoldFlash 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
     border-color: rgba(255,210,140,0.7) !important;
-    color: var(--charcoal) !important;
+    color: #1a1a2e !important;
     pointer-events: none;
   }
   @keyframes qrGoldFlash {
-    0% { background: rgba(255,255,255,0.96); box-shadow: 0 2px 10px rgba(15,30,50,0.05); transform: scale(1); opacity: 1; }
+    0% { background: rgba(255,255,255,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.12); transform: scale(1); opacity: 1; }
     20% { background: rgba(255,210,140,0.9); box-shadow: 0 0 0 4px rgba(255,210,140,0.3); transform: scale(1.03); opacity: 1; }
     100% { background: rgba(255,210,140,0.4); box-shadow: none; transform: scale(0.97); opacity: 0; }
   }
-  .qr-btn.yes, .qr-btn.no { border-color: rgba(255,210,140,0.35); color: var(--charcoal); background: rgba(255,255,255,0.96); }
-  .qr-btn.yes:hover, .qr-btn.no:hover { background: rgba(255,210,140,0.12); border-color: rgba(255,210,140,0.5); color: var(--charcoal); }
+  .qr-btn.yes, .qr-btn.no { border-color: rgba(255,210,140,0.4); color: #fff; background: rgba(255,255,255,0.08); }
+  .qr-btn.yes:hover, .qr-btn.no:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,210,140,0.55); color: #fff; }
   .qr-btn.qr-dimmed { opacity: 0.35; pointer-events: none; transform: none !important; }
   .choices-frozen .qr-btn:not(.qr-selected) { opacity: 0.3; pointer-events: none; }
   .answer-input-wrap { display: flex; gap: 8px; }
-  .answer-input { flex: 1; padding: 13px 18px; border: 1px solid rgba(0,0,0,0.08); border-radius: 99px; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: all 0.2s var(--ease); background: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(15,40,30,0.06); }
-  .answer-input:focus { border-color: rgba(245,200,66,0.5); box-shadow: 0 0 0 3px rgba(245,200,66,0.15); }
-  .answer-send { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%); color: #fff; border: none; border-radius: 99px; padding: 13px 22px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.2s; white-space: nowrap; box-shadow: 0 4px 14px rgba(12,18,34,0.25); }
+  .answer-input { flex: 1; padding: 13px 18px; border: 1px solid rgba(255,255,255,0.12); border-radius: 99px; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: all 0.2s var(--ease); background: rgba(255,255,255,0.08); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .answer-input::placeholder { color: rgba(255,255,255,0.35); }
+  .answer-input:focus { border-color: rgba(255,210,140,0.4); box-shadow: 0 0 0 3px rgba(255,210,140,0.1); }
+  .answer-send { background: rgba(255,210,140,0.9); color: #1a1a2e; border: none; border-radius: 99px; padding: 13px 22px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.2s; white-space: nowrap; box-shadow: 0 4px 14px rgba(255,210,140,0.25); }
   .answer-send:hover:not(:disabled) { transform: scale(1.03); }
   .answer-send:active:not(:disabled) { transform: scale(0.97); }
   .answer-send:disabled { opacity: 0.45; cursor: not-allowed; }
-  .answer-send-muted { background: rgba(255,255,255,0.85) !important; color: var(--muted) !important; border: 1px solid rgba(0,0,0,0.08) !important; box-shadow: none !important; }
-  .summary-card { background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 20px; font-size: 14px; line-height: 1.75; backdrop-filter: blur(8px); }
+  .answer-send-muted { background: rgba(255,255,255,0.08) !important; color: rgba(255,255,255,0.45) !important; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: none !important; }
+  .summary-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; font-size: 14px; line-height: 1.75; color: #fff; backdrop-filter: blur(8px); }
   .summary-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
-  .summary-key { font-weight: 600; min-width: 88px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; padding-top: 3px; }
-  .generate-wrap { padding: 20px 24px 24px; border-top: 1px solid rgba(0,0,0,0.05); background: transparent; }
-  .app-wrap.night .generate-wrap { border-top-color: rgba(255,255,255,0.06); }
+  .summary-key { font-weight: 600; min-width: 88px; color: rgba(255,255,255,0.45); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; padding-top: 3px; }
+  .generate-wrap { padding: 20px 24px 24px; border-top: 1px solid rgba(255,255,255,0.08); background: transparent; }
   .btn-generate {
     width: 100%; min-height: 52px; padding: 16px 24px; border: none; cursor: pointer;
-    background: linear-gradient(180deg, #1a2332 0%, var(--charcoal) 100%);
-    color: #fff; border-radius: 16px; font-family: 'Inter', sans-serif;
+    background: rgba(255,210,140,0.9); color: #1a1a2e; border-radius: 16px; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
-    box-shadow: 0 6px 24px rgba(12, 18, 34, 0.28);
+    box-shadow: 0 6px 24px rgba(255,210,140,0.25);
   }
-  .btn-generate:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(12, 18, 34, 0.34); }
-  .btn-generate:active:not(:disabled) { transform: scale(0.98); box-shadow: 0 4px 16px rgba(12, 18, 34, 0.24); }
+  .btn-generate:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(255,210,140,0.35); }
+  .btn-generate:active:not(:disabled) { transform: scale(0.98); box-shadow: 0 4px 16px rgba(255,210,140,0.2); }
   .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
   .btn-generate-inline { width: auto; padding: 12px 28px; display: inline-block; }
-  .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(26,26,46,0.2); border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── Stops panel ── */
@@ -1499,29 +1498,31 @@ export default function App() {
         <div className="chat-sub">Answer a few quick questions and we'll handle everything.</div>
       </div>
       <div className="route-wrap">
-        <div className="route-input-wrap">
-          <div className="route-dot"/>
-          {isLoaded ? (
-            <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
-              <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
-            </Autocomplete>
-          ) : (
-            <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
-          )}
-        </div>
-        <div className="hero-search-divider-wrap" style={{ height: 32, width: "100%", marginLeft: 16, alignSelf: "flex-start" }}>
-          <div className="route-line" style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1.5, height: "100%", margin: 0 }} />
-          <button type="button" className="hero-swap-btn" style={{ marginLeft: 20 }} onClick={swapRouteCities} aria-label="Swap origin and destination">↕</button>
-        </div>
-        <div className="route-input-wrap">
-          <div className="route-dot dest"/>
-          {isLoaded ? (
-            <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
-              <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
-            </Autocomplete>
-          ) : (
-            <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
-          )}
+        <div className="route-fields">
+          <div className="route-input-wrap">
+            <div className="route-dot"/>
+            {isLoaded ? (
+              <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
+                <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
+              </Autocomplete>
+            ) : (
+              <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
+            )}
+          </div>
+          <div className="route-divider-wrap">
+            <div className="route-divider"/>
+            <button type="button" className="route-swap-btn" onClick={swapRouteCities} aria-label="Swap origin and destination">↕</button>
+          </div>
+          <div className="route-input-wrap">
+            <div className="route-dot dest"/>
+            {isLoaded ? (
+              <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
+                <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
+              </Autocomplete>
+            ) : (
+              <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
+            )}
+          </div>
         </div>
         <div className="route-timing-wrap">
           <button type="button" className="route-timing-btn" onClick={() => setRouteTimingOpen(o => !o)}>
@@ -1813,32 +1814,18 @@ export default function App() {
         .app-wrap.day .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85) !important; }
         .app-wrap.day .nav-app .nav-btn-primary { background: rgba(255,210,140,0.9); color: var(--charcoal) !important; border-color: transparent; font-weight: 700; }
         .app-wrap.day .nav-center-wrap { background: rgba(255,255,255,0.08); }
-        .app-wrap.day .chat-title { color: var(--charcoal); }
-        .app-wrap.day .chat-sub { color: #6b7280; }
-        .app-wrap.day .route-input { background: rgba(255,255,255,0.92); border-color: rgba(120,160,180,0.2); color: var(--charcoal); border-radius: 12px; }
-        .app-wrap.day .ai-bubble {
-          background: rgba(255, 255, 255, 0.94); border-color: rgba(255,255,255,0.98);
-          color: var(--charcoal); box-shadow: 0 4px 18px rgba(30, 100, 140, 0.07);
-        }
-        .app-wrap.day .user-bubble {
-          background: linear-gradient(165deg, #1a2332 0%, #0c1222 100%); color: #fff;
-          box-shadow: 0 6px 24px rgba(12,18,34,0.22);
-        }
-        .app-wrap.day .qr-btn {
-          background: rgba(255,255,255,0.88); border-color: rgba(0,0,0,0.07); color: #1a2332;
-          box-shadow: 0 3px 12px rgba(30,80,50,0.07);
-        }
-        .app-wrap.day .qr-btn:hover { background: #fff; border-color: rgba(255,210,140,0.4); }
-        .app-wrap.day .btn-generate-app { background: #0f1923; color: #fff; }
         .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
-        .app-wrap.day .convo-wrap,
-        .app-wrap.day .chat-header,
-        .app-wrap.day .route-wrap,
-        .app-wrap.day .generate-wrap,
-        .app-wrap.day .stops-wrap { background: transparent !important; }
-        .app-wrap.day .chat-header { border-bottom-color: rgba(0,0,0,0.05); }
-        .app-wrap.day .route-wrap { border-bottom-color: rgba(0,0,0,0.05); }
-        .app-wrap.day .plan-route-hint { background: rgba(255,210,140,0.14); color: rgba(12,18,34,0.7); border: 1px solid rgba(255,210,140,0.2); }
+        .app-wrap.day .map-placeholder-sub { color: rgba(0,0,0,0.12); }
+
+        /* Float card + conversation — same dark frosted glass in day & night */
+        .app-wrap.day .float-card,
+        .app-wrap.night .float-card {
+          background: rgba(15, 20, 40, 0.75) !important;
+          backdrop-filter: blur(24px) saturate(1.2) !important;
+          -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
+          border: 1px solid rgba(255, 210, 140, 0.15) !important;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+        }
 
         /* ── App theme: Night ── */
         .app-wrap.night .nav-app { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
@@ -1849,96 +1836,19 @@ export default function App() {
         .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
         .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85) !important; }
         .app-wrap.night .nav-app .nav-btn-primary { background: var(--charcoal); color: #fff !important; border-color: rgba(255,255,255,0.15); }
-        .app-wrap.night .float-card .route-input { color: #fff !important; }
-        .app-wrap.night .float-card .route-input::placeholder { color: rgba(255,255,255,0.35) !important; }
         .app-wrap.night .route-loading-pill {
-          background: rgba(8,14,38,0.95); border-color: rgba(255,255,255,0.1); color: #fff;
+          background: rgba(15,20,40,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
         }
         .app-wrap.night .spinner-dark {
           border-color: rgba(255,255,255,0.15); border-top-color: rgba(255,210,140,0.9);
         }
         .app-wrap.night .empty-icon { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
-        .app-wrap.night .empty-cta { background: var(--charcoal); color: #fff; }
-        .pac-container { z-index: 100000 !important; }
-        .app-wrap.night .pac-container { background: #0d1935 !important; border-color: rgba(255,255,255,0.12) !important; }
-        .app-wrap.night .pac-item { border-top-color: rgba(255,255,255,0.08) !important; color: #fff !important; }
-        .app-wrap.night .pac-item:hover, .app-wrap.night .pac-item-selected { background: rgba(255,255,255,0.08) !important; }
-        .app-wrap.night .pac-item-query { color: #fff !important; }
-        .app-wrap.night .chat-title { color: #fff; }
-        .app-wrap.night .chat-sub { color: rgba(255,255,255,0.45); }
-        .app-wrap.night .route-wrap { border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.night .empty-cta { background: rgba(255,210,140,0.9); color: #1a1a2e; }
         .app-wrap.night .results-view { color: #fff; }
         .app-wrap.night .results-view .stop-city { color: #fff; }
         .app-wrap.night .results-view .stop-meta { color: rgba(255,255,255,0.5); }
-        .app-wrap.night .route-input { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.1) !important; color: #ffffff !important; }
-        .app-wrap.night .route-input::placeholder { color: rgba(255,255,255,0.25); }
-        .app-wrap.night .route-line { background: rgba(255,255,255,0.1); }
-        .app-wrap.night .route-dot { background: #fff; }
-        .app-wrap.night .route-dot.dest { background: rgba(255,210,140,0.9) !important; }
-        .app-wrap.night .convo-wrap { background: transparent !important; }
-        .app-wrap.night .ai-name { color: rgba(255,255,255,0.35); }
-        .app-wrap.night .ai-bubble {
-          background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.95);
-          box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-        }
-        .app-wrap.night .user-bubble {
-          background: linear-gradient(165deg, #1a2332 0%, #0c1222 100%); color: #fff;
-          box-shadow: 0 6px 24px rgba(0,0,0,0.35);
-        }
-        .app-wrap.night .qr-btn {
-          background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92);
-          box-shadow: 0 3px 12px rgba(0,0,0,0.2);
-        }
-        .app-wrap.night .qr-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
-        .app-wrap.night .qr-btn.yes { border-color: rgba(255,210,140,0.35); color: rgba(255,210,140,0.9); }
-        .app-wrap.night .qr-btn.yes:hover { background: rgba(255,210,140,0.15); color: #fff; }
-        .app-wrap.night .qr-btn.no { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
-        .app-wrap.night .qr-btn.no:hover { background: rgba(255,255,255,0.12); color: #fff; }
-        .app-wrap.night .answer-input { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: #fff; }
-        .app-wrap.night .answer-input::placeholder { color: rgba(255,255,255,0.25); }
-        .app-wrap.night .answer-send { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%); }
-        .app-wrap.night .answer-send-muted { background: rgba(255,255,255,0.07) !important; color: rgba(255,255,255,0.55) !important; border-color: rgba(255,255,255,0.1) !important; }
-        .app-wrap.night .summary-card { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #fff; }
-        .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); letter-spacing: 0.08em; }
-        .app-wrap.night .generate-wrap { border-top-color: rgba(255,255,255,0.06); background: transparent !important; }
-        .app-wrap.night .plan-route-hint { background: rgba(255,210,140,0.1); color: rgba(255,255,255,0.75); border: 1px solid rgba(255,210,140,0.15); }
-        .app-wrap.night .chat-header { background: transparent !important; border-bottom-color: rgba(255,255,255,0.06); }
-        .app-wrap.night .chat-wrap { background: transparent; }
-        .app-wrap.night .route-wrap { background: transparent !important; border-bottom-color: rgba(255,255,255,0.06); }
         .app-wrap.night .map-placeholder-text { color: rgba(255,255,255,0.2); }
         .app-wrap.night .map-placeholder-sub { color: rgba(255,255,255,0.12); }
-        .app-wrap.night .stop-card { background: #0d1935; border-color: rgba(255,255,255,0.08); }
-        .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
-        .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
-        .app-wrap.night .stop-city { color: #fff; }
-        .app-wrap.night .stop-meta { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .stop-num { background: rgba(255,210,140,0.9); color: var(--charcoal); }
-        .app-wrap.night .item-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
-        .app-wrap.night .item-row:hover { background: rgba(255,255,255,0.08); }
-        .app-wrap.night .item-name { color: #fff; }
-        .app-wrap.night .item-meta { color: rgba(255,255,255,0.5); }
-        .app-wrap.night .item-price { color: #fff; }
-        .app-wrap.night .road-stop-name { color: #fff !important; }
-        .app-wrap.night .road-stop-loc { color: rgba(255,255,255,0.5) !important; }
-        .app-wrap.night .road-stop-note { color: rgba(255,255,255,0.5) !important; }
-        .app-wrap.night .stop-section-label { color: rgba(255,255,255,0.3); }
-        .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
-        .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
-        .app-wrap.night .filter-tab.active { background: #fff !important; color: var(--ink) !important; border-color: #fff !important; }
-        .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
-        .app-wrap.night .action-btn-primary { background: var(--charcoal); border-color: var(--charcoal); }
-        .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
-        .app-wrap.night .empty-title { color: #fff; }
-        .app-wrap.night .empty-sub { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .stops-wrap { color: #fff; }
-        .app-wrap.night .stops-wrap h2, .app-wrap.night .stops-wrap div { color: inherit; }
-        .app-wrap.night .share-title { color: #fff; }
-        .app-wrap.night .share-sub { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .person-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
-        .app-wrap.night .person-name { color: #fff; }
-        .app-wrap.night .person-status { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .stops-wrap { background: transparent !important; color: #fff; }
-        .app-wrap.day .stops-wrap { background: transparent !important; }
 
         /* Sidebar — transparent so frosted float-card shows through */
         .app-wrap.day .sidebar-inner {
@@ -1953,31 +1863,9 @@ export default function App() {
         .app-wrap.night .sidebar-inner::before,
         .app-wrap.night .sidebar-inner::after { display: none; }
 
-        /* Float card — frosted glass */
-        .app-wrap.day .float-card {
-          background: rgba(255, 253, 250, 0.82) !important;
-          backdrop-filter: blur(32px) saturate(1.5) !important;
-          -webkit-backdrop-filter: blur(32px) saturate(1.5) !important;
-          border: 1px solid rgba(255,255,255,0.75) !important;
-          box-shadow: 0 24px 56px rgba(30, 100, 140, 0.12), 0 8px 24px rgba(20, 80, 120, 0.06), inset 0 1px 0 rgba(255,255,255,0.92) !important;
-        }
-        .app-wrap.night .float-card {
-          background: rgba(8, 14, 32, 0.84) !important;
-          backdrop-filter: blur(32px) saturate(1.4) !important;
-          -webkit-backdrop-filter: blur(32px) saturate(1.4) !important;
-          border: 1px solid rgba(255,210,140,0.1) !important;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,210,140,0.05) !important;
-        }
-
         /* Logo — Trip white, Mappa gold everywhere */
         .app-wrap .nav-logo { color: #fff !important; }
         .app-wrap .nav-logo span { color: rgba(255,210,140,0.9) !important; }
-
-        /* Route dots */
-        .app-wrap.night .route-dot { background: rgba(255,255,255,0.7) !important; }
-        .app-wrap.night .route-dot.dest { background: rgba(255,210,140,0.9) !important; }
-        .app-wrap.day .route-dot { background: #0f1923 !important; }
-        .app-wrap.day .route-dot.dest { background: rgba(255,210,140,0.9) !important; }
 
         .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap,
         .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
@@ -1985,7 +1873,66 @@ export default function App() {
         .app-wrap.night .fuel-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
         .app-wrap.night .fuel-label { color: #fff; }
         .app-wrap.night .fuel-meta-txt { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .btn-generate { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%); }
+
+        /* Stops panel — light cards inside dark float card (both themes) */
+        .app-wrap.day .stop-card,
+        .app-wrap.night .stop-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.08); }
+        .app-wrap.day .stop-card-head,
+        .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
+        .app-wrap.day .stop-city,
+        .app-wrap.night .stop-city { color: #fff; }
+        .app-wrap.day .stop-meta,
+        .app-wrap.night .stop-meta { color: rgba(255,255,255,0.45); }
+        .app-wrap.day .stop-num,
+        .app-wrap.night .stop-num { background: rgba(255,210,140,0.9); color: #1a1a2e; }
+        .app-wrap.day .item-row,
+        .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
+        .app-wrap.day .item-name,
+        .app-wrap.night .item-name { color: #fff; }
+        .app-wrap.day .item-meta,
+        .app-wrap.night .item-meta { color: rgba(255,255,255,0.5); }
+        .app-wrap.day .item-price,
+        .app-wrap.night .item-price { color: #fff; }
+        .app-wrap.day .stops-panel-title,
+        .app-wrap.night .stops-panel-title { color: #fff; }
+        .app-wrap.day .stops-panel-sub,
+        .app-wrap.night .stops-panel-sub { color: rgba(255,255,255,0.5); }
+        .app-wrap.day .empty-title,
+        .app-wrap.night .empty-title { color: #fff; }
+        .app-wrap.day .empty-sub,
+        .app-wrap.night .empty-sub { color: rgba(255,255,255,0.45); }
+        .app-wrap.day .share-title,
+        .app-wrap.night .share-title { color: #fff; }
+        .app-wrap.day .share-sub,
+        .app-wrap.night .share-sub { color: rgba(255,255,255,0.45); }
+        .app-wrap.day .person-row,
+        .app-wrap.night .person-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+        .app-wrap.day .person-name,
+        .app-wrap.night .person-name { color: #fff; }
+        .app-wrap.day .person-status,
+        .app-wrap.night .person-status { color: rgba(255,255,255,0.4); }
+        .app-wrap.day .stops-wrap,
+        .app-wrap.night .stops-wrap { background: transparent !important; color: #fff; }
+        .app-wrap.day .action-btn,
+        .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .app-wrap.day .action-btn:hover,
+        .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
+        .app-wrap.day .action-btn-primary,
+        .app-wrap.night .action-btn-primary { background: rgba(255,210,140,0.9); border-color: rgba(255,210,140,0.9); color: #1a1a2e; }
+        .app-wrap.day .filter-tab,
+        .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
+        .app-wrap.day .filter-tab.active,
+        .app-wrap.night .filter-tab.active { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: rgba(255,210,140,0.9) !important; }
+        .app-wrap.day .road-stop-name,
+        .app-wrap.night .road-stop-name { color: #fff !important; }
+        .app-wrap.day .road-stop-loc,
+        .app-wrap.night .road-stop-loc { color: rgba(255,255,255,0.5) !important; }
+        .app-wrap.day .section-sep,
+        .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
+        .app-wrap.day .stop-section-label,
+        .app-wrap.night .stop-section-label { color: rgba(255,255,255,0.35); }
+        .app-wrap.day .item-row:hover,
+        .app-wrap.night .item-row:hover { background: rgba(255,255,255,0.08) !important; }
 
         /* Two-layer opacity crossfade — same technique as hero */
         .app-wrap .sidebar-day-layer, .app-wrap .sidebar-night-layer {
@@ -2213,7 +2160,7 @@ export default function App() {
             <div className="float-card-header" onClick={()=>setCardCollapsed(c=>!c)}>
               <div className="float-card-handle" aria-hidden="true"/>
               <div className="float-card-header-row">
-                <div className="float-card-title" style={{color: theme==="night"?"#fff":"var(--ink)"}}>
+                <div className="float-card-title">
                   {tab==="plan"?"Plan Your Trip":tab==="trips"?"Trips":"Live Sharing"}
                 </div>
                 <div className="float-card-header-actions" onClick={e => e.stopPropagation()}>
