@@ -72,14 +72,6 @@ const CSS = `
     background: #020818;
     transition: background 1.8s ease;
   }
-  /* Pseudo-element trick for smooth background transition */
-  .hero::before {
-    content: ''; position: absolute; inset: 0;
-    background: inherit;
-    transition: opacity 1.4s ease;
-    z-index: 0;
-  }
-
   /* Road SVG overlay */
   .hero-road {
     position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
@@ -574,7 +566,7 @@ export default function App() {
   });
 
   function saveTrip() {
-    if (!origin || !dest || !stops.length) return;
+    if (!origin || !dest || (!stops.length && !roadStops.length)) return;
     const trip = {
       id: Date.now(),
       origin, dest,
@@ -1055,7 +1047,7 @@ export default function App() {
               )
             ))}
             {currentQ&&(
-              <div className="ai-msg">
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {qIndex > 0 && (
                   <button onClick={() => {
                     let prev = qIndex - 1;
@@ -1067,13 +1059,10 @@ export default function App() {
                     setAnswers(newAnswers);
                     setQIndex(prev);
                     setTextInput("");
-                  }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
+                  }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4}}>
                     ← Back
                   </button>
                 )}
-                {/* Visual separator between question and options */}
-                <div style={{width:"100%",height:"1px",background:"var(--border)",opacity:0.5,margin:"2px 0 6px"}}/>
-                <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:6}}>Choose one</div>
                 {currentQ.type==="yesno"&&(
                   <div className="quick-replies">
                     <button className="qr-btn yes" onClick={()=>submitAnswer("Yes")}>Yes</button>
@@ -1087,7 +1076,6 @@ export default function App() {
                 )}
                 {currentQ.type==="text"&&(
                   <>
-                    <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:6}}>Your answer</div>
                     <div className="answer-input-wrap">
                       <input className="answer-input" placeholder={currentQ.placeholder} value={textInput} onChange={e=>setTextInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&textInput.trim()&&submitAnswer(textInput.trim())}/>
                       {currentQ.skippable&&<button className="answer-send" style={{background:"var(--surface)",color:"var(--muted)",border:"1px solid var(--border)"}} onClick={()=>submitAnswer("skip")}>Skip</button>}
@@ -1412,6 +1400,8 @@ export default function App() {
         .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
         .app-wrap.night .empty-title { color: #fff; }
         .app-wrap.night .empty-sub { color: rgba(255,255,255,0.4); }
+        .app-wrap.night .stops-wrap { color: #fff; }
+        .app-wrap.night .stops-wrap h2, .app-wrap.night .stops-wrap div { color: inherit; }
         .app-wrap.night .share-title { color: #fff; }
         .app-wrap.night .share-sub { color: rgba(255,255,255,0.4); }
         .app-wrap.night .person-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
