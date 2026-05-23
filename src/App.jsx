@@ -3,6 +3,22 @@ import { GoogleMap, useJsApiLoader, Autocomplete } from "@react-google-maps/api"
 
 const GOOGLE_LIBRARIES = ["places", "routes"];
 
+const STANDARD_MAP_STYLES = [
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
+const DARK_MAP_STYLES = [
+  { elementType: "geometry", stylers: [{ color: "#0a1628" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#a0a0b0" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0a1628" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#1a2d45" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#2a4060" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d2a" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800;900&family=Syne:wght@700;800;900&display=swap');
   :root {
@@ -31,6 +47,9 @@ const CSS = `
     --glass: rgba(255, 255, 255, 0.72);
     --glass-border: rgba(255, 255, 255, 0.85);
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --gold: rgba(255,210,140,0.9);
+    --gold-soft: rgba(255,210,140,0.15);
+    --charcoal: #0c1222;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 14px; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
@@ -48,8 +67,8 @@ const CSS = `
   .nav-logo { font-family: 'Syne', sans-serif; font-size: 21px; font-weight: 900; letter-spacing: -0.8px; }
   .nav.transparent .nav-logo { color: #fff; }
   .nav.solid .nav-logo { color: var(--ink); }
-  .nav.transparent .nav-logo span { color: rgba(255,255,255,0.85); }
-  .nav.solid .nav-logo span { color: var(--ink); opacity: 0.7; }
+  .nav.transparent .nav-logo span { color: var(--gold); }
+  .nav.solid .nav-logo span { color: var(--gold); }
   .nav-center { display: flex; gap: 1px; border-radius: 8px; padding: 3px; }
   .nav.transparent .nav-center { background: rgba(255,255,255,0.12); }
   .nav.solid .nav-center { background: var(--border); }
@@ -68,9 +87,9 @@ const CSS = `
   .nav.transparent .nav-btn:hover { background: rgba(255,255,255,0.22); }
   .nav.transparent .nav-btn-ghost { background: none !important; border: none !important; color: rgba(255,255,255,0.92) !important; box-shadow: none !important; }
   .nav.transparent .nav-btn-ghost:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
-  .nav.transparent .nav-btn-signup { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%) !important; border: none !important; color: #fff !important; font-weight: 600 !important; box-shadow: 0 4px 16px rgba(0,0,0,0.35) !important; }
-  .nav.transparent .nav-btn-signup:hover { background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important; }
-  .nav.transparent .nav-btn-primary { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%); border-color: transparent; color: #fff; }
+  .nav.transparent .nav-btn-signup { background: var(--gold) !important; border: none !important; color: var(--charcoal) !important; font-weight: 600 !important; box-shadow: 0 4px 16px rgba(255,210,140,0.35) !important; }
+  .nav.transparent .nav-btn-signup:hover { background: rgba(255,220,155,0.95) !important; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,210,140,0.45) !important; }
+  .nav.transparent .nav-btn-primary { background: var(--gold); border-color: transparent; color: var(--charcoal); }
   .nav.solid .nav-btn { background: none; border-color: var(--border); color: var(--muted); }
   .nav.solid .nav-btn:hover { border-color: #ccc; color: var(--ink); }
   .nav.solid .nav-btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
@@ -109,10 +128,10 @@ const CSS = `
     z-index: 1;
   }
   .hero.day .hero-glow {
-    background: radial-gradient(ellipse 80% 55% at 50% 70%, rgba(212, 140, 90, 0.28) 0%, rgba(180, 110, 70, 0.1) 40%, transparent 72%);
+    background: radial-gradient(ellipse 85% 60% at 50% 68%, rgba(255,180,100,0.32) 0%, rgba(220,130,70,0.14) 38%, transparent 72%);
   }
   .hero.night .hero-glow {
-    background: radial-gradient(ellipse 75% 45% at 50% 75%, rgba(30, 138, 138, 0.18) 0%, rgba(20, 100, 120, 0.08) 40%, transparent 70%);
+    background: radial-gradient(ellipse 75% 50% at 50% 72%, rgba(255,180,100,0.12) 0%, rgba(255,210,140,0.06) 40%, transparent 70%);
   }
 
   /* Hero content */
@@ -133,6 +152,7 @@ const CSS = `
   }
   .hero.day .hero-title { text-shadow: 0 2px 28px rgba(0,0,0,0.25), 0 1px 4px rgba(0,0,0,0.15); }
   .hero.day .hero-sub { color: rgba(255,255,255,0.88); text-shadow: 0 1px 8px rgba(0,0,0,0.15); }
+  .hero-title .highlight { color: var(--gold); }
 
   .hero-sub {
     font-size: 17px; color: rgba(255,255,255,0.8); max-width: 440px;
@@ -151,16 +171,67 @@ const CSS = `
     transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
   }
   .hero-search:focus-within {
-    box-shadow: 0 28px 88px rgba(0,0,0,0.32), 0 0 0 3px rgba(255,255,255,0.25);
+    box-shadow: 0 28px 88px rgba(0,0,0,0.32), 0 0 0 3px rgba(255,210,140,0.2);
     border-color: rgba(255,255,255,1);
   }
+  .hero-search-fields { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+  .hero-search-divider-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
+  .hero-swap-btn {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.08);
+    color: var(--charcoal); font-size: 14px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,210,140,0.6); box-shadow: 0 4px 12px rgba(0,0,0,0.14); }
+  .hero.night .hero-swap-btn { background: rgba(20,28,48,0.95); border-color: rgba(255,255,255,0.15); color: #fff; }
+  .hero-timing-wrap { position: relative; width: 100%; max-width: 600px; margin: -28px auto 24px; animation: heroIn 1s 0.25s cubic-bezier(0.16,1,0.3,1) both; }
+  .hero-timing-btn {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 99px; padding: 7px 16px; font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.85); cursor: pointer;
+    transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .hero-timing-btn:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,210,140,0.35); }
+  .hero-timing-menu, .timing-menu {
+    position: absolute; top: calc(100% + 8px); left: 0; min-width: 180px;
+    background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 50;
+  }
+  .hero.night .hero-timing-menu { background: rgba(15,22,40,0.96); border-color: rgba(255,255,255,0.12); }
+  .timing-menu-item {
+    display: block; width: 100%; text-align: left; padding: 10px 14px;
+    border: none; background: none; border-radius: 8px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--charcoal);
+  }
+  .hero.night .timing-menu-item { color: #fff; }
+  .timing-menu-item:hover { background: rgba(255,210,140,0.12); }
+  .timing-menu-item.active { background: rgba(255,210,140,0.18); font-weight: 600; }
+  .hero-arrive-picker, .route-arrive-picker {
+    margin-top: 8px; padding: 10px 14px; width: 100%;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 10px;
+    background: rgba(255,255,255,0.1); color: #fff; font-family: 'Inter', sans-serif; font-size: 13px;
+  }
+  .route-timing-wrap { position: relative; margin-top: 4px; }
+  .route-timing-btn {
+    background: rgba(255,210,140,0.1); border: 1px solid rgba(255,210,140,0.2);
+    border-radius: 99px; padding: 7px 14px; font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 500; color: var(--charcoal); cursor: pointer;
+  }
+  .app-wrap.night .route-timing-btn { background: rgba(255,210,140,0.08); border-color: rgba(255,210,140,0.15); color: rgba(255,255,255,0.9); }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; }
+    .hero-search-fields { flex-direction: column; width: 100%; gap: 10px; }
+    .hero-search-divider-wrap { width: 100%; height: 1px; }
     .hero-search-divider { width: 100%; height: 1px; }
+    .hero-swap-btn { transform: translate(-50%, -50%); }
     .hero-input-wrap { width: 100%; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; }
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
+    .hero-timing-wrap { margin-top: -16px; }
   }
   .hero-search-divider { width: 1px; height: 30px; background: rgba(0,0,0,0.08); flex-shrink: 0; }
   .hero-input-wrap { flex: 1; display: flex; flex-direction: column; }
@@ -198,9 +269,18 @@ const CSS = `
     font-size: 12px; color: rgba(255,255,255,0.4);
     animation: heroIn 1s 0.35s cubic-bezier(0.16,1,0.3,1) both;
   }
-  .hero-hint span { color: rgba(255,255,255,0.65); }
+  .hero-hint span { color: var(--gold); }
 
-  /* Auth buttons */
+  /* Auth buttons — white/charcoal only on cover */
+  .hero-auth-btn-google { background: rgba(255,255,255,0.95); color: var(--charcoal); border-color: rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .hero-auth-btn-google:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.14); }
+  .hero-auth-btn-fb {
+    background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: none;
+  }
+  .hero-auth-btn-fb:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); box-shadow: none; }
+  .hero-auth-btn-apple { background: var(--charcoal); color: #fff; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+  .hero-auth-btn-apple:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
   .hero-auth { margin-top: 8px; margin-bottom: 40px; animation: heroIn 1s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
   .hero-auth-label { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; font-weight: 600; }
   .hero-auth-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
@@ -213,16 +293,6 @@ const CSS = `
   }
   .hero-auth-btn:hover { transform: translateY(-2px); }
   .hero-auth-btn:active { transform: translateY(0); }
-  .hero-auth-btn-google { background: #fff; color: #3c4043; border-color: #dadce0; box-shadow: 0 1px 3px rgba(60,64,67,0.15); }
-  .hero-auth-btn-google:hover { box-shadow: 0 4px 12px rgba(60,64,67,0.2); }
-  .hero-auth-btn-fb {
-    background: linear-gradient(180deg, #3d94ff 0%, #1877f2 48%, #1258c4 100%);
-    color: #fff; border: 1px solid rgba(255,255,255,0.18);
-    box-shadow: 0 4px 16px rgba(24,119,242,0.32), 0 1px 0 rgba(255,255,255,0.14) inset;
-  }
-  .hero-auth-btn-fb:hover { box-shadow: 0 8px 24px rgba(24,119,242,0.42), 0 1px 0 rgba(255,255,255,0.18) inset; }
-  .hero-auth-btn-apple { background: #000; color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
-  .hero-auth-btn-apple:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
   .hero.night .hero-auth-btn-google,
   .hero.night .hero-auth-btn-fb,
   .hero.night .hero-auth-btn-apple {
@@ -242,44 +312,89 @@ const CSS = `
     content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.18);
   }
   .hero-auth-or span { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 500; flex-shrink: 0; }
-  .hero-email-form {
-    display: flex; flex-direction: column; gap: 10px;
-    width: 100%; max-width: 400px; margin: 0 auto;
-  }
-  .hero-email-input {
-    background: rgba(255,255,255,0.98);
-    border-radius: 24px; padding: 14px 22px;
-    border: 1px solid rgba(255,255,255,0.95);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8) inset;
-    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
-    color: var(--ink); outline: none; width: 100%;
-    transition: box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
-  }
-  .hero-email-input::placeholder { color: #c0b8b0; font-weight: 400; }
-  .hero-email-input:focus {
-    box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 3px rgba(255,255,255,0.25);
-    border-color: rgba(255,255,255,1);
-  }
-  .hero.night .hero-email-input {
-    background: rgba(15, 22, 40, 0.72); backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-  }
-  .hero.night .hero-email-input::placeholder { color: rgba(255,255,255,0.35); }
-  .hero.night .hero-email-input:focus { border-color: rgba(255,255,255,0.2); box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 0 3px rgba(255,255,255,0.12); }
+  .hero-email-form { width: 100%; max-width: 400px; margin: 0 auto; }
   .hero-email-btn {
-    background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%);
-    color: #fff; border: none; border-radius: var(--r-lg);
+    background: transparent; color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: var(--r-lg);
     padding: 14px 28px; font-family: 'Inter', sans-serif;
     font-size: 14px; font-weight: 600; cursor: pointer;
-    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
     width: 100%;
   }
-  .hero-email-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4); }
-  .hero-email-btn:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
+  .hero-email-btn:hover { border-color: var(--gold); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+  .hero-email-btn:active { transform: translateY(0); }
+
+  /* Map style toggle */
+  .map-style-toggle {
+    position: absolute; bottom: 108px; right: 12px; z-index: 20;
+  }
+  .map-style-btn {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,0.96); border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--charcoal);
+    transition: box-shadow 0.2s var(--ease);
+  }
+  .map-style-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .map-style-menu {
+    position: absolute; bottom: calc(100% + 8px); right: 0; min-width: 140px;
+    background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .map-style-item {
+    display: block; width: 100%; text-align: left; padding: 10px 14px;
+    border: none; background: none; border-radius: 8px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--charcoal);
+  }
+  .map-style-item:hover { background: rgba(255,210,140,0.12); }
+  .map-style-item.active { background: rgba(255,210,140,0.2); font-weight: 600; }
+
+  /* Traffic alert toast */
+  .traffic-toast {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 25; display: flex; align-items: center; gap: 10px;
+    background: rgba(12,18,34,0.92); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,210,140,0.25); border-radius: 99px;
+    padding: 10px 20px; font-size: 13px; font-weight: 500; color: #fff;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    animation: trafficToastIn 0.35s var(--ease) both;
+    white-space: nowrap; max-width: calc(100vw - 32px);
+  }
+  .traffic-toast-icon { color: var(--gold); font-size: 16px; }
+  @keyframes trafficToastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* Float card help */
+  .float-card-help-wrap { position: absolute; bottom: 14px; right: 14px; z-index: 55; }
+  .float-card-help-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08);
+    color: var(--charcoal); font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+  .float-card-help-btn:hover { border-color: rgba(255,210,140,0.5); background: #fff; }
+  .app-wrap.night .float-card-help-btn { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); color: #fff; }
+  .help-menu {
+    position: absolute; bottom: calc(100% + 8px); right: 0; min-width: 160px;
+    background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .app-wrap.night .help-menu { background: rgba(15,22,40,0.96); border-color: rgba(255,255,255,0.12); }
+  .help-menu-item {
+    display: block; width: 100%; text-align: left; padding: 10px 14px;
+    border: none; background: none; border-radius: 8px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--charcoal);
+  }
+  .app-wrap.night .help-menu-item { color: #fff; }
+  .help-menu-item:hover { background: rgba(255,210,140,0.12); }
+  .report-textarea {
+    width: 100%; min-height: 120px; padding: 12px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px;
+    resize: vertical; outline: none; margin-bottom: 14px;
+  }
+  .report-textarea:focus { border-color: rgba(255,210,140,0.6); box-shadow: 0 0 0 3px rgba(255,210,140,0.15); }
 
   /* Feature pills */
   .hero-pills {
@@ -424,7 +539,7 @@ const CSS = `
     flex: 0; opacity: 0; pointer-events: none;
   }
   .float-card:not(.collapsed) .float-card-body { opacity: 1; }
-  .float-card-scroll { overflow-y: auto; flex: 1; min-height: 0; -webkit-overflow-scrolling: touch; }
+  .float-card-scroll { overflow-y: auto; flex: 1; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 44px; }
   .float-card-scroll::-webkit-scrollbar { width: 0; }
   .float-card-handle { display: none; }
 
@@ -484,7 +599,7 @@ const CSS = `
   .route-wrap { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; background: transparent; }
   .route-input-wrap { position: relative; }
   .route-dot { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
-  .route-dot.dest { background: var(--accent); }
+  .route-dot.dest { background: var(--gold); }
   .route-input { width: 100%; padding: 11px 12px 11px 32px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; background: var(--surface); color: var(--ink); outline: none; transition: all 0.15s; }
   .route-input:focus { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 3px rgba(10,12,16,0.06); }
   .route-input::placeholder { color: #c0bab4; }
@@ -496,7 +611,8 @@ const CSS = `
   .user-msg { display: flex; justify-content: flex-end; margin-top: 14px; animation: answerSlideIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
   .plan-route-hint {
     font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 20px;
-    padding: 11px 16px; background: rgba(245, 200, 66, 0.1); border-radius: 12px;
+    padding: 11px 16px; background: rgba(255,210,140,0.12); border-radius: 12px;
+    border: 1px solid rgba(255,210,140,0.18);
     font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
   }
   .step-active { animation: fadeUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
@@ -543,18 +659,15 @@ const CSS = `
   .qr-btn:hover { border-color: rgba(0,0,0,0.12); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15, 40, 30, 0.12); }
   .qr-btn:active { transform: scale(0.97); }
   .qr-btn.qr-selected {
-    animation: qrPop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    border-color: rgba(245, 200, 66, 0.5) !important;
-    background: linear-gradient(180deg, #fffef8 0%, #fff8e6 100%) !important;
-    box-shadow: 0 0 0 4px rgba(245, 200, 66, 0.25), 0 8px 28px rgba(245, 200, 66, 0.2) !important;
-    color: #0c1222 !important;
+    animation: qrGoldFlash 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    border-color: rgba(255,210,140,0.6) !important;
+    color: var(--charcoal) !important;
+    pointer-events: none;
   }
-  .qr-btn.qr-selected.yes { background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important; border-color: #6ee7b7 !important; box-shadow: 0 0 0 4px rgba(16,185,129,0.2), 0 8px 24px rgba(16,185,129,0.15) !important; color: #047857 !important; }
-  .qr-btn.qr-selected.no { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important; border-color: #fca5a5 !important; box-shadow: 0 0 0 4px rgba(239,68,68,0.15), 0 8px 24px rgba(239,68,68,0.12) !important; color: #b91c1c !important; }
-  @keyframes qrPop {
-    0% { transform: scale(1); }
-    45% { transform: scale(1.05); }
-    100% { transform: scale(1.02); }
+  @keyframes qrGoldFlash {
+    0% { background: rgba(255,255,255,0.95); box-shadow: 0 3px 12px rgba(15,40,30,0.08); transform: scale(1); opacity: 1; }
+    18% { background: rgba(255,210,140,0.9); box-shadow: 0 0 0 5px rgba(255,210,140,0.35), 0 8px 24px rgba(255,210,140,0.25); transform: scale(1.04); opacity: 1; }
+    100% { background: rgba(255,210,140,0.5); box-shadow: 0 0 0 2px rgba(255,210,140,0.1); transform: scale(0.96); opacity: 0; }
   }
   .qr-btn.yes { border-color: rgba(16,185,129,0.35); color: #059669; background: rgba(240,253,244,0.95); }
   .qr-btn.yes:hover { background: #10b981; color: #fff; border-color: #10b981; }
@@ -855,6 +968,16 @@ export default function App() {
   const [heroOrigin, setHeroOrigin] = useState("");
   const [heroDest, setHeroDest] = useState("");
   const [heroEmail, setHeroEmail] = useState("");
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [timingMode, setTimingMode] = useState("leave_now");
+  const [arriveByDate, setArriveByDate] = useState("");
+  const [heroTimingOpen, setHeroTimingOpen] = useState(false);
+  const [routeTimingOpen, setRouteTimingOpen] = useState(false);
+  const [mapStyle, setMapStyle] = useState("standard");
+  const [mapStyleOpen, setMapStyleOpen] = useState(false);
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const [trafficAlert, setTrafficAlert] = useState(false);
   const [convo, setConvo] = useState([]);
   const [answers, setAnswers] = useState({});
   const [qIndex, setQIndex] = useState(-1);
@@ -913,19 +1036,29 @@ export default function App() {
     if (!originVal || !destVal) return;
 
     setRouteLoading(true);
+    setTrafficAlert(false);
 
-    // Build route request based on vehicle type
     const routeRequest = {
       origin: originVal,
       destination: destVal,
       travelMode: window.google.maps.TravelMode.DRIVING,
     };
 
-    // For trucks and trailers avoid highways with restrictions
+    if (timingMode === "leave_now") {
+      routeRequest.drivingOptions = {
+        departureTime: new Date(),
+        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
+      };
+    } else if (timingMode === "arrive_by" && arriveByDate) {
+      routeRequest.drivingOptions = {
+        arrivalTime: new Date(arriveByDate),
+        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
+      };
+    }
+
     if (vehicleType === "Semi Truck" || vehicleType === "Trailer") {
       routeRequest.avoidFerries = true;
       routeRequest.avoidTolls = false;
-      // Use alternative routes to find truck-safe paths
       routeRequest.provideRouteAlternatives = true;
     }
 
@@ -938,7 +1071,13 @@ export default function App() {
     service.route(routeRequest, (result, status) => {
       setRouteLoading(false);
       if (status === "OK") {
-        const leg = result.routes[0].legs[0];
+        const route = result.routes[0];
+        const leg = route.legs[0];
+        const warnings = route.warnings || [];
+        const hasTrafficDelay = warnings.some(w => /traffic|delay|congestion|slow/i.test(w))
+          || route.legs.some(l => l.duration_in_traffic && l.duration_in_traffic.value > l.duration.value * 1.08);
+        if (warnings.length > 0 || hasTrafficDelay) setTrafficAlert(true);
+
         setRouteInfo({
           distance: leg.distance.text,
           duration: leg.duration.text,
@@ -946,14 +1085,16 @@ export default function App() {
           end: leg.end_address.split(",")[0],
           vehicleType: vehicleType || "Car",
           trailerDetail: trailerDetail || null,
+          timingMode,
+          arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
         });
         setOrigin(originVal);
         setDest(destVal);
-        setRoutePath(result.routes[0].overview_path);
+        setRoutePath(route.overview_path);
 
         if (mapRef.current) {
           const bounds = new window.google.maps.LatLngBounds();
-          result.routes[0].legs[0].steps.forEach(step => {
+          route.legs[0].steps.forEach(step => {
             bounds.extend(step.start_location);
             bounds.extend(step.end_location);
           });
@@ -961,7 +1102,7 @@ export default function App() {
         }
       }
     });
-  }, []);
+  }, [timingMode, arriveByDate]);
 
   const convoEndRef = useRef(null);
   const stopsEndRef = useRef(null);
@@ -994,7 +1135,43 @@ export default function App() {
     }
   }, [generated, stops, roadStops]);
 
+  useEffect(() => {
+    if (!trafficAlert) return;
+    const t = setTimeout(() => setTrafficAlert(false), 5000);
+    return () => clearTimeout(t);
+  }, [trafficAlert]);
+
+  useEffect(() => {
+    if (!mapRef.current || !window.google) return;
+    const typeId = mapStyle === "satellite"
+      ? window.google.maps.MapTypeId.SATELLITE
+      : window.google.maps.MapTypeId.ROADMAP;
+    mapRef.current.setMapTypeId(typeId);
+    mapRef.current.setOptions({
+      styles: mapStyle === "dark" ? DARK_MAP_STYLES : mapStyle === "standard" ? STANDARD_MAP_STYLES : null,
+    });
+  }, [mapStyle, isLoaded]);
+
   function toast_(msg) { setToast(msg); setTimeout(()=>setToast(null),2400); }
+
+  function swapHeroCities() {
+    const fromVal = heroOriginRef.current?.value ?? heroOrigin;
+    const toVal = heroDestRef.current?.value ?? heroDest;
+    if (heroOriginRef.current) heroOriginRef.current.value = toVal;
+    if (heroDestRef.current) heroDestRef.current.value = fromVal;
+    setHeroOrigin(toVal);
+    setHeroDest(fromVal);
+  }
+
+  function swapRouteCities() {
+    const fromVal = originRef.current?.value ?? origin;
+    const toVal = destRef.current?.value ?? dest;
+    if (originRef.current) originRef.current.value = toVal;
+    if (destRef.current) destRef.current.value = fromVal;
+    setOrigin(toVal);
+    setDest(fromVal);
+    if (isLoaded && window.google && toVal && fromVal) fetchDirections();
+  }
 
   function launchFromHero() {
     const from = heroOriginRef.current?.value || heroOrigin;
@@ -1071,9 +1248,9 @@ export default function App() {
         stepAnimTimer.current = setTimeout(() => {
           submitAnswer(value);
           setStepAnim(null);
-        }, 300);
-      }, 280);
-    }, 260);
+        }, 320);
+      }, 420);
+    }, 420);
   }
 
   useEffect(() => () => { if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current); }, []);
@@ -1389,22 +1566,46 @@ export default function App() {
         <div className="route-input-wrap">
           <div className="route-dot"/>
           {isLoaded ? (
-            <Autocomplete onPlaceChanged={fetchDirections} options={{types:["geocode","establishment"]}}>
+            <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
               <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
             </Autocomplete>
           ) : (
             <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
           )}
         </div>
-        <div className="route-line"/>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div className="route-line" style={{marginLeft:16}}/>
+          <button type="button" className="hero-swap-btn" style={{position:"relative",left:"auto",top:"auto",transform:"none"}} onClick={swapRouteCities} aria-label="Swap origin and destination">↕</button>
+        </div>
         <div className="route-input-wrap">
           <div className="route-dot dest"/>
           {isLoaded ? (
-            <Autocomplete onPlaceChanged={fetchDirections} options={{types:["geocode","establishment"]}}>
+            <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
               <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
             </Autocomplete>
           ) : (
             <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
+          )}
+        </div>
+        <div className="route-timing-wrap">
+          <button type="button" className="route-timing-btn" onClick={() => setRouteTimingOpen(o => !o)}>
+            {timingMode === "leave_now" ? "Leave now" : arriveByDate ? `Arrive by ${new Date(arriveByDate).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Arrive by"} ▾
+          </button>
+          {routeTimingOpen && (
+            <div className="timing-menu" style={{left:0}}>
+              <button type="button" className={`timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { setTimingMode("leave_now"); setRouteTimingOpen(false); if (originRef.current?.value && destRef.current?.value) fetchDirections(); }}>Leave now</button>
+              <button type="button" className={`timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { setTimingMode("arrive_by"); setRouteTimingOpen(false); }}>Arrive by</button>
+            </div>
+          )}
+          {timingMode === "arrive_by" && (
+            <input
+              type="datetime-local"
+              className="route-arrive-picker"
+              value={arriveByDate}
+              min={new Date().toISOString().slice(0, 16)}
+              onChange={e => { setArriveByDate(e.target.value); if (e.target.value && originRef.current?.value && destRef.current?.value) fetchDirections(); }}
+              style={{marginTop:8,width:"100%",background:"rgba(255,210,140,0.08)",border:"1px solid rgba(255,210,140,0.2)",borderRadius:10,padding:"10px 12px",fontFamily:"Inter,sans-serif",fontSize:13}}
+            />
           )}
         </div>
       </div>
@@ -1555,17 +1756,17 @@ export default function App() {
 
       {/* Hero */}
       <div className={`hero ${theme}`}>
-        {/* Day — deep sky blue → warm sandy terracotta */}
+        {/* Day — deep blue → warm amber sunset */}
         <div style={{
           position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-          background:"linear-gradient(180deg, #1a3a5c 0%, #2563a8 14%, #3d7eb8 32%, #5a9ec8 48%, #c4956a 68%, #c4784a 82%, #a85d3a 94%, #8b4a2e 100%)",
+          background:"linear-gradient(180deg, #0a1f3d 0%, #0f2847 10%, #1a4a7a 24%, #2563a8 38%, #5a8ec0 52%, #d4885a 68%, #e8a050 80%, #c47840 92%, #a86030 100%)",
           opacity: theme === "day" ? 1 : 0,
           transition: "opacity 1.8s ease",
         }}/>
-        {/* Night — deep ocean blue → turquoise */}
+        {/* Night — deeper sunset tones */}
         <div style={{
           position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-          background:"linear-gradient(180deg, #040a14 0%, #0a1628 16%, #0c2847 36%, #134e6f 58%, #1a6b7a 78%, #1e8a8a 92%, #1a7575 100%)",
+          background:"linear-gradient(180deg, #040810 0%, #0a1428 14%, #0f2040 32%, #1a3a5c 50%, #8b5030 72%, #b86838 86%, #8b4828 100%)",
           opacity: theme === "night" ? 1 : 0,
           transition: "opacity 1.8s ease",
         }}/>
@@ -1575,35 +1776,62 @@ export default function App() {
         <div className="hero-content">
           <h1 className="hero-title">
             Travel<br/>
-            Reimagined.
+            <span className="highlight">Reimagined.</span>
           </h1>
 
           <p className="hero-sub">Your next trip, planned in seconds.</p>
 
           {/* Search bar */}
           <div className="hero-search">
-            <div className="hero-input-wrap">
-              <div className="hero-input-label">From</div>
-              {isLoaded ? (
-                <Autocomplete onPlaceChanged={()=>{ if(heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value); }} options={{types:["geocode","establishment"]}}>
-                  <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
-                </Autocomplete>
-              ) : (
-                <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
-              )}
-            </div>
-            <div className="hero-search-divider"/>
-            <div className="hero-input-wrap">
-              <div className="hero-input-label">To</div>
-              {isLoaded ? (
-                <Autocomplete onPlaceChanged={()=>{ if(heroDestRef.current) setHeroDest(heroDestRef.current.value); }} options={{types:["geocode","establishment"]}}>
-                  <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles, CA" defaultValue={heroDest} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
-                </Autocomplete>
-              ) : (
-                <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e=>setHeroDest(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
-              )}
+            <div className="hero-search-fields">
+              <div className="hero-input-wrap">
+                <div className="hero-input-label">From</div>
+                {isLoaded ? (
+                  <Autocomplete onPlaceChanged={()=>{ if(heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value); }} options={{types:["geocode","establishment"]}}>
+                    <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+                  </Autocomplete>
+                ) : (
+                  <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+                )}
+              </div>
+              <div className="hero-search-divider-wrap">
+                <div className="hero-search-divider"/>
+                <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
+              </div>
+              <div className="hero-input-wrap">
+                <div className="hero-input-label">To</div>
+                {isLoaded ? (
+                  <Autocomplete onPlaceChanged={()=>{ if(heroDestRef.current) setHeroDest(heroDestRef.current.value); }} options={{types:["geocode","establishment"]}}>
+                    <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles, CA" defaultValue={heroDest} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+                  </Autocomplete>
+                ) : (
+                  <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e=>setHeroDest(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
+                )}
+              </div>
             </div>
             <button className="hero-go-btn" onClick={launchFromHero}>Plan my trip →</button>
+          </div>
+
+          <div className="hero-timing-wrap">
+            <button type="button" className="hero-timing-btn" onClick={() => setHeroTimingOpen(o => !o)}>
+              {timingMode === "leave_now" ? "Leave now" : arriveByDate ? `Arrive by ${new Date(arriveByDate).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Arrive by"} ▾
+            </button>
+            {heroTimingOpen && (
+              <div className="hero-timing-menu">
+                <button type="button" className={`timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { setTimingMode("leave_now"); setHeroTimingOpen(false); }}>Leave now</button>
+                <button type="button" className={`timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { setTimingMode("arrive_by"); setHeroTimingOpen(false); }}>Arrive by</button>
+              </div>
+            )}
+            {timingMode === "arrive_by" && (
+              <input
+                type="datetime-local"
+                className="hero-arrive-picker"
+                value={arriveByDate}
+                min={new Date().toISOString().slice(0, 16)}
+                onChange={e => setArriveByDate(e.target.value)}
+                style={{marginTop:8,display:"block"}}
+              />
+            )}
           </div>
 
           {/* Social sign in */}
@@ -1625,15 +1853,7 @@ export default function App() {
             </div>
             <div className="hero-auth-or"><span>or</span></div>
             <div className="hero-email-form">
-              <input
-                type="email"
-                className="hero-email-input"
-                placeholder="Enter your email"
-                value={heroEmail}
-                onChange={e => setHeroEmail(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && setView("app")}
-              />
-              <button type="button" className="hero-email-btn" onClick={() => setView("app")}>
+              <button type="button" className="hero-email-btn" onClick={() => setShowEmailModal(true)}>
                 Continue with email
               </button>
             </div>
@@ -1646,6 +1866,27 @@ export default function App() {
         </div>
       </div>
 
+      {showEmailModal && (
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
+          <div className="modal">
+            <div className="modal-title">Continue with email</div>
+            <div className="modal-sub">Enter your email to create your TripMappa account.</div>
+            <input
+              type="email"
+              className="grocery-input"
+              placeholder="you@example.com"
+              value={heroEmail}
+              onChange={e => setHeroEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && heroEmail.trim() && (setShowEmailModal(false), setView("app"))}
+              style={{width:"100%",marginBottom:14,padding:"12px 14px",borderRadius:10}}
+            />
+            <div className="modal-footer">
+              <button type="button" className="modal-btn modal-btn-outline" onClick={() => setShowEmailModal(false)}>Cancel</button>
+              <button type="button" className="modal-btn modal-btn-primary" onClick={() => { if (heroEmail.trim()) { setShowEmailModal(false); setView("app"); } else toast_("Enter your email"); }}>Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
       {toast&&<div className="toast">{toast}</div>}
     </>
   );
@@ -1678,7 +1919,7 @@ export default function App() {
           background: rgba(255,255,255,0.88); border-color: rgba(0,0,0,0.07); color: #1a2332;
           box-shadow: 0 3px 12px rgba(30,80,50,0.07);
         }
-        .app-wrap.day .qr-btn:hover { background: #fff; border-color: rgba(0,0,0,0.1); }
+        .app-wrap.day .qr-btn:hover { background: #fff; border-color: rgba(255,210,140,0.4); }
         .app-wrap.day .btn-generate-app { background: #0f1923; color: #fff; }
         .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
         .app-wrap.day .convo-wrap,
@@ -1688,7 +1929,7 @@ export default function App() {
         .app-wrap.day .stops-wrap { background: transparent !important; }
         .app-wrap.day .chat-header { border-bottom-color: rgba(0,0,0,0.05); }
         .app-wrap.day .route-wrap { border-bottom-color: rgba(0,0,0,0.05); }
-        .app-wrap.day .plan-route-hint { background: rgba(245,200,66,0.12); color: rgba(26,35,50,0.65); }
+        .app-wrap.day .plan-route-hint { background: rgba(255,210,140,0.14); color: rgba(12,18,34,0.7); border: 1px solid rgba(255,210,140,0.2); }
 
         /* ── App theme: Night ── */
         .app-wrap.night .nav-app { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); transition: background 1.8s ease, border-color 1.8s ease; }
@@ -1698,17 +1939,17 @@ export default function App() {
         .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
         .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
         .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85) !important; }
-        .app-wrap.night .nav-app .nav-btn-primary { background: var(--brand); color: #fff !important; border-color: var(--brand); }
+        .app-wrap.night .nav-app .nav-btn-primary { background: var(--charcoal); color: #fff !important; border-color: rgba(255,255,255,0.15); }
         .app-wrap.night .float-card .route-input { color: #fff !important; }
         .app-wrap.night .float-card .route-input::placeholder { color: rgba(255,255,255,0.35) !important; }
         .app-wrap.night .route-loading-pill {
           background: rgba(8,14,38,0.95); border-color: rgba(255,255,255,0.1); color: #fff;
         }
         .app-wrap.night .spinner-dark {
-          border-color: rgba(255,255,255,0.15); border-top-color: #e07c3a;
+          border-color: rgba(255,255,255,0.15); border-top-color: rgba(255,210,140,0.9);
         }
         .app-wrap.night .empty-icon { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
-        .app-wrap.night .empty-cta { background: var(--brand); color: #fff; }
+        .app-wrap.night .empty-cta { background: var(--charcoal); color: #fff; }
         .pac-container { z-index: 100000 !important; }
         .app-wrap.night .pac-container { background: #0d1935 !important; border-color: rgba(255,255,255,0.12) !important; }
         .app-wrap.night .pac-item { border-top-color: rgba(255,255,255,0.08) !important; color: #fff !important; }
@@ -1724,7 +1965,7 @@ export default function App() {
         .app-wrap.night .route-input::placeholder { color: rgba(255,255,255,0.25); }
         .app-wrap.night .route-line { background: rgba(255,255,255,0.1); }
         .app-wrap.night .route-dot { background: #fff; }
-        .app-wrap.night .route-dot.dest { background: #e07c3a; }
+        .app-wrap.night .route-dot.dest { background: rgba(255,210,140,0.9) !important; }
         .app-wrap.night .convo-wrap { background: transparent !important; }
         .app-wrap.night .ai-name { color: rgba(255,255,255,0.35); }
         .app-wrap.night .ai-bubble {
@@ -1740,15 +1981,10 @@ export default function App() {
           box-shadow: 0 3px 12px rgba(0,0,0,0.2);
         }
         .app-wrap.night .qr-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
-        .app-wrap.night .qr-btn.qr-selected {
-          background: rgba(245,200,66,0.15) !important; border-color: rgba(245,200,66,0.4) !important;
-          color: #F5C842 !important;
-          box-shadow: 0 0 0 4px rgba(245,200,66,0.15), 0 8px 24px rgba(0,0,0,0.25) !important;
-        }
-        .app-wrap.night .qr-btn.yes { border-color: #2abf6e; color: #2abf6e; }
-        .app-wrap.night .qr-btn.yes:hover { background: #2abf6e; color: #fff; }
-        .app-wrap.night .qr-btn.no { border-color: #e05c2a; color: #e05c2a; }
-        .app-wrap.night .qr-btn.no:hover { background: #e05c2a; color: #fff; }
+        .app-wrap.night .qr-btn.yes { border-color: rgba(255,210,140,0.35); color: rgba(255,210,140,0.9); }
+        .app-wrap.night .qr-btn.yes:hover { background: rgba(255,210,140,0.15); color: #fff; }
+        .app-wrap.night .qr-btn.no { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+        .app-wrap.night .qr-btn.no:hover { background: rgba(255,255,255,0.12); color: #fff; }
         .app-wrap.night .answer-input { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: #fff; }
         .app-wrap.night .answer-input::placeholder { color: rgba(255,255,255,0.25); }
         .app-wrap.night .answer-send { background: linear-gradient(180deg, #1a2332 0%, #0c1222 100%); }
@@ -1756,7 +1992,7 @@ export default function App() {
         .app-wrap.night .summary-card { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #fff; }
         .app-wrap.night .summary-key { color: rgba(255,255,255,0.4); letter-spacing: 0.08em; }
         .app-wrap.night .generate-wrap { border-top-color: rgba(255,255,255,0.06); background: transparent !important; }
-        .app-wrap.night .plan-route-hint { background: rgba(245, 200, 66, 0.1); color: rgba(255,255,255,0.65); }
+        .app-wrap.night .plan-route-hint { background: rgba(255,210,140,0.1); color: rgba(255,255,255,0.75); border: 1px solid rgba(255,210,140,0.15); }
         .app-wrap.night .chat-header { background: transparent !important; border-bottom-color: rgba(255,255,255,0.06); }
         .app-wrap.night .chat-wrap { background: transparent; }
         .app-wrap.night .route-wrap { background: transparent !important; border-bottom-color: rgba(255,255,255,0.06); }
@@ -1767,7 +2003,7 @@ export default function App() {
         .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
         .app-wrap.night .stop-city { color: #fff; }
         .app-wrap.night .stop-meta { color: rgba(255,255,255,0.4); }
-        .app-wrap.night .stop-num { background: #e07c3a; }
+        .app-wrap.night .stop-num { background: rgba(255,210,140,0.9); color: var(--charcoal); }
         .app-wrap.night .item-row { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
         .app-wrap.night .item-row:hover { background: rgba(255,255,255,0.08); }
         .app-wrap.night .item-name { color: #fff; }
@@ -1781,7 +2017,7 @@ export default function App() {
         .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
         .app-wrap.night .filter-tab.active { background: #fff !important; color: var(--ink) !important; border-color: #fff !important; }
         .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
-        .app-wrap.night .action-btn-primary { background: #e07c3a; border-color: #e07c3a; }
+        .app-wrap.night .action-btn-primary { background: var(--charcoal); border-color: var(--charcoal); }
         .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
         .app-wrap.night .empty-title { color: #fff; }
         .app-wrap.night .empty-sub { color: rgba(255,255,255,0.4); }
@@ -1810,18 +2046,18 @@ export default function App() {
 
         /* Float card — frosted glass */
         .app-wrap.day .float-card {
-          background: rgba(255, 252, 247, 0.74) !important;
+          background: rgba(255, 250, 245, 0.78) !important;
           backdrop-filter: blur(32px) saturate(1.6) !important;
           -webkit-backdrop-filter: blur(32px) saturate(1.6) !important;
-          border: 1px solid rgba(255,255,255,0.6) !important;
-          box-shadow: 0 24px 64px rgba(30,80,50,0.14), 0 8px 24px rgba(15,40,30,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+          border: 1px solid rgba(255,255,255,0.65) !important;
+          box-shadow: 0 24px 64px rgba(10,30,60,0.14), 0 8px 24px rgba(10,20,40,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
         }
         .app-wrap.night .float-card {
-          background: rgba(8, 14, 32, 0.76) !important;
+          background: rgba(8, 14, 32, 0.82) !important;
           backdrop-filter: blur(32px) saturate(1.5) !important;
           -webkit-backdrop-filter: blur(32px) saturate(1.5) !important;
-          border: 1px solid rgba(255,255,255,0.09) !important;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+          border: 1px solid rgba(255,210,140,0.1) !important;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,210,140,0.05) !important;
         }
 
         /* Logo fix */
@@ -1855,8 +2091,8 @@ export default function App() {
           transition: opacity 1.8s ease;
           z-index: 0;
         }
-        .app-wrap .map-day-layer { background: linear-gradient(150deg, #e4eef5 0%, #d2e4f0 60%, #c0d6e8 100%); }
-        .app-wrap .map-night-layer { background: linear-gradient(150deg, #020818 0%, #050d2a 50%, #0a1840 100%); }
+        .app-wrap .map-day-layer { background: linear-gradient(150deg, #dce8f4 0%, #e8ddd0 50%, #d4c4b0 100%); }
+        .app-wrap .map-night-layer { background: linear-gradient(150deg, #040810 0%, #0a1428 50%, #1a2030 100%); }
         .app-wrap .map-placeholder { background: transparent !important; position: relative; }
         .app-wrap .map-placeholder-text, .app-wrap .map-placeholder-sub { position: relative; z-index: 1; }
 
@@ -1902,7 +2138,7 @@ export default function App() {
         }
 
         /* Override CSS vars per theme so var(--ink) etc all transition together */
-        .app-wrap.day { --ink: #0a0c10; --surface: #f4f1ec; --card: #ffffff; --border: #ebebeb; --muted: #a0a0a0; }
+        .app-wrap.day { --ink: var(--charcoal); --surface: #faf7f2; --card: #ffffff; --border: #ebebeb; --muted: #888; }
         .app-wrap.night { --ink: #ffffff; --surface: rgba(255,255,255,0.07); --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.1); --muted: rgba(255,255,255,0.4); }
 
         /* All non-interactive elements transition at 1.8s */
@@ -1968,30 +2204,18 @@ export default function App() {
                     streetViewControl: false,
                     mapTypeControl: false,
                     fullscreenControl: false,
-                    styles: theme === "night" ? [
-                      {elementType:"geometry",stylers:[{color:"#0a1628"}]},
-                      {elementType:"labels.text.fill",stylers:[{color:"#a0a0b0"}]},
-                      {elementType:"labels.text.stroke",stylers:[{color:"#0a1628"}]},
-                      {featureType:"road",elementType:"geometry",stylers:[{color:"#1a2d45"}]},
-                      {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#2a4060"}]},
-                      {featureType:"water",elementType:"geometry",stylers:[{color:"#050d2a"}]},
-                      {featureType:"poi",stylers:[{visibility:"off"}]},
-                      {featureType:"transit",stylers:[{visibility:"off"}]},
-                    ] : [
-                      {featureType:"poi",stylers:[{visibility:"off"}]},
-                      {featureType:"transit",stylers:[{visibility:"off"}]},
-                    ],
+                    mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
+                    styles: mapStyle === "dark" ? DARK_MAP_STYLES : mapStyle === "standard" ? STANDARD_MAP_STYLES : undefined,
                   }}
                 >
                   {routePath && (() => {
                     if (mapRef.current) {
                       if (polylineRef.current) polylineRef.current.setMap(null);
-                      // Color route based on vehicle type
                       const color = routeInfo?.vehicleType === "Semi Truck" || routeInfo?.vehicleType === "Trailer"
-                        ? "#4a9fd4" // blue for trucks
+                        ? "rgba(255,210,140,0.85)"
                         : routeInfo?.vehicleType === "RV / Camper"
-                        ? "#2abf6e" // green for RV
-                        : "#e07c3a"; // orange default
+                        ? "rgba(255,210,140,0.75)"
+                        : "rgba(255,210,140,0.9)";
                       polylineRef.current = new window.google.maps.Polyline({
                         path: routePath,
                         geodesic: true,
@@ -2004,6 +2228,22 @@ export default function App() {
                     return null;
                   })()}
                 </GoogleMap>
+                {trafficAlert && (
+                  <div className="traffic-toast">
+                    <span className="traffic-toast-icon">⚠</span>
+                    Traffic delays detected on your route
+                  </div>
+                )}
+                <div className="map-style-toggle">
+                  <button type="button" className="map-style-btn" onClick={() => setMapStyleOpen(o => !o)} aria-label="Map style">🗺</button>
+                  {mapStyleOpen && (
+                    <div className="map-style-menu">
+                      {[["standard","Standard"],["satellite","Satellite"],["dark","Dark"]].map(([k,l]) => (
+                        <button key={k} type="button" className={`map-style-item${mapStyle === k ? " active" : ""}`} onClick={() => { setMapStyle(k); setMapStyleOpen(false); }}>{l}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {routeInfo && (
                   <div className="route-info-bar">
                     <div className="rib-item"><div className="rib-val">{routeInfo.distance}</div><div className="rib-label">Distance</div></div>
@@ -2062,7 +2302,16 @@ export default function App() {
           </div>
 
           {/* Floating glass card */}
-          <div className={`float-card ${theme} ${cardCollapsed?"collapsed":""}`}>
+          <div className={`float-card ${theme} ${cardCollapsed?"collapsed":""}`} style={{position:"relative"}}>
+            <div className="float-card-help-wrap">
+              <button type="button" className="float-card-help-btn" onClick={e => { e.stopPropagation(); setHelpMenuOpen(o => !o); }} aria-label="Help">?</button>
+              {helpMenuOpen && (
+                <div className="help-menu">
+                  <button type="button" className="help-menu-item" onClick={() => { window.open("https://tripmappa.com/help", "_blank"); setHelpMenuOpen(false); }}>Help center</button>
+                  <button type="button" className="help-menu-item" onClick={() => { setModal({ type: "report" }); setHelpMenuOpen(false); }}>Report an issue</button>
+                </div>
+              )}
+            </div>
             <div className="float-card-header" onClick={()=>setCardCollapsed(c=>!c)}>
               <div className="float-card-handle" aria-hidden="true"/>
               <div className="float-card-header-row">
@@ -2088,6 +2337,24 @@ export default function App() {
       {modal?.type==="grocery"&&(
         <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setModal(null);}}>
           <GroceryModal city={modal.city}/>
+        </div>
+      )}
+      {modal?.type==="report"&&(
+        <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setModal(null);}}>
+          <div className="modal">
+            <div className="modal-title">Report an issue</div>
+            <div className="modal-sub">Tell us what went wrong and we&apos;ll look into it.</div>
+            <textarea
+              className="report-textarea"
+              placeholder="Describe the issue…"
+              value={reportText}
+              onChange={e => setReportText(e.target.value)}
+            />
+            <div className="modal-footer">
+              <button type="button" className="modal-btn modal-btn-outline" onClick={() => { setModal(null); setReportText(""); }}>Cancel</button>
+              <button type="button" className="modal-btn modal-btn-primary" onClick={() => { toast_("Thanks — we'll review your report"); setModal(null); setReportText(""); }}>Submit</button>
+            </div>
+          </div>
         </div>
       )}
       {toast&&<div className="toast">{toast}</div>}
