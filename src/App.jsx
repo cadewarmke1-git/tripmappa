@@ -65,11 +65,11 @@ const CSS = `
     overflow: hidden;
   }
   .hero.day {
-    background: linear-gradient(180deg,#87CEEB 0%,#a8d8ea 18%,#c8e8c0 38%,#a8c878 52%,#8ab560 62%,#6d9e4a 72%,#4a7a6a 82%,#2d5a52 92%,#1a3d38 100%);
+    background: #87CEEB;
     transition: background 1.8s ease;
   }
   .hero.night {
-    background: linear-gradient(180deg,#020818 0%,#050d2a 20%,#0a1840 40%,#0d2255 55%,#1a3a6a 65%,#3a2a15 78%,#6b3d10 88%,#8a5020 95%,#020818 100%);
+    background: #020818;
     transition: background 1.8s ease;
   }
   /* Pseudo-element trick for smooth background transition */
@@ -310,7 +310,7 @@ const CSS = `
     .chat-title { font-size: 18px !important; }
     .chat-header { padding: 16px 16px 12px !important; }
     .route-wrap { padding: 12px 16px !important; }
-    .convo-wrap { padding: 12px 14px !important; }
+    .convo-wrap { padding: 12px 14px !important; gap: 28px !important; }
     .generate-wrap { padding: 10px 14px 14px !important; }
     .stops-wrap { padding: 12px 12px 20px !important; }
   }
@@ -877,15 +877,12 @@ export default function App() {
               <button onClick={resetPlan} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center",gap:4,padding:0}}>
                 ← Start over
               </button>
-              <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center",color:"inherit"}}>{origin} → {dest}</div>
+              <div style={{flex:1,fontFamily:"Syne",fontWeight:700,fontSize:13,textAlign:"center"}}>{origin} → {dest}</div>
               <button onClick={saveTrip} style={{background:"var(--accent)",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                 Save
               </button>
             </div>
             <div className="section-sep"/>
-            <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.8px",color:"var(--muted)",marginBottom:8}}>
-              {isDayOrHomeTrip ? "Stops along the way" : "Overnight stops"}
-            </div>
 
             {/* Road stops — shown for ALL trip types */}
             {roadStops.length > 0 && (
@@ -897,7 +894,7 @@ export default function App() {
                   {["all","fuel","food","rest","charging"].filter(cat =>
                     cat === "all" || roadStops.some(s => s.category === cat)
                   ).map(cat => (
-                    <button key={cat} onClick={()=>setStopCategory(cat)} style={{
+                    <button key={cat} onClick={()=>setStopCategory(cat)} className={`filter-tab${stopCategory===cat?' active':''}`} style={{
                       padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600,
                       border:"1.5px solid", cursor:"pointer",
                       background: stopCategory===cat ? "var(--ink)" : "transparent",
@@ -948,7 +945,7 @@ export default function App() {
                     (cat === "hotel" && stops.some(s => s.hotels?.length > 0)) ||
                     (cat === "food" && stops.some(s => s.restaurants?.length > 0))
                   ).map(cat => (
-                    <button key={cat} onClick={()=>setStopCategory(cat)} style={{
+                    <button key={cat} onClick={()=>setStopCategory(cat)} className={`filter-tab${stopCategory===cat?' active':''}`} style={{
                       padding:"4px 12px", borderRadius:99, fontSize:11, fontWeight:600,
                       border:"1.5px solid", cursor:"pointer",
                       background: stopCategory===cat ? "var(--ink)" : "transparent",
@@ -1357,6 +1354,9 @@ export default function App() {
         .app-wrap.night .chat-title { color: #fff; }
         .app-wrap.night .chat-sub { color: rgba(255,255,255,0.45); }
         .app-wrap.night .route-wrap { border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .app-wrap.night .results-view { color: #fff; }
+        .app-wrap.night .results-view .stop-city { color: #fff; }
+        .app-wrap.night .results-view .stop-meta { color: rgba(255,255,255,0.5); }
         .app-wrap.night .route-input { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.1) !important; color: #ffffff !important; }
         .app-wrap.night .route-input::placeholder { color: rgba(255,255,255,0.25); }
         .app-wrap.night .route-line { background: rgba(255,255,255,0.1); }
@@ -1405,6 +1405,8 @@ export default function App() {
         .app-wrap.night .road-stop-note { color: rgba(255,255,255,0.5) !important; }
         .app-wrap.night .stop-section-label { color: rgba(255,255,255,0.3); }
         .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
+        .app-wrap.night .filter-tab.active { background: #fff !important; color: var(--ink) !important; border-color: #fff !important; }
         .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
         .app-wrap.night .action-btn-primary { background: #e07c3a; border-color: #e07c3a; }
         .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
