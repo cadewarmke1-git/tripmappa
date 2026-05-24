@@ -20,6 +20,7 @@ const HERO_PHOTOS_NIGHT = [
   "https://images.unsplash.com/photo-1475070929565-c985b496cb9f?w=1920&q=80",
   "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1920&q=80",
   "https://images.unsplash.com/photo-1493246318656-5bfd4cfb29b8?w=1920&q=80",
+  "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80",
 ];
 
 function HeroPhotoSlideshow({ photos, paused, active }) {
@@ -275,24 +276,21 @@ const CSS = `
     position: relative; flex: 1; min-width: 0;
     display: grid; grid-template-columns: 1fr 1fr; align-items: stretch;
   }
-  .hero-search-divider-wrap {
-    position: absolute; left: 50%; top: 0; bottom: 0; width: 0; z-index: 3;
-    transform: translateX(-50%); pointer-events: none;
-  }
   .hero-search-divider {
-    position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px;
+    position: absolute; left: 50%; top: 8px; bottom: 8px; width: 1px;
     transform: translateX(-50%); background: rgba(255,255,255,0.3);
+    pointer-events: none; z-index: 1;
   }
   .hero-swap-btn {
-    position: absolute; left: 50%; top: 50%; z-index: 4;
+    position: absolute; left: 50%; top: 50%; z-index: 10;
     width: 30px; height: 30px; border-radius: 50%;
+    margin: 0; padding: 0;
     transform: translate(-50%, -50%);
     background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
     color: #fff; font-size: 13px; line-height: 1; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
-    pointer-events: auto;
   }
   .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
   .hero-go-btn { align-self: center; }
@@ -324,8 +322,8 @@ const CSS = `
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
     .hero-search-fields { grid-template-columns: 1fr; grid-template-rows: auto auto; width: 100%; }
-    .hero-search-divider-wrap .hero-search-divider { top: 50%; bottom: auto; left: 16px; right: 16px; width: auto; height: 1px; transform: translateY(-50%); }
-    .hero-search-divider-wrap .hero-swap-btn { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    .hero-search-divider { top: 50%; bottom: auto; left: 16px; right: 16px; width: auto; height: 1px; transform: translateY(-50%); }
+    .hero-swap-btn { left: 50%; top: 50%; margin: 0; padding: 0; transform: translate(-50%, -50%); }
     .hero-input-wrap:first-child,
     .hero-input-wrap:last-child { padding-left: 0; padding-right: 0; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
@@ -640,15 +638,13 @@ const CSS = `
     .route-loading-pill { top: 12px; max-width: calc(100% - 24px); }
   }
 
-  /* Card header */
+  /* Card header — theme applied via .float-card.day / .float-card.night */
   .float-card-header {
     display: flex; flex-direction: column; align-items: stretch;
     padding: 18px 20px; cursor: pointer; user-select: none;
     border-bottom: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
-    background: rgba(15, 20, 40, 0.92);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    background: transparent;
   }
   .float-card-header-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -877,13 +873,15 @@ const CSS = `
   .results-save:hover { background: rgba(255,210,140,1); box-shadow: 0 0 12px rgba(255,210,140,0.35); }
   .results-header-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 12px 0 14px; }
   .theme-test-btn {
-    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
-    padding: 6px 10px; border-radius: 99px; cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.85); white-space: nowrap;
-    transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    width: 36px; height: 36px; border-radius: 99px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
+    margin: 0; padding: 0; line-height: 1;
   }
-  .theme-test-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); }
+  .theme-test-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); transform: scale(1.05); }
   .stops-panel-head { margin-bottom: 16px; }
   .stops-panel-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.03em; margin-bottom: 4px; }
   .stops-panel-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
@@ -1086,32 +1084,43 @@ async function callAI(prompt, model = "claude-haiku-4-5-20251001") {
   return data.content?.[0]?.text || "";
 }
 
-function buildConvoRoutingPrompt(answers, lastQuestionId = null) {
-  return `You are a travel planning assistant. The user is planning a trip and has answered these questions so far: ${JSON.stringify(answers)}.
-${lastQuestionId ? `They just answered: ${lastQuestionId}` : ""}
+const HAIKU_QUESTION_IDS = [
+  "vehicle", "trailer_detail", "fuel", "pets", "pet_desc",
+  "lodging", "restaurants", "grocery", "extra",
+];
 
-Based on their answers, decide which question to ask next from this list:
-- trip_type: Road trip | Driving home | Day trip | Work / Delivery
-- vehicle: Car | RV / Camper | Semi Truck | Motorcycle | Trailer
-- trailer_detail: trailer weight and length (Trailer or Semi Truck only)
-- fuel: Gasoline | Electric (EV)
-- pets: Yes | No
-- pet_desc: pet type and size (only if pets is Yes)
-- overnight: Yes | No (Road trip or Work / Delivery only)
-- lodging: Budget | Mid-range | Upscale | Luxury | Campground | RV Park
-- restaurants: Yes | No
-- grocery: Yes | No
-- extra: optional notes
+function formatAnswersForPrompt(answers) {
+  return Object.entries(answers)
+    .filter(([, v]) => v !== undefined && v !== "" && v !== "skip")
+    .map(([k, v]) => `${k}: ${v}`)
+    .join("\n") || "(none yet)";
+}
 
-Rules:
-- Day trip: skip lodging, grocery, overnight, and restaurants
-- Driving home: skip lodging, restaurants, grocery, extra, pets, and pet_desc
-- Car or Motorcycle: skip trailer_detail
-- pets is No: skip pet_desc
-- restaurants is No: skip any restaurant preference questions
-- When all necessary questions are answered return exactly: done
+function buildConvoRoutingPrompt(answers) {
+  return `You are a travel planning assistant for TripMappa. 
 
-Return ONLY the question ID, nothing else.`;
+The user is planning a trip and has answered these questions so far:
+${formatAnswersForPrompt(answers)}
+
+Available questions to ask next:
+- "vehicle": What vehicle are they taking? (Car, RV/Camper, Semi Truck, Motorcycle, Trailer)
+- "trailer_detail": What is the trailer weight and length?
+- "fuel": Does the vehicle run on Gasoline or Electric?
+- "pets": Are they traveling with pets?
+- "pet_desc": Describe the pet
+- "lodging": What kind of lodging do they prefer? (Budget, Mid-range, Upscale, Luxury, Campground, RV Park)
+- "restaurants": Do they want restaurant recommendations?
+- "grocery": Do they want grocery delivery to the hotel?
+- "extra": Anything else to know?
+
+Rules for skipping questions:
+- If trip_type is "Day trip" — skip lodging, grocery, restaurants
+- If trip_type is "Driving home" — skip lodging, grocery, restaurants, pets
+- If vehicle is "Car" or "Motorcycle" — skip trailer_detail
+- If pets answer is "No" — skip pet_desc
+- If all necessary questions are done — return exactly: done
+
+Return ONLY the next question ID from the list above. No explanation. No punctuation. Just the ID or the word done.`;
 }
 
 function questionFromTemplate(id) {
@@ -1130,47 +1139,55 @@ function questionFromTemplate(id) {
 
 function isQuestionSkipped(id, answers) {
   if (answers[id] !== undefined && answers[id] !== "") return true;
+  if (id === "trip_type") return false;
   const q = QUESTIONS.find(x => x.id === id);
-  if (!q) return true;
-  if (q.onlyIf && !q.onlyIf(answers)) return true;
-  if (answers.trip_type === "Day trip" && ["lodging", "grocery", "overnight", "restaurants"].includes(id)) return true;
-  if (answers.trip_type === "Driving home" && ["lodging", "restaurants", "grocery", "extra", "pets", "pet_desc"].includes(id)) return true;
+  if (q?.onlyIf && !q.onlyIf(answers)) return true;
+  if (answers.trip_type === "Day trip" && ["lodging", "grocery", "restaurants"].includes(id)) return true;
+  if (answers.trip_type === "Driving home" && ["lodging", "grocery", "restaurants", "pets", "pet_desc"].includes(id)) return true;
   if (["Car", "Motorcycle"].includes(answers.vehicle) && id === "trailer_detail") return true;
   if (answers.pets === "No" && id === "pet_desc") return true;
-  if (answers.restaurants === "No" && id.startsWith("restaurant")) return true;
   return false;
 }
 
+function parseQuestionId(raw) {
+  const trimmed = raw.trim().toLowerCase();
+  if (trimmed === "done" || trimmed.startsWith("done")) return "done";
+  const match = trimmed.match(/\b([a-z_]+)\b/);
+  if (!match) return "";
+  const id = match[1];
+  return HAIKU_QUESTION_IDS.includes(id) || id === "trip_type" ? id : "";
+}
+
 function fallbackNextQuestion(answers, lastQuestionId) {
-  const from = lastQuestionId ? QUESTIONS.findIndex(q => q.id === lastQuestionId) + 1 : 0;
-  let i = from;
-  while (i < QUESTIONS.length) {
-    const q = QUESTIONS[i];
-    if (!isQuestionSkipped(q.id, answers)) {
-      const built = questionFromTemplate(q.id);
+  const order = ["trip_type", ...HAIKU_QUESTION_IDS];
+  const from = lastQuestionId ? order.indexOf(lastQuestionId) + 1 : 0;
+  for (let i = Math.max(from, 0); i < order.length; i++) {
+    const id = order[i];
+    if (!isQuestionSkipped(id, answers)) {
+      const built = questionFromTemplate(id);
       if (built) return built;
     }
-    i++;
   }
   return { done: true };
 }
 
-function resolveNextQuestionId(raw, answers, lastQuestionId) {
-  const cleaned = raw.trim().toLowerCase().replace(/^["'`]+|["'`]+$/g, "").replace(/[^a-z_]/g, "");
-  if (cleaned === "done") {
-    const fallback = fallbackNextQuestion(answers, lastQuestionId);
-    return fallback.done ? { done: true } : fallback;
-  }
-  if (!isQuestionSkipped(cleaned, answers)) {
-    const built = questionFromTemplate(cleaned);
+function resolveNextQuestionId(raw, answers) {
+  const id = parseQuestionId(raw);
+  if (id === "done") return { done: true };
+  if (id && !isQuestionSkipped(id, answers)) {
+    const built = questionFromTemplate(id);
     if (built) return built;
   }
-  return fallbackNextQuestion(answers, lastQuestionId);
+  return fallbackNextQuestion(answers, null);
 }
 
-async function fetchNextQuestion(answers, routeContext, lastQuestionId = null) {
-  const raw = await callAI(buildConvoRoutingPrompt(answers, lastQuestionId));
-  return resolveNextQuestionId(raw, answers, lastQuestionId);
+async function fetchNextQuestion(answers) {
+  if (!answers.trip_type) {
+    return questionFromTemplate("trip_type");
+  }
+  const raw = await callAI(buildConvoRoutingPrompt(answers));
+  console.log("Haiku next question →", raw.trim());
+  return resolveNextQuestionId(raw, answers);
 }
 
 function nextQ(from, ans) {
@@ -1434,9 +1451,8 @@ export default function App() {
 
   async function loadNextQuestion(newAnswers, lastQuestionId, routeOverride) {
     setConvoLoading(true);
-    const ctx = routeOverride || { origin, dest, routeInfo };
     try {
-      const result = await fetchNextQuestion(newAnswers, ctx, lastQuestionId);
+      const result = await fetchNextQuestion(newAnswers);
       if (result.done) {
         setCurrentQuestion(null);
         setQIndex(-2);
@@ -1995,6 +2011,22 @@ export default function App() {
     </div>
   );
 
+  function toggleTheme() {
+    setThemeOverride(theme === "day" ? "night" : "day");
+  }
+
+  const ThemeToggle = () => (
+    <button
+      type="button"
+      className="theme-test-btn"
+      onClick={toggleTheme}
+      title="Override automatic day/night detection for this session"
+      aria-label={theme === "day" ? "Switch to night mode" : "Switch to day mode"}
+    >
+      {theme === "day" ? "☀️" : "🌙"}
+    </button>
+  );
+
   if (view === "hero") return (
     <>
       <style>{CSS}</style>
@@ -2003,6 +2035,7 @@ export default function App() {
       <nav className="nav transparent">
         <div className="nav-logo">Trip<span>Mappa</span></div>
         <div className="nav-right">
+          <ThemeToggle />
           <button type="button" className="nav-btn nav-btn-ghost" onClick={()=>setView("app")}>Log in</button>
           <button type="button" className="nav-btn nav-btn-signup" onClick={()=>setView("app")}>Sign up</button>
         </div>
@@ -2043,10 +2076,8 @@ export default function App() {
                   <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
                 )}
               </div>
-              <div className="hero-search-divider-wrap">
-                <div className="hero-search-divider" aria-hidden="true"/>
-                <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
-              </div>
+              <div className="hero-search-divider" aria-hidden="true"/>
+              <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
               <div className="hero-input-wrap">
                 <div className="hero-input-label">To</div>
                 {isLoaded ? (
@@ -2150,6 +2181,19 @@ export default function App() {
         }
         .app-wrap.day .float-card-title { color: #1a1a2e !important; }
         .app-wrap.day .float-card-chevron { color: rgba(26,26,46,0.45) !important; }
+        .app-wrap.day .float-card-header {
+          background: rgba(255,255,255,0.85) !important;
+          border-bottom-color: rgba(26,26,46,0.08) !important;
+        }
+        .app-wrap.day .float-card-help-btn {
+          border-color: rgba(26,26,46,0.15) !important;
+          background: rgba(26,26,46,0.05) !important;
+          color: #1a1a2e !important;
+        }
+        .app-wrap.day .float-card-help-btn:hover {
+          border-color: rgba(255,210,140,0.6) !important;
+          background: rgba(26,26,46,0.08) !important;
+        }
         .app-wrap.day .chat-wrap { color: #1a1a2e !important; }
         .app-wrap.day .chat-title { color: #1a1a2e !important; }
         .app-wrap.day .chat-sub { color: rgba(26,26,46,0.55) !important; }
@@ -2236,6 +2280,17 @@ export default function App() {
           -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
           border: 1px solid rgba(255, 210, 140, 0.15) !important;
           box-shadow: 0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+        }
+        .app-wrap.night .float-card-header {
+          background: rgba(15,20,40,0.92) !important;
+          border-bottom-color: rgba(255,255,255,0.08) !important;
+        }
+        .app-wrap.night .float-card-title { color: #fff !important; }
+        .app-wrap.night .float-card-chevron { color: rgba(255,255,255,0.45) !important; }
+        .app-wrap.night .float-card-help-btn {
+          border-color: rgba(255,255,255,0.15) !important;
+          background: rgba(255,255,255,0.08) !important;
+          color: #fff !important;
         }
 
         /* ── App theme: Night ── */
@@ -2423,14 +2478,7 @@ export default function App() {
             ))}
           </div>
           <div className="nav-right" style={{display:"flex",gap:8,alignItems:"center"}}>
-            <button
-              type="button"
-              className="theme-test-btn"
-              onClick={() => setThemeOverride(theme === "day" ? "night" : "day")}
-              title="Override automatic day/night detection for this session"
-            >
-              Test: Day/Night {theme === "day" ? "☀️" : "🌙"}
-            </button>
+            <ThemeToggle />
             <button className="nav-btn" onClick={saveTripComingSoon}>Save trip</button>
             <button className="nav-btn nav-btn-primary" onClick={()=>toast_("Link copied")}>Share</button>
           </div>
