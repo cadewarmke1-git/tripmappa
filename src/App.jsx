@@ -110,6 +110,7 @@ export default function App() {
   const mapRef = useRef(null);
   const polylineRef = useRef(null);
   const polylinesRef = useRef([]);
+  const polylineAnimRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
 
   const fetchDirections = useCallback((vehicleType) => {
@@ -306,28 +307,42 @@ export default function App() {
 
   useEffect(() => {
     if (!mapRef.current || !window.google || !isLoaded || !mapReady) return;
+    if (polylineAnimRef.current) {
+      clearInterval(polylineAnimRef.current);
+      polylineAnimRef.current = null;
+    }
     polylinesRef.current.forEach(p => p.setMap(null));
     polylinesRef.current = [];
     if (polylineRef.current) { polylineRef.current.setMap(null); polylineRef.current = null; }
 
     const bounds = new window.google.maps.LatLngBounds();
     let hasBounds = false;
+    const ROUTE_GOLD = "#FFD28C";
 
     const drawLine = (path, style) => {
       if (!path?.length) return;
+      const color = style.color || ROUTE_GOLD;
       const opts = {
         path,
         geodesic: true,
-        strokeColor: style.color,
+        strokeColor: color,
         strokeOpacity: style.dashed ? 0 : 0.9,
         strokeWeight: 5,
         map: mapRef.current,
       };
       if (style.dashed) {
+        opts.strokeOpacity = 0;
         opts.icons = [{
-          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3 },
+          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: color, scale: 3 },
           offset: "0",
           repeat: "16px",
+        }];
+      } else if (style.animate !== false) {
+        opts.strokeOpacity = 0;
+        opts.icons = [{
+          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: color, scale: 4 },
+          offset: "0",
+          repeat: "24px",
         }];
       }
       const pl = new window.google.maps.Polyline(opts);
@@ -341,11 +356,27 @@ export default function App() {
         drawLine(leg.path, LEG_MAP_STYLES[leg.type] || LEG_MAP_STYLES.drive);
       });
     } else if (routePath) {
-      const scenic = routeInfo?.scenic || isScenicRoute(answers);
-      drawLine(routePath, { color: scenic ? "rgba(255,170,100,0.85)" : "rgba(255,140,0,0.9)", dashed: false });
+      drawLine(routePath, { color: ROUTE_GOLD, dashed: false, animate: true });
     }
 
     if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
+
+    let dashOffset = 0;
+    polylineAnimRef.current = setInterval(() => {
+      dashOffset = (dashOffset + 2) % 48;
+      polylinesRef.current.forEach(pl => {
+        const icons = pl.get("icons");
+        if (!icons?.length) return;
+        pl.set("icons", icons.map((ic, i) => (i === 0 ? { ...ic, offset: `${dashOffset}px` } : ic)));
+      });
+    }, 50);
+
+    return () => {
+      if (polylineAnimRef.current) {
+        clearInterval(polylineAnimRef.current);
+        polylineAnimRef.current = null;
+      }
+    };
   }, [tripLegs, routePath, isLoaded, mapReady, theme, routeInfo?.scenic, answers.preferences]);
 
   function toast_(msg) {

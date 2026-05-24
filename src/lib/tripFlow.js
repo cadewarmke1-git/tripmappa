@@ -8,11 +8,42 @@ import { callHaiku } from "./apiClient.js";
 
 export const FLOW_QUESTION_IDS = ["vehicle", "travelers", "lodging", "preferences"];
 
-export const VEHICLE_CHOICES = [
-  "Car", "SUV", "Pickup Truck", "Motorcycle", "RV", "Camper Van",
-  "Semi Truck (18-wheeler)", "Box Truck", "Flatbed", "Tanker",
-  "Boat", "Ferry", "Plane",
+export const VEHICLE_GROUPS = [
+  {
+    label: "Personal",
+    options: [
+      { value: "Car", label: "Car", emoji: "🚗" },
+      { value: "Motorcycle", label: "Motorcycle", emoji: "🏍️" },
+      { value: "SUV or Van", label: "SUV or Van", emoji: "🚐" },
+    ],
+  },
+  {
+    label: "Oversized",
+    options: [
+      { value: "RV", label: "RV", emoji: "🚍" },
+      { value: "Camper Van", label: "Camper Van", emoji: "🛺" },
+      { value: "Box Truck", label: "Box Truck", emoji: "📦" },
+    ],
+  },
+  {
+    label: "Commercial",
+    options: [
+      { value: "Semi Truck (18-wheeler)", label: "Semi Truck 18-Wheeler", emoji: "🚛" },
+      { value: "Flatbed", label: "Flatbed", emoji: "🛤️" },
+      { value: "Tanker", label: "Tanker", emoji: "⛽" },
+    ],
+  },
+  {
+    label: "Other",
+    options: [
+      { value: "Boat", label: "Boat", emoji: "⛵" },
+      { value: "Ferry", label: "Ferry", emoji: "⛴️" },
+      { value: "Plane", label: "Plane", emoji: "✈️" },
+    ],
+  },
 ];
+
+export const VEHICLE_CHOICES = VEHICLE_GROUPS.flatMap(g => g.options.map(o => o.value));
 
 /** @deprecated Kept for imports — specs are assumed automatically. */
 export const TRUCK_HEIGHTS = [];
@@ -126,6 +157,7 @@ function buildVehicleQuestion() {
     id: "vehicle",
     ask: "What are you traveling in?",
     type: "vehicle",
+    groups: VEHICLE_GROUPS,
     choices: VEHICLE_CHOICES,
   };
 }
@@ -207,6 +239,7 @@ RULES:
 - NEVER ask fuel type for trucks (diesel is assumed) or obvious parking for 18-wheelers.
 - NEVER ask lodging on day trips (under 150 miles).
 - NEVER repeat answered topics. Only ask if the answer would meaningfully change the trip plan.
+- ONLY ask questions whose answers would meaningfully change the route, stop cities, lodging recommendations, or trip duration. Never ask about skill level, experience, or anything that would not affect those four things.
 - Skip anything inferable from vehicle or distance.
 - If nothing useful remains, return {"done": true}.
 

@@ -34,14 +34,16 @@ export const DARK_MAP_STYLES = [
 /** Apple Maps–style dark theme applied when app theme is night. */
 export const NIGHT_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
   { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
   { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
   { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#FFD28C" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
   { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
@@ -49,7 +51,7 @@ export const NIGHT_MAP_STYLES = [
 ];
 
 export const LEG_MAP_STYLES = {
-  drive: { color: "rgba(255,140,0,0.9)", dashed: false },
+  drive: { color: "#FFD28C", dashed: false, animate: true },
   fly: { color: "rgba(59,130,246,0.9)", dashed: true },
   ferry: { color: "rgba(20,184,166,0.9)", dashed: true },
   cruise: { color: "rgba(20,184,166,0.9)", dashed: true },

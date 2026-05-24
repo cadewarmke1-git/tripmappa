@@ -48,14 +48,14 @@ export default function RouteFooter({
           )}
         </div>
       </div>
-      <div className="route-timing-wrap" style={{ position: "relative" }}>
+      <div className="route-timing-wrap">
         <button type="button" className="route-timing-btn" onClick={() => onSetRouteTimingOpen(o => !o)}>
           {timingMode === "leave_now" ? "Leave now" : arriveByDate ? `Arrive by ${new Date(arriveByDate).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Arrive by"} ▾
         </button>
         {routeTimingOpen && (
-          <div className="timing-menu" style={{ position: "absolute", left: "100%", top: 0 }}>
-            <button type="button" className={`timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { onSetTimingMode("leave_now"); onSetRouteTimingOpen(false); if (originRef.current?.value && destRef.current?.value && answers.vehicle) onFetchDirections(answers.vehicle); }}>Leave now</button>
-            <button type="button" className={`timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { onSetTimingMode("arrive_by"); onSetRouteTimingOpen(false); }}>Arrive by</button>
+          <div className="route-timing-menu" role="menu">
+            <button type="button" role="menuitem" className={`route-timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { onSetTimingMode("leave_now"); onSetRouteTimingOpen(false); if (originRef.current?.value && destRef.current?.value && answers.vehicle) onFetchDirections(answers.vehicle); }}>Leave now</button>
+            <button type="button" role="menuitem" className={`route-timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { onSetTimingMode("arrive_by"); onSetRouteTimingOpen(false); }}>Arrive by</button>
           </div>
         )}
         {timingMode === "arrive_by" && (

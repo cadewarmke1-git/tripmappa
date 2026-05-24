@@ -15,6 +15,7 @@ export default function QuestionChoices({
   const frozen = !!stepAnim;
   const selected = stepAnim?.answer;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];
+  const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) ? currentQ.groups : null;
 
   const mkClass = (val, extra = "") => {
     const sel = selected === val ? " qr-selected" : "";
@@ -23,7 +24,7 @@ export default function QuestionChoices({
   };
   const mkPrefClass = (p) => `qr-btn${prefDraft.includes(p) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
 
-  const isSingleSelect = currentQ.type === "choice" || currentQ.type === "vehicle" || currentQ.type === "travelers";
+  const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers";
 
   return (
     <div className={`question-choices${frozen ? " choices-frozen" : ""}`}>
@@ -36,7 +37,26 @@ export default function QuestionChoices({
         )}
       </div>
 
-      {isSingleSelect && (
+      {vehicleGroups && vehicleGroups.map(group => (
+        <div key={group.label} className="vehicle-group">
+          <div className="vehicle-group-label">{group.label}</div>
+          <div className="quick-replies vehicle-group-options">
+            {group.options.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className={mkClass(opt.value)}
+                disabled={frozen}
+                onClick={() => onPickAnswer(opt.value)}
+              >
+                {opt.emoji} {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {!vehicleGroups && isSingleSelect && (
         <div className="quick-replies">
           {choices.map(c => (
             <button key={c} type="button" className={mkClass(c)} disabled={frozen} onClick={() => onPickAnswer(c)}>{c}</button>

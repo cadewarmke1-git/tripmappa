@@ -61,10 +61,7 @@ export default function HeroView({
             onMouseEnter={() => onSearchHover(true)}
             onMouseLeave={() => onSearchHover(false)}
           >
-            <div
-              className="hero-search-fields"
-              style={{ position: "relative", display: "flex" }}
-            >
+            <div className="hero-search-fields">
               <div className="hero-input-wrap">
                 <div className="hero-input-label">From</div>
                 {isLoaded ? (
