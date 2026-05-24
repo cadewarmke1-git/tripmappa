@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
 const GOOGLE_LIBRARIES = ["places", "routes"];
@@ -22,62 +22,78 @@ const HERO_PHOTOS_NIGHT = [
   "https://images.unsplash.com/photo-1493246318656-5bfd4cfb29b8?w=1920&q=80",
 ];
 
-function HeroPhotoSlideshow({ photos, paused }) {
-  const startIdx = useMemo(() => Math.floor(Math.random() * photos.length), [photos]);
-  const indexRef = useRef(startIdx);
-  const [layerA, setLayerA] = useState({ idx: startIdx, opacity: 1 });
-  const [layerB, setLayerB] = useState({ idx: startIdx, opacity: 0 });
-  const aIsFrontRef = useRef(true);
-  const [tick, setTick] = useState(0);
+function HeroPhotoSlideshow({ photos, paused, active }) {
+  const [currentIndex, setCurrentIndex] = useState(() => Math.floor(Math.random() * photos.length));
+  const [incomingIndex, setIncomingIndex] = useState(null);
+  const [incomingVisible, setIncomingVisible] = useState(false);
+  const [instantHide, setInstantHide] = useState(false);
+  const indexRef = useRef(currentIndex);
+  const prevActiveRef = useRef(false);
+  const isFirstMountRef = useRef(true);
 
   useEffect(() => {
     photos.forEach((url) => { new Image().src = url; });
   }, [photos]);
 
-  useEffect(() => {
-    const preload = (idx) => { new Image().src = photos[(idx + 1) % photos.length]; };
-    preload(indexRef.current);
-  }, [photos, tick]);
+  const resetToFirst = useCallback(() => {
+    indexRef.current = 0;
+    setInstantHide(true);
+    setCurrentIndex(0);
+    setIncomingIndex(null);
+    setIncomingVisible(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => setInstantHide(false)));
+  }, []);
 
   useEffect(() => {
-    if (paused) return;
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      prevActiveRef.current = active;
+      return;
+    }
+    if (active && !prevActiveRef.current) resetToFirst();
+    prevActiveRef.current = active;
+  }, [active, resetToFirst]);
+
+  useEffect(() => {
+    if (!active || paused || incomingIndex !== null) return;
 
     const timer = setTimeout(() => {
-      const nextIdx = (indexRef.current + 1) % photos.length;
-      indexRef.current = nextIdx;
-
-      if (aIsFrontRef.current) {
-        setLayerB({ idx: nextIdx, opacity: 1 });
-        setLayerA((l) => ({ ...l, opacity: 0 }));
-      } else {
-        setLayerA({ idx: nextIdx, opacity: 1 });
-        setLayerB((l) => ({ ...l, opacity: 0 }));
-      }
-      aIsFrontRef.current = !aIsFrontRef.current;
-      setTick((t) => t + 1);
+      setIncomingIndex((indexRef.current + 1) % photos.length);
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [photos, paused, tick]);
+  }, [active, paused, currentIndex, incomingIndex, photos.length]);
 
-  const aOnTop = aIsFrontRef.current;
+  useEffect(() => {
+    if (incomingIndex === null) return;
+
+    const raf = requestAnimationFrame(() => setIncomingVisible(true));
+    const done = setTimeout(() => {
+      indexRef.current = incomingIndex;
+      setInstantHide(true);
+      setCurrentIndex(incomingIndex);
+      setIncomingVisible(false);
+      setIncomingIndex(null);
+      requestAnimationFrame(() => requestAnimationFrame(() => setInstantHide(false)));
+    }, 1500);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(done);
+    };
+  }, [incomingIndex]);
 
   return (
     <div className="hero-slideshow" aria-hidden="true">
       <div
-        className="hero-bg-slide"
-        style={{
-          backgroundImage: `url(${photos[layerA.idx]})`,
-          opacity: layerA.opacity,
-          zIndex: aOnTop ? 2 : 1,
-        }}
+        className="hero-bg-slide hero-bg-bottom"
+        style={{ backgroundImage: `url(${photos[currentIndex]})` }}
       />
       <div
-        className="hero-bg-slide"
+        className={`hero-bg-slide hero-bg-top${instantHide ? " no-transition" : ""}`}
         style={{
-          backgroundImage: `url(${photos[layerB.idx]})`,
-          opacity: layerB.opacity,
-          zIndex: aOnTop ? 1 : 2,
+          backgroundImage: `url(${photos[incomingIndex ?? currentIndex]})`,
+          opacity: incomingVisible ? 1 : 0,
         }}
       />
     </div>
@@ -101,11 +117,11 @@ const CSS = `
     --ink: #0c1222;
     --surface: #f4f6fa;
     --card: #ffffff;
-    --brand: #1d4ed8;
-    --brand-hover: #1e40af;
-    --brand-soft: rgba(29, 78, 216, 0.1);
-    --accent: #1d4ed8;
-    --accent2: #0ea5e9;
+    --brand: rgba(255,210,140,0.9);
+    --brand-hover: rgba(255,220,155,0.95);
+    --brand-soft: rgba(255,210,140,0.15);
+    --accent: rgba(255,210,140,0.9);
+    --accent2: rgba(255,210,140,0.9);
     --accent3: #10b981;
     --warm: #f59e0b;
     --danger: #ef4444;
@@ -194,12 +210,18 @@ const CSS = `
   }
   .hero-slideshow {
     position: absolute; inset: 0;
+    background: #0a0a12;
   }
   .hero-bg-slide {
     position: absolute; inset: 0;
     background-size: cover; background-position: center; background-repeat: no-repeat;
+  }
+  .hero-bg-bottom { z-index: 1; }
+  .hero-bg-top {
+    z-index: 2;
     transition: opacity 1.5s ease;
   }
+  .hero-bg-top.no-transition { transition: none !important; }
   .hero-overlay {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
     background: rgba(0, 0, 0, 0.35);
@@ -508,6 +530,7 @@ const CSS = `
     border-top-color: var(--accent); border-radius: 50%;
     animation: spin 0.75s linear infinite;
   }
+  .map-loading .loading-spinner { border-top-color: rgba(0,0,0,0.35); }
   .loading-spinner.light {
     border-color: rgba(255,255,255,0.2); border-top-color: #fff;
   }
@@ -524,6 +547,7 @@ const CSS = `
     border-top-color: var(--accent); border-radius: 50%;
     animation: spin 0.7s linear infinite; flex-shrink: 0;
   }
+  .map-full .spinner-dark { border-top-color: rgba(0,0,0,0.35); }
   .route-info-bar {
     position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
     background: rgba(15, 20, 40, 0.75); backdrop-filter: blur(24px) saturate(1.2);
@@ -553,14 +577,14 @@ const CSS = `
     .route-info-bar .rib-divider-mobile-hide { display: none; }
   }
   /* ── App layout — full screen map with floating card ── */
-  .app { padding-top: var(--nav-h); position: relative; height: 100vh; }
-  .map-full { position: absolute; inset: 0; top: var(--nav-h); }
+  .app { position: relative; height: 100vh; overflow: hidden; }
+  .map-full { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
   .gmap-wrap { width: 100%; height: 100%; }
 
   /* Floating card — moody mountain-lodge frosted glass */
   .float-card {
     position: absolute; top: calc(var(--nav-h) + 16px); left: 16px;
-    width: 390px; max-height: calc(100vh - var(--nav-h) - 32px);
+    width: 390px; max-height: calc(100vh - 80px);
     background: rgba(15, 20, 40, 0.75);
     backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
@@ -591,7 +615,7 @@ const CSS = `
     .float-card {
       left: 0; right: 0; top: auto; bottom: 0;
       width: 100%; max-width: 100%;
-      max-height: 60vh;
+      max-height: calc(100vh - 80px);
       border-radius: 20px 20px 0 0;
       box-shadow: 0 -8px 40px rgba(0,0,0,0.18), 0 -2px 8px rgba(0,0,0,0.08);
     }
@@ -798,14 +822,14 @@ const CSS = `
   .stop-actions { display: flex; gap: 7px; margin-top: 12px; }
   .action-btn { flex: 1; padding: 8px 0; border-radius: 9px; border: 1.5px solid var(--border); background: var(--surface); font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; color: var(--ink); transition: all 0.14s; }
   .action-btn:hover { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.15); }
-  .action-btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .action-btn-primary { background: var(--brand); color: var(--charcoal); border-color: var(--brand); }
   .action-btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
   .section-sep { height: 1px; background: var(--border); margin: 6px 0 16px; }
   .results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .results-back { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); padding: 0; font-weight: 500; }
   .results-back:hover { color: var(--ink); }
   .results-route { flex: 1; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px; text-align: center; letter-spacing: -0.02em; }
-  .results-save { background: var(--brand); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.2s var(--ease); }
+  .results-save { background: var(--brand); color: var(--charcoal); border: none; border-radius: 8px; padding: 7px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.2s var(--ease); }
   .results-save:hover { background: var(--brand-hover); }
   .stops-panel-head { margin-bottom: 16px; }
   .stops-panel-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.03em; margin-bottom: 4px; }
@@ -817,9 +841,9 @@ const CSS = `
   .filter-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
   .road-stop-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
   .road-cat-badge { width: 40px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; letter-spacing: 0.05em; flex-shrink: 0; }
-  .road-cat-badge.cat-fuel { background: rgba(29,78,216,0.12); color: var(--brand); }
+  .road-cat-badge.cat-fuel { background: rgba(255,210,140,0.12); color: var(--brand); }
   .road-cat-badge.cat-food { background: rgba(16,185,129,0.12); color: #059669; }
-  .road-cat-badge.cat-charging { background: rgba(14,165,233,0.12); color: #0284c7; }
+  .road-cat-badge.cat-charging { background: rgba(255,210,140,0.12); color: var(--brand); }
   .road-cat-badge.cat-rest { background: rgba(100,116,139,0.12); color: var(--muted); }
   .road-stop-info { flex: 1; min-width: 0; }
   .road-stop-name { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
@@ -1903,11 +1927,11 @@ export default function App() {
 
       {/* Hero */}
       <div className={`hero ${theme}`}>
-        <div className="hero-slideshow-set" style={{ opacity: theme === "day" ? 1 : 0 }}>
-          <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={heroSearchHover || theme !== "day"} />
+        <div className="hero-slideshow-set" style={{ opacity: theme === "day" ? 1 : 0, pointerEvents: theme === "day" ? "auto" : "none" }}>
+          <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={heroSearchHover} active={theme === "day"} />
         </div>
-        <div className="hero-slideshow-set" style={{ opacity: theme === "night" ? 1 : 0 }}>
-          <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={heroSearchHover || theme !== "night"} />
+        <div className="hero-slideshow-set" style={{ opacity: theme === "night" ? 1 : 0, pointerEvents: theme === "night" ? "auto" : "none" }}>
+          <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={heroSearchHover} active={theme === "night"} />
         </div>
         <div className="hero-overlay" />
 
@@ -2247,7 +2271,7 @@ export default function App() {
           </div>
         </nav>
 
-        <div className="app" style={{position:"relative",height:"calc(100vh - var(--nav-h))"}}>
+        <div className="app">
           {/* Full screen map */}
           <div className="map-full">
             {isLoaded ? (
