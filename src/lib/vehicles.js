@@ -23,8 +23,29 @@ export function getRouteTypeLabel(vehicleType) {
   return "Car Route";
 }
 
-export function needsVehicleSpecs(vehicle) {
-  return isTruckVehicle(vehicle) || isRvVehicle(vehicle);
+export function isOversizedVehicle(vehicle) {
+  return ["Flatbed", "Tanker"].includes(vehicle);
+}
+
+export function needsVehicleSpecs() {
+  return false;
+}
+
+export function applyAssumedVehicleSpecs(answers) {
+  const out = { ...answers };
+  if (isTruckVehicle(out.vehicle)) {
+    const oversized = isOversizedVehicle(out.vehicle);
+    out.truck_height = oversized ? "14'0\"" : "13'6\"";
+    out.truck_weight = "80,000 lbs";
+    out.truck_hazmat = "No";
+    out.fuel = "Diesel";
+  }
+  if (isRvVehicle(out.vehicle)) {
+    out.rv_height = "11'0\"";
+    out.rv_weight = "12,000 lbs";
+    out.rv_towing = "No";
+  }
+  return out;
 }
 
 export function isRvTrip(answers) {

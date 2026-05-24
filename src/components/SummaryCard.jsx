@@ -7,17 +7,20 @@ import {
   isScenicRoute,
   inferFuelType,
 } from "../lib/vehicles.js";
-import { hasKidsToddlers } from "../lib/tripFlow.js";
 
 export default function SummaryCard({ answers, hosCompliance }) {
   const fuel = inferFuelType(answers.vehicle, answers.preferences || []);
   const rows = [
     answers.trip_type && ["Trip", answers.trip_type],
     answers.vehicle && ["Vehicle", answers.vehicle],
-    isTruckVehicle(answers.vehicle) && answers.truck_height && ["Truck specs", `${answers.truck_height} · ${answers.truck_weight} · Hazmat ${answers.truck_hazmat}`],
-    isRvVehicle(answers.vehicle) && answers.rv_height && ["RV specs", `${answers.rv_height} · ${answers.rv_weight} · Towing ${answers.rv_towing}`],
-    answers.travelers && ["Travelers", hasFamilyKids(answers.travelers) ? `${answers.travelers} (${answers.kids_ages})` : answers.travelers],
+    isTruckVehicle(answers.vehicle) && answers.hauling_type && ["Hauling", answers.hauling_type],
+    isTruckVehicle(answers.vehicle) && answers.sleeper_cab && ["Sleeper cab", answers.sleeper_cab],
+    isTruckVehicle(answers.vehicle) && answers.truck_stop_brand && ["Truck stops", answers.truck_stop_brand],
+    isTruckVehicle(answers.vehicle) && answers.truck_height && ["Assumed specs", `${answers.truck_height} · ${answers.truck_weight} · Diesel`],
+    isRvVehicle(answers.vehicle) && answers.rv_height && ["Assumed RV specs", `${answers.rv_height} · ${answers.rv_weight}`],
+    answers.travelers && ["Travelers", answers.travelers],
     answers.lodging && ["Lodging", answers.lodging],
+    Array.isArray(answers.route_restrictions) && answers.route_restrictions.length > 0 && ["Route restrictions", answers.route_restrictions.join(", ")],
     Array.isArray(answers.preferences) && answers.preferences.length > 0 && ["Preferences", answers.preferences.join(", ")],
     fuel && ["Fuel type", fuel],
   ].filter(Boolean);
@@ -33,7 +36,6 @@ export default function SummaryCard({ answers, hosCompliance }) {
       {hasFamilyKids(answers.travelers) && (
         <div className="summary-kids-note">
           Kid-friendly stops prioritized · Rest stops every 2 hours
-          {hasKidsToddlers(answers.kids_ages) && " · Diaper changing stations noted"}
         </div>
       )}
       {isScenicRoute(answers) && (
@@ -42,7 +44,6 @@ export default function SummaryCard({ answers, hosCompliance }) {
       {isRvTrip(answers) && (
         <div className="summary-rv-note">
           RV Safe Route — bridges under 14ft flagged
-          {answers.rv_towing === "Yes" && " · Towing length restrictions applied"}
         </div>
       )}
       {isTruckerTrip(answers) && hosCompliance && (

@@ -1,4 +1,4 @@
-/** Legacy Haiku proxy — no frontend callers. Use api/plan-trip.js for trip generation. */
+/** Haiku proxy for dynamic question routing. Called via src/lib/apiClient.js only. */
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 

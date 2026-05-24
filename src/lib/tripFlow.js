@@ -1,20 +1,12 @@
 import {
   isTruckVehicle,
   isRvVehicle,
-  isRvTrip,
-  isTruckerTrip,
-  hasFamilyKids,
-  skipLodgingQuestion,
-  skipTravelersQuestion,
-  skipPreferencesQuestion,
+  applyAssumedVehicleSpecs,
 } from "./vehicles.js";
+import { parseMilesFromDistance } from "./parsing.js";
+import { callHaiku } from "./apiClient.js";
 
-export const FLOW_QUESTION_IDS = ["trip_type", "vehicle", "travelers", "lodging", "preferences"];
-
-export const TRIP_TYPE_CHOICES = [
-  "Road trip", "Day trip", "Driving home", "Work or Delivery run",
-  "Flying", "Ferry or Cruise", "Multi-leg trip",
-];
+export const FLOW_QUESTION_IDS = ["vehicle", "travelers", "lodging", "preferences"];
 
 export const VEHICLE_CHOICES = [
   "Car", "SUV", "Pickup Truck", "Motorcycle", "RV", "Camper Van",
@@ -22,167 +14,315 @@ export const VEHICLE_CHOICES = [
   "Boat", "Ferry", "Plane",
 ];
 
-export const PREFS_RV = [
-  "Scenic route", "Low bridge warnings", "RV park availability", "Dump station locations",
-  "Propane refill locations", "High clearance fuel stops", "Avoid steep grades",
-  "Pet-friendly stops", "Kid-friendly stops", "Avoid tolls", "Avoid highways",
+/** @deprecated Kept for imports — specs are assumed automatically. */
+export const TRUCK_HEIGHTS = [];
+export const RV_HEIGHTS = [];
+export const TRUCK_WEIGHTS = [];
+export const RV_WEIGHTS = [];
+export const KIDS_AGE_CHOICES = [];
+
+const MAX_HAIKU_QUESTIONS = 4;
+const DAY_TRIP_MILES = 150;
+
+export const TRUCKER_QUESTION_SEQUENCE = [
+  {
+    id: "hauling_type",
+    ask: "What are you hauling?",
+    type: "choice",
+    choices: ["General Freight", "Refrigerated Load", "Flatbed", "Tanker", "Livestock", "Empty"],
+  },
+  {
+    id: "sleeper_cab",
+    ask: "Do you have a sleeper cab?",
+    type: "choice",
+    choices: ["Yes sleeper cab", "No I need a motel or hotel"],
+  },
+  {
+    id: "route_restrictions",
+    ask: "Any route restrictions?",
+    type: "multiselect",
+    choices: ["Avoid toll roads", "Avoid low bridges", "Avoid certain states", "No restrictions"],
+  },
+  {
+    id: "truck_stop_brand",
+    ask: "Preferred truck stop brand?",
+    type: "choice",
+    choices: ["Pilot Flying J", "Love's", "Petro", "TA Travel Center", "No preference"],
+  },
 ];
-
-export const TRAVELER_CHOICES = ["Solo", "Partner", "Family with kids", "Group of friends", "Team", "Passengers"];
-export const KIDS_AGE_CHOICES = ["Toddlers", "Young kids", "Tweens", "Teens", "Mix of ages"];
-
-export const LODGING_REGULAR = [
-  "Budget hotel", "Mid-range hotel", "Upscale hotel", "Luxury hotel",
-  "Campground", "Airbnb", "No overnight stay",
-];
-
-export const LODGING_TRUCKER = [
-  "Truck stop (Pilot/Flying J/Love's)",
-  "Motel near truck stop",
-  "Sleeper cab — no hotel needed",
-  "Rest area",
-  "Weigh station area",
-];
-
-export const PREFS_REGULAR = [
-  "Scenic route", "Restaurant recommendations", "Grocery delivery to hotel",
-  "Pet-friendly stops", "Kid-friendly stops", "Avoid tolls", "Avoid highways",
-  "EV charging stops",
-];
-
-export const PREFS_TRUCKER = [
-  "Weigh station locations", "Truck parking availability",
-  "Fuel stops (Pilot/Flying J/Love's/TA)", "Scale bypass PrePass",
-  "Low bridge warnings", "Hazmat route", "Rest area locations", "Avoid steep grades",
-];
-
-export const TRUCK_HEIGHTS = (() => {
-  const opts = [];
-  for (let inches = 120; inches <= 168; inches += 6) {
-    const ft = Math.floor(inches / 12);
-    const rem = inches % 12;
-    opts.push(rem ? `${ft}'${rem}"` : `${ft}'0"`);
-  }
-  return opts;
-})();
-
-export const RV_HEIGHTS = (() => {
-  const opts = [];
-  for (let inches = 96; inches <= 162; inches += 6) {
-    const ft = Math.floor(inches / 12);
-    const rem = inches % 12;
-    opts.push(rem ? `${ft}'${rem}"` : `${ft}'0"`);
-  }
-  return opts;
-})();
-
-export const RV_WEIGHTS = (() => {
-  const opts = [];
-  for (let w = 5000; w <= 26000; w += 1000) opts.push(`${w.toLocaleString()} lbs`);
-  return opts;
-})();
-
-export const TRUCK_WEIGHTS = (() => {
-  const opts = [];
-  for (let w = 20000; w <= 80000; w += 5000) opts.push(`${w.toLocaleString()} lbs`);
-  return opts;
-})();
 
 export function hasKidsToddlers(kidsAges) {
   return kidsAges === "Toddlers" || kidsAges === "Mix of ages";
 }
 
-export function flowQuestionSkipped(id, answers) {
-  if (id === "travelers") return skipTravelersQuestion(answers.trip_type, answers.vehicle);
-  if (id === "lodging") return skipLodgingQuestion(answers.trip_type, answers.vehicle);
-  if (id === "preferences") return skipPreferencesQuestion(answers.trip_type, answers.vehicle);
-  return false;
+export function getRouteDistanceMiles(context) {
+  if (context?.routeDistanceMiles != null) return context.routeDistanceMiles;
+  return parseMilesFromDistance(context?.routeDistance);
 }
 
-export function pruneSkippedAnswers(answers) {
-  const pruned = { ...answers };
-  for (const id of FLOW_QUESTION_IDS) {
-    if (!flowQuestionSkipped(id, pruned)) continue;
-    delete pruned[id];
-    if (id === "vehicle") {
-      delete pruned.truck_height;
-      delete pruned.truck_weight;
-      delete pruned.truck_hazmat;
-      delete pruned.rv_height;
-      delete pruned.rv_weight;
-      delete pruned.rv_towing;
+export function isDayTripByDistance(context) {
+  const miles = getRouteDistanceMiles(context);
+  return miles != null && miles < DAY_TRIP_MILES;
+}
+
+function mapTruckerAnswers(answers) {
+  const out = { ...answers };
+
+  if (out.sleeper_cab?.startsWith("Yes")) {
+    out.lodging = "Sleeper cab — no hotel needed";
+  } else if (out.sleeper_cab?.startsWith("No")) {
+    out.lodging = "Motel near truck stop";
+  }
+
+  const prefs = Array.isArray(out.preferences) ? [...out.preferences] : [];
+  const restrictions = Array.isArray(out.route_restrictions) ? out.route_restrictions : [];
+  restrictions.forEach(r => {
+    if (r === "Avoid toll roads" && !prefs.includes("Avoid tolls")) prefs.push("Avoid tolls");
+    if (r === "Avoid low bridges" && !prefs.includes("Low bridge warnings")) prefs.push("Low bridge warnings");
+    if (r === "Avoid certain states" && !prefs.includes("Avoid steep grades")) prefs.push("Avoid steep grades");
+  });
+  if (restrictions.includes("No restrictions") && restrictions.length === 1) {
+    // no extra prefs
+  }
+
+  if (out.truck_stop_brand && out.truck_stop_brand !== "No preference") {
+    if (!prefs.includes("Fuel stops (Pilot/Flying J/Love's/TA)")) {
+      prefs.push("Fuel stops (Pilot/Flying J/Love's/TA)");
     }
-    if (id === "travelers") delete pruned.kids_ages;
-    if (id === "preferences") delete pruned.preferences;
+    out.truck_stop_preference = out.truck_stop_brand;
   }
-  return pruned;
+
+  if (out.hauling_type === "Tanker" && out.truck_hazmat === "No") {
+    out.hauling_note = "Tanker load — verify hazmat requirements if applicable";
+  }
+
+  out.preferences = prefs;
+  return out;
 }
 
-export function countApplicableFlowQuestions(answers) {
-  return FLOW_QUESTION_IDS.filter(id => !flowQuestionSkipped(id, answers)).length;
+export function normalizeTripAnswers(answers, context = {}) {
+  let out = applyAssumedVehicleSpecs({ ...answers });
+  const miles = getRouteDistanceMiles(context);
+  if (miles != null) {
+    out.trip_type = miles < DAY_TRIP_MILES ? "Day trip" : (out.trip_type || "Road trip");
+  } else if (!out.trip_type) {
+    out.trip_type = "Road trip";
+  }
+  if (!Array.isArray(out.preferences)) {
+    out.preferences = out.preferences ? [out.preferences] : [];
+  }
+  if (isDayTripByDistance(context)) {
+    delete out.lodging;
+  }
+  if (isTruckVehicle(out.vehicle)) {
+    out = mapTruckerAnswers(out);
+  }
+  return out;
 }
 
-export function isFlowQuestionComplete(id, answers) {
-  if (answers[id] === undefined) return false;
-  if (id === "vehicle" && isTruckVehicle(answers.vehicle)) {
-    return !!(answers.truck_height && answers.truck_weight && answers.truck_hazmat);
-  }
-  if (id === "vehicle" && isRvVehicle(answers.vehicle)) {
-    return !!(answers.rv_height && answers.rv_weight && answers.rv_towing);
-  }
-  if (id === "travelers" && hasFamilyKids(answers.travelers)) {
-    return !!answers.kids_ages;
-  }
-  return true;
+function buildVehicleQuestion() {
+  return {
+    done: false,
+    id: "vehicle",
+    ask: "What are you traveling in?",
+    type: "vehicle",
+    choices: VEHICLE_CHOICES,
+  };
 }
 
-export function buildFlowQuestion(id, answers) {
-  const base = { done: false, id };
-  const prefChoices = isTruckerTrip(answers) ? PREFS_TRUCKER : isRvTrip(answers) ? PREFS_RV : PREFS_REGULAR;
-  switch (id) {
-    case "trip_type":
-      return { ...base, ask: "What kind of trip is this?", type: "choice", choices: TRIP_TYPE_CHOICES };
-    case "vehicle":
-      return { ...base, ask: "What are you traveling in?", type: "vehicle", choices: VEHICLE_CHOICES };
-    case "travelers":
-      return { ...base, ask: "Who's coming along?", type: "travelers", choices: TRAVELER_CHOICES };
-    case "lodging":
-      return {
-        ...base, ask: "Where do you want to stay?", type: "choice",
-        choices: isTruckerTrip(answers) ? LODGING_TRUCKER : LODGING_REGULAR,
-      };
-    case "preferences":
-      return {
-        ...base, ask: "Any preferences? Select all that apply.", type: "multiselect",
-        choices: prefChoices,
-      };
-    default:
-      return null;
-  }
-}
-
-export function getNextFlowQuestion(answers) {
-  for (const id of FLOW_QUESTION_IDS) {
-    if (flowQuestionSkipped(id, answers)) continue;
-    if (!isFlowQuestionComplete(id, answers)) {
-      const q = buildFlowQuestion(id, answers);
-      if (q) return q;
-    }
+function getNextTruckerQuestion(answers) {
+  for (const q of TRUCKER_QUESTION_SEQUENCE) {
+    if (answers[q.id] === undefined) return { done: false, ...q };
   }
   return { done: true };
 }
 
+function isTruckerQuestionComplete(id, answers) {
+  if (answers[id] === undefined) return false;
+  if (id === "route_restrictions") return Array.isArray(answers.route_restrictions);
+  return true;
+}
+
+function isHaikuQuestionComplete(id, answers) {
+  if (answers[id] === undefined) return false;
+  if (Array.isArray(answers[id])) return true;
+  return answers[id] !== "";
+}
+
+function sanitizeHaikuQuestion(raw) {
+  if (!raw || raw.done) return { done: true };
+
+  const id = String(raw.id || "question").trim();
+  const type = ["choice", "multiselect", "vehicle"].includes(raw.type) ? raw.type : "choice";
+  const ask = String(raw.ask || "One more detail for your trip.").trim();
+  let choices = Array.isArray(raw.choices) ? raw.choices.map(String).filter(Boolean) : [];
+
+  if (type === "multiselect") {
+    if (choices.length < 2) choices = ["No preference", "Skip"];
+  } else if (choices.length < 3) {
+    choices = choices.length ? choices : ["Yes", "No", "Not sure"];
+    while (choices.length < 3) choices.push(`Option ${choices.length + 1}`);
+  }
+  choices = choices.slice(0, 6);
+
+  return { done: false, id, ask, type, choices };
+}
+
+function parseHaikuQuestion(text) {
+  const clean = text.replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(clean);
+  return sanitizeHaikuQuestion(parsed);
+}
+
+function formatAnswersForPrompt(answers) {
+  return Object.entries(answers)
+    .filter(([k, v]) => !k.startsWith("_") && v !== undefined && v !== "" && v !== null)
+    .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+    .join("\n") || "(none yet)";
+}
+
+function buildHaikuPrompt(answers, context) {
+  const vehicle = answers.vehicle || context.vehicle || "Car";
+  const miles = getRouteDistanceMiles(context);
+  const distanceLabel = context.routeDistance || (miles != null ? `${Math.round(miles)} mi` : "unknown");
+  const dayTrip = isDayTripByDistance(context);
+  const haikuCount = context.haikuQuestionCount ?? 0;
+  const rv = isRvVehicle(vehicle);
+  const carLike = !isTruckVehicle(vehicle) && !rv;
+
+  return `You are TripMappa's travel planning assistant. Return the SINGLE best next question for this trip.
+
+TRIP CONTEXT:
+- Vehicle: ${vehicle}
+- Route distance: ${distanceLabel}${miles != null ? ` (${Math.round(miles)} miles)` : ""}
+- Day trip (under 150 mi): ${miles != null ? (dayTrip ? "YES — do NOT ask about overnight lodging" : "NO — lodging questions OK if needed") : "UNKNOWN — do not ask lodging until distance is known"}
+- Assumed specs (already applied — NEVER ask for height, weight, hazmat, or towing): ${
+    isTruckVehicle(vehicle) ? "13'6\" (or 14' oversized), 80,000 lbs, diesel, no hazmat" :
+    rv ? "11' height, 12,000 lbs, no towing" : "standard passenger vehicle"
+  }
+- Questions asked so far: ${haikuCount} of ${MAX_HAIKU_QUESTIONS} max
+
+RULES:
+- Return 3–6 short, trip-specific answer choices in "choices" — fully tailored to this vehicle and distance.
+- NEVER ask fuel type for trucks (diesel is assumed) or obvious parking for 18-wheelers.
+- NEVER ask lodging on day trips (under 150 miles).
+- NEVER repeat answered topics. Only ask if the answer would meaningfully change the trip plan.
+- Skip anything inferable from vehicle or distance.
+- If nothing useful remains, return {"done": true}.
+
+${carLike ? "Car-like trip topics: travelers, lodging (150+ mi only), trip preferences." : ""}
+${rv ? "RV trip topics: RV park/campground lodging (150+ mi), scenic routes, dump stations, propane, pet/kid stops." : ""}
+
+Answers so far:
+${formatAnswersForPrompt(answers)}
+
+Respond with JSON only:
+{
+  "done": false,
+  "id": "unique_snake_case_id",
+  "ask": "Short question under 14 words",
+  "type": "choice|multiselect",
+  "choices": ["option1", "option2", "option3"]
+}`;
+}
+
+export function getNextFlowQuestion(answers, context = {}) {
+  const normalized = normalizeTripAnswers(answers, context);
+
+  if (!normalized.vehicle) return buildVehicleQuestion();
+
+  if (isTruckVehicle(normalized.vehicle)) {
+    const truckQ = getNextTruckerQuestion(normalized);
+    if (!truckQ.done) return truckQ;
+    return { done: true };
+  }
+
+  const haikuCount = context.haikuQuestionCount ?? 0;
+  if (haikuCount >= MAX_HAIKU_QUESTIONS) return { done: true };
+
+  return {
+    done: false,
+    id: "preferences",
+    ask: "Any preferences? Select all that apply.",
+    type: "multiselect",
+    choices: ["Scenic route", "Restaurant recommendations", "Pet-friendly stops", "Avoid tolls", "Avoid highways"],
+  };
+}
+
 export function countFlowQuestionsAnswered(answers) {
   let n = 0;
-  for (const id of FLOW_QUESTION_IDS) {
-    if (flowQuestionSkipped(id, answers)) continue;
-    if (isFlowQuestionComplete(id, answers)) n += 1;
+  if (answers.vehicle) n += 1;
+  if (isTruckVehicle(answers.vehicle)) {
+    TRUCKER_QUESTION_SEQUENCE.forEach(q => {
+      if (isTruckerQuestionComplete(q.id, answers)) n += 1;
+    });
+    return Math.min(n, 5);
   }
+  Object.keys(answers).forEach(k => {
+    if (k !== "vehicle" && k !== "trip_type" && k !== "fuel" && !k.startsWith("truck_") && !k.startsWith("rv_")) {
+      if (answers[k] !== undefined && answers[k] !== "") n += 1;
+    }
+  });
   return n;
 }
 
-export async function fetchNextQuestion(answers) {
-  const local = getNextFlowQuestion(answers);
-  if (local.done) return { done: true };
-  return local;
+export function pruneSkippedAnswers(answers) {
+  return normalizeTripAnswers(answers);
+}
+
+export function flowQuestionSkipped() {
+  return false;
+}
+
+export function countApplicableFlowQuestions() {
+  return MAX_HAIKU_QUESTIONS + 1;
+}
+
+export function isFlowQuestionComplete(id, answers) {
+  if (id === "vehicle") return !!answers.vehicle;
+  if (isTruckVehicle(answers.vehicle)) return isTruckerQuestionComplete(id, answers);
+  return isHaikuQuestionComplete(id, answers);
+}
+
+export function buildFlowQuestion(id, answers, context = {}) {
+  if (id === "vehicle") return buildVehicleQuestion();
+  return getNextFlowQuestion(answers, context);
+}
+
+export async function fetchNextQuestion(answers, context = {}) {
+  const normalized = normalizeTripAnswers(answers, context);
+
+  if (!normalized.vehicle) return buildVehicleQuestion();
+
+  if (isTruckVehicle(normalized.vehicle)) {
+    const truckQ = getNextTruckerQuestion(normalized);
+    return truckQ.done ? { done: true } : truckQ;
+  }
+
+  const haikuCount = context.haikuQuestionCount ?? 0;
+  if (haikuCount >= MAX_HAIKU_QUESTIONS) return { done: true };
+
+  try {
+    const text = await callHaiku(buildHaikuPrompt(normalized, context));
+    const question = parseHaikuQuestion(text);
+    if (question.done) return { done: true };
+
+    if (isHaikuQuestionComplete(question.id, normalized)) {
+      if (haikuCount + 1 >= MAX_HAIKU_QUESTIONS) return { done: true };
+      const retry = await callHaiku(buildHaikuPrompt(normalized, { ...context, haikuQuestionCount: haikuCount + 1 }));
+      return parseHaikuQuestion(retry);
+    }
+
+    if (question.id === "lodging" && isDayTripByDistance(context)) {
+      return fetchNextQuestion(
+        { ...normalized, lodging: "No overnight stay" },
+        { ...context, haikuQuestionCount: haikuCount + 1 },
+      );
+    }
+
+    return question;
+  } catch (err) {
+    console.error("Haiku question routing failed, using local fallback:", err);
+    return getNextFlowQuestion(normalized, context);
+  }
 }

@@ -13,7 +13,7 @@ import {
   isScenicRoute,
   inferFuelType,
 } from "./lib/vehicles.js";
-import { fetchNextQuestion, getNextFlowQuestion, pruneSkippedAnswers } from "./lib/tripFlow.js";
+import { fetchNextQuestion, getNextFlowQuestion, normalizeTripAnswers } from "./lib/tripFlow.js";
 import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { computeAutoTheme } from "./lib/theme.js";
@@ -395,28 +395,34 @@ export default function App() {
   }
 
   async function loadNextQuestion(newAnswers) {
+    const ctx = buildQuestionContext(newAnswers);
     setConvoLoading(true);
     try {
-      const result = await fetchNextQuestion(newAnswers);
+      const result = await fetchNextQuestion(newAnswers, ctx);
       if (result.done) {
         setCurrentQuestion(null);
         setQIndex(-2);
         setConvoComplete(true);
+        setAnswers(normalizeTripAnswers(newAnswers, ctx));
       } else {
         setCurrentQuestion(result);
         setQIndex(0);
-        if (result.id === "preferences") {
+        if (result.type === "multiselect") {
+          setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
+          setPrefSkipReady(false);
+        } else if (result.id === "preferences") {
           setPrefDraft(Array.isArray(newAnswers.preferences) ? newAnswers.preferences : []);
           setPrefSkipReady(false);
         }
       }
     } catch (err) {
       console.error("Question flow failed:", err);
-      const fallback = getNextFlowQuestion(newAnswers);
+      const fallback = getNextFlowQuestion(newAnswers, ctx);
       if (fallback.done) {
         setCurrentQuestion(null);
         setQIndex(-2);
         setConvoComplete(true);
+        setAnswers(normalizeTripAnswers(newAnswers, ctx));
       } else {
         setCurrentQuestion(fallback);
         setQIndex(0);
@@ -426,12 +432,21 @@ export default function App() {
     }
   }
 
+  function buildQuestionContext(newAnswers) {
+    return {
+      vehicle: newAnswers?.vehicle || routeInfo?.vehicleType || "Car",
+      routeDistance: routeInfo?.distance,
+      routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
+      haikuQuestionCount: questionHistory.filter(h => h.question?.id !== "vehicle").length,
+    };
+  }
+
   useEffect(() => {
-    if (currentQuestion?.id !== "preferences") return;
+    if (currentQuestion?.type !== "multiselect") return;
     setPrefSkipReady(false);
     const t = setTimeout(() => setPrefSkipReady(true), 3000);
     return () => clearTimeout(t);
-  }, [currentQuestion?.id]);
+  }, [currentQuestion?.id, currentQuestion?.type]);
 
   async function startConvo() {
     if (!origin || !dest) { toast_("Enter origin and destination first"); return; }
@@ -452,7 +467,11 @@ export default function App() {
 
   async function submitAnswer(value, extraFields = {}) {
     if (!currentQuestion) return;
-    const na = pruneSkippedAnswers({ ...answers, ...extraFields, [currentQuestion.id]: value });
+    const ctx = buildQuestionContext({ ...answers, ...extraFields, [currentQuestion.id]: value });
+    const na = normalizeTripAnswers(
+      { ...answers, ...extraFields, [currentQuestion.id]: value },
+      ctx,
+    );
 
     setAnswers(na);
     setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
@@ -531,7 +550,7 @@ export default function App() {
           origin: tripOrigin,
           destination: tripDest,
           answers: {
-            ...answers,
+            ...normalizeTripAnswers(answers, buildQuestionContext(answers)),
             fuel: inferFuelType(answers.vehicle, answers.preferences || []),
           },
           routeInfo: {

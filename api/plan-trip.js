@@ -27,19 +27,26 @@ export default async function handler(req, res) {
   const truckBlock = isTrucker
     ? `
 - Commercial vehicle: ${vehicle}
-- Truck height: ${answers?.truck_height || "unknown"} · Weight: ${answers?.truck_weight || "unknown"} · Hazmat: ${answers?.truck_hazmat || "No"}
-- Lodging preference: ${answers?.lodging || "Truck stop"}
-- Include truck stops (Pilot/Flying J/Love's/TA) with parking, showers, scales, DEF
+- Assumed dimensions: height ${answers?.truck_height || "13'6\""} · weight ${answers?.truck_weight || "80,000 lbs"} · Hazmat: ${answers?.truck_hazmat || "No"} · Fuel: Diesel
+- Hauling type: ${answers?.hauling_type || "General Freight"}
+- Sleeper cab: ${answers?.sleeper_cab || "Unknown"}${answers?.lodging ? ` · Lodging plan: ${answers.lodging}` : ""}
+- Route restrictions: ${Array.isArray(answers?.route_restrictions) && answers.route_restrictions.length ? answers.route_restrictions.join(", ") : "None"}
+- Preferred truck stop brand: ${answers?.truck_stop_brand || answers?.truck_stop_preference || "No preference"}
+- HOS compliance REQUIRED: 11-hour daily driving limit, mandatory 30-minute break every 8 hours, minimum 10-hour rest at each overnight stop
+- Prioritize ${answers?.truck_stop_brand && answers.truck_stop_brand !== "No preference" ? answers.truck_stop_brand : "Pilot/Flying J, Love's, Petro, or TA"} truck stops when brand preference set
+- Use hauling type to tailor stops (${answers?.hauling_type || "General Freight"} — e.g. reefer amenities for refrigerated, flatbed parking for flatbed)
+- If sleeper cab: recommend truck stop parking only; if no sleeper: include motel rooms near truck stops
+- Apply route restrictions to avoid tolls, low bridges, or specified states as listed
+- Include truck stops with parking spaces, showers, laundry, diesel prices, and CAT scales
 - Weigh station locations with operating hours
-- HOS compliance: 11-hour daily driving limit, 30-min break every 8 hours
-- Flag low bridges, steep grades over 6%, hazmat tunnels if hazmat Yes
-- Fuel stops with diesel prices and amenities between overnight stops`
+- Flag low bridges under assumed height, steep grades over 6%
+- Fuel stops with diesel prices and DEF between overnight stops`
     : "";
 
   const rvBlock = isRv
     ? `
 - RV/Camper: ${vehicle}
-- Height: ${answers?.rv_height || "unknown"} · Weight: ${answers?.rv_weight || "unknown"} · Towing vehicle: ${answers?.rv_towing || "No"}
+- Height: ${answers?.rv_height || "11'0\""} · Weight: ${answers?.rv_weight || "12,000 lbs"} · Towing: ${answers?.rv_towing || "No"} (assumed standard RV dimensions)
 - Flag low bridges under 14ft clearance, steep grades over 8%, sharp switchbacks
 - Include KOA, Good Sam, Thousand Trails RV parks with full hookups, amp options, pull-through sites
 - Include state/national forest campgrounds with max RV length and hookup info
