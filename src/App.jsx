@@ -18,10 +18,25 @@ const HERO_PHOTOS_DAY = [
 
 const HERO_PHOTOS_NIGHT = [
   "https://images.unsplash.com/photo-1475070929565-c985b496cb9f?w=1920&q=80",
-  "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1920&q=80",
-  "https://images.unsplash.com/photo-1493246318656-5bfd4cfb29b8?w=1920&q=80",
+  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80",
+  "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80",
   "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80",
 ];
+
+const WATER_VEHICLES = ["Ferry / Boat", "Cruise Ship", "Sailboat"];
+
+function isWaterVehicle(vehicle) {
+  return WATER_VEHICLES.includes(vehicle);
+}
+
+function getRouteTypeLabel(vehicleType) {
+  if (isWaterVehicle(vehicleType)) return "Water Route";
+  if (vehicleType === "Semi Truck") return "Truck Route";
+  if (vehicleType === "Trailer") return "Trailer Route";
+  if (vehicleType === "RV / Camper") return "RV Route";
+  if (vehicleType === "Motorcycle") return "Moto Route";
+  return "Car Route";
+}
 
 function HeroPhotoSlideshow({ photos, paused, active }) {
   const [currentIndex, setCurrentIndex] = useState(() => Math.floor(Math.random() * photos.length));
@@ -261,7 +276,7 @@ const CSS = `
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 24px; padding: 12px 12px 12px 26px;
-    display: flex; align-items: stretch; gap: 16px;
+    display: flex; align-items: center; gap: 16px;
     width: 100%; max-width: 600px; margin: 0 auto 40px;
     border: 1px solid rgba(255,255,255,0.3);
     box-shadow: 0 16px 48px rgba(0,0,0,0.2);
@@ -273,23 +288,35 @@ const CSS = `
     box-shadow: 0 20px 56px rgba(0,0,0,0.28), 0 0 0 3px rgba(255,255,255,0.08);
   }
   .hero-search-fields {
-    position: relative; flex: 1; min-width: 0;
-    display: grid; grid-template-columns: 1fr 1fr; align-items: stretch;
-  }
-  .hero-search-divider {
-    position: absolute; left: 50%; top: 8px; bottom: 8px; width: 1px;
-    transform: translateX(-50%); background: rgba(255,255,255,0.3);
-    pointer-events: none; z-index: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
   }
   .hero-swap-btn {
-    position: absolute; left: 50%; top: 50%; z-index: 10;
-    width: 30px; height: 30px; border-radius: 50%;
-    margin: 0; padding: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-    color: #fff; font-size: 13px; line-height: 1; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    z-index: 20;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
   }
   .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
@@ -321,18 +348,17 @@ const CSS = `
   .route-timing-btn:hover { border-color: rgba(255,210,140,0.4); background: rgba(255,255,255,0.12); }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
-    .hero-search-fields { grid-template-columns: 1fr; grid-template-rows: auto auto; width: 100%; }
-    .hero-search-divider { top: 50%; bottom: auto; left: 16px; right: 16px; width: auto; height: 1px; transform: translateY(-50%); }
-    .hero-swap-btn { left: 50%; top: 50%; margin: 0; padding: 0; transform: translate(-50%, -50%); }
-    .hero-input-wrap:first-child,
-    .hero-input-wrap:last-child { padding-left: 0; padding-right: 0; }
+    .hero-search-fields { flex-direction: column; width: 100%; }
+    .hero-input-wrap:first-child { padding-right: 0; padding-bottom: 20px; }
+    .hero-input-wrap:last-child { padding-left: 0; padding-top: 20px; }
+    .hero-swap-btn { left: 50%; top: 50%; transform: translate(-50%, -50%); }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
   }
-  .hero-input-wrap { min-width: 0; padding: 0 18px; }
-  .hero-input-wrap:first-child { padding-left: 0; padding-right: 22px; }
-  .hero-input-wrap:last-child { padding-right: 0; padding-left: 22px; }
+  .hero-input-wrap { min-width: 0; flex: 1; }
+  .hero-input-wrap:first-child { padding-right: 24px; }
+  .hero-input-wrap:last-child { padding-left: 24px; }
   .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 5px; }
   .hero-input {
     border: none; outline: none; font-family: 'Inter', sans-serif;
@@ -679,11 +705,20 @@ const CSS = `
   .route-footer .route-swap-btn { width: 24px; height: 24px; font-size: 11px; }
   .route-footer .route-timing-btn { padding: 5px 12px; font-size: 11px; }
   .route-footer .route-arrive-picker { padding: 8px 10px; font-size: 11px; margin-top: 6px; }
-  .route-slim-bar {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-    color: rgba(255,255,255,0.65); text-align: center;
-    padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06);
-    margin-top: 2px;
+  .route-slim-bar { display: none; }
+  .route-info-chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 6px; }
+  .route-info-chip {
+    display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center;
+    padding: 6px 14px; border-radius: 99px; font-family: 'Inter', sans-serif;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 0 12px rgba(255,210,140,0.06);
+  }
+  .route-chip-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; opacity: 0.75; }
+  .route-chip-val { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; }
+  .route-chip-sep { font-size: 11px; opacity: 0.4; }
+  .water-route-note {
+    font-size: 11px; line-height: 1.45; text-align: center; max-width: 280px;
+    color: rgba(255,255,255,0.55); font-style: italic;
   }
   .route-wrap { padding: 20px 24px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 14px; background: transparent; }
   .route-fields { display: flex; flex-direction: column; gap: 0; }
@@ -957,7 +992,21 @@ const QUESTIONS = [
     id: "vehicle",
     ask: "What are you traveling in?",
     type: "choice",
-    choices: ["Car", "RV / Camper", "Semi Truck", "Motorcycle", "Trailer"],
+    choices: ["Car", "RV / Camper", "Semi Truck", "Motorcycle", "Trailer", "Ferry / Boat", "Cruise Ship", "Sailboat"],
+  },
+  {
+    id: "depart_port",
+    ask: "What port are you departing from?",
+    type: "text",
+    placeholder: "e.g. Miami, FL",
+    onlyIf: (a) => a.vehicle === "Cruise Ship",
+  },
+  {
+    id: "arrive_port",
+    ask: "What port are you arriving at?",
+    type: "text",
+    placeholder: "e.g. Nassau, Bahamas",
+    onlyIf: (a) => a.vehicle === "Cruise Ship",
   },
   {
     id: "trailer_detail",
@@ -1085,7 +1134,7 @@ async function callAI(prompt, model = "claude-haiku-4-5-20251001") {
 }
 
 const HAIKU_QUESTION_IDS = [
-  "vehicle", "trailer_detail", "fuel", "pets", "pet_desc",
+  "vehicle", "depart_port", "arrive_port", "trailer_detail", "fuel", "pets", "pet_desc",
   "lodging", "restaurants", "grocery", "extra",
 ];
 
@@ -1103,7 +1152,9 @@ The user is planning a trip and has answered these questions so far:
 ${formatAnswersForPrompt(answers)}
 
 Available questions to ask next:
-- "vehicle": What vehicle are they taking? (Car, RV/Camper, Semi Truck, Motorcycle, Trailer)
+- "vehicle": What vehicle are they taking? (Car, RV/Camper, Semi Truck, Motorcycle, Trailer, Ferry/Boat, Cruise Ship, Sailboat)
+- "depart_port": What port are they departing from? (Cruise Ship only)
+- "arrive_port": What port are they arriving at? (Cruise Ship only)
 - "trailer_detail": What is the trailer weight and length?
 - "fuel": Does the vehicle run on Gasoline or Electric?
 - "pets": Are they traveling with pets?
@@ -1117,6 +1168,9 @@ Rules for skipping questions:
 - If trip_type is "Day trip" — skip lodging, grocery, restaurants
 - If trip_type is "Driving home" — skip lodging, grocery, restaurants, pets
 - If vehicle is "Car" or "Motorcycle" — skip trailer_detail
+- If vehicle is "Ferry / Boat", "Cruise Ship", or "Sailboat" — skip fuel and trailer_detail
+- If vehicle is NOT "Cruise Ship" — skip depart_port and arrive_port
+- If vehicle is "Cruise Ship" — skip lodging (staying on ship)
 - If pets answer is "No" — skip pet_desc
 - If all necessary questions are done — return exactly: done
 
@@ -1145,6 +1199,9 @@ function isQuestionSkipped(id, answers) {
   if (answers.trip_type === "Day trip" && ["lodging", "grocery", "restaurants"].includes(id)) return true;
   if (answers.trip_type === "Driving home" && ["lodging", "grocery", "restaurants", "pets", "pet_desc"].includes(id)) return true;
   if (["Car", "Motorcycle"].includes(answers.vehicle) && id === "trailer_detail") return true;
+  if (isWaterVehicle(answers.vehicle) && (id === "fuel" || id === "trailer_detail")) return true;
+  if (answers.vehicle !== "Cruise Ship" && (id === "depart_port" || id === "arrive_port")) return true;
+  if (answers.vehicle === "Cruise Ship" && id === "lodging") return true;
   if (answers.pets === "No" && id === "pet_desc") return true;
   return false;
 }
@@ -1501,6 +1558,9 @@ export default function App() {
     setTextInput("");
     setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
     await loadNextQuestion(na, currentQuestion.id);
+    if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
+      fetchDirections(value, na.trailer_detail);
+    }
   }
 
   function pickAnswer(value) {
@@ -1669,6 +1729,8 @@ export default function App() {
     const rows=[
       ["Trip", answers.trip_type],
       ["Vehicle", answers.vehicle],
+      answers.depart_port && ["Depart port", answers.depart_port],
+      answers.arrive_port && ["Arrive port", answers.arrive_port],
       answers.trailer_detail&&["Trailer", answers.trailer_detail],
       ["Fuel", answers.fuel],
       answers.pets&&["Pets", answers.pets==="Yes"?`Yes — ${answers.pet_desc||""}`:"No"],
@@ -1870,7 +1932,18 @@ export default function App() {
         )}
       </div>
       {routeInfo && (
-        <div className="route-slim-bar">{routeInfo.distance} · {routeInfo.duration} drive</div>
+        <div className="route-info-chip-wrap">
+          <div className="route-info-chip">
+            <span className="route-chip-label">{getRouteTypeLabel(answers.vehicle || routeInfo.vehicleType)}</span>
+            <span className="route-chip-sep">·</span>
+            <span className="route-chip-val">{routeInfo.distance}</span>
+            <span className="route-chip-sep">·</span>
+            <span className="route-chip-val">{routeInfo.duration}</span>
+          </div>
+          {isWaterVehicle(answers.vehicle) && (
+            <div className="water-route-note">Routing is approximate — Google Maps does not support marine routes.</div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -1908,7 +1981,14 @@ export default function App() {
                   className={`ai-msg${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                   key={currentQuestion?.id ?? qIndex}
                 >
-                  <div className="ai-bubble">{getStepMessage()}</div>
+                  <div className="ai-bubble">
+                    {getStepMessage()}
+                    {isWaterVehicle(answers.vehicle) && currentQuestion && !convoLoading && (
+                      <div className="water-route-note" style={{marginTop:12}}>
+                        Note: routing is approximate for water travel since Google Maps does not support marine routing.
+                      </div>
+                    )}
+                  </div>
                   {currentQuestion && !convoLoading && <QuestionChoices />}
                   {qIndex === -2 && (
                     <div className="question-choices" style={{borderTop:"none",paddingTop:16,marginTop:16}}>
@@ -2076,7 +2156,6 @@ export default function App() {
                   <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
                 )}
               </div>
-              <div className="hero-search-divider" aria-hidden="true"/>
               <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
               <div className="hero-input-wrap">
                 <div className="hero-input-label">To</div>
@@ -2228,7 +2307,15 @@ export default function App() {
           background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.12) !important;
           color: #1a1a2e !important;
         }
-        .app-wrap.day .route-slim-bar { color: rgba(26,26,46,0.55) !important; border-top-color: rgba(26,26,46,0.06) !important; }
+        .app-wrap.day .route-info-chip {
+          background: rgba(26,26,46,0.05) !important;
+          border-color: rgba(26,26,46,0.12) !important;
+          color: #1a1a2e !important;
+          box-shadow: none !important;
+        }
+        .app-wrap.day .route-chip-label { color: rgba(26,26,46,0.6) !important; }
+        .app-wrap.day .route-chip-val { color: #1a1a2e !important; }
+        .app-wrap.day .water-route-note { color: rgba(26,26,46,0.55) !important; }
         .app-wrap.day .route-arrive-picker {
           background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.12) !important; color: #1a1a2e !important;
         }
@@ -2292,6 +2379,15 @@ export default function App() {
           background: rgba(255,255,255,0.08) !important;
           color: #fff !important;
         }
+        .app-wrap.night .route-info-chip {
+          background: rgba(255,255,255,0.08) !important;
+          border-color: rgba(255,255,255,0.12) !important;
+          color: #fff !important;
+          box-shadow: 0 0 12px rgba(255,210,140,0.08) !important;
+        }
+        .app-wrap.night .route-chip-label { color: rgba(255,255,255,0.65) !important; }
+        .app-wrap.night .route-chip-val { color: #fff !important; }
+        .app-wrap.night .water-route-note { color: rgba(255,255,255,0.55) !important; }
 
         /* ── App theme: Night ── */
         .app-wrap.night .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
@@ -2511,7 +2607,9 @@ export default function App() {
                   {routePath && (() => {
                     if (mapRef.current) {
                       if (polylineRef.current) polylineRef.current.setMap(null);
-                      const color = routeInfo?.vehicleType === "Semi Truck" || routeInfo?.vehicleType === "Trailer"
+                      const color = isWaterVehicle(routeInfo?.vehicleType)
+                        ? "rgba(74,159,212,0.85)"
+                        : routeInfo?.vehicleType === "Semi Truck" || routeInfo?.vehicleType === "Trailer"
                         ? "rgba(255,210,140,0.85)"
                         : routeInfo?.vehicleType === "RV / Camper"
                         ? "rgba(255,210,140,0.75)"
@@ -2544,42 +2642,6 @@ export default function App() {
                     </div>
                   )}
                 </div>
-                {routeInfo && (
-                  <div className="route-info-bar">
-                    <div className="rib-item"><div className="rib-val">{routeInfo.distance}</div><div className="rib-label">Distance</div></div>
-                    <div className="rib-divider"/>
-                    <div className="rib-item"><div className="rib-val">{routeInfo.duration}</div><div className="rib-label">Drive Time</div></div>
-                    <div className="rib-divider rib-divider-mobile-hide"/>
-                    <div className="rib-item rib-item-route">
-                      <div className="rib-val" style={{fontSize:11}}>
-                        {routeInfo.vehicleType === "Semi Truck" ? "🚛 Truck Route" :
-                         routeInfo.vehicleType === "Trailer" ? "🚛 Trailer Route" :
-                         routeInfo.vehicleType === "RV / Camper" ? "🚐 RV Route" :
-                         routeInfo.vehicleType === "Motorcycle" ? "🏍 Moto Route" :
-                         "🚗 Car Route"}
-                      </div>
-                      <div className="rib-label">{routeInfo.start} → {routeInfo.end}</div>
-                    </div>
-                    {(routeInfo.vehicleType === "Semi Truck" || routeInfo.vehicleType === "Trailer") && (
-                      <>
-                        <div className="rib-divider rib-divider-mobile-hide"/>
-                        <div className="rib-item rib-item-badge">
-                          <div className="rib-val" style={{fontSize:10,color:"#4a9fd4"}}>TRUCK SAFE</div>
-                          <div className="rib-label">Avoids restrictions</div>
-                        </div>
-                      </>
-                    )}
-                    {routeInfo.vehicleType === "RV / Camper" && (
-                      <>
-                        <div className="rib-divider rib-divider-mobile-hide"/>
-                        <div className="rib-item rib-item-badge">
-                          <div className="rib-val" style={{fontSize:10,color:"#2abf6e"}}>RV FRIENDLY</div>
-                          <div className="rib-label">RV optimized</div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
               </>
             ) : (
               <div className="map-loading">
