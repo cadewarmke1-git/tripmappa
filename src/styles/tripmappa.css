@@ -146,7 +146,7 @@
     background: rgba(255,255,255,0.15);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px; padding: 12px 12px 12px 26px;
+    border-radius: 24px; padding: 12px 16px;
     display: flex; align-items: center; gap: 16px;
     width: 100%; max-width: 600px; margin: 0 auto 40px;
     border: 1px solid rgba(255,255,255,0.3);
@@ -161,19 +161,19 @@
   .hero-search-fields {
     flex: 1;
     min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    column-gap: 10px;
-    row-gap: 5px;
+    display: flex;
     align-items: center;
+    gap: 10px;
   }
-  .hero-field { display: contents; }
-  .hero-field-from .hero-input-label { grid-row: 1; grid-column: 1; }
-  .hero-field-from .hero-input-box { grid-row: 2; grid-column: 1; min-width: 0; }
+  .hero-field-from,
+  .hero-field-to {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
   .hero-swap-btn {
-    grid-row: 2;
-    grid-column: 2;
     flex-shrink: 0;
     width: 32px;
     height: 32px;
@@ -201,9 +201,8 @@
     flex-shrink: 0;
     pointer-events: none;
   }
-  .hero-field-to .hero-input-label { grid-row: 1; grid-column: 3; }
-  .hero-field-to .hero-input-box { grid-row: 2; grid-column: 3; min-width: 0; }
-  .hero-input-box { width: 100%; min-width: 0; }
+  .hero-input-box { flex: 1; min-width: 0; }
+  .hero-input-box > div { width: 100%; min-width: 0; }
   .hero-go-btn { align-self: center; }
   .route-timing-wrap { position: relative; margin-top: 8px; }
   .route-timing-menu {
@@ -343,27 +342,21 @@
   .budget-row-val.animate { animation: budgetPop 0.35s ease; color: rgba(255,210,140,0.9); }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
-    .hero-search-fields {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto auto auto auto auto;
-      width: 100%;
-      row-gap: 5px;
-    }
-    .hero-field-from .hero-input-label { grid-row: 1; grid-column: 1; }
-    .hero-field-from .hero-input-box { grid-row: 2; grid-column: 1; }
-    .hero-swap-btn { grid-row: 3; grid-column: 1; justify-self: center; width: 32px; height: 32px; padding: 0; }
-    .hero-field-to .hero-input-label { grid-row: 4; grid-column: 1; }
-    .hero-field-to .hero-input-box { grid-row: 5; grid-column: 1; }
+    .hero-search-fields { flex-direction: column; width: 100%; gap: 8px; align-items: stretch; }
+    .hero-field-from,
+    .hero-field-to { width: 100%; }
+    .hero-swap-btn { align-self: center; width: 32px; height: 32px; padding: 0; }
     .hero-swap-icon { width: 16px; height: 16px; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
   }
-  .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 0; }
+  .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 0; flex-shrink: 0; white-space: nowrap; }
   .hero-input {
     border: none; outline: none; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 400; color: #fff;
     background: transparent; width: 100%; padding: 0;
+    line-height: 1.4;
   }
   .hero-input::placeholder { color: rgba(255,255,255,0.6); font-weight: 400; }
   .hero-go-btn {
@@ -851,10 +844,7 @@
     color: #1a1a2e !important;
     background: rgba(255,210,140,0.9) !important;
     pointer-events: none;
-  }
-  @keyframes qrGoldFlash {
-    0% { background: rgba(255,255,255,0.08); box-shadow: none; transform: scale(1); }
-    100% { background: rgba(255,210,140,0.9); box-shadow: 0 0 0 3px rgba(255,210,140,0.25); transform: scale(1.02); color: #1a1a2e; }
+    transition: none;
   }
   .qr-btn.yes, .qr-btn.no { border-color: rgba(255,210,140,0.4); color: #fff; background: rgba(255,255,255,0.08); }
   .qr-btn.yes:hover, .qr-btn.no:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,210,140,0.55); color: #fff; }

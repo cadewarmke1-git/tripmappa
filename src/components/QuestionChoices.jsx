@@ -49,7 +49,7 @@ export default function QuestionChoices({
                 disabled={frozen}
                 onClick={() => onPickAnswer(opt.value)}
               >
-                {opt.emoji} {opt.label}
+                {opt.label}
               </button>
             ))}
           </div>

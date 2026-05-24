@@ -12,33 +12,33 @@ export const VEHICLE_GROUPS = [
   {
     label: "Personal",
     options: [
-      { value: "Car", label: "Car", emoji: "🚗" },
-      { value: "Motorcycle", label: "Motorcycle", emoji: "🏍️" },
-      { value: "SUV or Van", label: "SUV or Van", emoji: "🚐" },
+      { value: "Car", label: "Car" },
+      { value: "Motorcycle", label: "Motorcycle" },
+      { value: "SUV or Van", label: "SUV or Van" },
     ],
   },
   {
     label: "Oversized",
     options: [
-      { value: "RV", label: "RV", emoji: "🚍" },
-      { value: "Camper Van", label: "Camper Van", emoji: "🛺" },
-      { value: "Box Truck", label: "Box Truck", emoji: "📦" },
+      { value: "RV", label: "RV" },
+      { value: "Camper Van", label: "Camper Van" },
+      { value: "Box Truck", label: "Box Truck" },
     ],
   },
   {
     label: "Commercial",
     options: [
-      { value: "Semi Truck (18-wheeler)", label: "Semi Truck 18-Wheeler", emoji: "🚛" },
-      { value: "Flatbed", label: "Flatbed", emoji: "🛤️" },
-      { value: "Tanker", label: "Tanker", emoji: "⛽" },
+      { value: "Semi Truck (18-wheeler)", label: "Semi Truck 18-Wheeler" },
+      { value: "Flatbed", label: "Flatbed" },
+      { value: "Tanker", label: "Tanker" },
     ],
   },
   {
     label: "Other",
     options: [
-      { value: "Boat", label: "Boat", emoji: "⛵" },
-      { value: "Ferry", label: "Ferry", emoji: "⛴️" },
-      { value: "Plane", label: "Plane", emoji: "✈️" },
+      { value: "Boat", label: "Boat" },
+      { value: "Ferry", label: "Ferry" },
+      { value: "Plane", label: "Plane" },
     ],
   },
 ];
@@ -181,6 +181,12 @@ function isHaikuQuestionComplete(id, answers) {
   return answers[id] !== "";
 }
 
+function isLocationQuestion(question) {
+  if (!question || question.done) return false;
+  const blob = `${question.id} ${question.ask} ${(question.choices || []).join(" ")}`.toLowerCase();
+  return /origin|destination|starting point|start from|starting from|where are you|departure|arrival city|leave from|going to|location|pickup city|drop.?off/.test(blob);
+}
+
 function sanitizeHaikuQuestion(raw) {
   if (!raw || raw.done) return { done: true };
 
@@ -222,9 +228,14 @@ function buildHaikuPrompt(answers, context) {
   const rv = isRvVehicle(vehicle);
   const carLike = !isTruckVehicle(vehicle) && !rv;
 
+  const origin = context.origin || "unknown";
+  const destination = context.destination || "unknown";
+
   return `You are TripMappa's travel planning assistant. Return the SINGLE best next question for this trip.
 
 TRIP CONTEXT:
+- Origin: ${origin}
+- Destination: ${destination}
 - Vehicle: ${vehicle}
 - Route distance: ${distanceLabel}${miles != null ? ` (${Math.round(miles)} miles)` : ""}
 - Day trip (under 150 mi): ${miles != null ? (dayTrip ? "YES — do NOT ask about overnight lodging" : "NO — lodging questions OK if needed") : "UNKNOWN — do not ask lodging until distance is known"}
@@ -240,6 +251,7 @@ RULES:
 - NEVER ask lodging on day trips (under 150 miles).
 - NEVER repeat answered topics. Only ask if the answer would meaningfully change the trip plan.
 - ONLY ask questions whose answers would meaningfully change the route, stop cities, lodging recommendations, or trip duration. Never ask about skill level, experience, or anything that would not affect those four things.
+- NEVER ask the user for their origin, destination, starting point, or any location information — that has already been provided.
 - Skip anything inferable from vehicle or distance.
 - If nothing useful remains, return {"done": true}.
 
@@ -339,6 +351,14 @@ export async function fetchNextQuestion(answers, context = {}) {
     const text = await callHaiku(buildHaikuPrompt(normalized, context));
     const question = parseHaikuQuestion(text);
     if (question.done) return { done: true };
+
+    if (isLocationQuestion(question)) {
+      if (haikuCount + 1 >= MAX_HAIKU_QUESTIONS) return { done: true };
+      const retry = await callHaiku(buildHaikuPrompt(normalized, { ...context, haikuQuestionCount: haikuCount + 1 }));
+      const retried = parseHaikuQuestion(retry);
+      if (retried.done || isLocationQuestion(retried)) return getNextFlowQuestion(normalized, context);
+      return retried;
+    }
 
     if (isHaikuQuestionComplete(question.id, normalized)) {
       if (haikuCount + 1 >= MAX_HAIKU_QUESTIONS) return { done: true };

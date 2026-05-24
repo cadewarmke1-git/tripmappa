@@ -5,6 +5,7 @@ import {
   hasPref,
   skipLodgingQuestion,
 } from "../lib/vehicles.js";
+import BudgetCard from "./BudgetCard.jsx";
 
 export default function StopsResults({
   showHeader = true,
@@ -15,6 +16,8 @@ export default function StopsResults({
   roadStops,
   tripTips,
   stopCategory,
+  routeInfo,
+  tripLegs,
   onStopCategoryChange,
   truckSafety,
   rvSafety,
@@ -43,6 +46,8 @@ export default function StopsResults({
           <div className="results-header-divider"/>
         </>
       )}
+
+      <BudgetCard answers={answers} routeInfo={routeInfo} tripLegs={tripLegs} />
 
       {showHeader && isTruckerResults && (truckSafety || hosCompliance) && (
         <>

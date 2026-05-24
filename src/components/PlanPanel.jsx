@@ -1,7 +1,5 @@
 /** Floating planner panel — question flow, budget, route footer, and generated stops. */
-import { countAnsweredQuestions } from "../lib/budget.js";
 import { isWaterVehicle, isScenicRoute } from "../lib/vehicles.js";
-import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import StopsResults from "./StopsResults.jsx";
 import SummaryCard from "./SummaryCard.jsx";
@@ -80,6 +78,8 @@ export default function PlanPanel({
                 roadStops={roadStops}
                 tripTips={tripTips}
                 stopCategory={stopCategory}
+                routeInfo={routeInfo}
+                tripLegs={tripLegs}
                 onStopCategoryChange={onStopCategoryChange}
                 truckSafety={truckSafety}
                 rvSafety={rvSafety}
@@ -139,9 +139,6 @@ export default function PlanPanel({
                       onSetAnswers={onSetAnswers}
                       onSetPrefDraft={onSetPrefDraft}
                     />
-                  )}
-                  {!generated && countAnsweredQuestions(answers) >= 3 && (
-                    <BudgetCard answers={answers} routeInfo={routeInfo} tripLegs={tripLegs} />
                   )}
                   {qIndex === -2 && (
                     <div className="question-choices" style={{ borderTop: "none", paddingTop: 16, marginTop: 16 }}>

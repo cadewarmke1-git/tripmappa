@@ -101,6 +101,7 @@ export default function App() {
   });
   const [routeInfo, setRouteInfo] = useState(null);
   const [routePath, setRoutePath] = useState(null);
+  const [directionsResult, setDirectionsResult] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 37.0902, lng: -95.7129 });
   const originRef = useRef(null);
@@ -219,6 +220,7 @@ export default function App() {
         setOrigin(originVal);
         setDest(destVal);
         setRoutePath(route.overview_path);
+        setDirectionsResult(result);
 
         if (mapRef.current) {
           const bounds = new window.google.maps.LatLngBounds();
@@ -355,7 +357,7 @@ export default function App() {
         if (!leg.path) return;
         drawLine(leg.path, LEG_MAP_STYLES[leg.type] || LEG_MAP_STYLES.drive);
       });
-    } else if (routePath) {
+    } else if (routePath && !directionsResult) {
       drawLine(routePath, { color: ROUTE_GOLD, dashed: false, animate: true });
     }
 
@@ -377,7 +379,7 @@ export default function App() {
         polylineAnimRef.current = null;
       }
     };
-  }, [tripLegs, routePath, isLoaded, mapReady, theme, routeInfo?.scenic, answers.preferences]);
+  }, [tripLegs, routePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic, answers.preferences]);
 
   function toast_(msg) {
     setToastIsGold(false);
@@ -465,6 +467,8 @@ export default function App() {
 
   function buildQuestionContext(newAnswers) {
     return {
+      origin: origin?.trim() || routeInfo?.origin || "",
+      destination: dest?.trim() || routeInfo?.destination || "",
       vehicle: newAnswers?.vehicle || routeInfo?.vehicleType || "Car",
       routeDistance: routeInfo?.distance,
       routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
@@ -726,6 +730,7 @@ export default function App() {
             routeLoading={routeLoading}
             isDarkMode={theme === "night"}
             mapRef={mapRef}
+            directions={tripLegs.length === 0 ? directionsResult : null}
             onMapReady={() => setMapReady(true)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}

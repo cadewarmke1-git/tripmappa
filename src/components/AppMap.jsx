@@ -1,6 +1,12 @@
 /** Full-screen Google Map. Night theme uses Apple Maps–style dark styles via isDarkMode. */
-import { GoogleMap } from "@react-google-maps/api";
+import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import { NIGHT_MAP_STYLES } from "../lib/constants.js";
+
+const ROUTE_POLYLINE_OPTIONS = {
+  strokeColor: "#FFD28C",
+  strokeWeight: 5,
+  strokeOpacity: 0.9,
+};
 
 export default function AppMap({
   isLoaded,
@@ -11,6 +17,7 @@ export default function AppMap({
   routeLoading,
   isDarkMode,
   mapRef,
+  directions,
   onMapReady,
   onMapStyleOpenChange,
   onMapStyleChange,
@@ -37,7 +44,17 @@ export default function AppMap({
               mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
               styles: isDarkMode ? NIGHT_MAP_STYLES : [],
             }}
-          />
+          >
+            {directions && (
+              <DirectionsRenderer
+                directions={directions}
+                options={{
+                  suppressMarkers: true,
+                  polylineOptions: ROUTE_POLYLINE_OPTIONS,
+                }}
+              />
+            )}
+          </GoogleMap>
           {trafficAlert && (
             <div className="traffic-toast">
               <span className="traffic-toast-icon">⚠</span>
