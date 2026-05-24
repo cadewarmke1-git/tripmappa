@@ -1,6 +1,5 @@
 export default function QuestionChoices({
   currentQ,
-  convoLoading,
   stepAnim,
   answers,
   prefDraft,
@@ -11,7 +10,7 @@ export default function QuestionChoices({
   onPickAnswer,
   onSetPrefDraft,
 }) {
-  if (!currentQ || convoLoading) return null;
+  if (!currentQ) return null;
   const frozen = !!stepAnim;
   const selected = stepAnim?.answer;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];

@@ -5,6 +5,7 @@ import {
   hasPref,
   isScenicRoute,
   skipLodgingQuestion,
+  getEffectiveVehicle,
 } from "./vehicles.js";
 import { hasKidsToddlers } from "./tripFlow.js";
 import { computeHOSCompliance } from "./hos.js";
@@ -21,7 +22,8 @@ import {
 } from "./tripData.js";
 
 export function buildFallbackTripData(answers, routeInfo) {
-  const isDayOrHome = skipLodgingQuestion(answers.trip_type, answers.vehicle);
+  const effectiveVehicle = getEffectiveVehicle(answers);
+  const isDayOrHome = skipLodgingQuestion(answers.trip_type, effectiveVehicle);
   const hours = routeInfo ? parseHoursFromDuration(routeInfo.duration) || 10 : 10;
   const hasKids = hasFamilyKids(answers.travelers);
   const trucker = isTruckerTrip(answers);
@@ -69,7 +71,7 @@ export function buildFallbackTripData(answers, routeInfo) {
     roadStops = dayRoadStops.map(s => ({
       ...normalizeRoadStop(s),
       kidFriendly: hasKids,
-      petRelief: hasPref(answers, "Pet-friendly stops"),
+      petRelief: hasPref(answers, "Pet friendly"),
       scenic: isScenicRoute(answers),
     }));
   } else {
@@ -78,8 +80,8 @@ export function buildFallbackTripData(answers, routeInfo) {
       ...s,
       hotels: s.hotels.map(h => ({
         ...h,
-        kidFriendly: hasKids && hasPref(answers, "Kid-friendly stops"),
-        petFriendly: hasPref(answers, "Pet-friendly stops"),
+        kidFriendly: hasKids && hasPref(answers, "Kid friendly stops"),
+        petFriendly: hasPref(answers, "Pet friendly"),
       })),
       scenicView: isScenicRoute(answers) ? "Scenic viewpoint nearby" : null,
     }));
@@ -108,7 +110,7 @@ export function buildFallbackTripData(answers, routeInfo) {
     if (hasKidsToddlers(answers.kids_ages)) tips.push("Diaper changing stations noted at rest stops");
   }
   if (isScenicRoute(answers)) tips.push("Scenic viewpoints and photo spots noted near each stop.");
-  if (hasPref(answers, "Pet-friendly stops")) tips.push("Pet relief areas flagged at rest stops along your route.");
+  if (hasPref(answers, "Pet friendly")) tips.push("Pet relief areas flagged at rest stops along your route.");
   if (!tips.length) tips.push("Check weather and road conditions before you leave", "Allow extra time at major interchanges");
 
   return { stops, roadStops, tripTips: tips, hosCompliance: hos, truckSafety, rvSafety };

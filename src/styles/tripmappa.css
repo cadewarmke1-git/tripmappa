@@ -173,6 +173,19 @@
     align-items: baseline;
     gap: 8px;
   }
+  .hero-field-stack {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .hero-input-error {
+    font-size: 11px;
+    line-height: 1.35;
+    color: rgba(239, 120, 120, 0.9);
+    padding-left: 2px;
+  }
   .hero-swap-btn {
     flex-shrink: 0;
     width: 32px;
@@ -205,20 +218,17 @@
   .hero-input-box > div { width: 100%; min-width: 0; }
   .hero-go-btn { align-self: center; }
   .route-timing-wrap { position: relative; margin-top: 8px; }
-  .route-timing-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 100;
+  .timing-menu-fixed {
+    position: fixed;
+    z-index: 300;
     min-width: 180px;
-    margin-top: 6px;
     background: rgba(15, 20, 40, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
     padding: 6px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
-  .route-timing-menu-item {
+  .timing-menu-fixed-item {
     display: block;
     width: 100%;
     text-align: left;
@@ -232,15 +242,8 @@
     font-weight: 400;
     color: #fff;
   }
-  .route-timing-menu-item:hover { background: rgba(255, 210, 140, 0.12); }
-  .route-timing-menu-item.active { background: rgba(255, 210, 140, 0.18); font-weight: 700; color: rgba(255, 210, 140, 0.9); }
-  @media (max-width: 767px) {
-    .route-timing-menu {
-      left: auto;
-      right: 0;
-      max-width: calc(100vw - 32px);
-    }
-  }
+  .timing-menu-fixed-item:hover { background: rgba(255, 210, 140, 0.12); }
+  .timing-menu-fixed-item.active { background: rgba(255, 210, 140, 0.18); font-weight: 700; color: rgba(255, 210, 140, 0.9); }
   .route-arrive-picker {
     margin-top: 8px; padding: 10px 14px; width: 100%;
     border: 1px solid rgba(255,210,140,0.2); border-radius: 12px;
@@ -345,6 +348,7 @@
     .hero-search-fields { flex-direction: column; width: 100%; gap: 8px; align-items: stretch; }
     .hero-field-from,
     .hero-field-to { width: 100%; }
+    .hero-field-stack { width: 100%; }
     .hero-swap-btn { align-self: center; width: 32px; height: 32px; padding: 0; }
     .hero-swap-icon { width: 16px; height: 16px; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
@@ -370,6 +374,13 @@
   }
   .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,210,140,0.4); }
   .hero-go-btn:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(255,210,140,0.2); }
+  .hero-go-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .hero-go-btn:disabled:hover { transform: none; box-shadow: none; }
 
   .hero-hint {
     font-size: 12px; color: rgba(255,255,255,0.45);
@@ -456,9 +467,9 @@
   @keyframes trafficToastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
   /* Float card help — header */
-  .float-card-header { overflow: visible; z-index: 60; }
+  .float-card-header { overflow: visible; position: relative; z-index: 200; }
   .float-card-header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; position: relative; }
-  .float-card-help-wrap { position: relative; z-index: 200; }
+  .float-card-help-wrap { position: relative; z-index: 201; }
   .float-card-help-btn {
     width: 28px; height: 28px; border-radius: 50%;
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
@@ -470,7 +481,7 @@
   .help-menu {
     position: absolute; top: calc(100% + 8px); right: 0; min-width: 168px;
     background: rgba(15,20,40,0.98); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); z-index: 300;
+    border-radius: 12px; padding: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); z-index: 202;
   }
   .help-menu-item {
     display: block; width: 100%; text-align: left; padding: 10px 14px;
@@ -602,6 +613,35 @@
   .app { position: relative; height: 100vh; overflow: hidden; }
   .map-full { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
   .gmap-wrap { width: 100%; height: 100%; }
+  .map-route-pill {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: calc(100vw - 32px);
+    padding: 11px 22px;
+    border-radius: 99px;
+    background: rgba(15, 20, 40, 0.72);
+    backdrop-filter: blur(16px) saturate(1.25);
+    -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    border: 1px solid rgba(255, 210, 140, 0.28);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    font-family: 'Inter', sans-serif;
+    pointer-events: none;
+  }
+  .map-route-pill-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.75); }
+  .map-route-pill-val { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; color: rgba(255, 210, 140, 0.9); }
+  .map-route-pill-sep { font-size: 11px; color: rgba(255, 255, 255, 0.35); }
+  .map-route-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    background: rgba(255, 210, 140, 0.9); color: #1a1a2e; padding: 2px 7px; border-radius: 99px;
+  }
 
   /* Floating card — moody mountain-lodge frosted glass */
   .float-card {
@@ -618,6 +658,8 @@
     transition: max-height 0.45s var(--ease), box-shadow 0.3s var(--ease);
   }
   .float-card > * { position: relative; z-index: 1; }
+  .float-card > .float-card-header { z-index: 200; }
+  .float-card.help-open { overflow: visible; }
   .float-card.collapsed { max-height: 62px; }
   .float-card-body {
     flex: 1; min-height: 0; display: flex; flex-direction: column;

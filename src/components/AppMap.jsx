@@ -2,6 +2,8 @@
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import { NIGHT_MAP_STYLES } from "../lib/constants.js";
 
+import MapRoutePill from "./MapRoutePill.jsx";
+
 const ROUTE_POLYLINE_OPTIONS = {
   strokeColor: "#FFD28C",
   strokeWeight: 5,
@@ -18,6 +20,8 @@ export default function AppMap({
   isDarkMode,
   mapRef,
   directions,
+  routeInfo,
+  answers,
   onMapReady,
   onMapStyleOpenChange,
   onMapStyleChange,
@@ -90,6 +94,7 @@ export default function AppMap({
           Calculating route…
         </div>
       )}
+      <MapRoutePill routeInfo={routeInfo} answers={answers} />
     </div>
   );
 }

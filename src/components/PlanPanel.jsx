@@ -1,5 +1,5 @@
 /** Floating planner panel — question flow, budget, route footer, and generated stops. */
-import { isWaterVehicle, isScenicRoute } from "../lib/vehicles.js";
+import { isScenicRoute } from "../lib/vehicles.js";
 import QuestionChoices from "./QuestionChoices.jsx";
 import StopsResults from "./StopsResults.jsx";
 import SummaryCard from "./SummaryCard.jsx";
@@ -11,7 +11,6 @@ export default function PlanPanel({
   roadStops,
   qIndex,
   currentQuestion,
-  convoLoading,
   convoComplete,
   loading,
   answers,
@@ -31,7 +30,6 @@ export default function PlanPanel({
   hosCompliance,
   isLoaded,
   timingMode,
-  routeTimingOpen,
   arriveByDate,
   originRef,
   destRef,
@@ -54,7 +52,6 @@ export default function PlanPanel({
   onSetOrigin,
   onSetDest,
   onSetTimingMode,
-  onSetRouteTimingOpen,
   onSetArriveByDate,
   onRetryGenerate,
   getStepMessage,
@@ -106,28 +103,22 @@ export default function PlanPanel({
                   <button type="button" className="btn-generate btn-generate-inline" onClick={onStartConvo}>Start planning</button>
                 </div>
               )}
-              {(currentQuestion || qIndex === -2 || convoLoading) && (
+              {(currentQuestion || qIndex === -2) && (
                 <div
                   className={`ai-msg${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                   key={currentQuestion?.id ?? qIndex}
                 >
                   <div className="ai-bubble">
                     {getStepMessage()}
-                    {isWaterVehicle(answers.vehicle) && currentQuestion && !convoLoading && (
-                      <div className="water-route-note" style={{ marginTop: 12 }}>
-                        Note: routing is approximate for water travel since Google Maps does not support marine routing.
-                      </div>
-                    )}
-                    {isScenicRoute(answers) && !convoLoading && (
+                    {isScenicRoute(answers) && (
                       <div className="scenic-route-note" style={{ marginTop: 12 }}>
                         I&apos;ll find the most scenic roads for your trip.
                       </div>
                     )}
                   </div>
-                  {currentQuestion && !convoLoading && (
+                  {currentQuestion && (
                     <QuestionChoices
                       currentQ={currentQuestion}
-                      convoLoading={convoLoading}
                       stepAnim={stepAnim}
                       answers={answers}
                       prefDraft={prefDraft}
@@ -165,9 +156,7 @@ export default function PlanPanel({
           origin={origin}
           dest={dest}
           answers={answers}
-          routeInfo={routeInfo}
           timingMode={timingMode}
-          routeTimingOpen={routeTimingOpen}
           arriveByDate={arriveByDate}
           originRef={originRef}
           destRef={destRef}
@@ -176,7 +165,6 @@ export default function PlanPanel({
           onSetOrigin={onSetOrigin}
           onSetDest={onSetDest}
           onSetTimingMode={onSetTimingMode}
-          onSetRouteTimingOpen={onSetRouteTimingOpen}
           onSetArriveByDate={onSetArriveByDate}
         />
       )}

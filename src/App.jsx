@@ -12,14 +12,16 @@ import {
   hasPref,
   isScenicRoute,
   inferFuelType,
+  getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { fetchNextQuestion, getNextFlowQuestion, normalizeTripAnswers } from "./lib/tripFlow.js";
+import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers } from "./lib/tripFlow.js";
 import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { computeAutoTheme } from "./lib/theme.js";
 import { TRUCK_SAFETY_FALLBACK, RV_SAFETY_FALLBACK } from "./lib/tripData.js";
 import { generateTripPlan } from "./lib/apiClient.js";
 import { buildFallbackTripData, parseTripApiResponse } from "./lib/tripHandlers.js";
+import { resolvePlaceFromAutocomplete } from "./lib/places.js";
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
@@ -38,12 +40,14 @@ export default function App() {
   const [dest, setDest] = useState("");
   const [heroOrigin, setHeroOrigin] = useState("");
   const [heroDest, setHeroDest] = useState("");
+  const [heroOriginError, setHeroOriginError] = useState("");
+  const [heroDestError, setHeroDestError] = useState("");
+  const [heroLaunching, setHeroLaunching] = useState(false);
   const [heroEmail, setHeroEmail] = useState("");
   const [heroSearchHover, setHeroSearchHover] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
-  const [routeTimingOpen, setRouteTimingOpen] = useState(false);
   const [prefDraft, setPrefDraft] = useState([]);
   const [prefSkipReady, setPrefSkipReady] = useState(false);
   const [hosCompliance, setHosCompliance] = useState(null);
@@ -58,7 +62,6 @@ export default function App() {
   const [qIndex, setQIndex] = useState(-1);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionHistory, setQuestionHistory] = useState([]);
-  const [convoLoading, setConvoLoading] = useState(false);
   const [convoComplete, setConvoComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
@@ -93,6 +96,7 @@ export default function App() {
   const [cardCollapsed, setCardCollapsed] = useState(false);
   const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'pop' | 'exit' }
   const stepAnimTimer = useRef(null);
+  const helpWrapRef = useRef(null);
 
   // ── Google Maps ──
   const { isLoaded } = useJsApiLoader({
@@ -108,6 +112,8 @@ export default function App() {
   const destRef = useRef(null);
   const heroOriginRef = useRef(null);
   const heroDestRef = useRef(null);
+  const heroOriginAcRef = useRef(null);
+  const heroDestAcRef = useRef(null);
   const mapRef = useRef(null);
   const polylineRef = useRef(null);
   const polylinesRef = useRef([]);
@@ -117,7 +123,8 @@ export default function App() {
   const fetchDirections = useCallback((vehicleType) => {
     const originVal = originRef.current?.value?.trim() || origin?.trim();
     const destVal = destRef.current?.value?.trim() || dest?.trim();
-    if (!originVal || !destVal) return;
+    if (!originVal || !destVal) return Promise.resolve(false);
+    if (!window.google) return Promise.resolve(false);
 
     const vehicle = vehicleType || answers.vehicle || "Car";
     setRouteLoading(true);
@@ -154,83 +161,88 @@ export default function App() {
     if (hasPref(answers, "Avoid tolls")) routeRequest.avoidTolls = true;
 
     const service = new window.google.maps.DirectionsService();
-    service.route(routeRequest, (result, status) => {
-      setRouteLoading(false);
-      if (status === "OK") {
-        const route = result.routes[0];
-        const leg = route.legs[0];
-        const warnings = route.warnings || [];
-        const hasTrafficDelay = warnings.some(w => /traffic|delay|congestion|slow/i.test(w))
-          || route.legs.some(l => l.duration_in_traffic && l.duration_in_traffic.value > l.duration.value * 1.08);
-        if (warnings.length > 0 || hasTrafficDelay) setTrafficAlert(true);
+    return new Promise((resolve) => {
+      service.route(routeRequest, (result, status) => {
+        setRouteLoading(false);
+        if (status === "OK") {
+          const route = result.routes[0];
+          const leg = route.legs[0];
+          const warnings = route.warnings || [];
+          const hasTrafficDelay = warnings.some(w => /traffic|delay|congestion|slow/i.test(w))
+            || route.legs.some(l => l.duration_in_traffic && l.duration_in_traffic.value > l.duration.value * 1.08);
+          if (warnings.length > 0 || hasTrafficDelay) setTrafficAlert(true);
 
-        const hours = parseHoursFromDuration(leg.duration.text);
-        const miles = parseMilesFromDistance(leg.distance.text);
-        const hos = isTruckVehicle(vehicle) && hours ? computeHOSCompliance(hours) : null;
-        setHosCompliance(hos);
-        if (isTruckVehicle(vehicle)) {
-          setRvSafety(null);
-          setTruckSafety({
-            ...TRUCK_SAFETY_FALLBACK,
-            estimatedFuelGal: miles ? Math.ceil(miles / 6) : null,
-          });
-        } else if (isRvVehicle(vehicle)) {
-          setTruckSafety(null);
-          setRvSafety({
-            ...RV_SAFETY_FALLBACK,
-            estimatedFuelGal: miles ? Math.ceil(miles / 9) : null,
-            towing: answers.rv_towing === "Yes",
-          });
-        } else {
-          setTruckSafety(null);
-          setRvSafety(null);
-        }
-
-        const citiesAlongRoute = [];
-        route.legs[0].steps.forEach(step => {
-          if (!step.end_address) return;
-          const parts = step.end_address.split(",").map(s => s.trim());
-          if (parts.length >= 2) {
-            const cityState = `${parts[parts.length - 2]}, ${parts[parts.length - 1].replace(/\s+\d{5}(-\d{4})?.*$/, "").trim()}`;
-            if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
+          const hours = parseHoursFromDuration(leg.duration.text);
+          const miles = parseMilesFromDistance(leg.distance.text);
+          const hos = isTruckVehicle(vehicle) && hours ? computeHOSCompliance(hours) : null;
+          setHosCompliance(hos);
+          if (isTruckVehicle(vehicle)) {
+            setRvSafety(null);
+            setTruckSafety({
+              ...TRUCK_SAFETY_FALLBACK,
+              estimatedFuelGal: miles ? Math.ceil(miles / 6) : null,
+            });
+          } else if (isRvVehicle(vehicle)) {
+            setTruckSafety(null);
+            setRvSafety({
+              ...RV_SAFETY_FALLBACK,
+              estimatedFuelGal: miles ? Math.ceil(miles / 9) : null,
+              towing: answers.rv_towing === "Yes",
+            });
+          } else {
+            setTruckSafety(null);
+            setRvSafety(null);
           }
-        });
 
-        setRouteInfo({
-          distance: leg.distance.text,
-          duration: leg.duration.text,
-          start: leg.start_address.split(",")[0],
-          end: leg.end_address.split(",")[0],
-          origin: originVal,
-          destination: destVal,
-          citiesAlongRoute: citiesAlongRoute.slice(0, 15),
-          vehicleType: vehicle,
-          timingMode,
-          arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
-          scenic,
-          truckSafe: isTruckVehicle(vehicle),
-          rvSafe: isRvVehicle(vehicle),
-          truckHeight: answers.truck_height,
-          truckWeight: answers.truck_weight,
-          truckHazmat: answers.truck_hazmat,
-          rvHeight: answers.rv_height,
-          rvWeight: answers.rv_weight,
-          rvTowing: answers.rv_towing,
-        });
-        setOrigin(originVal);
-        setDest(destVal);
-        setRoutePath(route.overview_path);
-        setDirectionsResult(result);
-
-        if (mapRef.current) {
-          const bounds = new window.google.maps.LatLngBounds();
+          const citiesAlongRoute = [];
           route.legs[0].steps.forEach(step => {
-            bounds.extend(step.start_location);
-            bounds.extend(step.end_location);
+            if (!step.end_address) return;
+            const parts = step.end_address.split(",").map(s => s.trim());
+            if (parts.length >= 2) {
+              const cityState = `${parts[parts.length - 2]}, ${parts[parts.length - 1].replace(/\s+\d{5}(-\d{4})?.*$/, "").trim()}`;
+              if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
+            }
           });
-          mapRef.current.fitBounds(bounds, { padding: 60 });
+
+          setRouteInfo({
+            distance: leg.distance.text,
+            duration: leg.duration.text,
+            start: leg.start_address.split(",")[0],
+            end: leg.end_address.split(",")[0],
+            origin: originVal,
+            destination: destVal,
+            citiesAlongRoute: citiesAlongRoute.slice(0, 15),
+            vehicleType: vehicle,
+            timingMode,
+            arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
+            scenic,
+            truckSafe: isTruckVehicle(vehicle),
+            rvSafe: isRvVehicle(vehicle),
+            truckHeight: answers.truck_height,
+            truckWeight: answers.truck_weight,
+            truckHazmat: answers.truck_hazmat,
+            rvHeight: answers.rv_height,
+            rvWeight: answers.rv_weight,
+            rvTowing: answers.rv_towing,
+          });
+          setOrigin(originVal);
+          setDest(destVal);
+          setRoutePath(route.overview_path);
+          setDirectionsResult(result);
+
+          if (mapRef.current) {
+            const bounds = new window.google.maps.LatLngBounds();
+            route.legs[0].steps.forEach(step => {
+              bounds.extend(step.start_location);
+              bounds.extend(step.end_location);
+            });
+            mapRef.current.fitBounds(bounds, { padding: 60 });
+          }
+          resolve(true);
+        } else {
+          resolve(false);
         }
-      }
+      });
     });
   }, [timingMode, arriveByDate, answers, origin, dest]);
 
@@ -264,12 +276,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (currentQuestion && !stepAnim && !convoLoading) {
+    if (currentQuestion && !stepAnim) {
       setEnterAnim(true);
       const t = setTimeout(() => setEnterAnim(false), 350);
       return () => clearTimeout(t);
     }
-  }, [currentQuestion?.id, convoLoading, stepAnim]);
+  }, [currentQuestion?.id, stepAnim]);
 
   useEffect(() => {
     if (generated && (stops.length > 0 || roadStops.length > 0)) {
@@ -394,6 +406,8 @@ export default function App() {
     if (heroDestRef.current) heroDestRef.current.value = fromVal;
     setHeroOrigin(toVal);
     setHeroDest(fromVal);
+    setHeroOriginError("");
+    setHeroDestError("");
   }
 
   function swapRouteCities() {
@@ -406,62 +420,81 @@ export default function App() {
     if (isLoaded && window.google && toVal && fromVal && answers.vehicle) fetchDirections(answers.vehicle);
   }
 
-  function launchFromHero() {
-    const from = heroOriginRef.current?.value || heroOrigin;
-    const to = heroDestRef.current?.value || heroDest;
-    if (!from || !to) { toast_("Enter your starting point and destination"); return; }
-    setHeroOrigin(from); setHeroDest(to);
-    setOrigin(from); setDest(to);
+  async function launchFromHero() {
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+
+    const from = heroOriginRef.current?.value?.trim() || heroOrigin.trim();
+    const to = heroDestRef.current?.value?.trim() || heroDest.trim();
+    if (!from || !to) return;
+
+    setHeroLaunching(true);
+    setHeroOriginError("");
+    setHeroDestError("");
+
+    const [fromPlace, toPlace] = await Promise.all([
+      resolvePlaceFromAutocomplete(from, heroOriginAcRef.current),
+      resolvePlaceFromAutocomplete(to, heroDestAcRef.current),
+    ]);
+
+    let invalid = false;
+    if (!fromPlace) {
+      setHeroOriginError("Please enter a valid city, address, or landmark");
+      invalid = true;
+    }
+    if (!toPlace) {
+      setHeroDestError("Please enter a valid city, address, or landmark");
+      invalid = true;
+    }
+    if (invalid) {
+      setHeroLaunching(false);
+      return;
+    }
+
+    const fromAddr = fromPlace.formattedAddress;
+    const toAddr = toPlace.formattedAddress;
+    setHeroOrigin(fromAddr);
+    setHeroDest(toAddr);
+    setOrigin(fromAddr);
+    setDest(toAddr);
+    if (heroOriginRef.current) heroOriginRef.current.value = fromAddr;
+    if (heroDestRef.current) heroDestRef.current.value = toAddr;
+
     setView("app");
-    window.scrollTo(0,0);
-    setTimeout(() => {
-      if (originRef.current) originRef.current.value = from;
-      if (destRef.current) destRef.current.value = to;
-      setAnswers({});
-      setConvoComplete(false);
-      setGenerated(false);
-      setQuestionHistory([]);
-      setCurrentQuestion(null);
-      setTripLegs([]);
-      loadNextQuestion({});
-    }, 300);
+    window.scrollTo(0, 0);
+
+    if (originRef.current) originRef.current.value = fromAddr;
+    if (destRef.current) destRef.current.value = toAddr;
+
+    await fetchDirections("Car");
+
+    setAnswers({});
+    setConvoComplete(false);
+    setGenerated(false);
+    setQuestionHistory([]);
+    setCurrentQuestion(null);
+    setTripLegs([]);
+    loadNextQuestion({});
+    setHeroLaunching(false);
   }
 
-  async function loadNextQuestion(newAnswers) {
+  function loadNextQuestion(newAnswers) {
     const ctx = buildQuestionContext(newAnswers);
-    setConvoLoading(true);
-    try {
-      const result = await fetchNextQuestion(newAnswers, ctx);
-      if (result.done) {
-        setCurrentQuestion(null);
-        setQIndex(-2);
-        setConvoComplete(true);
-        setAnswers(normalizeTripAnswers(newAnswers, ctx));
-      } else {
-        setCurrentQuestion(result);
-        setQIndex(0);
-        if (result.type === "multiselect") {
-          setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
-          setPrefSkipReady(false);
-        } else if (result.id === "preferences") {
-          setPrefDraft(Array.isArray(newAnswers.preferences) ? newAnswers.preferences : []);
-          setPrefSkipReady(false);
-        }
+    const result = getNextFlowQuestion(newAnswers, ctx);
+    if (result.done) {
+      setCurrentQuestion(null);
+      setQIndex(-2);
+      setConvoComplete(true);
+      setAnswers(normalizeTripAnswers(newAnswers, ctx));
+    } else {
+      setCurrentQuestion(result);
+      setQIndex(0);
+      if (result.type === "multiselect") {
+        setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
+        setPrefSkipReady(false);
       }
-    } catch (err) {
-      console.error("Question flow failed:", err);
-      const fallback = getNextFlowQuestion(newAnswers, ctx);
-      if (fallback.done) {
-        setCurrentQuestion(null);
-        setQIndex(-2);
-        setConvoComplete(true);
-        setAnswers(normalizeTripAnswers(newAnswers, ctx));
-      } else {
-        setCurrentQuestion(fallback);
-        setQIndex(0);
-      }
-    } finally {
-      setConvoLoading(false);
     }
   }
 
@@ -471,8 +504,8 @@ export default function App() {
       destination: dest?.trim() || routeInfo?.destination || "",
       vehicle: newAnswers?.vehicle || routeInfo?.vehicleType || "Car",
       routeDistance: routeInfo?.distance,
+      routeDuration: routeInfo?.duration,
       routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
-      haikuQuestionCount: questionHistory.filter(h => h.question?.id !== "vehicle").length,
     };
   }
 
@@ -490,17 +523,20 @@ export default function App() {
     setConvoComplete(false);
     setTripLegs([]);
     setPrefDraft([]);
-    await loadNextQuestion({});
+    loadNextQuestion({});
   }
 
   function getStepMessage() {
-    if (qIndex === -2) return "Got it. Ready to generate your trip plan?";
-    if (convoLoading) return "One sec…";
+    if (qIndex === -2) {
+      const completeMsg = getFlowCompleteMessage(answers);
+      if (completeMsg) return completeMsg;
+      return "Got it. Ready to generate your trip plan?";
+    }
     if (currentQuestion) return currentQuestion.ask;
     return null;
   }
 
-  async function submitAnswer(value, extraFields = {}) {
+  function submitAnswer(value, extraFields = {}) {
     if (!currentQuestion) return;
     const ctx = buildQuestionContext({ ...answers, ...extraFields, [currentQuestion.id]: value });
     const na = normalizeTripAnswers(
@@ -510,7 +546,7 @@ export default function App() {
 
     setAnswers(na);
     setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
-    await loadNextQuestion(na);
+    loadNextQuestion(na);
     if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
       fetchDirections(na.vehicle);
     }
@@ -520,14 +556,14 @@ export default function App() {
   }
 
   function pickAnswer(value, extraFields) {
-    if (stepAnim || convoLoading) return;
+    if (stepAnim) return;
     setEnterAnim(false);
     setStepAnim({ answer: typeof value === "string" ? value : "selected", phase: "flash" });
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     stepAnimTimer.current = setTimeout(() => {
       setStepAnim(prev => prev ? { ...prev, phase: "exit" } : null);
-      stepAnimTimer.current = setTimeout(async () => {
-        await submitAnswer(value, extraFields);
+      stepAnimTimer.current = setTimeout(() => {
+        submitAnswer(value, extraFields);
         setStepAnim(null);
       }, 300);
     }, 150);
@@ -540,6 +576,16 @@ export default function App() {
   }
 
   useEffect(() => () => { if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current); }, []);
+
+  useEffect(() => {
+    if (!helpMenuOpen) return;
+    const onPointerDown = (e) => {
+      if (helpWrapRef.current?.contains(e.target)) return;
+      setHelpMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [helpMenuOpen]);
 
   function applyFallbackTrip() {
     const data = buildFallbackTripData(answers, routeInfo);
@@ -577,16 +623,17 @@ export default function App() {
     setLoading(true);
 
     if (isLoaded && window.google) {
-      fetchDirections(answers.vehicle);
+      fetchDirections(getEffectiveVehicle(answers));
     }
 
     try {
+      const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers));
       const data = await generateTripPlan({
           origin: tripOrigin,
           destination: tripDest,
           answers: {
-            ...normalizeTripAnswers(answers, buildQuestionContext(answers)),
-            fuel: inferFuelType(answers.vehicle, answers.preferences || []),
+            ...normalizedAnswers,
+            fuel: inferFuelType(getEffectiveVehicle(normalizedAnswers), normalizedAnswers.preferences || []),
           },
           routeInfo: {
             ...routeInfo,
@@ -613,7 +660,7 @@ export default function App() {
 
   function resetPlan() {
     setAnswers({}); setQIndex(-1);
-    setCurrentQuestion(null); setQuestionHistory([]); setConvoLoading(false);
+    setCurrentQuestion(null); setQuestionHistory([]);
     setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setStopCategory("all");
     setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
     setStepAnim(null);
@@ -630,17 +677,26 @@ export default function App() {
       delete newAnswers.truck_height;
       delete newAnswers.truck_weight;
       delete newAnswers.truck_hazmat;
+      delete newAnswers.hos_compliance;
       delete newAnswers.rv_height;
       delete newAnswers.rv_weight;
       delete newAnswers.rv_towing;
+      delete newAnswers.multi_vehicles;
+      delete newAnswers.primary_vehicle;
+      delete newAnswers.coordination_needs;
+      delete newAnswers.effective_vehicle;
     }
     if (last.question.id === "travelers") delete newAnswers.kids_ages;
+    if (last.question.type === "multiselect") {
+      setPrefDraft(Array.isArray(last.answer) ? last.answer : []);
+    } else {
+      setPrefDraft([]);
+    }
     setAnswers(newAnswers);
     setQuestionHistory(history);
     setCurrentQuestion(last.question);
     setQIndex(0);
     setConvoComplete(false);
-    setPrefDraft([]);
   }
 
   function toggleTheme() {
@@ -672,6 +728,10 @@ export default function App() {
         isLoaded={isLoaded}
         heroOrigin={heroOrigin}
         heroDest={heroDest}
+        heroOriginError={heroOriginError}
+        heroDestError={heroDestError}
+        heroLaunching={heroLaunching}
+        launchDisabled={!heroOrigin.trim() || !heroDest.trim() || !isLoaded || heroLaunching}
         heroSearchHover={heroSearchHover}
         heroOriginRef={heroOriginRef}
         heroDestRef={heroDestRef}
@@ -680,10 +740,18 @@ export default function App() {
         onSignup={() => setView("app")}
         onSearchHover={setHeroSearchHover}
         onSwap={swapHeroCities}
-        onHeroOriginPlaceChanged={() => { if (heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value); }}
-        onHeroDestPlaceChanged={() => { if (heroDestRef.current) setHeroDest(heroDestRef.current.value); }}
-        onHeroOriginChange={setHeroOrigin}
-        onHeroDestChange={setHeroDest}
+        onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; }}
+        onHeroDestAcLoad={ac => { heroDestAcRef.current = ac; }}
+        onHeroOriginPlaceChanged={() => {
+          if (heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value);
+          setHeroOriginError("");
+        }}
+        onHeroDestPlaceChanged={() => {
+          if (heroDestRef.current) setHeroDest(heroDestRef.current.value);
+          setHeroDestError("");
+        }}
+        onHeroOriginChange={v => { setHeroOrigin(v); setHeroOriginError(""); }}
+        onHeroDestChange={v => { setHeroDest(v); setHeroDestError(""); }}
         onLaunch={launchFromHero}
         onShowEmailModal={() => setShowEmailModal(true)}
       />
@@ -731,12 +799,14 @@ export default function App() {
             isDarkMode={theme === "night"}
             mapRef={mapRef}
             directions={tripLegs.length === 0 ? directionsResult : null}
+            routeInfo={routeInfo}
+            answers={answers}
             onMapReady={() => setMapReady(true)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
           />
 
-          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}`}>
+          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}`}>
             <div className="float-card-header" onClick={() => setCardCollapsed(c => !c)}>
               <div className="float-card-handle" aria-hidden="true"/>
               <div className="float-card-header-row">
@@ -744,7 +814,7 @@ export default function App() {
                   {tab === "plan" ? "Plan Your Trip" : tab === "trips" ? "Trips" : "Live Sharing"}
                 </div>
                 <div className="float-card-header-actions" onClick={e => e.stopPropagation()}>
-                  <div className="float-card-help-wrap">
+                  <div className="float-card-help-wrap" ref={helpWrapRef}>
                     <button type="button" className="float-card-help-btn" onClick={() => setHelpMenuOpen(o => !o)} aria-label="Help">?</button>
                     {helpMenuOpen && (
                       <div className="help-menu">
@@ -768,7 +838,6 @@ export default function App() {
                       tripTips={tripTips}
                       qIndex={qIndex}
                       currentQuestion={currentQuestion}
-                      convoLoading={convoLoading}
                       convoComplete={convoComplete}
                       loading={loading}
                       answers={answers}
@@ -787,7 +856,6 @@ export default function App() {
                       hosCompliance={hosCompliance}
                       isLoaded={isLoaded}
                       timingMode={timingMode}
-                      routeTimingOpen={routeTimingOpen}
                       arriveByDate={arriveByDate}
                       originRef={originRef}
                       destRef={destRef}
@@ -810,7 +878,6 @@ export default function App() {
                       onSetOrigin={setOrigin}
                       onSetDest={setDest}
                       onSetTimingMode={setTimingMode}
-                      onSetRouteTimingOpen={setRouteTimingOpen}
                       onSetArriveByDate={setArriveByDate}
                       onRetryGenerate={() => { setGenerated(false); generateTrip(); }}
                       getStepMessage={getStepMessage}

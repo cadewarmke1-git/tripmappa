@@ -1,6 +1,16 @@
 export const WATER_VEHICLES = ["Boat", "Ferry"];
 export const TRUCK_VEHICLES = ["Semi Truck (18-wheeler)", "Box Truck", "Flatbed", "Tanker"];
 export const RV_VEHICLES = ["RV", "Camper Van"];
+export const MULTI_VEHICLE_TRIP = "Multi-Vehicle Trip";
+
+export function getEffectiveVehicle(answers) {
+  const vehicle = answers?.vehicle;
+  if (vehicle === MULTI_VEHICLE_TRIP && answers?.primary_vehicle) {
+    if (answers.primary_vehicle === "Truck") return "Semi Truck (18-wheeler)";
+    return answers.primary_vehicle;
+  }
+  return vehicle || "Car";
+}
 
 export function isWaterVehicle(vehicle) {
   return WATER_VEHICLES.includes(vehicle);
@@ -49,7 +59,7 @@ export function applyAssumedVehicleSpecs(answers) {
 }
 
 export function isRvTrip(answers) {
-  return isRvVehicle(answers?.vehicle);
+  return isRvVehicle(getEffectiveVehicle(answers));
 }
 
 export function isWorkDelivery(tripType) {
@@ -80,7 +90,7 @@ export function hasFamilyKids(travelers) {
 }
 
 export function isTruckerTrip(answers) {
-  return isTruckVehicle(answers?.vehicle) || isWorkDelivery(answers?.trip_type);
+  return isTruckVehicle(getEffectiveVehicle(answers)) || isWorkDelivery(answers?.trip_type);
 }
 
 export function hasPref(answers, pref) {
@@ -89,7 +99,8 @@ export function hasPref(answers, pref) {
 
 export function inferFuelType(vehicle, preferences = []) {
   if (preferences.includes("EV charging stops")) return "Electric (EV)";
-  if (isTruckVehicle(vehicle)) return "Diesel";
+  const effective = typeof vehicle === "object" ? getEffectiveVehicle(vehicle) : vehicle;
+  if (isTruckVehicle(effective)) return "Diesel";
   return "Gasoline";
 }
 

@@ -1,14 +1,14 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Autocomplete } from "@react-google-maps/api";
-import { isWaterVehicle, getRouteTypeLabel, isScenicRoute } from "../lib/vehicles.js";
+import { isWaterVehicle } from "../lib/vehicles.js";
 
 export default function RouteFooter({
   isLoaded,
   origin,
   dest,
   answers,
-  routeInfo,
   timingMode,
-  routeTimingOpen,
   arriveByDate,
   originRef,
   destRef,
@@ -17,9 +17,55 @@ export default function RouteFooter({
   onSetOrigin,
   onSetDest,
   onSetTimingMode,
-  onSetRouteTimingOpen,
   onSetArriveByDate,
 }) {
+  const [showTimingMenu, setShowTimingMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const timingBtnRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const updateMenuPos = useCallback(() => {
+    if (!timingBtnRef.current) return;
+    const rect = timingBtnRef.current.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 6, left: rect.left });
+  }, []);
+
+  useEffect(() => {
+    if (!showTimingMenu) return;
+    updateMenuPos();
+    const onReposition = () => updateMenuPos();
+    window.addEventListener("scroll", onReposition, true);
+    window.addEventListener("resize", onReposition);
+    return () => {
+      window.removeEventListener("scroll", onReposition, true);
+      window.removeEventListener("resize", onReposition);
+    };
+  }, [showTimingMenu, updateMenuPos]);
+
+  useEffect(() => {
+    if (!showTimingMenu) return;
+    const onPointerDown = (e) => {
+      if (timingBtnRef.current?.contains(e.target)) return;
+      if (menuRef.current?.contains(e.target)) return;
+      setShowTimingMenu(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [showTimingMenu]);
+
+  const selectLeaveNow = () => {
+    onSetTimingMode("leave_now");
+    setShowTimingMenu(false);
+    if (originRef.current?.value && destRef.current?.value && answers.vehicle) {
+      onFetchDirections(answers.vehicle);
+    }
+  };
+
+  const selectArriveBy = () => {
+    onSetTimingMode("arrive_by");
+    setShowTimingMenu(false);
+  };
+
   return (
     <div className="route-footer">
       <div className="route-fields">
@@ -49,14 +95,32 @@ export default function RouteFooter({
         </div>
       </div>
       <div className="route-timing-wrap">
-        <button type="button" className="route-timing-btn" onClick={() => onSetRouteTimingOpen(o => !o)}>
+        <button
+          ref={timingBtnRef}
+          type="button"
+          className="route-timing-btn"
+          aria-expanded={showTimingMenu}
+          aria-haspopup="menu"
+          onClick={() => {
+            setShowTimingMenu(open => {
+              if (!open) updateMenuPos();
+              return !open;
+            });
+          }}
+        >
           {timingMode === "leave_now" ? "Leave now" : arriveByDate ? `Arrive by ${new Date(arriveByDate).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Arrive by"} ▾
         </button>
-        {routeTimingOpen && (
-          <div className="route-timing-menu" role="menu">
-            <button type="button" role="menuitem" className={`route-timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { onSetTimingMode("leave_now"); onSetRouteTimingOpen(false); if (originRef.current?.value && destRef.current?.value && answers.vehicle) onFetchDirections(answers.vehicle); }}>Leave now</button>
-            <button type="button" role="menuitem" className={`route-timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { onSetTimingMode("arrive_by"); onSetRouteTimingOpen(false); }}>Arrive by</button>
-          </div>
+        {showTimingMenu && createPortal(
+          <div
+            ref={menuRef}
+            className="timing-menu-fixed"
+            role="menu"
+            style={{ top: menuPos.top, left: menuPos.left }}
+          >
+            <button type="button" role="menuitem" className={`timing-menu-fixed-item${timingMode === "leave_now" ? " active" : ""}`} onClick={selectLeaveNow}>Leave now</button>
+            <button type="button" role="menuitem" className={`timing-menu-fixed-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={selectArriveBy}>Arrive by</button>
+          </div>,
+          document.body,
         )}
         {timingMode === "arrive_by" && (
           <input
@@ -68,22 +132,8 @@ export default function RouteFooter({
           />
         )}
       </div>
-      {routeInfo && (
-        <div className="route-info-chip-wrap">
-          <div className="route-info-chip">
-            {routeInfo.truckSafe && <span className="route-truck-badge">Truck Safe Route</span>}
-            {routeInfo.rvSafe && <span className="route-rv-badge">RV Safe Route</span>}
-            {(routeInfo.scenic || isScenicRoute(answers)) && <span className="route-scenic-badge">Scenic Route</span>}
-            <span className="route-chip-label">{getRouteTypeLabel(answers.vehicle || routeInfo.vehicleType)}</span>
-            <span className="route-chip-sep">·</span>
-            <span className="route-chip-val">{routeInfo.distance}</span>
-            <span className="route-chip-sep">·</span>
-            <span className="route-chip-val">{routeInfo.duration}</span>
-          </div>
-          {isWaterVehicle(answers.vehicle) && (
-            <div className="water-route-note">Routing is approximate — Google Maps does not support marine routes.</div>
-          )}
-        </div>
+      {isWaterVehicle(answers.vehicle) && (
+        <div className="water-route-note">Routing is approximate — Google Maps does not support marine routes.</div>
       )}
     </div>
   );
