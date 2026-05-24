@@ -159,13 +159,21 @@
     box-shadow: 0 20px 56px rgba(0,0,0,0.28), 0 0 0 3px rgba(255,255,255,0.08);
   }
   .hero-search-fields {
-    display: flex;
-    align-items: center;
     flex: 1;
     min-width: 0;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 5px;
+    align-items: center;
   }
+  .hero-field { display: contents; }
+  .hero-field-from .hero-input-label { grid-row: 1; grid-column: 1; }
+  .hero-field-from .hero-input-box { grid-row: 2; grid-column: 1; min-width: 0; }
   .hero-swap-btn {
+    grid-row: 2;
+    grid-column: 2;
     flex-shrink: 0;
     width: 32px;
     height: 32px;
@@ -193,6 +201,9 @@
     flex-shrink: 0;
     pointer-events: none;
   }
+  .hero-field-to .hero-input-label { grid-row: 1; grid-column: 3; }
+  .hero-field-to .hero-input-box { grid-row: 2; grid-column: 3; min-width: 0; }
+  .hero-input-box { width: 100%; min-width: 0; }
   .hero-go-btn { align-self: center; }
   .route-timing-wrap { position: relative; margin-top: 8px; }
   .route-timing-menu {
@@ -332,15 +343,23 @@
   .budget-row-val.animate { animation: budgetPop 0.35s ease; color: rgba(255,210,140,0.9); }
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
-    .hero-search-fields { flex-direction: column; width: 100%; gap: 6px; }
-    .hero-swap-btn { width: 32px; height: 32px; padding: 0; align-self: center; }
+    .hero-search-fields {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto auto auto;
+      width: 100%;
+      row-gap: 5px;
+    }
+    .hero-field-from .hero-input-label { grid-row: 1; grid-column: 1; }
+    .hero-field-from .hero-input-box { grid-row: 2; grid-column: 1; }
+    .hero-swap-btn { grid-row: 3; grid-column: 1; justify-self: center; width: 32px; height: 32px; padding: 0; }
+    .hero-field-to .hero-input-label { grid-row: 4; grid-column: 1; }
+    .hero-field-to .hero-input-box { grid-row: 5; grid-column: 1; }
     .hero-swap-icon { width: 16px; height: 16px; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
   }
-  .hero-input-wrap { min-width: 0; flex: 1; }
-  .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 5px; }
+  .hero-input-label { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 0; }
   .hero-input {
     border: none; outline: none; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 400; color: #fff;
