@@ -1,3 +1,4 @@
+/** Floating planner panel — question flow, budget, route footer, and generated stops. */
 import { countAnsweredQuestions } from "../lib/budget.js";
 import { isWaterVehicle, isScenicRoute } from "../lib/vehicles.js";
 import BudgetCard from "./BudgetCard.jsx";

@@ -1,3 +1,4 @@
+/** Frontend API layer — always call serverless routes, never Anthropic directly. */
 export async function generateTripPlan(payload) {
   const response = await fetch("/api/plan-trip", {
     method: "POST",

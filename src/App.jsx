@@ -1,3 +1,8 @@
+/**
+ * TripMappa root orchestrator (~710 lines).
+ * State, effects, handlers, and layout only — logic lives in src/lib/, UI in src/components/.
+ * See ROADMAP.md for phase status and conventions.
+ */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES } from "./lib/constants.js";

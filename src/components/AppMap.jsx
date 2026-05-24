@@ -1,3 +1,4 @@
+/** Full-screen Google Map. Night theme uses Apple Maps–style dark styles via isDarkMode. */
 import { GoogleMap } from "@react-google-maps/api";
 
 const DARK_MODE_MAP_STYLES = [

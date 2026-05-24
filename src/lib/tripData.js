@@ -1,3 +1,4 @@
+/** Fallback stop and safety data when /api/plan-trip fails — do not remove. */
 export const RV_SAFETY_FALLBACK = {
   lowBridges: [
     { name: "Railroad overpass", clearance: "13'2\"", location: "Exit 45, TX" },

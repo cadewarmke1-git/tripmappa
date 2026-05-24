@@ -1,16 +1,34 @@
-# React + Vite
+# TripMappa
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI-powered trip planning with real map routing, trucker/RV/family support, and a conversational 5-question flow.
 
-Currently, two official plugins are available:
+**Live:** [tripmappa.com](https://tripmappa.com)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Quick start
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Set `VITE_GOOGLE_MAPS_KEY` in `.env` for local map loading. Trip generation uses the Vercel serverless route `/api/plan-trip` (requires `ANTHROPIC_KEY` on the server).
 
-## Expanding the ESLint configuration
+## Project structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/App.jsx          Orchestrator (~710 lines)
+src/lib/             Business logic
+src/components/      UI components
+src/styles/          CSS (tripmappa.css + tripmappa-themes.css)
+api/plan-trip.js     Trip generation (Anthropic, server-side only)
+```
+
+## Roadmap & conventions
+
+See **[ROADMAP.md](./ROADMAP.md)** for phase status, upcoming features, money model, and required coding conventions.
+
+**Phases 1–2 complete.** Currently polishing before **Phase 3** (Lodging & Hotel APIs).
+
+## Stack
+
+React 19 · Vite 8 · `@react-google-maps/api` · Vercel Analytics · Vercel serverless
