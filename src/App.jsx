@@ -273,15 +273,18 @@ const CSS = `
   }
   .hero-search-fields {
     position: relative; flex: 1; min-width: 0;
-    display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+    display: grid; grid-template-columns: 1fr 1fr; align-items: stretch;
+  }
+  .hero-search-divider-wrap {
+    position: absolute; left: 50%; top: 0; bottom: 0; width: 0; z-index: 3;
+    transform: translateX(-50%); pointer-events: none;
   }
   .hero-search-divider {
-    position: absolute; left: 50%; top: 8px; bottom: 8px; width: 1px;
+    position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px;
     transform: translateX(-50%); background: rgba(255,255,255,0.3);
-    pointer-events: none;
   }
   .hero-swap-btn {
-    position: absolute; left: 50%; top: 50%; z-index: 2;
+    position: absolute; left: 50%; top: 50%; z-index: 4;
     width: 30px; height: 30px; border-radius: 50%;
     transform: translate(-50%, -50%);
     background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
@@ -289,6 +292,7 @@ const CSS = `
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+    pointer-events: auto;
   }
   .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
   .hero-go-btn { align-self: center; }
@@ -320,7 +324,8 @@ const CSS = `
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
     .hero-search-fields { grid-template-columns: 1fr; grid-template-rows: auto auto; width: 100%; }
-    .hero-search-divider { top: 50%; bottom: auto; left: 16px; right: 16px; width: auto; height: 1px; transform: translateY(-50%); }
+    .hero-search-divider-wrap .hero-search-divider { top: 50%; bottom: auto; left: 16px; right: 16px; width: auto; height: 1px; transform: translateY(-50%); }
+    .hero-search-divider-wrap .hero-swap-btn { left: 50%; top: 50%; transform: translate(-50%, -50%); }
     .hero-input-wrap:first-child,
     .hero-input-wrap:last-child { padding-left: 0; padding-right: 0; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
@@ -338,16 +343,16 @@ const CSS = `
   }
   .hero-input::placeholder { color: rgba(255,255,255,0.6); font-weight: 400; }
   .hero-go-btn {
-    background: #1a1a2e;
-    color: #fff; border: none; border-radius: var(--r-lg);
+    background: rgba(255,210,140,0.9);
+    color: #1a1a2e; border: none; border-radius: var(--r-lg);
     padding: 15px 28px; font-family: 'Inter', sans-serif;
     font-size: 14px; font-weight: 700; cursor: pointer;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); white-space: nowrap;
     flex-shrink: 0;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 6px 20px rgba(255,210,140,0.25);
   }
-  .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); }
-  .hero-go-btn:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
+  .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,210,140,0.4); }
+  .hero-go-btn:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(255,210,140,0.2); }
 
   .hero-hint {
     font-size: 12px; color: rgba(255,255,255,0.45);
@@ -660,9 +665,30 @@ const CSS = `
 
   /* ── Chat panel — mountain-lodge frosted glass ── */
   .chat-wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; background: transparent; color: #fff; }
-  .chat-header { padding: 28px 24px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); background: transparent; }
-  .chat-title { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 10px; letter-spacing: -0.02em; line-height: 1.3; }
-  .chat-sub { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.65; font-weight: 400; }
+  .convo-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 18px 20px 10px; }
+  .convo-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 4px; }
+  .convo-scroll::-webkit-scrollbar { width: 0; }
+  .chat-header { padding: 0 0 12px; border-bottom: none; background: transparent; flex-shrink: 0; }
+  .chat-title { font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; letter-spacing: -0.02em; line-height: 1.3; }
+  .chat-sub { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.5; font-weight: 400; }
+  .route-footer {
+    flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 14px 12px; background: rgba(0,0,0,0.08);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .route-footer .route-fields { display: flex; flex-direction: column; gap: 0; }
+  .route-footer .route-divider-wrap { height: 24px; }
+  .route-footer .route-input { padding: 8px 10px 8px 30px; font-size: 12px; border-radius: 10px; }
+  .route-footer .route-dot { left: 11px; width: 6px; height: 6px; }
+  .route-footer .route-swap-btn { width: 24px; height: 24px; font-size: 11px; }
+  .route-footer .route-timing-btn { padding: 5px 12px; font-size: 11px; }
+  .route-footer .route-arrive-picker { padding: 8px 10px; font-size: 11px; margin-top: 6px; }
+  .route-slim-bar {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.65); text-align: center;
+    padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 2px;
+  }
   .route-wrap { padding: 20px 24px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 14px; background: transparent; }
   .route-fields { display: flex; flex-direction: column; gap: 0; }
   .route-divider-wrap {
@@ -695,26 +721,31 @@ const CSS = `
   }
   .route-input:focus { border-color: rgba(255,210,140,0.4); background: rgba(255,255,255,0.12); box-shadow: 0 0 0 3px rgba(255,210,140,0.1); }
   .route-input::placeholder { color: rgba(255,255,255,0.35); }
-  .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 28px 24px; display: flex; flex-direction: column; gap: 0; background: transparent; }
-  .convo-wrap::-webkit-scrollbar { width: 0px; }
+  .convo-wrap { flex: 1; overflow-y: auto; min-height: 0; padding: 0; display: flex; flex-direction: column; gap: 0; background: transparent; }
+  .plan-view { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; min-height: 0; animation: none; }
   .plan-view, .convo-wrap > .ai-msg, .convo-wrap > .user-msg { margin: 0; }
-  .ai-msg { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
+  .ai-msg { display: flex; flex-direction: column; gap: 0; }
   .user-msg { display: flex; justify-content: flex-end; margin-top: 14px; animation: answerSlideIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
-  .plan-route-hint {
-    font-size: 11px; color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 20px;
-    padding: 11px 16px; background: rgba(255,210,140,0.1); border-radius: 12px;
-    border: 1px solid rgba(255,210,140,0.18);
-    font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-  }
-  .step-active { animation: fadeUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
-  .step-exit { animation: stepExit 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards; pointer-events: none; }
-  @keyframes stepExit { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-10px) scale(0.97); } }
+  .step-active { animation: none; }
+  .step-exit { animation: stepExit 300ms ease forwards; pointer-events: none; }
+  .step-enter { animation: stepEnter 350ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes stepExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
+  @keyframes stepEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes answerSlideIn { from { opacity: 0; transform: translateY(12px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .question-choices {
-    margin-top: 22px; padding-top: 22px;
+    margin-top: 16px; padding-top: 16px;
     border-top: 1px solid rgba(255,255,255,0.08);
-    display: flex; flex-direction: column; gap: 16px;
+    display: flex; flex-direction: column; gap: 12px;
   }
+  .convo-nav-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .convo-nav-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 8px; padding: 6px 12px; font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600; color: #fff; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  .convo-nav-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
   .convo-empty { text-align: center; padding: 36px 0; }
   .convo-empty p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 16px; line-height: 1.55; }
@@ -747,15 +778,15 @@ const CSS = `
   .qr-btn:hover { border-color: rgba(255,210,140,0.6); transform: translateY(-1px); background: rgba(255,255,255,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
   .qr-btn:active { transform: scale(0.98); }
   .qr-btn.qr-selected {
-    animation: qrGoldFlash 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    border-color: rgba(255,210,140,0.7) !important;
+    animation: qrGoldFlash 150ms ease forwards;
+    border-color: rgba(255,210,140,0.9) !important;
     color: #1a1a2e !important;
+    background: rgba(255,210,140,0.9) !important;
     pointer-events: none;
   }
   @keyframes qrGoldFlash {
-    0% { background: rgba(255,255,255,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.12); transform: scale(1); opacity: 1; }
-    20% { background: rgba(255,210,140,0.9); box-shadow: 0 0 0 4px rgba(255,210,140,0.3); transform: scale(1.03); opacity: 1; }
-    100% { background: rgba(255,210,140,0.4); box-shadow: none; transform: scale(0.97); opacity: 0; }
+    0% { background: rgba(255,255,255,0.08); box-shadow: none; transform: scale(1); }
+    100% { background: rgba(255,210,140,0.9); box-shadow: 0 0 0 3px rgba(255,210,140,0.25); transform: scale(1.02); color: #1a1a2e; }
   }
   .qr-btn.yes, .qr-btn.no { border-color: rgba(255,210,140,0.4); color: #fff; background: rgba(255,255,255,0.08); }
   .qr-btn.yes:hover, .qr-btn.no:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,210,140,0.55); color: #fff; }
@@ -825,12 +856,34 @@ const CSS = `
   .action-btn-primary { background: var(--brand); color: var(--charcoal); border-color: var(--brand); }
   .action-btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
   .section-sep { height: 1px; background: var(--border); margin: 6px 0 16px; }
-  .results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-  .results-back { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); padding: 0; font-weight: 500; }
-  .results-back:hover { color: var(--ink); }
-  .results-route { flex: 1; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px; text-align: center; letter-spacing: -0.02em; }
-  .results-save { background: var(--brand); color: var(--charcoal); border: none; border-radius: 8px; padding: 7px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.2s var(--ease); }
-  .results-save:hover { background: var(--brand-hover); }
+  .results-header {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center; gap: 8px; margin-bottom: 0;
+  }
+  .results-back {
+    justify-self: start; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 8px; cursor: pointer; font-size: 12px; color: #fff;
+    padding: 6px 10px; font-weight: 600; font-family: 'Inter', sans-serif;
+    text-decoration: underline; text-underline-offset: 2px;
+    transition: background 0.15s var(--ease);
+  }
+  .results-back:hover { background: rgba(255,255,255,0.14); }
+  .results-route {
+    justify-self: center; font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: 13px; text-align: center; letter-spacing: -0.02em; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  .results-save { justify-self: end; background: rgba(255,210,140,0.9); color: #1a1a2e; border: none; border-radius: 8px; padding: 7px 14px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.2s var(--ease), box-shadow 0.2s var(--ease); }
+  .results-save:hover { background: rgba(255,210,140,1); box-shadow: 0 0 12px rgba(255,210,140,0.35); }
+  .results-header-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 12px 0 14px; }
+  .theme-test-btn {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+    padding: 6px 10px; border-radius: 99px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85); white-space: nowrap;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  .theme-test-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); }
   .stops-panel-head { margin-bottom: 16px; }
   .stops-panel-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.03em; margin-bottom: 4px; }
   .stops-panel-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
@@ -1033,82 +1086,91 @@ async function callAI(prompt, model = "claude-haiku-4-5-20251001") {
   return data.content?.[0]?.text || "";
 }
 
-function buildNextQuestionPrompt(answers, routeContext) {
-  const { origin, dest, routeInfo } = routeContext;
-  const routeLine = routeInfo
-    ? `${routeInfo.distance} · ${routeInfo.duration} drive`
-    : "distance unknown";
+function buildConvoRoutingPrompt(answers, lastQuestionId = null) {
+  return `You are a travel planning assistant. The user is planning a trip and has answered these questions so far: ${JSON.stringify(answers)}.
+${lastQuestionId ? `They just answered: ${lastQuestionId}` : ""}
 
-  return `You are a friendly travel planning assistant for TripMappa. Write the NEXT single question for this user.
-
-Route: ${origin || "?"} → ${dest || "?"}
-${routeLine}
-Answers so far: ${JSON.stringify(answers)}
-
-Collect these fields before finishing (skip when rules say to):
+Based on their answers, decide which question to ask next from this list:
 - trip_type: Road trip | Driving home | Day trip | Work / Delivery
 - vehicle: Car | RV / Camper | Semi Truck | Motorcycle | Trailer
-- trailer_detail: free text (Trailer or Semi Truck only)
+- trailer_detail: trailer weight and length (Trailer or Semi Truck only)
 - fuel: Gasoline | Electric (EV)
-- pets: Yes | No (skip for Work / Delivery)
-- pet_desc: free text (only if pets is Yes)
+- pets: Yes | No
+- pet_desc: pet type and size (only if pets is Yes)
 - overnight: Yes | No (Road trip or Work / Delivery only)
 - lodging: Budget | Mid-range | Upscale | Luxury | Campground | RV Park
 - restaurants: Yes | No
 - grocery: Yes | No
-- extra: optional free text
+- extra: optional notes
 
 Rules:
-- Day trip: skip lodging, grocery, and overnight
-- Driving home: skip lodging, restaurants, grocery, and extra
+- Day trip: skip lodging, grocery, overnight, and restaurants
+- Driving home: skip lodging, restaurants, grocery, extra, pets, and pet_desc
 - Car or Motorcycle: skip trailer_detail
 - pets is No: skip pet_desc
-- When all needed fields are collected, return {"done":true}
+- restaurants is No: skip any restaurant preference questions
+- When all necessary questions are answered return exactly: done
 
-Write "ask" in plain, casual, SHORT English (max 10 words). Tailor wording to their trip — mention route length when relevant.
+Return ONLY the question ID, nothing else.`;
+}
 
-Return ONLY valid JSON, no markdown:
-{"done":false,"id":"vehicle","ask":"What are you driving?","type":"choice","choices":["Car","RV / Camper","Semi Truck","Motorcycle","Trailer"],"placeholder":"","skippable":false}
+function questionFromTemplate(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return null;
+  return {
+    done: false,
+    id: q.id,
+    ask: q.ask,
+    type: q.type,
+    choices: q.choices,
+    placeholder: q.placeholder,
+    skippable: q.skippable,
+  };
+}
 
-Use type "choice", "yesno", or "text". For yesno you may omit choices. For text include placeholder. Only extra may have skippable true.`;
+function isQuestionSkipped(id, answers) {
+  if (answers[id] !== undefined && answers[id] !== "") return true;
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return true;
+  if (q.onlyIf && !q.onlyIf(answers)) return true;
+  if (answers.trip_type === "Day trip" && ["lodging", "grocery", "overnight", "restaurants"].includes(id)) return true;
+  if (answers.trip_type === "Driving home" && ["lodging", "restaurants", "grocery", "extra", "pets", "pet_desc"].includes(id)) return true;
+  if (["Car", "Motorcycle"].includes(answers.vehicle) && id === "trailer_detail") return true;
+  if (answers.pets === "No" && id === "pet_desc") return true;
+  if (answers.restaurants === "No" && id.startsWith("restaurant")) return true;
+  return false;
 }
 
 function fallbackNextQuestion(answers, lastQuestionId) {
   const from = lastQuestionId ? QUESTIONS.findIndex(q => q.id === lastQuestionId) + 1 : 0;
-  const next = nextQ(from, answers);
-  if (next === -2) return { done: true };
-  const q = QUESTIONS[next];
-  return { done: false, id: q.id, ask: q.ask, type: q.type, choices: q.choices, placeholder: q.placeholder, skippable: q.skippable };
+  let i = from;
+  while (i < QUESTIONS.length) {
+    const q = QUESTIONS[i];
+    if (!isQuestionSkipped(q.id, answers)) {
+      const built = questionFromTemplate(q.id);
+      if (built) return built;
+    }
+    i++;
+  }
+  return { done: true };
 }
 
-function parseAIQuestion(raw, answers, lastQuestionId) {
-  try {
-    const clean = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
-    if (parsed.done) return { done: true };
-
-    const template = QUESTIONS.find(q => q.id === parsed.id);
-    if (!template) throw new Error("unknown question id");
-    if (template.onlyIf && !template.onlyIf(answers)) throw new Error("question not applicable");
-    if (answers[parsed.id] !== undefined && answers[parsed.id] !== "") throw new Error("already answered");
-
-    return {
-      done: false,
-      id: parsed.id,
-      ask: String(parsed.ask || template.ask).slice(0, 120),
-      type: parsed.type || template.type,
-      choices: parsed.choices || template.choices,
-      placeholder: parsed.placeholder || template.placeholder || "",
-      skippable: parsed.skippable ?? template.skippable ?? false,
-    };
-  } catch {
-    return fallbackNextQuestion(answers, lastQuestionId);
+function resolveNextQuestionId(raw, answers, lastQuestionId) {
+  const cleaned = raw.trim().toLowerCase().replace(/^["'`]+|["'`]+$/g, "").replace(/[^a-z_]/g, "");
+  if (cleaned === "done") {
+    const fallback = fallbackNextQuestion(answers, lastQuestionId);
+    return fallback.done ? { done: true } : fallback;
   }
+  if (!isQuestionSkipped(cleaned, answers)) {
+    const built = questionFromTemplate(cleaned);
+    if (built) return built;
+  }
+  return fallbackNextQuestion(answers, lastQuestionId);
 }
 
 async function fetchNextQuestion(answers, routeContext, lastQuestionId = null) {
-  const raw = await callAI(buildNextQuestionPrompt(answers, routeContext));
-  return parseAIQuestion(raw, answers, lastQuestionId);
+  const raw = await callAI(buildConvoRoutingPrompt(answers, lastQuestionId));
+  return resolveNextQuestionId(raw, answers, lastQuestionId);
 }
 
 function nextQ(from, ans) {
@@ -1172,7 +1234,10 @@ export default function App() {
   const [groceryInput, setGroceryInput] = useState("");
   const [groceryItems, setGroceryItems] = useState([]);
   const [scrolled, setScrolled] = useState(false);
-  const [theme, setTheme] = useState(computeAutoTheme);
+  const [autoTheme, setAutoTheme] = useState(computeAutoTheme);
+  const [themeOverride, setThemeOverride] = useState(null);
+  const theme = themeOverride ?? autoTheme;
+  const [enterAnim, setEnterAnim] = useState(false);
   const [cardCollapsed, setCardCollapsed] = useState(false);
   const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'pop' | 'exit' }
   const stepAnimTimer = useRef(null);
@@ -1280,7 +1345,7 @@ export default function App() {
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateTheme = () => setTheme(computeAutoTheme());
+    const updateTheme = () => setAutoTheme(computeAutoTheme());
     mq.addEventListener("change", updateTheme);
     const interval = setInterval(updateTheme, 60_000);
     return () => {
@@ -1288,6 +1353,14 @@ export default function App() {
       clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    if (currentQuestion && !stepAnim && !convoLoading) {
+      setEnterAnim(true);
+      const t = setTimeout(() => setEnterAnim(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [currentQuestion?.id, convoLoading, stepAnim]);
 
   useEffect(() => {
     if (generated && (stops.length > 0 || roadStops.length > 0)) {
@@ -1416,6 +1489,7 @@ export default function App() {
 
   function pickAnswer(value) {
     if (stepAnim || convoLoading) return;
+    setEnterAnim(false);
     setStepAnim({ answer: value, phase: "flash" });
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     stepAnimTimer.current = setTimeout(() => {
@@ -1423,8 +1497,8 @@ export default function App() {
       stepAnimTimer.current = setTimeout(async () => {
         await submitAnswer(value);
         setStepAnim(null);
-      }, 260);
-    }, 380);
+      }, 300);
+    }, 150);
   }
 
   useEffect(() => () => { if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current); }, []);
@@ -1539,19 +1613,20 @@ export default function App() {
     if (!currentQ || convoLoading) return null;
     const frozen = !!stepAnim;
     const selected = stepAnim?.answer;
-    const showChoices = stepAnim?.phase !== "exit";
     const mkClass = (val, extra = "") => {
       const sel = selected === val ? " qr-selected" : "";
       return `qr-btn${extra}${sel}${frozen && selected !== val ? " qr-dimmed" : ""}`;
     };
-    if (!showChoices) return null;
     return (
       <div className={`question-choices${frozen ? " choices-frozen" : ""}`}>
-        {questionHistory.length > 0 && !frozen && (
-          <button type="button" onClick={goBackOneQuestion} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--muted)",padding:"2px 0",display:"flex",alignItems:"center",gap:4,letterSpacing:"0.04em"}}>
-            ← Back
-          </button>
-        )}
+        <div className="convo-nav-row">
+          {!frozen && (
+            <button type="button" className="convo-nav-btn" onClick={resetPlan}>Start over</button>
+          )}
+          {questionHistory.length > 0 && !frozen && (
+            <button type="button" className="convo-nav-btn" onClick={goBackOneQuestion}>← Back</button>
+          )}
+        </div>
         {currentQ.type==="yesno"&&(
           <div className="quick-replies">
             <button type="button" className={mkClass("Yes", " yes")} disabled={frozen} onClick={()=>pickAnswer("Yes")}>Yes</button>
@@ -1611,7 +1686,7 @@ export default function App() {
             <div className="results-route">{origin} → {dest}</div>
             <button type="button" className="results-save" onClick={saveTripComingSoon}>Save</button>
           </div>
-          <div className="section-sep"/>
+          <div className="results-header-divider"/>
         </>
       )}
 
@@ -1730,107 +1805,115 @@ export default function App() {
     </div>
   );
 
+  const routeFooter = (
+    <div className="route-footer">
+      <div className="route-fields">
+        <div className="route-input-wrap">
+          <div className="route-dot"/>
+          {isLoaded ? (
+            <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
+              <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
+            </Autocomplete>
+          ) : (
+            <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
+          )}
+        </div>
+        <div className="route-divider-wrap">
+          <div className="route-divider"/>
+          <button type="button" className="route-swap-btn" onClick={swapRouteCities} aria-label="Swap origin and destination">↕</button>
+        </div>
+        <div className="route-input-wrap">
+          <div className="route-dot dest"/>
+          {isLoaded ? (
+            <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
+              <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
+            </Autocomplete>
+          ) : (
+            <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
+          )}
+        </div>
+      </div>
+      <div className="route-timing-wrap">
+        <button type="button" className="route-timing-btn" onClick={() => setRouteTimingOpen(o => !o)}>
+          {timingMode === "leave_now" ? "Leave now" : arriveByDate ? `Arrive by ${new Date(arriveByDate).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Arrive by"} ▾
+        </button>
+        {routeTimingOpen && (
+          <div className="timing-menu" style={{left:0}}>
+            <button type="button" className={`timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { setTimingMode("leave_now"); setRouteTimingOpen(false); if (originRef.current?.value && destRef.current?.value) fetchDirections(); }}>Leave now</button>
+            <button type="button" className={`timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { setTimingMode("arrive_by"); setRouteTimingOpen(false); }}>Arrive by</button>
+          </div>
+        )}
+        {timingMode === "arrive_by" && (
+          <input
+            type="datetime-local"
+            className="route-arrive-picker"
+            value={arriveByDate}
+            min={new Date().toISOString().slice(0, 16)}
+            onChange={e => { setArriveByDate(e.target.value); if (e.target.value && originRef.current?.value && destRef.current?.value) fetchDirections(); }}
+          />
+        )}
+      </div>
+      {routeInfo && (
+        <div className="route-slim-bar">{routeInfo.distance} · {routeInfo.duration} drive</div>
+      )}
+    </div>
+  );
+
   const planPanel = (
     <div className="chat-wrap">
-      <div className="chat-header">
-        <div className="chat-title">Plan your trip.</div>
-        <div className="chat-sub">Answer a few quick questions and we'll handle everything.</div>
-      </div>
-      <div className="route-wrap">
-        <div className="route-fields">
-          <div className="route-input-wrap">
-            <div className="route-dot"/>
-            {isLoaded ? (
-              <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
-                <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
-              </Autocomplete>
+      <div className="convo-stage">
+        {!generated && (
+          <div className="chat-header">
+            <div className="chat-title">Plan your trip.</div>
+            <div className="chat-sub">Answer a few quick questions and we'll handle everything.</div>
+          </div>
+        )}
+        <div className="convo-scroll">
+          {generated ? (
+            (stops.length > 0 || roadStops.length > 0) ? (
+              <StopsResults />
             ) : (
-              <input className="route-input" placeholder="Starting from…" value={origin} onChange={e=>setOrigin(e.target.value)}/>
-            )}
-          </div>
-          <div className="route-divider-wrap">
-            <div className="route-divider"/>
-            <button type="button" className="route-swap-btn" onClick={swapRouteCities} aria-label="Swap origin and destination">↕</button>
-          </div>
-          <div className="route-input-wrap">
-            <div className="route-dot dest"/>
-            {isLoaded ? (
-              <Autocomplete onPlaceChanged={() => fetchDirections()} options={{types:["geocode","establishment"]}}>
-                <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
-              </Autocomplete>
-            ) : (
-              <input className="route-input" placeholder="Going to…" value={dest} onChange={e=>setDest(e.target.value)}/>
-            )}
-          </div>
-        </div>
-        <div className="route-timing-wrap">
-          <button type="button" className="route-timing-btn" onClick={() => setRouteTimingOpen(o => !o)}>
-            {timingMode === "leave_now" ? "Leave now" : arriveByDate ? `Arrive by ${new Date(arriveByDate).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Arrive by"} ▾
-          </button>
-          {routeTimingOpen && (
-            <div className="timing-menu" style={{left:0}}>
-              <button type="button" className={`timing-menu-item${timingMode === "leave_now" ? " active" : ""}`} onClick={() => { setTimingMode("leave_now"); setRouteTimingOpen(false); if (originRef.current?.value && destRef.current?.value) fetchDirections(); }}>Leave now</button>
-              <button type="button" className={`timing-menu-item${timingMode === "arrive_by" ? " active" : ""}`} onClick={() => { setTimingMode("arrive_by"); setRouteTimingOpen(false); }}>Arrive by</button>
-            </div>
-          )}
-          {timingMode === "arrive_by" && (
-            <input
-              type="datetime-local"
-              className="route-arrive-picker"
-              value={arriveByDate}
-              min={new Date().toISOString().slice(0, 16)}
-              onChange={e => { setArriveByDate(e.target.value); if (e.target.value && originRef.current?.value && destRef.current?.value) fetchDirections(); }}
-              style={{marginTop:8,width:"100%",background:"rgba(255,210,140,0.08)",border:"1px solid rgba(255,210,140,0.2)",borderRadius:10,padding:"10px 12px",fontFamily:"Inter,sans-serif",fontSize:13}}
-            />
-          )}
-        </div>
-      </div>
-      <div className="convo-wrap">
-        {/* RESULTS VIEW — shown after generating */}
-        {generated ? (
-          (stops.length > 0 || roadStops.length > 0) ? (
-            <StopsResults />
+              <div className="empty-state" style={{padding:"40px 16px"}}>
+                <div className="empty-title">No stops returned</div>
+                <div className="empty-sub" style={{marginBottom:16}}>Something went wrong loading your plan. Try generating again.</div>
+                <button type="button" className="btn-generate" style={{width:"auto",padding:"10px 24px",display:"inline-block"}} onClick={()=>{ setGenerated(false); generateTrip(); }}>Try again</button>
+              </div>
+            )
           ) : (
-            <div className="empty-state" style={{padding:"40px 16px"}}>
-              <div className="empty-title">No stops returned</div>
-              <div className="empty-sub" style={{marginBottom:16}}>Something went wrong loading your plan. Try generating again.</div>
-              <button type="button" className="btn-generate" style={{width:"auto",padding:"10px 24px",display:"inline-block"}} onClick={()=>{ setGenerated(false); generateTrip(); }}>Try again</button>
+            <div className="plan-view">
+              {qIndex === -1 && (
+                <div className="convo-empty">
+                  <p>Enter your route below, then tap below to get started.</p>
+                  <button type="button" className="btn-generate btn-generate-inline" onClick={startConvo}>Start planning</button>
+                </div>
+              )}
+              {(currentQuestion || qIndex === -2 || convoLoading) && (
+                <div
+                  className={`ai-msg${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
+                  key={currentQuestion?.id ?? qIndex}
+                >
+                  <div className="ai-bubble">{getStepMessage()}</div>
+                  {currentQuestion && !convoLoading && <QuestionChoices />}
+                  {qIndex === -2 && (
+                    <div className="question-choices" style={{borderTop:"none",paddingTop:16,marginTop:16}}>
+                      <SummaryCard/>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div ref={convoEndRef}/>
             </div>
-          )
-        ) : (
-          /* Step-by-step planner — one question at a time */
-          <div className="plan-view">
-            {qIndex === -1 && (
-              <div className="convo-empty">
-                <p>Enter your route above, then tap below to get started.</p>
-                <button type="button" className="btn-generate btn-generate-inline" onClick={startConvo}>Start planning</button>
-              </div>
-            )}
-            {(currentQuestion || qIndex === -2 || convoLoading) && (
-              <div className={`ai-msg step-active${stepAnim?.phase === "exit" ? " step-exit" : ""}`} key={currentQuestion?.id ?? qIndex}>
-                {currentQuestion && routeInfo && !convoLoading && (
-                  <div className="plan-route-hint">{routeInfo.distance} · {routeInfo.duration} drive</div>
-                )}
-                <div className="ai-bubble">{getStepMessage()}</div>
-                {currentQuestion && !convoLoading && <QuestionChoices />}
-                {qIndex === -2 && (
-                  <div className="question-choices" style={{borderTop:"none",paddingTop:16,marginTop:16}}>
-                    <SummaryCard/>
-                  </div>
-                )}
-              </div>
-            )}
-            <div ref={convoEndRef}/>
+          )}
+        </div>
+        {convoComplete && !generated && (
+          <div className="generate-wrap">
+            <button type="button" className="btn-generate" onClick={generateTrip} disabled={loading||generated}>
+              {loading?<><span className="spinner"/>Planning your trip…</>:generated?"Trip Planned ✓":"Generate Trip Plan"}
+            </button>
           </div>
         )}
       </div>
-      {convoComplete&&(
-        <div className="generate-wrap">
-          <button type="button" className="btn-generate" onClick={generateTrip} disabled={loading||generated}>
-            {loading?<><span className="spinner"/>Planning your trip…</>:generated?"Trip Planned ✓":"Generate Trip Plan"}
-          </button>
-        </div>
-      )}
+      {!generated && routeFooter}
     </div>
   );
 
@@ -1960,8 +2043,10 @@ export default function App() {
                   <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e=>setHeroOrigin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&launchFromHero()}/>
                 )}
               </div>
-              <div className="hero-search-divider" aria-hidden="true"/>
-              <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
+              <div className="hero-search-divider-wrap">
+                <div className="hero-search-divider" aria-hidden="true"/>
+                <button type="button" className="hero-swap-btn" onClick={swapHeroCities} aria-label="Swap origin and destination">↕</button>
+              </div>
               <div className="hero-input-wrap">
                 <div className="hero-input-label">To</div>
                 {isLoaded ? (
@@ -2037,21 +2122,114 @@ export default function App() {
     <>
       <style>{CSS}</style>
       <style>{`
-        /* ── App theme: Day ── */
-        .app-wrap.day .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
-        .app-wrap.day .nav-app .nav-logo { color: #fff; }
-        .app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
-        .app-wrap.day .nav-app .nav-tab { color: rgba(255,255,255,0.5); }
-        .app-wrap.day .nav-app .nav-tab.active { background: rgba(255,255,255,0.12); color: #fff; box-shadow: none; }
-        .nav-app .nav-btn { color: rgba(255,255,255,0.55); }
-        .app-wrap.day .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85) !important; }
-        .app-wrap.day .nav-app .nav-btn-primary { background: rgba(255,210,140,0.9); color: var(--charcoal) !important; border-color: transparent; font-weight: 700; }
-        .app-wrap.day .nav-center-wrap { background: rgba(255,255,255,0.08); }
+        /* ── App theme: Day — light & airy ── */
+        .app-wrap.day .nav-app {
+          background: rgba(255,255,255,0.92) !important;
+          border-bottom: 1px solid rgba(26,26,46,0.08) !important;
+          transition: background 1.8s ease, border-color 1.8s ease;
+        }
+        .app-wrap.day .nav-app .nav-logo { color: #1a1a2e !important; }
+        .app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.95) !important; }
+        .app-wrap.day .nav-app .nav-tab { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .nav-app .nav-tab.active { background: rgba(26,26,46,0.08) !important; color: #1a1a2e !important; box-shadow: none; }
+        .app-wrap.day .nav-center-wrap { background: rgba(26,26,46,0.06) !important; }
+        .app-wrap.day .nav-app .nav-btn { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.12) !important; color: #1a1a2e !important; }
+        .app-wrap.day .nav-app .nav-btn-primary { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: transparent !important; font-weight: 700; }
+        .app-wrap.day .theme-test-btn { background: rgba(26,26,46,0.06); border-color: rgba(26,26,46,0.12); color: #1a1a2e; }
+        .app-wrap.day .theme-test-btn:hover { background: rgba(26,26,46,0.1); border-color: rgba(26,26,46,0.2); }
         .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
         .app-wrap.day .map-placeholder-sub { color: rgba(0,0,0,0.12); }
 
-        /* Float card + conversation — same dark frosted glass in day & night */
-        .app-wrap.day .float-card,
+        /* Float card — day: light frosted glass */
+        .app-wrap.day .float-card {
+          background: rgba(255,255,255,0.85) !important;
+          backdrop-filter: blur(24px) saturate(1.2) !important;
+          -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
+          border: 1px solid rgba(255, 210, 140, 0.35) !important;
+          box-shadow: 0 24px 64px rgba(26,26,46,0.12), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+        }
+        .app-wrap.day .float-card-title { color: #1a1a2e !important; }
+        .app-wrap.day .float-card-chevron { color: rgba(26,26,46,0.45) !important; }
+        .app-wrap.day .chat-wrap { color: #1a1a2e !important; }
+        .app-wrap.day .chat-title { color: #1a1a2e !important; }
+        .app-wrap.day .chat-sub { color: rgba(26,26,46,0.55) !important; }
+        .app-wrap.day .convo-empty p { color: rgba(26,26,46,0.55) !important; }
+        .app-wrap.day .ai-bubble {
+          background: #ffffff !important; border-color: rgba(26,26,46,0.1) !important;
+          color: #1a1a2e !important; box-shadow: 0 4px 18px rgba(26,26,46,0.08) !important;
+        }
+        .app-wrap.day .user-bubble {
+          background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important;
+        }
+        .app-wrap.day .qr-btn {
+          background: #ffffff !important; border-color: rgba(26,26,46,0.2) !important;
+          color: #1a1a2e !important; box-shadow: 0 2px 8px rgba(26,26,46,0.06) !important;
+        }
+        .app-wrap.day .qr-btn:hover { background: rgba(255,255,255,0.95) !important; border-color: rgba(26,26,46,0.3) !important; }
+        .app-wrap.day .question-choices { border-top-color: rgba(26,26,46,0.08) !important; }
+        .app-wrap.day .convo-nav-btn {
+          background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.18) !important;
+          color: #1a1a2e !important;
+        }
+        .app-wrap.day .convo-nav-btn:hover { background: rgba(26,26,46,0.1) !important; border-color: rgba(26,26,46,0.28) !important; }
+        .app-wrap.day .route-footer {
+          background: rgba(26,26,46,0.03) !important; border-top-color: rgba(26,26,46,0.08) !important;
+        }
+        .app-wrap.day .route-input {
+          background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.1) !important;
+          color: #1a1a2e !important;
+        }
+        .app-wrap.day .route-input::placeholder { color: rgba(26,26,46,0.4) !important; }
+        .app-wrap.day .route-timing-btn {
+          background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.12) !important;
+          color: #1a1a2e !important;
+        }
+        .app-wrap.day .route-slim-bar { color: rgba(26,26,46,0.55) !important; border-top-color: rgba(26,26,46,0.06) !important; }
+        .app-wrap.day .route-arrive-picker {
+          background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.12) !important; color: #1a1a2e !important;
+        }
+        .app-wrap.day .answer-input {
+          background: #fff !important; border-color: rgba(26,26,46,0.15) !important; color: #1a1a2e !important;
+        }
+        .app-wrap.day .results-view { color: #1a1a2e !important; }
+        .app-wrap.day .results-back {
+          background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.15) !important; color: #1a1a2e !important;
+        }
+        .app-wrap.day .results-back:hover { background: rgba(26,26,46,0.1) !important; }
+        .app-wrap.day .results-route { color: #1a1a2e !important; }
+        .app-wrap.day .results-header-divider { background: rgba(26,26,46,0.1) !important; }
+        .app-wrap.day .stop-card { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
+        .app-wrap.day .stop-card-head { background: rgba(26,26,46,0.03) !important; border-color: rgba(26,26,46,0.06) !important; }
+        .app-wrap.day .stop-city { color: #1a1a2e !important; }
+        .app-wrap.day .stop-meta { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .item-row { background: rgba(26,26,46,0.03) !important; border-color: rgba(26,26,46,0.07) !important; }
+        .app-wrap.day .item-name { color: #1a1a2e !important; }
+        .app-wrap.day .item-meta { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .item-price { color: #1a1a2e !important; }
+        .app-wrap.day .stops-panel-title { color: #1a1a2e !important; }
+        .app-wrap.day .stops-panel-sub { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .empty-title { color: #1a1a2e !important; }
+        .app-wrap.day .empty-sub { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .share-title { color: #1a1a2e !important; }
+        .app-wrap.day .share-sub { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .person-row { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
+        .app-wrap.day .person-name { color: #1a1a2e !important; }
+        .app-wrap.day .person-status { color: rgba(26,26,46,0.45) !important; }
+        .app-wrap.day .stops-wrap { color: #1a1a2e !important; }
+        .app-wrap.day .action-btn { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.1) !important; color: #1a1a2e !important; }
+        .app-wrap.day .action-btn:hover { background: rgba(26,26,46,0.1) !important; }
+        .app-wrap.day .filter-tab { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.12) !important; color: rgba(26,26,46,0.65) !important; }
+        .app-wrap.day .filter-tab.active { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: rgba(255,210,140,0.9) !important; }
+        .app-wrap.day .road-stop-name { color: #1a1a2e !important; }
+        .app-wrap.day .road-stop-loc { color: rgba(26,26,46,0.5) !important; }
+        .app-wrap.day .section-sep { background: rgba(26,26,46,0.08) !important; }
+        .app-wrap.day .stop-section-label { color: rgba(26,26,46,0.4) !important; }
+        .app-wrap.day .item-row:hover { background: rgba(26,26,46,0.06) !important; }
+        .app-wrap.day .fuel-row { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
+        .app-wrap.day .fuel-label { color: #1a1a2e !important; }
+        .app-wrap.day .fuel-meta-txt { color: rgba(26,26,46,0.45) !important; }
+
+        /* Float card — night: dark frosted glass */
         .app-wrap.night .float-card {
           background: rgba(15, 20, 40, 0.75) !important;
           backdrop-filter: blur(24px) saturate(1.2) !important;
@@ -2069,6 +2247,8 @@ export default function App() {
         .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
         .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85) !important; }
         .app-wrap.night .nav-app .nav-btn-primary { background: var(--charcoal); color: #fff !important; border-color: rgba(255,255,255,0.15); }
+        .app-wrap.night .theme-test-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
+        .app-wrap.night .theme-test-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); }
         .app-wrap.night .route-loading-pill {
           background: rgba(15,20,40,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
         }
@@ -2096,9 +2276,9 @@ export default function App() {
         .app-wrap.night .sidebar-inner::before,
         .app-wrap.night .sidebar-inner::after { display: none; }
 
-        /* Logo — Trip white, Mappa gold everywhere */
-        .app-wrap .nav-logo { color: #fff !important; }
-        .app-wrap .nav-logo span { color: rgba(255,210,140,0.9) !important; }
+        /* Logo — night: Trip white, Mappa gold */
+        .app-wrap.night .nav-logo { color: #fff !important; }
+        .app-wrap.night .nav-logo span { color: rgba(255,210,140,0.9) !important; }
 
         .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap,
         .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
@@ -2107,65 +2287,42 @@ export default function App() {
         .app-wrap.night .fuel-label { color: #fff; }
         .app-wrap.night .fuel-meta-txt { color: rgba(255,255,255,0.4); }
 
-        /* Stops panel — light cards inside dark float card (both themes) */
-        .app-wrap.day .stop-card,
+        /* Stops panel — night: light cards inside dark float card */
         .app-wrap.night .stop-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.08); }
-        .app-wrap.day .stop-card-head,
         .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
-        .app-wrap.day .stop-city,
         .app-wrap.night .stop-city { color: #fff; }
-        .app-wrap.day .stop-meta,
         .app-wrap.night .stop-meta { color: rgba(255,255,255,0.45); }
-        .app-wrap.day .stop-num,
         .app-wrap.night .stop-num { background: rgba(255,210,140,0.9); color: #1a1a2e; }
-        .app-wrap.day .item-row,
         .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
-        .app-wrap.day .item-name,
         .app-wrap.night .item-name { color: #fff; }
-        .app-wrap.day .item-meta,
         .app-wrap.night .item-meta { color: rgba(255,255,255,0.5); }
-        .app-wrap.day .item-price,
         .app-wrap.night .item-price { color: #fff; }
-        .app-wrap.day .stops-panel-title,
         .app-wrap.night .stops-panel-title { color: #fff; }
-        .app-wrap.day .stops-panel-sub,
         .app-wrap.night .stops-panel-sub { color: rgba(255,255,255,0.5); }
-        .app-wrap.day .empty-title,
         .app-wrap.night .empty-title { color: #fff; }
-        .app-wrap.day .empty-sub,
         .app-wrap.night .empty-sub { color: rgba(255,255,255,0.45); }
-        .app-wrap.day .share-title,
         .app-wrap.night .share-title { color: #fff; }
-        .app-wrap.day .share-sub,
         .app-wrap.night .share-sub { color: rgba(255,255,255,0.45); }
-        .app-wrap.day .person-row,
         .app-wrap.night .person-row { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
-        .app-wrap.day .person-name,
         .app-wrap.night .person-name { color: #fff; }
-        .app-wrap.day .person-status,
         .app-wrap.night .person-status { color: rgba(255,255,255,0.4); }
-        .app-wrap.day .stops-wrap,
         .app-wrap.night .stops-wrap { background: transparent !important; color: #fff; }
-        .app-wrap.day .action-btn,
         .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
-        .app-wrap.day .action-btn:hover,
         .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
-        .app-wrap.day .action-btn-primary,
         .app-wrap.night .action-btn-primary { background: rgba(255,210,140,0.9); border-color: rgba(255,210,140,0.9); color: #1a1a2e; }
-        .app-wrap.day .filter-tab,
         .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
-        .app-wrap.day .filter-tab.active,
         .app-wrap.night .filter-tab.active { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: rgba(255,210,140,0.9) !important; }
-        .app-wrap.day .road-stop-name,
         .app-wrap.night .road-stop-name { color: #fff !important; }
-        .app-wrap.day .road-stop-loc,
         .app-wrap.night .road-stop-loc { color: rgba(255,255,255,0.5) !important; }
-        .app-wrap.day .section-sep,
         .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
-        .app-wrap.day .stop-section-label,
         .app-wrap.night .stop-section-label { color: rgba(255,255,255,0.35); }
-        .app-wrap.day .item-row:hover,
         .app-wrap.night .item-row:hover { background: rgba(255,255,255,0.08) !important; }
+        .app-wrap.night .results-back {
+          background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.18); color: #fff;
+        }
+        .app-wrap.night .results-back:hover { background: rgba(255,255,255,0.14); }
+        .app-wrap.night .results-route { color: #fff; }
+        .app-wrap.night .results-header-divider { background: rgba(255,255,255,0.1); }
 
         /* Two-layer opacity crossfade — same technique as hero */
         .app-wrap .sidebar-day-layer, .app-wrap .sidebar-night-layer {
@@ -2266,6 +2423,14 @@ export default function App() {
             ))}
           </div>
           <div className="nav-right" style={{display:"flex",gap:8,alignItems:"center"}}>
+            <button
+              type="button"
+              className="theme-test-btn"
+              onClick={() => setThemeOverride(theme === "day" ? "night" : "day")}
+              title="Override automatic day/night detection for this session"
+            >
+              Test: Day/Night {theme === "day" ? "☀️" : "🌙"}
+            </button>
             <button className="nav-btn" onClick={saveTripComingSoon}>Save trip</button>
             <button className="nav-btn nav-btn-primary" onClick={()=>toast_("Link copied")}>Share</button>
           </div>
