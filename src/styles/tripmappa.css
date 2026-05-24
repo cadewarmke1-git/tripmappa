@@ -190,6 +190,13 @@
     transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
   }
   .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
+  .hero-swap-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
   .hero-go-btn { align-self: center; }
   .timing-menu {
     position: absolute; top: calc(100% + 8px); left: 0; min-width: 180px;
@@ -309,7 +316,9 @@
     .hero-search-fields { flex-direction: column; width: 100%; }
     .hero-input-wrap:first-child { padding-right: 0; padding-bottom: 20px; }
     .hero-input-wrap:last-child { padding-left: 0; padding-top: 20px; }
-    .hero-swap-btn { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    .hero-swap-btn { left: 50%; top: 50%; transform: translate(-50%, -50%); width: 32px; height: 32px; padding: 0; }
+    .hero-swap-btn:hover { transform: translate(-50%, -50%) rotate(180deg); }
+    .hero-swap-icon { width: 16px; height: 16px; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
     .hero-title { letter-spacing: -1.5px; }
     .hero-auth-btns { flex-wrap: wrap; }
@@ -602,7 +611,6 @@
     .float-card {
       left: 0; right: 0; top: auto; bottom: 0;
       width: 100%; max-width: 100%;
-      max-height: calc(100vh - 80px);
       border-radius: 20px 20px 0 0;
       box-shadow: 0 -8px 40px rgba(0,0,0,0.18), 0 -2px 8px rgba(0,0,0,0.08);
     }
@@ -620,6 +628,44 @@
     .generate-wrap { padding: 10px 14px 14px !important; }
     .stops-wrap { padding: 12px 12px 20px !important; }
     .route-loading-pill { top: 12px; max-width: calc(100% - 24px); }
+  }
+
+  /* Mobile — cap planning panel height so map stays visible */
+  @media (max-width: 767px) {
+    .float-card:not(.collapsed) {
+      max-height: 60vh;
+    }
+    .float-card-body {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .float-card-scroll {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-height: 0;
+    }
+    .chat-wrap {
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .convo-stage {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .convo-scroll {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-height: 0;
+    }
+    .plan-view,
+    .question-choices {
+      min-height: 0;
+    }
   }
 
   /* Card header — theme applied via .float-card.day / .float-card.night */

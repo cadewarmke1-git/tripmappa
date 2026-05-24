@@ -1,6 +1,4 @@
 import { Autocomplete } from "@react-google-maps/api";
-import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
-import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function HeroView({
@@ -8,7 +6,6 @@ export default function HeroView({
   isLoaded,
   heroOrigin,
   heroDest,
-  heroSearchHover,
   heroOriginRef,
   heroDestRef,
   onThemeToggle,
@@ -35,13 +32,16 @@ export default function HeroView({
       </nav>
 
       <div className={`hero ${theme}`}>
-        <div className="hero-slideshow-set" style={{ opacity: theme === "day" ? 1 : 0, pointerEvents: theme === "day" ? "auto" : "none" }}>
-          <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={heroSearchHover} active={theme === "day"} />
-        </div>
-        <div className="hero-slideshow-set" style={{ opacity: theme === "night" ? 1 : 0, pointerEvents: theme === "night" ? "auto" : "none" }}>
-          <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={heroSearchHover} active={theme === "night"} />
-        </div>
-        <div className="hero-overlay" />
+        <div
+          className="hero-gradient-bg"
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            background: "linear-gradient(150deg, #0a0a12 0%, #141824 45%, #1a2030 100%)",
+          }}
+        />
 
         <div className="hero-content">
           <h1 className="hero-title">
@@ -55,7 +55,10 @@ export default function HeroView({
             onMouseEnter={() => onSearchHover(true)}
             onMouseLeave={() => onSearchHover(false)}
           >
-            <div className="hero-search-fields">
+            <div
+              className="hero-search-fields"
+              style={{ position: "relative", display: "flex" }}
+            >
               <div className="hero-input-wrap">
                 <div className="hero-input-label">From</div>
                 {isLoaded ? (
@@ -66,7 +69,16 @@ export default function HeroView({
                   <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={e => e.key === "Enter" && onLaunch()}/>
                 )}
               </div>
-              <button type="button" className="hero-swap-btn" onClick={onSwap} aria-label="Swap origin and destination">↕</button>
+              <button
+                type="button"
+                className="hero-swap-btn"
+                onClick={onSwap}
+                aria-label="Swap origin and destination"
+              >
+                <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
               <div className="hero-input-wrap">
                 <div className="hero-input-label">To</div>
                 {isLoaded ? (
