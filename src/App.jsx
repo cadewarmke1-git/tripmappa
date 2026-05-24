@@ -113,10 +113,11 @@ export default function App() {
   const [mapReady, setMapReady] = useState(false);
 
   const fetchDirections = useCallback((vehicleType) => {
-    const originVal = originRef.current?.value;
-    const destVal = destRef.current?.value;
+    const originVal = originRef.current?.value?.trim() || origin?.trim();
+    const destVal = destRef.current?.value?.trim() || dest?.trim();
     if (!originVal || !destVal) return;
 
+    const vehicle = vehicleType || answers.vehicle || "Car";
     setRouteLoading(true);
     setTrafficAlert(false);
 
@@ -139,10 +140,10 @@ export default function App() {
       };
     }
 
-    if (isTruckVehicle(vehicleType)) {
+    if (isTruckVehicle(vehicle)) {
       routeRequest.avoidFerries = true;
       routeRequest.provideRouteAlternatives = true;
-    } else if (isRvVehicle(vehicleType)) {
+    } else if (isRvVehicle(vehicle)) {
       routeRequest.avoidFerries = true;
       routeRequest.provideRouteAlternatives = true;
     }
@@ -163,15 +164,15 @@ export default function App() {
 
         const hours = parseHoursFromDuration(leg.duration.text);
         const miles = parseMilesFromDistance(leg.distance.text);
-        const hos = isTruckVehicle(vehicleType) && hours ? computeHOSCompliance(hours) : null;
+        const hos = isTruckVehicle(vehicle) && hours ? computeHOSCompliance(hours) : null;
         setHosCompliance(hos);
-        if (isTruckVehicle(vehicleType)) {
+        if (isTruckVehicle(vehicle)) {
           setRvSafety(null);
           setTruckSafety({
             ...TRUCK_SAFETY_FALLBACK,
             estimatedFuelGal: miles ? Math.ceil(miles / 6) : null,
           });
-        } else if (isRvVehicle(vehicleType)) {
+        } else if (isRvVehicle(vehicle)) {
           setTruckSafety(null);
           setRvSafety({
             ...RV_SAFETY_FALLBACK,
@@ -201,12 +202,12 @@ export default function App() {
           origin: originVal,
           destination: destVal,
           citiesAlongRoute: citiesAlongRoute.slice(0, 15),
-          vehicleType: vehicleType || "Car",
+          vehicleType: vehicle,
           timingMode,
           arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
           scenic,
-          truckSafe: isTruckVehicle(vehicleType),
-          rvSafe: isRvVehicle(vehicleType),
+          truckSafe: isTruckVehicle(vehicle),
+          rvSafe: isRvVehicle(vehicle),
           truckHeight: answers.truck_height,
           truckWeight: answers.truck_weight,
           truckHazmat: answers.truck_hazmat,
@@ -228,7 +229,21 @@ export default function App() {
         }
       }
     });
-  }, [timingMode, arriveByDate, answers]);
+  }, [timingMode, arriveByDate, answers, origin, dest]);
+
+  useEffect(() => {
+    if (view !== "app" || !isLoaded || !mapReady || !window.google) return;
+    const o = origin?.trim();
+    const d = dest?.trim();
+    if (!o || !d) return;
+    if (routeInfo?.origin === o && routeInfo?.destination === d && routePath) return;
+    fetchDirections();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, isLoaded, mapReady, origin, dest, routeInfo?.origin, routeInfo?.destination, routePath]);
+
+  useEffect(() => {
+    if (view === "hero") setMapReady(false);
+  }, [view]);
 
   const convoEndRef = useRef(null);
   const stopsEndRef = useRef(null);
@@ -366,10 +381,9 @@ export default function App() {
     setOrigin(from); setDest(to);
     setView("app");
     window.scrollTo(0,0);
-    setTimeout(()=>{
+    setTimeout(() => {
       if (originRef.current) originRef.current.value = from;
       if (destRef.current) destRef.current.value = to;
-      if (isLoaded && window.google && answers.vehicle) fetchDirections(answers.vehicle);
       setAnswers({});
       setConvoComplete(false);
       setGenerated(false);
