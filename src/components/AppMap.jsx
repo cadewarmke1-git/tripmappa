@@ -1,5 +1,20 @@
 import { GoogleMap } from "@react-google-maps/api";
-import { STANDARD_MAP_STYLES, DARK_MAP_STYLES } from "../lib/constants.js";
+
+const DARK_MODE_MAP_STYLES = [
+  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+];
 
 export default function AppMap({
   isLoaded,
@@ -8,6 +23,7 @@ export default function AppMap({
   mapStyleOpen,
   trafficAlert,
   routeLoading,
+  isDarkMode,
   mapRef,
   polylinesRef,
   polylineRef,
@@ -36,7 +52,7 @@ export default function AppMap({
               mapTypeControl: false,
               fullscreenControl: false,
               mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
-              styles: mapStyle === "dark" ? DARK_MAP_STYLES : mapStyle === "standard" ? STANDARD_MAP_STYLES : undefined,
+              styles: isDarkMode ? DARK_MODE_MAP_STYLES : [],
             }}
           />
           {trafficAlert && (

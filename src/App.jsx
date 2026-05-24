@@ -635,6 +635,7 @@ export default function App() {
             mapStyleOpen={mapStyleOpen}
             trafficAlert={trafficAlert}
             routeLoading={routeLoading}
+            isDarkMode={theme === "night"}
             mapRef={mapRef}
             polylinesRef={polylinesRef}
             polylineRef={polylineRef}

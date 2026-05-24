@@ -66,7 +66,6 @@ export default function PlanPanel({
         {!generated && (
           <div className="chat-header">
             <div className="chat-title">Plan your trip.</div>
-            <div className="chat-sub">5 quick questions — under 30 seconds.</div>
           </div>
         )}
         <div className="convo-scroll">
