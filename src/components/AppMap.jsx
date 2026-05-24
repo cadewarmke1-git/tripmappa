@@ -1,0 +1,79 @@
+import { GoogleMap } from "@react-google-maps/api";
+import { STANDARD_MAP_STYLES, DARK_MAP_STYLES } from "../lib/constants.js";
+
+export default function AppMap({
+  isLoaded,
+  mapCenter,
+  mapStyle,
+  mapStyleOpen,
+  trafficAlert,
+  routeLoading,
+  mapRef,
+  polylinesRef,
+  polylineRef,
+  onMapStyleOpenChange,
+  onMapStyleChange,
+}) {
+  return (
+    <div className="map-full">
+      {isLoaded ? (
+        <>
+          <GoogleMap
+            mapContainerClassName="gmap-wrap"
+            center={mapCenter}
+            zoom={4}
+            onLoad={map => {
+              mapRef.current = map;
+              polylinesRef.current.forEach(p => p.setMap(null));
+              polylinesRef.current = [];
+              if (polylineRef.current) polylineRef.current.setMap(null);
+            }}
+            options={{
+              disableDefaultUI: false,
+              zoomControl: true,
+              zoomControlOptions: { position: window.google?.maps?.ControlPosition?.RIGHT_CENTER },
+              streetViewControl: false,
+              mapTypeControl: false,
+              fullscreenControl: false,
+              mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
+              styles: mapStyle === "dark" ? DARK_MAP_STYLES : mapStyle === "standard" ? STANDARD_MAP_STYLES : undefined,
+            }}
+          />
+          {trafficAlert && (
+            <div className="traffic-toast">
+              <span className="traffic-toast-icon">⚠</span>
+              Traffic delays detected on your route
+            </div>
+          )}
+          <div className="map-style-toggle">
+            <button type="button" className="map-style-btn" onClick={() => onMapStyleOpenChange(o => !o)} aria-label="Map style">🗺</button>
+            {mapStyleOpen && (
+              <div className="map-style-menu">
+                {[["standard", "Standard"], ["satellite", "Satellite"], ["dark", "Dark"]].map(([k, l]) => (
+                  <button key={k} type="button" className={`map-style-item${mapStyle === k ? " active" : ""}`} onClick={() => { onMapStyleChange(k); onMapStyleOpenChange(false); }}>{l}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="map-loading">
+          <div className="loading-spinner"/>
+          <div className="map-placeholder-text">Loading map…</div>
+          <div className="map-placeholder-sub">Connecting to Google Maps</div>
+          <div className="map-loading-skeleton" aria-hidden="true">
+            <div className="map-skeleton-bar"/>
+            <div className="map-skeleton-bar"/>
+            <div className="map-skeleton-bar"/>
+          </div>
+        </div>
+      )}
+      {isLoaded && routeLoading && (
+        <div className="route-loading-pill">
+          <span className="spinner-dark"/>
+          Calculating route…
+        </div>
+      )}
+    </div>
+  );
+}
