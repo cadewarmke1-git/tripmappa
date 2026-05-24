@@ -35,12 +35,23 @@ export function isWorkDelivery(tripType) {
   return tripType === "Work or Delivery run";
 }
 
-export function skipLodgingQuestion(tripType) {
-  return tripType === "Day trip" || tripType === "Driving home";
+export function skipLodgingQuestion(tripType, vehicle) {
+  if (tripType === "Day trip" || tripType === "Driving home") return true;
+  if (tripType === "Flying" || tripType === "Ferry or Cruise") return true;
+  if (vehicle === "Plane" || isWaterVehicle(vehicle)) return true;
+  return false;
 }
 
 export function skipTravelersQuestion(tripType, vehicle) {
-  return isWorkDelivery(tripType) && isTruckVehicle(vehicle);
+  if (isWorkDelivery(tripType)) return true;
+  if (tripType === "Flying" || tripType === "Ferry or Cruise") return true;
+  if (vehicle === "Plane") return true;
+  return false;
+}
+
+export function skipPreferencesQuestion(tripType, vehicle) {
+  if (tripType === "Flying" || vehicle === "Plane") return true;
+  return false;
 }
 
 export function hasFamilyKids(travelers) {

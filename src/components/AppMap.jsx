@@ -1,21 +1,6 @@
 /** Full-screen Google Map. Night theme uses Apple Maps–style dark styles via isDarkMode. */
 import { GoogleMap } from "@react-google-maps/api";
-
-const DARK_MODE_MAP_STYLES = [
-  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
-  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
-  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
-];
+import { NIGHT_MAP_STYLES } from "../lib/constants.js";
 
 export default function AppMap({
   isLoaded,
@@ -26,8 +11,7 @@ export default function AppMap({
   routeLoading,
   isDarkMode,
   mapRef,
-  polylinesRef,
-  polylineRef,
+  onMapReady,
   onMapStyleOpenChange,
   onMapStyleChange,
 }) {
@@ -41,9 +25,7 @@ export default function AppMap({
             zoom={4}
             onLoad={map => {
               mapRef.current = map;
-              polylinesRef.current.forEach(p => p.setMap(null));
-              polylinesRef.current = [];
-              if (polylineRef.current) polylineRef.current.setMap(null);
+              onMapReady?.();
             }}
             options={{
               disableDefaultUI: false,
@@ -53,7 +35,7 @@ export default function AppMap({
               mapTypeControl: false,
               fullscreenControl: false,
               mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
-              styles: isDarkMode ? DARK_MODE_MAP_STYLES : [],
+              styles: isDarkMode ? NIGHT_MAP_STYLES : [],
             }}
           />
           {trafficAlert && (

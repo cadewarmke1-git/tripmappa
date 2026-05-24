@@ -1,4 +1,6 @@
 import { Autocomplete } from "@react-google-maps/api";
+import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
+import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function HeroView({
@@ -6,6 +8,7 @@ export default function HeroView({
   isLoaded,
   heroOrigin,
   heroDest,
+  heroSearchHover,
   heroOriginRef,
   heroDestRef,
   onThemeToggle,
@@ -33,15 +36,18 @@ export default function HeroView({
 
       <div className={`hero ${theme}`}>
         <div
-          className="hero-gradient-bg"
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            background: "linear-gradient(150deg, #0a0a12 0%, #141824 45%, #1a2030 100%)",
-          }}
-        />
+          className="hero-slideshow-set"
+          style={{ opacity: theme === "day" ? 1 : 0, pointerEvents: theme === "day" ? "auto" : "none" }}
+        >
+          <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={heroSearchHover} active={theme === "day"} />
+        </div>
+        <div
+          className="hero-slideshow-set"
+          style={{ opacity: theme === "night" ? 1 : 0, pointerEvents: theme === "night" ? "auto" : "none" }}
+        >
+          <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={heroSearchHover} active={theme === "night"} />
+        </div>
+        <div className="hero-overlay" />
 
         <div className="hero-content">
           <h1 className="hero-title">

@@ -5,7 +5,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
-import { GOOGLE_LIBRARIES, LEG_MAP_STYLES } from "./lib/constants.js";
+import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, STANDARD_MAP_STYLES, DARK_MAP_STYLES, NIGHT_MAP_STYLES } from "./lib/constants.js";
 import {
   isTruckVehicle,
   isRvVehicle,
@@ -13,7 +13,7 @@ import {
   isScenicRoute,
   inferFuelType,
 } from "./lib/vehicles.js";
-import { fetchNextQuestion, getNextFlowQuestion } from "./lib/tripFlow.js";
+import { fetchNextQuestion, getNextFlowQuestion, pruneSkippedAnswers } from "./lib/tripFlow.js";
 import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { computeAutoTheme } from "./lib/theme.js";
@@ -110,6 +110,7 @@ export default function App() {
   const mapRef = useRef(null);
   const polylineRef = useRef(null);
   const polylinesRef = useRef([]);
+  const [mapReady, setMapReady] = useState(false);
 
   const fetchDirections = useCallback((vehicleType) => {
     const originVal = originRef.current?.value;
@@ -182,11 +183,24 @@ export default function App() {
           setRvSafety(null);
         }
 
+        const citiesAlongRoute = [];
+        route.legs[0].steps.forEach(step => {
+          if (!step.end_address) return;
+          const parts = step.end_address.split(",").map(s => s.trim());
+          if (parts.length >= 2) {
+            const cityState = `${parts[parts.length - 2]}, ${parts[parts.length - 1].replace(/\s+\d{5}(-\d{4})?.*$/, "").trim()}`;
+            if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
+          }
+        });
+
         setRouteInfo({
           distance: leg.distance.text,
           duration: leg.duration.text,
           start: leg.start_address.split(",")[0],
           end: leg.end_address.split(",")[0],
+          origin: originVal,
+          destination: destVal,
+          citiesAlongRoute: citiesAlongRoute.slice(0, 15),
           vehicleType: vehicleType || "Car",
           timingMode,
           arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
@@ -268,13 +282,15 @@ export default function App() {
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapRef.current.setMapTypeId(typeId);
-    mapRef.current.setOptions({
-      styles: mapStyle === "dark" ? DARK_MAP_STYLES : mapStyle === "standard" ? STANDARD_MAP_STYLES : null,
-    });
-  }, [mapStyle, isLoaded]);
+    let styles = [];
+    if (mapStyle === "dark") styles = DARK_MAP_STYLES;
+    else if (mapStyle === "standard" && theme === "night") styles = NIGHT_MAP_STYLES;
+    else if (mapStyle === "standard") styles = STANDARD_MAP_STYLES;
+    mapRef.current.setOptions({ styles });
+  }, [mapStyle, theme, isLoaded, mapReady]);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google || !isLoaded) return;
+    if (!mapRef.current || !window.google || !isLoaded || !mapReady) return;
     polylinesRef.current.forEach(p => p.setMap(null));
     polylinesRef.current = [];
     if (polylineRef.current) { polylineRef.current.setMap(null); polylineRef.current = null; }
@@ -315,7 +331,7 @@ export default function App() {
     }
 
     if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
-  }, [tripLegs, routePath, isLoaded, routeInfo?.scenic, answers.preferences]);
+  }, [tripLegs, routePath, isLoaded, mapReady, theme, routeInfo?.scenic, answers.preferences]);
 
   function toast_(msg) {
     setToastIsGold(false);
@@ -422,7 +438,7 @@ export default function App() {
 
   async function submitAnswer(value, extraFields = {}) {
     if (!currentQuestion) return;
-    const na = { ...answers, ...extraFields, [currentQuestion.id]: value };
+    const na = pruneSkippedAnswers({ ...answers, ...extraFields, [currentQuestion.id]: value });
 
     setAnswers(na);
     setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
@@ -504,11 +520,15 @@ export default function App() {
             ...answers,
             fuel: inferFuelType(answers.vehicle, answers.preferences || []),
           },
-          routeInfo: { ...routeInfo, scenic: isScenicRoute(answers) },
+          routeInfo: {
+            ...routeInfo,
+            origin: tripOrigin,
+            destination: tripDest,
+            scenic: isScenicRoute(answers),
+          },
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
         });
-      if (!response.ok) throw new Error(data.error || "Failed to generate trip");
       applyTripData(data);
     } catch (err) {
       console.error("Generate trip error:", err);
@@ -642,8 +662,7 @@ export default function App() {
             routeLoading={routeLoading}
             isDarkMode={theme === "night"}
             mapRef={mapRef}
-            polylinesRef={polylinesRef}
-            polylineRef={polylineRef}
+            onMapReady={() => setMapReady(true)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
           />

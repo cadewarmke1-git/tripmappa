@@ -21,7 +21,7 @@ import {
 } from "./tripData.js";
 
 export function buildFallbackTripData(answers, routeInfo) {
-  const isDayOrHome = skipLodgingQuestion(answers.trip_type);
+  const isDayOrHome = skipLodgingQuestion(answers.trip_type, answers.vehicle);
   const hours = routeInfo ? parseHoursFromDuration(routeInfo.duration) || 10 : 10;
   const hasKids = hasFamilyKids(answers.travelers);
   const trucker = isTruckerTrip(answers);

@@ -6,6 +6,7 @@ import {
   hasFamilyKids,
   skipLodgingQuestion,
   skipTravelersQuestion,
+  skipPreferencesQuestion,
 } from "./vehicles.js";
 
 export const FLOW_QUESTION_IDS = ["trip_type", "vehicle", "travelers", "lodging", "preferences"];
@@ -93,8 +94,32 @@ export function hasKidsToddlers(kidsAges) {
 
 export function flowQuestionSkipped(id, answers) {
   if (id === "travelers") return skipTravelersQuestion(answers.trip_type, answers.vehicle);
-  if (id === "lodging") return skipLodgingQuestion(answers.trip_type);
+  if (id === "lodging") return skipLodgingQuestion(answers.trip_type, answers.vehicle);
+  if (id === "preferences") return skipPreferencesQuestion(answers.trip_type, answers.vehicle);
   return false;
+}
+
+export function pruneSkippedAnswers(answers) {
+  const pruned = { ...answers };
+  for (const id of FLOW_QUESTION_IDS) {
+    if (!flowQuestionSkipped(id, pruned)) continue;
+    delete pruned[id];
+    if (id === "vehicle") {
+      delete pruned.truck_height;
+      delete pruned.truck_weight;
+      delete pruned.truck_hazmat;
+      delete pruned.rv_height;
+      delete pruned.rv_weight;
+      delete pruned.rv_towing;
+    }
+    if (id === "travelers") delete pruned.kids_ages;
+    if (id === "preferences") delete pruned.preferences;
+  }
+  return pruned;
+}
+
+export function countApplicableFlowQuestions(answers) {
+  return FLOW_QUESTION_IDS.filter(id => !flowQuestionSkipped(id, answers)).length;
 }
 
 export function isFlowQuestionComplete(id, answers) {

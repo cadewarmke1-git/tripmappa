@@ -26,7 +26,7 @@ export default function StopsResults({
   onGroceryModal,
   stopsEndRef,
 }) {
-  const isDayOrHomeTrip = skipLodgingQuestion(answers.trip_type);
+  const isDayOrHomeTrip = skipLodgingQuestion(answers.trip_type, answers.vehicle);
   const isTruckerResults = isTruckerTrip(answers);
   const isRvResults = isRvTrip(answers);
   const wantsRestaurants = hasPref(answers, "Restaurant recommendations");

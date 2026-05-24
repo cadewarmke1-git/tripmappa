@@ -64,12 +64,35 @@ export default async function handler(req, res) {
     ? "\n- Pet-friendly: flag pet-friendly hotels, pet relief areas at rest stops, note national parks allowing pets on trails"
     : "";
 
+  const routeOrigin = routeInfo?.origin || origin;
+  const routeDestination = routeInfo?.destination || destination;
+  const citiesAlongRoute = Array.isArray(routeInfo?.citiesAlongRoute) ? routeInfo.citiesAlongRoute : [];
+  const legCities = hasLegs
+    ? legs.map(leg => leg.end || leg.to || leg.destination || leg.city).filter(Boolean)
+    : [];
+
+  const routeConstraintBlock = `
+CRITICAL — ROUTE LOCATION RULES (must follow exactly):
+- Origin: ${routeOrigin}
+- Destination: ${routeDestination}
+${routeInfo?.start ? `- Route starts near: ${routeInfo.start}` : ""}
+${routeInfo?.end ? `- Route ends near: ${routeInfo.end}` : ""}
+${routeInfo?.distance ? `- Total distance: ${routeInfo.distance}` : ""}
+${routeInfo?.duration ? `- Drive time: ${routeInfo.duration}` : ""}
+${citiesAlongRoute.length ? `- Cities/towns along the driving route (use ONLY these or other real towns between origin and destination): ${citiesAlongRoute.join(" → ")}` : ""}
+${legCities.length ? `- Leg stop cities: ${legCities.join(" → ")}` : ""}
+Every "city", "location", hotel, restaurant, fuel stop, truck stop, and road_stop MUST be a real place in the correct city and state along the actual route from ${routeOrigin} to ${routeDestination}.
+Do NOT invent cities from other regions. Do NOT use placeholder examples (e.g. Amarillo, Albuquerque) unless they are genuinely on this route.`;
+
   const systemPrompt = `You are TripMappa, a concise AI travel planner.
 Respond with a JSON object only — no markdown, no extra text.
-Keep all text extremely short and scannable.`;
+Keep all text extremely short and scannable.
+All stop and hotel cities MUST match the user's actual route — never use unrelated cities.`;
 
   const userPrompt = isTrucker
-    ? `Plan a commercial truck route from ${origin} to ${destination}.
+    ? `${routeConstraintBlock}
+
+Plan a commercial truck route from ${routeOrigin} to ${routeDestination}.
 - Trip type: ${tripType}
 - Distance: ${routeInfo?.distance || "unknown"}
 - Drive time: ${routeInfo?.duration || "unknown"}
@@ -89,7 +112,9 @@ Return JSON:
   "tips": ["HOS Compliant Route tip", "Truck parking tip"]
 }`
     : isRv
-    ? `Plan an RV-safe route from ${origin} to ${destination}.
+    ? `${routeConstraintBlock}
+
+Plan an RV-safe route from ${routeOrigin} to ${routeDestination}.
 - Trip type: ${tripType}
 - Distance: ${routeInfo?.distance || "unknown"}
 - Drive time: ${routeInfo?.duration || "unknown"}
@@ -109,7 +134,9 @@ Return JSON:
   "tips": ["RV Safe Route tip", "Dump station tip"]
 }`
     : tripType === "Flying" || vehicle === "Plane"
-    ? `Plan a flight trip from ${origin} to ${destination}.${prefsBlock}
+    ? `${routeConstraintBlock}
+
+Plan a flight trip from ${routeOrigin} to ${routeDestination}.${prefsBlock}
 
 Return JSON:
 {
@@ -117,7 +144,9 @@ Return JSON:
   "tips": ["Flight tip 1", "Airport tip 2"]
 }`
     : needsOvernight
-    ? `Plan a ${tripType.toLowerCase()} from ${origin} to ${destination}.
+    ? `${routeConstraintBlock}
+
+Plan a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
 - Distance: ${routeInfo?.distance || "unknown"}
 - Drive time: ${routeInfo?.duration || "unknown"}
 - Vehicle: ${vehicle} · Fuel: ${fuel}
@@ -135,7 +164,9 @@ Return JSON:
   "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "rest", "name": "Rest stop", "note": "Short note" }],
   "tips": ["Driving tip 1", "Driving tip 2"]
 }`
-    : `Plan road stops for a ${tripType.toLowerCase()} from ${origin} to ${destination}.
+    : `${routeConstraintBlock}
+
+Plan road stops for a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
 - Vehicle: ${vehicle} · Fuel: ${fuel}${kidsBlock}${scenicBlock}${petBlock}${prefsBlock}
 
 Return JSON:

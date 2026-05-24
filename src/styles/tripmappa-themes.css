@@ -83,8 +83,9 @@
 .app-wrap.day .budget-row-total .budget-row-val { color: rgba(200,140,40,0.95) !important; }
 .app-wrap.day .budget-disclaimer { color: rgba(26,26,46,0.4) !important; }
 .app-wrap.day .budget-shimmer {
-  background: linear-gradient(90deg, rgba(26,26,46,0.06) 0%, rgba(26,26,46,0.12) 50%, rgba(26,26,46,0.06) 100%) !important;
+  background: linear-gradient(90deg, rgba(200,140,40,0.15) 0%, rgba(255,210,140,0.55) 50%, rgba(200,140,40,0.15) 100%) !important;
   background-size: 200% 100% !important;
+  animation: budgetShimmer 1.2s ease infinite !important;
 }
 .app-wrap.day .summary-kids-note { color: rgba(180,120,30,0.95) !important; border-top-color: rgba(26,26,46,0.08) !important; }
 .app-wrap.day .scenic-route-note { color: rgba(180,120,30,0.9) !important; }
