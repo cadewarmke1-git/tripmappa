@@ -50,6 +50,12 @@ export default function PlanPanel({
   onRemoveRoadStop,
   onLodgingSelect,
   selectedLodging,
+  tripAlerts,
+  onDismissAlert,
+  nearbyServicesByCity,
+  activitiesByCity,
+  optionalStopCards,
+  onAddCustomStop,
   onStopCategoryChange,
   onSwapRoute,
   onFetchDirections,
@@ -94,6 +100,13 @@ export default function PlanPanel({
                 onRemoveRoadStop={onRemoveRoadStop}
                 onLodgingSelect={onLodgingSelect}
                 selectedLodging={selectedLodging}
+                tripAlerts={tripAlerts}
+                onDismissAlert={onDismissAlert}
+                nearbyServicesByCity={nearbyServicesByCity}
+                activitiesByCity={activitiesByCity}
+                optionalStopCards={optionalStopCards}
+                isLoaded={isLoaded}
+                onAddCustomStop={onAddCustomStop}
                 stopsEndRef={stopsEndRef}
               />
             ) : (

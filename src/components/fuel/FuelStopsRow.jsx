@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { enrichFuelStations, enrichEvCharging } from "../../lib/apiClient.js";
+import { isTeslaSuperchargerOnly } from "../../lib/tripAccommodations.js";
 import {
   searchGasStations,
   searchDieselStations,
@@ -9,10 +10,14 @@ import {
 import {
   getFuelStopMode,
   takeClosest,
+  selectOnRouteFuelStations,
+  markBestPriceFuelStations,
   buildFallbackGasStations,
   buildFallbackEvStations,
   buildFallbackPropane,
 } from "../../lib/fuel.js";
+import { applyStopFilters } from "../../lib/placesFilters.js";
+import { needsSafeStopsOnly } from "../../lib/tripAccommodations.js";
 import FuelStopCard from "./FuelStopCard.jsx";
 
 function FuelSkeleton() {
@@ -56,8 +61,8 @@ export default function FuelStopsRow({
         if (mode === "gas" || mode === "diesel" || mode === "hybrid") {
           const apiMode = mode === "diesel" ? "diesel" : "gas";
           const googleStations = apiMode === "diesel"
-            ? await searchDieselStations(lat, lng)
-            : await searchGasStations(lat, lng);
+            ? await searchDieselStations(lat, lng, 10, ON_ROUTE_RADIUS)
+            : await searchGasStations(lat, lng, 10, ON_ROUTE_RADIUS);
           let gasStations = googleStations;
           if (googleStations.length) {
             const enriched = await enrichFuelStations(googleStations, apiMode);
@@ -69,6 +74,9 @@ export default function FuelStopsRow({
             gasStations = buildFallbackGasStations(lat, lng, apiMode);
             if (!cancelled) setUsedFallback(true);
           }
+          gasStations = selectOnRouteFuelStations(gasStations, 1);
+          gasStations = applyStopFilters(gasStations, answers);
+          gasStations = markBestPriceFuelStations(gasStations, apiMode);
           collected.push(...gasStations.map(s => ({
             ...s,
             cardType: apiMode === "diesel" ? "diesel" : "gas",
@@ -79,8 +87,8 @@ export default function FuelStopsRow({
 
         if (mode === "rv") {
           const [googleGas, googleDiesel] = await Promise.all([
-            searchGasStations(lat, lng),
-            searchDieselStations(lat, lng),
+            searchGasStations(lat, lng, 10, ON_ROUTE_RADIUS),
+            searchDieselStations(lat, lng, 10, ON_ROUTE_RADIUS),
           ]);
           const [gasRes, dieselRes] = await Promise.all([
             googleGas.length ? enrichFuelStations(googleGas, "gas") : { stations: [], fallback: true },
@@ -88,6 +96,10 @@ export default function FuelStopsRow({
           ]);
           let gasStations = gasRes.stations?.length ? gasRes.stations : buildFallbackGasStations(lat, lng, "gas");
           let dieselStations = dieselRes.stations?.length ? dieselRes.stations : buildFallbackGasStations(lat, lng, "diesel");
+          gasStations = selectOnRouteFuelStations(applyStopFilters(gasStations, answers), 1);
+          dieselStations = selectOnRouteFuelStations(applyStopFilters(dieselStations, answers), 1);
+          gasStations = markBestPriceFuelStations(gasStations, "gas");
+          dieselStations = markBestPriceFuelStations(dieselStations, "diesel");
           if (gasRes.fallback || dieselRes.fallback) {
             if (!cancelled) setUsedFallback(true);
           }
@@ -106,16 +118,17 @@ export default function FuelStopsRow({
         }
 
         if (mode === "ev" || mode === "hybrid") {
-          const googleEv = await searchEvChargingStations(lat, lng);
+          const googleEv = await searchEvChargingStations(lat, lng, 10, ON_ROUTE_RADIUS);
           let evStations = googleEv;
           if (googleEv.length) {
-            const evRes = await enrichEvCharging(googleEv, "ELEC");
+            const evRes = await enrichEvCharging(googleEv, "ELEC", { teslaOnly: isTeslaSuperchargerOnly(answers) });
             evStations = evRes.stations || googleEv;
             if (evRes.fallback && !cancelled) setUsedFallback(true);
           } else {
             evStations = buildFallbackEvStations(lat, lng);
             if (!cancelled) setUsedFallback(true);
           }
+          evStations = selectOnRouteFuelStations(applyStopFilters(evStations, answers), 1);
           collected.push(...evStations.map(s => ({ ...s, cardType: "ev" })));
         }
 

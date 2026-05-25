@@ -133,7 +133,7 @@ function enrichStation(googleStation, nrelMatch, fuelType) {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { stations = [], fuelType = "ELEC" } = req.body;
+  const { stations = [], fuelType = "ELEC", teslaOnly = false } = req.body;
   if (!Array.isArray(stations) || !stations.length) {
     return res.status(400).json({ error: "Missing stations array from Google Places" });
   }
@@ -141,7 +141,9 @@ export default async function handler(req, res) {
   const apiKey = process.env.NREL_API_KEY;
   if (!apiKey) {
     return res.status(200).json({
-      stations: stations.map(s => enrichStation(s, null, fuelType)),
+      stations: (teslaOnly
+        ? stations.map(s => enrichStation(s, null, fuelType)).filter(s => /tesla/i.test(s.network || s.name || ""))
+        : stations.map(s => enrichStation(s, null, fuelType))),
       fallback: true,
       error: "NREL_API_KEY not configured",
     });
@@ -157,7 +159,11 @@ export default async function handler(req, res) {
       return enrichStation(googleStation, match, fuelType);
     }));
 
-    return res.status(200).json({ stations: enriched, fallback: false });
+    const filtered = teslaOnly
+      ? enriched.filter(s => /tesla/i.test(s.network || s.name || ""))
+      : enriched;
+
+    return res.status(200).json({ stations: filtered, fallback: false });
   } catch (err) {
     console.error("NREL enrich error:", err);
     return res.status(200).json({

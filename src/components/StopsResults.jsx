@@ -1,7 +1,6 @@
 import {
   isTruckerTrip,
   isRvTrip,
-  hasFamilyKids,
   hasPref,
   skipLodgingQuestion,
 } from "../lib/vehicles.js";
@@ -12,6 +11,10 @@ import BudgetCard from "./BudgetCard.jsx";
 import LodgingCardsSection from "./lodging/LodgingCardsSection.jsx";
 import FuelStopsRow from "./fuel/FuelStopsRow.jsx";
 import FuelStopsSection from "./fuel/FuelStopsSection.jsx";
+import TripAlertsSection from "./TripAlertsSection.jsx";
+import NearbyServicesSection from "./NearbyServicesSection.jsx";
+import RestaurantPlacesSection from "./RestaurantPlacesSection.jsx";
+import CustomizeStopPanel from "./CustomizeStopPanel.jsx";
 
 export default function StopsResults({
   showHeader = true,
@@ -37,6 +40,13 @@ export default function StopsResults({
   onRemoveRoadStop,
   onLodgingSelect,
   selectedLodging = [],
+  tripAlerts = [],
+  onDismissAlert,
+  nearbyServicesByCity = {},
+  activitiesByCity = {},
+  optionalStopCards = [],
+  isLoaded = false,
+  onAddCustomStop,
   stopsEndRef,
 }) {
   const isDayOrHomeTrip = skipLodgingQuestion(answers.trip_type, answers.vehicle);
@@ -98,6 +108,8 @@ export default function StopsResults({
         roadStops={roadStops}
         selectedLodging={selectedLodging}
       />
+
+      <TripAlertsSection alerts={tripAlerts} onDismiss={onDismissAlert} />
 
       {showHeader && isTruckerResults && (truckSafety || hosCompliance) && (
         <>
@@ -162,8 +174,17 @@ export default function StopsResults({
         </div>
       )}
 
-      {showHeader && hasFamilyKids(answers.travelers) && (
-        <div className="traveler-note-banner">Rest stops suggested every 2 hours for young travelers</div>
+
+      {optionalStopCards.length > 0 && (
+        <div className="optional-stops-section">
+          <div className="stops-section-label">Optional stops along route</div>
+          {optionalStopCards.map((card, i) => (
+            <div key={card.id || i} className="activity-card optional-stop-card">
+              <div className="activity-card-name">{card.name}</div>
+              <div className="activity-card-meta">{card.distanceMiles != null ? `${card.distanceMiles} mi from route` : ""} · Playground / park</div>
+            </div>
+          ))}
+        </div>
       )}
 
       {roadStops.length > 0 && (
@@ -272,8 +293,18 @@ export default function StopsResults({
                   answers={answers}
                   origin={origin}
                   dest={dest}
+                  routeInfo={routeInfo}
                   selectedLodging={selectedLodging}
                   onLodgingSelect={onLodgingSelect}
+                  onToast={onToast}
+                />
+              )}
+              {!isTruckerResults && !isRvResults && (stopCategory === "all" || stopCategory === "food") && (
+                <RestaurantPlacesSection
+                  city={stop.city}
+                  stopLat={stop.lat}
+                  stopLng={stop.lng}
+                  answers={answers}
                   onToast={onToast}
                 />
               )}
@@ -283,13 +314,41 @@ export default function StopsResults({
                   {stop.restaurants.map((r, ri) => (
                     <div className="item-row" key={ri} onClick={() => onToast(`Booking ${r.name}`)}>
                       <div className="item-info">
-                        <div className="item-name">{r.name} {hasFamilyKids(answers.travelers) && <span className="mini-badge kid-badge">Kids menu</span>}</div>
+                        <div className="item-name">
+                          {r.name}
+                          {r.wifiAvailable && <span className="mini-badge wifi-badge">WiFi</span>}
+                        </div>
                         <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
                       </div>
                       <div className="item-time">{r.time}</div>
                     </div>
                   ))}
                 </div>
+              )}
+              {activitiesByCity[stop.city]?.length > 0 && (
+                <div className="stop-section activity-cards-section">
+                  <div className="stop-section-head"><span className="badge badge-poi">ACTIVITIES</span> Optional evening activities</div>
+                  {activitiesByCity[stop.city].map((act, ai) => (
+                    <div className="activity-card" key={act.id || ai}>
+                      <div className="activity-card-name">{act.name}</div>
+                      <div className="activity-card-meta">
+                        {act.distanceMiles != null ? `${act.distanceMiles} mi from hotel` : ""}
+                        {act.hours ? ` · ${act.hours.split(";")[0]}` : ""}
+                        {act.rating ? ` · ${act.rating}★` : ""}
+                        {act.admissionEstimate ? ` · ${act.admissionEstimate}` : ""}
+                      </div>
+                      {act.interest && <div className="activity-card-tag">{act.interest}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <NearbyServicesSection city={stop.city} answers={answers} />
+              {!isTruckerResults && !isRvResults && (
+                <CustomizeStopPanel
+                  city={stop.city}
+                  isLoaded={isLoaded}
+                  onAddCustomStop={onAddCustomStop}
+                />
               )}
               <div className="stop-card-actions">
                 {hasPref(answers, "Grocery delivery to hotel") && !isTruckerResults && !isRvResults && (

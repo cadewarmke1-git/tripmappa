@@ -25,11 +25,12 @@ export async function enrichFuelStations(stations, mode = "gas") {
   return data;
 }
 
-export async function enrichEvCharging(stations, fuelType = "ELEC") {
+export async function enrichEvCharging(stations, fuelType = "ELEC", options = {}) {
+  const { teslaOnly = false } = options;
   const response = await fetch("/api/ev-charging", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stations, fuelType }),
+    body: JSON.stringify({ stations, fuelType, teslaOnly }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "EV charging enrichment failed");
@@ -45,10 +46,10 @@ export async function fetchFuelStations(latitude, longitude, mode = "gas") {
 }
 
 /** @deprecated Use enrichEvCharging after Google Places search. */
-export async function fetchEvCharging(latitude, longitude, fuelType = "ELEC") {
+export async function fetchEvCharging(latitude, longitude, fuelType = "ELEC", options = {}) {
   const googleStations = fuelType === "LPG"
     ? await searchPropaneStations(latitude, longitude)
     : await searchEvChargingStations(latitude, longitude);
   if (!googleStations.length) return { stations: [], fallback: true };
-  return enrichEvCharging(googleStations, fuelType);
+  return enrichEvCharging(googleStations, fuelType, options);
 }

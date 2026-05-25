@@ -3,10 +3,10 @@ import {
   isRvVehicle,
   isTruckerTrip,
   isRvTrip,
-  hasFamilyKids,
   isScenicRoute,
   inferFuelType,
   getEffectiveVehicle,
+  formatPartySizeLabel,
   MULTI_VEHICLE_TRIP,
 } from "../lib/vehicles.js";
 
@@ -24,8 +24,7 @@ export default function SummaryCard({ answers, hosCompliance }) {
     isTruckVehicle(effective) && answers.truck_stop_brand && ["Truck stops", answers.truck_stop_brand],
     isTruckVehicle(effective) && answers.truck_height && ["Assumed specs", `${answers.truck_height} · ${answers.truck_weight} · Diesel · HOS required`],
     isRvVehicle(effective) && answers.rv_height && ["Assumed RV specs", `${answers.rv_height} · ${answers.rv_weight}`],
-    answers.travelers && ["Travelers", answers.travelers],
-    Array.isArray(answers.special_needs) && answers.special_needs.length > 0 && ["Special needs", answers.special_needs.join(", ")],
+    formatPartySizeLabel(answers.travelers) && ["Party size", formatPartySizeLabel(answers.travelers)],
     answers.lodging && ["Lodging", answers.lodging],
     Array.isArray(answers.route_restrictions) && answers.route_restrictions.length > 0 && ["Route restrictions", answers.route_restrictions.join(", ")],
     Array.isArray(answers.coordination_needs) && answers.coordination_needs.length > 0 && ["Coordination", answers.coordination_needs.join(", ")],
@@ -41,11 +40,6 @@ export default function SummaryCard({ answers, hosCompliance }) {
           <div>{v}</div>
         </div>
       ))}
-      {hasFamilyKids(answers.travelers) && (
-        <div className="summary-kids-note">
-          Kid-friendly stops prioritized · Rest stops every 2 hours
-        </div>
-      )}
       {isScenicRoute(answers) && (
         <div className="summary-kids-note">Scenic route selected — viewpoints noted at each stop</div>
       )}

@@ -1,3 +1,10 @@
+function normalizeChoice(choice) {
+  if (choice && typeof choice === "object" && choice.value != null) {
+    return { value: choice.value, label: choice.label ?? choice.value };
+  }
+  return { value: choice, label: choice };
+}
+
 export default function QuestionChoices({
   currentQ,
   stepAnim,
@@ -9,6 +16,7 @@ export default function QuestionChoices({
   onGoBack,
   onPickAnswer,
   onSetPrefDraft,
+  onSetAnswers,
 }) {
   if (!currentQ) return null;
   const frozen = !!stepAnim;
@@ -23,7 +31,8 @@ export default function QuestionChoices({
   };
   const mkPrefClass = (p) => `qr-btn${prefDraft.includes(p) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
 
-  const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers";
+  const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers" || currentQ.type === "lodging";
+  const isLodging = currentQ.type === "lodging";
 
   return (
     <div className={`question-choices${frozen ? " choices-frozen" : ""}`}>
@@ -56,10 +65,21 @@ export default function QuestionChoices({
       ))}
 
       {!vehicleGroups && isSingleSelect && (
-        <div className="quick-replies">
-          {choices.map(c => (
-            <button key={c} type="button" className={mkClass(c)} disabled={frozen} onClick={() => onPickAnswer(c)}>{c}</button>
-          ))}
+        <div className={`quick-replies${isLodging ? " quick-replies-lodging" : ""}`}>
+          {choices.map(raw => {
+            const { value, label } = normalizeChoice(raw);
+            return (
+              <button
+                key={value}
+                type="button"
+                className={mkClass(value, isLodging ? " qr-btn-lodging" : "")}
+                disabled={frozen}
+                onClick={() => onPickAnswer(value)}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -87,6 +107,33 @@ export default function QuestionChoices({
             )}
           </div>
         </>
+      )}
+      {currentQ.type === "text" && (
+        <div className="question-text-wrap">
+          <input
+            type="text"
+            className="question-text-input"
+            placeholder={currentQ.placeholder || "Type your answer…"}
+            defaultValue={answers[currentQ.id] || ""}
+            disabled={frozen}
+            onKeyDown={e => {
+              if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                onPickAnswer(e.currentTarget.value.trim());
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={() => {
+              const el = document.querySelector(".question-text-input");
+              if (el?.value?.trim()) onPickAnswer(el.value.trim());
+            }}
+          >
+            Continue
+          </button>
+        </div>
       )}
     </div>
   );

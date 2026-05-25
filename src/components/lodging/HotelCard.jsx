@@ -4,6 +4,7 @@ import AmenityBadges from "./AmenityBadges.jsx";
 const BADGE_LABELS = {
   premium: "Premium Pick",
   bestValue: "Best Value",
+  topRated: "Top Rated",
   kidFriendly: "Kid Friendly",
 };
 

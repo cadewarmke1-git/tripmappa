@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { computeBudgetEstimate } from "../lib/budget.js";
+import { parseTravelerCount } from "../lib/vehicles.js";
+import { getTripBudgetCap } from "../lib/tripAccommodations.js";
 
 function AnimatedBudgetValue({ value, animateKey }) {
   const [display, setDisplay] = useState(0);
@@ -36,10 +38,30 @@ export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [
   const lodgingReady = est.lodging != null;
   const foodReady = est.food != null;
   const hasAddedItems = est.addedStops?.length > 0;
+  const budgetCap = getTripBudgetCap(answers);
+  const partySize = parseTravelerCount(answers?.travelers) ?? 1;
+  const perPerson = est.total != null && partySize > 0 ? Math.round(est.total / partySize) : null;
+  const showBudgetWarning = budgetCap != null && est.total != null && budgetCap - est.total <= 50;
 
   return (
-    <div className="budget-card">
-      <div className="budget-card-title">Estimated Trip Cost</div>
+    <div className={`budget-card${showBudgetWarning ? " budget-card-warning" : ""}`}>
+      <div className="budget-card-header">
+        <div className="budget-card-title">Estimated Trip Cost</div>
+        {showBudgetWarning && <span className="budget-warning-badge">Budget warning</span>}
+      </div>
+      {budgetCap != null && est.total != null && (
+        <div className="budget-tracker">
+          <div className="budget-tracker-bar">
+            <div
+              className="budget-tracker-fill"
+              style={{ width: `${Math.min(100, (est.total / budgetCap) * 100)}%` }}
+            />
+          </div>
+          <div className="budget-tracker-label">
+            ${Math.round(est.total).toLocaleString()} of ${budgetCap.toLocaleString()} budget used
+          </div>
+        </div>
+      )}
       <div className="budget-row">
         <span className="budget-row-label">Fuel</span>
         {fuelReady
@@ -64,6 +86,9 @@ export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [
           ? <AnimatedBudgetValue value={est.total} animateKey={`total-${est.total}-${roadStops.length}-${selectedLodging.length}`} />
           : <span className="budget-shimmer" />}
       </div>
+      {perPerson != null && partySize > 1 && (
+        <div className="budget-per-person">~${perPerson.toLocaleString()} per person ({partySize} travelers)</div>
+      )}
 
       {hasAddedItems && (
         <div className="budget-breakdown">

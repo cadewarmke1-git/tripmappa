@@ -20,8 +20,16 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js
 import { computeAutoTheme } from "./lib/theme.js";
 import { TRUCK_SAFETY_FALLBACK, RV_SAFETY_FALLBACK } from "./lib/tripData.js";
 import { generateTripPlan } from "./lib/apiClient.js";
-import { buildFallbackTripData, parseTripApiResponse } from "./lib/tripHandlers.js";
+import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { resolvePlaceFromAutocomplete } from "./lib/places.js";
+import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
+import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
+import { buildPlacesContext, formatPlacesContextForPrompt } from "./lib/placesContext.js";
+import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
+import { computeBudgetEstimate } from "./lib/budget.js";
+import { stopsToMapMarkers } from "./lib/mapMarkers.js";
+import { computeNightSegments, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
+
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
@@ -69,6 +77,15 @@ export default function App() {
   const [tripTips, setTripTips] = useState([]);
   const [roadStops, setRoadStops] = useState([]);
   const [selectedLodging, setSelectedLodging] = useState([]);
+  const [tripAlerts, setTripAlerts] = useState([]);
+  const [dismissedAlerts, setDismissedAlerts] = useState([]);
+  const [mapMarkers, setMapMarkers] = useState([]);
+  const [customStops, setCustomStops] = useState([]);
+  const [nearbyServicesByCity, setNearbyServicesByCity] = useState({});
+  const [activitiesByCity, setActivitiesByCity] = useState({});
+  const [optionalStopCards, setOptionalStopCards] = useState([]);
+  const [nightSegmentPaths, setNightSegmentPaths] = useState([]);
+  const [lowFuelSegmentPaths, setLowFuelSegmentPaths] = useState([]);
   const [tripLegs, setTripLegs] = useState([]);
   const [stopCategory, setStopCategory] = useState("all");
   const [savedTrips, setSavedTrips] = useState(() => {
@@ -160,6 +177,9 @@ export default function App() {
 
     if (scenic || hasPref(answers, "Avoid highways")) routeRequest.avoidHighways = true;
     if (hasPref(answers, "Avoid tolls")) routeRequest.avoidTolls = true;
+    if (isTowingSelected(answers)) {
+      routeRequest.avoidHighways = true;
+    }
 
     const service = new window.google.maps.DirectionsService();
     return new Promise((resolve) => {
@@ -641,6 +661,67 @@ export default function App() {
     setCardCollapsed(false);
   }
 
+  useEffect(() => {
+    if (!routeInfo?.routePoints?.length) {
+      setNightSegmentPaths([]);
+      setLowFuelSegmentPaths([]);
+      return;
+    }
+    const hours = parseHoursFromDuration(routeInfo.duration);
+    const dep = timingMode === "leave_now" ? new Date() : new Date();
+    const nightSegs = computeNightSegments(routeInfo.routePoints, dep, hours);
+    setNightSegmentPaths(nightSegs.map(s => s.path).filter(p => p?.length > 1));
+    const totalMiles = parseMilesFromDistance(routeInfo.distance);
+    setLowFuelSegmentPaths(
+      computeLowFuelSegmentPath(routeInfo.routePoints, [], getFuelRangeMiles(answers), totalMiles),
+    );
+  }, [routeInfo, answers, timingMode]);
+
+  async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers) {
+    if (!isLoaded || !window.google) return null;
+    try {
+      const enriched = await enrichGeneratedTrip({
+        answers: normalizedAnswers,
+        routeInfo,
+        stops: parsedStops,
+        roadStops: parsedRoadStops,
+        customStops,
+        selectedLodging,
+        timingMode,
+      });
+      setStops(enriched.stops);
+      setRoadStops(enriched.roadStops);
+      setNearbyServicesByCity(enriched.nearbyServicesByCity);
+      setActivitiesByCity(enriched.activitiesByCity);
+      setOptionalStopCards(enriched.optionalStopCards || []);
+      setTripAlerts(enriched.tripAlerts);
+      setMapMarkers(enriched.mapMarkers);
+      setDismissedAlerts([]);
+      return enriched;
+    } catch (err) {
+      console.warn("Trip enrichment failed:", err);
+      setMapMarkers(stopsToMapMarkers(parsedStops, parsedRoadStops, customStops, []));
+      return null;
+    }
+  }
+
+  function addCustomStop(stop) {
+    setCustomStops(prev => [...prev, stop]);
+    setMapMarkers(prev => [
+      ...prev,
+      {
+        id: stop.id,
+        lat: stop.lat,
+        lng: stop.lng,
+        category: "custom",
+        title: stop.name,
+        subtitle: stop.address || stop.city,
+        action: "directions",
+      },
+    ]);
+    toast_("Custom stop added to map");
+  }
+
   async function generateTrip() {
     const tripOrigin = originRef.current?.value?.trim() || origin;
     const tripDest = destRef.current?.value?.trim() || dest;
@@ -653,11 +734,25 @@ export default function App() {
     setLoading(true);
 
     if (isLoaded && window.google) {
-      fetchDirections(getEffectiveVehicle(answers));
+      await fetchDirections(getEffectiveVehicle(answers));
     }
 
     try {
       const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers));
+      const activeRouteInfo = {
+        ...routeInfo,
+        origin: tripOrigin,
+        destination: tripDest,
+        scenic: isScenicRoute(answers),
+      };
+
+      let placesContext = null;
+      let placesContextPrompt = "";
+      if (isLoaded && window.google && activeRouteInfo.routePoints?.length) {
+        placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
+        placesContextPrompt = formatPlacesContextForPrompt(placesContext);
+      }
+
       const data = await generateTripPlan({
           origin: tripOrigin,
           destination: tripDest,
@@ -665,23 +760,42 @@ export default function App() {
             ...normalizedAnswers,
             fuel: inferFuelType(normalizedAnswers, normalizedAnswers.preferences || [], normalizedAnswers),
           },
-          routeInfo: {
-            ...routeInfo,
-            origin: tripOrigin,
-            destination: tripDest,
-            scenic: isScenicRoute(answers),
-          },
+          routeInfo: activeRouteInfo,
+          placesContext,
+          placesContextPrompt,
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
         });
-      applyTripData(data);
-    } catch (err) {
-      console.error("Generate trip error:", err);
-      applyFallbackTrip();
+      const parsed = parseTripApiResponse(data, answers, routeInfo, buildFallbackTripData);
+      setStops(parsed.stops);
+      setRoadStops(parsed.roadStops);
+      setTripTips(parsed.tripTips);
+      if (parsed.hosCompliance) setHosCompliance(parsed.hosCompliance);
+      if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
+      if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
       setGenerated(true);
       setStopCategory("all");
       setTab("plan");
       setCardCollapsed(false);
+      await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
+    } catch (err) {
+      console.error("Generate trip error:", err);
+      const fallback = buildFallbackTripData(answers, routeInfo);
+      setStops(fallback.stops);
+      setRoadStops(fallback.roadStops);
+      setTripTips(fallback.tripTips);
+      if (fallback.hosCompliance) setHosCompliance(fallback.hosCompliance);
+      setTruckSafety(fallback.truckSafety);
+      setRvSafety(fallback.rvSafety);
+      setGenerated(true);
+      setStopCategory("all");
+      setTab("plan");
+      setCardCollapsed(false);
+      await enrichAndSetTrip(
+        fallback.stops,
+        fallback.roadStops,
+        normalizeTripAnswers(answers, buildQuestionContext(answers)),
+      );
     }
 
     setLoading(false);
@@ -693,9 +807,78 @@ export default function App() {
     setCurrentQuestion(null); setQuestionHistory([]);
     setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setSelectedLodging([]); setStopCategory("all");
     setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
+    setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
+    setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
+    setNightSegmentPaths([]); setLowFuelSegmentPaths([]);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
   }
+
+  function dismissTripAlert(alertId) {
+    setDismissedAlerts(prev => [...prev, alertId]);
+    setMapMarkers(prev => prev.filter(m => m.alertId !== alertId));
+  }
+
+  function handleShareItinerary() {
+    const link = createItineraryShareLink({
+      origin, dest, stops, roadStops, tripTips, answers, routeInfo, selectedLodging,
+    });
+    if (!link) {
+      toast_("Could not create share link");
+      return;
+    }
+    navigator.clipboard?.writeText(link).catch(() => {});
+    toast_("Safety itinerary link copied — send to a trusted contact");
+  }
+
+  useEffect(() => {
+    const shareId = new URLSearchParams(window.location.search).get("share");
+    if (!shareId) return;
+    const shared = loadSharedItinerary(shareId);
+    if (!shared) return;
+    setView("app");
+    setOrigin(shared.origin || "");
+    setDest(shared.dest || "");
+    setStops(shared.stops || []);
+    setRoadStops(shared.roadStops || []);
+    setTripTips(shared.tripTips || []);
+    setAnswers(stripSessionOnlyAnswers(shared.answers || {}));
+    setSelectedLodging(shared.selectedLodging || []);
+    setGenerated(true);
+    setConvoComplete(true);
+    setTab("plan");
+    setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], []));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!generated) return;
+    const budget = computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging });
+    setTripAlerts(prev => {
+      const base = prev.filter(a => a.type !== "budget");
+      const cap = getTripBudgetCap(answers);
+      if (cap == null || budget.total == null) return base;
+      if (budget.total > cap) {
+        return [...base, {
+          id: "alert-budget-exceeded",
+          type: "budget",
+          title: "Budget exceeded",
+          message: `Estimated total $${Math.round(budget.total)} exceeds your $${cap} budget limit.`,
+          mapCategory: "budget",
+        }];
+      }
+      if (cap - budget.total <= 50) {
+        return [...base, {
+          id: "alert-budget-warning",
+          type: "budget",
+          title: "Budget warning",
+          message: `Within $50 of your $${cap} budget limit.`,
+          mapCategory: "budget",
+        }];
+      }
+      return base;
+    });
+  }, [generated, answers, routeInfo, tripLegs, roadStops, selectedLodging]);
 
   function goBackOneQuestion() {
     if (questionHistory.length === 0) return;
@@ -704,7 +887,6 @@ export default function App() {
     const newAnswers = { ...answers };
     delete newAnswers[last.question.id];
     if (last.question.id === "travelers") {
-      delete newAnswers.special_needs;
       delete newAnswers.kids_ages;
     }
     if (last.question.id === "vehicle") {
@@ -742,7 +924,7 @@ export default function App() {
     setDest(trip.dest);
     setStops(trip.stops || []);
     setTripTips(trip.tripTips || []);
-    setAnswers(trip.answers || {});
+    setAnswers(stripSessionOnlyAnswers(trip.answers || {}));
     setGenerated(true);
     setConvoComplete(true);
     setTab("plan");
@@ -835,9 +1017,16 @@ export default function App() {
             directions={tripLegs.length === 0 ? directionsResult : null}
             routeInfo={routeInfo}
             answers={answers}
+            mapMarkers={mapMarkers}
+            dismissedAlertIds={dismissedAlerts}
+            nightSegmentPaths={nightSegmentPaths}
+            lowFuelSegmentPaths={lowFuelSegmentPaths}
             onMapReady={() => setMapReady(true)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
+            onMarkerAction={(action, marker) => {
+              if (action === "add") toast_("Added to trip");
+            }}
           />
 
           <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}`}>
@@ -909,6 +1098,12 @@ export default function App() {
                       onRemoveRoadStop={removeRoadStop}
                       onLodgingSelect={addLodgingSelection}
                       selectedLodging={selectedLodging}
+                      tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
+                      onDismissAlert={dismissTripAlert}
+                      nearbyServicesByCity={nearbyServicesByCity}
+                      activitiesByCity={activitiesByCity}
+                      optionalStopCards={optionalStopCards}
+                      onAddCustomStop={addCustomStop}
                       onStopCategoryChange={setStopCategory}
                       onSwapRoute={swapRouteCities}
                       onFetchDirections={fetchDirections}
@@ -928,7 +1123,13 @@ export default function App() {
                       onPlanTrip={() => { setTab("plan"); setCardCollapsed(false); }}
                     />
                   )}
-                  {tab === "share" && <SharePanel onCopyLink={() => toast_("Link copied")} />}
+                  {tab === "share" && (
+                    <SharePanel
+                      onCopyLink={() => toast_("Link copied")}
+                      onShareItinerary={handleShareItinerary}
+                      hasItinerary={generated && (stops.length > 0 || roadStops.length > 0)}
+                    />
+                  )}
                 </div>
               </div>
             </div>

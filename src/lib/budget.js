@@ -1,9 +1,15 @@
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
-import { hasFamilyKids, hasPref } from "./vehicles.js";
+import { hasPref, parseTravelerCount } from "./vehicles.js";
 import { countFlowQuestionsAnswered } from "./tripFlow.js";
 import { estimateTripFuelCost, estimateStopCost, parsePriceString } from "./fuel.js";
 
 export const LODGING_NIGHTLY_RATES = {
+  Budget: 65,
+  "Mid-Range": 115,
+  Luxury: 220,
+  "Airbnb or Vacation Rental": 125,
+  "Camping or Outdoors": 35,
+  "Doesn't Matter": 100,
   Hotel: 130,
   Motel: 75,
   Airbnb: 110,
@@ -14,17 +20,14 @@ export const LODGING_NIGHTLY_RATES = {
   "Upscale hotel": 220,
   "Luxury hotel": 400,
   Campground: 35,
-  Airbnb: 110,
   "No overnight stay": 0,
   "Truck stop (Pilot/Flying J/Love's)": 0,
   "Motel near truck stop": 65,
   "Sleeper cab — no hotel needed": 0,
   "Rest area": 0,
   "Weigh station area": 0,
-  Budget: 75,
   "Mid-range": 130,
   Upscale: 220,
-  Luxury: 400,
   "RV Park": 55,
 };
 
@@ -103,15 +106,13 @@ export function computeBudgetEstimate(answers, routeInfo, tripLegs, options = {}
   }
 
   const tripDays = hours ? Math.max(1, Math.ceil(hours / 8)) : null;
-  const hasKids = hasFamilyKids(answers.travelers);
+  const partySize = parseTravelerCount(answers.travelers) ?? 2;
   let food = null;
   if (tripDays) {
     const wantsRestaurants = hasPref(answers, "Sit down restaurants only")
-      || hasPref(answers, "Kid friendly restaurants")
       || hasPref(answers, "Fast food only");
-    const adultPerDay = wantsRestaurants ? 65 : 25;
-    const childPerDay = hasKids ? 15 : 0;
-    food = tripDays * (adultPerDay + childPerDay) + addedFoodCost;
+    const perPersonPerDay = wantsRestaurants ? 32 : 12;
+    food = tripDays * partySize * perPersonPerDay + addedFoodCost;
   } else if (addedFoodCost) {
     food = addedFoodCost;
   }

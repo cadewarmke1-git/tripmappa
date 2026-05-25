@@ -12,6 +12,7 @@ export const VEHICLE_MPG = {
   Car: 30,
   Motorcycle: 45,
   "SUV or Van": 22,
+  "Rental Car": 28,
   RV: 10,
   "Camper Van": 18,
   "Semi Truck (18-wheeler)": 6.5,
@@ -40,10 +41,10 @@ export function getFuelStopMode(answers) {
   if (isWaterVehicle(vehicle) || vehicle === "Plane") return "none";
   if (isRvVehicle(vehicle)) return "rv";
   if (isTruckVehicle(vehicle)) return "diesel";
-  const personal = ["Car", "Motorcycle", "SUV or Van"].includes(vehicle);
+  const personal = ["Car", "Motorcycle", "SUV or Van", "Rental Car"].includes(vehicle);
   const fuelType = answers?.fuel_type || answers?.fuel;
   if (personal && fuelType === "Hybrid") return "hybrid";
-  if (personal && (fuelType === "Electric" || fuelType === "Electric (EV)")) return "ev";
+  if (personal && (fuelType === "Electric" || fuelType === "Electric (EV)" || fuelType === "Electric — Tesla Superchargers only")) return "ev";
   if (personal && fuelType === "Diesel") return "diesel";
   return "gas";
 }
@@ -54,7 +55,7 @@ export function estimateTripFuelCost(miles, answers) {
   const fuelType = answers?.fuel_type || answers?.fuel;
   if (isWaterVehicle(vehicle) || vehicle === "Plane") return 0;
 
-  if (fuelType === "Electric" || fuelType === "Electric (EV)") {
+  if (fuelType === "Electric" || fuelType === "Electric (EV)" || fuelType === "Electric — Tesla Superchargers only") {
     return Math.round(miles * FUEL_PRICES.evPerMile);
   }
   if (fuelType === "Hybrid") {
@@ -166,6 +167,14 @@ export function sortByDistance(stations) {
 export function takeClosest(stations, max = 3) {
   return sortByDistance(stations).slice(0, max);
 }
+
+/** Keep fuel stations within maxMiles of the route sample point (default 1 mi on-route). */
+export function selectOnRouteFuelStations(stations, maxMiles = 1) {
+  const onRoute = stations.filter(s => (s.distanceMiles ?? 99) <= maxMiles);
+  return onRoute.length ? onRoute : sortByDistance(stations).slice(0, 3);
+}
+
+export { markBestPriceFuelStations } from "./placesFilters.js";
 
 export function buildFallbackGasStations(lat, lng, mode) {
   const brands = mode === "diesel"

@@ -45,6 +45,7 @@ export const PLACEHOLDER_HOTELS = {
       photo: HOTEL_PHOTOS[0],
       kidFriendly: true,
       rating: 4.5,
+      propertyType: "hotel",
     },
     {
       id: "hampton-inn-amarillo",
@@ -59,6 +60,7 @@ export const PLACEHOLDER_HOTELS = {
       distanceFromRoute: 1.2,
       bookUrl: "https://example.com/book/hampton-inn-amarillo",
       photo: HOTEL_PHOTOS[1],
+      propertyType: "hotel",
     },
     {
       id: "budget-inn-amarillo",
@@ -73,6 +75,7 @@ export const PLACEHOLDER_HOTELS = {
       bookUrl: "https://example.com/book/budget-inn-amarillo",
       photo: HOTEL_PHOTOS[2],
       rating: 3.6,
+      propertyType: "hotel",
     },
   ],
   "albuquerque, nm": [
@@ -311,10 +314,10 @@ function normalizeCityKey(city) {
 
 export function getLodgingSortTier(lodging) {
   const l = (lodging || "").trim();
-  if (l === "Budget" || l === "Motel" || l === "Camping") return "budget";
-  if (l === "Luxury" || l === "Airbnb") return "luxury";
-  if (l === "Mid-range" || l === "Hotel") return "mid";
-  if (l === "Doesn't matter") return "any";
+  if (l === "Budget" || l === "Motel" || l === "Camping" || l === "Camping or Outdoors") return "budget";
+  if (l === "Luxury" || l === "Airbnb" || l === "Airbnb or Vacation Rental") return "luxury";
+  if (l === "Mid-Range" || l === "Mid-range" || l === "Hotel") return "mid";
+  if (l === "Doesn't Matter" || l === "Doesn't matter") return "any";
   return "mid";
 }
 
@@ -322,46 +325,86 @@ function hotelRating(hotel) {
   return hotel.rating ?? hotel.stars ?? 0;
 }
 
-function sortHotels(hotels, tier) {
+function propertyType(hotel) {
+  return hotel.propertyType || "hotel";
+}
+
+function filterHotelsByPreference(hotels, lodgingPref) {
+  const pref = (lodgingPref || "").trim();
+  if (pref === "Budget") {
+    const filtered = hotels.filter(h => parsePrice(h) < 80 && (h.stars || 0) <= 2);
+    return filtered.length ? filtered : hotels.filter(h => parsePrice(h) < 80);
+  }
+  if (pref === "Luxury") {
+    const filtered = hotels.filter(h => (h.stars || 0) >= 4 && hotelRating(h) >= 4.5);
+    return filtered.length ? filtered : hotels.filter(h => (h.stars || 0) >= 4);
+  }
+  if (pref === "Airbnb or Vacation Rental") {
+    const rentals = hotels.filter(h => propertyType(h) === "vacation_rental");
+    return rentals.length ? rentals : hotels;
+  }
+  if (pref === "Camping or Outdoors") {
+    const camping = hotels.filter(h => propertyType(h) === "campground" || propertyType(h) === "camping");
+    return camping.length ? camping : hotels.filter(h => (h.stars || 0) <= 2);
+  }
+  return hotels;
+}
+
+function sortHotels(hotels, lodgingPref) {
+  const pref = (lodgingPref || "").trim();
   const sorted = [...hotels];
-  if (tier === "budget") {
+
+  if (pref === "Budget") {
     sorted.sort((a, b) => parsePrice(a) - parsePrice(b));
-  } else if (tier === "luxury") {
+  } else if (pref === "Luxury") {
     sorted.sort((a, b) => {
-      const aLux = a.stars >= 4 ? 0 : 1;
-      const bLux = b.stars >= 4 ? 0 : 1;
-      if (aLux !== bLux) return aLux - bLux;
       if (b.stars !== a.stars) return b.stars - a.stars;
+      if (hotelRating(b) !== hotelRating(a)) return hotelRating(b) - hotelRating(a);
       return parsePrice(b) - parsePrice(a);
     });
-  } else if (tier === "any") {
-    sorted.sort((a, b) => {
-      const diff = hotelRating(b) - hotelRating(a);
-      if (diff !== 0) return diff;
-      return b.stars - a.stars;
-    });
-  } else {
+  } else if (pref === "Mid-Range") {
     sorted.sort((a, b) => {
       const aMid = a.stars === 3 ? 0 : 1;
       const bMid = b.stars === 3 ? 0 : 1;
       if (aMid !== bMid) return aMid - bMid;
       return Math.abs(a.stars - 3) - Math.abs(b.stars - 3);
     });
+  } else if (pref === "Airbnb or Vacation Rental") {
+    sorted.sort((a, b) => {
+      const aRent = propertyType(a) === "vacation_rental" ? 0 : 1;
+      const bRent = propertyType(b) === "vacation_rental" ? 0 : 1;
+      if (aRent !== bRent) return aRent - bRent;
+      return hotelRating(b) - hotelRating(a);
+    });
+  } else if (pref === "Camping or Outdoors") {
+    sorted.sort((a, b) => {
+      const aCamp = ["campground", "camping"].includes(propertyType(a)) ? 0 : 1;
+      const bCamp = ["campground", "camping"].includes(propertyType(b)) ? 0 : 1;
+      if (aCamp !== bCamp) return aCamp - bCamp;
+      return parsePrice(a) - parsePrice(b);
+    });
+  } else {
+    sorted.sort((a, b) => {
+      const diff = hotelRating(b) - hotelRating(a);
+      if (diff !== 0) return diff;
+      return b.stars - a.stars;
+    });
   }
   return sorted;
 }
 
-function applyHotelBadges(hotels, answers, tier) {
-  const family = answers?.travelers === "Family with young kids" || answers?.travelers === "Family with kids";
+function applyHotelBadges(hotels, lodgingPref) {
+  const pref = (lodgingPref || "").trim();
+  const isLuxury = pref === "Luxury";
+  const isBudget = pref === "Budget";
 
-  return hotels.map((h, index) => ({
-    ...h,
-    badges: [
-      ...(tier === "luxury" && index === 0 ? ["premium"] : []),
-      ...(tier === "budget" && index === 0 ? ["bestValue"] : []),
-      ...(family && (h.kidFriendly || h.amenities?.includes("pool")) ? ["kidFriendly"] : []),
-    ],
-  }));
+  return hotels.map((h, index) => {
+    const badges = [];
+    if (isBudget && index === 0) badges.push("bestValue");
+    if (isLuxury && index === 0) badges.push("premium");
+    if (isLuxury && hotelRating(h) >= 4.5) badges.push("topRated");
+    return { ...h, badges };
+  });
 }
 
 function generateGenericHotels(city) {
@@ -379,8 +422,8 @@ function generateGenericHotels(city) {
       distanceFromRoute: 1.0,
       bookUrl: "https://example.com/book/generic-hotel",
       photo: HOTEL_PHOTOS[0],
-      kidFriendly: true,
-      rating: 4.4,
+      rating: 4.6,
+      propertyType: "hotel",
     },
     {
       id: `generic-inn-${label}`,
@@ -395,6 +438,22 @@ function generateGenericHotels(city) {
       distanceFromRoute: 1.5,
       bookUrl: "https://example.com/book/generic-inn",
       photo: HOTEL_PHOTOS[1],
+      propertyType: "hotel",
+    },
+    {
+      id: `generic-rental-${label}`,
+      name: `${label} Vacation Home`,
+      stars: 4,
+      neighborhood: `${label} Residential`,
+      pricePerNight: 125,
+      priceLabel: "$125/night",
+      amenities: ["wifi", "parking", "pet"],
+      description: `Whole-home vacation rental with kitchen and yard — ideal for longer stays in ${city}.`,
+      distanceFromRoute: 2.2,
+      bookUrl: "https://example.com/book/generic-rental",
+      photo: HOTEL_PHOTOS[1],
+      rating: 4.7,
+      propertyType: "vacation_rental",
     },
     {
       id: `generic-motel-${label}`,
@@ -409,16 +468,36 @@ function generateGenericHotels(city) {
       bookUrl: "https://example.com/book/generic-motel",
       photo: HOTEL_PHOTOS[2],
       rating: 3.5,
+      propertyType: "hotel",
+    },
+    {
+      id: `generic-campground-${label}`,
+      name: `${label} Riverside Campground`,
+      stars: 2,
+      neighborhood: `${label} Outskirts`,
+      pricePerNight: 32,
+      priceLabel: "$32/night",
+      amenities: ["parking", "pet"],
+      description: `Campground with tent and RV sites near ${city} — fire pits, restrooms, and trail access.`,
+      distanceFromRoute: 3.5,
+      bookUrl: "https://example.com/book/generic-campground",
+      photo: HOTEL_PHOTOS[2],
+      rating: 4.2,
+      propertyType: "campground",
     },
   ];
 }
 
 export function getHotelsForStop(city, answers) {
   const key = normalizeCityKey(city);
-  const base = PLACEHOLDER_HOTELS[key] || generateGenericHotels(city);
-  const tier = getLodgingSortTier(answers?.lodging);
-  const sorted = sortHotels(base, tier).slice(0, 3);
-  return applyHotelBadges(sorted, answers, tier);
+  const base = (PLACEHOLDER_HOTELS[key] || generateGenericHotels(city)).map(h => ({
+    propertyType: "hotel",
+    ...h,
+  }));
+  const lodgingPref = answers?.lodging;
+  const filtered = filterHotelsByPreference(base, lodgingPref);
+  const sorted = sortHotels(filtered, lodgingPref).slice(0, 3);
+  return applyHotelBadges(sorted, lodgingPref);
 }
 
 export function getRvParksForStop(_city) {

@@ -1,13 +1,12 @@
 import {
   isTruckerTrip,
   isRvTrip,
-  hasFamilyKids,
   hasPref,
   isScenicRoute,
   skipLodgingQuestion,
   getEffectiveVehicle,
+  parseTravelerCount,
 } from "./vehicles.js";
-import { hasKidsToddlers } from "./tripFlow.js";
 import { computeHOSCompliance } from "./hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import {
@@ -21,11 +20,18 @@ import {
   mapHotelStops,
 } from "./tripData.js";
 
+/** Strip session-only fields before persisting or restoring saved trips. */
+export function stripSessionOnlyAnswers(answers) {
+  if (!answers || typeof answers !== "object") return {};
+  const { travelers, kids_ages, ...rest } = answers;
+  return rest;
+}
+
 export function buildFallbackTripData(answers, routeInfo) {
   const effectiveVehicle = getEffectiveVehicle(answers);
   const isDayOrHome = skipLodgingQuestion(answers.trip_type, effectiveVehicle);
   const hours = routeInfo ? parseHoursFromDuration(routeInfo.duration) || 10 : 10;
-  const hasKids = hasFamilyKids(answers.travelers);
+  const partySize = parseTravelerCount(answers.travelers) ?? 2;
   const trucker = isTruckerTrip(answers);
   const rv = isRvTrip(answers);
   const hos = trucker ? computeHOSCompliance(hours) : null;
@@ -67,10 +73,8 @@ export function buildFallbackTripData(answers, routeInfo) {
       fuel: f.fuel, highClearance: f.highClearance, rvFriendly: f.rvFriendly, def: f.def, amenities: f.amenities,
     })));
   } else if (isDayOrHome) {
-    const dayRoadStops = hasKids ? [...ROAD_STOPS_FALLBACK, ...ROAD_STOPS_FALLBACK.slice(0, 2)] : ROAD_STOPS_FALLBACK;
-    roadStops = dayRoadStops.map(s => ({
+    roadStops = ROAD_STOPS_FALLBACK.map(s => ({
       ...normalizeRoadStop(s),
-      kidFriendly: hasKids,
       petRelief: hasPref(answers, "Pet friendly"),
       scenic: isScenicRoute(answers),
     }));
@@ -80,13 +84,12 @@ export function buildFallbackTripData(answers, routeInfo) {
       ...s,
       hotels: s.hotels.map(h => ({
         ...h,
-        kidFriendly: hasKids && hasPref(answers, "Kid friendly stops"),
         petFriendly: hasPref(answers, "Pet friendly"),
       })),
       scenicView: isScenicRoute(answers) ? "Scenic viewpoint nearby" : null,
     }));
-    roadStops = ROAD_STOPS_FALLBACK.slice(0, hasKids ? 5 : 3).map(s => normalizeRoadStop({
-      ...s, kidFriendly: hasKids, scenic: isScenicRoute(answers),
+    roadStops = ROAD_STOPS_FALLBACK.slice(0, partySize >= 4 ? 4 : 3).map(s => normalizeRoadStop({
+      ...s, scenic: isScenicRoute(answers),
     }));
   }
 
@@ -104,10 +107,8 @@ export function buildFallbackTripData(answers, routeInfo) {
     }
     tips.push("Dump station locations noted between overnight stops");
   }
-  if (hasKids) {
-    tips.push("Kid-friendly stops prioritized along your route");
-    tips.push("Rest stops suggested every 2 hours for young travelers.");
-    if (hasKidsToddlers(answers.special_needs)) tips.push("Diaper changing stations noted at rest stops");
+  if (partySize >= 6) {
+    tips.push("Large party — request appropriate table sizes at restaurant stops.");
   }
   if (isScenicRoute(answers)) tips.push("Scenic viewpoints and photo spots noted near each stop.");
   if (hasPref(answers, "Pet friendly")) tips.push("Pet relief areas flagged at rest stops along your route.");

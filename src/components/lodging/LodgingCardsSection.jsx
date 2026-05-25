@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import {
-  getHotelsForStop,
   getRvParksForStop,
   getTruckStopsForStop,
   getRestAreasForStop,
   saveLodgingToTrips,
 } from "../../lib/lodgingData.js";
+import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
+import { processLodgingResults } from "../../lib/lodgingPlaces.js";
 import { isTruckerTrip, isRvTrip } from "../../lib/vehicles.js";
 import HotelCard from "./HotelCard.jsx";
 import RvParkCard from "./RvParkCard.jsx";
@@ -13,13 +14,12 @@ import TruckStopCard from "./TruckStopCard.jsx";
 import RestAreaCard from "./RestAreaCard.jsx";
 import LodgingCardSkeleton from "./LodgingCardSkeleton.jsx";
 
-const LOAD_MS = 700;
-
 export default function LodgingCardsSection({
   city,
   answers,
   origin,
   dest,
+  routeInfo,
   onToast,
   onLodgingSelect,
   selectedLodging = [],
@@ -28,31 +28,52 @@ export default function LodgingCardsSection({
   const [items, setItems] = useState([]);
   const [restAreas, setRestAreas] = useState([]);
   const [lodgingType, setLodgingType] = useState("hotel");
+  const [placesSource, setPlacesSource] = useState(false);
 
   const isTrucker = isTruckerTrip(answers);
   const isRv = isRvTrip(answers);
   const showSleeperOnly = isTrucker && answers?.lodging === "Sleeper cab — no hotel needed";
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    const timer = setTimeout(() => {
+
+    async function load() {
       if (isRv) {
         setLodgingType("rv");
         setItems(getRvParksForStop(city));
         setRestAreas([]);
+        setPlacesSource(false);
       } else if (isTrucker) {
         setLodgingType("truck");
         setItems(getTruckStopsForStop(city, answers));
         setRestAreas(getRestAreasForStop(city));
+        setPlacesSource(false);
       } else {
         setLodgingType("hotel");
-        setItems(getHotelsForStop(city, answers));
-        setRestAreas([]);
+        const geo = await geocodeCity(city);
+        if (geo && window.google?.maps?.places) {
+          const raw = await searchLodging(geo.lat, geo.lng, answers, routeInfo);
+          const hotels = processLodgingResults(raw, answers, routeInfo);
+          if (!cancelled && hotels.length) {
+            setItems(hotels);
+            setPlacesSource(true);
+            setRestAreas([]);
+            setLoading(false);
+            return;
+          }
+        }
+        if (!cancelled) {
+          setItems([]);
+          setPlacesSource(false);
+        }
       }
-      setLoading(false);
-    }, LOAD_MS);
-    return () => clearTimeout(timer);
-  }, [city, answers, isRv, isTrucker]);
+      if (!cancelled) setLoading(false);
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [city, answers, isRv, isTrucker, routeInfo]);
 
   function handleSave(lodging) {
     saveLodgingToTrips(lodging, city, origin, dest);
@@ -78,7 +99,7 @@ export default function LodgingCardsSection({
     ? "RV parks & campgrounds"
     : lodgingType === "truck"
       ? "Truck stops"
-      : "Hotels & lodging";
+      : placesSource ? "Hotels — verified on Google Maps" : "Hotels & lodging";
 
   const skeletonCount = lodgingType === "truck" ? 4 : 3;
 
@@ -92,32 +113,19 @@ export default function LodgingCardsSection({
             <LodgingCardSkeleton key={i} />
           ))}
         </div>
+      ) : items.length === 0 && lodgingType === "hotel" ? (
+        <div className="lodging-empty">No lodging found within budget — try adjusting your trip budget or lodging preference.</div>
       ) : (
         <>
           <div className="lodging-cards-scroll">
             {lodgingType === "hotel" && items.map(hotel => (
-              <HotelCard
-                key={hotel.id}
-                hotel={hotel}
-                onSave={handleSave}
-                onToast={onToast}
-              />
+              <HotelCard key={hotel.id} hotel={hotel} onSave={handleSave} onToast={onToast} />
             ))}
             {lodgingType === "rv" && items.map(park => (
-              <RvParkCard
-                key={park.id}
-                park={park}
-                onSave={handleSave}
-                onToast={onToast}
-              />
+              <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} />
             ))}
             {lodgingType === "truck" && items.map(stop => (
-              <TruckStopCard
-                key={stop.id}
-                stop={stop}
-                onSave={handleSave}
-                onToast={onToast}
-              />
+              <TruckStopCard key={stop.id} stop={stop} onSave={handleSave} onToast={onToast} />
             ))}
           </div>
 
@@ -126,12 +134,7 @@ export default function LodgingCardsSection({
               <div className="lodging-section-sublabel">Rest areas — backup option</div>
               <div className="lodging-cards-scroll lodging-cards-rest">
                 {restAreas.map(area => (
-                  <RestAreaCard
-                    key={area.id}
-                    restArea={area}
-                    onSave={handleSave}
-                    onToast={onToast}
-                  />
+                  <RestAreaCard key={area.id} restArea={area} onSave={handleSave} onToast={onToast} />
                 ))}
               </div>
             </>
@@ -139,7 +142,9 @@ export default function LodgingCardsSection({
         </>
       )}
 
-      <p className="lodging-disclaimer">Prices are estimates — final rates shown at booking.</p>
+      <p className="lodging-disclaimer">
+        {placesSource ? "Live Google Places data — book for final rates." : "Prices are estimates — final rates shown at booking."}
+      </p>
     </div>
   );
 }

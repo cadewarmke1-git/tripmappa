@@ -85,8 +85,24 @@ export function skipPreferencesQuestion(tripType, vehicle) {
   return false;
 }
 
-export function hasFamilyKids(travelers) {
-  return travelers === "Family with young kids" || travelers === "Family with kids";
+export function hasFamilyKids() {
+  return false;
+}
+
+/** Session-only party size from traveler count answer — not persisted. */
+export function parseTravelerCount(travelers) {
+  if (!travelers) return null;
+  if (travelers === "1") return 1;
+  if (travelers === "2") return 2;
+  if (travelers === "3 to 5") return 4;
+  if (travelers === "6 or more") return 6;
+  return null;
+}
+
+export function formatPartySizeLabel(travelers) {
+  const n = parseTravelerCount(travelers);
+  if (n == null) return null;
+  return `${n} traveler${n === 1 ? "" : "s"}`;
 }
 
 export function isTruckerTrip(answers) {
@@ -105,7 +121,7 @@ export function inferFuelType(vehicle, preferences = [], answers = null) {
   if (a?.fuel) return a.fuel;
   if (a?.fuel_type) {
     const ft = a.fuel_type;
-    if (ft === "Electric") return "Electric (EV)";
+    if (ft === "Electric" || ft === "Electric — Tesla Superchargers only") return "Electric (EV)";
     if (ft === "Hybrid") return "Hybrid";
     if (ft === "Diesel") return "Diesel";
     if (ft === "Propane") return "Propane";

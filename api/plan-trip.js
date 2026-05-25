@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { origin, destination, answers, routeInfo, legs, model = "claude-sonnet-4-20250514" } = req.body;
+  const { origin, destination, answers, routeInfo, legs, model = "claude-sonnet-4-20250514", placesContextPrompt = "" } = req.body;
 
   if (!origin || !destination) {
     return res.status(400).json({ error: "Missing origin or destination" });
@@ -35,11 +35,39 @@ export default async function handler(req, res) {
   const isWater = WATER_TYPES.includes(vehicle) || WATER_TYPES.includes(rawVehicle);
   const isPlane = vehicle === "Plane" || rawVehicle === "Plane";
   const isMultiVehicle = rawVehicle === "Multi-Vehicle Trip";
-  const hasKids = answers?.travelers === "Family with kids";
-  const kidsAges = answers?.kids_ages || "";
+  const partySize = (() => {
+    const t = answers?.travelers;
+    if (t === "1") return 1;
+    if (t === "2") return 2;
+    if (t === "3 to 5") return 4;
+    if (t === "6 or more") return 6;
+    return null;
+  })();
   const isScenic = preferences.includes("Scenic route") || routeInfo?.scenic === true;
   const needsOvernight = !["Day trip", "Driving home"].includes(tripType) && answers?.lodging !== "No overnight stay" && answers?.lodging !== "Sleeper cab — no hotel needed";
   const hasLegs = Array.isArray(legs) && legs.length > 0;
+
+  const lodgingPref = answers?.lodging || "Mid-Range";
+  const lodgingPreferenceBlock = (() => {
+    const base = `- Lodging preference: ${lodgingPref}
+- CRITICAL: Only suggest overnight stop cities along the route corridor where lodging matching this preference is realistically available. If a corridor city lacks matching options, suggest the nearest alternative city on the route that does.`;
+    const rules = {
+      Budget: "Budget — 1-2 star hotels and motels under $80/night only. Prioritize cheapest options.",
+      "Mid-Range": "Mid-Range — 3-star hotels between $80 and $150/night. Prioritize solid 3-star properties.",
+      Luxury: "Luxury — 4-5 star hotels over $150/night only. Require 4+ stars and 4.5+ guest ratings.",
+      "Airbnb or Vacation Rental": "Airbnb or vacation rentals — whole-home or apartment stays, not standard hotels.",
+      "Camping or Outdoors": "Camping or outdoors — campgrounds, state parks, and outdoor stays only; no hotels.",
+      "Doesn't Matter": "No lodging type restriction — any suitable overnight option in each stop city.",
+    };
+    return `${base}\n- ${rules[lodgingPref] || rules["Mid-Range"]}`;
+  })();
+
+  const partyBlock = partySize
+    ? `
+- Party size: ${partySize} travelers
+- Size hotel rooms and restaurant table recommendations for this party count
+- Use neutral party-size language only — never describe anyone as traveling alone`
+    : "";
 
   const prefsBlock = preferences.length ? `\n- Preferences: ${preferences.join(", ")}` : "";
   const restrictionsBlock = routeRestrictions.length ? `\n- Route restrictions: ${routeRestrictions.join(", ")}` : "";
@@ -82,17 +110,36 @@ export default async function handler(req, res) {
 - Propane refill and dump station locations between stops${answers?.rv_towing === "Yes" ? "\n- Towing: extra length restrictions, unhitch zones, oversized parking, state towing speed limits" : ""}`
     : "";
 
-  const kidsBlock = hasKids
-    ? `
-- Travelers: Family with kids (${kidsAges})
-- Rest stops every ~2 hours; kid-friendly hotels (pools, cribs, adjoining rooms)
-- Kid-friendly restaurants with kids menus and high chairs
-- Tip: "Rest stops suggested every 2 hours for young travelers"${kidsAges === "Toddlers under 3" || kidsAges === "Mix of ages" ? '\n- Diaper changing stations at rest stops' : ""}`
-    : "";
+  const kidsBlock = "";
 
   const scenicBlock = isScenic
     ? "\n- Scenic route: favor backroads, scenic overlooks, photo spots near each stop"
     : "";
+
+  const dietary = Array.isArray(answers?.dietary) ? answers.dietary : [];
+  const accessibility = Array.isArray(answers?.accessibility) ? answers.accessibility : [];
+  const stopsInterests = Array.isArray(answers?.stops_interests) ? answers.stops_interests : [];
+  const tripBudget = answers?.trip_budget;
+  const scheduleRestrictions = answers?.schedule_restrictions;
+  const towing = answers?.towing;
+  const loyalty = answers?.loyalty_program;
+
+  const accommodationsBlock = `
+HUMAN POSSIBILITY ACCOMMODATIONS (must follow exactly):
+${dietary.length ? `- Dietary needs: ${dietary.join(", ")}${answers?.food_allergies ? ` · Allergies: ${answers.food_allergies}` : ""}` : ""}
+${accessibility.length ? `- Accessibility & medical: ${accessibility.join(", ")}` : ""}
+${stopsInterests.length ? `- Stops & interests: ${stopsInterests.join(", ")}` : ""}
+${tripBudget && tripBudget !== "No budget limit" ? `- Total trip budget cap: ${tripBudget} — NEVER exceed this across all lodging and stops combined` : ""}
+${scheduleRestrictions && scheduleRestrictions !== "No restrictions" ? `- Schedule restriction: ${scheduleRestrictions}${answers?.schedule_hours ? ` · Drive hours: ${answers.schedule_hours}` : ""} — NEVER schedule driving segments on restricted days; place overnight stop before restricted day begins` : ""}
+${towing && towing !== "No" ? `- Towing: ${towing} — recommend stops with trailer parking; avoid low clearance and sharp turns` : ""}
+${loyalty && loyalty !== "No preference" ? `- Hotel loyalty: prioritize ${loyalty} branded properties at overnight stops` : ""}
+${accessibility.includes("Need dialysis centers along route") ? "- ALWAYS list dialysis centers at each overnight stop in nearby services context" : ""}
+${accessibility.includes("Traveling with a sick pet — need veterinary clinics along route") ? "- ALWAYS list veterinary clinics at each overnight stop" : ""}
+${accessibility.includes("Prefer highly rated safe stops only") ? "- Filter gas, rest, and lodging to 4+ star rated, well-lit facilities only" : ""}
+${stopsInterests.some(i => /music|comedy|drive-in|antique/i.test(i)) ? "- Suggest evening activities matching entertainment interests at each overnight stop with brief descriptions" : ""}
+${stopsInterests.includes("Remote work — WiFi cafés") ? "- Prioritize restaurants and cafés with strong WiFi at stops" : ""}
+- For any driving segment between 10 PM and 6 AM: suggest well-lit 24-hour staffed facilities only
+- Use only real place names when provided in placesContext; do not invent businesses`;
 
   const petBlock = preferences.includes("Pet friendly")
     ? "\n- Pet-friendly: flag pet-friendly hotels, pet relief areas at rest stops, note national parks allowing pets on trails"
@@ -133,7 +180,7 @@ ${routeInfo?.end ? `- Route ends near: ${routeInfo.end}` : ""}
 ${citiesAlongRoute.length ? `- Known cities/towns along the driving corridor: ${citiesAlongRoute.join(" → ")}` : ""}
 ${legCities.length ? `- Leg stop cities: ${legCities.join(" → ")}` : ""}`;
 
-  const routeConstraintBlock = `${routeInfoBlock}
+  const routeConstraintBlock = `${routeInfoBlock}${placesContextPrompt || ""}
 
 CRITICAL — OVERNIGHT STOP CITY RULES (must follow exactly):
 - Every overnight stop "city" field MUST be a real US city or town located along the actual driving corridor between ${routeOrigin} and ${routeDestination}.
@@ -153,7 +200,13 @@ STRICT ROUTING RULES — never violate these:
 2. Never suggest a stop city that requires a significant detour from the route.
 3. Space overnight stops evenly based on drive time so no single driving segment exceeds 8 hours.
 4. Always return each stop city as "City, State" (full name and state abbreviation) for display above hotel/lodging cards.
-5. All hotels, restaurants, fuel stops, truck stops, and road_stops must be in cities on the same corridor — never unrelated regions.`;
+5. All hotels, restaurants, fuel stops, truck stops, and road_stops must be in cities on the same corridor — never unrelated regions.
+6. Never schedule driving on a day the user has restricted (Sabbath/Sunday/hours-only).
+7. Never exceed the user's stated total trip budget across lodging and stops.
+8. Prioritize hotel loyalty program brand when preference is stated.
+9. Always suggest dialysis centers at overnight stops when medical needs include dialysis.
+10. Always suggest veterinary clinics at overnight stops when traveling with a sick pet.
+11. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.`;
 
   const userPrompt = isTrucker
     ? `${routeConstraintBlock}
@@ -162,7 +215,7 @@ Plan a commercial truck route from ${routeOrigin} to ${routeDestination}.
 - Trip type: ${tripType}
 - Total distance: ${routeDistance}
 - Estimated drive time: ${routeDuration}
-- Fuel: ${fuel}${truckBlock}${multiBlock}${prefsBlock}
+- Fuel: ${fuel}${truckBlock}${multiBlock}${accommodationsBlock}${prefsBlock}
 
 Return JSON (each stop "city" MUST be "City, State" on the driving corridor):
 {
@@ -184,7 +237,7 @@ Plan an RV-safe route from ${routeOrigin} to ${routeDestination}.
 - Trip type: ${tripType}
 - Total distance: ${routeDistance}
 - Estimated drive time: ${routeDuration}
-- Fuel: ${fuel} · ~9 MPG average${rvBlock}${kidsBlock}${scenicBlock}${petBlock}${kidStopsBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
+- Fuel: ${fuel} · ~9 MPG average${rvBlock}${partyBlock}${scenicBlock}${accommodationsBlock}${petBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
 Return JSON (each stop "city" MUST be "City, State" on the driving corridor):
 {
@@ -228,8 +281,8 @@ Plan a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
 - Total distance: ${routeDistance}
 - Estimated drive time: ${routeDuration}
 - Vehicle: ${vehicle}${rawVehicle !== vehicle ? ` (trip: ${rawVehicle})` : ""} · Fuel: ${fuel}
-- Travelers: ${answers?.travelers || "Solo"}
-- Lodging preference: ${answers?.lodging || "Mid-range hotel"}${kidsBlock}${scenicBlock}${petBlock}${kidStopsBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
+${partyBlock}
+${lodgingPreferenceBlock}${scenicBlock}${accommodationsBlock}${petBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
 Return JSON (each stop "city" MUST be "City, State" on the driving corridor; space stops so no segment exceeds 8 hours driving):
 {
@@ -248,7 +301,7 @@ Plan road stops for a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDe
 - Total distance: ${routeDistance}
 - Estimated drive time: ${routeDuration}
 - Vehicle: ${vehicle}${rawVehicle !== vehicle ? ` (trip: ${rawVehicle})` : ""} · Fuel: ${fuel}
-- Travelers: ${answers?.travelers || "Solo"}${kidsBlock}${scenicBlock}${petBlock}${kidStopsBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
+${partyBlock}${scenicBlock}${accommodationsBlock}${petBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
 Return JSON (all locations MUST be "City, State" on the driving corridor):
 {

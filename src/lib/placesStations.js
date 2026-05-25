@@ -44,10 +44,9 @@ function nearbySearch(request) {
 }
 
 /** Google Places nearby search — primary station location source. */
-export async function searchNearbyStations(lat, lng, { type, keyword, maxResults = 10 } = {}) {
+export async function searchNearbyStations(lat, lng, { type, keyword, maxResults = 10, radius = 8047 } = {}) {
   if (lat == null || lng == null) return [];
   const location = new window.google.maps.LatLng(lat, lng);
-  const radius = 8047;
   const base = { location, radius };
   if (type) base.type = type;
   if (keyword) base.keyword = keyword;
@@ -59,21 +58,21 @@ export async function searchNearbyStations(lat, lng, { type, keyword, maxResults
     .filter(s => s.lat != null && s.lng != null);
 }
 
-export async function searchGasStations(lat, lng, maxResults = 10) {
-  return searchNearbyStations(lat, lng, { type: "gas_station", maxResults });
+export async function searchGasStations(lat, lng, maxResults = 10, radius = 8047) {
+  return searchNearbyStations(lat, lng, { type: "gas_station", maxResults, radius });
 }
 
-export async function searchEvChargingStations(lat, lng, maxResults = 10) {
-  return searchNearbyStations(lat, lng, { type: "electric_vehicle_charging_station", maxResults });
+export async function searchEvChargingStations(lat, lng, maxResults = 10, radius = 8047) {
+  return searchNearbyStations(lat, lng, { type: "electric_vehicle_charging_station", maxResults, radius });
 }
 
 export async function searchPropaneStations(lat, lng, maxResults = 6) {
   return searchNearbyStations(lat, lng, { keyword: "propane refill", maxResults });
 }
 
-export async function searchDieselStations(lat, lng, maxResults = 10) {
-  const truckStops = await searchNearbyStations(lat, lng, { keyword: "truck stop diesel", maxResults: 6 });
+export async function searchDieselStations(lat, lng, maxResults = 10, radius = 8047) {
+  const truckStops = await searchNearbyStations(lat, lng, { keyword: "truck stop diesel", maxResults: 6, radius });
   if (truckStops.length >= 3) return truckStops;
-  const gas = await searchGasStations(lat, lng, maxResults);
+  const gas = await searchGasStations(lat, lng, maxResults, radius);
   return gas;
 }

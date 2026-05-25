@@ -29,9 +29,10 @@ export default function FuelStopCard({ stop, type, onAdd, required }) {
   return (
     <article className={`fuel-stop-card${required ? " fuel-stop-required" : ""}`}>
       {required && (
-        <div className="fuel-required-badge">
-          Required stop
-        </div>
+        <div className="fuel-required-badge">Required stop</div>
+      )}
+      {stop.bestPrice && (
+        <div className="fuel-best-price-badge">Best Price</div>
       )}
       <div className="fuel-stop-header">
         <div className="fuel-brand-logo" aria-hidden="true">{initials}</div>

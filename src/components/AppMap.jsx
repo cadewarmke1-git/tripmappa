@@ -1,8 +1,12 @@
-/** Full-screen Google Map. Night theme uses Apple Maps–style dark styles via isDarkMode. */
+/** Full-screen Google Map with live trip markers, route highlights, and info cards. */
+import { useState } from "react";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import { NIGHT_MAP_STYLES } from "../lib/constants.js";
-
 import MapRoutePill from "./MapRoutePill.jsx";
+import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
+import MapInfoCard from "./map/MapInfoCard.jsx";
+import MapLegend from "./map/MapLegend.jsx";
+import MapRouteOverlays from "./map/MapRouteOverlays.jsx";
 
 const ROUTE_POLYLINE_OPTIONS = {
   strokeColor: "#FFD28C",
@@ -22,10 +26,29 @@ export default function AppMap({
   directions,
   routeInfo,
   answers,
+  mapMarkers = [],
+  dismissedAlertIds = [],
+  nightSegmentPaths = [],
+  lowFuelSegmentPaths = [],
   onMapReady,
   onMapStyleOpenChange,
   onMapStyleChange,
+  onMarkerAction,
 }) {
+  const [selectedMarker, setSelectedMarker] = useState(null);
+  const [legendOpen, setLegendOpen] = useState(false);
+
+  function handleMarkerClick(marker) {
+    setSelectedMarker(marker);
+  }
+
+  function handleInfoAction(action, marker) {
+    onMarkerAction?.(action, marker);
+    if (action === "directions" && marker.lat != null && marker.lng != null) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`, "_blank");
+    }
+  }
+
   return (
     <div className="map-full">
       {isLoaded ? (
@@ -48,6 +71,7 @@ export default function AppMap({
               mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
               styles: isDarkMode ? NIGHT_MAP_STYLES : [],
             }}
+            onClick={() => setSelectedMarker(null)}
           >
             {directions && (
               <DirectionsRenderer
@@ -58,7 +82,25 @@ export default function AppMap({
                 }}
               />
             )}
+            <MapMarkerLayer
+              markers={mapMarkers}
+              isDarkMode={isDarkMode}
+              dismissedAlertIds={dismissedAlertIds}
+              onMarkerClick={handleMarkerClick}
+            />
+            <MapRouteOverlays
+              nightSegmentPaths={nightSegmentPaths}
+              lowFuelSegmentPaths={lowFuelSegmentPaths}
+            />
           </GoogleMap>
+          {selectedMarker && (
+            <MapInfoCard
+              marker={selectedMarker}
+              onClose={() => setSelectedMarker(null)}
+              onAction={handleInfoAction}
+            />
+          )}
+          <MapLegend open={legendOpen} onToggle={() => setLegendOpen(o => !o)} isDarkMode={isDarkMode} />
           {trafficAlert && (
             <div className="traffic-toast">
               <span className="traffic-toast-icon">!</span>
@@ -81,11 +123,6 @@ export default function AppMap({
           <div className="loading-spinner"/>
           <div className="map-placeholder-text">Loading map…</div>
           <div className="map-placeholder-sub">Connecting to Google Maps</div>
-          <div className="map-loading-skeleton" aria-hidden="true">
-            <div className="map-skeleton-bar"/>
-            <div className="map-skeleton-bar"/>
-            <div className="map-skeleton-bar"/>
-          </div>
         </div>
       )}
       {isLoaded && routeLoading && (

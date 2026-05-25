@@ -880,6 +880,11 @@
   }
   .convo-nav-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
+  .quick-replies-lodging { flex-direction: column; gap: 8px; }
+  .qr-btn-lodging {
+    width: 100%; text-align: left; line-height: 1.45; padding: 12px 16px;
+    white-space: normal;
+  }
   .convo-empty { text-align: center; padding: 36px 0; }
   .convo-empty p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 16px; line-height: 1.55; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -1143,6 +1148,11 @@
     background: rgba(255,210,140,0.95); color: #1a1a2e;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
+  .lodging-feature-badge.badge-topRated {
+    background: #FFD28C;
+    color: #1a1a2e;
+    box-shadow: 0 2px 10px rgba(255, 210, 140, 0.55);
+  }
   .lodging-type-badge {
     position: absolute; top: 10px; left: 10px; z-index: 1;
     padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 700;
@@ -1338,3 +1348,68 @@
   /* ── Toast ── */
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 300; background: var(--ink); color: #fff; padding: 11px 20px; border-radius: 99px; font-size: 13.5px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.25); animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; letter-spacing: -0.01em; border: 1px solid rgba(255,255,255,0.08); }
   @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(8px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+  /* ── Trip alerts, nearby services, map legend, budget tracker ── */
+  .trip-alerts-section { margin: 12px 0 16px; }
+  .trip-alerts-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+  .trip-alert-card { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); margin-bottom: 8px; }
+  .trip-alert-medical { background: rgba(232,93,93,0.1); border-color: rgba(232,93,93,0.25); }
+  .trip-alert-icon { font-weight: 800; color: #f59e0b; flex-shrink: 0; }
+  .trip-alert-heading { font-size: 13px; font-weight: 600; }
+  .trip-alert-msg { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .trip-alert-dismiss { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted); padding: 0 4px; }
+
+  .nearby-services-section { margin-top: 10px; }
+  .nearby-services-toggle { font-size: 12px; font-weight: 600; color: #FFD28C; background: none; border: none; cursor: pointer; padding: 0; }
+  .nearby-services-panel { margin-top: 8px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .nearby-services-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin: 8px 0 4px; }
+  .nearby-services-row { font-size: 12px; padding: 4px 0; display: flex; justify-content: space-between; gap: 8px; }
+  .nearby-services-name { font-weight: 500; }
+  .nearby-services-meta { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+  .activity-cards-section { margin-top: 10px; }
+  .activity-card { padding: 10px; border-radius: 10px; background: rgba(192,132,252,0.08); border: 1px solid rgba(192,132,252,0.2); margin-bottom: 6px; }
+  .activity-card-name { font-size: 13px; font-weight: 600; }
+  .activity-card-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .activity-card-tag { font-size: 10px; color: #c084fc; margin-top: 4px; }
+
+  .budget-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .budget-warning-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: rgba(245,158,11,0.2); color: #f59e0b; }
+  .budget-card-warning { border-color: rgba(245,158,11,0.35); }
+  .budget-tracker { margin-bottom: 10px; }
+  .budget-tracker-bar { height: 4px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .budget-tracker-fill { height: 100%; background: #FFD28C; border-radius: 99px; transition: width 0.3s ease; }
+  .budget-tracker-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .budget-per-person { font-size: 12px; color: var(--muted); text-align: right; margin-top: -4px; margin-bottom: 8px; }
+
+  .share-safety-block { padding: 14px; border-radius: 14px; background: rgba(255,210,140,0.1); border: 1px solid rgba(255,210,140,0.3); margin-bottom: 20px; }
+  .share-safety-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .share-safety-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.45; }
+  .share-safety-btn { width: 100%; }
+
+  .question-text-wrap { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .question-text-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: inherit; font-size: 14px; }
+
+  .map-legend-toggle { position: absolute; bottom: 80px; left: 12px; z-index: 20; }
+  .map-legend-wrap { position: absolute; bottom: 72px; left: 12px; z-index: 20; }
+  .map-legend-wrap .map-legend-toggle { position: static; }
+  .map-legend-btn { padding: 8px 12px; border-radius: 10px; background: rgba(26,26,46,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.15); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .map-legend-panel { position: absolute; bottom: 120px; left: 12px; z-index: 21; padding: 12px; border-radius: 12px; background: rgba(26,26,46,0.92); border: 1px solid rgba(255,255,255,0.12); max-height: 240px; overflow-y: auto; min-width: 180px; }
+  .map-legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 3px 0; }
+  .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  .map-info-card { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 25; width: min(320px, calc(100% - 32px)); padding: 14px; border-radius: 14px; background: rgba(26,26,46,0.95); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+  .map-info-card-title { font-size: 14px; font-weight: 700; }
+  .map-info-card-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+  .map-info-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .wifi-badge { background: rgba(96,165,250,0.2); color: #60a5fa; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+  .detour-badge { background: rgba(245,158,11,0.2); color: #f59e0b; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+  .fuel-best-price-badge { font-size: 9px; font-weight: 700; color: #34d399; text-transform: uppercase; margin-bottom: 6px; }
+  .lodging-empty { font-size: 12px; color: var(--muted); padding: 12px 0; }
+  .places-loading { font-size: 12px; color: var(--muted); padding: 8px 0; }
+  .optional-stops-section { margin: 12px 0; }
+  .optional-stop-card { border-color: rgba(107,203,119,0.25); background: rgba(107,203,119,0.08); }
+  .customize-stop-wrap { margin-top: 10px; }
+  .customize-stop-toggle { font-size: 12px; font-weight: 600; color: #FFD28C; background: none; border: none; cursor: pointer; }
+  .customize-stop-panel { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .customize-stop-input { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: inherit; }
