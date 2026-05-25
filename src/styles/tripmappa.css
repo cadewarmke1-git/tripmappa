@@ -1052,6 +1052,133 @@
   .modal-btn-primary { background: var(--ink); color: #fff; }
   .modal-btn-outline { background: var(--surface); color: var(--ink); border: 1.5px solid var(--border); }
 
+  /* ── Lodging cards (Phase 3) ── */
+  .lodging-section { padding: 12px 16px 16px; }
+  .lodging-section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 12px;
+  }
+  .lodging-cards-scroll {
+    display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .lodging-cards-scroll::-webkit-scrollbar { display: none; }
+  .lodging-card {
+    flex: 0 0 min(88%, 320px); scroll-snap-align: start;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; overflow: hidden;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+  }
+  .lodging-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .lodging-card-photo-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; }
+  .lodging-card-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lodging-card-photo-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 45%, transparent 100%);
+    pointer-events: none;
+  }
+  .lodging-card-badges {
+    position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 1;
+  }
+  .lodging-feature-badge {
+    padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    background: rgba(255,210,140,0.95); color: #1a1a2e;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .lodging-type-badge {
+    position: absolute; top: 10px; left: 10px; z-index: 1;
+    padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    background: rgba(26,26,46,0.75); color: #FFD28C; border: 1px solid rgba(255,210,140,0.35);
+  }
+  .lodging-card-body { padding: 14px 16px 16px; }
+  .lodging-card-name {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 17px;
+    letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 6px;
+  }
+  .lodging-stars { display: flex; gap: 2px; margin-bottom: 4px; }
+  .lodging-star { font-size: 14px; color: rgba(255,255,255,0.2); line-height: 1; }
+  .lodging-star.filled { color: #FFD28C; }
+  .lodging-card-neighborhood { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .lodging-card-price {
+    font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 800;
+    color: #FFD28C; letter-spacing: -0.02em; margin-bottom: 10px;
+  }
+  .lodging-card-price-inline { font-size: 14px; font-weight: 800; color: #FFD28C; }
+  .lodging-amenities { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .lodging-amenity-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: 600;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.85);
+  }
+  .lodging-amenity-icon { font-size: 11px; line-height: 1; }
+  .lodging-card-desc { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.75); margin-bottom: 8px; }
+  .lodging-card-distance { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .lodging-detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 10px;
+  }
+  .lodging-detail-item { display: flex; flex-direction: column; gap: 2px; }
+  .lodging-detail-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
+  }
+  .lodging-detail-value { font-size: 12.5px; font-weight: 600; }
+  .lodging-card-food { font-size: 12px; line-height: 1.45; margin-bottom: 10px; color: rgba(255,255,255,0.8); }
+  .lodging-card-food .lodging-detail-label { display: block; margin-bottom: 2px; }
+  .lodging-card-actions { display: flex; gap: 8px; align-items: stretch; }
+  .lodging-btn-book {
+    flex: 1; min-height: 42px; padding: 10px 16px !important; font-size: 13px !important;
+    width: auto !important; border-radius: 12px !important;
+  }
+  .lodging-btn-save {
+    flex-shrink: 0; padding: 10px 16px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.9); font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+  }
+  .lodging-btn-save:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,210,140,0.35); }
+  .lodging-disclaimer {
+    margin-top: 12px; font-size: 10.5px; color: var(--muted); line-height: 1.4;
+    font-style: italic; opacity: 0.85;
+  }
+  .lodging-card-skeleton { pointer-events: none; }
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%);
+    background-size: 200% 100%; animation: lodgingShimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes lodgingShimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  .lodging-card-skeleton .lodging-card-photo { min-height: 160px; }
+  .skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 8px; }
+  .skeleton-title { height: 18px; width: 75%; }
+  .skeleton-stars { height: 14px; width: 40%; }
+  .skeleton-short { width: 50%; }
+  .skeleton-price { height: 22px; width: 35%; margin-bottom: 12px; }
+  .skeleton-desc { height: 36px; width: 100%; }
+  .skeleton-amenities { display: flex; gap: 6px; margin-bottom: 12px; }
+  .skeleton-pill { height: 24px; width: 72px; border-radius: 8px; }
+  .skeleton-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .skeleton-btn { flex: 1; height: 42px; border-radius: 12px; }
+  .skeleton-btn-secondary { flex: 0 0 72px; }
+
+  @media (min-width: 768px) {
+    .lodging-cards-scroll {
+      flex-direction: column; overflow-x: visible; scroll-snap-type: none;
+    }
+    .lodging-card {
+      flex: none; width: 100%; max-width: none;
+    }
+    .lodging-card + .lodging-card { margin-top: 0; }
+  }
+
   /* ── Toast ── */
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 300; background: var(--ink); color: #fff; padding: 11px 20px; border-radius: 99px; font-size: 13.5px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.25); animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; letter-spacing: -0.01em; border: 1px solid rgba(255,255,255,0.08); }
   @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(8px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }

@@ -6,6 +6,7 @@ import {
   skipLodgingQuestion,
 } from "../lib/vehicles.js";
 import BudgetCard from "./BudgetCard.jsx";
+import LodgingCardsSection from "./lodging/LodgingCardsSection.jsx";
 
 export default function StopsResults({
   showHeader = true,
@@ -173,11 +174,11 @@ export default function StopsResults({
           <div className="filter-tabs" style={{ marginTop: roadStops.length > 0 ? 16 : 0 }}>
             {["all", "hotel", "food"].filter(cat =>
               cat === "all"
-              || (cat === "hotel" && stops.some(s => s.hotels?.length > 0))
+              || (cat === "hotel")
               || (cat === "food" && stops.some(s => s.restaurants?.length > 0))
             ).map(cat => (
               <button key={cat} type="button" onClick={() => onStopCategoryChange(cat)} className={`filter-tab${stopCategory === cat ? " active" : ""}`}>
-                {cat === "all" ? "All" : cat === "hotel" ? "Hotels" : "Dining"}
+                {cat === "all" ? "All" : cat === "hotel" ? (isRvResults ? "RV Parks" : isTruckerResults ? "Truck Stops" : "Hotels") : "Dining"}
               </button>
             ))}
           </div>
@@ -193,99 +194,14 @@ export default function StopsResults({
                 {stop.why && <div className="stop-why">{stop.why}</div>}
               </div>
 
-              {isRvResults && stop.rvPark && (
-                <div className="stop-section">
-                  <div className="stop-section-head"><span className="badge badge-rv">RV PARK</span> Full hookup sites</div>
-                  <div className="rv-park-detail">
-                    <div className="item-name">{stop.rvPark.name}</div>
-                    <div className="item-meta">{stop.rvPark.fullHookups} full hookup sites · Max length {stop.rvPark.maxLength}</div>
-                    <div className="item-meta">{stop.rvPark.amp30 ? "30 amp" : ""}{stop.rvPark.amp30 && stop.rvPark.amp50 ? " · " : ""}{stop.rvPark.amp50 ? "50 amp" : ""} · {stop.rvPark.pullThrough} pull-through · {stop.rvPark.backIn} back-in</div>
-                    <div className="item-meta">{stop.rvPark.amenities}</div>
-                    <div className="item-price">{stop.rvPark.rate}</div>
-                    <button type="button" className="action-btn action-btn-gold" style={{ marginTop: 8 }} onClick={() => onToastGold("RV park booking coming in Phase 3 — we'll notify you when live.")}>Reserve Site</button>
-                  </div>
-                </div>
-              )}
-
-              {isRvResults && stop.campground && (
-                <div className="stop-section">
-                  <div className="stop-section-head"><span className="badge badge-camp">CAMPGROUND</span> State / forest campground</div>
-                  <div className="rv-park-detail">
-                    <div className="item-name">{stop.campground.name}</div>
-                    <div className="item-meta">Max RV length: {stop.campground.maxLength} · {stop.campground.hookups}</div>
-                    <div className="item-meta">{stop.campground.distanceFromHighway} from highway · {stop.campground.reservation}</div>
-                  </div>
-                </div>
-              )}
-
-              {isRvResults && stop.freeParking && (
-                <div className="stop-section">
-                  <div className="stop-section-head"><span className="badge badge-free-park">{stop.freeParking.type.toUpperCase()}</span> Free overnight parking</div>
-                  <div className="rv-park-detail">
-                    <div className="item-name">{stop.freeParking.name}</div>
-                    <div className="item-meta">{stop.freeParking.distance}</div>
-                    <div className="free-park-note">{stop.freeParking.note}</div>
-                  </div>
-                </div>
-              )}
-
-              {isTruckerResults && stop.truckStop && (
-                <div className="stop-section truck-stop-section">
-                  <div className="stop-section-head"><span className="badge badge-truck">TRUCK STOP</span> Truck parking</div>
-                  <div className="truck-stop-detail">
-                    <div className="item-name">{stop.truckStop.name}</div>
-                    <div className="item-meta">{stop.truckStop.spaces} spaces · Showers {stop.truckStop.showers ? "✓" : "—"} · Laundry {stop.truckStop.laundry ? "✓" : "—"} · Restaurant {stop.truckStop.restaurant ? "✓" : "—"}</div>
-                    <div className="item-meta">Diesel {stop.truckStop.diesel} · {stop.truckStop.hours}</div>
-                    <button type="button" className="action-btn action-btn-gold" onClick={() => onToastGold("Parking reservation coming in Phase 9 — we'll notify you when live.")}>Reserve Parking</button>
-                  </div>
-                </div>
-              )}
-
-              {isTruckerResults && answers.lodging === "Sleeper cab — no hotel needed" && (
-                <div className="sleeper-cab-card">
-                  <div className="item-name">Parking reserved — no hotel needed</div>
-                  <div className="item-meta">{stop.truckStop?.name} · {stop.truckStop?.spaces} spaces · Showers · Laundry · Restaurant on site</div>
-                </div>
-              )}
-
-              {isTruckerResults && stop.motel && answers.lodging === "Motel near truck stop" && (
-                <div className="stop-section">
-                  <div className="stop-section-head"><span className="badge badge-hotel">MOTEL</span> Near truck stop</div>
-                  <div className="item-row">
-                    <div className="item-info">
-                      <div className="item-name">{stop.motel.name}</div>
-                      <div className="item-meta">{stop.motel.distance} · {stop.motel.parking}</div>
-                    </div>
-                    <div className="item-price">{stop.motel.price}</div>
-                  </div>
-                  <button type="button" className="action-btn action-btn-primary" onClick={() => onToast("Motel reserved!")}>Reserve</button>
-                </div>
-              )}
-
-              {isTruckerResults && stop.restArea && (answers.lodging === "Rest area" || answers.lodging === "Weigh station area") && (
-                <div className="stop-section">
-                  <div className="stop-section-head"><span className="badge badge-rest">REST</span> Rest area</div>
-                  <div className="item-meta">{stop.restArea.name} · {stop.restArea.spaces} truck spaces · {stop.restArea.distance} from city · {stop.restArea.amenities}</div>
-                </div>
-              )}
-
-              {!isTruckerResults && !isRvResults && (stopCategory === "all" || stopCategory === "hotel") && stop.hotels?.length > 0 && (
-                <div className="stop-section">
-                  <div className="stop-section-head"><span className="badge badge-hotel">HOTEL</span> Lodging</div>
-                  {stop.hotels.map((h, hi) => (
-                    <div className="item-row" key={hi} onClick={() => onToast(`Booking ${h.name}`)}>
-                      <div className="item-info">
-                        <div className="item-name">
-                          {h.name}
-                          {h.kidFriendly && <span className="mini-badge kid-badge">Kid-friendly</span>}
-                          {(h.pet || h.petFriendly) && <span className="mini-badge pet-badge">Pet-friendly</span>}
-                        </div>
-                        <div className="item-meta">{h.stars}-star · {h.pet || h.petFriendly ? "Pet-friendly" : "No pets"}</div>
-                      </div>
-                      <div className="item-price">{h.price}</div>
-                    </div>
-                  ))}
-                </div>
+              {(stopCategory === "all" || stopCategory === "hotel") && (
+                <LodgingCardsSection
+                  city={stop.city}
+                  answers={answers}
+                  origin={origin}
+                  dest={dest}
+                  onToast={onToast}
+                />
               )}
               {!isTruckerResults && !isRvResults && (stopCategory === "all" || stopCategory === "food") && wantsRestaurants && stop.restaurants?.length > 0 && (
                 <div className="stop-section">
@@ -302,9 +218,6 @@ export default function StopsResults({
                 </div>
               )}
               <div className="stop-card-actions">
-                {!isTruckerResults && !isRvResults && (
-                  <button type="button" className="action-btn action-btn-primary" style={{ flex: 2 }} onClick={() => onToast("Hotel reserved!")}>Reserve hotel</button>
-                )}
                 {hasPref(answers, "Grocery delivery to hotel") && !isTruckerResults && !isRvResults && (
                   <button type="button" className="action-btn" onClick={() => onGroceryModal(stop.city)}>Grocery</button>
                 )}
