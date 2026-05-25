@@ -1,14 +1,17 @@
 import { formatStarLabel } from "../../lib/ratings.js";
-
-const PLACEHOLDER = "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80";
+import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 
 export default function RoadStopCard({ stop, onAdd }) {
-  const photo = stop.photoUrl || PLACEHOLDER;
-
   return (
     <article className="road-stop-card">
       <div className="road-stop-card-photo-wrap">
-        <img src={photo} alt="" className="road-stop-card-photo" loading="lazy"/>
+        <PlacePhotoOrIcon
+          photoUrl={stop.photoUrl}
+          name={stop.title}
+          category={stop.category}
+          imgClassName="road-stop-card-photo"
+          className="road-stop-card-photo-fallback"
+        />
         {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
         <span className="road-stop-badge-cat">{stop.category || "Stop"}</span>
       </div>

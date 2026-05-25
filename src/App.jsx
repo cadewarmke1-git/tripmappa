@@ -31,6 +31,8 @@ import { stopsToMapMarkers } from "./lib/mapMarkers.js";
 import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
+import { useAuth } from "./context/AuthContext.jsx";
+import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -39,12 +41,15 @@ import TripsPanel from "./components/TripsPanel.jsx";
 import SharePanel from "./components/SharePanel.jsx";
 import GroceryModal from "./components/GroceryModal.jsx";
 import EmailModal from "./components/EmailModal.jsx";
+import SignInModal from "./components/auth/SignInModal.jsx";
+import OAuthComingSoonModal from "./components/auth/OAuthComingSoonModal.jsx";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
 import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
 
 export default function App() {
+  const { user, signUp, signIn, signOut, resetPassword, signInWithOAuth, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
   const [view, setView] = useState("hero"); // "hero" | "app"
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
@@ -56,7 +61,9 @@ export default function App() {
   const [heroLaunching, setHeroLaunching] = useState(false);
   const [heroEmail, setHeroEmail] = useState("");
   const [heroSearchHover, setHeroSearchHover] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [authModal, setAuthModal] = useState(null); // signin | signup | oauth-google | oauth-facebook | oauth-apple
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState([]);
@@ -80,6 +87,8 @@ export default function App() {
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
   const [roadStops, setRoadStops] = useState([]);
+  const [tripFormat, setTripFormat] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const [selectedLodging, setSelectedLodging] = useState([]);
   const [tripAlerts, setTripAlerts] = useState([]);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
@@ -99,14 +108,151 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
 
-  function saveTripComingSoon() {
-    toast_("Sign in to save trips — coming in Phase 6");
+  function openAuthModal(mode) {
+    setAuthError("");
+    setAuthModal(mode);
   }
 
-  function deleteSavedTrip(id) {
+  async function handleOAuth(provider) {
+    setAuthError("");
+    if (!isAuthConfigured) {
+      openAuthModal(`oauth-${provider}`);
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      await signInWithOAuth(provider);
+    } catch (err) {
+      setAuthBusy(false);
+      setAuthError(err.message || `${provider} sign in failed`);
+      openAuthModal(`oauth-${provider}`);
+    }
+  }
+
+  async function handleEmailSignUp({ email, password }) {
+    if (!email?.trim()) {
+      setAuthError("Enter your email");
+      return;
+    }
+    if (!password || password.length < 8) {
+      setAuthError("Password must be at least 8 characters");
+      return;
+    }
+    if (!isAuthConfigured) {
+      toast_("Auth is not configured — add Supabase env vars");
+      return;
+    }
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      const { session } = await signUp(email, password);
+      if (session) {
+        toast_("Welcome to TripMappa!", true);
+        setAuthModal(null);
+      } else {
+        toast_("Check your email to confirm your account", true);
+        setAuthModal(null);
+      }
+    } catch (err) {
+      setAuthError(err.message || "Sign up failed");
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handleSignInSubmit({ email, password }) {
+    if (!email?.trim() || !password) {
+      setAuthError("Enter email and password");
+      return;
+    }
+    if (!isAuthConfigured) {
+      toast_("Auth is not configured — add Supabase env vars");
+      return;
+    }
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      await signIn(email, password);
+      toast_("Signed in", true);
+      setAuthModal(null);
+    } catch (err) {
+      setAuthError(err.message || "Sign in failed");
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handleForgotPassword(email) {
+    if (!email?.trim()) {
+      toast_("Enter your email first");
+      return;
+    }
+    if (!isAuthConfigured) {
+      toast_("Auth is not configured — add Supabase env vars");
+      return;
+    }
+    try {
+      await resetPassword(email);
+      toast_("Password reset email sent — check your inbox", true);
+    } catch (err) {
+      toast_(err.message || "Could not send reset email");
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+      toast_("Signed out");
+    } catch (err) {
+      toast_(err.message || "Could not sign out");
+    }
+  }
+
+  async function saveCurrentTrip() {
+    if (!user) {
+      openAuthModal("signin");
+      toast_("Sign in to save trips");
+      return;
+    }
+    if (!origin?.trim() || !dest?.trim()) {
+      toast_("Plan a trip first");
+      return;
+    }
+    const tripPayload = {
+      origin,
+      dest,
+      date: new Date().toLocaleDateString(),
+      stops,
+      roadStops,
+      tripTips,
+      answers: stripSessionOnlyAnswers(answers),
+      routeInfo,
+      selectedLodging,
+    };
+    try {
+      const saved = await saveTrip(user.id, tripPayload);
+      setSavedTrips(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+      toast_("Trip saved", true);
+    } catch (err) {
+      console.error("Save trip error:", err);
+      toast_(err.message || "Could not save trip");
+    }
+  }
+
+  async function deleteSavedTrip(id) {
+    if (user) {
+      try {
+        await deleteTrip(user.id, id);
+      } catch (err) {
+        toast_(err.message || "Could not delete trip");
+        return;
+      }
+    }
     const updated = savedTrips.filter(t => t.id !== id);
     setSavedTrips(updated);
-    try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
+    if (!user) {
+      try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
+    }
     toast_("Trip removed");
   }
   const [toast, setToast] = useState(null);
@@ -122,6 +268,34 @@ export default function App() {
   const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'pop' | 'exit' }
   const stepAnimTimer = useRef(null);
   const helpWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (authLoading) return undefined;
+    if (!user) {
+      try {
+        setSavedTrips(JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"));
+      } catch {
+        setSavedTrips([]);
+      }
+      return undefined;
+    }
+
+    setAuthModal(null);
+    setAuthBusy(false);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await migrateLocalTrips(user.id);
+        const trips = await fetchTrips(user.id);
+        if (!cancelled) setSavedTrips(trips);
+      } catch (err) {
+        console.warn("Could not load saved trips:", err);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id, authLoading]);
 
   // ── Google Maps ──
   const { isLoaded } = useJsApiLoader({
@@ -711,6 +885,8 @@ export default function App() {
     setStops(parsed.stops);
     setRoadStops(parsed.roadStops);
     setTripTips(parsed.tripTips);
+    setTripFormat(parsed.tripFormat || null);
+    setRecommendations(parsed.recommendations || []);
     if (parsed.hosCompliance) setHosCompliance(parsed.hosCompliance);
     if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
     if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
@@ -832,6 +1008,8 @@ export default function App() {
       setStops(parsed.stops);
       setRoadStops(parsed.roadStops);
       setTripTips(parsed.tripTips);
+      setTripFormat(parsed.tripFormat || null);
+      setRecommendations(parsed.recommendations || []);
       if (parsed.hosCompliance) setHosCompliance(parsed.hosCompliance);
       if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
       if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
@@ -847,6 +1025,8 @@ export default function App() {
       setStops(fallback.stops);
       setRoadStops(fallback.roadStops);
       setTripTips(fallback.tripTips);
+      setTripFormat("simplified");
+      setRecommendations([]);
       if (fallback.hosCompliance) setHosCompliance(fallback.hosCompliance);
       setTruckSafety(fallback.truckSafety);
       setRvSafety(fallback.rvSafety);
@@ -869,7 +1049,7 @@ export default function App() {
   function resetPlan() {
     setAnswers({}); setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
-    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setSelectedLodging([]); setStopCategory("all");
+    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]); setStopCategory("all");
     setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
     setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
@@ -895,7 +1075,7 @@ export default function App() {
       return;
     }
     navigator.clipboard?.writeText(link).catch(() => {});
-    toast_("Safety itinerary link copied — send to a trusted contact");
+    toast_("Safety trip link copied — send to a trusted contact");
   }
 
   useEffect(() => {
@@ -992,12 +1172,16 @@ export default function App() {
     setOrigin(trip.origin);
     setDest(trip.dest);
     setStops(trip.stops || []);
+    setRoadStops(trip.roadStops || []);
     setTripTips(trip.tripTips || []);
     setAnswers(stripSessionOnlyAnswers(trip.answers || {}));
+    setRouteInfo(trip.routeInfo || null);
+    setSelectedLodging(trip.selectedLodging || []);
     setGenerated(true);
     setResultsView("itinerary");
     setConvoComplete(true);
     setTab("plan");
+    setView("app");
     toast_("Trip loaded");
   }
 
@@ -1022,8 +1206,13 @@ export default function App() {
         heroOriginRef={heroOriginRef}
         heroDestRef={heroDestRef}
         onThemeToggle={toggleTheme}
-        onLogin={() => setView("app")}
-        onSignup={() => setView("app")}
+        user={user}
+        onSignOut={handleSignOut}
+        onLogin={() => openAuthModal("signin")}
+        onSignup={() => openAuthModal("signup")}
+        onGoogle={() => handleOAuth("google")}
+        onFacebook={() => handleOAuth("facebook")}
+        onApple={() => handleOAuth("apple")}
         onSearchHover={setHeroSearchHover}
         onSwap={swapHeroCities}
         onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; }}
@@ -1039,15 +1228,40 @@ export default function App() {
         onHeroOriginChange={v => { setHeroOrigin(v); setHeroOriginError(""); }}
         onHeroDestChange={v => { setHeroDest(v); setHeroDestError(""); }}
         onLaunch={launchFromHero}
-        onShowEmailModal={() => setShowEmailModal(true)}
+        onShowEmailModal={() => openAuthModal("signup")}
       />
-      {showEmailModal && (
+      {authModal === "signup" && (
         <EmailModal
           email={heroEmail}
           onEmailChange={setHeroEmail}
-          onClose={() => setShowEmailModal(false)}
-          onContinue={() => { if (heroEmail.trim()) { setShowEmailModal(false); setView("app"); } else toast_("Enter your email"); }}
-          onContinueWithEnter={() => { if (heroEmail.trim()) { setShowEmailModal(false); setView("app"); } }}
+          onClose={() => setAuthModal(null)}
+          onSignUp={handleEmailSignUp}
+          onSwitchToSignIn={() => openAuthModal("signin")}
+          onGoogle={() => handleOAuth("google")}
+          onFacebook={() => handleOAuth("facebook")}
+          onApple={() => handleOAuth("apple")}
+          loading={authBusy}
+          error={authError}
+        />
+      )}
+      {authModal === "signin" && (
+        <SignInModal
+          onClose={() => setAuthModal(null)}
+          onSignIn={handleSignInSubmit}
+          onForgotPassword={handleForgotPassword}
+          onSwitchToSignup={() => openAuthModal("signup")}
+          onGoogle={() => handleOAuth("google")}
+          onFacebook={() => handleOAuth("facebook")}
+          onApple={() => handleOAuth("apple")}
+          loading={authBusy}
+          error={authError}
+        />
+      )}
+      {!isAuthConfigured && authModal?.startsWith("oauth-") && (
+        <OAuthComingSoonModal
+          provider={authModal.replace("oauth-", "")}
+          onClose={() => setAuthModal(null)}
+          onUseEmail={() => openAuthModal("signup")}
         />
       )}
       <Toast message={toast} isGold={toastIsGold} />
@@ -1072,11 +1286,17 @@ export default function App() {
           )}
           <div className="nav-right" style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
+            {user && <span className="nav-user-label" title={user.email}>{user.email?.split("@")[0]}</span>}
             {!(generated && resultsView === "map") && (
               <>
-                <button type="button" className="nav-btn" onClick={saveTripComingSoon}>Save trip</button>
+                <button type="button" className="nav-btn" onClick={saveCurrentTrip}>Save trip</button>
                 <button type="button" className="nav-btn nav-btn-primary" onClick={handleShareItinerary}>Share</button>
               </>
+            )}
+            {user ? (
+              <button type="button" className="nav-btn nav-btn-ghost" onClick={handleSignOut}>Sign out</button>
+            ) : (
+              <button type="button" className="nav-btn nav-btn-ghost" onClick={() => openAuthModal("signin")}>Log in</button>
             )}
           </div>
         </nav>
@@ -1084,6 +1304,7 @@ export default function App() {
 
         {generated && resultsView === "itinerary" ? (
           <TripResultsPanel
+            theme={theme}
             origin={origin}
             dest={dest}
             answers={answers}
@@ -1091,6 +1312,8 @@ export default function App() {
             roadStops={roadStops}
             routeInfo={routeInfo}
             tripLegs={tripLegs}
+            tripFormat={tripFormat}
+            recommendations={recommendations}
             selectedLodging={selectedLodging}
             tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
             activitiesByCity={activitiesByCity}
@@ -1109,7 +1332,7 @@ export default function App() {
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen">
             <header className="trip-results-topbar trip-map-topbar">
-              <button type="button" className="trip-results-back" onClick={() => setResultsView("itinerary")}>← View Itinerary</button>
+              <button type="button" className="trip-results-back" onClick={() => setResultsView("itinerary")}>← View Trip</button>
               <div className="trip-results-topbar-title">{origin} → {dest}</div>
               <button type="button" className="trip-results-map-btn" onClick={() => { setResultsView("planning"); setGenerated(false); setTab("plan"); }}>Edit Trip</button>
             </header>
@@ -1244,8 +1467,8 @@ export default function App() {
                   {tab === "share" && (
                     <SharePanel
                       onCopyLink={() => toast_("Link copied")}
-                      onShareItinerary={handleShareItinerary}
-                      hasItinerary={generated && (stops.length > 0 || roadStops.length > 0)}
+                      onShareTrip={handleShareItinerary}
+                      hasTrip={generated && (stops.length > 0 || roadStops.length > 0)}
                     />
                   )}
                 </div>
@@ -1275,6 +1498,40 @@ export default function App() {
           onTextChange={setReportText}
           onClose={() => { setModal(null); setReportText(""); }}
           onSubmit={() => { toast_("Thanks — we'll review your report"); setModal(null); setReportText(""); }}
+        />
+      )}
+      {authModal === "signup" && (
+        <EmailModal
+          email={heroEmail}
+          onEmailChange={setHeroEmail}
+          onClose={() => setAuthModal(null)}
+          onSignUp={handleEmailSignUp}
+          onSwitchToSignIn={() => openAuthModal("signin")}
+          onGoogle={() => handleOAuth("google")}
+          onFacebook={() => handleOAuth("facebook")}
+          onApple={() => handleOAuth("apple")}
+          loading={authBusy}
+          error={authError}
+        />
+      )}
+      {authModal === "signin" && (
+        <SignInModal
+          onClose={() => setAuthModal(null)}
+          onSignIn={handleSignInSubmit}
+          onForgotPassword={handleForgotPassword}
+          onSwitchToSignup={() => openAuthModal("signup")}
+          onGoogle={() => handleOAuth("google")}
+          onFacebook={() => handleOAuth("facebook")}
+          onApple={() => handleOAuth("apple")}
+          loading={authBusy}
+          error={authError}
+        />
+      )}
+      {!isAuthConfigured && authModal?.startsWith("oauth-") && (
+        <OAuthComingSoonModal
+          provider={authModal.replace("oauth-", "")}
+          onClose={() => setAuthModal(null)}
+          onUseEmail={() => openAuthModal("signup")}
         />
       )}
       <Toast message={toast} isGold={toastIsGold} />

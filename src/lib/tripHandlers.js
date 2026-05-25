@@ -73,11 +73,7 @@ export function buildFallbackTripData(answers, routeInfo) {
       fuel: f.fuel, highClearance: f.highClearance, rvFriendly: f.rvFriendly, def: f.def, amenities: f.amenities,
     })));
   } else if (isDayOrHome) {
-    roadStops = ROAD_STOPS_FALLBACK.map(s => ({
-      ...normalizeRoadStop(s),
-      petRelief: hasPref(answers, "Pet friendly"),
-      scenic: isScenicRoute(answers),
-    }));
+    roadStops = [];
   } else {
     const numStops = hours <= 6 ? 1 : hours <= 12 ? 2 : hours <= 20 ? 3 : 4;
     stops = STOPS_DATA.slice(0, numStops).map(s => ({
@@ -88,9 +84,7 @@ export function buildFallbackTripData(answers, routeInfo) {
       })),
       scenicView: isScenicRoute(answers) ? "Scenic viewpoint nearby" : null,
     }));
-    roadStops = ROAD_STOPS_FALLBACK.slice(0, partySize >= 4 ? 4 : 3).map(s => normalizeRoadStop({
-      ...s, scenic: isScenicRoute(answers),
-    }));
+    roadStops = [];
   }
 
   const tips = [];
@@ -126,6 +120,8 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
       stops: mapHotelStops(apiStops),
       roadStops: apiRoadStops,
       tripTips: Array.isArray(data.tips) && data.tips.length ? data.tips : [],
+      tripFormat: data.trip_format || "multi_day",
+      recommendations: data.recommendations || [],
       usedFallback: false,
     };
   }
@@ -134,6 +130,8 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
       stops: [],
       roadStops: apiRoadStops,
       tripTips: Array.isArray(data.tips) && data.tips.length ? data.tips : [],
+      tripFormat: data.trip_format || "simplified",
+      recommendations: data.recommendations || [],
       usedFallback: false,
     };
   }
@@ -142,6 +140,8 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
     stops: fallback.stops,
     roadStops: fallback.roadStops,
     tripTips: fallback.tripTips,
+    tripFormat: "simplified",
+    recommendations: [],
     hosCompliance: fallback.hosCompliance,
     truckSafety: fallback.truckSafety,
     rvSafety: fallback.rvSafety,

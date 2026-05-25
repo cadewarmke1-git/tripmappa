@@ -1,14 +1,14 @@
-export default function SharePanel({ onCopyLink, onShareItinerary, hasItinerary = false }) {
+export default function SharePanel({ onCopyLink, onShareTrip, hasTrip = false }) {
   return (
     <div className="share-wrap">
-      {hasItinerary && (
+      {hasTrip && (
         <div className="share-safety-block">
-          <div className="share-safety-title">Share My Itinerary for Safety</div>
+          <div className="share-safety-title">Share My Trip for Safety</div>
           <div className="share-safety-sub">
             Generate a read-only link with all stops, hotels, and timing to send a trusted contact before you depart.
           </div>
-          <button type="button" className="btn-generate share-safety-btn" onClick={onShareItinerary}>
-            Copy safety itinerary link
+          <button type="button" className="btn-generate share-safety-btn" onClick={onShareTrip}>
+            Copy safety trip link
           </button>
         </div>
       )}

@@ -1,23 +1,23 @@
 import { useState } from "react";
-import AuthSocialButtons from "./auth/AuthSocialButtons.jsx";
+import AuthSocialButtons from "./AuthSocialButtons.jsx";
 
-export default function EmailModal({
-  email,
-  onEmailChange,
+export default function SignInModal({
   onClose,
-  onSignUp,
-  onSwitchToSignIn,
+  onSignIn,
+  onForgotPassword,
+  onSwitchToSignup,
   onGoogle,
   onFacebook,
   onApple,
   loading = false,
   error = "",
 }) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   function handleSubmit(e) {
     e?.preventDefault();
-    onSignUp?.({ email, password });
+    onSignIn?.({ email, password });
   }
 
   return (
@@ -25,45 +25,46 @@ export default function EmailModal({
       <div className="auth-modal">
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <div className="auth-modal-logo">Trip<span>Mappa</span></div>
-        <h2 className="auth-modal-headline">Start planning your perfect trip.</h2>
-        <p className="auth-modal-sub">Create your free account to save trips, share routes, and unlock premium features.</p>
+        <h2 className="auth-modal-headline">Welcome back.</h2>
+        <p className="auth-modal-sub">Sign in to pick up where you left off.</p>
 
         <form className="auth-modal-form" onSubmit={handleSubmit}>
-          <label className="auth-field-label" htmlFor="signup-email">Email</label>
+          <label className="auth-field-label" htmlFor="signin-email">Email</label>
           <input
-            id="signup-email"
+            id="signin-email"
             type="email"
             className="auth-field-input"
             placeholder="you@example.com"
             value={email}
-            onChange={e => onEmailChange(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             autoComplete="email"
             disabled={loading}
           />
-          <label className="auth-field-label" htmlFor="signup-password">Password</label>
+          <label className="auth-field-label" htmlFor="signin-password">Password</label>
           <input
-            id="signup-password"
+            id="signin-password"
             type="password"
             className="auth-field-input"
-            placeholder="At least 8 characters"
+            placeholder="Your password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            autoComplete="new-password"
-            minLength={8}
+            autoComplete="current-password"
             disabled={loading}
           />
+          <button type="button" className="auth-forgot-link" onClick={() => onForgotPassword?.(email)} disabled={loading}>
+            Forgot password?
+          </button>
           {error && <p className="auth-modal-error">{error}</p>}
           <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
-            {loading ? "Creating account…" : "Create My Account →"}
+            {loading ? "Signing in…" : "Sign In →"}
           </button>
         </form>
 
         <div className="auth-modal-divider"><span>or sign in with</span></div>
         <AuthSocialButtons onGoogle={onGoogle} onFacebook={onFacebook} onApple={onApple} compact disabled={loading}/>
-
         <p className="auth-modal-footer">
-          Already have an account?{" "}
-          <button type="button" className="auth-modal-link-btn" onClick={onSwitchToSignIn} disabled={loading}>Sign in.</button>
+          New here?{" "}
+          <button type="button" className="auth-modal-link-btn" onClick={onSwitchToSignup} disabled={loading}>Create an account</button>
         </p>
       </div>
     </div>

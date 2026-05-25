@@ -1,6 +1,19 @@
-/** Build day-by-day itinerary structure from trip stops. */
+/** Build day-by-day trip structure from trip stops. */
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { parseRating, isLocalFavorite } from "./ratings.js";
+import { skipLodgingQuestion, getEffectiveVehicle } from "./vehicles.js";
+
+export function isSimplifiedTrip({ answers, routeInfo, stops = [], tripFormat }) {
+  if (tripFormat === "simplified") return true;
+  if (tripFormat === "multi_day") return false;
+  const tripType = answers?.trip_type;
+  const vehicle = getEffectiveVehicle(answers);
+  if (skipLodgingQuestion(tripType, vehicle)) return true;
+  const miles = parseMilesFromDistance(routeInfo?.distance) || 0;
+  if (miles > 0 && miles < 150) return true;
+  if (!stops.filter(s => s.city).length) return true;
+  return false;
+}
 
 function addDays(date, days) {
   const d = new Date(date);
@@ -84,6 +97,7 @@ export function buildItineraryDays({
   optionalStopCards = [],
   activitiesByCity = {},
   restaurantsByCity = {},
+  recommendations = [],
 }) {
   const dep = departureTime instanceof Date ? departureTime : (departureTime ? new Date(departureTime) : new Date());
   const overnightStops = stops.filter(s => s.city);
@@ -103,7 +117,7 @@ export function buildItineraryDays({
       drivingSummary: dayDrivingSummary(0, 1, routeInfo),
       roadStops: roadItems,
       overnight: null,
-      activities: pickActivities(origin, activitiesByCity, restaurantsByCity),
+      activities: pickActivities(origin, activitiesByCity, restaurantsByCity, recommendations),
       overnightCity: null,
     });
     return days;
@@ -135,7 +149,7 @@ export function buildItineraryDays({
         stopData: stop,
         action: "book",
       },
-      activities: pickActivities(stop.city, activitiesByCity, restaurantsByCity),
+      activities: pickActivities(stop.city, activitiesByCity, restaurantsByCity, recommendations),
       overnightCity: stop.city,
       stopIndex: dayIdx,
     });
@@ -144,7 +158,19 @@ export function buildItineraryDays({
   return days;
 }
 
-function pickActivities(city, activitiesByCity, restaurantsByCity) {
+function pickActivities(city, activitiesByCity, restaurantsByCity, recommendations = []) {
+  const fromRecs = recommendations.slice(0, 3).map((r, i) => ({
+    id: r.id || `rec-${i}`,
+    name: r.name,
+    category: r.category || "Recommendation",
+    rating: parseRating(r.rating),
+    photoUrl: r.photoUrl,
+    address: r.address || r.note,
+    lat: r.lat,
+    lng: r.lng,
+    distanceMiles: r.distanceMiles,
+  }));
+  if (fromRecs.length) return fromRecs;
   const acts = activitiesByCity?.[city] || [];
   const rests = restaurantsByCity?.[city] || [];
   const merged = [

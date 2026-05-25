@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
 import { processLodgingResults } from "../../lib/lodgingPlaces.js";
 import { formatStarLabel } from "../../lib/ratings.js";
+import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import AmenityBadges from "../lodging/AmenityBadges.jsx";
-
-const PLACEHOLDER = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&q=80";
 
 export default function OvernightStayCard({ overnight, answers, routeInfo, selectedLodging, onLodgingSelect, onToast }) {
   const [hotel, setHotel] = useState(null);
@@ -30,10 +29,10 @@ export default function OvernightStayCard({ overnight, answers, routeInfo, selec
   }, [overnight?.city, overnight?.lat, overnight?.lng, answers, routeInfo]);
 
   const featured = hotel || (selectedLodging.length ? selectedLodging[0] : null);
-  const photo = featured?.photo || PLACEHOLDER;
   const name = featured?.name || overnight?.title || overnight?.city;
-  const price = featured?.priceLabel || featured?.pricePerNight ? `$${featured.pricePerNight}/night` : null;
+  const price = featured?.priceLabel || (featured?.pricePerNight ? `$${featured.pricePerNight}/night` : null);
   const desc = overnight?.description || featured?.description || "Your home base for the night.";
+  const photoUrl = featured?.photo || featured?.photoUrl || null;
 
   function handleBook() {
     if (featured?.bookUrl) window.open(featured.bookUrl, "_blank", "noopener,noreferrer");
@@ -48,7 +47,13 @@ export default function OvernightStayCard({ overnight, answers, routeInfo, selec
   return (
     <article className="overnight-card">
       <div className="overnight-card-hero">
-        <img src={photo} alt="" className="overnight-card-photo" loading="lazy"/>
+        <PlacePhotoOrIcon
+          photoUrl={photoUrl}
+          name={name}
+          category="Stay"
+          imgClassName="overnight-card-photo"
+          className="overnight-card-photo-fallback"
+        />
         <div className="overnight-card-gradient"/>
       </div>
       <div className="overnight-card-body">

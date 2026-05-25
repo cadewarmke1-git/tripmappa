@@ -216,6 +216,25 @@
 .app-wrap.day .budget-breakdown-label { color: rgba(26,26,46,0.45) !important; }
 .app-wrap.day .budget-breakdown-name { color: rgba(26,26,46,0.55) !important; }
 
+/* Trip results panel — day: light frosted glass */
+.app-wrap.day {
+  --results-bg: linear-gradient(180deg, #f4faf8 0%, #eef6f2 50%, #e8f0ec 100%);
+  --results-topbar-bg: rgba(255,255,255,0.88);
+  --results-card-bg: rgba(255,255,255,0.82);
+  --results-card-border: rgba(255,210,140,0.45);
+  --gold: rgba(180,120,30,0.95);
+}
+.app-wrap.day .trip-results-panel { color: var(--charcoal) !important; }
+.app-wrap.day .trip-results-topbar { border-bottom-color: rgba(26,26,46,0.08) !important; }
+.app-wrap.day .trip-results-back, .app-wrap.day .trip-results-map-btn { color: rgba(180,120,30,0.95) !important; }
+.app-wrap.day .trip-results-map-btn { background: rgba(255,210,140,0.2) !important; border-color: rgba(255,210,140,0.5) !important; }
+.app-wrap.day .trip-overview-hero { box-shadow: 0 16px 48px rgba(26,26,46,0.1) !important; }
+.app-wrap.day .road-stop-add-btn, .app-wrap.day .activity-dining-add {
+  color: rgba(180,120,30,0.95) !important;
+  background: rgba(255,210,140,0.15) !important;
+  border-color: rgba(255,210,140,0.45) !important;
+}
+
 /* Float card — night: dark frosted glass */
 .app-wrap.night .float-card {
   background: rgba(15, 20, 40, 0.75) !important;
@@ -331,6 +350,17 @@
 .app-wrap.night .results-route { color: #fff; }
 .app-wrap.night .results-header-divider { background: rgba(255,255,255,0.1); }
 
+/* Trip results panel — night: dark premium cards */
+.app-wrap.night {
+  --results-bg: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 40%, #12121f 100%);
+  --results-topbar-bg: rgba(15,15,26,0.92);
+  --results-card-bg: linear-gradient(145deg, rgba(20,20,35,0.95) 0%, rgba(30,30,50,0.85) 50%, rgba(255,210,140,0.08) 100%);
+  --results-card-border: rgba(255,210,140,0.18);
+  --gold: #FFD28C;
+}
+.app-wrap.night .trip-results-panel { color: #f4f4f5 !important; }
+.app-wrap.night .trip-overview-hero { box-shadow: 0 16px 48px rgba(0,0,0,0.25) !important; }
+
 /* Two-layer opacity crossfade — same technique as hero */
 .app-wrap .sidebar-day-layer, .app-wrap .sidebar-night-layer {
   position: absolute; inset: 0; pointer-events: none;
@@ -385,6 +415,16 @@
 .app-wrap .route-line,
 .app-wrap .route-dot,
 .app-wrap .section-sep {
+  transition: background 1.8s ease, background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease !important;
+}
+
+.app-wrap .trip-results-panel,
+.app-wrap .trip-results-topbar,
+.app-wrap .trip-overview-hero,
+.app-wrap .road-stop-card,
+.app-wrap .overnight-card,
+.app-wrap .activity-dining-card,
+.app-wrap .trip-summary-footer {
   transition: background 1.8s ease, background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease !important;
 }
 

@@ -108,10 +108,7 @@ export const STOPS_DATA = [
 ];
 
 export const ROAD_STOPS_FALLBACK = [
-  { location:"Amarillo, TX", distance:"180 mi", eta:"2h 45m", category:"fuel", name:"Buc-ee's", note:"120 pumps · clean restrooms · snacks" },
-  { location:"Tucumcari, NM", distance:"95 mi", eta:"1h 30m", category:"food", name:"Whataburger", note:"Quick bite · drive-thru" },
-  { location:"Albuquerque, NM", distance:"140 mi", eta:"2h 10m", category:"rest", name:"New Mexico Welcome Center", note:"Restrooms · picnic area" },
-  { location:"Gallup, NM", distance:"200 mi", eta:"3h", category:"fuel", name:"Love's Travel Stop", note:"Fuel · coffee · parking" },
+  { location: "Along route", distance: "—", eta: "—", category: "rest", name: "Rest area", note: "Scenic pull-off" },
 ];
 
 export function normalizeRoadStop(s) {

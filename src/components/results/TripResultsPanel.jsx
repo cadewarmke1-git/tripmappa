@@ -1,12 +1,14 @@
 import { useMemo, useRef } from "react";
-import { buildItineraryDays } from "../../lib/itineraryDays.js";
+import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
+import SimpleTripSection from "./SimpleTripSection.jsx";
 import TripSummaryFooter from "./TripSummaryFooter.jsx";
 import TripAlertsBanner from "../TripAlertsSection.jsx";
 
 export default function TripResultsPanel({
+  theme,
   origin,
   dest,
   answers,
@@ -14,6 +16,8 @@ export default function TripResultsPanel({
   roadStops,
   routeInfo,
   tripLegs,
+  tripFormat,
+  recommendations = [],
   selectedLodging = [],
   tripAlerts = [],
   activitiesByCity = {},
@@ -30,6 +34,10 @@ export default function TripResultsPanel({
   onToast,
 }) {
   const dayRefs = useRef([]);
+  const simplified = useMemo(
+    () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),
+    [answers, routeInfo, stops, tripFormat],
+  );
 
   const days = useMemo(() => buildItineraryDays({
     origin,
@@ -40,7 +48,8 @@ export default function TripResultsPanel({
     departureTime,
     activitiesByCity,
     restaurantsByCity,
-  }), [origin, dest, stops, roadStops, routeInfo, departureTime, activitiesByCity, restaurantsByCity]);
+    recommendations,
+  }), [origin, dest, stops, roadStops, routeInfo, departureTime, activitiesByCity, restaurantsByCity, recommendations]);
 
   function scrollToDay(index) {
     onDaySelect?.(index);
@@ -48,10 +57,10 @@ export default function TripResultsPanel({
   }
 
   return (
-    <div className="trip-results-panel">
+    <div className={`trip-results-panel trip-results-panel-${theme || "night"}`}>
       <header className="trip-results-topbar">
         <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit Trip</button>
-        <div className="trip-results-topbar-title">Your Itinerary</div>
+        <div className="trip-results-topbar-title">Your Trip</div>
         <button type="button" className="trip-results-map-btn" onClick={onViewMap}>View on Map</button>
       </header>
 
@@ -67,23 +76,34 @@ export default function TripResultsPanel({
           selectedLodging={selectedLodging}
         />
 
-        <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
+        {!simplified && days.length > 1 && (
+          <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
+        )}
 
         <TripAlertsBanner alerts={tripAlerts} onDismiss={onDismissAlert} />
 
-        {days.map((day, i) => (
-          <ResultsDaySection
-            key={day.dayNumber}
-            day={day}
-            answers={answers}
-            routeInfo={routeInfo}
-            selectedLodging={selectedLodging}
-            onLodgingSelect={onLodgingSelect}
-            onToast={onToast}
+        {simplified ? (
+          <SimpleTripSection
+            days={days}
+            roadStops={roadStops}
+            recommendations={recommendations}
             onAddRoadStop={onAddRoadStop}
-            sectionRef={el => { dayRefs.current[i] = el; }}
           />
-        ))}
+        ) : (
+          days.map((day, i) => (
+            <ResultsDaySection
+              key={day.dayNumber}
+              day={day}
+              answers={answers}
+              routeInfo={routeInfo}
+              selectedLodging={selectedLodging}
+              onLodgingSelect={onLodgingSelect}
+              onToast={onToast}
+              onAddRoadStop={onAddRoadStop}
+              sectionRef={el => { dayRefs.current[i] = el; }}
+            />
+          ))
+        )}
 
         <TripSummaryFooter
           answers={answers}

@@ -15,6 +15,7 @@ import {
   getTripBudgetCap,
 } from "./tripAccommodations.js";
 import { buildFuelIntervalPoints, getFuelStopMode, sampleRoutePointsEveryMiles } from "./fuel.js";
+import { buildRoadStopsFromRoute } from "./roadStopsFromPlaces.js";
 import { computeBudgetEstimate } from "./budget.js";
 import { parseMilesFromDistance } from "./parsing.js";
 
@@ -53,7 +54,12 @@ export async function enrichGeneratedTrip({
   const optionalStopCards = [];
   const poiMarkers = [];
   const enrichedStops = stops.map(s => ({ ...s }));
-  const safeRoadStops = roadStops.map(rs => ({ ...rs }));
+  let safeRoadStops = roadStops.map(rs => ({ ...rs }));
+
+  const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
+  if (corridorRoadStops.length > 0) {
+    safeRoadStops = corridorRoadStops;
+  }
 
   const interests = asArray(answers?.stops_interests).filter(i => i !== "No specific interests");
   const serviceCats = serviceCategoriesForAnswers();

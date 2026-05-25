@@ -1,12 +1,17 @@
 import { formatStarLabel } from "../../lib/ratings.js";
-
-const PLACEHOLDER = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80";
+import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 
 export default function ActivityDiningCard({ item, onAdd }) {
   return (
     <article className="activity-dining-card">
       <div className="activity-dining-photo-wrap">
-        <img src={item.photoUrl || PLACEHOLDER} alt="" className="activity-dining-photo" loading="lazy"/>
+        <PlacePhotoOrIcon
+          photoUrl={item.photoUrl}
+          name={item.name}
+          category={item.category}
+          imgClassName="activity-dining-photo"
+          className="activity-dining-photo-fallback"
+        />
         <span className="activity-dining-cat">{item.category}</span>
       </div>
       <div className="activity-dining-body">

@@ -87,7 +87,7 @@ export default async function handler(req, res) {
 - Sleeper cab: ${answers?.sleeper_cab || "Unknown"}${answers?.lodging ? ` · Lodging plan: ${answers.lodging}` : ""}
 - Preferred truck stop brand: ${answers?.truck_stop_brand || answers?.truck_stop_preference || "No preference"}
 - HOS compliance REQUIRED: ${answers?.hos_compliance !== false ? "Yes — 11-hour daily driving limit, mandatory 30-minute break every 8 hours, minimum 10-hour rest at each overnight stop" : "Yes"}
-- Prioritize ${answers?.truck_stop_brand && answers.truck_stop_brand !== "No preference" ? answers.truck_stop_brand : "Pilot/Flying J, Love's, Petro, or TA"} truck stops when brand preference set
+- Prioritize the user's preferred truck stop brand when set; otherwise recommend suitable truck stops from placesContext only
 - Use hauling type to tailor stops (${answers?.hauling_type || "General freight"} — e.g. reefer amenities for refrigerated, flatbed parking for flatbed)
 - If sleeper cab: recommend truck stop parking only; if no sleeper: include motel rooms near truck stops
 - Apply route restrictions to avoid tolls or specified states as listed
@@ -103,9 +103,8 @@ export default async function handler(req, res) {
 - Lodging: ${answers?.lodging || "RV parks and campgrounds"} (auto-route to RV parks — no hotels)
 - Height: ${answers?.rv_height || "11'0\""} · Weight: ${answers?.rv_weight || "12,000 lbs"} · Towing: ${answers?.rv_towing || "No"} (assumed standard RV dimensions)
 - Flag low bridges under 14ft clearance, steep grades over 8%, sharp switchbacks
-- Include KOA, Good Sam, Thousand Trails RV parks with full hookups, amp options, pull-through sites
-- Include state/national forest campgrounds with max RV length and hookup info
-- Include Walmart/Cracker Barrel free overnight parking options
+- Include RV parks and campgrounds from placesContext when available
+- Include free overnight parking options only when verified in placesContext
 - High clearance fuel stops (truck stops and RV-friendly stations), DEF for diesel RVs
 - Propane refill and dump station locations between stops${answers?.rv_towing === "Yes" ? "\n- Towing: extra length restrictions, unhitch zones, oversized parking, state towing speed limits" : ""}`
     : "";
@@ -164,6 +163,25 @@ ${stopsInterests.includes("Remote work — WiFi cafés") ? "- Prioritize restaur
   const routeDistance = routeInfo?.distance || "unknown";
   const routeDuration = routeInfo?.duration || "unknown";
 
+  function parseRouteMiles(dist) {
+    if (!dist || dist === "unknown") return 0;
+    const m = String(dist).match(/([\d,.]+)\s*mi/i);
+    return m ? parseFloat(m[1].replace(/,/g, "")) : 0;
+  }
+
+  const routeMiles = parseRouteMiles(routeDistance);
+  const isSimplifiedFormat =
+    ["Day trip", "Driving home"].includes(tripType) ||
+    (routeMiles > 0 && routeMiles < 150) ||
+    !needsOvernight;
+
+  const placesOnlyStopsRule = `
+ROAD STOPS — CRITICAL:
+- For road_stops, use ONLY verified business names from placesContext in this request.
+- Never invent businesses or suggest chain restaurants, gas stations, or food brands from training data.
+- Describe whatever Google Places returned — match names exactly when provided.
+- If placesContext lists no stops for a segment, omit road_stops entries for that segment rather than guessing.`;
+
   const routeInfoBlock = `
 FULL ROUTE INFORMATION (use for all stop placement decisions):
 - Origin: ${routeOrigin}
@@ -184,7 +202,7 @@ CRITICAL — OVERNIGHT STOP CITY RULES (must follow exactly):
 - ALWAYS format each stop city as "City, State" (full city name and two-letter state abbreviation) — this is displayed as the location header above hotel/lodging cards.
 - Do NOT invent cities from other regions. Do NOT reuse example cities (e.g. Amarillo, Albuquerque) unless they genuinely lie on this specific route.
 - Every "location" in road_stops, hotels, restaurants, fuel stops, and truck stops MUST be in a city that lies on this same corridor.
-- Order stops geographically from origin toward destination; "distance" and "eta" must progress logically along the route.`;
+- Order stops geographically from origin toward destination; "distance" and "eta" must progress logically along the route.${placesOnlyStopsRule}`;
 
   const systemPrompt = `You are TripMappa, a concise AI travel planner.
 Respond with a JSON object only — no markdown, no extra text.
@@ -199,7 +217,17 @@ STRICT ROUTING RULES — never violate these:
 6. Every stop MUST fall within 1 mile of the GPS route boundary coordinates provided in placesContext — never outside the corridor.
 7. Never exceed the user's stated total trip budget across lodging and stops.
 8. Prioritize hotel loyalty program brand when preference is stated.
-9. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.`;
+9. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.
+10. For road_stops: use ONLY business names from placesContext — never invent or suggest chain names from training data.`;
+
+  const simplifiedTripJson = `Return JSON with trip_format "simplified" — single-page summary only (NO day-by-day overnight layout):
+{
+  "trip_format": "simplified",
+  "route_summary": "One sentence route overview",
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "Exact name from placesContext", "note": "Short note" }],
+  "recommendations": [{ "name": "Place from placesContext", "category": "Activity|Dining|Viewpoint", "rating": "4.5", "note": "Why stop here" }],
+  "tips": ["Driving tip 1"]
+}`;
 
   const userPrompt = isTrucker
     ? `${routeConstraintBlock}
@@ -209,20 +237,22 @@ Plan a commercial truck route from ${routeOrigin} to ${routeDestination}.
 - Total distance: ${routeDistance}
 - Estimated drive time: ${routeDuration}
 - Fuel: ${fuel}${truckBlock}${multiBlock}${accommodationsBlock}${prefsBlock}
+${isSimplifiedFormat ? `- SHORT TRIP (${routeDistance}) — use simplified single-page format, no overnight stops` : ""}
 
-Return JSON (each stop "city" MUST be "City, State" on the driving corridor):
+${isSimplifiedFormat ? simplifiedTripJson : `Return JSON with trip_format "multi_day" (each stop "city" MUST be "City, State" on the driving corridor):
 {
+  "trip_format": "multi_day",
   "stops": [{
     "city": "City, State", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
-    "truckStop": { "name": "Pilot Flying J", "spaces": 120, "showers": true, "laundry": true, "restaurant": true, "diesel": "$3.89/gal", "hours": "24/7" },
+    "truckStop": { "name": "Verified truck stop from placesContext", "spaces": 120, "showers": true, "laundry": true, "restaurant": true, "diesel": "$3.89/gal", "hours": "24/7" },
     "motel": { "name": "Budget Inn", "price": "$69/night", "distance": "0.5 mi", "parking": "Large rig parking" },
-    "restArea": { "name": "I-40 Rest Area", "spaces": 24, "distance": "10 mi", "amenities": "Restrooms · vending" },
-    "fuelStops": [{ "name": "Love's", "location": "City, ST", "distance": "XXX mi", "diesel": "$3.89/gal", "amenities": "Showers · CAT scales · DEF" }]
+    "restArea": { "name": "Rest area name", "spaces": 24, "distance": "10 mi", "amenities": "Restrooms · vending" },
+    "fuelStops": [{ "name": "Verified fuel stop from placesContext", "location": "City, ST", "distance": "XXX mi", "diesel": "$3.89/gal", "amenities": "Showers · CAT scales · DEF" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "Pilot Flying J", "note": "Diesel $3.89 · showers · scales" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "Verified name from placesContext", "note": "Short note" }],
   "safety": { "weighStations": 3, "lowBridges": [], "steepGrades": [] },
   "tips": ["HOS Compliant Route tip", "Truck parking tip"]
-}`
+}`}`
     : isRv
     ? `${routeConstraintBlock}
 
@@ -231,20 +261,22 @@ Plan an RV-safe route from ${routeOrigin} to ${routeDestination}.
 - Total distance: ${routeDistance}
 - Estimated drive time: ${routeDuration}
 - Fuel: ${fuel} · ~9 MPG average${rvBlock}${partyBlock}${scenicBlock}${accommodationsBlock}${petBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
+${isSimplifiedFormat ? `- SHORT TRIP (${routeDistance}) — use simplified single-page format, no overnight stops` : ""}
 
-Return JSON (each stop "city" MUST be "City, State" on the driving corridor):
+${isSimplifiedFormat ? simplifiedTripJson : `Return JSON with trip_format "multi_day" (each stop "city" MUST be "City, State" on the driving corridor):
 {
+  "trip_format": "multi_day",
   "stops": [{
     "city": "City, State", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
-    "rvPark": { "name": "KOA Journey", "fullHookups": 40, "amp30": true, "amp50": true, "pullThrough": 25, "backIn": 15, "maxLength": "45 ft", "amenities": "WiFi · pool · laundry · dump · dog park", "rate": "$55/night" },
-    "campground": { "name": "State Park Campground", "maxLength": "40 ft", "hookups": "Water & electric", "distanceFromHighway": "8 mi", "reservation": "Reservation required" },
-    "freeParking": { "name": "Walmart Supercenter", "type": "Walmart", "note": "Free overnight parking — confirm with store before arrival", "distance": "2 mi from route" },
-    "fuelStops": [{ "name": "Love's Travel Stop", "location": "City, ST", "distance": "XXX mi", "fuel": "Gasoline & diesel", "highClearance": true, "def": true, "rvFriendly": true, "amenities": "High clearance · RV lanes · DEF" }]
+    "rvPark": { "name": "Verified RV park from placesContext", "fullHookups": 40, "amp30": true, "amp50": true, "pullThrough": 25, "backIn": 15, "maxLength": "45 ft", "amenities": "WiFi · pool · laundry · dump · dog park", "rate": "$55/night" },
+    "campground": { "name": "Campground from placesContext", "maxLength": "40 ft", "hookups": "Water & electric", "distanceFromHighway": "8 mi", "reservation": "Reservation required" },
+    "freeParking": { "name": "Verified parking from placesContext", "type": "Parking", "note": "Confirm before arrival", "distance": "2 mi from route" },
+    "fuelStops": [{ "name": "Verified fuel stop from placesContext", "location": "City, ST", "distance": "XXX mi", "fuel": "Gasoline & diesel", "highClearance": true, "def": true, "rvFriendly": true, "amenities": "High clearance · RV lanes · DEF" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "Love's", "note": "High clearance · RV-friendly · DEF" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "Verified name from placesContext", "note": "Short note" }],
   "safety": { "lowBridges": [], "steepGrades": [], "sharpCurves": [], "propaneLocations": [], "dumpStations": [] },
   "tips": ["RV Safe Route tip", "Dump station tip"]
-}`
+}`}`
     : tripType === "Flying" || isPlane
     ? `${routeConstraintBlock}
 
@@ -267,7 +299,7 @@ Return JSON:
   "road_stops": [{ "location": "Departure port", "distance": "—", "eta": "—", "category": "rest", "name": "Port recommendation", "note": "Marine routing approximate" }],
   "tips": ["Marine routing tip", "Port arrival tip"]
 }`
-    : needsOvernight
+    : !isSimplifiedFormat
     ? `${routeConstraintBlock}
 
 Plan a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
@@ -277,30 +309,27 @@ Plan a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
 ${partyBlock}
 ${lodgingPreferenceBlock}${scenicBlock}${accommodationsBlock}${petBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
-Return JSON (each stop "city" MUST be "City, State" on the driving corridor; space stops so no segment exceeds 8 hours driving):
+Return JSON with trip_format "multi_day" (each stop "city" MUST be "City, State" on the driving corridor; space stops so no segment exceeds 8 hours driving):
 {
+  "trip_format": "multi_day",
   "stops": [{
     "city": "City, State", "distance": "XXX miles", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
     "hotels": [{ "name": "Hotel", "stars": 4, "price": "$XXX/night", "pet": true, "kidFriendly": true }],
     "restaurants": ${preferences.includes("Sit down restaurants only") || preferences.includes("Fast food only") ? `[{ "name": "Restaurant", "cuisine": "Type", "rating": "4.5", "time": "7 PM", "kidFriendly": true }]` : "[]"},
     "scenicView": ${isScenic ? '"Scenic viewpoint nearby"' : "null"}
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "rest", "name": "Rest stop", "note": "Short note" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "rest", "name": "Verified name from placesContext", "note": "Short note" }],
   "tips": ["Driving tip 1", "Driving tip 2"]
 }`
     : `${routeConstraintBlock}
 
-Plan road stops for a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
-- Total distance: ${routeDistance}
+Plan a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
+- Total distance: ${routeDistance} (${isSimplifiedFormat ? "under 150 miles or single-day — use simplified format" : "day trip"})
 - Estimated drive time: ${routeDuration}
 - Vehicle: ${vehicle}${rawVehicle !== vehicle ? ` (trip: ${rawVehicle})` : ""} · Fuel: ${fuel}
 ${partyBlock}${scenicBlock}${accommodationsBlock}${petBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
-Return JSON (all locations MUST be "City, State" on the driving corridor):
-{
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "Stop name", "note": "Short note" }],
-  "tips": ["Driving tip 1"]
-}`;
+${simplifiedTripJson}`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -327,6 +356,7 @@ Return JSON (all locations MUST be "City, State" on the driving corridor):
     const text = data.content[0].text;
     const clean = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
+    parsed.trip_format = isSimplifiedFormat ? "simplified" : "multi_day";
 
     return res.status(200).json(parsed);
   } catch (err) {

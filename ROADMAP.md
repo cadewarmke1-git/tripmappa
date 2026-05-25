@@ -67,7 +67,7 @@ Inline sub-flows: truck specs (height/weight/hazmat), RV specs, kids ages, multi
 | **3** | Lodging & Hotel APIs | 🔜 Next | Booking.com affiliate API — live hotel cards (prices, photos, ratings, availability); Book button → affiliate links |
 | **4** | Fuel & EV Charging | Planned | NREL API (EV stations); GasBuddy or similar (live fuel prices along route) |
 | **5** | Restaurants | Planned | Yelp Fusion API (recommendations at stops); OpenTable or Resy (reservations) |
-| **6** | User Accounts & Saved Trips | Planned | Supabase Auth (Google OAuth + email); `users` + `trips` tables; wire Save Trip button |
+| **6** | User Accounts & Saved Trips | 🔜 In progress | Supabase Auth (email + OAuth); `trips` table; Save Trip wired |
 | **7** | Live Location Sharing | Planned | Supabase Realtime (GPS every 30s); shared read-only map via unique link; Twilio SMS invites |
 | **8** | Grocery Delivery | Planned | Instacart Storefront API (DoorDash Drive backup); Web Speech API voice-to-list; deliver to hotel |
 | **9** | Truck & Oversized Routing | Planned | HERE Maps Truck Routing (height/weight/hazmat); Trucker Path API (parking); Reserve Parking button |
@@ -112,6 +112,8 @@ Placeholder toasts in the UI reference the phase when each feature ships (e.g. S
 ### Environment
 
 - `VITE_GOOGLE_MAPS_KEY` — client-side Google Maps
+- `VITE_SUPABASE_URL` — Supabase project URL (client)
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon key (client)
 - `ANTHROPIC_KEY` — server-side only (Vercel env)
 
 ### Build & deploy

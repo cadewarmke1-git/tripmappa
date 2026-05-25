@@ -25,7 +25,7 @@ export default function TripSummaryFooter({ answers, routeInfo, tripLegs, roadSt
         <p className="trip-summary-per-person">About ${perPerson.toLocaleString()} per person ({partySize} travelers)</p>
       )}
       <button type="button" className="btn-generate trip-summary-share-btn" onClick={onShare}>
-        Share My Itinerary
+        Share My Trip
       </button>
     </footer>
   );
