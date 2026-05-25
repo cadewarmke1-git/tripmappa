@@ -1,14 +1,14 @@
 /** Placeholder lodging data for Phase 3 — replaced by Booking.com API later. */
 
 export const AMENITY_DEFS = {
-  wifi: { id: "wifi", label: "Free WiFi", icon: "📶" },
-  parking: { id: "parking", label: "Free Parking", icon: "🅿️" },
-  pet: { id: "pet", label: "Pet Friendly", icon: "🐾" },
-  pool: { id: "pool", label: "Pool", icon: "🏊" },
-  restaurant: { id: "restaurant", label: "Restaurant", icon: "🍽️" },
-  ev: { id: "ev", label: "EV Charging", icon: "⚡" },
-  truckParking: { id: "truckParking", label: "Truck Parking", icon: "🚛" },
-  rvHookups: { id: "rvHookups", label: "RV Hookups", icon: "🔌" },
+  wifi: { id: "wifi", label: "Free WiFi" },
+  parking: { id: "parking", label: "Free Parking" },
+  pet: { id: "pet", label: "Pet Friendly" },
+  pool: { id: "pool", label: "Pool" },
+  restaurant: { id: "restaurant", label: "Restaurant" },
+  ev: { id: "ev", label: "EV Charging" },
+  truckParking: { id: "truckParking", label: "Truck Parking" },
+  rvHookups: { id: "rvHookups", label: "RV Hookups" },
 };
 
 const HOTEL_PHOTOS = [
@@ -44,11 +44,13 @@ export const PLACEHOLDER_HOTELS = {
       bookUrl: "https://example.com/book/marriott-amarillo-downtown",
       photo: HOTEL_PHOTOS[0],
       kidFriendly: true,
+      rating: 4.5,
     },
     {
       id: "hampton-inn-amarillo",
       name: "Hampton Inn Amarillo",
       stars: 3,
+      rating: 4.2,
       neighborhood: "West Amarillo",
       pricePerNight: 89,
       priceLabel: "$89/night",
@@ -70,6 +72,7 @@ export const PLACEHOLDER_HOTELS = {
       distanceFromRoute: 2.1,
       bookUrl: "https://example.com/book/budget-inn-amarillo",
       photo: HOTEL_PHOTOS[2],
+      rating: 3.6,
     },
   ],
   "albuquerque, nm": [
@@ -86,6 +89,7 @@ export const PLACEHOLDER_HOTELS = {
       bookUrl: "https://example.com/book/hyatt-regency-albuquerque",
       photo: HOTEL_PHOTOS[0],
       kidFriendly: true,
+      rating: 4.4,
     },
     {
       id: "holiday-inn-express-albuquerque",
@@ -100,6 +104,7 @@ export const PLACEHOLDER_HOTELS = {
       bookUrl: "https://example.com/book/holiday-inn-express-albuquerque",
       photo: HOTEL_PHOTOS[1],
       kidFriendly: true,
+      rating: 4.1,
     },
     {
       id: "motel-6-albuquerque",
@@ -113,6 +118,7 @@ export const PLACEHOLDER_HOTELS = {
       distanceFromRoute: 2.3,
       bookUrl: "https://example.com/book/motel-6-albuquerque",
       photo: HOTEL_PHOTOS[2],
+      rating: 3.4,
     },
   ],
   "flagstaff, az": [
@@ -129,6 +135,7 @@ export const PLACEHOLDER_HOTELS = {
       bookUrl: "https://example.com/book/little-america-flagstaff",
       photo: HOTEL_PHOTOS[0],
       kidFriendly: true,
+      rating: 4.6,
     },
     {
       id: "courtyard-flagstaff",
@@ -142,6 +149,7 @@ export const PLACEHOLDER_HOTELS = {
       distanceFromRoute: 0.9,
       bookUrl: "https://example.com/book/courtyard-flagstaff",
       photo: HOTEL_PHOTOS[1],
+      rating: 4.3,
     },
     {
       id: "super-8-flagstaff",
@@ -155,6 +163,25 @@ export const PLACEHOLDER_HOTELS = {
       distanceFromRoute: 1.8,
       bookUrl: "https://example.com/book/super-8-flagstaff",
       photo: HOTEL_PHOTOS[2],
+      rating: 3.5,
+    },
+  ],
+};
+
+const REST_AREA_PHOTO = "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80";
+
+export const PLACEHOLDER_REST_AREAS = {
+  default: [
+    {
+      id: "rest-area-eastbound",
+      name: "I-40 Eastbound Rest Area",
+      highwayLocation: "I-40 East, MM 142",
+      parkingSpaces: 28,
+      amenities: ["Restrooms", "Vending", "Picnic area", "Pet area"],
+      distanceFromRoute: 12,
+      stopType: "full overnight stop",
+      note: "Well-lit overnight parking permitted — quiet hours after 10 PM",
+      photo: REST_AREA_PHOTO,
     },
   ],
 };
@@ -253,19 +280,46 @@ export const PLACEHOLDER_TRUCK_STOPS = {
   ],
 };
 
+function parsePrice(item) {
+  if (item.pricePerNight != null) return item.pricePerNight;
+  return parseInt(String(item.priceLabel || "0").replace(/\D/g, ""), 10) || 0;
+}
+
+function rvHookupRank(park) {
+  if (park.id === "walmart-overnight") return 99;
+  const h = (park.hookups || "").toLowerCase();
+  if (h.includes("full")) return 0;
+  if (h.includes("partial")) return 1;
+  if (h.includes("dry")) return 2;
+  return 1;
+}
+
+function matchesTruckStopBrand(stop, brand) {
+  if (!brand || brand === "No preference") return false;
+  const name = stop.name.toLowerCase();
+  const b = brand.toLowerCase();
+  if (b.includes("pilot") || b.includes("flying j")) return name.includes("pilot");
+  if (b.includes("love")) return name.includes("love");
+  if (b.includes("petro")) return name.includes("petro");
+  if (b.includes("ta travel")) return name.includes("ta");
+  return name.includes(b.split(" ")[0]);
+}
+
 function normalizeCityKey(city) {
   return (city || "").trim().toLowerCase();
 }
 
 export function getLodgingSortTier(lodging) {
-  if (lodging === "Motel" || lodging === "Camping") return "budget";
-  if (lodging === "Hotel" || lodging === "Airbnb") return "luxury";
+  const l = (lodging || "").trim();
+  if (l === "Budget" || l === "Motel" || l === "Camping") return "budget";
+  if (l === "Luxury" || l === "Airbnb") return "luxury";
+  if (l === "Mid-range" || l === "Hotel") return "mid";
+  if (l === "Doesn't matter") return "any";
   return "mid";
 }
 
-function parsePrice(item) {
-  if (item.pricePerNight != null) return item.pricePerNight;
-  return parseInt(String(item.priceLabel || "0").replace(/\D/g, ""), 10) || 0;
+function hotelRating(hotel) {
+  return hotel.rating ?? hotel.stars ?? 0;
 }
 
 function sortHotels(hotels, tier) {
@@ -274,8 +328,17 @@ function sortHotels(hotels, tier) {
     sorted.sort((a, b) => parsePrice(a) - parsePrice(b));
   } else if (tier === "luxury") {
     sorted.sort((a, b) => {
+      const aLux = a.stars >= 4 ? 0 : 1;
+      const bLux = b.stars >= 4 ? 0 : 1;
+      if (aLux !== bLux) return aLux - bLux;
       if (b.stars !== a.stars) return b.stars - a.stars;
       return parsePrice(b) - parsePrice(a);
+    });
+  } else if (tier === "any") {
+    sorted.sort((a, b) => {
+      const diff = hotelRating(b) - hotelRating(a);
+      if (diff !== 0) return diff;
+      return b.stars - a.stars;
     });
   } else {
     sorted.sort((a, b) => {
@@ -289,15 +352,13 @@ function sortHotels(hotels, tier) {
 }
 
 function applyHotelBadges(hotels, answers, tier) {
-  const cheapestId = [...hotels].sort((a, b) => parsePrice(a) - parsePrice(b))[0]?.id;
   const family = answers?.travelers === "Family with kids";
-  const lodging = answers?.lodging;
 
-  return hotels.map(h => ({
+  return hotels.map((h, index) => ({
     ...h,
     badges: [
-      ...((tier === "luxury" || lodging === "Hotel") && h.stars >= 4 ? ["premium"] : []),
-      ...(tier === "budget" && h.id === cheapestId ? ["bestValue"] : []),
+      ...(tier === "luxury" && index === 0 ? ["premium"] : []),
+      ...(tier === "budget" && index === 0 ? ["bestValue"] : []),
       ...(family && (h.kidFriendly || h.amenities?.includes("pool")) ? ["kidFriendly"] : []),
     ],
   }));
@@ -319,11 +380,13 @@ function generateGenericHotels(city) {
       bookUrl: "https://example.com/book/generic-hotel",
       photo: HOTEL_PHOTOS[0],
       kidFriendly: true,
+      rating: 4.4,
     },
     {
       id: `generic-inn-${label}`,
       name: `${label} Inn & Suites`,
       stars: 3,
+      rating: 4.0,
       neighborhood: `${label} Midtown`,
       pricePerNight: 99,
       priceLabel: "$99/night",
@@ -345,6 +408,7 @@ function generateGenericHotels(city) {
       distanceFromRoute: 2.0,
       bookUrl: "https://example.com/book/generic-motel",
       photo: HOTEL_PHOTOS[2],
+      rating: 3.5,
     },
   ];
 }
@@ -358,19 +422,29 @@ export function getHotelsForStop(city, answers) {
 }
 
 export function getRvParksForStop(_city) {
-  return PLACEHOLDER_RV_PARKS.default.map(p => ({ ...p }));
+  const parks = PLACEHOLDER_RV_PARKS.default.map(p => ({ ...p }));
+  return parks.sort((a, b) => rvHookupRank(a) - rvHookupRank(b));
 }
 
 export function getTruckStopsForStop(_city, answers) {
-  const stops = PLACEHOLDER_TRUCK_STOPS.default.map(s => ({ ...s }));
+  let stops = [...PLACEHOLDER_TRUCK_STOPS.default].sort(
+    (a, b) => b.parkingSpaces - a.parkingSpaces,
+  );
   const brand = answers?.truck_stop_brand;
   if (brand && brand !== "No preference") {
-    const preferred = stops.find(s => s.name.includes(brand.split(" ")[0]));
-    if (preferred) {
-      return [preferred, ...stops.filter(s => s.id !== preferred.id)].slice(0, 3);
+    const idx = stops.findIndex(s => matchesTruckStopBrand(s, brand));
+    if (idx > 0) {
+      const [preferred] = stops.splice(idx, 1);
+      stops.unshift(preferred);
+    } else if (idx === 0) {
+      // already first
     }
   }
-  return stops;
+  return stops.slice(0, 3);
+}
+
+export function getRestAreasForStop(_city) {
+  return PLACEHOLDER_REST_AREAS.default.map(r => ({ ...r }));
 }
 
 export function saveLodgingToTrips(lodging, city, origin, dest) {

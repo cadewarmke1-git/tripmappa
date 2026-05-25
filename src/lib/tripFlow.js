@@ -106,7 +106,7 @@ const LODGING_QUESTION = {
   id: "lodging",
   ask: "Where do you want to sleep?",
   type: "choice",
-  choices: ["Hotel", "Motel", "Airbnb", "Camping", "Doesn't matter"],
+  choices: ["Budget", "Mid-range", "Luxury", "Doesn't matter"],
 };
 
 const PERSONAL_PREFERENCES_QUESTION = {

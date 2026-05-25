@@ -9,7 +9,6 @@ export default function AmenityBadges({ amenityIds }) {
         if (!def) return null;
         return (
           <span key={id} className="lodging-amenity-badge">
-            <span className="lodging-amenity-icon" aria-hidden="true">{def.icon}</span>
             {def.label}
           </span>
         );

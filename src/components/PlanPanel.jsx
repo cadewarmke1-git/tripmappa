@@ -46,6 +46,7 @@ export default function PlanPanel({
   onToast,
   onToastGold,
   onGroceryModal,
+  onAddFuelStop,
   onStopCategoryChange,
   onSwapRoute,
   onFetchDirections,
@@ -86,6 +87,7 @@ export default function PlanPanel({
                 onToast={onToast}
                 onToastGold={onToastGold}
                 onGroceryModal={onGroceryModal}
+                onAddFuelStop={onAddFuelStop}
                 stopsEndRef={stopsEndRef}
               />
             ) : (
@@ -145,7 +147,7 @@ export default function PlanPanel({
         {convoComplete && !generated && (
           <div className="generate-wrap">
             <button type="button" className="btn-generate" onClick={onGenerateTrip} disabled={loading || generated}>
-              {loading ? <><span className="spinner"/>Planning your trip…</> : generated ? "Trip Planned ✓" : "Generate Trip Plan"}
+              {loading ? <><span className="spinner"/>Planning your trip…</> : generated ? "Trip planned" : "Generate Trip Plan"}
             </button>
           </div>
         )}

@@ -5,8 +5,13 @@ import {
   hasPref,
   skipLodgingQuestion,
 } from "../lib/vehicles.js";
+import { useMemo, Fragment } from "react";
+import { parseMilesFromDistance } from "../lib/parsing.js";
+import { buildFuelIntervalPoints, getFuelStopMode, computeSegmentMiles, fuelStopToRoadStop } from "../lib/fuel.js";
 import BudgetCard from "./BudgetCard.jsx";
 import LodgingCardsSection from "./lodging/LodgingCardsSection.jsx";
+import FuelStopsRow from "./fuel/FuelStopsRow.jsx";
+import FuelStopsSection from "./fuel/FuelStopsSection.jsx";
 
 export default function StopsResults({
   showHeader = true,
@@ -28,12 +33,45 @@ export default function StopsResults({
   onToast,
   onToastGold,
   onGroceryModal,
+  onAddFuelStop,
   stopsEndRef,
 }) {
   const isDayOrHomeTrip = skipLodgingQuestion(answers.trip_type, answers.vehicle);
   const isTruckerResults = isTruckerTrip(answers);
   const isRvResults = isRvTrip(answers);
   const wantsRestaurants = hasPref(answers, "Restaurant recommendations");
+  const fuelMode = getFuelStopMode(answers);
+  const totalMiles = parseMilesFromDistance(routeInfo?.distance);
+
+  const fuelIntervalPoints = useMemo(() => {
+    if (!routeInfo?.routePoints?.length || fuelMode === "none") return [];
+    return buildFuelIntervalPoints(routeInfo.routePoints, stops.length, totalMiles, answers);
+  }, [routeInfo?.routePoints, stops.length, totalMiles, answers, fuelMode]);
+
+  function handleAddFuelStop(stop, type) {
+    onAddFuelStop?.(fuelStopToRoadStop(stop, type));
+    onToast(`Added ${stop.name} to your trip`);
+  }
+
+  function renderFuelRow(point, index) {
+    if (!point) return null;
+    const miles = computeSegmentMiles(totalMiles, point.segmentIndex ?? index, fuelIntervalPoints.length);
+    const label = point.required
+      ? `Required charge · ~${miles ?? "—"} mi from start`
+      : miles != null
+        ? `Fuel stop · ~${miles} mi from start`
+        : "Fuel stop along route";
+    return (
+      <FuelStopsRow
+        key={`fuel-row-${index}-${point.lat}`}
+        point={point}
+        answers={answers}
+        segmentLabel={label}
+        onAddStop={handleAddFuelStop}
+        onToast={onToast}
+      />
+    );
+  }
 
   return (
     <div className="results-view">
@@ -54,7 +92,7 @@ export default function StopsResults({
         <>
           {hosCompliance && (
             <div className="hos-compliance-card">
-              <div className="hos-shield">🛡️</div>
+              <div className="hos-shield">HOS</div>
               <div>
                 <div className="hos-title">HOS Compliant Route</div>
                 <div className="hos-detail">
@@ -84,7 +122,7 @@ export default function StopsResults({
 
       {showHeader && isRvResults && rvSafety && (
         <div className="rv-safety-card">
-          <div className="rv-safety-title">🚐 RV route safety summary</div>
+          <div className="rv-safety-title">RV route safety summary</div>
           <div className="rv-safety-row">Low bridge warnings: <strong>{rvSafety.lowBridges?.length || 0}</strong></div>
           {rvSafety.lowBridges?.map((b, i) => (
             <div className="rv-safety-warn" key={`rv-bridge-${i}`}>Low bridge: {b.clearance} clearance at {b.location}</div>
@@ -120,19 +158,20 @@ export default function StopsResults({
       {roadStops.length > 0 && (
         <>
           <div className="stops-section-label">
-            {isRvResults ? "RV fuel stops" : isDayOrHomeTrip ? "Stops along the way" : isTruckerResults ? "Fuel stops" : "Road stops"}
+            {isRvResults ? "Stops along the way" : isDayOrHomeTrip ? "Stops along the way" : isTruckerResults ? "Road stops" : "Road stops"}
           </div>
           <div className="filter-tabs">
-            {["all", "fuel", "food", "rest", "charging"].filter(cat =>
+            {["all", "food", "rest", "charging"].filter(cat =>
               cat === "all" || roadStops.some(s => s.category === cat)
             ).map(cat => (
               <button key={cat} type="button" onClick={() => onStopCategoryChange(cat)} className={`filter-tab${stopCategory === cat ? " active" : ""}`}>
-                {cat === "all" ? "All" : cat === "fuel" ? "Fuel" : cat === "food" ? "Food" : cat === "rest" ? "Rest" : "Charging"}
+                {cat === "all" ? "All" : cat === "food" ? "Food" : cat === "rest" ? "Rest" : "Charging"}
               </button>
             ))}
           </div>
           {roadStops
             .filter(s => stopCategory === "all" || s.category === stopCategory)
+            .filter(s => s.category !== "fuel" || fuelMode === "none")
             .map((s, i) => (
               <div key={`road-${i}`} className="stop-card road-stop-card" style={{ animationDelay: i * 0.07 + "s" }}>
                 <div className="road-stop-row">
@@ -142,7 +181,7 @@ export default function StopsResults({
                   <div className="road-stop-info">
                     <div className="road-stop-name">
                       {s.name}
-                      {s.kidFriendly && <span className="mini-badge kid-badge">👶 Kid-friendly</span>}
+                      {s.kidFriendly && <span className="mini-badge kid-badge">Kid-friendly</span>}
                       {s.diesel && <span className="mini-badge diesel-badge">{s.diesel}</span>}
                       {s.highClearance && <span className="mini-badge high-clearance-badge">High clearance</span>}
                       {s.rvFriendly && <span className="mini-badge kid-badge">RV-friendly</span>}
@@ -151,8 +190,8 @@ export default function StopsResults({
                     <div className="road-stop-loc">{s.location} · {s.distance}</div>
                     {s.amenities && <div className="road-stop-note">{s.amenities}</div>}
                     {s.note && <div className="road-stop-note">{s.note}</div>}
-                    {s.scenic && <div className="road-stop-note scenic-note">📸 Scenic viewpoint nearby</div>}
-                    {s.petRelief && <div className="road-stop-note">🐾 Pet relief area</div>}
+                    {s.scenic && <div className="road-stop-note scenic-note">Scenic viewpoint nearby</div>}
+                    {s.petRelief && <div className="road-stop-note">Pet relief area</div>}
                   </div>
                   <div className="road-stop-eta">{s.eta}</div>
                 </div>
@@ -169,8 +208,24 @@ export default function StopsResults({
         </>
       )}
 
+      {stops.length === 0 && fuelMode !== "none" && (
+        <FuelStopsSection
+          answers={answers}
+          routeInfo={routeInfo}
+          stops={stops}
+          onAddFuelStop={onAddFuelStop}
+          onToast={onToast}
+        />
+      )}
+
       {stops.length > 0 && (!isDayOrHomeTrip || isTruckerResults || isRvResults) && (
         <>
+          {fuelMode !== "none" && fuelIntervalPoints[0] && (
+            <div className="fuel-between-stops">
+              <div className="stops-section-label">Fuel &amp; charging along route</div>
+              {renderFuelRow(fuelIntervalPoints[0], 0)}
+            </div>
+          )}
           <div className="filter-tabs" style={{ marginTop: roadStops.length > 0 ? 16 : 0 }}>
             {["all", "hotel", "food"].filter(cat =>
               cat === "all"
@@ -183,13 +238,14 @@ export default function StopsResults({
             ))}
           </div>
           {stops.map((stop, i) => (
-            <div className="stop-card" key={`hotel-${i}`} style={{ animationDelay: i * 0.07 + "s" }}>
+            <Fragment key={`stop-${i}`}>
+            <div className="stop-card" style={{ animationDelay: i * 0.07 + "s" }}>
               <div className="stop-card-head">
                 <div className="stop-pin"/>
                 <div style={{ flex: 1 }}>
                   <div className="stop-city">{stop.city}</div>
                   <div className="stop-meta">{stop.distance} · {stop.eta} drive</div>
-                  {stop.scenicView && <div className="scenic-note">📸 {stop.scenicView}</div>}
+                  {stop.scenicView && <div className="scenic-note">{stop.scenicView}</div>}
                 </div>
                 {stop.why && <div className="stop-why">{stop.why}</div>}
               </div>
@@ -209,7 +265,7 @@ export default function StopsResults({
                   {stop.restaurants.map((r, ri) => (
                     <div className="item-row" key={ri} onClick={() => onToast(`Booking ${r.name}`)}>
                       <div className="item-info">
-                        <div className="item-name">{r.name} {hasFamilyKids(answers.travelers) && <span className="mini-badge kid-badge">🍽 Kids menu</span>}</div>
+                        <div className="item-name">{r.name} {hasFamilyKids(answers.travelers) && <span className="mini-badge kid-badge">Kids menu</span>}</div>
                         <div className="item-meta">{r.cuisine} · {r.rating} stars</div>
                       </div>
                       <div className="item-time">{r.time}</div>
@@ -224,6 +280,12 @@ export default function StopsResults({
                 <button type="button" className="action-btn" onClick={() => onToast("Stop added to map")}>Map</button>
               </div>
             </div>
+            {fuelMode !== "none" && fuelIntervalPoints[i + 1] && (
+              <div className="fuel-between-stops">
+                {renderFuelRow(fuelIntervalPoints[i + 1], i + 1)}
+              </div>
+            )}
+            </Fragment>
           ))}
         </>
       )}

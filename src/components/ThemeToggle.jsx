@@ -7,7 +7,7 @@ export default function ThemeToggle({ theme, onToggle }) {
       title="Override automatic day/night detection for this session"
       aria-label={theme === "day" ? "Switch to night mode" : "Switch to day mode"}
     >
-      {theme === "day" ? "☀️" : "🌙"}
+      {theme === "day" ? "Night" : "Day"}
     </button>
   );
 }

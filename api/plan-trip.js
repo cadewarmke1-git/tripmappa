@@ -119,34 +119,52 @@ export default async function handler(req, res) {
     ? legs.map(leg => leg.end || leg.to || leg.destination || leg.city).filter(Boolean)
     : [];
 
-  const routeConstraintBlock = `
-CRITICAL — ROUTE LOCATION RULES (must follow exactly):
+  const routeDistance = routeInfo?.distance || "unknown";
+  const routeDuration = routeInfo?.duration || "unknown";
+
+  const routeInfoBlock = `
+FULL ROUTE INFORMATION (use for all stop placement decisions):
 - Origin: ${routeOrigin}
 - Destination: ${routeDestination}
+- Total distance: ${routeDistance}
+- Estimated drive time: ${routeDuration}
 ${routeInfo?.start ? `- Route starts near: ${routeInfo.start}` : ""}
 ${routeInfo?.end ? `- Route ends near: ${routeInfo.end}` : ""}
-${routeInfo?.distance ? `- Total distance: ${routeInfo.distance}` : ""}
-${routeInfo?.duration ? `- Drive time: ${routeInfo.duration}` : ""}
-${citiesAlongRoute.length ? `- Cities/towns along the driving route (use ONLY these or other real towns between origin and destination): ${citiesAlongRoute.join(" → ")}` : ""}
-${legCities.length ? `- Leg stop cities: ${legCities.join(" → ")}` : ""}
-Every "city", "location", hotel, restaurant, fuel stop, truck stop, and road_stop MUST be a real place in the correct city and state along the actual route from ${routeOrigin} to ${routeDestination}.
-Do NOT invent cities from other regions. Do NOT use placeholder examples (e.g. Amarillo, Albuquerque) unless they are genuinely on this route.`;
+${citiesAlongRoute.length ? `- Known cities/towns along the driving corridor: ${citiesAlongRoute.join(" → ")}` : ""}
+${legCities.length ? `- Leg stop cities: ${legCities.join(" → ")}` : ""}`;
+
+  const routeConstraintBlock = `${routeInfoBlock}
+
+CRITICAL — OVERNIGHT STOP CITY RULES (must follow exactly):
+- Every overnight stop "city" field MUST be a real US city or town located along the actual driving corridor between ${routeOrigin} and ${routeDestination}.
+- NEVER suggest a stop city that requires a significant detour from the main route — stays must be on or within a few miles of the driving path.
+- Space overnight stops evenly based on total drive time (${routeDuration}) so no single driving segment exceeds 8 hours.
+- ALWAYS format each stop city as "City, State" (full city name and two-letter state abbreviation) — this is displayed as the location header above hotel/lodging cards.
+- Do NOT invent cities from other regions. Do NOT reuse example cities (e.g. Amarillo, Albuquerque) unless they genuinely lie on this specific route.
+- Every "location" in road_stops, hotels, restaurants, fuel stops, and truck stops MUST be in a city that lies on this same corridor.
+- Order stops geographically from origin toward destination; "distance" and "eta" must progress logically along the route.`;
 
   const systemPrompt = `You are TripMappa, a concise AI travel planner.
 Respond with a JSON object only — no markdown, no extra text.
 Keep all text extremely short and scannable.
-All stop and hotel cities MUST match the user's actual route — never use unrelated cities.`;
+
+STRICT ROUTING RULES — never violate these:
+1. Every overnight stop city must be a real US city located along the actual driving corridor between the trip origin and destination.
+2. Never suggest a stop city that requires a significant detour from the route.
+3. Space overnight stops evenly based on drive time so no single driving segment exceeds 8 hours.
+4. Always return each stop city as "City, State" (full name and state abbreviation) for display above hotel/lodging cards.
+5. All hotels, restaurants, fuel stops, truck stops, and road_stops must be in cities on the same corridor — never unrelated regions.`;
 
   const userPrompt = isTrucker
     ? `${routeConstraintBlock}
 
 Plan a commercial truck route from ${routeOrigin} to ${routeDestination}.
 - Trip type: ${tripType}
-- Distance: ${routeInfo?.distance || "unknown"}
-- Drive time: ${routeInfo?.duration || "unknown"}
+- Total distance: ${routeDistance}
+- Estimated drive time: ${routeDuration}
 - Fuel: ${fuel}${truckBlock}${multiBlock}${prefsBlock}
 
-Return JSON:
+Return JSON (each stop "city" MUST be "City, State" on the driving corridor):
 {
   "stops": [{
     "city": "City, State", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
@@ -164,11 +182,11 @@ Return JSON:
 
 Plan an RV-safe route from ${routeOrigin} to ${routeDestination}.
 - Trip type: ${tripType}
-- Distance: ${routeInfo?.distance || "unknown"}
-- Drive time: ${routeInfo?.duration || "unknown"}
+- Total distance: ${routeDistance}
+- Estimated drive time: ${routeDuration}
 - Fuel: ${fuel} · ~9 MPG average${rvBlock}${kidsBlock}${scenicBlock}${petBlock}${kidStopsBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
-Return JSON:
+Return JSON (each stop "city" MUST be "City, State" on the driving corridor):
 {
   "stops": [{
     "city": "City, State", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
@@ -207,13 +225,13 @@ Return JSON:
     ? `${routeConstraintBlock}
 
 Plan a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
-- Distance: ${routeInfo?.distance || "unknown"}
-- Drive time: ${routeInfo?.duration || "unknown"}
+- Total distance: ${routeDistance}
+- Estimated drive time: ${routeDuration}
 - Vehicle: ${vehicle}${rawVehicle !== vehicle ? ` (trip: ${rawVehicle})` : ""} · Fuel: ${fuel}
 - Travelers: ${answers?.travelers || "Solo"}
 - Lodging preference: ${answers?.lodging || "Mid-range hotel"}${kidsBlock}${scenicBlock}${petBlock}${kidStopsBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
-Return JSON:
+Return JSON (each stop "city" MUST be "City, State" on the driving corridor; space stops so no segment exceeds 8 hours driving):
 {
   "stops": [{
     "city": "City, State", "distance": "XXX miles", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
@@ -227,10 +245,12 @@ Return JSON:
     : `${routeConstraintBlock}
 
 Plan road stops for a ${tripType.toLowerCase()} from ${routeOrigin} to ${routeDestination}.
+- Total distance: ${routeDistance}
+- Estimated drive time: ${routeDuration}
 - Vehicle: ${vehicle}${rawVehicle !== vehicle ? ` (trip: ${rawVehicle})` : ""} · Fuel: ${fuel}
 - Travelers: ${answers?.travelers || "Solo"}${kidsBlock}${scenicBlock}${petBlock}${kidStopsBlock}${evBlock}${foodBlock}${multiBlock}${prefsBlock}
 
-Return JSON:
+Return JSON (all locations MUST be "City, State" on the driving corridor):
 {
   "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "Stop name", "note": "Short note" }],
   "tips": ["Driving tip 1"]

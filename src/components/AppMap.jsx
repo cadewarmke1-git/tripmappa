@@ -61,12 +61,12 @@ export default function AppMap({
           </GoogleMap>
           {trafficAlert && (
             <div className="traffic-toast">
-              <span className="traffic-toast-icon">⚠</span>
+              <span className="traffic-toast-icon">!</span>
               Traffic delays detected on your route
             </div>
           )}
           <div className="map-style-toggle">
-            <button type="button" className="map-style-btn" onClick={() => onMapStyleOpenChange(o => !o)} aria-label="Map style">🗺</button>
+            <button type="button" className="map-style-btn" onClick={() => onMapStyleOpenChange(o => !o)} aria-label="Map style">Map</button>
             {mapStyleOpen && (
               <div className="map-style-menu">
                 {[["standard", "Standard"], ["satellite", "Satellite"], ["dark", "Dark"]].map(([k, l]) => (

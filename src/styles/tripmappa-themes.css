@@ -179,8 +179,8 @@
   box-shadow: 0 4px 20px rgba(26,26,46,0.08) !important;
 }
 .app-wrap.day .lodging-card-name { color: #1a1a2e !important; }
-.app-wrap.day .lodging-star { color: rgba(26,26,46,0.15) !important; }
-.app-wrap.day .lodging-star.filled { color: #FFD28C !important; }
+.app-wrap.day .lodging-star { background: rgba(26,26,46,0.12) !important; }
+.app-wrap.day .lodging-star.filled { background: #FFD28C !important; }
 .app-wrap.day .lodging-card-desc { color: rgba(26,26,46,0.65) !important; }
 .app-wrap.day .lodging-card-food { color: rgba(26,26,46,0.7) !important; }
 .app-wrap.day .lodging-amenity-badge {
@@ -200,6 +200,20 @@
   background-size: 200% 100% !important;
 }
 .app-wrap.day .lodging-disclaimer { color: rgba(26,26,46,0.45) !important; }
+.app-wrap.day .lodging-rest-area-badge {
+  background: rgba(26,26,46,0.08) !important; color: rgba(26,26,46,0.55) !important;
+  border-color: rgba(26,26,46,0.12) !important;
+}
+.app-wrap.day .lodging-amenity-badge-muted {
+  background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important;
+  color: rgba(26,26,46,0.55) !important;
+}
+.app-wrap.day .lodging-card-rest-area { border-color: rgba(26,26,46,0.12) !important; }
+.app-wrap.day .fuel-stop-card {
+  background: rgba(255,255,255,0.72) !important; border-color: rgba(26,26,46,0.1) !important;
+}
+.app-wrap.day .fuel-stop-name { color: #1a1a2e !important; }
+.app-wrap.day .fuel-stop-price { color: #FFD28C !important; }
 
 /* Float card — night: dark frosted glass */
 .app-wrap.night .float-card {

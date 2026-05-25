@@ -1,6 +1,7 @@
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
-import { inferFuelType, hasPref, hasFamilyKids } from "./vehicles.js";
+import { hasFamilyKids, hasPref } from "./vehicles.js";
 import { countFlowQuestionsAnswered } from "./tripFlow.js";
+import { estimateTripFuelCost } from "./fuel.js";
 
 export const LODGING_NIGHTLY_RATES = {
   "Budget hotel": 75, "Mid-range hotel": 130, "Upscale hotel": 220, "Luxury hotel": 400,
@@ -18,13 +19,10 @@ export function estimateOvernightStops(hours, tripType, lodging) {
   return Math.max(1, Math.ceil(hours / 11) - 1);
 }
 
-export function estimateFuelCost(miles, vehicle, preferences) {
+export function estimateFuelCost(miles, vehicle, preferences, answers) {
+  if (answers) return estimateTripFuelCost(miles, answers);
   if (!miles || miles <= 0) return null;
-  const fuel = inferFuelType(vehicle, preferences || []);
-  if (fuel === "Electric (EV)") return (miles / 4) * 0.15;
-  if (fuel === "Diesel") return (miles / 6) * 3.8;
-  if (vehicle === "RV" || vehicle === "Camper Van") return (miles / 9) * 3.5;
-  return (miles / 28) * 3.5;
+  return Math.round((miles / 28) * 3.45);
 }
 
 export function countAnsweredQuestions(answers) {
@@ -41,7 +39,7 @@ export function computeBudgetEstimate(answers, routeInfo, tripLegs) {
 
   const prefs = answers.preferences || [];
   const fuel = miles != null && answers.vehicle
-    ? estimateFuelCost(miles, answers.vehicle, prefs)
+    ? estimateFuelCost(miles, answers.vehicle, prefs, answers)
     : null;
   const nights = estimateOvernightStops(hours, answers.trip_type, answers.lodging);
   const lodgingRate = LODGING_NIGHTLY_RATES[answers.lodging] ?? null;

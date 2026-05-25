@@ -212,6 +212,10 @@ export default function App() {
             origin: originVal,
             destination: destVal,
             citiesAlongRoute: citiesAlongRoute.slice(0, 15),
+            routePoints: route.overview_path.map(p => ({
+              lat: typeof p.lat === "function" ? p.lat() : p.lat,
+              lng: typeof p.lng === "function" ? p.lng() : p.lng,
+            })),
             vehicleType: vehicle,
             timingMode,
             arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
@@ -587,6 +591,10 @@ export default function App() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [helpMenuOpen]);
 
+  function addFuelStopToTrip(roadStop) {
+    setRoadStops(prev => [...prev, roadStop]);
+  }
+
   function applyFallbackTrip() {
     const data = buildFallbackTripData(answers, routeInfo);
     setStops(data.stops);
@@ -872,6 +880,7 @@ export default function App() {
                       onToast={toast_}
                       onToastGold={toastGold}
                       onGroceryModal={city => setModal({ type: "grocery", city })}
+                      onAddFuelStop={addFuelStopToTrip}
                       onStopCategoryChange={setStopCategory}
                       onSwapRoute={swapRouteCities}
                       onFetchDirections={fetchDirections}

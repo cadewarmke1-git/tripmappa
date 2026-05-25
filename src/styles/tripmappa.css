@@ -282,7 +282,13 @@
     display: flex; gap: 12px; padding: 14px 16px; margin-bottom: 14px; border-radius: 14px;
     border: 2px solid rgba(59,130,246,0.55); background: rgba(59,130,246,0.08);
   }
-  .hos-shield { font-size: 24px; line-height: 1; }
+  .hos-shield {
+    flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+    color: rgba(147,197,253,0.95); background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.35);
+  }
   .hos-title { font-weight: 700; font-size: 13px; color: rgba(147,197,253,0.95); }
   .hos-detail { font-size: 12px; margin-top: 4px; opacity: 0.85; }
   .hos-warning { font-size: 11px; margin-top: 8px; color: rgba(251,191,36,0.95); }
@@ -431,11 +437,11 @@
     position: absolute; bottom: 108px; right: 12px; z-index: 20;
   }
   .map-style-btn {
-    width: 40px; height: 40px; border-radius: 10px;
+    min-width: 40px; height: 40px; padding: 0 10px; border-radius: 10px;
     background: rgba(255,255,255,0.96); border: 1px solid rgba(0,0,0,0.08);
     box-shadow: 0 2px 12px rgba(0,0,0,0.15); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: var(--charcoal);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: var(--charcoal);
     transition: box-shadow 0.2s var(--ease);
   }
   .map-style-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
@@ -463,7 +469,12 @@
     animation: trafficToastIn 0.35s var(--ease) both;
     white-space: nowrap; max-width: calc(100vw - 32px);
   }
-  .traffic-toast-icon { color: var(--gold); font-size: 16px; }
+  .traffic-toast-icon {
+    color: var(--gold); font-size: 13px; font-weight: 800;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,210,140,0.15); flex-shrink: 0;
+  }
   @keyframes trafficToastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
   /* Float card help — header */
@@ -931,8 +942,9 @@
   .empty-state { text-align: center; padding: 48px 24px; }
   .empty-icon {
     width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 16px;
-    display: flex; align-items: center; justify-content: center; font-size: 26px;
-    background: var(--surface); border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; letter-spacing: 0.06em;
+    background: var(--surface); border: 1.5px solid var(--border); color: var(--muted);
   }
   .empty-title { font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
   .empty-sub { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 260px; margin: 0 auto 18px; }
@@ -984,13 +996,13 @@
   .results-save:hover { background: rgba(255,210,140,1); box-shadow: 0 0 12px rgba(255,210,140,0.35); }
   .results-header-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 12px 0 14px; }
   .theme-test-btn {
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
-    width: 36px; height: 36px; border-radius: 99px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    min-width: 44px; height: 32px; padding: 0 10px; border-radius: 99px; cursor: pointer;
     border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12);
     color: #fff; display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
-    margin: 0; padding: 0; line-height: 1;
+    margin: 0; line-height: 1; letter-spacing: 0.02em;
   }
   .theme-test-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); transform: scale(1.05); }
   .stops-panel-head { margin-bottom: 16px; }
@@ -1100,9 +1112,12 @@
     font-family: 'Fraunces', serif; font-weight: 700; font-size: 17px;
     letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 6px;
   }
-  .lodging-stars { display: flex; gap: 2px; margin-bottom: 4px; }
-  .lodging-star { font-size: 14px; color: rgba(255,255,255,0.2); line-height: 1; }
-  .lodging-star.filled { color: #FFD28C; }
+  .lodging-stars { display: flex; gap: 3px; margin-bottom: 4px; align-items: center; }
+  .lodging-star {
+    display: inline-block; width: 7px; height: 7px; border-radius: 1px;
+    background: rgba(255,255,255,0.18); flex-shrink: 0;
+  }
+  .lodging-star.filled { background: #FFD28C; }
   .lodging-card-neighborhood { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
   .lodging-card-price {
     font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 800;
@@ -1147,6 +1162,36 @@
     margin-top: 12px; font-size: 10.5px; color: var(--muted); line-height: 1.4;
     font-style: italic; opacity: 0.85;
   }
+  .lodging-section-sublabel {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 16px 0 10px; opacity: 0.85;
+  }
+  .lodging-card-rest-area {
+    border-style: dashed;
+    opacity: 0.95;
+  }
+  .lodging-card-photo-muted .lodging-card-photo {
+    filter: saturate(0.65) brightness(0.85);
+  }
+  .lodging-rest-area-badge {
+    position: absolute; top: 10px; left: 10px; z-index: 1;
+    padding: 4px 10px; border-radius: 99px; font-size: 9px; font-weight: 600;
+    letter-spacing: 0.03em; text-transform: uppercase;
+    background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+  }
+  .lodging-rest-amenities {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+  }
+  .lodging-amenity-badge-muted {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    color: rgba(255,255,255,0.65) !important;
+    font-size: 10px;
+  }
+  .lodging-btn-save-full { flex: 1; width: 100%; }
+  .lodging-cards-rest .lodging-card { flex: 0 0 min(88%, 320px); }
   .lodging-card-skeleton { pointer-events: none; }
   .skeleton-shimmer {
     background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%);
@@ -1177,6 +1222,75 @@
       flex: none; width: 100%; max-width: none;
     }
     .lodging-card + .lodging-card { margin-top: 0; }
+  }
+
+  /* ── Fuel & EV charging stops (Phase 4) ── */
+  .fuel-stops-section { margin-bottom: 16px; }
+  .fuel-between-stops { margin: 12px 0 16px; }
+  .fuel-segment-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .fuel-stops-scroll {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .fuel-stops-scroll::-webkit-scrollbar { display: none; }
+  .fuel-stop-card {
+    flex: 0 0 min(78%, 240px); scroll-snap-align: start;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 14px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  }
+  .fuel-stop-required { border-color: rgba(255,210,140,0.45); box-shadow: 0 0 0 1px rgba(255,210,140,0.15); }
+  .fuel-required-badge {
+    display: inline-flex; align-items: center;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #FFD28C; margin-bottom: 8px;
+  }
+  .fuel-stop-header { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .fuel-brand-logo {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,210,140,0.12); border: 1px solid rgba(255,210,140,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.04em; color: #FFD28C; flex-shrink: 0;
+  }
+  .fuel-stop-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; line-height: 1.25; }
+  .fuel-stop-brand { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .fuel-type-badge {
+    display: inline-block; padding: 3px 8px; border-radius: 6px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .fuel-type-gas { background: rgba(16,185,129,0.15); color: #34d399; }
+  .fuel-type-diesel { background: rgba(255,210,140,0.15); color: #FFD28C; }
+  .fuel-type-ev { background: rgba(96,165,250,0.15); color: #60a5fa; }
+  .fuel-type-propane { background: rgba(251,146,60,0.15); color: #fb923c; }
+  .fuel-stop-price {
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800;
+    color: #FFD28C; letter-spacing: -0.02em; margin-bottom: 4px;
+  }
+  .fuel-premium { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); }
+  .fuel-stop-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .fuel-stop-distance { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+  .fuel-live-badge {
+    font-size: 9px; font-weight: 600; color: #34d399; margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .fuel-estimate-note, .fuel-fallback-note {
+    font-size: 10px; color: var(--muted); font-style: italic; margin-top: 6px;
+  }
+  .fuel-add-btn {
+    width: 100% !important; min-height: 36px !important; padding: 8px 12px !important;
+    font-size: 12px !important; border-radius: 10px !important;
+  }
+  .fuel-stop-skeleton { pointer-events: none; }
+  .skeleton-fuel-logo { width: 36px; height: 36px; border-radius: 10px; margin-bottom: 10px; }
+  .skeleton-fuel-title { width: 70%; height: 14px; }
+  .skeleton-fuel-price { width: 45%; height: 18px; margin-bottom: 12px; }
+  @media (min-width: 768px) {
+    .fuel-stop-card { flex: 0 0 240px; }
   }
 
   /* ── Toast ── */
