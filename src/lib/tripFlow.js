@@ -250,6 +250,10 @@ function countPersonalFlowQuestions(answers, context) {
   return n;
 }
 
+function canAskPersonalQuestion(answers, context) {
+  return countPersonalFlowQuestions(answers, context) < PERSONAL_MAX_QUESTIONS;
+}
+
 function buildVehicleQuestion() {
   return {
     done: false,
@@ -439,9 +443,9 @@ export function getFlowCompleteMessage(answers) {
 }
 
 export function getNextFlowQuestion(answers, context = {}) {
-  const normalized = normalizeTripAnswers(answers, context);
+  if (!answers?.vehicle) return buildVehicleQuestion();
 
-  if (!normalized.vehicle) return buildVehicleQuestion();
+  const normalized = normalizeTripAnswers(answers, context);
 
   if (normalized.vehicle === MULTI_VEHICLE_TRIP) {
     const multiNext = getNextMultiVehicleQuestion(normalized, context);

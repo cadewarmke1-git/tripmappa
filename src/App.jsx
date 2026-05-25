@@ -477,9 +477,12 @@ export default function App() {
     setConvoComplete(false);
     setGenerated(false);
     setQuestionHistory([]);
+    setQIndex(-1);
     setCurrentQuestion(null);
     setTripLegs([]);
     setPrefDraft([]);
+    setStepAnim(null);
+    if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     loadNextQuestion({});
     setHeroLaunching(false);
 
