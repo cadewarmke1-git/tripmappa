@@ -36,7 +36,6 @@ export default function PlanPanel({
   destRef,
   convoEndRef,
   stopsEndRef,
-  onStartConvo,
   onGenerateTrip,
   onResetPlan,
   onGoBack,
@@ -115,12 +114,6 @@ export default function PlanPanel({
                   selectedLodging={selectedLodging}
                 />
               )}
-              {qIndex === -1 && (
-                <div className="convo-empty">
-                  <p>Enter your route below, then tap below to get started.</p>
-                  <button type="button" className="btn-generate btn-generate-inline" onClick={onStartConvo}>Start planning</button>
-                </div>
-              )}
               {(currentQuestion || qIndex === -2) && (
                 <div
                   className={`ai-msg${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
@@ -161,9 +154,9 @@ export default function PlanPanel({
           )}
         </div>
         {convoComplete && !generated && (
-          <div className="generate-wrap">
-            <button type="button" className="btn-generate" onClick={onGenerateTrip} disabled={loading || generated}>
-              {loading ? <><span className="spinner"/>Planning your trip…</> : generated ? "Trip planned" : "Generate Trip Plan"}
+          <div className="generate-wrap generate-wrap-payoff">
+            <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
+              {loading ? <><span className="spinner"/>Planning your trip…</> : "Generate My Trip →"}
             </button>
           </div>
         )}

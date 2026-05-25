@@ -942,6 +942,29 @@
   .summary-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
   .summary-key { font-weight: 600; min-width: 88px; color: rgba(255,255,255,0.45); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; padding-top: 3px; }
   .generate-wrap { padding: 20px 24px 24px; border-top: 1px solid rgba(255,255,255,0.08); background: transparent; }
+  .generate-wrap-payoff { padding: 16px 20px 20px; border-top: none; }
+  .btn-generate-trip {
+    width: 100%; min-height: 60px; padding: 18px 28px; border: none; cursor: pointer;
+    background: #FFD28C; color: #1a1a2e; border-radius: 16px;
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.2;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    box-shadow: 0 8px 32px rgba(255, 210, 140, 0.4);
+    animation: generatePulse 2.5s ease-in-out infinite;
+  }
+  .btn-generate-trip:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 210, 140, 0.5);
+  }
+  .btn-generate-trip:active:not(:disabled) { transform: scale(0.98); }
+  .btn-generate-trip:disabled {
+    opacity: 0.65; cursor: not-allowed; transform: none;
+    animation: none;
+  }
+  @keyframes generatePulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(255, 210, 140, 0.35); }
+    50% { box-shadow: 0 10px 44px rgba(255, 210, 140, 0.55), 0 0 0 5px rgba(255, 210, 140, 0.1); }
+  }
   .btn-generate {
     width: 100%; min-height: 52px; padding: 16px 24px; border: none; cursor: pointer;
     background: rgba(255,210,140,0.9); color: #1a1a2e; border-radius: 16px; font-family: 'Inter', sans-serif;

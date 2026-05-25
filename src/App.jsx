@@ -473,16 +473,17 @@ export default function App() {
     if (originRef.current) originRef.current.value = fromAddr;
     if (destRef.current) destRef.current.value = toAddr;
 
-    await fetchDirections("Car");
-
     setAnswers({});
     setConvoComplete(false);
     setGenerated(false);
     setQuestionHistory([]);
     setCurrentQuestion(null);
     setTripLegs([]);
+    setPrefDraft([]);
     loadNextQuestion({});
     setHeroLaunching(false);
+
+    fetchDirections("Car");
   }
 
   function loadNextQuestion(newAnswers) {
@@ -521,15 +522,12 @@ export default function App() {
     return () => clearTimeout(t);
   }, [currentQuestion?.id, currentQuestion?.type]);
 
-  async function startConvo() {
-    if (!origin || !dest) { toast_("Enter origin and destination first"); return; }
-    setAnswers({});
-    setQuestionHistory([]);
-    setConvoComplete(false);
-    setTripLegs([]);
-    setPrefDraft([]);
+  useEffect(() => {
+    if (view !== "app" || generated || convoComplete || qIndex !== -1) return;
+    if (!origin?.trim() || !dest?.trim()) return;
     loadNextQuestion({});
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, origin, dest, generated, convoComplete, qIndex]);
 
   function getStepMessage() {
     if (qIndex === -2) {
@@ -894,7 +892,6 @@ export default function App() {
                       destRef={destRef}
                       convoEndRef={convoEndRef}
                       stopsEndRef={stopsEndRef}
-                      onStartConvo={startConvo}
                       onGenerateTrip={generateTrip}
                       onResetPlan={resetPlan}
                       onGoBack={goBackOneQuestion}
