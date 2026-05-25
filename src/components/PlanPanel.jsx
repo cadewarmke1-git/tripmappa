@@ -25,10 +25,6 @@ export default function PlanPanel({
   origin,
   dest,
   tripTips,
-  stopCategory,
-  truckSafety,
-  rvSafety,
-  hosCompliance,
   isLoaded,
   timingMode,
   arriveByDate,
@@ -45,18 +41,17 @@ export default function PlanPanel({
   onSaveTrip,
   onToast,
   onToastGold,
-  onGroceryModal,
   onAddFuelStop,
-  onRemoveRoadStop,
   onLodgingSelect,
   selectedLodging,
   tripAlerts,
   onDismissAlert,
-  nearbyServicesByCity,
-  activitiesByCity,
   optionalStopCards,
-  onAddCustomStop,
-  onStopCategoryChange,
+  activeDayIndex,
+  onDaySelect,
+  onFocusMap,
+  onAddRoadStop,
+  departureTime,
   onSwapRoute,
   onFetchDirections,
   onSetOrigin,
@@ -84,29 +79,22 @@ export default function PlanPanel({
                 stops={stops}
                 roadStops={roadStops}
                 tripTips={tripTips}
-                stopCategory={stopCategory}
                 routeInfo={routeInfo}
                 tripLegs={tripLegs}
-                onStopCategoryChange={onStopCategoryChange}
-                truckSafety={truckSafety}
-                rvSafety={rvSafety}
-                hosCompliance={hosCompliance}
                 onResetPlan={onResetPlan}
                 onSaveTrip={onSaveTrip}
                 onToast={onToast}
-                onToastGold={onToastGold}
-                onGroceryModal={onGroceryModal}
                 onAddFuelStop={onAddFuelStop}
-                onRemoveRoadStop={onRemoveRoadStop}
                 onLodgingSelect={onLodgingSelect}
                 selectedLodging={selectedLodging}
                 tripAlerts={tripAlerts}
                 onDismissAlert={onDismissAlert}
-                nearbyServicesByCity={nearbyServicesByCity}
-                activitiesByCity={activitiesByCity}
                 optionalStopCards={optionalStopCards}
-                isLoaded={isLoaded}
-                onAddCustomStop={onAddCustomStop}
+                activeDayIndex={activeDayIndex}
+                onDaySelect={onDaySelect}
+                onFocusMap={onFocusMap}
+                onAddRoadStop={onAddRoadStop}
+                departureTime={departureTime}
                 stopsEndRef={stopsEndRef}
               />
             ) : (
@@ -157,7 +145,7 @@ export default function PlanPanel({
                   )}
                   {qIndex === -2 && (
                     <div className="question-choices" style={{ borderTop: "none", paddingTop: 16, marginTop: 16 }}>
-                      <SummaryCard answers={answers} hosCompliance={hosCompliance} />
+                      <SummaryCard answers={answers} />
                     </div>
                   )}
                 </div>

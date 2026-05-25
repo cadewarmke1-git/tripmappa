@@ -3,7 +3,7 @@
  * State, effects, handlers, and layout only — logic lives in src/lib/, UI in src/components/.
  * See ROADMAP.md for phase status and conventions.
  */
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, STANDARD_MAP_STYLES, DARK_MAP_STYLES, NIGHT_MAP_STYLES } from "./lib/constants.js";
 import {
@@ -28,7 +28,9 @@ import { buildPlacesContext, formatPlacesContextForPrompt } from "./lib/placesCo
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
 import { stopsToMapMarkers } from "./lib/mapMarkers.js";
-import { computeNightSegments, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
+import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
+import { computeDayRoutePaths } from "./lib/itineraryMap.js";
+import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -86,6 +88,8 @@ export default function App() {
   const [optionalStopCards, setOptionalStopCards] = useState([]);
   const [nightSegmentPaths, setNightSegmentPaths] = useState([]);
   const [lowFuelSegmentPaths, setLowFuelSegmentPaths] = useState([]);
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [mapFocusTarget, setMapFocusTarget] = useState(null);
   const [tripLegs, setTripLegs] = useState([]);
   const [stopCategory, setStopCategory] = useState("all");
   const [savedTrips, setSavedTrips] = useState(() => {
@@ -616,8 +620,60 @@ export default function App() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [helpMenuOpen]);
 
+  const getDepartureTime = useCallback(() => {
+    if (timingMode === "leave_now") return new Date();
+    if (timingMode === "arrive_by" && arriveByDate && routeInfo?.duration) {
+      const hours = parseHoursFromDuration(routeInfo.duration);
+      const arrive = new Date(arriveByDate);
+      if (!Number.isNaN(arrive.getTime()) && hours) {
+        return new Date(arrive.getTime() - hours * 3600000);
+      }
+    }
+    return new Date();
+  }, [timingMode, arriveByDate, routeInfo]);
+
+  const departureTime = useMemo(() => getDepartureTime(), [getDepartureTime]);
+
+  const dayRoutePaths = useMemo(() => {
+    if (!generated || !routeInfo?.routePoints?.length) return [];
+    const overnightCount = Math.max(1, stops.filter(s => s.city).length);
+    return computeDayRoutePaths(routeInfo.routePoints, overnightCount);
+  }, [generated, routeInfo, stops]);
+
+  const focusMapOnStop = useCallback((item) => {
+    if (item?.lat == null || item?.lng == null) return;
+    setMapFocusTarget({
+      id: item.id || `focus-${item.lat}-${item.lng}`,
+      lat: item.lat,
+      lng: item.lng,
+      category: item.type === "overnight" ? "lodging" : "poi",
+      title: item.title || item.name,
+      subtitle: item.city || item.description || "",
+      _ts: Date.now(),
+    });
+  }, []);
+
   function addFuelStopToTrip(roadStop) {
     setRoadStops(prev => [...prev, roadStop]);
+  }
+
+  function addRoadStopToTrip(stop) {
+    const entry = { ...stop, id: stop.id || `rs-${Date.now()}` };
+    setRoadStops(prev => [...prev, entry]);
+    if (entry.lat != null && entry.lng != null) {
+      setMapMarkers(prev => [
+        ...prev,
+        {
+          id: entry.id,
+          lat: entry.lat,
+          lng: entry.lng,
+          category: "poi",
+          title: entry.name || entry.title,
+          subtitle: entry.location || entry.city || "",
+          action: "add",
+        },
+      ]);
+    }
   }
 
   function removeRoadStop(indexOrId) {
@@ -668,14 +724,14 @@ export default function App() {
       return;
     }
     const hours = parseHoursFromDuration(routeInfo.duration);
-    const dep = timingMode === "leave_now" ? new Date() : new Date();
-    const nightSegs = computeNightSegments(routeInfo.routePoints, dep, hours);
-    setNightSegmentPaths(nightSegs.map(s => s.path).filter(p => p?.length > 1));
+    const dep = getDepartureTime();
+    const nightBlocks = computeNightDrivingBlocks(dep, hours, routeInfo.routePoints);
+    setNightSegmentPaths(nightBlocks.map(b => b.path).filter(p => p?.length > 1));
     const totalMiles = parseMilesFromDistance(routeInfo.distance);
     setLowFuelSegmentPaths(
       computeLowFuelSegmentPath(routeInfo.routePoints, [], getFuelRangeMiles(answers), totalMiles),
     );
-  }, [routeInfo, answers, timingMode]);
+  }, [routeInfo, answers, getDepartureTime]);
 
   async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers) {
     if (!isLoaded || !window.google) return null;
@@ -688,13 +744,15 @@ export default function App() {
         customStops,
         selectedLodging,
         timingMode,
+        departureTime: getDepartureTime(),
       });
       setStops(enriched.stops);
       setRoadStops(enriched.roadStops);
       setNearbyServicesByCity(enriched.nearbyServicesByCity);
       setActivitiesByCity(enriched.activitiesByCity);
       setOptionalStopCards(enriched.optionalStopCards || []);
-      setTripAlerts(enriched.tripAlerts);
+      setTripAlerts(consolidateAndCapAlerts(enriched.tripAlerts));
+      setActiveDayIndex(0);
       setMapMarkers(enriched.mapMarkers);
       setDismissedAlerts([]);
       return enriched;
@@ -810,6 +868,7 @@ export default function App() {
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
     setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
     setNightSegmentPaths([]); setLowFuelSegmentPaths([]);
+    setActiveDayIndex(0); setMapFocusTarget(null);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
   }
@@ -857,26 +916,27 @@ export default function App() {
     setTripAlerts(prev => {
       const base = prev.filter(a => a.type !== "budget");
       const cap = getTripBudgetCap(answers);
-      if (cap == null || budget.total == null) return base;
-      if (budget.total > cap) {
-        return [...base, {
-          id: "alert-budget-exceeded",
-          type: "budget",
-          title: "Budget exceeded",
-          message: `Estimated total $${Math.round(budget.total)} exceeds your $${cap} budget limit.`,
-          mapCategory: "budget",
-        }];
+      const budgetAlerts = [];
+      if (cap != null && budget.total != null) {
+        if (budget.total > cap) {
+          budgetAlerts.push({
+            id: "alert-budget-exceeded",
+            type: "budget",
+            title: "Budget exceeded",
+            message: `Estimated total $${Math.round(budget.total)} exceeds your $${cap} budget limit.`,
+            mapCategory: "budget",
+          });
+        } else if (cap - budget.total <= 50) {
+          budgetAlerts.push({
+            id: "alert-budget-warning",
+            type: "budget",
+            title: "Budget warning",
+            message: `Within $50 of your $${cap} budget limit.`,
+            mapCategory: "budget",
+          });
+        }
       }
-      if (cap - budget.total <= 50) {
-        return [...base, {
-          id: "alert-budget-warning",
-          type: "budget",
-          title: "Budget warning",
-          message: `Within $50 of your $${cap} budget limit.`,
-          mapCategory: "budget",
-        }];
-      }
-      return base;
+      return consolidateAndCapAlerts([...base, ...budgetAlerts]);
     });
   }, [generated, answers, routeInfo, tripLegs, roadStops, selectedLodging]);
 
@@ -1019,8 +1079,11 @@ export default function App() {
             answers={answers}
             mapMarkers={mapMarkers}
             dismissedAlertIds={dismissedAlerts}
+            dayRoutePaths={dayRoutePaths}
+            activeDayIndex={generated ? activeDayIndex : null}
             nightSegmentPaths={nightSegmentPaths}
             lowFuelSegmentPaths={lowFuelSegmentPaths}
+            mapFocusTarget={mapFocusTarget}
             onMapReady={() => setMapReady(true)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
@@ -1073,10 +1136,6 @@ export default function App() {
                       questionHistoryLength={questionHistory.length}
                       origin={origin}
                       dest={dest}
-                      stopCategory={stopCategory}
-                      truckSafety={truckSafety}
-                      rvSafety={rvSafety}
-                      hosCompliance={hosCompliance}
                       isLoaded={isLoaded}
                       timingMode={timingMode}
                       arriveByDate={arriveByDate}
@@ -1092,19 +1151,17 @@ export default function App() {
                       onSetPrefDraft={setPrefDraft}
                       onSaveTrip={saveTripComingSoon}
                       onToast={toast_}
-                      onToastGold={toastGold}
-                      onGroceryModal={city => setModal({ type: "grocery", city })}
                       onAddFuelStop={addFuelStopToTrip}
-                      onRemoveRoadStop={removeRoadStop}
                       onLodgingSelect={addLodgingSelection}
                       selectedLodging={selectedLodging}
                       tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
                       onDismissAlert={dismissTripAlert}
-                      nearbyServicesByCity={nearbyServicesByCity}
-                      activitiesByCity={activitiesByCity}
                       optionalStopCards={optionalStopCards}
-                      onAddCustomStop={addCustomStop}
-                      onStopCategoryChange={setStopCategory}
+                      activeDayIndex={activeDayIndex}
+                      onDaySelect={setActiveDayIndex}
+                      onFocusMap={focusMapOnStop}
+                      onAddRoadStop={addRoadStopToTrip}
+                      departureTime={departureTime}
                       onSwapRoute={swapRouteCities}
                       onFetchDirections={fetchDirections}
                       onSetOrigin={setOrigin}

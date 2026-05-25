@@ -3,26 +3,15 @@ import { geocodeCity, searchNearbyServices } from "../lib/placesSearch.js";
 import { NEARBY_SERVICE_CATEGORIES } from "../lib/tripAccommodations.js";
 
 const DEFAULT_CATS = NEARBY_SERVICE_CATEGORIES.filter(c =>
-  ["pharmacy", "hospital", "urgent_care", "auto_repair", "atm", "car_wash", "laundry", "tire", "windshield"].includes(c.id),
+  ["pharmacy", "hospital", "urgent_care", "auto_repair", "atm", "car_wash", "laundry", "tire", "windshield", "shipping"].includes(c.id),
 );
 
-export default function NearbyServicesSection({ city, answers, extraCategories = [] }) {
+export default function NearbyServicesSection({ city, extraCategories = [] }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState({});
 
-  const categories = [...DEFAULT_CATS];
-  if (answers?.accessibility?.includes("Need dialysis centers along route")) {
-    categories.push(NEARBY_SERVICE_CATEGORIES.find(c => c.id === "dialysis"));
-  }
-  if (answers?.accessibility?.includes("Traveling with a sick pet — need veterinary clinics along route")) {
-    categories.push(NEARBY_SERVICE_CATEGORIES.find(c => c.id === "vet"));
-  }
-  if (answers?.stops_interests?.includes("Prayer facilities")) {
-    categories.push(NEARBY_SERVICE_CATEGORIES.find(c => c.id === "religious"));
-  }
-  categories.push(NEARBY_SERVICE_CATEGORIES.find(c => c.id === "shipping"));
-  extraCategories.forEach(c => categories.push(c));
+  const categories = [...DEFAULT_CATS, ...extraCategories.filter(Boolean)];
 
   useEffect(() => {
     if (!open || !city) return;
@@ -31,11 +20,11 @@ export default function NearbyServicesSection({ city, answers, extraCategories =
     (async () => {
       const geo = await geocodeCity(city);
       if (!geo || cancelled) { setLoading(false); return; }
-      const data = await searchNearbyServices(geo.lat, geo.lng, categories.filter(Boolean));
+      const data = await searchNearbyServices(geo.lat, geo.lng, categories);
       if (!cancelled) { setServices(data); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [open, city]);
+  }, [open, city, categories.length]);
 
   return (
     <div className="nearby-services-section">

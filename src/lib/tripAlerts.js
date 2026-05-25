@@ -1,19 +1,57 @@
-/** Compute automatic trip alerts from route, answers, and stop data. */
+/** Compute automatic trip alerts — consolidated, capped, actionable. */
 import {
   getFuelRangeMiles,
-  needsElderlyOrPregnantRest,
-  needsRefrigeratedMeds,
-  needsDialysis,
-  needsVetCare,
+  needsElderlyRest,
+  needsYoungChildrenRest,
   getTripBudgetCap,
 } from "./tripAccommodations.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
-import { computeNightSegments } from "./tripMapSegments.js";
+import { computeNightDrivingBlocks } from "./tripMapSegments.js";
 
-let alertCounter = 0;
+const MAX_ALERTS = 5;
+const ALERT_PRIORITY = ["budget", "low_fuel", "night", "rest", "medical", "vet", "alert"];
+
 function mkAlert(type, title, message, meta = {}) {
-  alertCounter += 1;
-  return { id: `alert-${type}-${alertCounter}`, type, title, message, ...meta };
+  return { id: `alert-${type}-${meta.key || type}`, type, title, message, ...meta };
+}
+
+function formatNightBlockMessage(block, departureTime) {
+  const start = new Date(departureTime.getTime() + block.startHour * 3600000);
+  const end = new Date(departureTime.getTime() + block.endHour * 3600000);
+  const fmt = d => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const hrs = Math.round((block.endHour - block.startHour) * 10) / 10;
+  return `About ${hrs}h of driving between ${fmt(start)} and ${fmt(end)}. Well-lit, 24-hour stops recommended.`;
+}
+
+export function consolidateAndCapAlerts(alerts, max = MAX_ALERTS) {
+  const byType = new Map();
+  for (const a of alerts) {
+    const existing = byType.get(a.type);
+    if (!existing) {
+      byType.set(a.type, { ...a });
+      continue;
+    }
+    if (a.type === "night") {
+      byType.set(a.type, {
+        ...existing,
+        message: existing.message.includes(a.message) ? existing.message : `${existing.message} Also: ${a.message}`,
+      });
+      continue;
+    }
+    if (a.type === "medical" && a.message !== existing.message) {
+      byType.set(a.type, {
+        ...existing,
+        message: `${existing.message} Also: ${a.message}`,
+      });
+    }
+  }
+  return [...byType.values()]
+    .sort((a, b) => {
+      const pa = ALERT_PRIORITY.indexOf(a.type);
+      const pb = ALERT_PRIORITY.indexOf(b.type);
+      return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
+    })
+    .slice(0, max);
 }
 
 export function computeTripAlerts({
@@ -26,65 +64,60 @@ export function computeTripAlerts({
   budgetTotal = null,
   departureTime = null,
 }) {
-  const alerts = [];
+  const raw = [];
   const miles = parseMilesFromDistance(routeInfo?.distance);
   const hours = parseHoursFromDuration(routeInfo?.duration);
   const range = getFuelRangeMiles(answers);
 
-  if (needsElderlyOrPregnantRest(answers)) {
-    alerts.push(mkAlert("rest", "Rest breaks recommended", "Plan a stop every 90 minutes — no segment should exceed 90 minutes without a rest option.", { mapCategory: "alert" }));
+  if (needsElderlyRest(answers) || needsYoungChildrenRest(answers)) {
+    raw.push(mkAlert("rest", "Rest breaks recommended", "Plan a stop about every 90 minutes for comfort and safety.", { mapCategory: "alert" }));
   }
 
-  if (departureTime && routeInfo?.routePoints?.length) {
-    const nightSegs = computeNightSegments(routeInfo.routePoints, departureTime, hours);
-    nightSegs.forEach((seg, i) => {
-      alerts.push(mkAlert("night", "Night driving segment", `Segment ${i + 1} falls between 10 PM and 6 AM. Well-lit 24-hour stops recommended.`, {
-        segmentIndex: seg.index,
-        mapCategory: "alert",
-        markerId: `night-seg-${i}`,
-      }));
+  if (departureTime && hours) {
+    const nightBlocks = computeNightDrivingBlocks(departureTime, hours, routeInfo?.routePoints);
+    nightBlocks.forEach((block, i) => {
+      const midFrac = ((block.startHour + block.endHour) / 2) / hours;
+      const ptIdx = Math.floor(midFrac * Math.max(0, (routeInfo?.routePoints?.length || 1) - 1));
+      const pt = routeInfo?.routePoints?.[ptIdx];
+      raw.push(mkAlert(
+        "night",
+        "Night driving",
+        `You'll be on the road between 10 PM and 6 AM. ${formatNightBlockMessage(block, departureTime instanceof Date ? departureTime : new Date(departureTime))}`,
+        {
+          mapCategory: "alert",
+          markerId: `night-block-${i}`,
+          lat: pt?.lat,
+          lng: pt?.lng,
+          key: `night-${i}`,
+        },
+      ));
     });
   }
 
   if (fuelStopPoints.length >= 2) {
+    let worstGap = 0;
+    let worstIdx = 0;
     for (let i = 1; i < fuelStopPoints.length; i++) {
       const gap = fuelStopPoints[i].segmentMiles ?? (miles ? miles / fuelStopPoints.length : null);
-      if (gap != null && gap > range) {
-        alerts.push(mkAlert("low_fuel", "Low fuel warning", `Gap of ~${Math.round(gap)} mi exceeds safe range (${range} mi). Urgent fuel stop needed.`, {
-          segmentIndex: i,
-          mapCategory: "alert",
-          markerId: `low-fuel-${i}`,
-        }));
-      }
+      if (gap != null && gap > worstGap) { worstGap = gap; worstIdx = i; }
     }
-  }
-
-  if (needsRefrigeratedMeds(answers)) {
-    stops.forEach(stop => {
-      const services = nearbyServicesByCity[stop.city];
-      const hasPharmacy = services?.pharmacy?.length || services?.hospital?.length;
-      if (!hasPharmacy) {
-        alerts.push(mkAlert("medical", "Medical services unavailable", `Limited pharmacy access near ${stop.city} for refrigerated medication.`, { city: stop.city, mapCategory: "medical" }));
-      }
-    });
-  }
-
-  if (needsDialysis(answers)) {
-    alerts.push(mkAlert("medical", "Dialysis centers", "Dialysis centers listed in Nearby Services at each overnight stop.", { mapCategory: "medical" }));
-  }
-
-  if (needsVetCare(answers)) {
-    alerts.push(mkAlert("vet", "Veterinary care", "Veterinary clinics listed in Nearby Services at each overnight stop.", { mapCategory: "vet" }));
+    if (worstGap > range) {
+      raw.push(mkAlert("low_fuel", "Fuel range warning", `Longest gap (~${Math.round(worstGap)} mi) exceeds safe range (${range} mi). Plan an extra fuel stop.`, {
+        segmentIndex: worstIdx,
+        mapCategory: "alert",
+        markerId: "low-fuel-worst",
+      }));
+    }
   }
 
   const cap = getTripBudgetCap(answers);
   if (cap != null && budgetTotal != null && budgetTotal > cap) {
-    alerts.push(mkAlert("budget", "Budget exceeded", `Estimated total $${Math.round(budgetTotal)} exceeds your $${cap} budget limit.`, { mapCategory: "budget" }));
+    raw.push(mkAlert("budget", "Over budget", `Estimated $${Math.round(budgetTotal)} exceeds your $${cap} limit.`, { mapCategory: "budget" }));
   } else if (cap != null && budgetTotal != null && cap - budgetTotal <= 50) {
-    alerts.push(mkAlert("budget", "Budget warning", `Within $50 of your $${cap} budget limit.`, { mapCategory: "budget" }));
+    raw.push(mkAlert("budget", "Near budget limit", `About $${Math.round(cap - budgetTotal)} remaining in your $${cap} budget.`, { mapCategory: "budget" }));
   }
 
-  return alerts;
+  return consolidateAndCapAlerts(raw);
 }
 
 export function alertsToMapMarkers(alerts, dismissedIds = []) {

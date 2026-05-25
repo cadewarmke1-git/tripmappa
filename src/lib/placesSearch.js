@@ -198,7 +198,6 @@ export async function searchInterestPOIs(lat, lng, interest, radius = RADIUS_10M
     "Comedy Clubs or Sports Bars": { keyword: "comedy club sports bar" },
     "Drive-In Movie Theaters": { keyword: "drive in theater" },
     "Antique Shops or Flea Markets": { keyword: "antique flea market" },
-    "Prayer facilities": { keyword: "mosque church temple synagogue" },
     "Remote work — WiFi cafés": { keyword: "cafe wifi laptop" },
   };
   const cfg = map[interest] || { keyword: interest };

@@ -1,5 +1,5 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import { NIGHT_MAP_STYLES } from "../lib/constants.js";
 import MapRoutePill from "./MapRoutePill.jsx";
@@ -28,8 +28,11 @@ export default function AppMap({
   answers,
   mapMarkers = [],
   dismissedAlertIds = [],
+  dayRoutePaths = [],
+  activeDayIndex = null,
   nightSegmentPaths = [],
   lowFuelSegmentPaths = [],
+  mapFocusTarget = null,
   onMapReady,
   onMapStyleOpenChange,
   onMapStyleChange,
@@ -37,6 +40,14 @@ export default function AppMap({
 }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [legendOpen, setLegendOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mapFocusTarget?.lat || !mapRef.current || !window.google) return;
+    mapRef.current.panTo({ lat: mapFocusTarget.lat, lng: mapFocusTarget.lng });
+    const zoom = mapRef.current.getZoom?.() ?? 4;
+    if (zoom < 10) mapRef.current.setZoom(11);
+    setSelectedMarker(mapFocusTarget);
+  }, [mapFocusTarget, mapRef]);
 
   function handleMarkerClick(marker) {
     setSelectedMarker(marker);
@@ -73,7 +84,7 @@ export default function AppMap({
             }}
             onClick={() => setSelectedMarker(null)}
           >
-            {directions && (
+            {directions && dayRoutePaths.length === 0 && (
               <DirectionsRenderer
                 directions={directions}
                 options={{
@@ -89,6 +100,8 @@ export default function AppMap({
               onMarkerClick={handleMarkerClick}
             />
             <MapRouteOverlays
+              dayRoutePaths={dayRoutePaths}
+              activeDayIndex={activeDayIndex}
               nightSegmentPaths={nightSegmentPaths}
               lowFuelSegmentPaths={lowFuelSegmentPaths}
             />

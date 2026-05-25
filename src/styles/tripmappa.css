@@ -1413,3 +1413,135 @@
   .customize-stop-toggle { font-size: 12px; font-weight: 600; color: #FFD28C; background: none; border: none; cursor: pointer; }
   .customize-stop-panel { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
   .customize-stop-input { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: inherit; }
+
+  /* ── Premium itinerary results ── */
+  .itinerary-view { scroll-behavior: smooth; }
+  .trip-overview-card {
+    position: relative; overflow: hidden; margin: 0 0 16px; padding: 18px 16px 16px;
+    border-radius: 16px; background: linear-gradient(145deg, rgba(255,210,140,0.12) 0%, rgba(255,255,255,0.04) 55%);
+    border: 1px solid rgba(255,210,140,0.22);
+  }
+  .trip-overview-accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, #FFD28C, #F59E0B, #FFD28C, transparent);
+    background-size: 200% 100%; animation: goldShimmer 3s ease-in-out infinite;
+  }
+  @keyframes goldShimmer { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0 0; } }
+  .trip-overview-route { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .trip-overview-city { font-family: "Fraunces", Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .trip-overview-arrow { color: #FFD28C; font-size: 18px; font-weight: 600; }
+  .trip-overview-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 480px) { .trip-overview-stats { grid-template-columns: repeat(4, 1fr); } }
+  .trip-overview-stat { text-align: center; padding: 8px 4px; border-radius: 10px; background: rgba(0,0,0,0.12); }
+  .trip-overview-stat-val { display: block; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+  .trip-overview-stat-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-top: 2px; }
+
+  .route-progress-bar { margin: 0 0 20px; padding: 8px 4px 28px; position: relative; }
+  .route-progress-track {
+    position: relative; height: 4px; border-radius: 99px;
+    background: rgba(255,255,255,0.12); margin: 0 12px;
+  }
+  .route-progress-track::before {
+    content: ""; position: absolute; inset: 0; border-radius: 99px;
+    background: linear-gradient(90deg, #FFD28C, #6366F1, #14B8A6);
+    opacity: 0.35;
+  }
+  .route-progress-stop {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    background: none; border: none; cursor: pointer; padding: 0; text-align: center; min-width: 48px;
+  }
+  .route-progress-dot {
+    display: block; width: 12px; height: 12px; margin: 0 auto 4px; border-radius: 50%;
+    background: var(--ink); border: 2px solid #FFD28C; transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .route-progress-stop.active .route-progress-dot {
+    transform: scale(1.25); box-shadow: 0 0 0 4px rgba(255,210,140,0.25); background: #FFD28C;
+  }
+  .route-progress-label { font-size: 9px; font-weight: 600; color: var(--muted); max-width: 64px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .route-progress-stop.active .route-progress-label { color: #FFD28C; }
+
+  .trip-alerts-banner {
+    margin: 0 0 16px; border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+  }
+  .trip-alerts-banner-toggle {
+    width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: none; border: none; cursor: pointer; color: inherit; font-size: 13px; text-align: left;
+  }
+  .trip-alerts-banner-count {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px;
+    border-radius: 99px; background: rgba(255,210,140,0.2); color: #FFD28C; font-size: 11px; font-weight: 700;
+  }
+  .trip-alerts-banner-chevron { margin-left: auto; font-size: 10px; color: var(--muted); }
+  .trip-alerts-banner-panel { border-top: 1px solid rgba(255,255,255,0.08); padding: 4px 0; }
+  .trip-alert-row {
+    display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .trip-alert-row:last-child { border-bottom: none; }
+  .trip-alert-row-text { flex: 1; min-width: 0; }
+  .trip-alert-row-text strong { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .trip-alert-row-text span { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .trip-alert-row-dismiss { background: none; border: none; font-size: 16px; color: var(--muted); cursor: pointer; padding: 0 2px; line-height: 1; }
+
+  .itinerary-day { margin-bottom: 28px; opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .itinerary-day.itinerary-day-visible { opacity: 1; transform: translateY(0); }
+  .itinerary-day-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-left: 4px; }
+  .itinerary-day-label { font-family: "Fraunces", Georgia, serif; font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+  .itinerary-day-date { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  .itinerary-timeline { display: flex; flex-direction: column; gap: 0; }
+  .itinerary-timeline-item { display: flex; gap: 12px; }
+  .itinerary-timeline-rail { width: 16px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-top: 18px; }
+  .itinerary-timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFD28C; box-shadow: 0 0 0 3px rgba(255,210,140,0.2); }
+  .itinerary-timeline-item:not(:last-child) .itinerary-timeline-rail::after {
+    content: ""; flex: 1; width: 2px; min-height: 12px; margin-top: 6px;
+    background: linear-gradient(180deg, rgba(255,210,140,0.4), rgba(255,255,255,0.08));
+  }
+  .itinerary-timeline-content { flex: 1; min-width: 0; padding-bottom: 16px; }
+
+  .itinerary-card {
+    border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+    animation: cardEntrance 0.55s ease backwards;
+  }
+  @keyframes cardEntrance { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .itinerary-card-hero { border-color: rgba(255,210,140,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+  .itinerary-card-overnight .itinerary-card-photo-wrap { aspect-ratio: 16 / 7; }
+  .itinerary-card-road, .itinerary-card-discovery { max-width: 100%; }
+  .itinerary-card-road .itinerary-card-photo-wrap, .itinerary-card-discovery .itinerary-card-photo-wrap { aspect-ratio: 16 / 9; max-height: 140px; }
+  .itinerary-card-photo-wrap { position: relative; overflow: hidden; aspect-ratio: 16 / 9; }
+  .itinerary-card-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .itinerary-card-photo-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+  .itinerary-badge-local {
+    position: absolute; top: 10px; left: 10px; z-index: 1;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 4px 8px; border-radius: 6px; background: rgba(255,210,140,0.95); color: #1a1a2e;
+  }
+  .itinerary-badge-type {
+    position: absolute; top: 10px; right: 10px; z-index: 1;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.5); color: #fff;
+  }
+  .itinerary-card-body { padding: 12px 14px 14px; }
+  .itinerary-card-title { font-family: "Fraunces", Georgia, serif; font-size: 17px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .itinerary-card-hero .itinerary-card-title { font-size: 20px; }
+  .itinerary-card-desc { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 0 0 10px; }
+  .itinerary-card-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .itinerary-card-meta span:not(:last-child)::after { content: "·"; margin-left: 8px; opacity: 0.5; }
+  .itinerary-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .itinerary-btn-gold { flex: 1; min-width: 120px; }
+  .itinerary-btn-secondary {
+    padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(255,210,140,0.4); background: rgba(255,210,140,0.1); color: #FFD28C; cursor: pointer;
+  }
+  .itinerary-btn-ghost {
+    padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 500;
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+  }
+  .itinerary-lodging-embed { margin-top: 10px; }
+  .tips-card-compact { margin-top: 16px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }

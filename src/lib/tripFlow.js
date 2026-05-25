@@ -14,11 +14,9 @@ import {
   DIETARY_CHOICES,
   ACCESSIBILITY_CHOICES,
   TRIP_BUDGET_CHOICES,
-  SCHEDULE_CHOICES,
   LOYALTY_CHOICES,
   getStopsInterestsChoices,
   needsFoodAllergyDetail,
-  needsScheduleHours,
   needsTowingQuestion,
   isTowingSelected,
 } from "./tripAccommodations.js";
@@ -33,7 +31,7 @@ export const PLANE_SKIP_MESSAGE =
 export const FLOW_QUESTION_IDS = [
   "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
   "lodging", "loyalty_program", "dietary", "food_allergies", "accessibility",
-  "stops_interests", "trip_budget", "schedule_restrictions", "schedule_hours", "preferences",
+  "stops_interests", "trip_budget", "preferences",
   "hauling_type", "sleeper_cab", "truck_stop_brand", "route_restrictions", "coordination_needs",
 ];
 
@@ -85,9 +83,9 @@ export const KIDS_AGE_CHOICES = [];
 const DAY_TRIP_MILES = 150;
 
 export const LODGING_CHOICE_OPTIONS = [
-  { value: "Budget", label: "Budget — 1 to 2 star hotels and motels under $80 per night" },
-  { value: "Mid-Range", label: "Mid-Range — 3 star hotels between $80 and $150 per night" },
-  { value: "Luxury", label: "Luxury — 4 to 5 star hotels over $150 per night" },
+  { value: "Budget", label: "Budget — under $80 per night" },
+  { value: "Mid-Range", label: "Mid-Range — $80 to $150 per night" },
+  { value: "Luxury", label: "Luxury — over $150 per night" },
   { value: "Airbnb or Vacation Rental", label: "Airbnb or Vacation Rental" },
   { value: "Camping or Outdoors", label: "Camping or Outdoors" },
   { value: "Doesn't Matter", label: "Doesn't Matter" },
@@ -123,21 +121,21 @@ const LODGING_QUESTION = {
 
 const LOYALTY_QUESTION = {
   id: "loyalty_program",
-  ask: "Hotel loyalty program preference?",
+  ask: "Hotel loyalty program?",
   type: "choice",
   choices: LOYALTY_CHOICES,
 };
 
 const DIETARY_QUESTION = {
   id: "dietary",
-  ask: "Any dietary preferences or restrictions?",
+  ask: "Any food preferences?",
   type: "multiselect",
   choices: DIETARY_CHOICES,
 };
 
 const FOOD_ALLERGIES_QUESTION = {
   id: "food_allergies",
-  ask: "Please specify your food allergies:",
+  ask: "Which food allergies should we plan around?",
   type: "text",
   placeholder: "e.g. peanuts, shellfish, dairy…",
 };
@@ -154,20 +152,6 @@ const TRIP_BUDGET_QUESTION = {
   ask: "Do you have a total trip budget?",
   type: "choice",
   choices: TRIP_BUDGET_CHOICES,
-};
-
-const SCHEDULE_QUESTION = {
-  id: "schedule_restrictions",
-  ask: "Any schedule restrictions?",
-  type: "choice",
-  choices: SCHEDULE_CHOICES,
-};
-
-const SCHEDULE_HOURS_QUESTION = {
-  id: "schedule_hours",
-  ask: "What hours do you prefer to drive?",
-  type: "text",
-  placeholder: "e.g. 8 AM – 6 PM only",
 };
 
 const PERSONAL_PREFERENCES_QUESTION = {
@@ -208,7 +192,7 @@ const COORDINATION_QUESTION = {
 function buildStopsInterestsQuestion(answers) {
   return {
     id: "stops_interests",
-    ask: "Any specific stops or interests?",
+    ask: "Anything fun to stop for along the way?",
     type: "multiselect",
     choices: getStopsInterestsChoices(answers),
   };
@@ -267,10 +251,6 @@ function getNextCommercialQuestion(answers) {
 
 function getNextUniversalQuestions(answers) {
   if (!isAnswered("accessibility", answers)) return { done: false, ...ACCESSIBILITY_QUESTION };
-  if (!isAnswered("schedule_restrictions", answers)) return { done: false, ...SCHEDULE_QUESTION };
-  if (needsScheduleHours(answers) && !isAnswered("schedule_hours", answers)) {
-    return { done: false, ...SCHEDULE_HOURS_QUESTION };
-  }
   return null;
 }
 
@@ -282,10 +262,6 @@ function getNextNonCommercialQuestions(answers, context) {
   if (!isAnswered("accessibility", answers)) return { done: false, ...ACCESSIBILITY_QUESTION };
   if (!isAnswered("stops_interests", answers)) return { done: false, ...buildStopsInterestsQuestion(answers) };
   if (!isAnswered("trip_budget", answers)) return { done: false, ...TRIP_BUDGET_QUESTION };
-  if (!isAnswered("schedule_restrictions", answers)) return { done: false, ...SCHEDULE_QUESTION };
-  if (needsScheduleHours(answers) && !isAnswered("schedule_hours", answers)) {
-    return { done: false, ...SCHEDULE_HOURS_QUESTION };
-  }
   return null;
 }
 

@@ -120,22 +120,17 @@ export default async function handler(req, res) {
   const accessibility = Array.isArray(answers?.accessibility) ? answers.accessibility : [];
   const stopsInterests = Array.isArray(answers?.stops_interests) ? answers.stops_interests : [];
   const tripBudget = answers?.trip_budget;
-  const scheduleRestrictions = answers?.schedule_restrictions;
   const towing = answers?.towing;
   const loyalty = answers?.loyalty_program;
 
   const accommodationsBlock = `
 HUMAN POSSIBILITY ACCOMMODATIONS (must follow exactly):
 ${dietary.length ? `- Dietary needs: ${dietary.join(", ")}${answers?.food_allergies ? ` · Allergies: ${answers.food_allergies}` : ""}` : ""}
-${accessibility.length ? `- Accessibility & medical: ${accessibility.join(", ")}` : ""}
+${accessibility.length ? `- Accessibility: ${accessibility.join(", ")}` : ""}
 ${stopsInterests.length ? `- Stops & interests: ${stopsInterests.join(", ")}` : ""}
 ${tripBudget && tripBudget !== "No budget limit" ? `- Total trip budget cap: ${tripBudget} — NEVER exceed this across all lodging and stops combined` : ""}
-${scheduleRestrictions && scheduleRestrictions !== "No restrictions" ? `- Schedule restriction: ${scheduleRestrictions}${answers?.schedule_hours ? ` · Drive hours: ${answers.schedule_hours}` : ""} — NEVER schedule driving segments on restricted days; place overnight stop before restricted day begins` : ""}
 ${towing && towing !== "No" ? `- Towing: ${towing} — recommend stops with trailer parking; avoid low clearance and sharp turns` : ""}
 ${loyalty && loyalty !== "No preference" ? `- Hotel loyalty: prioritize ${loyalty} branded properties at overnight stops` : ""}
-${accessibility.includes("Need dialysis centers along route") ? "- ALWAYS list dialysis centers at each overnight stop in nearby services context" : ""}
-${accessibility.includes("Traveling with a sick pet — need veterinary clinics along route") ? "- ALWAYS list veterinary clinics at each overnight stop" : ""}
-${accessibility.includes("Prefer highly rated safe stops only") ? "- Filter gas, rest, and lodging to 4+ star rated, well-lit facilities only" : ""}
 ${stopsInterests.some(i => /music|comedy|drive-in|antique/i.test(i)) ? "- Suggest evening activities matching entertainment interests at each overnight stop with brief descriptions" : ""}
 ${stopsInterests.includes("Remote work — WiFi cafés") ? "- Prioritize restaurants and cafés with strong WiFi at stops" : ""}
 - For any driving segment between 10 PM and 6 AM: suggest well-lit 24-hour staffed facilities only
@@ -201,12 +196,9 @@ STRICT ROUTING RULES — never violate these:
 3. Space overnight stops evenly based on drive time so no single driving segment exceeds 8 hours.
 4. Always return each stop city as "City, State" (full name and state abbreviation) for display above hotel/lodging cards.
 5. All hotels, restaurants, fuel stops, truck stops, and road_stops must be in cities on the same corridor — never unrelated regions.
-6. Never schedule driving on a day the user has restricted (Sabbath/Sunday/hours-only).
-7. Never exceed the user's stated total trip budget across lodging and stops.
-8. Prioritize hotel loyalty program brand when preference is stated.
-9. Always suggest dialysis centers at overnight stops when medical needs include dialysis.
-10. Always suggest veterinary clinics at overnight stops when traveling with a sick pet.
-11. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.`;
+6. Never exceed the user's stated total trip budget across lodging and stops.
+7. Prioritize hotel loyalty program brand when preference is stated.
+8. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.`;
 
   const userPrompt = isTrucker
     ? `${routeConstraintBlock}

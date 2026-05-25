@@ -12,15 +12,11 @@ import { stopsToMapMarkers } from "./mapMarkers.js";
 import {
   asArray,
   NEARBY_SERVICE_CATEGORIES,
-  needsDialysis,
-  needsVetCare,
-  needsSafeStopsOnly,
   getTripBudgetCap,
 } from "./tripAccommodations.js";
 import { buildFuelIntervalPoints, getFuelStopMode, sampleRoutePoints } from "./fuel.js";
 import { computeBudgetEstimate } from "./budget.js";
 import { parseMilesFromDistance } from "./parsing.js";
-import { applyStopFilters } from "./placesFilters.js";
 
 const BASE_SERVICE_IDS = [
   "pharmacy", "hospital", "urgent_care", "auto_repair", "atm",
@@ -30,18 +26,15 @@ const BASE_SERVICE_IDS = [
 function interestToMarkerCategory(interest) {
   if (/playground|park/i.test(interest)) return "playground";
   if (/music|comedy|drive-in|antique|flea|sports bar/i.test(interest)) return "entertainment";
-  if (/prayer/i.test(interest)) return "religious";
   if (/wifi|remote work/i.test(interest)) return "wifi";
   if (/kid friendly/i.test(interest)) return "playground";
   return "poi";
 }
 
-function serviceCategoriesForAnswers(answers) {
-  const ids = [...BASE_SERVICE_IDS];
-  if (needsDialysis(answers)) ids.push("dialysis");
-  if (needsVetCare(answers)) ids.push("vet");
-  if (asArray(answers?.stops_interests).includes("Prayer facilities")) ids.push("religious");
-  return ids.map(id => NEARBY_SERVICE_CATEGORIES.find(c => c.id === id)).filter(Boolean);
+function serviceCategoriesForAnswers() {
+  return BASE_SERVICE_IDS
+    .map(id => NEARBY_SERVICE_CATEGORIES.find(c => c.id === id))
+    .filter(Boolean);
 }
 
 export async function enrichGeneratedTrip({
@@ -59,14 +52,11 @@ export async function enrichGeneratedTrip({
   const restaurantsByCity = {};
   const optionalStopCards = [];
   const poiMarkers = [];
-  const enrichedStops = stops.map(s => ({ ...s, safetyFlagged: needsSafeStopsOnly(answers) }));
-  const safeRoadStops = roadStops.map(rs => ({
-    ...rs,
-    safetyFlagged: needsSafeStopsOnly(answers) && (rs.rating ?? 5) < 4,
-  }));
+  const enrichedStops = stops.map(s => ({ ...s }));
+  const safeRoadStops = roadStops.map(rs => ({ ...rs }));
 
   const interests = asArray(answers?.stops_interests).filter(i => i !== "No specific interests");
-  const serviceCats = serviceCategoriesForAnswers(answers);
+  const serviceCats = serviceCategoriesForAnswers();
   const wantsPlaygrounds = interests.some(i => /playground|park/i.test(i));
 
   for (const stop of enrichedStops) {
@@ -103,10 +93,7 @@ export async function enrichGeneratedTrip({
     Object.entries(nearbyServicesByCity[stop.city] || {}).forEach(([key, items]) => {
       items?.forEach(item => {
         if (item.lat == null || item.lng == null) return;
-        const cat = key === "dialysis" || key === "hospital" || key === "pharmacy" ? "medical"
-          : key === "vet" ? "vet"
-          : key === "religious" ? "religious"
-          : null;
+        const cat = key === "hospital" || key === "pharmacy" ? "medical" : null;
         if (!cat) return;
         poiMarkers.push({
           id: `svc-${key}-${item.id}`,

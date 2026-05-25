@@ -1,28 +1,56 @@
-/** Route segment analysis for night driving and fuel risk highlights. */
+/** Route segment analysis — night driving blocks and fuel risk highlights. */
 
-export function computeNightSegments(routePoints, departureTime, totalHours) {
-  if (!routePoints?.length || !departureTime || !totalHours) return [];
+function isNightHour(date) {
+  const h = date.getHours();
+  return h >= 22 || h < 6;
+}
+
+function sliceRouteByFraction(routePoints, startFrac, endFrac) {
+  if (!routePoints?.length) return [];
+  const n = routePoints.length;
+  const i0 = Math.max(0, Math.floor(startFrac * (n - 1)));
+  const i1 = Math.min(n - 1, Math.ceil(endFrac * (n - 1)));
+  return routePoints.slice(i0, i1 + 1);
+}
+
+/**
+ * Consolidate driving time into continuous night blocks (10 PM – 6 AM).
+ * Returns one entry per continuous night period — never one per route segment.
+ */
+export function computeNightDrivingBlocks(departureTime, totalHours, routePoints) {
+  if (!departureTime || !totalHours || totalHours <= 0) return [];
   const start = departureTime instanceof Date ? departureTime : new Date(departureTime);
   if (Number.isNaN(start.getTime())) return [];
 
-  const segments = [];
-  const segCount = Math.max(1, routePoints.length - 1);
-  const hoursPerSeg = totalHours / segCount;
+  const stepHours = 0.25;
+  const steps = Math.ceil(totalHours / stepHours);
+  const rawBlocks = [];
+  let current = null;
 
-  for (let i = 0; i < segCount; i++) {
-    const segStart = new Date(start.getTime() + i * hoursPerSeg * 3600000);
-    const hour = segStart.getHours();
-    if (hour >= 22 || hour < 6) {
-      segments.push({
-        index: i,
-        path: routePoints.slice(
-          Math.floor(i * routePoints.length / segCount),
-          Math.floor((i + 1) * routePoints.length / segCount) + 1,
-        ),
-      });
+  for (let s = 0; s <= steps; s++) {
+    const hourOffset = Math.min(s * stepHours, totalHours);
+    const clock = new Date(start.getTime() + hourOffset * 3600000);
+    if (isNightHour(clock)) {
+      if (!current) current = { startHour: hourOffset, endHour: hourOffset };
+      else current.endHour = hourOffset;
+    } else if (current) {
+      rawBlocks.push(current);
+      current = null;
     }
   }
-  return segments;
+  if (current) rawBlocks.push(current);
+
+  return rawBlocks.map((block, index) => ({
+    index,
+    startHour: block.startHour,
+    endHour: block.endHour,
+    path: sliceRouteByFraction(routePoints, block.startHour / totalHours, block.endHour / totalHours),
+  }));
+}
+
+/** @deprecated Use computeNightDrivingBlocks */
+export function computeNightSegments(routePoints, departureTime, totalHours) {
+  return computeNightDrivingBlocks(departureTime, totalHours, routePoints);
 }
 
 export function computeLowFuelSegmentPath(routePoints, fuelStopIndices, rangeMiles, totalMiles) {

@@ -21,8 +21,6 @@ export const DIETARY_CHOICES = [
   "No restrictions",
   "Vegetarian",
   "Vegan",
-  "Halal",
-  "Kosher",
   "Gluten Free",
   "Food Allergies — I will specify",
   "Drive-Through Only",
@@ -30,15 +28,10 @@ export const DIETARY_CHOICES = [
 
 export const ACCESSIBILITY_CHOICES = [
   "No special needs",
-  "Wheelchair accessible stops required",
-  "Wheelchair accessible lodging required",
+  "Wheelchair accessible stops",
   "Traveling with elderly passengers",
-  "Traveling while pregnant",
-  "Service animal accommodations needed",
-  "Prefer highly rated safe stops only",
-  "Traveling with refrigerated medication — need stops with refrigeration available",
-  "Need dialysis centers along route",
-  "Traveling with a sick pet — need veterinary clinics along route",
+  "Traveling with young children",
+  "Service animal accommodations",
 ];
 
 export const STOPS_INTERESTS_BASE = [
@@ -50,7 +43,6 @@ export const STOPS_INTERESTS_BASE = [
   "Shopping Malls or Outlets",
   "Sports Venues",
   "Music Venues",
-  "Prayer facilities",
   "Remote work — WiFi cafés",
   "Live Music Venues",
   "Comedy Clubs or Sports Bars",
@@ -73,14 +65,6 @@ export const TRIP_BUDGET_CHOICES = [
   "Over $1000",
 ];
 
-export const SCHEDULE_CHOICES = [
-  "No restrictions",
-  "Cannot travel on Saturdays — Sabbath observant",
-  "Cannot travel on Sundays",
-  "Prefer to drive during specific hours only — I will specify",
-  "Night driving only",
-];
-
 export const LOYALTY_CHOICES = [
   "No preference",
   "Marriott Bonvoy",
@@ -100,10 +84,7 @@ export const NEARBY_SERVICE_CATEGORIES = [
   { id: "laundry", label: "Laundromat", keyword: "laundromat" },
   { id: "tire", label: "Tire service", keyword: "tire shop" },
   { id: "windshield", label: "Windshield repair", keyword: "auto glass repair" },
-  { id: "dialysis", label: "Dialysis center", keyword: "dialysis center" },
-  { id: "vet", label: "Veterinary care", type: "veterinary_care" },
   { id: "shipping", label: "Shipping stores", keyword: "FedEx UPS shipping" },
-  { id: "religious", label: "Prayer facilities", keyword: "mosque church temple" },
 ];
 
 const PERSONAL = ["Car", "Motorcycle", "SUV or Van", "Rental Car"];
@@ -149,45 +130,36 @@ export function hasAccessibility(answers, option) {
 }
 
 export function needsWheelchairFilter(answers) {
-  return hasAccessibility(answers, "Wheelchair accessible stops required")
-    || hasAccessibility(answers, "Wheelchair accessible lodging required");
+  return hasAccessibility(answers, "Wheelchair accessible stops");
 }
 
+export function needsElderlyRest(answers) {
+  return hasAccessibility(answers, "Traveling with elderly passengers");
+}
+
+export function needsYoungChildrenRest(answers) {
+  return hasAccessibility(answers, "Traveling with young children");
+}
+
+/** @deprecated */
 export function needsElderlyOrPregnantRest(answers) {
-  return hasAccessibility(answers, "Traveling with elderly passengers")
-    || hasAccessibility(answers, "Traveling while pregnant");
+  return needsElderlyRest(answers) || needsYoungChildrenRest(answers);
 }
 
 export function needsSafeStopsOnly(answers) {
-  return hasAccessibility(answers, "Prefer highly rated safe stops only");
-}
-
-export function needsRefrigeratedMeds(answers) {
-  return hasAccessibility(answers, "Traveling with refrigerated medication — need stops with refrigeration available");
-}
-
-export function needsDialysis(answers) {
-  return hasAccessibility(answers, "Need dialysis centers along route");
-}
-
-export function needsVetCare(answers) {
-  return hasAccessibility(answers, "Traveling with a sick pet — need veterinary clinics along route");
+  return false;
 }
 
 export function needsFoodAllergyDetail(answers) {
   return asArray(answers?.dietary).includes("Food Allergies — I will specify");
 }
 
-export function needsScheduleHours(answers) {
-  return answers?.schedule_restrictions === "Prefer to drive during specific hours only — I will specify";
-}
-
 export function isTeslaSuperchargerOnly(answers) {
   return answers?.fuel_type === "Electric — Tesla Superchargers only";
 }
 
-export function isNightDrivingOnly(answers) {
-  return answers?.schedule_restrictions === "Night driving only";
+export function isNightDrivingOnly() {
+  return false;
 }
 
 export function getTripBudgetCap(answers) {
@@ -206,8 +178,6 @@ export function getDietarySearchKeywords(answers) {
   const map = {
     Vegetarian: "vegetarian restaurant",
     Vegan: "vegan restaurant",
-    Halal: "halal restaurant",
-    Kosher: "kosher restaurant",
     "Gluten Free": "gluten free restaurant",
     "Drive-Through Only": "drive through restaurant",
   };
