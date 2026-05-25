@@ -41,24 +41,32 @@ export function getFuelStopMode(answers) {
   if (isRvVehicle(vehicle)) return "rv";
   if (isTruckVehicle(vehicle)) return "diesel";
   const personal = ["Car", "Motorcycle", "SUV or Van"].includes(vehicle);
-  if (personal && hasPref(answers, "EV charging stops")) return "hybrid";
-  if (personal && inferFuelType(vehicle, answers.preferences || []) === "Electric (EV)") return "ev";
+  const fuelType = answers?.fuel_type || answers?.fuel;
+  if (personal && fuelType === "Hybrid") return "hybrid";
+  if (personal && (fuelType === "Electric" || fuelType === "Electric (EV)")) return "ev";
+  if (personal && fuelType === "Diesel") return "diesel";
   return "gas";
 }
 
 export function estimateTripFuelCost(miles, answers) {
   if (!miles || miles <= 0) return null;
   const vehicle = getEffectiveVehicle(answers);
-  const mode = getFuelStopMode(answers);
-  if (mode === "none") return 0;
-  if (mode === "ev") return Math.round(miles * FUEL_PRICES.evPerMile);
-  if (mode === "hybrid") {
+  const fuelType = answers?.fuel_type || answers?.fuel;
+  if (isWaterVehicle(vehicle) || vehicle === "Plane") return 0;
+
+  if (fuelType === "Electric" || fuelType === "Electric (EV)") {
+    return Math.round(miles * FUEL_PRICES.evPerMile);
+  }
+  if (fuelType === "Hybrid") {
     const gasPart = (miles * 0.6) / getVehicleMpg(vehicle) * FUEL_PRICES.regular;
     const evPart = (miles * 0.4) * FUEL_PRICES.evPerMile;
     return Math.round(gasPart + evPart);
   }
+
+  const mode = getFuelStopMode(answers);
+  if (mode === "none") return 0;
   const mpg = getVehicleMpg(vehicle);
-  const price = mode === "diesel" ? FUEL_PRICES.diesel : FUEL_PRICES.regular;
+  const price = mode === "diesel" || fuelType === "Diesel" ? FUEL_PRICES.diesel : FUEL_PRICES.regular;
   return Math.round((miles / mpg) * price);
 }
 
@@ -249,7 +257,9 @@ export function buildFallbackPropane(lat, lng) {
 
 export function fuelStopToRoadStop(stop, type) {
   const category = type === "ev" ? "charging" : "fuel";
+  const cost = estimateStopCost({ category, ...stop }, type);
   return {
+    id: stop.id || `stop-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     location: stop.address || stop.name,
     distance: `${stop.distanceMiles?.toFixed(1) ?? "—"} mi`,
     eta: "—",
@@ -258,5 +268,26 @@ export function fuelStopToRoadStop(stop, type) {
     note: stop.estimated ? "Estimated — live prices unavailable" : "Added from fuel planner",
     diesel: stop.dieselPrice,
     fuel: stop.regularPrice || stop.chargerTypes?.join(", "),
+    estimatedCost: cost,
+    userAdded: true,
   };
+}
+
+export function parsePriceString(priceStr) {
+  if (!priceStr) return null;
+  const m = String(priceStr).match(/[\d.]+/);
+  return m ? parseFloat(m[0]) : null;
+}
+
+export function estimateStopCost(stop, type) {
+  if (stop.estimatedCost != null) return stop.estimatedCost;
+  if (type === "ev" || stop.category === "charging") return 18;
+  if (type === "propane") return 35;
+  const diesel = parsePriceString(stop.dieselPrice);
+  const regular = parsePriceString(stop.regularPrice);
+  if (diesel) return Math.round(diesel * 25);
+  if (regular) return Math.round(regular * 15);
+  if (stop.category === "food") return 28;
+  if (stop.category === "rest") return 0;
+  return 15;
 }

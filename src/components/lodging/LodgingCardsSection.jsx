@@ -21,6 +21,8 @@ export default function LodgingCardsSection({
   origin,
   dest,
   onToast,
+  onLodgingSelect,
+  selectedLodging = [],
 }) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
@@ -54,6 +56,10 @@ export default function LodgingCardsSection({
 
   function handleSave(lodging) {
     saveLodgingToTrips(lodging, city, origin, dest);
+    onLodgingSelect?.(lodging);
+    onToast?.(selectedLodging.some(l => l.id === lodging.id)
+      ? `Removed ${lodging.name} from budget`
+      : `Added ${lodging.name} to budget`);
   }
 
   if (showSleeperOnly) {

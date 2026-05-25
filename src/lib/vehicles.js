@@ -86,7 +86,7 @@ export function skipPreferencesQuestion(tripType, vehicle) {
 }
 
 export function hasFamilyKids(travelers) {
-  return travelers === "Family with kids";
+  return travelers === "Family with young kids" || travelers === "Family with kids";
 }
 
 export function isTruckerTrip(answers) {
@@ -94,10 +94,23 @@ export function isTruckerTrip(answers) {
 }
 
 export function hasPref(answers, pref) {
-  return Array.isArray(answers?.preferences) && answers.preferences.includes(pref);
+  const prefs = answers?.preferences || [];
+  const needs = answers?.special_needs || [];
+  return (Array.isArray(prefs) && prefs.includes(pref))
+    || (Array.isArray(needs) && needs.includes(pref));
 }
 
-export function inferFuelType(vehicle, preferences = []) {
+export function inferFuelType(vehicle, preferences = [], answers = null) {
+  const a = answers || (typeof vehicle === "object" ? vehicle : null);
+  if (a?.fuel) return a.fuel;
+  if (a?.fuel_type) {
+    const ft = a.fuel_type;
+    if (ft === "Electric") return "Electric (EV)";
+    if (ft === "Hybrid") return "Hybrid";
+    if (ft === "Diesel") return "Diesel";
+    if (ft === "Propane") return "Propane";
+    return "Gasoline";
+  }
   if (preferences.includes("EV charging stops")) return "Electric (EV)";
   const effective = typeof vehicle === "object" ? getEffectiveVehicle(vehicle) : vehicle;
   if (isTruckVehicle(effective)) return "Diesel";

@@ -107,7 +107,7 @@ export function buildFallbackTripData(answers, routeInfo) {
   if (hasKids) {
     tips.push("Kid-friendly stops prioritized along your route");
     tips.push("Rest stops suggested every 2 hours for young travelers.");
-    if (hasKidsToddlers(answers.kids_ages)) tips.push("Diaper changing stations noted at rest stops");
+    if (hasKidsToddlers(answers.special_needs)) tips.push("Diaper changing stations noted at rest stops");
   }
   if (isScenicRoute(answers)) tips.push("Scenic viewpoints and photo spots noted near each stop.");
   if (hasPref(answers, "Pet friendly")) tips.push("Pet relief areas flagged at rest stops along your route.");

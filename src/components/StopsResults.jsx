@@ -34,12 +34,17 @@ export default function StopsResults({
   onToastGold,
   onGroceryModal,
   onAddFuelStop,
+  onRemoveRoadStop,
+  onLodgingSelect,
+  selectedLodging = [],
   stopsEndRef,
 }) {
   const isDayOrHomeTrip = skipLodgingQuestion(answers.trip_type, answers.vehicle);
   const isTruckerResults = isTruckerTrip(answers);
   const isRvResults = isRvTrip(answers);
-  const wantsRestaurants = hasPref(answers, "Restaurant recommendations");
+  const wantsRestaurants = hasPref(answers, "Sit down restaurants only")
+    || hasPref(answers, "Kid friendly restaurants")
+    || hasPref(answers, "Fast food only");
   const fuelMode = getFuelStopMode(answers);
   const totalMiles = parseMilesFromDistance(routeInfo?.distance);
 
@@ -86,7 +91,13 @@ export default function StopsResults({
         </>
       )}
 
-      <BudgetCard answers={answers} routeInfo={routeInfo} tripLegs={tripLegs} />
+      <BudgetCard
+        answers={answers}
+        routeInfo={routeInfo}
+        tripLegs={tripLegs}
+        roadStops={roadStops}
+        selectedLodging={selectedLodging}
+      />
 
       {showHeader && isTruckerResults && (truckSafety || hosCompliance) && (
         <>
@@ -173,7 +184,7 @@ export default function StopsResults({
             .filter(s => stopCategory === "all" || s.category === stopCategory)
             .filter(s => s.category !== "fuel" || fuelMode === "none")
             .map((s, i) => (
-              <div key={`road-${i}`} className="stop-card road-stop-card" style={{ animationDelay: i * 0.07 + "s" }}>
+              <div key={s.id || `road-${i}`} className="stop-card road-stop-card" style={{ animationDelay: i * 0.07 + "s" }}>
                 <div className="road-stop-row">
                   <div className={`road-cat-badge cat-${s.category}`}>
                     {s.category === "fuel" ? "FUEL" : s.category === "food" ? "FOOD" : s.category === "charging" ? "EV" : "REST"}
@@ -196,7 +207,12 @@ export default function StopsResults({
                   <div className="road-stop-eta">{s.eta}</div>
                 </div>
                 <div className="stop-card-actions">
-                  <button type="button" className="action-btn action-btn-primary" onClick={() => onToast("Added to route!")}>Add to route</button>
+                  {s.userAdded && onRemoveRoadStop && (
+                    <button type="button" className="action-btn action-btn-danger" onClick={() => onRemoveRoadStop(s.id ?? i)}>Remove</button>
+                  )}
+                  {!s.userAdded && (
+                    <button type="button" className="action-btn action-btn-primary" onClick={() => onToast("Added to route!")}>Add to route</button>
+                  )}
                   {isTruckerResults && s.category === "fuel" && (
                     <button type="button" className="action-btn action-btn-gold" onClick={() => onToastGold("Parking reservation coming in Phase 9 — we'll notify you when live.")}>Reserve Parking</button>
                   )}
@@ -256,6 +272,8 @@ export default function StopsResults({
                   answers={answers}
                   origin={origin}
                   dest={dest}
+                  selectedLodging={selectedLodging}
+                  onLodgingSelect={onLodgingSelect}
                   onToast={onToast}
                 />
               )}

@@ -1,14 +1,5 @@
-/** MapQuest Search API — gas and diesel stations near a route point. */
+/** MapQuest API — fuel price enrichment for Google-found gas stations only. */
 const MAPQUEST_RADIUS = "https://www.mapquestapi.com/search/v2/radius";
-
-function haversineMiles(lat1, lng1, lat2, lng2) {
-  const R = 3958.8;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 function inferBrand(name) {
   const n = (name || "").toLowerCase();
@@ -37,71 +28,81 @@ function estimatePrices(mode) {
   };
 }
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-  const { latitude, longitude, mode = "gas" } = req.body;
-  if (latitude == null || longitude == null) {
-    return res.status(400).json({ error: "Missing latitude or longitude" });
-  }
-
+async function fetchMapQuestPrices(lat, lng, mode) {
   const apiKey = process.env.MAPQUEST_API_KEY;
-  if (!apiKey) {
-    return res.status(200).json({ stations: [], fallback: true, error: "MAPQUEST_API_KEY not configured" });
-  }
+  if (!apiKey) return null;
 
   const params = new URLSearchParams({
     key: apiKey,
-    origin: `${latitude},${longitude}`,
-    radius: "5",
+    origin: `${lat},${lng}`,
+    radius: "0.5",
     units: "m",
-    maxMatches: "15",
+    maxMatches: "3",
     hostedData: "mqap.ntpois|group_sic_code=?|554101",
   });
 
+  const response = await fetch(`${MAPQUEST_RADIUS}?${params}`);
+  const data = await response.json();
+  if (!response.ok || data.info?.statuscode !== 0) return null;
+
+  const results = data.searchResults || [];
+  if (!results.length) return null;
+
+  return estimatePrices(mode);
+}
+
+function enrichStation(googleStation, prices, mode) {
+  const name = googleStation.name || "Gas Station";
+  const brand = inferBrand(name);
+  const isTruckStop = /pilot|love|ta |petro|flying j/i.test(name);
+  const priceData = prices || estimatePrices(mode);
+
+  return {
+    id: googleStation.id || googleStation.placeId,
+    placeId: googleStation.placeId,
+    name,
+    brand,
+    address: googleStation.address || "Along route",
+    distanceMiles: googleStation.distanceMiles,
+    lat: googleStation.lat,
+    lng: googleStation.lng,
+    ...priceData,
+    hasDef: mode === "diesel" || isTruckStop,
+    estimated: !prices,
+    livePrices: !!prices,
+  };
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const { stations = [], mode = "gas" } = req.body;
+  if (!Array.isArray(stations) || !stations.length) {
+    return res.status(400).json({ error: "Missing stations array from Google Places" });
+  }
+
   try {
-    const response = await fetch(`${MAPQUEST_RADIUS}?${params}`);
-    const data = await response.json();
+    let anyLive = false;
+    const enriched = await Promise.all(stations.map(async (googleStation) => {
+      if (googleStation.lat == null || googleStation.lng == null) {
+        return enrichStation(googleStation, null, mode);
+      }
+      const prices = await fetchMapQuestPrices(googleStation.lat, googleStation.lng, mode);
+      if (prices) anyLive = true;
+      return enrichStation(googleStation, prices, mode);
+    }));
 
-    if (!response.ok || data.info?.statuscode !== 0) {
-      return res.status(200).json({
-        stations: [],
-        fallback: true,
-        error: data.info?.messages?.[0] || "MapQuest API error",
-      });
-    }
-
-    const results = data.searchResults || [];
-    const prices = estimatePrices(mode);
-
-    const stations = results.map((r, i) => {
-      const lat = r.fields?.lat ?? r.latLng?.lat;
-      const lng = r.fields?.lng ?? r.latLng?.lng;
-      const dist = r.distance ?? (lat && lng ? haversineMiles(latitude, longitude, lat, lng) : null);
-      const name = r.name || r.fields?.name || "Gas Station";
-      const brand = inferBrand(name);
-      const isTruckStop = /pilot|love|ta |petro|flying j/i.test(name);
-
-      return {
-        id: `mq-${r.fields?.mq_id || i}`,
-        name,
-        brand,
-        address: [r.fields?.address, r.fields?.city, r.fields?.state].filter(Boolean).join(", ")
-          || r.formattedAddress
-          || "Along route",
-        distanceMiles: dist != null ? Math.round(Number(dist) * 10) / 10 : null,
-        ...prices,
-        hasDef: mode === "diesel" || isTruckStop,
-        lat,
-        lng,
-        estimated: true,
-        livePrices: false,
-      };
-    }).sort((a, b) => (a.distanceMiles ?? 99) - (b.distanceMiles ?? 99));
-
-    return res.status(200).json({ stations, fallback: false, livePrices: false });
+    return res.status(200).json({
+      stations: enriched,
+      fallback: !anyLive,
+      livePrices: anyLive,
+    });
   } catch (err) {
-    console.error("MapQuest API error:", err);
-    return res.status(200).json({ stations: [], fallback: true, error: "Failed to fetch fuel stations" });
+    console.error("MapQuest enrich error:", err);
+    return res.status(200).json({
+      stations: stations.map(s => enrichStation(s, null, mode)),
+      fallback: true,
+      error: "Failed to fetch fuel prices",
+    });
   }
 }

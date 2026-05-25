@@ -68,6 +68,7 @@ export default function App() {
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
   const [roadStops, setRoadStops] = useState([]);
+  const [selectedLodging, setSelectedLodging] = useState([]);
   const [tripLegs, setTripLegs] = useState([]);
   const [stopCategory, setStopCategory] = useState("all");
   const [savedTrips, setSavedTrips] = useState(() => {
@@ -554,6 +555,9 @@ export default function App() {
     if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
       fetchDirections(na.vehicle);
     }
+    if (currentQuestion.id === "fuel_type" && originRef.current?.value && destRef.current?.value) {
+      fetchDirections(getEffectiveVehicle(na));
+    }
     if (currentQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
       fetchDirections(na.vehicle);
     }
@@ -593,6 +597,23 @@ export default function App() {
 
   function addFuelStopToTrip(roadStop) {
     setRoadStops(prev => [...prev, roadStop]);
+  }
+
+  function removeRoadStop(indexOrId) {
+    setRoadStops(prev => {
+      if (typeof indexOrId === "number") {
+        return prev.filter((_, i) => i !== indexOrId);
+      }
+      return prev.filter(s => s.id !== indexOrId);
+    });
+  }
+
+  function addLodgingSelection(lodging) {
+    setSelectedLodging(prev => {
+      const exists = prev.some(l => l.id === lodging.id);
+      if (exists) return prev.filter(l => l.id !== lodging.id);
+      return [...prev, lodging];
+    });
   }
 
   function applyFallbackTrip() {
@@ -641,7 +662,7 @@ export default function App() {
           destination: tripDest,
           answers: {
             ...normalizedAnswers,
-            fuel: inferFuelType(getEffectiveVehicle(normalizedAnswers), normalizedAnswers.preferences || []),
+            fuel: inferFuelType(normalizedAnswers, normalizedAnswers.preferences || [], normalizedAnswers),
           },
           routeInfo: {
             ...routeInfo,
@@ -669,7 +690,7 @@ export default function App() {
   function resetPlan() {
     setAnswers({}); setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
-    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setStopCategory("all");
+    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setSelectedLodging([]); setStopCategory("all");
     setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
@@ -681,7 +702,12 @@ export default function App() {
     const last = history.pop();
     const newAnswers = { ...answers };
     delete newAnswers[last.question.id];
+    if (last.question.id === "travelers") {
+      delete newAnswers.special_needs;
+      delete newAnswers.kids_ages;
+    }
     if (last.question.id === "vehicle") {
+      delete newAnswers.fuel_type;
       delete newAnswers.truck_height;
       delete newAnswers.truck_weight;
       delete newAnswers.truck_hazmat;
@@ -694,7 +720,6 @@ export default function App() {
       delete newAnswers.coordination_needs;
       delete newAnswers.effective_vehicle;
     }
-    if (last.question.id === "travelers") delete newAnswers.kids_ages;
     if (last.question.type === "multiselect") {
       setPrefDraft(Array.isArray(last.answer) ? last.answer : []);
     } else {
@@ -881,6 +906,9 @@ export default function App() {
                       onToastGold={toastGold}
                       onGroceryModal={city => setModal({ type: "grocery", city })}
                       onAddFuelStop={addFuelStopToTrip}
+                      onRemoveRoadStop={removeRoadStop}
+                      onLodgingSelect={addLodgingSelection}
+                      selectedLodging={selectedLodging}
                       onStopCategoryChange={setStopCategory}
                       onSwapRoute={swapRouteCities}
                       onFetchDirections={fetchDirections}

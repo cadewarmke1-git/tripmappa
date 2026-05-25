@@ -1,5 +1,6 @@
 /** Floating planner panel — question flow, budget, route footer, and generated stops. */
 import { isScenicRoute } from "../lib/vehicles.js";
+import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import StopsResults from "./StopsResults.jsx";
 import SummaryCard from "./SummaryCard.jsx";
@@ -47,6 +48,9 @@ export default function PlanPanel({
   onToastGold,
   onGroceryModal,
   onAddFuelStop,
+  onRemoveRoadStop,
+  onLodgingSelect,
+  selectedLodging,
   onStopCategoryChange,
   onSwapRoute,
   onFetchDirections,
@@ -88,6 +92,9 @@ export default function PlanPanel({
                 onToastGold={onToastGold}
                 onGroceryModal={onGroceryModal}
                 onAddFuelStop={onAddFuelStop}
+                onRemoveRoadStop={onRemoveRoadStop}
+                onLodgingSelect={onLodgingSelect}
+                selectedLodging={selectedLodging}
                 stopsEndRef={stopsEndRef}
               />
             ) : (
@@ -99,6 +106,15 @@ export default function PlanPanel({
             )
           ) : (
             <div className="plan-view">
+              {answers.vehicle && routeInfo?.distance && (
+                <BudgetCard
+                  answers={answers}
+                  routeInfo={routeInfo}
+                  tripLegs={tripLegs}
+                  roadStops={roadStops}
+                  selectedLodging={selectedLodging}
+                />
+              )}
               {qIndex === -1 && (
                 <div className="convo-empty">
                   <p>Enter your route below, then tap below to get started.</p>

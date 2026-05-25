@@ -213,7 +213,8 @@
   background: rgba(255,255,255,0.72) !important; border-color: rgba(26,26,46,0.1) !important;
 }
 .app-wrap.day .fuel-stop-name { color: #1a1a2e !important; }
-.app-wrap.day .fuel-stop-price { color: #FFD28C !important; }
+.app-wrap.day .budget-breakdown-label { color: rgba(26,26,46,0.45) !important; }
+.app-wrap.day .budget-breakdown-name { color: rgba(26,26,46,0.55) !important; }
 
 /* Float card — night: dark frosted glass */
 .app-wrap.night .float-card {

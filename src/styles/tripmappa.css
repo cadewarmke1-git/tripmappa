@@ -337,6 +337,25 @@
   .budget-row-total { border-top: 1px solid rgba(255,255,255,0.1); margin-top: 6px; padding-top: 10px; }
   .budget-row-total .budget-row-val { color: rgba(255,210,140,0.95); font-size: 15px; }
   .budget-disclaimer { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 10px; line-height: 1.45; }
+  .budget-breakdown {
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .budget-breakdown-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.4); margin-bottom: 6px;
+  }
+  .budget-breakdown-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 0; font-size: 11px;
+  }
+  .budget-breakdown-name {
+    color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 65%; padding-right: 8px;
+  }
+  .budget-breakdown-row .budget-row-val { font-size: 11px; color: rgba(255,210,140,0.9); }
+  .action-btn-danger {
+    color: var(--danger) !important; border-color: rgba(239,68,68,0.45) !important;
+  }
   .summary-kids-note {
     margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);
     font-size: 11px; color: rgba(255,210,140,0.85); line-height: 1.45;

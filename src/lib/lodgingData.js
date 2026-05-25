@@ -352,7 +352,7 @@ function sortHotels(hotels, tier) {
 }
 
 function applyHotelBadges(hotels, answers, tier) {
-  const family = answers?.travelers === "Family with kids";
+  const family = answers?.travelers === "Family with young kids" || answers?.travelers === "Family with kids";
 
   return hotels.map((h, index) => ({
     ...h,

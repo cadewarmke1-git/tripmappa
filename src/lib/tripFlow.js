@@ -17,10 +17,11 @@ export const PLANE_SKIP_MESSAGE =
 
 export const FLOW_QUESTION_IDS = [
   "vehicle",
+  "fuel_type",
   "multi_vehicles",
   "primary_vehicle",
   "travelers",
-  "kids_ages",
+  "special_needs",
   "lodging",
   "preferences",
   "hauling_type",
@@ -70,6 +71,7 @@ export const VEHICLE_GROUPS = [
 ];
 
 export const VEHICLE_CHOICES = VEHICLE_GROUPS.flatMap(g => g.options.map(o => o.value));
+export const MULTI_VEHICLE_CHOICES = VEHICLE_CHOICES.filter(v => v !== MULTI_VEHICLE_TRIP);
 
 /** @deprecated Kept for imports — specs are assumed automatically. */
 export const TRUCK_HEIGHTS = [];
@@ -77,36 +79,50 @@ export const RV_HEIGHTS = [];
 export const TRUCK_WEIGHTS = [];
 export const RV_WEIGHTS = [];
 
-export const KIDS_AGE_CHOICES = [
-  "Toddlers under 3",
-  "Young kids 4 to 10",
-  "Tweens 11 to 14",
-  "Mix of ages",
-];
+export const KIDS_AGE_CHOICES = [];
 
 const DAY_TRIP_MILES = 150;
+const PERSONAL_MAX_QUESTIONS = 5;
 
 const PERSONAL_VEHICLES = ["Car", "Motorcycle", "SUV or Van"];
+
+const FUEL_TYPE_PERSONAL = {
+  id: "fuel_type",
+  ask: "What fuel does your vehicle take?",
+  type: "choice",
+  choices: ["Gasoline", "Diesel", "Electric", "Hybrid"],
+};
+
+const FUEL_TYPE_RV = {
+  id: "fuel_type",
+  ask: "What fuel does your vehicle take?",
+  type: "choice",
+  choices: ["Gasoline", "Diesel", "Propane"],
+};
 
 const TRAVELERS_QUESTION = {
   id: "travelers",
   ask: "Who is traveling?",
   type: "travelers",
-  choices: ["Solo", "Couple", "Family with kids", "Group of friends"],
+  choices: ["Solo", "Couple", "Family with young kids", "Group of friends"],
 };
 
-const KIDS_AGES_QUESTION = {
-  id: "kids_ages",
-  ask: "How old are the kids?",
-  type: "choice",
-  choices: KIDS_AGE_CHOICES,
+const SPECIAL_NEEDS_QUESTION = {
+  id: "special_needs",
+  ask: "Any special needs?",
+  type: "multiselect",
+  choices: [
+    "Frequent rest stops needed",
+    "Kid friendly restaurants",
+    "Diaper changing stations",
+  ],
 };
 
 const LODGING_QUESTION = {
   id: "lodging",
   ask: "Where do you want to sleep?",
   type: "choice",
-  choices: ["Budget", "Mid-range", "Luxury", "Doesn't matter"],
+  choices: ["Hotel", "Motel", "Airbnb", "Camping", "Doesn't matter"],
 };
 
 const PERSONAL_PREFERENCES_QUESTION = {
@@ -117,10 +133,9 @@ const PERSONAL_PREFERENCES_QUESTION = {
     "Scenic route",
     "Avoid tolls",
     "Pet friendly",
-    "EV charging stops",
-    "Kid friendly stops",
     "Fast food only",
     "Sit down restaurants only",
+    "Avoid highways",
   ],
 };
 
@@ -154,7 +169,7 @@ export const TRUCKER_QUESTION_SEQUENCE = [
   },
   {
     id: "truck_stop_brand",
-    ask: "Preferred truck stop brand?",
+    ask: "Preferred truck stop?",
     type: "choice",
     choices: ["Pilot Flying J", "Love's", "Petro", "TA Travel Center", "No preference"],
   },
@@ -170,16 +185,7 @@ const MULTI_VEHICLES_QUESTION = {
   id: "multi_vehicles",
   ask: "Which vehicles are on this trip?",
   type: "multiselect",
-  choices: [
-    "Car",
-    "Motorcycle",
-    "SUV or Van",
-    "RV",
-    "Camper Van",
-    "Truck",
-    "Boat",
-    "Plane",
-  ],
+  choices: MULTI_VEHICLE_CHOICES,
 };
 
 const COORDINATION_QUESTION = {
@@ -188,14 +194,15 @@ const COORDINATION_QUESTION = {
   type: "multiselect",
   choices: [
     "Meet at waypoints",
-    "Separate overnight stops",
     "Same hotels throughout",
     "Convoy mode",
+    "Separate overnight stops",
   ],
 };
 
-export function hasKidsToddlers(kidsAges) {
-  return kidsAges === "Toddlers under 3" || kidsAges === "Mix of ages";
+export function hasKidsToddlers(specialNeeds) {
+  const needs = Array.isArray(specialNeeds) ? specialNeeds : [];
+  return needs.includes("Diaper changing stations");
 }
 
 export function getRouteDistanceMiles(context) {
@@ -222,8 +229,8 @@ function isAnswered(id, answers) {
   return answers[id] !== "";
 }
 
-function needsKidsAgesQuestion(answers) {
-  return answers.travelers === "Family with kids";
+function needsSpecialNeedsQuestion(answers) {
+  return answers.travelers === "Family with young kids";
 }
 
 function needsLodgingQuestion(answers, context) {
@@ -231,6 +238,16 @@ function needsLodgingQuestion(answers, context) {
   const effective = getEffectiveVehicle(answers);
   if (isRvVehicle(effective) || isTruckVehicle(effective)) return false;
   return isPersonalVehicle(effective);
+}
+
+function countPersonalFlowQuestions(answers, context) {
+  let n = 1;
+  if (isAnswered("fuel_type", answers)) n += 1;
+  if (isAnswered("travelers", answers)) n += 1;
+  if (needsSpecialNeedsQuestion(answers) && isAnswered("special_needs", answers)) n += 1;
+  if (needsLodgingQuestion(answers, context) && isAnswered("lodging", answers)) n += 1;
+  if (isAnswered("preferences", answers)) n += 1;
+  return n;
 }
 
 function buildVehicleQuestion() {
@@ -262,31 +279,46 @@ function getNextCommercialQuestion(answers) {
   return null;
 }
 
-function getNextTravelersBranch(answers, context, preferencesQuestion) {
+function getNextPersonalBranchQuestion(answers, context) {
+  if (!canAskPersonalQuestion(answers, context)) return null;
+
+  if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_PERSONAL };
   if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
-  if (needsKidsAgesQuestion(answers) && !isAnswered("kids_ages", answers)) {
-    return { done: false, ...KIDS_AGES_QUESTION };
+
+  if (needsSpecialNeedsQuestion(answers) && !isAnswered("special_needs", answers)) {
+    return { done: false, ...SPECIAL_NEEDS_QUESTION };
   }
+
   if (needsLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
-    return { done: false, ...LODGING_QUESTION };
+    if (countPersonalFlowQuestions(answers, context) < PERSONAL_MAX_QUESTIONS) {
+      return { done: false, ...LODGING_QUESTION };
+    }
   }
-  if (!isAnswered("preferences", answers)) return { done: false, ...preferencesQuestion };
+
+  if (!isAnswered("preferences", answers) && countPersonalFlowQuestions(answers, context) < PERSONAL_MAX_QUESTIONS) {
+    return { done: false, ...PERSONAL_PREFERENCES_QUESTION };
+  }
+
   return null;
 }
 
-function getNextPersonalQuestion(answers, context) {
-  return getNextTravelersBranch(answers, context, PERSONAL_PREFERENCES_QUESTION);
-}
+function getNextRvBranchQuestion(answers, context) {
+  if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_RV };
+  if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
 
-function getNextRvQuestion(answers, context) {
-  return getNextTravelersBranch(answers, context, RV_PREFERENCES_QUESTION);
+  if (needsSpecialNeedsQuestion(answers) && !isAnswered("special_needs", answers)) {
+    return { done: false, ...SPECIAL_NEEDS_QUESTION };
+  }
+
+  if (!isAnswered("preferences", answers)) return { done: false, ...RV_PREFERENCES_QUESTION };
+  return null;
 }
 
 function getNextBranchQuestion(effective, answers, context) {
   if (isInstantCompleteVehicle(effective)) return null;
   if (isTruckVehicle(effective)) return getNextCommercialQuestion(answers);
-  if (isRvVehicle(effective)) return getNextRvQuestion(answers, context);
-  if (isPersonalVehicle(effective)) return getNextPersonalQuestion(answers, context);
+  if (isRvVehicle(effective)) return getNextRvBranchQuestion(answers, context);
+  if (isPersonalVehicle(effective)) return getNextPersonalBranchQuestion(answers, context);
   return null;
 }
 
@@ -306,6 +338,14 @@ function getNextMultiVehicleQuestion(answers, context) {
     return { done: false, ...COORDINATION_QUESTION };
   }
   return null;
+}
+
+function mapFuelTypeToFuel(fuelType) {
+  if (fuelType === "Electric") return "Electric (EV)";
+  if (fuelType === "Hybrid") return "Hybrid";
+  if (fuelType === "Diesel") return "Diesel";
+  if (fuelType === "Propane") return "Propane";
+  return "Gasoline";
 }
 
 function mapTruckerAnswers(answers) {
@@ -345,6 +385,9 @@ export function normalizeTripAnswers(answers, context = {}) {
   if (!Array.isArray(out.preferences)) {
     out.preferences = out.preferences ? [out.preferences] : [];
   }
+  if (!Array.isArray(out.special_needs)) {
+    out.special_needs = out.special_needs ? [out.special_needs] : [];
+  }
   if (!Array.isArray(out.route_restrictions) && out.route_restrictions != null) {
     out.route_restrictions = [out.route_restrictions];
   }
@@ -352,11 +395,16 @@ export function normalizeTripAnswers(answers, context = {}) {
     out.coordination_needs = [out.coordination_needs];
   }
 
+  if (out.fuel_type && !isTruckVehicle(effective)) {
+    out.fuel = mapFuelTypeToFuel(out.fuel_type);
+  }
+
   if (isTruckVehicle(effective)) {
     out.hos_compliance = true;
     out.truck_height = "13'6\"";
     out.truck_weight = "80,000 lbs";
     out.fuel = "Diesel";
+    out.fuel_type = "Diesel";
     out = mapTruckerAnswers(out);
   }
 
@@ -435,8 +483,9 @@ export function countFlowQuestionsAnswered(answers) {
     return n;
   }
   if (isPersonalVehicle(effective) || isRvVehicle(effective)) {
+    if (isAnswered("fuel_type", answers)) n += 1;
     if (isAnswered("travelers", answers)) n += 1;
-    if (needsKidsAgesQuestion(answers) && isAnswered("kids_ages", answers)) n += 1;
+    if (needsSpecialNeedsQuestion(answers) && isAnswered("special_needs", answers)) n += 1;
     if (isAnswered("lodging", answers)) n += 1;
     if (isAnswered("preferences", answers)) n += 1;
   }
@@ -455,14 +504,10 @@ export function countApplicableFlowQuestions() {
   return 8;
 }
 
-function isTruckerQuestionComplete(id, answers) {
-  return isAnswered(id, answers);
-}
-
 export function isFlowQuestionComplete(id, answers) {
   if (id === "vehicle") return !!answers.vehicle;
   const effective = getEffectiveVehicle(answers);
-  if (isTruckVehicle(effective)) return isTruckerQuestionComplete(id, answers);
+  if (isTruckVehicle(effective)) return isAnswered(id, answers);
   return isAnswered(id, answers);
 }
 

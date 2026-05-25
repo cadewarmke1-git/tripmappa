@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { fetchFuelStations, fetchEvCharging } from "../../lib/apiClient.js";
+import { enrichFuelStations, enrichEvCharging } from "../../lib/apiClient.js";
+import {
+  searchGasStations,
+  searchDieselStations,
+  searchEvChargingStations,
+  searchPropaneStations,
+} from "../../lib/placesStations.js";
 import {
   getFuelStopMode,
   takeClosest,
@@ -49,24 +55,36 @@ export default function FuelStopsRow({
       try {
         if (mode === "gas" || mode === "diesel" || mode === "hybrid") {
           const apiMode = mode === "diesel" ? "diesel" : "gas";
-          const gasRes = await fetchFuelStations(lat, lng, apiMode);
-          let gasStations = gasRes.stations || [];
-          if (gasRes.fallback || !gasStations.length) {
+          const googleStations = apiMode === "diesel"
+            ? await searchDieselStations(lat, lng)
+            : await searchGasStations(lat, lng);
+          let gasStations = googleStations;
+          if (googleStations.length) {
+            const enriched = await enrichFuelStations(googleStations, apiMode);
+            gasStations = enriched.stations || googleStations;
+            if (enriched.fallback) {
+              if (!cancelled) setUsedFallback(true);
+            }
+          } else {
             gasStations = buildFallbackGasStations(lat, lng, apiMode);
             if (!cancelled) setUsedFallback(true);
           }
           collected.push(...gasStations.map(s => ({
             ...s,
             cardType: apiMode === "diesel" ? "diesel" : "gas",
-            estimated: s.estimated || gasRes.fallback,
-            livePrices: !gasRes.fallback && !s.estimated,
+            estimated: s.estimated !== false,
+            livePrices: s.livePrices === true,
           })));
         }
 
         if (mode === "rv") {
+          const [googleGas, googleDiesel] = await Promise.all([
+            searchGasStations(lat, lng),
+            searchDieselStations(lat, lng),
+          ]);
           const [gasRes, dieselRes] = await Promise.all([
-            fetchFuelStations(lat, lng, "gas"),
-            fetchFuelStations(lat, lng, "diesel"),
+            googleGas.length ? enrichFuelStations(googleGas, "gas") : { stations: [], fallback: true },
+            googleDiesel.length ? enrichFuelStations(googleDiesel, "diesel") : { stations: [], fallback: true },
           ]);
           let gasStations = gasRes.stations?.length ? gasRes.stations : buildFallbackGasStations(lat, lng, "gas");
           let dieselStations = dieselRes.stations?.length ? dieselRes.stations : buildFallbackGasStations(lat, lng, "diesel");
@@ -76,21 +94,25 @@ export default function FuelStopsRow({
           collected.push(...gasStations.map(s => ({
             ...s,
             cardType: "gas",
-            estimated: s.estimated || gasRes.fallback,
-            livePrices: !gasRes.fallback && !s.estimated,
+            estimated: s.estimated !== false,
+            livePrices: s.livePrices === true,
           })));
           collected.push(...dieselStations.map(s => ({
             ...s,
             cardType: "diesel",
-            estimated: s.estimated || dieselRes.fallback,
-            livePrices: !dieselRes.fallback && !s.estimated,
+            estimated: s.estimated !== false,
+            livePrices: s.livePrices === true,
           })));
         }
 
         if (mode === "ev" || mode === "hybrid") {
-          const evRes = await fetchEvCharging(lat, lng, "ELEC");
-          let evStations = evRes.stations || [];
-          if (evRes.fallback || !evStations.length) {
+          const googleEv = await searchEvChargingStations(lat, lng);
+          let evStations = googleEv;
+          if (googleEv.length) {
+            const evRes = await enrichEvCharging(googleEv, "ELEC");
+            evStations = evRes.stations || googleEv;
+            if (evRes.fallback && !cancelled) setUsedFallback(true);
+          } else {
             evStations = buildFallbackEvStations(lat, lng);
             if (!cancelled) setUsedFallback(true);
           }
@@ -98,11 +120,13 @@ export default function FuelStopsRow({
         }
 
         if (mode === "rv") {
-          const propaneRes = await fetchEvCharging(lat, lng, "LPG");
-          let propane = propaneRes.stations || [];
-          if (propaneRes.fallback || !propane.length) {
+          const googlePropane = await searchPropaneStations(lat, lng);
+          let propane = googlePropane;
+          if (googlePropane.length) {
+            const propaneRes = await enrichEvCharging(googlePropane, "LPG");
+            propane = propaneRes.stations || googlePropane;
+          } else {
             propane = buildFallbackPropane(lat, lng);
-            if (propaneRes.fallback && !cancelled) setUsedFallback(true);
           }
           collected.push(...propane.map(s => ({ ...s, cardType: "propane" })));
         }

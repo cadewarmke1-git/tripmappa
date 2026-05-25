@@ -26,39 +26,58 @@ function AnimatedBudgetValue({ value, animateKey }) {
   return <span className={`budget-row-val${pop ? " animate" : ""}`}>${display.toLocaleString()}</span>;
 }
 
-export default function BudgetCard({ answers, routeInfo, tripLegs }) {
-  const est = useMemo(() => computeBudgetEstimate(answers, routeInfo, tripLegs), [answers, routeInfo, tripLegs]);
+export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [], selectedLodging = [] }) {
+  const est = useMemo(
+    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging }),
+    [answers, routeInfo, tripLegs, roadStops, selectedLodging],
+  );
+
   const fuelReady = est.fuel != null;
   const lodgingReady = est.lodging != null;
   const foodReady = est.food != null;
+  const hasAddedItems = est.addedStops?.length > 0;
+
   return (
     <div className="budget-card">
       <div className="budget-card-title">Estimated Trip Cost</div>
       <div className="budget-row">
         <span className="budget-row-label">Fuel</span>
         {fuelReady
-          ? <AnimatedBudgetValue value={est.fuel ?? 0} animateKey={`fuel-${est.fuel}`} />
+          ? <AnimatedBudgetValue value={est.fuel ?? 0} animateKey={`fuel-${est.fuel}-${est.addedFuelCost}`} />
           : <span className="budget-shimmer" />}
       </div>
       <div className="budget-row">
         <span className="budget-row-label">Lodging</span>
         {lodgingReady
-          ? <AnimatedBudgetValue value={est.lodging ?? 0} animateKey={`lodging-${est.lodging}`} />
+          ? <AnimatedBudgetValue value={est.lodging ?? 0} animateKey={`lodging-${est.lodging}-${selectedLodging.length}`} />
           : <span className="budget-shimmer" />}
       </div>
       <div className="budget-row">
         <span className="budget-row-label">Food</span>
         {foodReady
-          ? <AnimatedBudgetValue value={est.food ?? 0} animateKey={`food-${est.food}`} />
+          ? <AnimatedBudgetValue value={est.food ?? 0} animateKey={`food-${est.food}-${est.addedFoodCost}`} />
           : <span className="budget-shimmer" />}
       </div>
       <div className="budget-row budget-row-total">
         <span className="budget-row-label">Total</span>
         {est.total != null
-          ? <AnimatedBudgetValue value={est.total} animateKey={`total-${est.total}`} />
+          ? <AnimatedBudgetValue value={est.total} animateKey={`total-${est.total}-${roadStops.length}-${selectedLodging.length}`} />
           : <span className="budget-shimmer" />}
       </div>
-      <div className="budget-disclaimer">Estimates only — real prices after generation.</div>
+
+      {hasAddedItems && (
+        <div className="budget-breakdown">
+          <div className="budget-breakdown-label">Added to trip</div>
+          {est.addedStops.map(item => (
+            <div className="budget-breakdown-row" key={item.id}>
+              <span className="budget-breakdown-name">{item.label}</span>
+              <AnimatedBudgetValue value={item.cost} animateKey={`item-${item.id}-${item.cost}`} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="budget-disclaimer">Estimates only — updates as you add stops.</div>
     </div>
   );
 }
