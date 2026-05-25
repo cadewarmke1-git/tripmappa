@@ -84,7 +84,7 @@ export default function AppMap({
             }}
             onClick={() => setSelectedMarker(null)}
           >
-            {directions && dayRoutePaths.length === 0 && (
+            {directions && (
               <DirectionsRenderer
                 directions={directions}
                 options={{
@@ -100,7 +100,7 @@ export default function AppMap({
               onMarkerClick={handleMarkerClick}
             />
             <MapRouteOverlays
-              dayRoutePaths={dayRoutePaths}
+              dayRoutePaths={directions ? [] : dayRoutePaths}
               activeDayIndex={activeDayIndex}
               nightSegmentPaths={nightSegmentPaths}
               lowFuelSegmentPaths={lowFuelSegmentPaths}
