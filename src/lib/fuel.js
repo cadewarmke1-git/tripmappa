@@ -91,6 +91,36 @@ export function sampleRoutePoints(path, count) {
   return points;
 }
 
+/** Sample GPS points every N miles along the actual route polyline. */
+export function sampleRoutePointsEveryMiles(path, intervalMiles = 30) {
+  const encoded = encodeRoutePoints(path);
+  if (!encoded.length) return [];
+  if (encoded.length === 1) return encoded;
+
+  const samples = [encoded[0]];
+  let sinceLast = 0;
+
+  for (let i = 1; i < encoded.length; i++) {
+    sinceLast += milesBetweenPoints(encoded[i - 1], encoded[i]);
+    while (sinceLast >= intervalMiles) {
+      samples.push(encoded[i]);
+      sinceLast -= intervalMiles;
+    }
+  }
+
+  const last = encoded[encoded.length - 1];
+  const prev = samples[samples.length - 1];
+  if (prev.lat !== last.lat || prev.lng !== last.lng) samples.push(last);
+  return samples;
+}
+
+export function routePointAtFraction(path, fraction) {
+  const encoded = encodeRoutePoints(path);
+  if (!encoded.length) return null;
+  const idx = Math.floor(Math.max(0, Math.min(1, fraction)) * (encoded.length - 1));
+  return encoded[idx];
+}
+
 function haversineMiles(lat1, lng1, lat2, lng2) {
   const R = 3958.8;
   const dLat = (lat2 - lat1) * Math.PI / 180;

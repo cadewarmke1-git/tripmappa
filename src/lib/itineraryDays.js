@@ -1,5 +1,6 @@
 /** Build day-by-day itinerary structure from trip stops. */
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
+import { parseRating, isLocalFavorite } from "./ratings.js";
 
 function addDays(date, days) {
   const d = new Date(date);
@@ -27,6 +28,52 @@ function distributeRoadStops(roadStops, dayCount) {
   return out;
 }
 
+function inferCategory(rs) {
+  const cat = (rs.category || "").toLowerCase();
+  if (/fuel|gas|diesel|ev|charge/i.test(cat)) return "Fuel";
+  if (/food|rest|dining|meal/i.test(cat)) return "Food";
+  if (/rest|break/i.test(cat)) return "Rest";
+  if (/fuel|pilot|love'?s|shell|chevron|ta\b/i.test(rs.name || "")) return "Fuel";
+  if (/mcdonald|starbucks|restaurant|diner|food/i.test(rs.name || rs.note || "")) return "Food";
+  return "Rest";
+}
+
+function mapRoadItem(rs, key) {
+  const rating = parseRating(rs.rating ?? String(rs.note || "").match(/(\d+\.?\d*)\s*star/i)?.[1]);
+  return {
+    id: rs.id || `road-${key}`,
+    type: "road",
+    title: rs.name || rs.location || "Road stop",
+    city: rs.location,
+    category: inferCategory(rs),
+    description: rs.note || rs.amenities || "A worthwhile stop along your route.",
+    eta: rs.eta,
+    distance: rs.distance,
+    distanceFromRoute: rs.detourMiles ?? rs.distanceMiles,
+    rating,
+    photoUrl: rs.photoUrl,
+    lat: rs.lat,
+    lng: rs.lng,
+    localFavorite: isLocalFavorite(rating),
+    action: "add",
+    stopData: rs,
+  };
+}
+
+function dayDrivingSummary(dayIdx, dayCount, routeInfo) {
+  const totalMiles = parseMilesFromDistance(routeInfo?.distance) || 0;
+  const totalHours = parseHoursFromDuration(routeInfo?.duration) || 0;
+  const milesPerDay = dayCount > 0 ? Math.round(totalMiles / dayCount) : totalMiles;
+  const hoursPerDay = dayCount > 0 ? totalHours / dayCount : totalHours;
+  const h = Math.floor(hoursPerDay);
+  const m = Math.round((hoursPerDay % 1) * 60);
+  return {
+    miles: milesPerDay ? `${milesPerDay} mi` : "—",
+    duration: hoursPerDay ? `${h}h ${m}m` : "—",
+    dayIdx,
+  };
+}
+
 export function buildItineraryDays({
   origin,
   dest,
@@ -35,6 +82,8 @@ export function buildItineraryDays({
   routeInfo,
   departureTime = null,
   optionalStopCards = [],
+  activitiesByCity = {},
+  restaurantsByCity = {},
 }) {
   const dep = departureTime instanceof Date ? departureTime : (departureTime ? new Date(departureTime) : new Date());
   const overnightStops = stops.filter(s => s.city);
@@ -43,96 +92,50 @@ export function buildItineraryDays({
   const days = [];
 
   if (overnightStops.length === 0) {
-    const items = [
-      {
-        id: "departure",
-        type: "departure",
-        title: cityLabel(origin) || "Departure",
-        city: origin,
-        description: "Start your adventure — the open road awaits.",
-        eta: routeInfo?.duration ? `Total ${routeInfo.duration}` : null,
-        distance: null,
-        action: "directions",
-      },
+    const roadItems = [
       ...roadStops.map((rs, i) => mapRoadItem(rs, i)),
       ...optionalStopCards.slice(0, 3).map((p, i) => mapOptionalItem(p, i)),
-      {
-        id: "arrival",
-        type: "arrival",
-        title: cityLabel(dest) || "Destination",
-        city: dest,
-        description: "You've arrived — enjoy your destination!",
-        eta: null,
-        distance: routeInfo?.distance,
-        action: "directions",
-      },
     ];
     days.push({
       dayNumber: 1,
       label: "Day 1",
       date: formatDayDate(dep),
-      items,
+      drivingSummary: dayDrivingSummary(0, 1, routeInfo),
+      roadStops: roadItems,
+      overnight: null,
+      activities: pickActivities(origin, activitiesByCity, restaurantsByCity),
       overnightCity: null,
     });
     return days;
   }
 
   overnightStops.forEach((stop, dayIdx) => {
-    const dayNum = dayIdx + 1;
-    const items = [];
-
-    if (dayIdx === 0) {
-      items.push({
-        id: "departure",
-        type: "departure",
-        title: cityLabel(origin) || "Departure",
-        city: origin,
-        description: "Begin your journey from here.",
-        eta: stop.eta ? `Arrive ${stop.city} · ${stop.eta}` : null,
-        distance: stop.distance,
-        action: "directions",
-      });
-    }
-
-    (roadByDay[dayIdx] || []).forEach((rs, i) => items.push(mapRoadItem(rs, `${dayIdx}-${i}`)));
-
+    const roadItems = (roadByDay[dayIdx] || []).map((rs, i) => mapRoadItem(rs, `${dayIdx}-${i}`));
     if (dayIdx === 0 && optionalStopCards.length) {
-      optionalStopCards.slice(0, 2).forEach((p, i) => items.push(mapOptionalItem(p, i)));
-    }
-
-    items.push({
-      id: `overnight-${dayIdx}`,
-      type: "overnight",
-      title: cityLabel(stop.city),
-      city: stop.city,
-      description: stop.why || "Your home base for the night — rest up for tomorrow's drive.",
-      eta: stop.eta,
-      distance: stop.distance,
-      rating: stop.rating,
-      lat: stop.lat,
-      lng: stop.lng,
-      stopData: stop,
-      action: "book",
-    });
-
-    if (dayIdx === overnightStops.length - 1) {
-      items.push({
-        id: "arrival",
-        type: "arrival",
-        title: cityLabel(dest) || "Destination",
-        city: dest,
-        description: "Final leg — your destination is within reach.",
-        eta: null,
-        distance: routeInfo?.distance,
-        action: "directions",
-      });
+      optionalStopCards.slice(0, 2).forEach((p, i) => roadItems.push(mapOptionalItem(p, i)));
     }
 
     days.push({
-      dayNumber: dayNum,
-      label: `Day ${dayNum}`,
+      dayNumber: dayIdx + 1,
+      label: `Day ${dayIdx + 1}`,
       date: formatDayDate(addDays(dep, dayIdx)),
-      items,
+      drivingSummary: dayDrivingSummary(dayIdx, overnightStops.length, routeInfo),
+      roadStops: roadItems,
+      overnight: {
+        id: `overnight-${dayIdx}`,
+        type: "overnight",
+        title: cityLabel(stop.city),
+        city: stop.city,
+        description: stop.why || "Your home base for the night — rest up for tomorrow's drive.",
+        eta: stop.eta,
+        distance: stop.distance,
+        rating: parseRating(stop.rating),
+        lat: stop.lat,
+        lng: stop.lng,
+        stopData: stop,
+        action: "book",
+      },
+      activities: pickActivities(stop.city, activitiesByCity, restaurantsByCity),
       overnightCity: stop.city,
       stopIndex: dayIdx,
     });
@@ -141,25 +144,34 @@ export function buildItineraryDays({
   return days;
 }
 
-function mapRoadItem(rs, key) {
-  const rating = rs.rating ?? parseFloat(String(rs.note || "").match(/(\d+\.?\d*)\s*star/i)?.[1]);
-  return {
-    id: rs.id || `road-${key}`,
-    type: "road",
-    title: rs.name || rs.location || "Road stop",
-    city: rs.location,
-    description: rs.note || rs.amenities || "A worthwhile detour worth your time.",
-    eta: rs.eta,
-    distance: rs.distance,
-    rating,
-    photoUrl: rs.photoUrl,
-    lat: rs.lat,
-    lng: rs.lng,
-    detourMiles: rs.detourMiles,
-    localFavorite: rating >= 4.5,
-    action: "add",
-    stopData: rs,
-  };
+function pickActivities(city, activitiesByCity, restaurantsByCity) {
+  const acts = activitiesByCity?.[city] || [];
+  const rests = restaurantsByCity?.[city] || [];
+  const merged = [
+    ...acts.slice(0, 2).map(a => ({
+      id: a.id,
+      name: a.name,
+      category: a.interest || "Activity",
+      rating: parseRating(a.rating),
+      photoUrl: a.photoUrl,
+      address: a.address,
+      lat: a.lat,
+      lng: a.lng,
+      distanceMiles: a.distanceMiles,
+    })),
+    ...rests.slice(0, 2).map(r => ({
+      id: r.id,
+      name: r.name,
+      category: "Dining",
+      rating: parseRating(r.rating),
+      photoUrl: r.photoUrl,
+      address: r.address,
+      lat: r.lat,
+      lng: r.lng,
+      distanceMiles: r.distanceMiles,
+    })),
+  ];
+  return merged.slice(0, 3);
 }
 
 function mapOptionalItem(p, i) {
@@ -168,25 +180,33 @@ function mapOptionalItem(p, i) {
     type: "discovery",
     title: p.name,
     city: p.address,
+    category: "Discovery",
     description: "A fun stretch break along your route.",
+    distanceFromRoute: p.distanceMiles,
     distance: p.distanceMiles != null ? `${p.distanceMiles} mi off route` : null,
+    rating: parseRating(p.rating),
     photoUrl: p.photoUrl,
     lat: p.lat,
     lng: p.lng,
-    localFavorite: (p.rating ?? 0) >= 4.5,
+    localFavorite: isLocalFavorite(p.rating),
     action: "add",
+    stopData: p,
   };
 }
 
-export function getItineraryOverview({ origin, dest, routeInfo, stops, budgetTotal }) {
+export function getItineraryOverview({ origin, dest, routeInfo, stops, roadStops, budgetTotal }) {
   const miles = parseMilesFromDistance(routeInfo?.distance);
   const hours = parseHoursFromDuration(routeInfo?.duration);
+  const dayCount = Math.max(1, stops.filter(s => s.city).length || 1);
   return {
     origin: cityLabel(origin) || origin,
     destination: cityLabel(dest) || dest,
+    tripName: `${cityLabel(origin) || origin} to ${cityLabel(dest) || dest}`,
     distance: routeInfo?.distance || (miles ? `${Math.round(miles)} mi` : "—"),
     duration: routeInfo?.duration || (hours ? `${Math.floor(hours)}h ${Math.round((hours % 1) * 60)}m` : "—"),
-    overnightCount: stops.length,
+    dayCount,
+    stopCount: (roadStops?.length || 0) + stops.length,
+    overnightCount: stops.filter(s => s.city).length,
     estimatedCost: budgetTotal,
   };
 }

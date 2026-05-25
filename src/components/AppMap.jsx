@@ -1,7 +1,7 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
 import { useState, useEffect } from "react";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
-import { NIGHT_MAP_STYLES } from "../lib/constants.js";
+import { NIGHT_MAP_STYLES, TRIP_ROUTE_GOLD } from "../lib/constants.js";
 import MapRoutePill from "./MapRoutePill.jsx";
 import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
 import MapInfoCard from "./map/MapInfoCard.jsx";
@@ -9,9 +9,10 @@ import MapLegend from "./map/MapLegend.jsx";
 import MapRouteOverlays from "./map/MapRouteOverlays.jsx";
 
 const ROUTE_POLYLINE_OPTIONS = {
-  strokeColor: "#FFD28C",
+  strokeColor: TRIP_ROUTE_GOLD,
   strokeWeight: 5,
   strokeOpacity: 0.9,
+  zIndex: 10,
 };
 
 export default function AppMap({

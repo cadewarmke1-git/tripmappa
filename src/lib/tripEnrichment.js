@@ -14,7 +14,7 @@ import {
   NEARBY_SERVICE_CATEGORIES,
   getTripBudgetCap,
 } from "./tripAccommodations.js";
-import { buildFuelIntervalPoints, getFuelStopMode, sampleRoutePoints } from "./fuel.js";
+import { buildFuelIntervalPoints, getFuelStopMode, sampleRoutePointsEveryMiles } from "./fuel.js";
 import { computeBudgetEstimate } from "./budget.js";
 import { parseMilesFromDistance } from "./parsing.js";
 
@@ -108,7 +108,7 @@ export async function enrichGeneratedTrip({
   }
 
   if (wantsPlaygrounds && routeInfo?.routePoints?.length) {
-    const routeSamples = sampleRoutePoints(routeInfo.routePoints, 4);
+    const routeSamples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 30);
     for (const pt of routeSamples) {
       const parks = await searchNearbyCategory(pt.lat, pt.lng, {
         keyword: "playground park",

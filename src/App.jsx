@@ -5,7 +5,7 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
-import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, STANDARD_MAP_STYLES, DARK_MAP_STYLES, NIGHT_MAP_STYLES } from "./lib/constants.js";
+import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, STANDARD_MAP_STYLES, DARK_MAP_STYLES, NIGHT_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
 import {
   isTruckVehicle,
   isRvVehicle,
@@ -42,6 +42,7 @@ import EmailModal from "./components/EmailModal.jsx";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
+import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
 
 export default function App() {
   const [view, setView] = useState("hero"); // "hero" | "app"
@@ -75,6 +76,7 @@ export default function App() {
   const [convoComplete, setConvoComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
   const [roadStops, setRoadStops] = useState([]);
@@ -85,6 +87,7 @@ export default function App() {
   const [customStops, setCustomStops] = useState([]);
   const [nearbyServicesByCity, setNearbyServicesByCity] = useState({});
   const [activitiesByCity, setActivitiesByCity] = useState({});
+  const [restaurantsByCity, setRestaurantsByCity] = useState({});
   const [optionalStopCards, setOptionalStopCards] = useState([]);
   const [nightSegmentPaths, setNightSegmentPaths] = useState([]);
   const [lowFuelSegmentPaths, setLowFuelSegmentPaths] = useState([]);
@@ -360,11 +363,11 @@ export default function App() {
 
     const bounds = new window.google.maps.LatLngBounds();
     let hasBounds = false;
-    const ROUTE_GOLD = "#FFD28C";
+    const ROUTE_GOLD = TRIP_ROUTE_GOLD;
 
     const drawLine = (path, style) => {
       if (!path?.length) return;
-      const color = style.color || ROUTE_GOLD;
+      const color = style.dashed ? (style.color || TRIP_ROUTE_GOLD) : TRIP_ROUTE_GOLD;
       const opts = {
         path,
         geodesic: true,
@@ -750,6 +753,7 @@ export default function App() {
       setRoadStops(enriched.roadStops);
       setNearbyServicesByCity(enriched.nearbyServicesByCity);
       setActivitiesByCity(enriched.activitiesByCity);
+      setRestaurantsByCity(enriched.restaurantsByCity || {});
       setOptionalStopCards(enriched.optionalStopCards || []);
       setTripAlerts(consolidateAndCapAlerts(enriched.tripAlerts));
       setActiveDayIndex(0);
@@ -832,6 +836,7 @@ export default function App() {
       if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
       if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
       setGenerated(true);
+      setResultsView("itinerary");
       setStopCategory("all");
       setTab("plan");
       setCardCollapsed(false);
@@ -846,6 +851,7 @@ export default function App() {
       setTruckSafety(fallback.truckSafety);
       setRvSafety(fallback.rvSafety);
       setGenerated(true);
+      setResultsView("itinerary");
       setStopCategory("all");
       setTab("plan");
       setCardCollapsed(false);
@@ -867,8 +873,10 @@ export default function App() {
     setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
     setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
+    setRestaurantsByCity({});
     setNightSegmentPaths([]); setLowFuelSegmentPaths([]);
     setActiveDayIndex(0); setMapFocusTarget(null);
+    setResultsView("planning");
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
   }
@@ -904,6 +912,7 @@ export default function App() {
     setAnswers(stripSessionOnlyAnswers(shared.answers || {}));
     setSelectedLodging(shared.selectedLodging || []);
     setGenerated(true);
+    setResultsView("itinerary");
     setConvoComplete(true);
     setTab("plan");
     setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], []));
@@ -986,6 +995,7 @@ export default function App() {
     setTripTips(trip.tripTips || []);
     setAnswers(stripSessionOnlyAnswers(trip.answers || {}));
     setGenerated(true);
+    setResultsView("itinerary");
     setConvoComplete(true);
     setTab("plan");
     toast_("Trip loaded");
@@ -1046,24 +1056,92 @@ export default function App() {
 
   return (
     <>
-      <div className={`app-wrap ${theme}`} style={{
+      <div className={`app-wrap ${theme}${generated && resultsView === "itinerary" ? " results-fullscreen" : ""}${generated && resultsView === "map" ? " map-fullscreen-mode" : ""}`} style={{
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
+        {!(generated && resultsView === "itinerary") && (
         <nav className="nav-app nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
           <div className="nav-logo">Trip<span>Mappa</span></div>
+          {!(generated && resultsView === "map") && (
           <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "1px", borderRadius: 8, padding: 3 }}>
             {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
               <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
             ))}
           </div>
+          )}
           <div className="nav-right" style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            <button type="button" className="nav-btn" onClick={saveTripComingSoon}>Save trip</button>
-            <button type="button" className="nav-btn nav-btn-primary" onClick={() => toast_("Link copied")}>Share</button>
+            {!(generated && resultsView === "map") && (
+              <>
+                <button type="button" className="nav-btn" onClick={saveTripComingSoon}>Save trip</button>
+                <button type="button" className="nav-btn nav-btn-primary" onClick={handleShareItinerary}>Share</button>
+              </>
+            )}
           </div>
         </nav>
+        )}
 
+        {generated && resultsView === "itinerary" ? (
+          <TripResultsPanel
+            origin={origin}
+            dest={dest}
+            answers={answers}
+            stops={stops}
+            roadStops={roadStops}
+            routeInfo={routeInfo}
+            tripLegs={tripLegs}
+            selectedLodging={selectedLodging}
+            tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
+            activitiesByCity={activitiesByCity}
+            restaurantsByCity={restaurantsByCity}
+            departureTime={departureTime}
+            activeDayIndex={activeDayIndex}
+            onEditTrip={() => { setResultsView("planning"); setGenerated(false); setTab("plan"); setCardCollapsed(false); }}
+            onViewMap={() => setResultsView("map")}
+            onDaySelect={setActiveDayIndex}
+            onAddRoadStop={addRoadStopToTrip}
+            onLodgingSelect={addLodgingSelection}
+            onDismissAlert={dismissTripAlert}
+            onShare={handleShareItinerary}
+            onToast={toast_}
+          />
+        ) : generated && resultsView === "map" ? (
+          <div className="trip-map-fullscreen">
+            <header className="trip-results-topbar trip-map-topbar">
+              <button type="button" className="trip-results-back" onClick={() => setResultsView("itinerary")}>← View Itinerary</button>
+              <div className="trip-results-topbar-title">{origin} → {dest}</div>
+              <button type="button" className="trip-results-map-btn" onClick={() => { setResultsView("planning"); setGenerated(false); setTab("plan"); }}>Edit Trip</button>
+            </header>
+            <AppMap
+              isLoaded={isLoaded}
+              mapCenter={mapCenter}
+              mapStyle={mapStyle}
+              mapStyleOpen={mapStyleOpen}
+              trafficAlert={trafficAlert}
+              routeLoading={routeLoading}
+              isDarkMode={theme === "night"}
+              mapRef={mapRef}
+              directions={tripLegs.length === 0 ? directionsResult : null}
+              routeInfo={routeInfo}
+              answers={answers}
+              mapMarkers={mapMarkers}
+              dismissedAlertIds={dismissedAlerts}
+              dayRoutePaths={[]}
+              activeDayIndex={activeDayIndex}
+              nightSegmentPaths={nightSegmentPaths}
+              lowFuelSegmentPaths={lowFuelSegmentPaths}
+              mapFocusTarget={mapFocusTarget}
+              onMapReady={() => setMapReady(true)}
+              onMapStyleOpenChange={setMapStyleOpen}
+              onMapStyleChange={setMapStyle}
+              onMarkerAction={(action, marker) => {
+                if (action === "add") toast_("Added to trip");
+                focusMapOnStop(marker);
+              }}
+            />
+          </div>
+        ) : (
         <div className="app">
           <AppMap
             isLoaded={isLoaded}
@@ -1118,10 +1196,6 @@ export default function App() {
                 <div className="sidebar-inner" style={{ background: "transparent" }}>
                   {tab === "plan" && (
                     <PlanPanel
-                      generated={generated}
-                      stops={stops}
-                      roadStops={roadStops}
-                      tripTips={tripTips}
                       qIndex={qIndex}
                       currentQuestion={currentQuestion}
                       convoComplete={convoComplete}
@@ -1136,39 +1210,26 @@ export default function App() {
                       questionHistoryLength={questionHistory.length}
                       origin={origin}
                       dest={dest}
+                      roadStops={roadStops}
+                      selectedLodging={selectedLodging}
                       isLoaded={isLoaded}
                       timingMode={timingMode}
                       arriveByDate={arriveByDate}
                       originRef={originRef}
                       destRef={destRef}
                       convoEndRef={convoEndRef}
-                      stopsEndRef={stopsEndRef}
                       onGenerateTrip={generateTrip}
                       onResetPlan={resetPlan}
                       onGoBack={goBackOneQuestion}
                       onPickAnswer={pickAnswer}
                       onSetAnswers={setAnswers}
                       onSetPrefDraft={setPrefDraft}
-                      onSaveTrip={saveTripComingSoon}
-                      onToast={toast_}
-                      onAddFuelStop={addFuelStopToTrip}
-                      onLodgingSelect={addLodgingSelection}
-                      selectedLodging={selectedLodging}
-                      tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
-                      onDismissAlert={dismissTripAlert}
-                      optionalStopCards={optionalStopCards}
-                      activeDayIndex={activeDayIndex}
-                      onDaySelect={setActiveDayIndex}
-                      onFocusMap={focusMapOnStop}
-                      onAddRoadStop={addRoadStopToTrip}
-                      departureTime={departureTime}
                       onSwapRoute={swapRouteCities}
                       onFetchDirections={fetchDirections}
                       onSetOrigin={setOrigin}
                       onSetDest={setDest}
                       onSetTimingMode={setTimingMode}
                       onSetArriveByDate={setArriveByDate}
-                      onRetryGenerate={() => { setGenerated(false); generateTrip(); }}
                       getStepMessage={getStepMessage}
                     />
                   )}
@@ -1192,6 +1253,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {modal?.type === "grocery" && (

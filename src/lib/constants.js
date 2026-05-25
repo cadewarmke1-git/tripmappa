@@ -60,11 +60,13 @@ export const LEG_MAP_STYLES = {
 };
 
 /** Per-day route colors for multi-day itinerary map */
+export const TRIP_ROUTE_GOLD = "#FFD28C";
+
 export const DAY_ROUTE_COLORS = [
-  "#FFD28C",
-  "#6366F1",
-  "#14B8A6",
-  "#C084FC",
-  "#F59E0B",
-  "#60A5FA",
+  TRIP_ROUTE_GOLD,
+  TRIP_ROUTE_GOLD,
+  TRIP_ROUTE_GOLD,
+  TRIP_ROUTE_GOLD,
+  TRIP_ROUTE_GOLD,
+  TRIP_ROUTE_GOLD,
 ];

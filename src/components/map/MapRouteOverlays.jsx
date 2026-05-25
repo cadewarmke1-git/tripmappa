@@ -1,8 +1,7 @@
 import { Polyline } from "@react-google-maps/api";
-import { LEG_MAP_STYLES } from "../../lib/constants.js";
+import { TRIP_ROUTE_GOLD } from "../../lib/constants.js";
 
-const ROUTE_GOLD = LEG_MAP_STYLES.drive.color;
-const NIGHT_OPTS = { strokeColor: "#6366F1", strokeWeight: 6, strokeOpacity: 0.85, zIndex: 2 };
+const NIGHT_OPTS = { strokeColor: TRIP_ROUTE_GOLD, strokeWeight: 8, strokeOpacity: 0.35, zIndex: 1 };
 const LOW_FUEL_OPTS = { strokeColor: "#F59E0B", strokeWeight: 6, strokeOpacity: 0.85, zIndex: 3 };
 
 export default function MapRouteOverlays({
@@ -20,10 +19,10 @@ export default function MapRouteOverlays({
             key={`day-route-${dayIndex}`}
             path={path}
             options={{
-              strokeColor: ROUTE_GOLD,
-              strokeWeight: dimmed ? 4 : 7,
-              strokeOpacity: dimmed ? 0.25 : 0.92,
-              zIndex: dimmed ? 1 : 4 + dayIndex,
+              strokeColor: TRIP_ROUTE_GOLD,
+              strokeWeight: dimmed ? 4 : 5,
+              strokeOpacity: dimmed ? 0.25 : 0.9,
+              zIndex: dimmed ? 2 : 10,
             }}
           />
         );

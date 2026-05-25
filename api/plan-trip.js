@@ -196,9 +196,10 @@ STRICT ROUTING RULES — never violate these:
 3. Space overnight stops evenly based on drive time so no single driving segment exceeds 8 hours.
 4. Always return each stop city as "City, State" (full name and state abbreviation) for display above hotel/lodging cards.
 5. All hotels, restaurants, fuel stops, truck stops, and road_stops must be in cities on the same corridor — never unrelated regions.
-6. Never exceed the user's stated total trip budget across lodging and stops.
-7. Prioritize hotel loyalty program brand when preference is stated.
-8. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.`;
+6. Every stop MUST fall within 1 mile of the GPS route boundary coordinates provided in placesContext — never outside the corridor.
+7. Never exceed the user's stated total trip budget across lodging and stops.
+8. Prioritize hotel loyalty program brand when preference is stated.
+9. Always suggest well-lit 24-hour facilities for segments between 10 PM and 6 AM.`;
 
   const userPrompt = isTrucker
     ? `${routeConstraintBlock}
