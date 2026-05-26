@@ -41,3 +41,6 @@ drop trigger if exists trips_updated_at on public.trips;
 create trigger trips_updated_at
   before update on public.trips
   for each row execute function public.set_trips_updated_at();
+
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on table public.trips to anon, authenticated, service_role;

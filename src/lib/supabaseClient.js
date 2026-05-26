@@ -1,3 +1,7 @@
+/**
+ * Browser Supabase client (anon key only).
+ * Env: import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY
+ */
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;

@@ -111,10 +111,21 @@ Placeholder toasts in the UI reference the phase when each feature ships (e.g. S
 
 ### Environment
 
-- `VITE_GOOGLE_MAPS_KEY` — client-side Google Maps
-- `VITE_SUPABASE_URL` — Supabase project URL (client)
-- `VITE_SUPABASE_ANON_KEY` — Supabase anon key (client)
-- `ANTHROPIC_KEY` — server-side only (Vercel env)
+Set variables in `.env.local` locally and in Vercel manually (see `.env.example`). Never hardcode keys.
+
+**Frontend** — `import.meta.env.VITE_*` only:
+
+- `VITE_GOOGLE_MAPS_KEY` — Google Maps
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon key
+
+**Serverless (`api/`)** — `process.env.*` only:
+
+- `ANTHROPIC_KEY` — trip generation
+- `SUPABASE_URL` — Supabase project URL for admin client
+- `SUPABASE_SERVICE_ROLE_KEY` — admin Supabase access (via `api/lib/supabaseAdmin.js`)
+- `NREL_API_KEY` — EV charging enrichment
+- `MAPQUEST_API_KEY` — fuel price enrichment
 
 ### Build & deploy
 

@@ -11,14 +11,20 @@ npm install
 npm run dev
 ```
 
-Set `VITE_GOOGLE_MAPS_KEY` in `.env` for local map loading. Trip generation uses the Vercel serverless route `/api/plan-trip` (requires `ANTHROPIC_KEY` on the server).
+Set env vars in `.env.local` (see `.env.example`). Trip generation uses the Vercel serverless route `/api/plan-trip` (requires `ANTHROPIC_KEY` on the server).
 
 ### Supabase Auth (Phase 6)
 
-Add to `.env` (and Vercel project settings):
+Add to `.env.local` locally and to Vercel project settings (never commit secrets):
 
-- `VITE_SUPABASE_URL` — Project URL from Supabase dashboard
-- `VITE_SUPABASE_ANON_KEY` — Project anon/public key
+| Variable | Used by | Purpose |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Frontend (`import.meta.env`) | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Frontend (`import.meta.env`) | Supabase anon/public key |
+| `SUPABASE_URL` | Serverless (`process.env`) | Same Supabase project URL for admin client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Serverless (`process.env`) | Admin DB access in `api/` routes only |
+
+Do not use `NEXT_PUBLIC_*`, hardcoded keys, or `VITE_`-prefixed secrets on the server. The browser client lives in `src/lib/supabaseClient.js`; server admin access uses `api/lib/supabaseAdmin.js`.
 
 Run the SQL in `supabase/migrations/001_trips.sql` in the Supabase SQL Editor to create the `trips` table and RLS policies.
 
