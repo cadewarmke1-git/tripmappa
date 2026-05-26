@@ -5,7 +5,17 @@ import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import AmenityBadges from "../lodging/AmenityBadges.jsx";
 
-export default function OvernightStayCard({ overnight, answers, routeInfo, selectedLodging, onLodgingSelect, onToast }) {
+export default function OvernightStayCard({
+  overnight,
+  answers,
+  routeInfo,
+  selectedLodging,
+  onLodgingSelect,
+  onToast,
+  onSelect,
+  highlighted = false,
+  cardRef,
+}) {
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,10 +44,21 @@ export default function OvernightStayCard({ overnight, answers, routeInfo, selec
   const desc = overnight?.description || featured?.description || "Your home base for the night.";
   const photoUrl = featured?.photo || featured?.photoUrl || null;
 
-  function handleBook() {
+  function handleBook(e) {
+    e?.stopPropagation?.();
     if (featured?.bookUrl) window.open(featured.bookUrl, "_blank", "noopener,noreferrer");
     else onToast?.("Opening booking options…");
     if (featured) onLodgingSelect?.(featured);
+  }
+
+  function handleClick() {
+    onSelect?.({
+      id: overnight?.id || `overnight-${overnight?.city}`,
+      lat: overnight?.lat ?? featured?.lat,
+      lng: overnight?.lng ?? featured?.lng,
+      title: name,
+      city: overnight?.city,
+    });
   }
 
   if (loading) {
@@ -45,7 +66,15 @@ export default function OvernightStayCard({ overnight, answers, routeInfo, selec
   }
 
   return (
-    <article className="overnight-card">
+    <article
+      ref={cardRef}
+      className={`overnight-card${highlighted ? " stop-highlighted" : ""}`}
+      data-stop-id={overnight?.id || `overnight-${overnight?.city}`}
+      onClick={handleClick}
+      onKeyDown={e => { if (e.key === "Enter") handleClick(); }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="overnight-card-hero">
         <PlacePhotoOrIcon
           photoUrl={photoUrl}

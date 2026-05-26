@@ -7,6 +7,8 @@ import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
 import MapInfoCard from "./map/MapInfoCard.jsx";
 import MapLegend from "./map/MapLegend.jsx";
 import MapRouteOverlays from "./map/MapRouteOverlays.jsx";
+import MapGenerationPulse from "./map/MapGenerationPulse.jsx";
+import MapRecenterButton from "./map/MapRecenterButton.jsx";
 
 const ROUTE_POLYLINE_OPTIONS = {
   strokeColor: TRIP_ROUTE_GOLD,
@@ -22,10 +24,13 @@ export default function AppMap({
   mapStyleOpen,
   trafficAlert,
   routeLoading,
+  tripGenerating = false,
+  loadingMessageIndex = 0,
   isDarkMode,
   mapRef,
   directions,
   routeInfo,
+  routePoints = [],
   answers,
   mapMarkers = [],
   dismissedAlertIds = [],
@@ -38,6 +43,10 @@ export default function AppMap({
   onMapStyleOpenChange,
   onMapStyleChange,
   onMarkerAction,
+  onMarkerSelect,
+  onRecenter,
+  theme = "night",
+  navigateHomeSlot = null,
 }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [legendOpen, setLegendOpen] = useState(false);
@@ -52,6 +61,7 @@ export default function AppMap({
 
   function handleMarkerClick(marker) {
     setSelectedMarker(marker);
+    onMarkerSelect?.(marker);
   }
 
   function handleInfoAction(action, marker) {
@@ -60,6 +70,10 @@ export default function AppMap({
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`, "_blank");
     }
   }
+
+  const pulsePoints = routePoints.length > 1
+    ? routePoints
+    : (routeInfo?.routePoints || []);
 
   return (
     <div className="map-full">
@@ -107,9 +121,11 @@ export default function AppMap({
               lowFuelSegmentPaths={lowFuelSegmentPaths}
             />
           </GoogleMap>
+          <MapGenerationPulse mapRef={mapRef} routePoints={pulsePoints} active={tripGenerating} />
           {selectedMarker && (
             <MapInfoCard
               marker={selectedMarker}
+              theme={theme}
               onClose={() => setSelectedMarker(null)}
               onAction={handleInfoAction}
             />
@@ -131,6 +147,7 @@ export default function AppMap({
               </div>
             )}
           </div>
+          <MapRecenterButton theme={theme} onRecenter={onRecenter} />
         </>
       ) : (
         <div className="map-loading">
@@ -139,13 +156,18 @@ export default function AppMap({
           <div className="map-placeholder-sub">Connecting to Google Maps</div>
         </div>
       )}
-      {isLoaded && routeLoading && (
+      {isLoaded && routeLoading && !tripGenerating && (
         <div className="route-loading-pill">
-          <span className="spinner-dark"/>
           Calculating route…
         </div>
       )}
-      <MapRoutePill routeInfo={routeInfo} answers={answers} />
+      {navigateHomeSlot}
+      <MapRoutePill
+        routeInfo={routeInfo}
+        answers={answers}
+        tripGenerating={tripGenerating}
+        loadingMessageIndex={loadingMessageIndex}
+      />
     </div>
   );
 }

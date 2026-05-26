@@ -1,37 +1,65 @@
 /** Map marker categories, colors, and legend labels. */
 
+export const MARKER_GOLD = "#FFD28C";
+
 export const MARKER_CATEGORIES = {
-  hotel: { label: "Overnight stop", color: "#FFD28C", glyph: "H", zIndex: 10 },
-  fuel: { label: "Fuel stop", color: "#FFD28C", glyph: "F", zIndex: 9 },
-  restaurant: { label: "Restaurant", color: "#E8A87C", glyph: "R", zIndex: 8 },
-  park: { label: "National park", color: "#6BCB77", glyph: "P", zIndex: 7 },
-  poi: { label: "Point of interest", color: "#FFD28C", glyph: "*", zIndex: 6 },
-  medical: { label: "Medical", color: "#E85D5D", glyph: "+", zIndex: 5 },
-  vet: { label: "Veterinary", color: "#E85D5D", glyph: "🐾", zIndex: 5 },
-  playground: { label: "Park / playground", color: "#6BCB77", glyph: "⛳", zIndex: 6 },
-  entertainment: { label: "Entertainment", color: "#C084FC", glyph: "♪", zIndex: 6 },
-  wifi: { label: "WiFi stop", color: "#60A5FA", glyph: "WiFi", zIndex: 6 },
-  religious: { label: "Prayer facility", color: "#94A3B8", glyph: "✝", zIndex: 5 },
-  safety: { label: "Safety flagged", color: "#FFD28C", glyph: "🛡", zIndex: 8 },
-  budget: { label: "Budget alert", color: "#F59E0B", glyph: "$", zIndex: 11 },
-  alert: { label: "Trip alert", color: "#F59E0B", glyph: "!", zIndex: 12 },
-  custom: { label: "Custom stop", color: "#FFFFFF", glyph: "C", zIndex: 13 },
-  repair: { label: "Auto repair", color: "#94A3B8", glyph: "X", zIndex: 4 },
+  hotel: { label: "Overnight stop", color: MARKER_GOLD, zIndex: 10 },
+  fuel: { label: "Fuel stop", color: MARKER_GOLD, zIndex: 9 },
+  restaurant: { label: "Restaurant", color: MARKER_GOLD, zIndex: 8 },
+  rest: { label: "Rest stop", color: MARKER_GOLD, zIndex: 8 },
+  ev: { label: "EV charging", color: MARKER_GOLD, zIndex: 9 },
+  truck: { label: "Truck stop", color: MARKER_GOLD, zIndex: 8 },
+  park: { label: "Nature & parks", color: MARKER_GOLD, zIndex: 7 },
+  poi: { label: "Point of interest", color: MARKER_GOLD, zIndex: 6 },
+  medical: { label: "Emergency services", color: MARKER_GOLD, zIndex: 5 },
+  vet: { label: "Veterinary", color: MARKER_GOLD, zIndex: 5 },
+  playground: { label: "Park / playground", color: MARKER_GOLD, zIndex: 6 },
+  entertainment: { label: "Entertainment", color: MARKER_GOLD, zIndex: 6 },
+  wifi: { label: "WiFi stop", color: MARKER_GOLD, zIndex: 6 },
+  religious: { label: "Prayer facility", color: MARKER_GOLD, zIndex: 5 },
+  safety: { label: "Safety flagged", color: MARKER_GOLD, zIndex: 8 },
+  budget: { label: "Budget alert", color: MARKER_GOLD, zIndex: 11 },
+  alert: { label: "Trip alert", color: MARKER_GOLD, zIndex: 12 },
+  custom: { label: "Custom stop", color: MARKER_GOLD, zIndex: 13 },
+  repair: { label: "Auto repair", color: MARKER_GOLD, zIndex: 4 },
 };
 
 const ICON_PATHS = {
-  medical: '<path d="M14 8v12M8 14h12" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>',
-  vet: '<ellipse cx="16" cy="19" rx="5" ry="4" fill="#1a1a2e"/><circle cx="12" cy="12" r="2.5" fill="#1a1a2e"/><circle cx="20" cy="12" r="2.5" fill="#1a1a2e"/><circle cx="16" cy="9" r="2.5" fill="#1a1a2e"/>',
-  playground: '<path d="M10 24V14l6-6 6 6v10M13 24v-6h6v6" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  entertainment: '<path d="M12 22V12M12 12c0-3 2-5 4-5s4 2 4 5M20 22V12M20 12c0-3 2-5 4-5" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="9" r="2" fill="#1a1a2e"/><circle cx="20" cy="9" r="2" fill="#1a1a2e"/>',
-  wifi: '<path d="M8 18c4-4 12-4 16 0M11 21c2.5-2.5 7.5-2.5 10 0M14 24h4" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="16" cy="24" r="1.5" fill="#1a1a2e"/>',
-  religious: '<path d="M16 6v20M10 12h12M13 12V9a3 3 0 016 0v3" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>',
-  safety: '<path d="M16 5l9 4v7c0 6-4 10-9 12-5-2-9-6-9-12V9l9-4z" stroke="#1a1a2e" stroke-width="2" fill="none"/>',
-  budget: '<text x="16" y="21" text-anchor="middle" font-size="16" font-weight="800" fill="#1a1a2e">$</text>',
-  hotel: '<text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">H</text>',
-  fuel: '<text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">F</text>',
-  default: '<text x="16" y="21" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">•</text>',
+  hotel: '<path d="M8 22V10l4-2 4 2v12M10 18h4M14 18h4" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  fuel: '<path d="M9 22V8l3-2 3 2v14M11 18h2M14 18h2M12 6V4" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="10" y="10" width="4" height="5" rx="0.5" fill="#fff"/>',
+  restaurant: '<path d="M9 22V12M9 12c0-2 1-3 3-3s3 1 3 3v10M15 22V8M15 8c0-2 1-3 3-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M7 22V14c0-1.5-.5-2-1.5-2.5" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+  rest: '<path d="M10 22V14c0-2 1.5-3.5 3-3.5h2c1.5 0 3 1.5 3 3.5v8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M8 10h8l-1-4H9l-1 4z" stroke="#fff" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M7 22h10" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>',
+  ev: '<path d="M13 4l-4 8h3l-2 8 6-10h-3l2-6z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>',
+  truck: '<path d="M4 18h1M19 18h1M6 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0M16 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0M4 14h11v4H4v-4zM15 14h3l2 3v1h-5v-4z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  park: '<path d="M16 22V12l-4-6-4 6v10" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 14c2-3 4-3 6 0 2-3 4-3 6 0" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>',
+  poi: '<path d="M16 10l-2.5 5 2.5 5 2.5-5-2.5-5z" fill="#fff"/><circle cx="16" cy="16" r="9" stroke="#fff" stroke-width="1.4" fill="none"/>',
+  medical: '<path d="M16 8v16M8 16h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>',
+  vet: '<ellipse cx="16" cy="19" rx="5" ry="4" fill="#fff"/><circle cx="12" cy="12" r="2" fill="#fff"/><circle cx="20" cy="12" r="2" fill="#fff"/><circle cx="16" cy="9" r="2" fill="#fff"/>',
+  playground: '<path d="M10 24V14l6-6 6 6v10M13 24v-6h6v6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  entertainment: '<path d="M12 22V12M12 12c0-3 2-5 4-5s4 2 4 5M20 22V12M20 12c0-3 2-5 4-5" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="12" cy="9" r="2" fill="#fff"/><circle cx="20" cy="9" r="2" fill="#fff"/>',
+  wifi: '<path d="M8 18c4-4 12-4 16 0M11 21c2.5-2.5 7.5-2.5 10 0M14 24h4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="16" cy="24" r="1.5" fill="#fff"/>',
+  religious: '<path d="M16 6v20M10 12h12M13 12V9a3 3 0 016 0v3" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+  safety: '<path d="M16 5l9 4v7c0 6-4 10-9 12-5-2-9-6-9-12V9l9-4z" stroke="#fff" stroke-width="1.8" fill="none"/>',
+  budget: '<text x="16" y="21" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">$</text>',
+  alert: '<text x="16" y="21" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">!</text>',
+  custom: '<circle cx="16" cy="16" r="4" fill="#fff"/>',
+  repair: '<path d="M14 10l-4 4 6 6 4-4-6-6zM11 13l-2 2" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+  default: '<circle cx="16" cy="16" r="3" fill="#fff"/>',
 };
+
+function mapRoadStopCategory(rs) {
+  if (rs.safetyFlagged) return "safety";
+  const c = rs.category;
+  if (c === "food") return "restaurant";
+  if (c === "fuel") return "fuel";
+  if (c === "charging") return "ev";
+  if (c === "rest") return "rest";
+  if (c === "truck") return "truck";
+  if (c === "park" || c === "discovery") return "park";
+  if (c === "medical") return "medical";
+  if (rs.wifiAvailable) return "wifi";
+  return "poi";
+}
 
 export function buildMarkerIcon(category, isDarkMode = false) {
   const cfg = MARKER_CATEGORIES[category] || MARKER_CATEGORIES.poi;
@@ -54,12 +82,11 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
 
   stops.forEach((stop, i) => {
     if (stop.lat != null && stop.lng != null) {
-      const safety = stop.safetyFlagged;
       markers.push({
         id: `stop-${i}`,
         lat: stop.lat,
         lng: stop.lng,
-        category: safety ? "safety" : "hotel",
+        category: stop.safetyFlagged ? "safety" : "hotel",
         title: stop.city || stop.name,
         subtitle: `${stop.distance || ""} · ${stop.eta || ""}`.trim(),
         stopIndex: i,
@@ -75,7 +102,7 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
         id: rs.id || `road-${i}`,
         lat: rs.lat,
         lng: rs.lng,
-        category: rs.safetyFlagged ? "safety" : rs.category === "food" ? "restaurant" : rs.category === "fuel" || rs.category === "charging" ? "fuel" : rs.wifiAvailable ? "wifi" : "poi",
+        category: mapRoadStopCategory(rs),
         title: rs.name,
         subtitle: rs.location || rs.distance,
         action: "add",
@@ -93,5 +120,7 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
 }
 
 export function getLegendItems() {
-  return Object.entries(MARKER_CATEGORIES).map(([key, val]) => ({ id: key, ...val }));
+  return [
+    "hotel", "fuel", "restaurant", "rest", "ev", "truck", "park", "poi", "medical",
+  ].map(key => ({ id: key, ...MARKER_CATEGORIES[key] }));
 }

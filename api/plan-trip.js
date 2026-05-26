@@ -1,7 +1,31 @@
 /** Active trip-generation endpoint (Anthropic Sonnet). Called via src/lib/apiClient.js only. */
+import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
+import { getUserFromRequest } from "./lib/authFromRequest.js";
+import { consumeCredit } from "./lib/tripCredits.js";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const user = await getUserFromRequest(req);
+  if (user) {
+    const admin = getSupabaseAdmin();
+    if (admin) {
+      try {
+        const credit = await consumeCredit(admin, user.id);
+        if (!credit.ok) {
+          return res.status(402).json({
+            error: "No AI trip generations remaining this month",
+            code: "no_credits",
+            credits: credit,
+          });
+        }
+      } catch (creditErr) {
+        console.error("Credit consumption failed:", creditErr);
+        return res.status(500).json({ error: "Could not verify trip credits" });
+      }
+    }
   }
 
   const { origin, destination, answers, routeInfo, legs, model = "claude-sonnet-4-20250514", placesContextPrompt = "" } = req.body;

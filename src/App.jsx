@@ -14,7 +14,7 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers } from "./lib/tripFlow.js";
+import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress } from "./lib/tripFlow.js";
 import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { computeAutoTheme } from "./lib/theme.js";
@@ -33,6 +33,9 @@ import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
+import { fetchTripCredits } from "./lib/tripCreditsApi.js";
+import { getGuestCreditStatus, consumeGuestCredit } from "./lib/guestCredits.js";
+import { fetchUserProfile, saveHomeAddress, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -44,14 +47,18 @@ import EmailModal from "./components/EmailModal.jsx";
 import SignInModal from "./components/auth/SignInModal.jsx";
 import PhoneModal from "./components/auth/PhoneModal.jsx";
 import OAuthComingSoonModal from "./components/auth/OAuthComingSoonModal.jsx";
+import UpgradeModal from "./components/UpgradeModal.jsx";
+import HomeAddressModal from "./components/HomeAddressModal.jsx";
 import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
 import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
+import NavLogo from "./components/NavLogo.jsx";
+import AccountBadge from "./components/AccountBadge.jsx";
 
 export default function App() {
-  const { user, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
+  const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
   const [view, setView] = useState("hero"); // "hero" | "app"
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
@@ -110,6 +117,16 @@ export default function App() {
   const [savedTrips, setSavedTrips] = useState(() => {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
+  const [creditStatus, setCreditStatus] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [homeAddress, setHomeAddress] = useState("");
+  const [showHomeAddressModal, setShowHomeAddressModal] = useState(false);
+  const [navigateHomePending, setNavigateHomePending] = useState(false);
+  const [returnedFromResults, setReturnedFromResults] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [highlightedStopId, setHighlightedStopId] = useState(null);
+  const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
+  const highlightTimerRef = useRef(null);
 
   function openAuthModal(mode) {
     setAuthError("");
@@ -152,6 +169,8 @@ export default function App() {
       if (session) {
         toast_("Welcome to TripMappa!", true);
         setAuthModal(null);
+        setGuestBannerDismissed(true);
+        refreshCredits();
       } else {
         toast_("Check your email to confirm your account", true);
         setAuthModal(null);
@@ -178,6 +197,8 @@ export default function App() {
       await signIn(email, password);
       toast_("Signed in", true);
       setAuthModal(null);
+      setGuestBannerDismissed(true);
+      refreshCredits();
     } catch (err) {
       setAuthError(err.message || "Sign in failed");
     } finally {
@@ -248,12 +269,35 @@ export default function App() {
   }
 
   async function handleSignOut() {
+    intentionalSignOutRef.current = true;
     try {
       await signOut();
       toast_("Signed out");
     } catch (err) {
+      intentionalSignOutRef.current = false;
       toast_(err.message || "Could not sign out");
     }
+  }
+
+  function buildTripSavePayload() {
+    return {
+      origin,
+      dest,
+      date: new Date().toLocaleDateString(),
+      stops,
+      roadStops,
+      tripTips,
+      answers: stripSessionOnlyAnswers(answers),
+      routeInfo,
+      selectedLodging,
+    };
+  }
+
+  async function persistTripForUser(userId) {
+    const tripPayload = buildTripSavePayload();
+    const saved = await saveTrip(userId, tripPayload);
+    setSavedTrips(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+    return saved;
   }
 
   async function saveCurrentTrip() {
@@ -266,20 +310,8 @@ export default function App() {
       toast_("Plan a trip first");
       return;
     }
-    const tripPayload = {
-      origin,
-      dest,
-      date: new Date().toLocaleDateString(),
-      stops,
-      roadStops,
-      tripTips,
-      answers: stripSessionOnlyAnswers(answers),
-      routeInfo,
-      selectedLodging,
-    };
     try {
-      const saved = await saveTrip(user.id, tripPayload);
-      setSavedTrips(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+      await persistTripForUser(user.id);
       toast_("Trip saved", true);
     } catch (err) {
       console.error("Save trip error:", err);
@@ -305,6 +337,14 @@ export default function App() {
   }
   const [toast, setToast] = useState(null);
   const [toastIsGold, setToastIsGold] = useState(false);
+  const [toastAction, setToastAction] = useState(null);
+  const toastTimerRef = useRef(null);
+  const hadUserRef = useRef(false);
+  const intentionalSignOutRef = useRef(false);
+  const sessionExpiredNotifiedRef = useRef(false);
+  const [guestTripPendingSave, setGuestTripPendingSave] = useState(false);
+  const panelDragStartY = useRef(null);
+  const panelDragMoved = useRef(false);
   const [modal, setModal] = useState(null);
   const [groceryInput, setGroceryInput] = useState("");
   const [groceryItems, setGroceryItems] = useState([]);
@@ -344,6 +384,63 @@ export default function App() {
 
     return () => { cancelled = true; };
   }, [user?.id, authLoading]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      hadUserRef.current = true;
+      sessionExpiredNotifiedRef.current = false;
+      return;
+    }
+    if (hadUserRef.current && !intentionalSignOutRef.current && !sessionExpiredNotifiedRef.current) {
+      sessionExpiredNotifiedRef.current = true;
+      toast_("Your session expired — please sign in again", {
+        actionLabel: "Sign In",
+        onAction: () => openAuthModal("signin"),
+        duration: 8000,
+      });
+    }
+    intentionalSignOutRef.current = false;
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (authLoading || !user?.id || !guestTripPendingSave) return undefined;
+    if (!generated || !origin?.trim() || !dest?.trim()) {
+      setGuestTripPendingSave(false);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await persistTripForUser(user.id);
+        if (!cancelled) {
+          setGuestTripPendingSave(false);
+          toast_("Your trip has been saved to your account.", true);
+        }
+      } catch (err) {
+        console.warn("Auto-save guest trip failed:", err);
+        if (!cancelled) setGuestTripPendingSave(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, guestTripPendingSave, authLoading, generated]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user?.id && session?.access_token) {
+      fetchTripCredits(session.access_token)
+        .then(setCreditStatus)
+        .catch(() => setCreditStatus({ tier: "free", unlimited: false, remaining: 3, limit: 3 }));
+      fetchUserProfile(user.id)
+        .then(profile => { if (profile?.home_address) setHomeAddress(profile.home_address); })
+        .catch(() => {});
+    } else {
+      setCreditStatus(getGuestCreditStatus());
+      const guestHome = getGuestHomeAddress();
+      if (guestHome) setHomeAddress(guestHome);
+    }
+  }, [user?.id, session?.access_token, authLoading, generated]);
 
   // ── Google Maps ──
   const { isLoaded } = useJsApiLoader({
@@ -500,6 +597,273 @@ export default function App() {
     });
   }, [timingMode, arriveByDate, answers, origin, dest]);
 
+  const fetchRouteBetween = useCallback((originVal, destVal) => {
+    if (!originVal || !destVal || !window.google) return Promise.resolve(false);
+    setRouteLoading(true);
+    setTrafficAlert(false);
+
+    const routeRequest = {
+      origin: originVal,
+      destination: destVal,
+      travelMode: window.google.maps.TravelMode.DRIVING,
+      drivingOptions: {
+        departureTime: new Date(),
+        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
+      },
+    };
+
+    const service = new window.google.maps.DirectionsService();
+    return new Promise((resolve) => {
+      service.route(routeRequest, (result, status) => {
+        setRouteLoading(false);
+        if (status === "OK") {
+          const route = result.routes[0];
+          const leg = route.legs[0];
+          setRouteInfo({
+            distance: leg.distance.text,
+            duration: leg.duration.text,
+            start: leg.start_address.split(",")[0],
+            end: leg.end_address.split(",")[0],
+            origin: originVal,
+            destination: destVal,
+            routePoints: route.overview_path.map(p => ({
+              lat: typeof p.lat === "function" ? p.lat() : p.lat,
+              lng: typeof p.lng === "function" ? p.lng() : p.lng,
+            })),
+            vehicleType: "Car",
+            timingMode: "leave_now",
+          });
+          setRoutePath(route.overview_path);
+          setDirectionsResult(result);
+          if (mapRef.current) {
+            const bounds = new window.google.maps.LatLngBounds();
+            route.legs[0].steps.forEach(step => {
+              bounds.extend(step.start_location);
+              bounds.extend(step.end_location);
+            });
+            mapRef.current.fitBounds(bounds, { padding: 60 });
+          }
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
+    });
+  }, []);
+
+  function formatCreditsLabel(status) {
+    if (!status) return null;
+    if (status.unlimited) return "Unlimited";
+    if (status.tier === "guest") return "1 free try";
+    const n = status.remaining ?? 0;
+    if (n === 1) return "1 left";
+    return `${n} left`;
+  }
+
+  const flowProgress = useMemo(() => getFlowProgress(answers, buildQuestionContext(answers), {
+    questionHistoryLength: questionHistory.length,
+    convoComplete,
+  }), [answers, questionHistory.length, convoComplete, origin, dest, routeInfo]);
+
+  function refreshCredits() {
+    if (user && session?.access_token) {
+      fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
+    } else {
+      setCreditStatus(getGuestCreditStatus());
+    }
+  }
+
+  function goHome() {
+    setAuthModal(null);
+    setShowUpgradeModal(false);
+    setShowHomeAddressModal(false);
+    setModal(null);
+    setHelpMenuOpen(false);
+    setReturnedFromResults(false);
+    setGuestBannerDismissed(false);
+    setHighlightedStopId(null);
+    setLoading(false);
+    setGuestTripPendingSave(false);
+    setView("hero");
+    setTab("plan");
+    setOrigin("");
+    setDest("");
+    setHeroOrigin("");
+    setHeroDest("");
+    setHeroOriginError("");
+    setHeroDestError("");
+    setAnswers({});
+    setQIndex(-1);
+    setCurrentQuestion(null);
+    setQuestionHistory([]);
+    setConvoComplete(false);
+    setGenerated(false);
+    setResultsView("planning");
+    setStops([]);
+    setTripTips([]);
+    setRoadStops([]);
+    setTripFormat(null);
+    setRecommendations([]);
+    setSelectedLodging([]);
+    setStopCategory("all");
+    setTripLegs([]);
+    setPrefDraft([]);
+    setHosCompliance(null);
+    setTruckSafety(null);
+    setRvSafety(null);
+    setTripAlerts([]);
+    setDismissedAlerts([]);
+    setMapMarkers([]);
+    setCustomStops([]);
+    setNearbyServicesByCity({});
+    setActivitiesByCity({});
+    setRestaurantsByCity({});
+    setOptionalStopCards([]);
+    setNightSegmentPaths([]);
+    setLowFuelSegmentPaths([]);
+    setActiveDayIndex(0);
+    setMapFocusTarget(null);
+    setRouteInfo(null);
+    setRoutePath(null);
+    setDirectionsResult(null);
+    setCardCollapsed(false);
+    setStepAnim(null);
+    if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
+    if (originRef.current) originRef.current.value = "";
+    if (destRef.current) destRef.current.value = "";
+    if (heroOriginRef.current) heroOriginRef.current.value = "";
+    if (heroDestRef.current) heroDestRef.current.value = "";
+    window.scrollTo(0, 0);
+  }
+
+  function handleEditTrip() {
+    setResultsView("planning");
+    setGenerated(false);
+    setTab("plan");
+    setCardCollapsed(false);
+    setReturnedFromResults(true);
+    setConvoComplete(true);
+    setQIndex(-2);
+    setCurrentQuestion(null);
+    scrollPlanToTop();
+  }
+
+  function highlightStop(stopId) {
+    if (!stopId) return;
+    setHighlightedStopId(stopId);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightedStopId(null), 2000);
+  }
+
+  function handleMapMarkerSelect(marker) {
+    if (!marker?.id) return;
+    let stopId = marker.id;
+    if (stopId.startsWith("stop-")) {
+      stopId = `overnight-${stopId.replace("stop-", "")}`;
+    }
+    highlightStop(stopId);
+    if (resultsView === "map" && generated) {
+      setResultsView("itinerary");
+    }
+  }
+
+  const recenterMap = useCallback(() => {
+    if (!mapRef.current || !window.google) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    let hasBounds = false;
+
+    if (directionsResult?.routes?.[0]?.legs) {
+      directionsResult.routes[0].legs.forEach(leg => {
+        leg.steps.forEach(step => {
+          bounds.extend(step.start_location);
+          bounds.extend(step.end_location);
+          hasBounds = true;
+        });
+      });
+    } else if (routePath?.length) {
+      routePath.forEach(p => {
+        bounds.extend(typeof p.lat === "function" ? { lat: p.lat(), lng: p.lng() } : p);
+        hasBounds = true;
+      });
+    } else if (routeInfo?.routePoints?.length) {
+      routeInfo.routePoints.forEach(p => { bounds.extend(p); hasBounds = true; });
+    }
+
+    if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
+  }, [directionsResult, routePath, routeInfo]);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingMessageIndex(0);
+      return undefined;
+    }
+    const interval = setInterval(() => {
+      setLoadingMessageIndex(i => (i + 1) % 4);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  useEffect(() => () => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+  }, []);
+
+  async function runNavigateHome(home) {
+    if (!home?.trim()) {
+      setShowHomeAddressModal(true);
+      return;
+    }
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+    setNavigateHomePending(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const originStr = `${pos.coords.latitude},${pos.coords.longitude}`;
+        const ok = await fetchRouteBetween(originStr, home.trim());
+        setNavigateHomePending(false);
+        if (ok) toast_("Route home ready", true);
+        else toast_("Could not calculate route home");
+      },
+      () => {
+        setNavigateHomePending(false);
+        toast_("Enable location access to navigate home");
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  }
+
+  function handleNavigateHome() {
+    const home = homeAddress || getGuestHomeAddress();
+    if (!home) {
+      setNavigateHomePending(true);
+      setShowHomeAddressModal(true);
+      return;
+    }
+    runNavigateHome(home);
+  }
+
+  async function handleSaveHomeAddress(address) {
+    const trimmed = address.trim();
+    if (!trimmed) return;
+    setHomeAddress(trimmed);
+    setGuestHomeAddress(trimmed);
+    setShowHomeAddressModal(false);
+    if (user?.id) {
+      try {
+        await saveHomeAddress(user.id, trimmed);
+      } catch (err) {
+        console.warn("Could not save home address:", err);
+      }
+    }
+    if (navigateHomePending) {
+      setNavigateHomePending(false);
+      runNavigateHome(trimmed);
+    } else {
+      toast_("Home address saved", true);
+    }
+  }
+
   useEffect(() => {
     if (view !== "app" || !isLoaded || !mapReady || !window.google) return;
     const o = origin?.trim();
@@ -515,8 +879,20 @@ export default function App() {
   }, [view]);
 
   const convoEndRef = useRef(null);
+  const convoScrollRef = useRef(null);
+  const floatCardScrollRef = useRef(null);
   const stopsEndRef = useRef(null);
-  useEffect(()=>{ convoEndRef.current?.scrollIntoView({behavior:"smooth"}); },[qIndex, generated]);
+
+  const scrollPlanToTop = useCallback(() => {
+    window.scrollTo(0, 0);
+    convoScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    floatCardScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
+  useEffect(() => {
+    if (view !== "app") return;
+    scrollPlanToTop();
+  }, [view, qIndex, currentQuestion?.id, scrollPlanToTop]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -536,16 +912,6 @@ export default function App() {
       return () => clearTimeout(t);
     }
   }, [currentQuestion?.id, stepAnim]);
-
-  useEffect(() => {
-    if (generated && (stops.length > 0 || roadStops.length > 0)) {
-      setCardCollapsed(false);
-      setTab("plan");
-      requestAnimationFrame(() => {
-        convoEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      });
-    }
-  }, [generated, stops, roadStops]);
 
   useEffect(() => {
     if (!trafficAlert) return;
@@ -647,11 +1013,73 @@ export default function App() {
     };
   }, [tripLegs, routePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic, answers.preferences]);
 
-  function toast_(msg) {
-    setToastIsGold(false);
+  function toast_(msg, options = false) {
+    const opts = typeof options === "boolean" ? { isGold: options } : options;
+    const { isGold = false, actionLabel, onAction, duration = 2400 } = opts;
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastIsGold(isGold);
     setToast(msg);
-    setTimeout(() => setToast(null), 2400);
+    if (actionLabel && onAction) {
+      setToastAction({ label: actionLabel, onClick: onAction });
+    } else {
+      setToastAction(null);
+    }
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      setToastAction(null);
+    }, actionLabel ? Math.max(duration, 8000) : duration);
   }
+
+  function handlePanelTouchStart(e) {
+    if (window.innerWidth > 767) return;
+    panelDragStartY.current = e.touches[0].clientY;
+    panelDragMoved.current = false;
+  }
+
+  function handlePanelTouchMove(e) {
+    if (panelDragStartY.current == null) return;
+    const dy = e.touches[0].clientY - panelDragStartY.current;
+    if (Math.abs(dy) > 8) panelDragMoved.current = true;
+  }
+
+  function handlePanelTouchEnd(e) {
+    if (panelDragStartY.current == null) return;
+    const dy = e.changedTouches[0].clientY - panelDragStartY.current;
+    if (dy > 48) setCardCollapsed(true);
+    else if (dy < -48) setCardCollapsed(false);
+    panelDragStartY.current = null;
+  }
+
+  function handlePanelHeaderClick() {
+    if (panelDragMoved.current) {
+      panelDragMoved.current = false;
+      return;
+    }
+    setCardCollapsed(c => !c);
+  }
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key !== "Escape") return;
+      if (showHomeAddressModal) { setShowHomeAddressModal(false); setNavigateHomePending(false); e.preventDefault(); return; }
+      if (showUpgradeModal) { setShowUpgradeModal(false); e.preventDefault(); return; }
+      if (authModal) { setAuthModal(null); e.preventDefault(); return; }
+      if (modal) { setModal(null); e.preventDefault(); return; }
+      if (helpMenuOpen) { setHelpMenuOpen(false); e.preventDefault(); return; }
+      if (mapStyleOpen) { setMapStyleOpen(false); e.preventDefault(); return; }
+      if (view === "app" && generated && resultsView === "itinerary") {
+        handleEditTrip();
+        e.preventDefault();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, generated, resultsView, showHomeAddressModal, showUpgradeModal, authModal, modal, helpMenuOpen, mapStyleOpen]);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
 
   function swapHeroCities() {
     const fromVal = heroOriginRef.current?.value ?? heroOrigin;
@@ -734,6 +1162,7 @@ export default function App() {
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     loadNextQuestion({});
     setHeroLaunching(false);
+    requestAnimationFrame(() => scrollPlanToTop());
 
     fetchDirections("Car");
   }
@@ -878,6 +1307,16 @@ export default function App() {
     });
   }, []);
 
+  function handleResultsStopSelect(stop) {
+    if (stop?.lat == null || stop?.lng == null) return;
+    const id = stop.id || `focus-${stop.lat}-${stop.lng}`;
+    highlightStop(id);
+    focusMapOnStop({ ...stop, id });
+    if (resultsView === "itinerary") {
+      setResultsView("map");
+    }
+  }
+
   function addFuelStopToTrip(roadStop) {
     setRoadStops(prev => [...prev, roadStop]);
   }
@@ -1015,6 +1454,34 @@ export default function App() {
       toast_("Enter origin and destination first");
       return;
     }
+
+    let status = creditStatus;
+    if (user && session?.access_token) {
+      try {
+        status = await fetchTripCredits(session.access_token);
+        setCreditStatus(status);
+      } catch {
+        status = creditStatus;
+      }
+    } else {
+      status = getGuestCreditStatus();
+      setCreditStatus(status);
+    }
+
+    if (!status?.unlimited && (status?.remaining ?? 0) <= 0) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    if (!user) {
+      if (!consumeGuestCredit()) {
+        setCreditStatus(getGuestCreditStatus());
+        setShowUpgradeModal(true);
+        return;
+      }
+      setCreditStatus(getGuestCreditStatus());
+    }
+
     setOrigin(tripOrigin);
     setDest(tripDest);
     setLoading(true);
@@ -1051,7 +1518,7 @@ export default function App() {
           placesContextPrompt,
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
-        });
+        }, session?.access_token || null);
       const parsed = parseTripApiResponse(data, answers, routeInfo, buildFallbackTripData);
       setStops(parsed.stops);
       setRoadStops(parsed.roadStops);
@@ -1067,8 +1534,24 @@ export default function App() {
       setTab("plan");
       setCardCollapsed(false);
       await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
+      if (user && session?.access_token) {
+        fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
+      } else {
+        setGuestTripPendingSave(true);
+        const guestStatus = getGuestCreditStatus();
+        setCreditStatus(guestStatus);
+        if (guestStatus.remaining <= 0) {
+          setTimeout(() => setShowUpgradeModal(true), 1200);
+        }
+      }
     } catch (err) {
       console.error("Generate trip error:", err);
+      if (err.code === "no_credits") {
+        setShowUpgradeModal(true);
+        if (err.credits) setCreditStatus(err.credits);
+        setLoading(false);
+        return;
+      }
       const fallback = buildFallbackTripData(answers, routeInfo);
       setStops(fallback.stops);
       setRoadStops(fallback.roadStops);
@@ -1088,6 +1571,7 @@ export default function App() {
         fallback.roadStops,
         normalizeTripAnswers(answers, buildQuestionContext(answers)),
       );
+      if (!user) setGuestTripPendingSave(true);
     }
 
     setLoading(false);
@@ -1095,6 +1579,8 @@ export default function App() {
   }
 
   function resetPlan() {
+    setReturnedFromResults(false);
+    setGuestTripPendingSave(false);
     setAnswers({}); setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
     setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]); setStopCategory("all");
@@ -1278,6 +1764,7 @@ export default function App() {
         onLaunch={launchFromHero}
         onShowEmailModal={() => openAuthModal("signup")}
         onShowPhoneModal={openPhoneModal}
+        onGoHome={goHome}
       />
       {authModal === "signup" && (
         <EmailModal
@@ -1325,7 +1812,12 @@ export default function App() {
           onUseEmail={() => openAuthModal("signup")}
         />
       )}
-      <Toast message={toast} isGold={toastIsGold} />
+      <Toast
+        message={toast}
+        isGold={toastIsGold}
+        actionLabel={toastAction?.label}
+        onAction={toastAction?.onClick}
+      />
     </>
   );
 
@@ -1335,19 +1827,23 @@ export default function App() {
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
+        <NavLogo onClick={goHome} className="app-global-home-logo" />
         {!(generated && resultsView === "itinerary") && (
-        <nav className="nav-app nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
-          <div className="nav-logo">Trip<span>Mappa</span></div>
+        <nav className="nav-app nav app-nav-with-logo" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 0 140px" }}>
+          <div className="nav-logo-spacer" aria-hidden="true"/>
           {!(generated && resultsView === "map") && (
-          <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "1px", borderRadius: 8, padding: 3 }}>
+          <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "1px", borderRadius: 8, padding: 3, alignItems: "center" }}>
             {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
               <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
             ))}
+            <button type="button" className="nav-navigate-home" onClick={handleNavigateHome} disabled={navigateHomePending}>
+              {navigateHomePending ? "Locating…" : "Navigate Home"}
+              <span className="always-free-badge">Always free</span>
+            </button>
           </div>
           )}
           <div className="nav-right" style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            {user && <span className="nav-user-label" title={user.email}>{user.email?.split("@")[0]}</span>}
             {!(generated && resultsView === "map") && (
               <>
                 <button type="button" className="nav-btn" onClick={saveCurrentTrip}>Save trip</button>
@@ -1355,7 +1851,7 @@ export default function App() {
               </>
             )}
             {user ? (
-              <button type="button" className="nav-btn nav-btn-ghost" onClick={handleSignOut}>Sign out</button>
+              <AccountBadge user={user} creditStatus={creditStatus} onSignOut={handleSignOut} onRefreshCredits={refreshCredits} />
             ) : (
               <button type="button" className="nav-btn nav-btn-ghost" onClick={() => openAuthModal("signin")}>Log in</button>
             )}
@@ -1381,7 +1877,9 @@ export default function App() {
             restaurantsByCity={restaurantsByCity}
             departureTime={departureTime}
             activeDayIndex={activeDayIndex}
-            onEditTrip={() => { setResultsView("planning"); setGenerated(false); setTab("plan"); setCardCollapsed(false); }}
+            highlightedStopId={highlightedStopId}
+            showGuestBanner={!user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
+            onEditTrip={handleEditTrip}
             onViewMap={() => setResultsView("map")}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
@@ -1389,14 +1887,16 @@ export default function App() {
             onDismissAlert={dismissTripAlert}
             onShare={handleShareItinerary}
             onToast={toast_}
+            onStopSelect={handleResultsStopSelect}
+            onGuestSignUp={() => openAuthModal("signup")}
+            onDismissGuestBanner={() => setGuestBannerDismissed(true)}
           />
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen">
-            <header className="trip-results-topbar trip-map-topbar">
-              <button type="button" className="trip-results-back" onClick={() => setResultsView("itinerary")}>← View Trip</button>
-              <div className="trip-results-topbar-title">{origin} → {dest}</div>
-              <button type="button" className="trip-results-map-btn" onClick={() => { setResultsView("planning"); setGenerated(false); setTab("plan"); }}>Edit Trip</button>
-            </header>
+            <div className="map-float-nav">
+              <button type="button" className="map-float-pill" onClick={() => setResultsView("itinerary")}>← Your Trip</button>
+              <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit Trip</button>
+            </div>
             <AppMap
               isLoaded={isLoaded}
               mapCenter={mapCenter}
@@ -1404,10 +1904,14 @@ export default function App() {
               mapStyleOpen={mapStyleOpen}
               trafficAlert={trafficAlert}
               routeLoading={routeLoading}
+              tripGenerating={loading}
+              loadingMessageIndex={loadingMessageIndex}
               isDarkMode={theme === "night"}
+              theme={theme}
               mapRef={mapRef}
               directions={tripLegs.length === 0 ? directionsResult : null}
               routeInfo={routeInfo}
+              routePoints={routeInfo?.routePoints || []}
               answers={answers}
               mapMarkers={mapMarkers}
               dismissedAlertIds={dismissedAlerts}
@@ -1419,6 +1923,14 @@ export default function App() {
               onMapReady={() => setMapReady(true)}
               onMapStyleOpenChange={setMapStyleOpen}
               onMapStyleChange={setMapStyle}
+              onRecenter={recenterMap}
+              onMarkerSelect={handleMapMarkerSelect}
+              navigateHomeSlot={(
+                <button type="button" className="navigate-home-float" onClick={handleNavigateHome} disabled={navigateHomePending}>
+                  {navigateHomePending ? "Locating…" : "Navigate Home"}
+                  <span className="always-free-badge">Always free</span>
+                </button>
+              )}
               onMarkerAction={(action, marker) => {
                 if (action === "add") toast_("Added to trip");
                 focusMapOnStop(marker);
@@ -1434,10 +1946,14 @@ export default function App() {
             mapStyleOpen={mapStyleOpen}
             trafficAlert={trafficAlert}
             routeLoading={routeLoading}
+            tripGenerating={loading}
+            loadingMessageIndex={loadingMessageIndex}
             isDarkMode={theme === "night"}
+            theme={theme}
             mapRef={mapRef}
             directions={tripLegs.length === 0 ? directionsResult : null}
             routeInfo={routeInfo}
+            routePoints={routeInfo?.routePoints || []}
             answers={answers}
             mapMarkers={mapMarkers}
             dismissedAlertIds={dismissedAlerts}
@@ -1449,13 +1965,27 @@ export default function App() {
             onMapReady={() => setMapReady(true)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
+            onRecenter={recenterMap}
+            onMarkerSelect={handleMapMarkerSelect}
+            navigateHomeSlot={(
+              <button type="button" className="navigate-home-float" onClick={handleNavigateHome} disabled={navigateHomePending}>
+                {navigateHomePending ? "Locating…" : "Navigate Home"}
+                <span className="always-free-badge">Always free</span>
+              </button>
+            )}
             onMarkerAction={(action, marker) => {
               if (action === "add") toast_("Added to trip");
             }}
           />
 
           <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}`}>
-            <div className="float-card-header" onClick={() => setCardCollapsed(c => !c)}>
+            <div
+              className="float-card-header"
+              onClick={handlePanelHeaderClick}
+              onTouchStart={handlePanelTouchStart}
+              onTouchMove={handlePanelTouchMove}
+              onTouchEnd={handlePanelTouchEnd}
+            >
               <div className="float-card-handle" aria-hidden="true"/>
               <div className="float-card-header-row">
                 <div className="float-card-title">
@@ -1476,7 +2006,7 @@ export default function App() {
               </div>
             </div>
             <div className="float-card-body">
-              <div className="float-card-scroll">
+              <div className="float-card-scroll" ref={floatCardScrollRef}>
                 <div className="sidebar-inner" style={{ background: "transparent" }}>
                   {tab === "plan" && (
                     <PlanPanel
@@ -1502,6 +2032,10 @@ export default function App() {
                       originRef={originRef}
                       destRef={destRef}
                       convoEndRef={convoEndRef}
+                      convoScrollRef={convoScrollRef}
+                      creditsLabel={formatCreditsLabel(creditStatus)}
+                      flowProgress={flowProgress}
+                      returnedFromResults={returnedFromResults}
                       onGenerateTrip={generateTrip}
                       onResetPlan={resetPlan}
                       onGoBack={goBackOneQuestion}
@@ -1607,7 +2141,27 @@ export default function App() {
           onUseEmail={() => openAuthModal("signup")}
         />
       )}
-      <Toast message={toast} isGold={toastIsGold} />
+      {showUpgradeModal && (
+        <UpgradeModal
+          creditStatus={creditStatus || getGuestCreditStatus()}
+          onClose={() => setShowUpgradeModal(false)}
+          onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
+        />
+      )}
+      {showHomeAddressModal && (
+        <HomeAddressModal
+          isLoaded={isLoaded}
+          initialAddress={homeAddress || getGuestHomeAddress()}
+          onSave={handleSaveHomeAddress}
+          onClose={() => { setShowHomeAddressModal(false); setNavigateHomePending(false); }}
+        />
+      )}
+      <Toast
+        message={toast}
+        isGold={toastIsGold}
+        actionLabel={toastAction?.label}
+        onAction={toastAction?.onClick}
+      />
     </>
   );
 }

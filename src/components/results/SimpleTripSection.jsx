@@ -1,15 +1,25 @@
 import RoadStopCard from "./RoadStopCard.jsx";
 import ActivityDiningCard from "./ActivityDiningCard.jsx";
 
-export default function SimpleTripSection({ days, roadStops, recommendations = [], onAddRoadStop }) {
+export default function SimpleTripSection({
+  days,
+  roadStops,
+  recommendations = [],
+  onAddRoadStop,
+  highlightedStopId,
+  stopRefs,
+  onStopSelect,
+}) {
   const day = days[0];
   const stops = day?.roadStops?.length ? day.roadStops : roadStops.map((rs, i) => ({
-    id: rs.id || `rs-${i}`,
+    id: rs.id || `road-${i}`,
     title: rs.name,
     category: rs.category,
     rating: rs.rating,
     distanceFromRoute: rs.distanceMiles ?? rs.distance,
     photoUrl: rs.photoUrl,
+    lat: rs.lat,
+    lng: rs.lng,
     stopData: rs,
   }));
 
@@ -23,6 +33,12 @@ export default function SimpleTripSection({ days, roadStops, recommendations = [
       distanceMiles: r.distanceMiles,
     }))
     : (day?.activities || []);
+
+  function setStopRef(id) {
+    return (el) => {
+      if (el && stopRefs) stopRefs.current[id] = el;
+    };
+  }
 
   return (
     <section className="results-day-section results-day-visible simple-trip-section">
@@ -42,7 +58,14 @@ export default function SimpleTripSection({ days, roadStops, recommendations = [
           <h3 className="results-subsection-label">Stops Along the Way</h3>
           <div className="results-road-stops-scroll">
             {stops.map(stop => (
-              <RoadStopCard key={stop.id} stop={stop} onAdd={onAddRoadStop}/>
+              <RoadStopCard
+                key={stop.id}
+                stop={stop}
+                onAdd={onAddRoadStop}
+                onSelect={item => onStopSelect?.({ ...item, lat: item.lat ?? item.stopData?.lat, lng: item.lng ?? item.stopData?.lng })}
+                highlighted={highlightedStopId === stop.id}
+                cardRef={setStopRef(stop.id)}
+              />
             ))}
           </div>
         </div>

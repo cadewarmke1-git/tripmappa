@@ -2,6 +2,7 @@ import { Autocomplete } from "@react-google-maps/api";
 import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
 import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
+import NavLogo from "./NavLogo.jsx";
 
 export default function HeroView({
   theme,
@@ -34,6 +35,7 @@ export default function HeroView({
   onLaunch,
   onShowEmailModal,
   onShowPhoneModal,
+  onGoHome,
 }) {
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
@@ -42,7 +44,7 @@ export default function HeroView({
   return (
     <>
       <nav className="nav transparent">
-        <div className="nav-logo">Trip<span>Mappa</span></div>
+        <NavLogo onClick={onGoHome} />
         <div className="nav-right">
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
           {user ? (
@@ -157,12 +159,13 @@ export default function HeroView({
             <div className="hero-auth-or"><span>or</span></div>
             <div className="hero-email-form">
               <button type="button" className="hero-email-btn" onClick={onShowEmailModal}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+                  <path d="M3 7l9 6 9-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 Continue with email
               </button>
               <button type="button" className="hero-phone-btn" onClick={onShowPhoneModal}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M6.5 3h3l1.5 5-2 1.2a13 13 0 0 0 5.8 5.8L16 13l5 1.5v3A16.5 16.5 0 0 1 3 6.5L6.5 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-                </svg>
                 Continue with phone
               </button>
             </div>

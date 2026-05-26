@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
@@ -6,6 +6,7 @@ import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import TripSummaryFooter from "./TripSummaryFooter.jsx";
 import TripAlertsBanner from "../TripAlertsSection.jsx";
+import GuestSignupBanner from "./GuestSignupBanner.jsx";
 
 export default function TripResultsPanel({
   theme,
@@ -24,6 +25,8 @@ export default function TripResultsPanel({
   restaurantsByCity = {},
   departureTime,
   activeDayIndex = 0,
+  highlightedStopId = null,
+  showGuestBanner = false,
   onEditTrip,
   onViewMap,
   onDaySelect,
@@ -32,8 +35,14 @@ export default function TripResultsPanel({
   onDismissAlert,
   onShare,
   onToast,
+  onStopSelect,
+  onGuestSignUp,
+  onDismissGuestBanner,
 }) {
   const dayRefs = useRef([]);
+  const stopRefs = useRef({});
+  const scrollRef = useRef(null);
+
   const simplified = useMemo(
     () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),
     [answers, routeInfo, stops, tripFormat],
@@ -56,15 +65,27 @@ export default function TripResultsPanel({
     dayRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  useEffect(() => {
+    if (!highlightedStopId) return;
+    const el = stopRefs.current[highlightedStopId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedStopId]);
+
   return (
     <div className={`trip-results-panel trip-results-panel-${theme || "night"}`}>
-      <header className="trip-results-topbar">
+      <header className="trip-results-topbar trip-results-topbar-with-logo">
         <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit Trip</button>
         <div className="trip-results-topbar-title">Your Trip</div>
         <button type="button" className="trip-results-map-btn" onClick={onViewMap}>View on Map</button>
       </header>
 
-      <div className="trip-results-scroll">
+      <div className="trip-results-scroll" ref={scrollRef}>
+        {showGuestBanner && (
+          <GuestSignupBanner onSignUp={onGuestSignUp} onDismiss={onDismissGuestBanner} />
+        )}
+
         <TripOverviewHero
           origin={origin}
           dest={dest}
@@ -88,6 +109,9 @@ export default function TripResultsPanel({
             roadStops={roadStops}
             recommendations={recommendations}
             onAddRoadStop={onAddRoadStop}
+            highlightedStopId={highlightedStopId}
+            stopRefs={stopRefs}
+            onStopSelect={onStopSelect}
           />
         ) : (
           days.map((day, i) => (
@@ -100,6 +124,9 @@ export default function TripResultsPanel({
               onLodgingSelect={onLodgingSelect}
               onToast={onToast}
               onAddRoadStop={onAddRoadStop}
+              highlightedStopId={highlightedStopId}
+              stopRefs={stopRefs}
+              onStopSelect={onStopSelect}
               sectionRef={el => { dayRefs.current[i] = el; }}
             />
           ))

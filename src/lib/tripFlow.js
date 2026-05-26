@@ -401,6 +401,41 @@ export function countFlowQuestionsAnswered(answers) {
   return FLOW_QUESTION_IDS.filter(id => isAnswered(id, answers)).length;
 }
 
+function dummyAnswerForQuestion(q) {
+  if (!q) return null;
+  if (q.type === "multiselect") return q.choices?.length ? [q.choices[0]] : [];
+  if (q.type === "text") return "none";
+  if (q.type === "vehicle" && q.groups?.[0]?.options?.[0]) return q.groups[0].options[0].value;
+  if (Array.isArray(q.choices) && q.choices.length) {
+    const first = q.choices[0];
+    return typeof first === "object" ? first.value : first;
+  }
+  return "Yes";
+}
+
+/** Progress through the dynamic question flow for the step indicator. */
+export function getFlowProgress(answers, context = {}, options = {}) {
+  const { questionHistoryLength = 0, convoComplete = false } = options;
+  const answered = questionHistoryLength;
+
+  let remaining = 0;
+  const sim = { ...answers };
+  while (true) {
+    const result = getNextFlowQuestion(sim, context);
+    if (result.done) break;
+    remaining++;
+    sim[result.id] = dummyAnswerForQuestion(result);
+  }
+
+  const totalSteps = convoComplete ? Math.max(answered, 1) : Math.max(answered + remaining, 1);
+  const currentStep = convoComplete ? totalSteps : Math.min(answered + 1, totalSteps);
+  const progressPercent = convoComplete
+    ? 100
+    : totalSteps > 0 ? (answered / totalSteps) * 100 : 0;
+
+  return { currentStep, totalSteps, progressPercent };
+}
+
 export function pruneSkippedAnswers(answers) {
   return normalizeTripAnswers(answers);
 }

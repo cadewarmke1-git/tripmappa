@@ -12,6 +12,9 @@ export default function ResultsDaySection({
   onToast,
   onAddRoadStop,
   sectionRef,
+  highlightedStopId,
+  stopRefs,
+  onStopSelect,
 }) {
   const sectionEl = useRef(null);
 
@@ -31,6 +34,12 @@ export default function ResultsDaySection({
     return () => obs.disconnect();
   }, [day.dayNumber]);
 
+  function setStopRef(id) {
+    return (el) => {
+      if (el && stopRefs) stopRefs.current[id] = el;
+    };
+  }
+
   return (
     <section className="results-day-section" ref={mergedRef}>
       <div className="results-day-header">
@@ -48,7 +57,14 @@ export default function ResultsDaySection({
           <h3 className="results-subsection-label">Stops Along the Way</h3>
           <div className="results-road-stops-scroll">
             {day.roadStops.map(stop => (
-              <RoadStopCard key={stop.id} stop={stop} onAdd={onAddRoadStop}/>
+              <RoadStopCard
+                key={stop.id}
+                stop={stop}
+                onAdd={onAddRoadStop}
+                onSelect={onStopSelect}
+                highlighted={highlightedStopId === stop.id}
+                cardRef={setStopRef(stop.id)}
+              />
             ))}
           </div>
         </div>
@@ -64,6 +80,9 @@ export default function ResultsDaySection({
             selectedLodging={selectedLodging}
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
+            onSelect={onStopSelect}
+            highlighted={highlightedStopId === (day.overnight.id || `overnight-${day.overnight.city}`)}
+            cardRef={setStopRef(day.overnight.id || `overnight-${day.overnight.city}`)}
           />
         </div>
       )}

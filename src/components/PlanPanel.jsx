@@ -4,6 +4,7 @@ import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import SummaryCard from "./SummaryCard.jsx";
 import RouteFooter from "./RouteFooter.jsx";
+import QuestionProgress from "./QuestionProgress.jsx";
 
 export default function PlanPanel({
   qIndex,
@@ -18,6 +19,8 @@ export default function PlanPanel({
   prefDraft,
   prefSkipReady,
   questionHistoryLength,
+  flowProgress,
+  returnedFromResults,
   origin,
   dest,
   roadStops,
@@ -28,6 +31,8 @@ export default function PlanPanel({
   originRef,
   destRef,
   convoEndRef,
+  convoScrollRef,
+  creditsLabel,
   onGenerateTrip,
   onResetPlan,
   onGoBack,
@@ -48,7 +53,13 @@ export default function PlanPanel({
         <div className="chat-header">
           <div className="chat-title">Plan your trip.</div>
         </div>
-        <div className="convo-scroll">
+        {(currentQuestion || convoComplete) && flowProgress?.totalSteps > 0 && (
+          <QuestionProgress {...flowProgress} />
+        )}
+        {returnedFromResults && (
+          <div className="plan-saved-note">Your previous answers are saved</div>
+        )}
+        <div className="convo-scroll" ref={convoScrollRef}>
           <div className="plan-view">
             {answers.vehicle && routeInfo?.distance && (
               <BudgetCard
@@ -100,7 +111,12 @@ export default function PlanPanel({
         {convoComplete && (
           <div className="generate-wrap generate-wrap-payoff">
             <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
-              {loading ? <><span className="spinner"/>Planning your trip…</> : "Generate My Trip →"}
+              {loading ? "Generating…" : (
+                <>
+                  Generate My Trip →
+                  {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
+                </>
+              )}
             </button>
           </div>
         )}

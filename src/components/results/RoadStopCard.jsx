@@ -1,9 +1,21 @@
 import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 
-export default function RoadStopCard({ stop, onAdd }) {
+export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = false, cardRef }) {
+  function handleClick() {
+    onSelect?.(stop);
+  }
+
   return (
-    <article className="road-stop-card">
+    <article
+      ref={cardRef}
+      className={`road-stop-card${highlighted ? " stop-highlighted" : ""}`}
+      data-stop-id={stop.id}
+      onClick={handleClick}
+      onKeyDown={e => { if (e.key === "Enter") handleClick(); }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="road-stop-card-photo-wrap">
         <PlacePhotoOrIcon
           photoUrl={stop.photoUrl}
@@ -25,7 +37,13 @@ export default function RoadStopCard({ stop, onAdd }) {
             <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
           )}
         </div>
-        <button type="button" className="road-stop-add-btn" onClick={() => onAdd?.(stop)}>Add to Trip</button>
+        <button
+          type="button"
+          className="road-stop-add-btn"
+          onClick={e => { e.stopPropagation(); onAdd?.(stop); }}
+        >
+          Add to Trip
+        </button>
       </div>
     </article>
   );
