@@ -57,9 +57,7 @@ export async function enrichGeneratedTrip({
   let safeRoadStops = roadStops.map(rs => ({ ...rs }));
 
   const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
-  if (corridorRoadStops.length > 0) {
-    safeRoadStops = corridorRoadStops;
-  }
+  safeRoadStops = corridorRoadStops;
 
   const interests = asArray(answers?.stops_interests).filter(i => i !== "No specific interests");
   const serviceCats = serviceCategoriesForAnswers();

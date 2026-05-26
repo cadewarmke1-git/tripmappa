@@ -45,6 +45,7 @@ function inferCategory(rs) {
   const cat = (rs.category || "").toLowerCase();
   if (/fuel|gas|diesel|ev|charge/i.test(cat)) return "Fuel";
   if (/food|rest|dining|meal/i.test(cat)) return "Food";
+  if (/discovery|attraction|scenic/i.test(cat)) return "Discovery";
   if (/rest|break/i.test(cat)) return "Rest";
   if (/fuel|pilot|love'?s|shell|chevron|ta\b/i.test(rs.name || "")) return "Fuel";
   if (/mcdonald|starbucks|restaurant|diner|food/i.test(rs.name || rs.note || "")) return "Food";

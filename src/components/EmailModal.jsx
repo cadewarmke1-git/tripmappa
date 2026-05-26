@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AuthSocialButtons from "./auth/AuthSocialButtons.jsx";
+import { PhoneIcon } from "./auth/PhoneModal.jsx";
 
 export default function EmailModal({
   email,
@@ -10,6 +11,7 @@ export default function EmailModal({
   onGoogle,
   onFacebook,
   onApple,
+  onContinueWithPhone,
   loading = false,
   error = "",
 }) {
@@ -57,6 +59,11 @@ export default function EmailModal({
             {loading ? "Creating account…" : "Create My Account →"}
           </button>
         </form>
+
+        <div className="auth-modal-divider"><span>or</span></div>
+        <button type="button" className="hero-email-btn auth-modal-alt-btn" onClick={onContinueWithPhone} disabled={loading}>
+          <PhoneIcon /> Continue with phone
+        </button>
 
         <div className="auth-modal-divider"><span>or sign in with</span></div>
         <AuthSocialButtons onGoogle={onGoogle} onFacebook={onFacebook} onApple={onApple} compact disabled={loading}/>

@@ -5,6 +5,10 @@ const CATEGORY_ICONS = {
   Dining: "🍽",
   Activity: "📍",
   Discovery: "✦",
+  fuel: "⛽",
+  food: "🍽",
+  rest: "🛣",
+  discovery: "✦",
   default: "📍",
 };
 

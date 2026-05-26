@@ -1,18 +1,33 @@
 /** Build road stop suggestions exclusively from Google Places along the route polyline. */
 import { sampleRoutePointsEveryMiles } from "./fuel.js";
 import { getFuelStopMode } from "./fuel.js";
+import { searchNearbyCategory, getPlaceDetails } from "./placesSearch.js";
 import { searchGasStations } from "./placesStations.js";
-import { searchRestaurants, getPlaceDetails } from "./placesSearch.js";
 import { parseMilesFromDistance } from "./parsing.js";
 
-async function attachPhoto(place) {
-  if (place.photoUrl || !place.placeId) return place;
-  const details = await getPlaceDetails(place.placeId);
-  const photo = details?.photos?.[0]?.getUrl?.({ maxWidth: 480 });
-  return photo ? { ...place, photoUrl: photo } : place;
+const GENERAL_SEARCHES = [
+  { type: "restaurant", keyword: "restaurant", category: "food" },
+  { type: "cafe", keyword: "cafe", category: "food" },
+  { type: "tourist_attraction", keyword: "attraction", category: "discovery" },
+  { type: "park", keyword: "scenic stop", category: "rest" },
+  { type: "bakery", keyword: "bakery", category: "food" },
+];
+
+async function pickUniquePhoto(placeId, usedPhotoUrls) {
+  if (!placeId) return null;
+  const details = await getPlaceDetails(placeId);
+  const photos = details?.photos || [];
+  for (const photo of photos) {
+    const url = photo.getUrl?.({ maxWidth: 480 });
+    if (url && !usedPhotoUrls.has(url)) {
+      usedPhotoUrls.add(url);
+      return url;
+    }
+  }
+  return null;
 }
 
-function roadStopFromPlace(place, category, distanceLabel) {
+function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
   return {
     id: place.placeId || place.id,
     placeId: place.placeId,
@@ -24,11 +39,31 @@ function roadStopFromPlace(place, category, distanceLabel) {
     note: place.rating ? `${place.rating}★` : "",
     lat: place.lat,
     lng: place.lng,
-    photoUrl: place.photoUrl || null,
+    photoUrl: photoUrl || null,
     rating: place.rating,
     distanceMiles: place.distanceMiles,
     detourMiles: place.isDetour ? place.detourMiles : undefined,
   };
+}
+
+async function searchAtSample(pt, sampleIndex, answers, fuelMode) {
+  const searches = [...GENERAL_SEARCHES];
+  if (fuelMode !== "none") {
+    searches.unshift({ fuel: true, category: "fuel" });
+  }
+  const pick = searches[sampleIndex % searches.length];
+
+  if (pick.fuel) {
+    const gasList = await searchGasStations(pt.lat, pt.lng, 5, 1609);
+    return gasList.map(g => ({ ...g, category: "fuel" }));
+  }
+
+  return searchNearbyCategory(pt.lat, pt.lng, {
+    type: pick.type,
+    keyword: pick.keyword,
+    radius: 1609,
+    maxResults: 8,
+  }).then(list => list.map(p => ({ ...p, category: pick.category })));
 }
 
 export async function buildRoadStopsFromRoute(answers, routeInfo) {
@@ -38,34 +73,28 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
   const totalMiles = parseMilesFromDistance(routeInfo?.distance) || 0;
   const fuelMode = getFuelStopMode(answers);
   const stops = [];
-  const seen = new Set();
+  const seenPlaceIds = new Set();
+  const usedPhotoUrls = new Set();
 
   for (let i = 0; i < samples.length; i++) {
     const pt = samples[i];
     if (!pt?.lat) continue;
+
     const mileLabel = totalMiles
       ? `${Math.round((i / Math.max(1, samples.length - 1)) * totalMiles)} mi`
       : "—";
 
-    if (fuelMode !== "none") {
-      const gasList = await searchGasStations(pt.lat, pt.lng, 4, 1609);
-      const gas = gasList.find(g => g.placeId && !seen.has(g.placeId) && (g.distanceMiles ?? 99) <= 1);
-      if (gas) {
-        seen.add(gas.placeId);
-        const enriched = await attachPhoto(gas);
-        stops.push(roadStopFromPlace(enriched, "fuel", mileLabel));
-      }
-    }
+    const candidates = await searchAtSample(pt, i, answers, fuelMode);
+    const place = candidates.find(p =>
+      p.placeId
+      && !seenPlaceIds.has(p.placeId)
+      && (p.distanceMiles ?? 99) <= 1,
+    );
+    if (!place) continue;
 
-    if (i % 2 === 1 || samples.length <= 3) {
-      const restaurants = await searchRestaurants(pt.lat, pt.lng, answers);
-      const pick = restaurants.find(r => r.placeId && !seen.has(r.placeId) && (r.distanceMiles ?? 99) <= 1);
-      if (pick) {
-        seen.add(pick.placeId);
-        const enriched = await attachPhoto(pick);
-        stops.push(roadStopFromPlace(enriched, "food", `${pick.distanceMiles ?? "—"} mi`));
-      }
-    }
+    seenPlaceIds.add(place.placeId);
+    const photoUrl = await pickUniquePhoto(place.placeId, usedPhotoUrls);
+    stops.push(roadStopFromPlace(place, place.category || "discovery", mileLabel, photoUrl));
   }
 
   return stops.slice(0, 12);

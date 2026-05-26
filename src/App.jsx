@@ -42,14 +42,16 @@ import SharePanel from "./components/SharePanel.jsx";
 import GroceryModal from "./components/GroceryModal.jsx";
 import EmailModal from "./components/EmailModal.jsx";
 import SignInModal from "./components/auth/SignInModal.jsx";
+import PhoneModal from "./components/auth/PhoneModal.jsx";
 import OAuthComingSoonModal from "./components/auth/OAuthComingSoonModal.jsx";
+import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
 import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
 
 export default function App() {
-  const { user, signUp, signIn, signOut, resetPassword, signInWithOAuth, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
+  const { user, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
   const [view, setView] = useState("hero"); // "hero" | "app"
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
@@ -61,7 +63,8 @@ export default function App() {
   const [heroLaunching, setHeroLaunching] = useState(false);
   const [heroEmail, setHeroEmail] = useState("");
   const [heroSearchHover, setHeroSearchHover] = useState(false);
-  const [authModal, setAuthModal] = useState(null); // signin | signup | oauth-google | oauth-facebook | oauth-apple
+  const [authModal, setAuthModal] = useState(null); // signin | signup | phone | oauth-*
+  const [authPhone, setAuthPhone] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
   const [timingMode, setTimingMode] = useState("leave_now");
@@ -197,6 +200,51 @@ export default function App() {
     } catch (err) {
       toast_(err.message || "Could not send reset email");
     }
+  }
+
+  async function handlePhoneSendCode(phone) {
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      await sendSmsOtp(phone);
+      setAuthPhone(phone);
+      toast_("Verification code sent", true);
+      return true;
+    } catch (err) {
+      setAuthError(err.message || "Could not send code");
+      return false;
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handlePhoneVerify(phone, code) {
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      const session = await verifySmsOtp(phone, code);
+      await setSessionFromTokens({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+      toast_("Signed in", true);
+      setAuthModal(null);
+      setAuthPhone("");
+    } catch (err) {
+      setAuthError(err.message || "Could not verify code");
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handlePhoneResend(phone) {
+    return handlePhoneSendCode(phone);
+  }
+
+  function openPhoneModal() {
+    setAuthError("");
+    setAuthPhone("");
+    setAuthModal("phone");
   }
 
   async function handleSignOut() {
@@ -1229,6 +1277,7 @@ export default function App() {
         onHeroDestChange={v => { setHeroDest(v); setHeroDestError(""); }}
         onLaunch={launchFromHero}
         onShowEmailModal={() => openAuthModal("signup")}
+        onShowPhoneModal={openPhoneModal}
       />
       {authModal === "signup" && (
         <EmailModal
@@ -1237,9 +1286,21 @@ export default function App() {
           onClose={() => setAuthModal(null)}
           onSignUp={handleEmailSignUp}
           onSwitchToSignIn={() => openAuthModal("signin")}
+          onContinueWithPhone={() => { setAuthModal(null); openPhoneModal(); }}
           onGoogle={() => handleOAuth("google")}
           onFacebook={() => handleOAuth("facebook")}
           onApple={() => handleOAuth("apple")}
+          loading={authBusy}
+          error={authError}
+        />
+      )}
+      {authModal === "phone" && (
+        <PhoneModal
+          onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
+          onSendCode={handlePhoneSendCode}
+          onVerifyCode={handlePhoneVerify}
+          onResendCode={handlePhoneResend}
+          initialPhone={authPhone}
           loading={authBusy}
           error={authError}
         />
@@ -1507,9 +1568,21 @@ export default function App() {
           onClose={() => setAuthModal(null)}
           onSignUp={handleEmailSignUp}
           onSwitchToSignIn={() => openAuthModal("signin")}
+          onContinueWithPhone={() => { setAuthModal(null); openPhoneModal(); }}
           onGoogle={() => handleOAuth("google")}
           onFacebook={() => handleOAuth("facebook")}
           onApple={() => handleOAuth("apple")}
+          loading={authBusy}
+          error={authError}
+        />
+      )}
+      {authModal === "phone" && (
+        <PhoneModal
+          onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
+          onSendCode={handlePhoneSendCode}
+          onVerifyCode={handlePhoneVerify}
+          onResendCode={handlePhoneResend}
+          initialPhone={authPhone}
           loading={authBusy}
           error={authError}
         />

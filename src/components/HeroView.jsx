@@ -33,6 +33,7 @@ export default function HeroView({
   onHeroDestChange,
   onLaunch,
   onShowEmailModal,
+  onShowPhoneModal,
 }) {
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
@@ -157,6 +158,12 @@ export default function HeroView({
             <div className="hero-email-form">
               <button type="button" className="hero-email-btn" onClick={onShowEmailModal}>
                 Continue with email
+              </button>
+              <button type="button" className="hero-phone-btn" onClick={onShowPhoneModal}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6.5 3h3l1.5 5-2 1.2a13 13 0 0 0 5.8 5.8L16 13l5 1.5v3A16.5 16.5 0 0 1 3 6.5L6.5 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+                </svg>
+                Continue with phone
               </button>
             </div>
           </div>

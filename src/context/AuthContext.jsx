@@ -82,6 +82,12 @@ export function AuthProvider({ children }) {
       });
       if (error) throw error;
     },
+    async setSessionFromTokens({ access_token, refresh_token }) {
+      if (!supabase) throw new Error("Supabase is not configured");
+      const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (error) throw error;
+      return data;
+    },
   }), [user, session, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
