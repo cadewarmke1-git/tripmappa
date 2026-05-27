@@ -88,9 +88,13 @@ export default function HeroView({
             onMouseEnter={() => onSearchHover(true)}
             onMouseLeave={() => onSearchHover(false)}
           >
-            <div className="hero-route-row">
-              <div className="hero-route-field">
+            <div className="hero-route-block">
+              <div className="hero-labels-row">
                 <div className="hero-input-label">From</div>
+                <div className="hero-swap-label-gap" aria-hidden="true" />
+                <div className="hero-input-label">To</div>
+              </div>
+              <div className="hero-inputs-row">
                 <div className="hero-input-box">
                   {isLoaded ? (
                     <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
@@ -100,20 +104,16 @@ export default function HeroView({
                     <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                   )}
                 </div>
-                {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
-              </div>
-              <button
-                type="button"
-                className="hero-swap-btn"
-                onClick={onSwap}
-                aria-label="Swap origin and destination"
-              >
-                <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <div className="hero-route-field">
-                <div className="hero-input-label">To</div>
+                <button
+                  type="button"
+                  className="hero-swap-btn"
+                  onClick={onSwap}
+                  aria-label="Swap origin and destination"
+                >
+                  <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
                 <div className="hero-input-box">
                   {isLoaded ? (
                     <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
@@ -123,8 +123,13 @@ export default function HeroView({
                     <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                   )}
                 </div>
-                {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
               </div>
+              {(heroOriginError || heroDestError) && (
+                <div className="hero-route-errors">
+                  {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
+                  {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
+                </div>
+              )}
             </div>
             <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
               {heroLaunching ? "Checking locations…" : "Plan my trip →"}
@@ -163,8 +168,20 @@ export default function HeroView({
               </button>
               <button type="button" className="hero-phone-btn" onClick={onShowPhoneModal}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-                  <path d="M10 18h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                  <path
+                    d="M8.2 4.8c-2.4 1.6-3.8 4.8-3.2 8.2.6 3.6 3.2 6.8 6.4 8.2M15.8 19.2c2.4-1.6 3.8-4.8 3.2-8.2-.6-3.6-3.2-6.8-6.4-8.2"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9.2 5.8l1.6-2a1 1 0 011.3-.2l1.1.9M14.8 18.2l-1.6 2a1 1 0 01-1.3.2l-1.1-.9"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 Continue with phone
               </button>

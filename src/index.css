@@ -9,5 +9,5 @@ body { margin: 0; }
 
 @keyframes qrGoldFlash {
   0% { background: rgba(255,255,255,0.08); box-shadow: none; transform: scale(1); }
-  100% { background: rgba(255,210,140,0.9); box-shadow: 0 0 0 3px rgba(255,210,140,0.25); transform: scale(1.02); color: #1a1a2e; }
+  100% { background: #FFD28C; box-shadow: 0 0 0 3px rgba(255,210,140,0.25); transform: scale(1.02); color: #1a1a2e; }
 }

@@ -1,20 +1,30 @@
 /* ── App theme: Day — light & airy ── */
-.app-wrap.day .nav-app {
-  background: rgba(255,255,255,0.92) !important;
-  border-bottom: 1px solid rgba(26,26,46,0.08) !important;
+.app-wrap.day .nav-app,
+.app-wrap.night .nav-app {
+  background: rgba(8, 10, 18, 0.96) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
   transition: background 1.8s ease, border-color 1.8s ease;
 }
-.app-wrap.day .nav-app .nav-logo { color: #1a1a2e !important; }
-.app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.95) !important; }
 .app-wrap.day .app-global-home-logo,
-.app-wrap.night .app-global-home-logo { color: #fff !important; }
+.app-wrap.night .app-global-home-logo { color: #FFD28C !important; }
 .app-wrap.day .app-global-home-logo span,
-.app-wrap.night .app-global-home-logo span { color: #FFD28C !important; }
-.app-wrap.day .nav-app .nav-tab { color: rgba(26,26,46,0.5) !important; }
-.app-wrap.day .nav-app .nav-tab.active { background: rgba(26,26,46,0.08) !important; color: #1a1a2e !important; box-shadow: none; }
-.app-wrap.day .nav-center-wrap { background: rgba(26,26,46,0.06) !important; }
-.app-wrap.day .nav-app .nav-btn { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.12) !important; color: #1a1a2e !important; }
-.app-wrap.day .nav-app .nav-btn-primary { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: transparent !important; font-weight: 700; }
+.app-wrap.night .app-global-home-logo span { color: #fff !important; }
+.app-wrap.day .nav-app .nav-tab,
+.app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.5) !important; }
+.app-wrap.day .nav-app .nav-tab.active,
+.app-wrap.night .nav-app .nav-tab.active {
+  background: rgba(255,255,255,0.12) !important; color: #fff !important; box-shadow: none;
+}
+.app-wrap.day .nav-center-wrap,
+.app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.06) !important; }
+.app-wrap.day .nav-app .nav-btn,
+.app-wrap.night .nav-app .nav-btn {
+  background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.9) !important;
+}
+.app-wrap.day .nav-app .nav-btn-primary,
+.app-wrap.night .nav-app .nav-btn-primary {
+  background: #FFD28C !important; color: #1a1a2e !important; border-color: transparent !important; font-weight: 700;
+}
 .app-wrap.day .theme-test-btn { background: rgba(26,26,46,0.06); border-color: rgba(26,26,46,0.12); color: #1a1a2e; }
 .app-wrap.day .theme-test-btn:hover { background: rgba(26,26,46,0.1); border-color: rgba(26,26,46,0.2); }
 .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
@@ -52,7 +62,7 @@
   color: #1a1a2e !important; box-shadow: 0 4px 18px rgba(26,26,46,0.08) !important;
 }
 .app-wrap.day .user-bubble {
-  background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important;
+  background: #FFD28C !important; color: #1a1a2e !important;
 }
 .app-wrap.day .qr-btn {
   background: #ffffff !important; border-color: rgba(26,26,46,0.2) !important;
@@ -61,9 +71,9 @@
 .app-wrap.day .qr-btn:hover { background: rgba(255,255,255,0.95) !important; border-color: rgba(26,26,46,0.3) !important; }
 .app-wrap.day .qr-btn.qr-selected {
   animation: qrGoldFlash 150ms ease forwards !important;
-  border-color: rgba(255,210,140,0.9) !important;
+  border-color: #FFD28C !important;
   color: #1a1a2e !important;
-  background: rgba(255,210,140,0.9) !important;
+  background: #FFD28C !important;
   box-shadow: 0 0 0 3px rgba(255,210,140,0.25) !important;
   transition: none !important;
 }
@@ -92,14 +102,14 @@
 }
 .app-wrap.day .timing-menu-fixed-item { color: #1a1a2e !important; }
 .app-wrap.day .timing-menu-fixed-item:hover { background: rgba(255,210,140,0.15) !important; }
-.app-wrap.day .timing-menu-fixed-item.active { background: rgba(255,210,140,0.25) !important; color: rgba(180,120,30,0.95) !important; }
+.app-wrap.day .timing-menu-fixed-item.active { background: rgba(255,210,140,0.25) !important; color: #FFD28C !important; }
 .app-wrap.day .map-route-pill {
   background: rgba(255, 255, 255, 0.82) !important;
   border-color: rgba(255, 210, 140, 0.45) !important;
   box-shadow: 0 8px 32px rgba(26, 26, 46, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.9) inset !important;
 }
 .app-wrap.day .map-route-pill-label { color: rgba(26, 26, 46, 0.65) !important; }
-.app-wrap.day .map-route-pill-val { color: rgba(255, 210, 140, 0.95) !important; }
+.app-wrap.day .map-route-pill-val { color: #FFD28C !important; }
 .app-wrap.day .map-route-pill-sep { color: rgba(26, 26, 46, 0.3) !important; }
 .app-wrap.day .help-menu {
   background: rgba(255,255,255,0.98) !important;
@@ -115,17 +125,17 @@
 .app-wrap.day .budget-card-title { color: #1a1a2e !important; }
 .app-wrap.day .budget-row-label { color: rgba(26,26,46,0.55) !important; }
 .app-wrap.day .budget-row-val { color: #1a1a2e !important; }
-.app-wrap.day .budget-row-val.animate { color: rgba(255,210,140,0.9) !important; }
-.app-wrap.day .budget-row-total .budget-row-val { color: rgba(255,210,140,0.9) !important; }
+.app-wrap.day .budget-row-val.animate { color: #FFD28C !important; }
+.app-wrap.day .budget-row-total .budget-row-val { color: #FFD28C !important; }
 .app-wrap.day .budget-disclaimer { color: rgba(26,26,46,0.4) !important; }
 .app-wrap.day .budget-shimmer {
-  background: linear-gradient(90deg, rgba(255,210,140,0.12) 0%, rgba(255,210,140,0.9) 50%, rgba(255,210,140,0.12) 100%) !important;
+  background: linear-gradient(90deg, rgba(255,210,140,0.12) 0%, #FFD28C 50%, rgba(255,210,140,0.12) 100%) !important;
   background-size: 200% 100% !important;
   animation: budgetShimmer 1.2s ease infinite !important;
 }
 .app-wrap.day .vehicle-group-label { color: rgba(26,26,46,0.45) !important; }
-.app-wrap.day .summary-kids-note { color: rgba(180,120,30,0.95) !important; border-top-color: rgba(26,26,46,0.08) !important; }
-.app-wrap.day .scenic-route-note { color: rgba(180,120,30,0.9) !important; }
+.app-wrap.day .summary-kids-note { color: #FFD28C !important; border-top-color: rgba(26,26,46,0.08) !important; }
+.app-wrap.day .scenic-route-note { color: #FFD28C !important; }
 .app-wrap.day .route-info-chip {
   background: rgba(26,26,46,0.05) !important;
   border-color: rgba(26,26,46,0.12) !important;
@@ -169,7 +179,7 @@
 .app-wrap.day .action-btn { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.1) !important; color: #1a1a2e !important; }
 .app-wrap.day .action-btn:hover { background: rgba(26,26,46,0.1) !important; }
 .app-wrap.day .filter-tab { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.12) !important; color: rgba(26,26,46,0.65) !important; }
-.app-wrap.day .filter-tab.active { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: rgba(255,210,140,0.9) !important; }
+.app-wrap.day .filter-tab.active { background: #FFD28C !important; color: #1a1a2e !important; border-color: #FFD28C !important; }
 .app-wrap.day .road-stop-name { color: #1a1a2e !important; }
 .app-wrap.day .road-stop-loc { color: rgba(26,26,46,0.5) !important; }
 .app-wrap.day .section-sep { background: rgba(26,26,46,0.08) !important; }
@@ -226,15 +236,15 @@
   --results-topbar-bg: rgba(255,255,255,0.88);
   --results-card-bg: rgba(255,255,255,0.82);
   --results-card-border: rgba(255,210,140,0.45);
-  --gold: rgba(180,120,30,0.95);
+  --gold: #FFD28C;
 }
 .app-wrap.day .trip-results-panel { color: var(--charcoal) !important; }
 .app-wrap.day .trip-results-topbar { border-bottom-color: rgba(26,26,46,0.08) !important; }
-.app-wrap.day .trip-results-back, .app-wrap.day .trip-results-map-btn { color: rgba(180,120,30,0.95) !important; }
+.app-wrap.day .trip-results-back, .app-wrap.day .trip-results-map-btn { color: #FFD28C !important; }
 .app-wrap.day .trip-results-map-btn { background: rgba(255,210,140,0.2) !important; border-color: rgba(255,210,140,0.5) !important; }
 .app-wrap.day .trip-overview-hero { box-shadow: 0 16px 48px rgba(26,26,46,0.1) !important; }
 .app-wrap.day .road-stop-add-btn, .app-wrap.day .activity-dining-add {
-  color: rgba(180,120,30,0.95) !important;
+  color: #FFD28C !important;
   background: rgba(255,210,140,0.15) !important;
   border-color: rgba(255,210,140,0.45) !important;
 }
@@ -271,7 +281,7 @@
 /* ── App theme: Night ── */
 .app-wrap.night .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
 .app-wrap.night .nav-app .nav-logo { color: #fff; }
-.app-wrap.night .nav-app .nav-logo span { color: rgba(255,210,140,0.9); }
+.app-wrap.night .nav-app .nav-logo span { color: #FFD28C; }
 .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
 .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
 .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
@@ -283,10 +293,10 @@
   background: rgba(15,20,40,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
 }
 .app-wrap.night .spinner-dark {
-  border-color: rgba(255,255,255,0.15); border-top-color: rgba(255,210,140,0.9);
+  border-color: rgba(255,255,255,0.15); border-top-color: #FFD28C;
 }
 .app-wrap.night .empty-icon { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
-.app-wrap.night .empty-cta { background: rgba(255,210,140,0.9); color: #1a1a2e; }
+.app-wrap.night .empty-cta { background: #FFD28C; color: #1a1a2e; }
 .app-wrap.night .results-view { color: #fff; }
 .app-wrap.night .results-view .stop-city { color: #fff; }
 .app-wrap.night .results-view .stop-meta { color: rgba(255,255,255,0.5); }
@@ -308,7 +318,7 @@
 
 /* Logo — night: Trip white, Mappa gold */
 .app-wrap.night .nav-logo { color: #fff !important; }
-.app-wrap.night .nav-logo span { color: rgba(255,210,140,0.9) !important; }
+.app-wrap.night .nav-logo span { color: #FFD28C !important; }
 
 .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap,
 .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
@@ -322,7 +332,7 @@
 .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
 .app-wrap.night .stop-city { color: #fff; }
 .app-wrap.night .stop-meta { color: rgba(255,255,255,0.45); }
-.app-wrap.night .stop-num { background: rgba(255,210,140,0.9); color: #1a1a2e; }
+.app-wrap.night .stop-num { background: #FFD28C; color: #1a1a2e; }
 .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
 .app-wrap.night .item-name { color: #fff; }
 .app-wrap.night .item-meta { color: rgba(255,255,255,0.5); }
@@ -339,9 +349,9 @@
 .app-wrap.night .stops-wrap { background: transparent !important; color: #fff; }
 .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
 .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
-.app-wrap.night .action-btn-primary { background: rgba(255,210,140,0.9); border-color: rgba(255,210,140,0.9); color: #1a1a2e; }
+.app-wrap.night .action-btn-primary { background: #FFD28C; border-color: #FFD28C; color: #1a1a2e; }
 .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
-.app-wrap.night .filter-tab.active { background: rgba(255,210,140,0.9) !important; color: #1a1a2e !important; border-color: rgba(255,210,140,0.9) !important; }
+.app-wrap.night .filter-tab.active { background: #FFD28C !important; color: #1a1a2e !important; border-color: #FFD28C !important; }
 .app-wrap.night .road-stop-name { color: #fff !important; }
 .app-wrap.night .road-stop-loc { color: rgba(255,255,255,0.5) !important; }
 .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
