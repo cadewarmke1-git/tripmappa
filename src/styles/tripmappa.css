@@ -190,52 +190,68 @@
     border-color: rgba(255,255,255,0.45);
     box-shadow: 0 20px 56px rgba(0,0,0,0.28), 0 0 0 3px rgba(255,255,255,0.08);
   }
+  /* Hero route bar — labels row, inputs row (swap centered here), errors row */
   .hero-route-bar {
     position: relative;
     flex: 1;
     min-width: 0;
     width: 100%;
-    /* Swap vertical anchor: labels + gap + half input height (errors excluded) */
-    --hero-swap-label-h: 14px;
-    --hero-swap-label-gap: 6px;
-    --hero-swap-input-h: 21px;
-    --hero-swap-btn-h: 44px;
   }
-  .hero-route-labels,
-  .hero-route-inputs {
+  .hero-route-row {
     display: flex;
     width: 100%;
-    align-items: flex-start;
+    align-items: stretch;
   }
-  .hero-route-labels {
-    margin-bottom: var(--hero-swap-label-gap);
-    height: var(--hero-swap-label-h);
-  }
-  .hero-route-field {
+  .hero-route-col {
     width: 50%;
     flex: none;
     box-sizing: border-box;
     min-width: 0;
   }
-  .hero-route-to { padding-right: 22px; }
-  .hero-route-from { padding-left: 22px; }
-  .hero-route-field .hero-input-label {
+  .hero-route-col-to .hero-input-label,
+  .hero-route-col-to .hero-input-box { padding-right: 26px; }
+  .hero-route-col-from .hero-input-label,
+  .hero-route-col-from .hero-input-box { padding-left: 26px; }
+  .hero-route-labels {
+    margin-bottom: 6px;
+  }
+  .hero-route-labels .hero-input-label {
     display: block;
     margin-bottom: 0;
-    height: var(--hero-swap-label-h);
-    line-height: var(--hero-swap-label-h);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #FFD28C;
+    line-height: 1.3;
   }
-  .hero-route-field .hero-input-box {
+  .hero-route-inputs {
+    position: relative;
+    align-items: center;
+    min-height: 44px;
+  }
+  .hero-route-inputs .hero-input-box {
     width: 100%;
     min-width: 0;
-    height: var(--hero-swap-input-h);
     display: flex;
     align-items: center;
+    min-height: 44px;
+  }
+  .hero-route-inputs .hero-input-box > div {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+  .hero-route-bar .hero-input {
+    width: 100%;
+    min-height: 44px;
+    line-height: 44px;
+    padding: 0;
+  }
+  .hero-route-errors {
+    margin-top: 4px;
+    align-items: flex-start;
   }
   .hero-input-error {
     font-size: 11px;
@@ -243,19 +259,16 @@
     color: rgba(239, 120, 120, 0.9);
     padding-left: 2px;
   }
-  .hero-swap-btn {
+  .hero-route-inputs .hero-swap-btn {
     position: absolute;
     left: 50%;
-    top: calc(
-      var(--hero-swap-label-h) + var(--hero-swap-label-gap) +
-      var(--hero-swap-input-h) / 2 - var(--hero-swap-btn-h) / 2
-    );
-    transform: translateX(-50%);
-    width: var(--hero-swap-btn-h);
-    height: var(--hero-swap-btn-h);
+    top: 50%;
+    width: 44px;
+    height: 44px;
     margin: 0;
     padding: 0;
     border-radius: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -268,7 +281,10 @@
     -webkit-backdrop-filter: blur(12px);
     transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
   }
-  .hero-swap-btn:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.22); }
+  .hero-route-inputs .hero-swap-btn:hover {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.22);
+  }
   .hero-swap-icon {
     width: 18px;
     height: 18px;
@@ -277,8 +293,7 @@
     pointer-events: none;
   }
   .hero-input-box { flex: 1; min-width: 0; }
-  .hero-route-field .hero-input-box { flex: none; }
-  .hero-input-box > div { width: 100%; min-width: 0; height: 100%; display: flex; align-items: center; }
+  .hero-input-box > div { width: 100%; min-width: 0; }
   .hero-go-btn { align-self: center; }
   .route-timing-wrap { position: relative; margin-top: 8px; }
   .timing-menu-fixed {
@@ -444,21 +459,15 @@
   @media (max-width: 540px) {
     .hero-search { flex-direction: column; padding: 16px; border-radius: 16px; gap: 10px; align-items: stretch; }
     .hero-route-bar { width: 100%; }
-    .hero-route-labels,
-    .hero-route-inputs { flex-direction: column; }
-    .hero-route-field { width: 100%; flex: none; padding-left: 0 !important; padding-right: 0 !important; }
-    .hero-route-from { margin-top: 8px; }
-    .hero-route-bar {
-      --hero-swap-btn-h: 40px;
-    }
-    .hero-swap-btn {
-      width: var(--hero-swap-btn-h);
-      height: var(--hero-swap-btn-h);
-      top: calc(
-        var(--hero-swap-label-h) + var(--hero-swap-label-gap) +
-        var(--hero-swap-input-h) / 2 - var(--hero-swap-btn-h) / 2
-      );
-    }
+    .hero-route-row { flex-direction: column; }
+    .hero-route-col { width: 100%; flex: none; }
+    .hero-route-col-to .hero-input-label,
+    .hero-route-col-to .hero-input-box,
+    .hero-route-col-from .hero-input-label,
+    .hero-route-col-from .hero-input-box { padding-left: 0; padding-right: 0; }
+    .hero-route-col-from { margin-top: 8px; }
+    .hero-route-inputs { min-height: 96px; }
+    .hero-route-inputs .hero-swap-btn { width: 40px; height: 40px; }
     .hero-swap-icon { width: 16px; height: 16px; }
     .hero-go-btn { width: 100%; text-align: center; justify-content: center; align-self: stretch; }
     .hero-title { letter-spacing: -1.5px; }
@@ -469,13 +478,8 @@
     border: none; outline: none; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 400; color: #fff;
     background: transparent; width: 100%; padding: 0;
-    height: var(--hero-swap-input-h, 21px);
-    line-height: var(--hero-swap-input-h, 21px);
+    line-height: 1.4;
     box-sizing: border-box;
-  }
-  .hero-route-bar .hero-input {
-    height: var(--hero-swap-input-h);
-    line-height: var(--hero-swap-input-h);
   }
   .hero-input::placeholder { color: rgba(255,255,255,0.6); font-weight: 400; }
   .hero-go-btn {
