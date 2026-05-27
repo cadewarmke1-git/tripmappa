@@ -255,8 +255,17 @@
   background: rgba(8, 10, 18, 0.96) !important;
 }
 .app-wrap.day .trip-results-topbar-title { color: #fff !important; }
-.app-wrap.day .trip-results-back, .app-wrap.day .trip-results-map-btn { color: #FFD28C !important; }
-.app-wrap.day .trip-results-map-btn { background: rgba(255,210,140,0.2) !important; border-color: rgba(255,210,140,0.5) !important; }
+.app-wrap.day .trip-results-back { color: #FFD28C !important; }
+.app-wrap.day .trip-results-map-btn,
+.app-wrap.night .trip-results-map-btn {
+  color: #FFD28C !important;
+  border: 1px solid #FFD28C !important;
+  background: transparent !important;
+}
+.app-wrap.day .trip-results-map-btn:hover,
+.app-wrap.night .trip-results-map-btn:hover {
+  background: rgba(255, 210, 140, 0.12) !important;
+}
 .app-wrap.day .trip-overview-hero { box-shadow: 0 16px 48px rgba(26,26,46,0.1) !important; }
 .app-wrap.day .road-stop-add-btn, .app-wrap.day .activity-dining-add {
   color: #FFD28C !important;

@@ -790,8 +790,15 @@ export default function App() {
       routeInfo.routePoints.forEach(p => { bounds.extend(p); hasBounds = true; });
     }
 
+    mapMarkers.forEach(m => {
+      if (m?.lat != null && m?.lng != null) {
+        bounds.extend({ lat: m.lat, lng: m.lng });
+        hasBounds = true;
+      }
+    });
+
     if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
-  }, [directionsResult, routePath, routeInfo]);
+  }, [directionsResult, routePath, routeInfo, mapMarkers]);
 
   useEffect(() => {
     if (!loading) {
@@ -1867,7 +1874,10 @@ export default function App() {
             highlightedStopId={highlightedStopId}
             showGuestBanner={!user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
             onEditTrip={handleEditTrip}
-            onViewMap={() => setResultsView("map")}
+            onViewMap={() => {
+              setResultsView("map");
+              window.setTimeout(() => recenterMap(), 200);
+            }}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
             onLodgingSelect={addLodgingSelection}

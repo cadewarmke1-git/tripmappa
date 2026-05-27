@@ -88,57 +88,52 @@ export default function HeroView({
             onMouseEnter={() => onSearchHover(true)}
             onMouseLeave={() => onSearchHover(false)}
           >
-            <table className="hero-route-table">
-              <tbody>
-                <tr>
-                  <td className="hero-route-cell hero-route-cell-to">
-                    <div className="hero-input-label">To</div>
-                  </td>
-                  <td className="hero-route-cell hero-route-cell-swap" aria-hidden="true" />
-                  <td className="hero-route-cell hero-route-cell-from">
-                    <div className="hero-input-label">From</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="hero-route-cell hero-route-cell-to">
-                    <div className="hero-input-box">
-                      {isLoaded ? (
-                        <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                          <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
-                        </Autocomplete>
-                      ) : (
-                        <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
-                      )}
-                    </div>
-                    {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
-                  </td>
-                  <td className="hero-route-cell hero-route-cell-swap">
-                    <button
-                      type="button"
-                      className="hero-swap-btn"
-                      onClick={onSwap}
-                      aria-label="Swap destination and origin"
-                    >
-                      <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </td>
-                  <td className="hero-route-cell hero-route-cell-from">
-                    <div className="hero-input-box">
-                      {isLoaded ? (
-                        <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                          <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
-                        </Autocomplete>
-                      ) : (
-                        <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
-                      )}
-                    </div>
-                    {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="hero-route-bar">
+              <div className="hero-route-labels">
+                <div className="hero-route-field hero-route-to">
+                  <div className="hero-input-label">To</div>
+                </div>
+                <div className="hero-route-field hero-route-from">
+                  <div className="hero-input-label">From</div>
+                </div>
+              </div>
+              <div className="hero-route-inputs">
+                <div className="hero-route-field hero-route-to">
+                  <div className="hero-input-box">
+                    {isLoaded ? (
+                      <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
+                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      </Autocomplete>
+                    ) : (
+                      <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                    )}
+                  </div>
+                  {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
+                </div>
+                <div className="hero-route-field hero-route-from">
+                  <div className="hero-input-box">
+                    {isLoaded ? (
+                      <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
+                        <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      </Autocomplete>
+                    ) : (
+                      <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                    )}
+                  </div>
+                  {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="hero-swap-btn"
+                onClick={onSwap}
+                aria-label="Swap destination and origin"
+              >
+                <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
             <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
               {heroLaunching ? "Checking locations…" : "Plan my trip →"}
             </button>
