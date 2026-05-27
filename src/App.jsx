@@ -5,7 +5,8 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
-import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, STANDARD_MAP_STYLES, DARK_MAP_STYLES, NIGHT_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
+import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
+import { resolveMapStyles } from "./lib/mapStyles.js";
 import {
   isTruckVehicle,
   isRvVehicle,
@@ -932,11 +933,7 @@ export default function App() {
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapRef.current.setMapTypeId(typeId);
-    let styles = [];
-    if (mapStyle === "dark") styles = DARK_MAP_STYLES;
-    else if (mapStyle === "standard" && theme === "night") styles = NIGHT_MAP_STYLES;
-    else if (mapStyle === "standard") styles = STANDARD_MAP_STYLES;
-    mapRef.current.setOptions({ styles });
+    mapRef.current.setOptions({ styles: resolveMapStyles(mapStyle, theme) });
   }, [mapStyle, theme, isLoaded, mapReady]);
 
   useEffect(() => {
@@ -1918,7 +1915,6 @@ export default function App() {
               navigateHomeSlot={(
                 <button type="button" className="navigate-home-float" onClick={handleNavigateHome} disabled={navigateHomePending}>
                   {navigateHomePending ? "Locating…" : "Navigate Home"}
-                  <span className="always-free-badge">Always free</span>
                 </button>
               )}
               onMarkerAction={(action, marker) => {
@@ -1960,7 +1956,6 @@ export default function App() {
             navigateHomeSlot={(
               <button type="button" className="navigate-home-float" onClick={handleNavigateHome} disabled={navigateHomePending}>
                 {navigateHomePending ? "Locating…" : "Navigate Home"}
-                <span className="always-free-badge">Always free</span>
               </button>
             )}
             onMarkerAction={(action, marker) => {
@@ -1991,7 +1986,16 @@ export default function App() {
                       </div>
                     )}
                   </div>
-                  <span className={`float-card-chevron ${cardCollapsed ? "" : "open"}`}>▼</span>
+                  <button
+                    type="button"
+                    className={`float-card-chevron-btn${cardCollapsed ? "" : " open"}`}
+                    onClick={e => { e.stopPropagation(); handlePanelHeaderClick(); }}
+                    aria-label={cardCollapsed ? "Expand plan panel" : "Collapse plan panel"}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>

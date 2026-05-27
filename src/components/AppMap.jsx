@@ -1,21 +1,16 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
-import { NIGHT_MAP_STYLES, TRIP_ROUTE_GOLD } from "../lib/constants.js";
 import MapRoutePill from "./MapRoutePill.jsx";
 import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
 import MapInfoCard from "./map/MapInfoCard.jsx";
-import MapLegend from "./map/MapLegend.jsx";
 import MapRouteOverlays from "./map/MapRouteOverlays.jsx";
 import MapGenerationPulse from "./map/MapGenerationPulse.jsx";
 import MapRecenterButton from "./map/MapRecenterButton.jsx";
-
-const ROUTE_POLYLINE_OPTIONS = {
-  strokeColor: TRIP_ROUTE_GOLD,
-  strokeWeight: 5,
-  strokeOpacity: 0.9,
-  zIndex: 10,
-};
+import MapZoomControls from "./map/MapZoomControls.jsx";
+import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
+import { getDirectionsPath } from "../lib/mapRoutePath.js";
+import { resolveMapStyles } from "../lib/mapStyles.js";
 
 export default function AppMap({
   isLoaded,
@@ -49,7 +44,17 @@ export default function AppMap({
   navigateHomeSlot = null,
 }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
-  const [legendOpen, setLegendOpen] = useState(false);
+  const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
+  const mapStyles = useMemo(() => resolveMapStyles(mapStyle, theme), [mapStyle, theme]);
+
+  useEffect(() => {
+    if (!mapRef.current || !window.google) return;
+    const typeId = mapStyle === "satellite"
+      ? window.google.maps.MapTypeId.SATELLITE
+      : window.google.maps.MapTypeId.ROADMAP;
+    mapRef.current.setMapTypeId(typeId);
+    mapRef.current.setOptions({ styles: mapStyles });
+  }, [mapStyle, theme, mapStyles, mapRef, isLoaded]);
 
   useEffect(() => {
     if (!mapFocusTarget?.lat || !mapRef.current || !window.google) return;
@@ -89,13 +94,12 @@ export default function AppMap({
             }}
             options={{
               disableDefaultUI: false,
-              zoomControl: true,
-              zoomControlOptions: { position: window.google?.maps?.ControlPosition?.RIGHT_CENTER },
+              zoomControl: false,
               streetViewControl: false,
               mapTypeControl: false,
               fullscreenControl: false,
               mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
-              styles: isDarkMode ? NIGHT_MAP_STYLES : [],
+              styles: mapStyles,
             }}
             onClick={() => setSelectedMarker(null)}
           >
@@ -104,9 +108,12 @@ export default function AppMap({
                 directions={directions}
                 options={{
                   suppressMarkers: true,
-                  polylineOptions: ROUTE_POLYLINE_OPTIONS,
+                  suppressPolylines: true,
                 }}
               />
+            )}
+            {directionsPath.length > 1 && (
+              <AnimatedRoutePath path={directionsPath} />
             )}
             <MapMarkerLayer
               markers={mapMarkers}
@@ -130,7 +137,6 @@ export default function AppMap({
               onAction={handleInfoAction}
             />
           )}
-          <MapLegend open={legendOpen} onToggle={() => setLegendOpen(o => !o)} isDarkMode={isDarkMode} />
           {trafficAlert && (
             <div className="traffic-toast">
               <span className="traffic-toast-icon">!</span>
@@ -147,7 +153,8 @@ export default function AppMap({
               </div>
             )}
           </div>
-          <MapRecenterButton theme={theme} onRecenter={onRecenter} />
+          <MapZoomControls mapRef={mapRef} />
+          <MapRecenterButton onRecenter={onRecenter} />
         </>
       ) : (
         <div className="map-loading">

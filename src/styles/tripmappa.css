@@ -127,10 +127,24 @@
   .hero-bg-top.no-transition { transition: none !important; }
   .hero-overlay {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: rgba(0, 0, 0, 0.35);
-    transition: background 1.8s ease;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 0, 0.38) 45%,
+      rgba(0, 0, 0, 0.32) 55%,
+      rgba(0, 0, 0, 0.68) 100%
+    );
+    transition: opacity 1.8s ease;
   }
-  .hero.night .hero-overlay { background: rgba(0, 0, 0, 0.55); }
+  .hero.night .hero-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.78) 0%,
+      rgba(0, 0, 0, 0.45) 45%,
+      rgba(0, 0, 0, 0.4) 55%,
+      rgba(0, 0, 0, 0.75) 100%
+    );
+  }
 
   /* Hero content */
   .hero-content {
@@ -193,6 +207,11 @@
     flex: 1;
     min-width: 0;
     margin-bottom: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #FFD28C;
   }
   .hero-swap-label-gap {
     width: 40px;
@@ -212,8 +231,14 @@
   }
   .hero-route-errors {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
+    gap: 0;
+  }
+  .hero-route-error-col {
+    flex: 1;
+    min-width: 0;
   }
   .hero-input-error {
     font-size: 11px;
@@ -505,7 +530,7 @@
 
   /* Map style toggle */
   .map-style-toggle {
-    position: absolute; bottom: 108px; right: 12px; z-index: 20;
+    position: absolute; bottom: 168px; right: 12px; z-index: 20;
   }
   .map-style-btn {
     min-width: 44px; height: 44px; padding: 0 12px; border-radius: 12px;
@@ -797,7 +822,7 @@
     }
     .float-card.collapsed .float-card-help-wrap,
     .float-card.collapsed .float-card-help-btn { display: none; }
-    .float-card.collapsed .float-card-chevron {
+    .float-card.collapsed .float-card-chevron-btn {
       transform: rotate(-90deg);
       margin-top: 4px;
     }
@@ -890,12 +915,37 @@
     background: transparent;
   }
   .float-card-header-row {
-    display: flex; align-items: center; justify-content: space-between;
-    width: 100%;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    width: 100%; gap: 12px;
   }
-  .float-card-title { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; color: #fff; }
-  .float-card-chevron { font-size: 10px; color: rgba(255,255,255,0.45); transition: transform 0.3s; }
-  .float-card-chevron.open { transform: rotate(180deg); }
+  .float-card-title {
+    font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700;
+    letter-spacing: -0.02em; color: #fff;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #FFD28C;
+    margin-bottom: 2px;
+    align-self: flex-start;
+  }
+  .float-card-chevron-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; padding: 0; border: none; cursor: pointer;
+    border-radius: 10px;
+    background: rgba(18, 20, 32, 0.78);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.32);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    color: #FFD28C;
+    transition: background 0.2s var(--ease), transform 0.3s var(--ease);
+  }
+  .app-wrap.day .float-card-chevron-btn {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(0,0,0,0.14);
+    color: #FFD28C;
+  }
+  .float-card-chevron-btn:hover { background: rgba(18, 20, 32, 0.9); }
+  .app-wrap.day .float-card-chevron-btn:hover { background: rgba(255,255,255,0.96); }
+  .float-card-chevron-btn.open { transform: rotate(180deg); }
+  .float-card-chevron-btn svg { display: block; }
 
   /* Map placeholder */
   .map-placeholder { width: 100%; height: 100%; background: linear-gradient(150deg, #e4eef5 0%, #d2e4f0 60%, #c0d6e8 100%); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
@@ -2042,18 +2092,42 @@
 
   /* Map recenter */
   .map-recenter-btn {
-    position: absolute; bottom: 108px; right: 12px; z-index: 20;
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.35);
+    position: absolute; bottom: 24px; right: 12px; z-index: 20;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.35);
     background: rgba(18, 20, 32, 0.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     color: #FFD28C; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;
     box-shadow: 0 4px 24px rgba(0,0,0,0.35);
   }
-  .map-recenter-btn.day {
-    color: #FFD28C; border-color: rgba(0,0,0,0.14); background: rgba(255,255,255,0.9);
+  .map-recenter-btn svg { color: #FFD28C; flex-shrink: 0; }
+  .app-wrap.day .map-recenter-btn {
+    color: #1a1a2e; border-color: rgba(0,0,0,0.14); background: rgba(255,255,255,0.9);
   }
+  .app-wrap.day .map-recenter-btn svg { color: #FFD28C; }
   .map-recenter-btn:hover { background: rgba(18, 20, 32, 0.9); }
-  .map-recenter-btn.day:hover { background: rgba(255,255,255,0.96); }
+  .app-wrap.day .map-recenter-btn:hover { background: rgba(255,255,255,0.96); }
+
+  .map-zoom-controls {
+    position: absolute; right: 12px; bottom: 76px; z-index: 20;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .map-zoom-btn {
+    width: 40px; height: 40px; padding: 0; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: rgba(18, 20, 32, 0.78);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    color: #FFD28C; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s var(--ease);
+  }
+  .app-wrap.day .map-zoom-btn {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(0,0,0,0.14);
+    color: #FFD28C;
+  }
+  .map-zoom-btn:hover { background: rgba(18, 20, 32, 0.9); }
+  .app-wrap.day .map-zoom-btn:hover { background: rgba(255,255,255,0.96); }
 
   /* Account badge */
   .account-badge-wrap { position: relative; }
