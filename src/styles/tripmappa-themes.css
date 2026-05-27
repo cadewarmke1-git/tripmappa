@@ -25,8 +25,17 @@
 .app-wrap.night .nav-app .nav-btn-primary {
   background: #FFD28C !important; color: #1a1a2e !important; border-color: transparent !important; font-weight: 700;
 }
-.app-wrap.day .theme-test-btn { background: rgba(26,26,46,0.06); border-color: rgba(26,26,46,0.12); color: #1a1a2e; }
-.app-wrap.day .theme-test-btn:hover { background: rgba(26,26,46,0.1); border-color: rgba(26,26,46,0.2); }
+.app-wrap.day .theme-toggle-btn,
+.app-wrap.day .theme-test-btn {
+  background: rgba(18, 20, 32, 0.78) !important;
+  border-color: rgba(255,255,255,0.32) !important;
+  color: #FFD28C !important;
+}
+.app-wrap.day .theme-toggle-btn:hover,
+.app-wrap.day .theme-test-btn:hover {
+  background: rgba(18, 20, 32, 0.9) !important;
+  border-color: rgba(255,255,255,0.45) !important;
+}
 .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
 .app-wrap.day .map-placeholder-sub { color: rgba(0,0,0,0.12); }
 
@@ -235,13 +244,17 @@
 /* Trip results panel — day: light frosted glass */
 .app-wrap.day {
   --results-bg: linear-gradient(180deg, #f4faf8 0%, #eef6f2 50%, #e8f0ec 100%);
-  --results-topbar-bg: rgba(255,255,255,0.88);
+  --results-topbar-bg: rgba(8, 10, 18, 0.96);
   --results-card-bg: rgba(255,255,255,0.82);
   --results-card-border: rgba(255,210,140,0.45);
   --gold: #FFD28C;
 }
 .app-wrap.day .trip-results-panel { color: var(--charcoal) !important; }
-.app-wrap.day .trip-results-topbar { border-bottom-color: rgba(26,26,46,0.08) !important; }
+.app-wrap.day .trip-results-topbar {
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+  background: rgba(8, 10, 18, 0.96) !important;
+}
+.app-wrap.day .trip-results-topbar-title { color: #fff !important; }
 .app-wrap.day .trip-results-back, .app-wrap.day .trip-results-map-btn { color: #FFD28C !important; }
 .app-wrap.day .trip-results-map-btn { background: rgba(255,210,140,0.2) !important; border-color: rgba(255,210,140,0.5) !important; }
 .app-wrap.day .trip-overview-hero { box-shadow: 0 16px 48px rgba(26,26,46,0.1) !important; }
@@ -280,15 +293,26 @@
 
 /* ── App theme: Night ── */
 .app-wrap.night .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
-.app-wrap.night .nav-app .nav-logo { color: #fff; }
-.app-wrap.night .nav-app .nav-logo span { color: #FFD28C; }
+.app-wrap.night .nav-app .nav-logo,
+.app-wrap.day .nav-app .nav-logo { color: #FFD28C !important; }
+.app-wrap.night .nav-app .nav-logo span,
+.app-wrap.day .nav-app .nav-logo span { color: #fff !important; }
 .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
 .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
 .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
 .app-wrap.night .nav-app .nav-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85) !important; }
 .app-wrap.night .nav-app .nav-btn-primary { background: var(--charcoal); color: #fff !important; border-color: rgba(255,255,255,0.15); }
-.app-wrap.night .theme-test-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
-.app-wrap.night .theme-test-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); }
+.app-wrap.night .theme-toggle-btn,
+.app-wrap.night .theme-test-btn {
+  background: rgba(18, 20, 32, 0.78) !important;
+  border-color: rgba(255,255,255,0.32) !important;
+  color: #FFD28C !important;
+}
+.app-wrap.night .theme-toggle-btn:hover,
+.app-wrap.night .theme-test-btn:hover {
+  background: rgba(18, 20, 32, 0.9) !important;
+  border-color: rgba(255,255,255,0.45) !important;
+}
 .app-wrap.night .route-loading-pill {
   background: rgba(15,20,40,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
 }
@@ -316,9 +340,15 @@
 .app-wrap.night .sidebar-inner::before,
 .app-wrap.night .sidebar-inner::after { display: none; }
 
-/* Logo — night: Trip white, Mappa gold */
-.app-wrap.night .nav-logo { color: #fff !important; }
-.app-wrap.night .nav-logo span { color: #FFD28C !important; }
+/* Logo — Trip gold, Mappa white (all views) */
+.app-wrap.night .nav-logo,
+.app-wrap.day .nav-logo,
+.app-wrap.night .app-global-home-logo,
+.app-wrap.day .app-global-home-logo { color: #FFD28C !important; }
+.app-wrap.night .nav-logo span,
+.app-wrap.day .nav-logo span,
+.app-wrap.night .app-global-home-logo span,
+.app-wrap.day .app-global-home-logo span { color: #fff !important; }
 
 .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap,
 .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }
@@ -367,7 +397,7 @@
 /* Trip results panel — night: dark premium cards */
 .app-wrap.night {
   --results-bg: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 40%, #12121f 100%);
-  --results-topbar-bg: rgba(15,15,26,0.92);
+  --results-topbar-bg: rgba(8, 10, 18, 0.96);
   --results-card-bg: linear-gradient(145deg, rgba(20,20,35,0.95) 0%, rgba(30,30,50,0.85) 50%, rgba(255,210,140,0.08) 100%);
   --results-card-border: rgba(255,210,140,0.18);
   --gold: #FFD28C;

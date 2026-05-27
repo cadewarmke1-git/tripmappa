@@ -1825,18 +1825,19 @@ export default function App() {
         transition: "color 1.8s ease",
       }}>
         <NavLogo onClick={goHome} className="app-global-home-logo" />
-        {!(generated && resultsView === "itinerary") && (
         <nav className="nav-app nav app-nav-with-logo app-nav-minimal" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 0 148px" }}>
           <div className="nav-logo-spacer" aria-hidden="true"/>
-          {!(generated && resultsView === "map") && (
           <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "4px", borderRadius: 8, padding: 4, alignItems: "center" }}>
-            {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
-              <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
-            ))}
-          </div>
-          )}
-          <div className="nav-right app-nav-right" style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            {!(generated && resultsView === "map") && (
+              <>
+                {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
+                  <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
+                ))}
+              </>
+            )}
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          </div>
+          <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {user ? (
               <AccountBadge user={user} creditStatus={creditStatus} onSignOut={handleSignOut} onRefreshCredits={refreshCredits} />
             ) : (
@@ -1844,7 +1845,6 @@ export default function App() {
             )}
           </div>
         </nav>
-        )}
 
         {generated && resultsView === "itinerary" ? (
           <TripResultsPanel
