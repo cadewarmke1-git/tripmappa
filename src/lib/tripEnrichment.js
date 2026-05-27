@@ -172,7 +172,7 @@ export async function enrichGeneratedTrip({
     }
   }
 
-  const mapMarkers = stopsToMapMarkers(enrichedStops, safeRoadStops, customStops, poiMarkers);
+  const mapMarkers = stopsToMapMarkers(enrichedStops, safeRoadStops, customStops, poiMarkers, answers);
 
   return {
     stops: enrichedStops,

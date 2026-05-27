@@ -6,6 +6,10 @@
 }
 .app-wrap.day .nav-app .nav-logo { color: #1a1a2e !important; }
 .app-wrap.day .nav-app .nav-logo span { color: rgba(255,210,140,0.95) !important; }
+.app-wrap.day .app-global-home-logo,
+.app-wrap.night .app-global-home-logo { color: #fff !important; }
+.app-wrap.day .app-global-home-logo span,
+.app-wrap.night .app-global-home-logo span { color: #FFD28C !important; }
 .app-wrap.day .nav-app .nav-tab { color: rgba(26,26,46,0.5) !important; }
 .app-wrap.day .nav-app .nav-tab.active { background: rgba(26,26,46,0.08) !important; color: #1a1a2e !important; box-shadow: none; }
 .app-wrap.day .nav-center-wrap { background: rgba(26,26,46,0.06) !important; }

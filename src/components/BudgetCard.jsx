@@ -28,7 +28,7 @@ function AnimatedBudgetValue({ value, animateKey }) {
   return <span className={`budget-row-val${pop ? " animate" : ""}`}>${display.toLocaleString()}</span>;
 }
 
-export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [], selectedLodging = [] }) {
+export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [], selectedLodging = [], compact = false }) {
   const est = useMemo(
     () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging }),
     [answers, routeInfo, tripLegs, roadStops, selectedLodging],
@@ -42,6 +42,17 @@ export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [
   const partySize = parseTravelerCount(answers?.travelers) ?? 1;
   const perPerson = est.total != null && partySize > 0 ? Math.round(est.total / partySize) : null;
   const showBudgetWarning = budgetCap != null && est.total != null && budgetCap - est.total <= 50;
+
+  if (compact) {
+    return (
+      <div className="budget-card budget-card-compact">
+        <span className="budget-card-compact-label">Estimated Trip Cost</span>
+        {est.total != null
+          ? <AnimatedBudgetValue value={est.total} animateKey={`total-compact-${est.total}`} />
+          : <span className="budget-shimmer" />}
+      </div>
+    );
+  }
 
   return (
     <div className={`budget-card${showBudgetWarning ? " budget-card-warning" : ""}`}>

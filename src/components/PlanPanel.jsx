@@ -63,6 +63,7 @@ export default function PlanPanel({
           <div className="plan-view">
             {answers.vehicle && routeInfo?.distance && (
               <BudgetCard
+                compact
                 answers={answers}
                 routeInfo={routeInfo}
                 tripLegs={tripLegs}
@@ -72,7 +73,7 @@ export default function PlanPanel({
             )}
             {(currentQuestion || qIndex === -2) && (
               <div
-                className={`ai-msg${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
+                className={`ai-msg${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                 key={currentQuestion?.id ?? qIndex}
               >
                 <div className="ai-bubble">
@@ -83,6 +84,18 @@ export default function PlanPanel({
                     </div>
                   )}
                 </div>
+                {convoComplete && (
+                  <div className="generate-inline">
+                    <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
+                      {loading ? "Generating…" : (
+                        <>
+                          Generate My Trip →
+                          {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
                 {currentQuestion && (
                   <QuestionChoices
                     currentQ={currentQuestion}
@@ -98,8 +111,8 @@ export default function PlanPanel({
                     onSetPrefDraft={onSetPrefDraft}
                   />
                 )}
-                {qIndex === -2 && (
-                  <div className="question-choices" style={{ borderTop: "none", paddingTop: 16, marginTop: 16 }}>
+                {qIndex === -2 && convoComplete && (
+                  <div className="payoff-summary-wrap">
                     <SummaryCard answers={answers} />
                   </div>
                 )}
@@ -108,18 +121,6 @@ export default function PlanPanel({
             <div ref={convoEndRef}/>
           </div>
         </div>
-        {convoComplete && (
-          <div className="generate-wrap generate-wrap-payoff">
-            <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
-              {loading ? "Generating…" : (
-                <>
-                  Generate My Trip →
-                  {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
-                </>
-              )}
-            </button>
-          </div>
-        )}
       </div>
       <RouteFooter
         isLoaded={isLoaded}

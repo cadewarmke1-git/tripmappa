@@ -1,9 +1,12 @@
 /** Map marker categories, colors, and legend labels. */
+import { getEffectiveVehicle, isRvVehicle } from "./vehicles.js";
 
 export const MARKER_GOLD = "#FFD28C";
+const MARKER_SIZE = 26;
 
 export const MARKER_CATEGORIES = {
   hotel: { label: "Overnight stop", color: MARKER_GOLD, zIndex: 10 },
+  rv: { label: "RV / campground", color: MARKER_GOLD, zIndex: 10 },
   fuel: { label: "Fuel stop", color: MARKER_GOLD, zIndex: 9 },
   restaurant: { label: "Restaurant", color: MARKER_GOLD, zIndex: 8 },
   rest: { label: "Rest stop", color: MARKER_GOLD, zIndex: 8 },
@@ -25,9 +28,10 @@ export const MARKER_CATEGORIES = {
 };
 
 const ICON_PATHS = {
-  hotel: '<path d="M8 22V10l4-2 4 2v12M10 18h4M14 18h4" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  fuel: '<path d="M9 22V8l3-2 3 2v14M11 18h2M14 18h2M12 6V4" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="10" y="10" width="4" height="5" rx="0.5" fill="#fff"/>',
-  restaurant: '<path d="M9 22V12M9 12c0-2 1-3 3-3s3 1 3 3v10M15 22V8M15 8c0-2 1-3 3-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M7 22V14c0-1.5-.5-2-1.5-2.5" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+  hotel: '<path d="M7 22V13a2 2 0 012-2h10a2 2 0 012 2v9M7 17h14M10 22v-3M18 22v-3" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  rv: '<path d="M16 7L8 21h16L16 7z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linejoin="round"/><path d="M16 13v5M13 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>',
+  fuel: '<path d="M10 22V9l3-2 3 2v13M12 18h2M15 18h2M13 7V5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="11.5" y="11" width="3" height="4.5" rx="0.5" fill="#fff"/>',
+  restaurant: '<path d="M9 22V11c0-2 .8-3.5 3-3.5s3 1.5 3 3.5v11M15 22V9c0-2 .8-3.5 3-3.5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M7 22V15" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>',
   rest: '<path d="M10 22V14c0-2 1.5-3.5 3-3.5h2c1.5 0 3 1.5 3 3.5v8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M8 10h8l-1-4H9l-1 4z" stroke="#fff" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M7 22h10" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>',
   ev: '<path d="M13 4l-4 8h3l-2 8 6-10h-3l2-6z" fill="#fff" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>',
   truck: '<path d="M4 18h1M19 18h1M6 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0M16 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0M4 14h11v4H4v-4zM15 14h3l2 3v1h-5v-4z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -65,20 +69,21 @@ export function buildMarkerIcon(category, isDarkMode = false) {
   const cfg = MARKER_CATEGORIES[category] || MARKER_CATEGORIES.poi;
   const stroke = isDarkMode ? "#1a1a2e" : "#ffffff";
   const inner = ICON_PATHS[category] || ICON_PATHS.default;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-    <circle cx="16" cy="16" r="14" fill="${cfg.color}" stroke="${stroke}" stroke-width="2"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MARKER_SIZE}" height="${MARKER_SIZE}" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="12" fill="${cfg.color}" stroke="${stroke}" stroke-width="1.5"/>
     ${inner}
   </svg>`;
   if (!window.google?.maps) return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}` };
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(32, 32),
-    anchor: new window.google.maps.Point(16, 16),
+    scaledSize: new window.google.maps.Size(MARKER_SIZE, MARKER_SIZE),
+    anchor: new window.google.maps.Point(MARKER_SIZE / 2, MARKER_SIZE / 2),
   };
 }
 
-export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], extraMarkers = []) {
+export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], extraMarkers = [], answers = null) {
   const markers = [];
+  const overnightCategory = answers && isRvVehicle(getEffectiveVehicle(answers)) ? "rv" : "hotel";
 
   stops.forEach((stop, i) => {
     if (stop.lat != null && stop.lng != null) {
@@ -86,7 +91,7 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
         id: `stop-${i}`,
         lat: stop.lat,
         lng: stop.lng,
-        category: stop.safetyFlagged ? "safety" : "hotel",
+        category: stop.safetyFlagged ? "safety" : overnightCategory,
         title: stop.city || stop.name,
         subtitle: `${stop.distance || ""} · ${stop.eta || ""}`.trim(),
         stopIndex: i,
@@ -121,6 +126,6 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
 
 export function getLegendItems() {
   return [
-    "hotel", "fuel", "restaurant", "rest", "ev", "truck", "park", "poi", "medical",
+    "hotel", "rv", "fuel", "restaurant", "rest", "ev", "truck", "park", "poi", "medical",
   ].map(key => ({ id: key, ...MARKER_CATEGORIES[key] }));
 }

@@ -1425,7 +1425,7 @@ export default function App() {
       return enriched;
     } catch (err) {
       console.warn("Trip enrichment failed:", err);
-      setMapMarkers(stopsToMapMarkers(parsedStops, parsedRoadStops, customStops, []));
+      setMapMarkers(stopsToMapMarkers(parsedStops, parsedRoadStops, customStops, [], answers));
       return null;
     }
   }
@@ -1629,7 +1629,7 @@ export default function App() {
     setResultsView("itinerary");
     setConvoComplete(true);
     setTab("plan");
-    setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], []));
+    setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], [], answers));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1829,27 +1829,17 @@ export default function App() {
       }}>
         <NavLogo onClick={goHome} className="app-global-home-logo" />
         {!(generated && resultsView === "itinerary") && (
-        <nav className="nav-app nav app-nav-with-logo" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 0 140px" }}>
+        <nav className="nav-app nav app-nav-with-logo app-nav-minimal" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 0 148px" }}>
           <div className="nav-logo-spacer" aria-hidden="true"/>
           {!(generated && resultsView === "map") && (
-          <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "1px", borderRadius: 8, padding: 3, alignItems: "center" }}>
+          <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "4px", borderRadius: 8, padding: 4, alignItems: "center" }}>
             {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
               <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
             ))}
-            <button type="button" className="nav-navigate-home" onClick={handleNavigateHome} disabled={navigateHomePending}>
-              {navigateHomePending ? "Locating…" : "Navigate Home"}
-              <span className="always-free-badge">Always free</span>
-            </button>
           </div>
           )}
-          <div className="nav-right" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div className="nav-right app-nav-right" style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            {!(generated && resultsView === "map") && (
-              <>
-                <button type="button" className="nav-btn" onClick={saveCurrentTrip}>Save trip</button>
-                <button type="button" className="nav-btn nav-btn-primary" onClick={handleShareItinerary}>Share</button>
-              </>
-            )}
             {user ? (
               <AccountBadge user={user} creditStatus={creditStatus} onSignOut={handleSignOut} onRefreshCredits={refreshCredits} />
             ) : (
