@@ -1,6 +1,6 @@
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { getUserFromRequest } from "./lib/authFromRequest.js";
-import { fetchCreditStatus } from "./lib/tripCredits.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getUserFromRequest } from "../lib/authFromRequest.js";
+import { fetchCreditStatus } from "../lib/tripCredits.js";
 
 /** GET /api/trip-credits — remaining AI generations for signed-in user. */
 export default async function handler(req, res) {

@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { assignConvoyColor } from "./lib/liveTripHelpers.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { assignConvoyColor } from "../lib/liveTripHelpers.js";
 
 /** POST /api/join-convoy — register a convoy member on an active live trip. */
 export default async function handler(req, res) {

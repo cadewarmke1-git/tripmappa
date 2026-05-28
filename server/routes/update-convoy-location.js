@@ -1,6 +1,6 @@
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { getGoogleMapsKey } from "./lib/googleKey.js";
-import { mphFromSpeedMps } from "./lib/liveTripHelpers.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getGoogleMapsKey } from "../lib/googleKey.js";
+import { mphFromSpeedMps } from "../lib/liveTripHelpers.js";
 
 async function fetchMatrixEta(originLat, originLng, destination) {
   const key = getGoogleMapsKey();

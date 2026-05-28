@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { getUserFromRequest } from "./lib/authFromRequest.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getUserFromRequest } from "../lib/authFromRequest.js";
 
 function generateShareToken() {
   return crypto.randomBytes(24).toString("base64url");

@@ -1,7 +1,7 @@
 /** Active trip-generation endpoint (Anthropic Sonnet). Called via src/lib/apiClient.js only. */
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { getUserFromRequest } from "./lib/authFromRequest.js";
-import { consumeCredit } from "./lib/tripCredits.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getUserFromRequest } from "../lib/authFromRequest.js";
+import { consumeCredit } from "../lib/tripCredits.js";
 
 const TRUCK_TYPES = ["Semi Truck (18-wheeler)", "Box Truck", "Flatbed", "Tanker"];
 const RV_TYPES = ["RV", "Camper Van"];

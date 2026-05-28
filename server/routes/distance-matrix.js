@@ -1,4 +1,4 @@
-import { getGoogleMapsKey } from "./lib/googleKey.js";
+import { getGoogleMapsKey } from "../lib/googleKey.js";
 
 /** POST /api/distance-matrix — ETA from coordinates to one or more destinations. */
 export default async function handler(req, res) {

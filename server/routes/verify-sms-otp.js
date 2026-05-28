@@ -1,6 +1,6 @@
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { validateUsPhone, verifyStoredOtp } from "./lib/phoneOtp.js";
-import { createPhoneSignInSession } from "./lib/phoneAuth.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { validateUsPhone, verifyStoredOtp } from "../lib/phoneOtp.js";
+import { createPhoneSignInSession } from "../lib/phoneAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

@@ -1,6 +1,6 @@
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { getUserFromRequest } from "./lib/authFromRequest.js";
-import { googleMapsLink } from "./lib/liveTripHelpers.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getUserFromRequest } from "../lib/authFromRequest.js";
+import { googleMapsLink } from "../lib/liveTripHelpers.js";
 
 /** POST /api/sos-alert — emergency SMS to owner's emergency contact (placeholder until Twilio verified). */
 export default async function handler(req, res) {

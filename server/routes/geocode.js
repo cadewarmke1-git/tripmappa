@@ -1,6 +1,6 @@
 /** Geocode a city or address server-side. */
-import { geocodeAddress } from "./lib/geocode.js";
-import { getGoogleMapsKey } from "./lib/googleKey.js";
+import { geocodeAddress } from "../lib/geocode.js";
+import { getGoogleMapsKey } from "../lib/googleKey.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });

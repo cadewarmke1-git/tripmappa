@@ -1,5 +1,5 @@
 /** Google Weather API — conditions for overnight stop cities. */
-import { getGoogleMapsKey } from "./lib/googleKey.js";
+import { getGoogleMapsKey } from "../lib/googleKey.js";
 
 const CURRENT_URL = "https://weather.googleapis.com/v1/currentConditions:lookup";
 const FORECAST_URL = "https://weather.googleapis.com/v1/forecast/days:lookup";

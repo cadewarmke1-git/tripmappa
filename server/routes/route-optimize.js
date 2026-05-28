@@ -1,6 +1,6 @@
 /** Optimize multi-stop route order via Google Directions API (server-side). */
-import { getGoogleMapsKey } from "./lib/googleKey.js";
-import { geocodeAddress } from "./lib/geocode.js";
+import { getGoogleMapsKey } from "../lib/googleKey.js";
+import { geocodeAddress } from "../lib/geocode.js";
 
 const DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json";
 

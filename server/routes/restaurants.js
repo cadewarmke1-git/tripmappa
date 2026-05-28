@@ -1,5 +1,5 @@
 /** Google Places — restaurant search near a route stop with preference filtering. */
-import { getGoogleMapsKey, photoUrl } from "./lib/googleKey.js";
+import { getGoogleMapsKey, photoUrl } from "../lib/googleKey.js";
 
 const NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";

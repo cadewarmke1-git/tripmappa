@@ -1,12 +1,12 @@
 import twilio from "twilio";
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import {
   generateOtp,
   validateUsPhone,
   countRecentOtpRequests,
   storeOtp,
   RATE_LIMIT_MAX,
-} from "./lib/phoneOtp.js";
+} from "../lib/phoneOtp.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

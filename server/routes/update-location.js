@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { getGoogleMapsKey } from "./lib/googleKey.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getGoogleMapsKey } from "../lib/googleKey.js";
 import {
   appendBreadcrumb,
   assignConvoyColor,
@@ -9,7 +9,7 @@ import {
   getNextOvernightStop,
   mphFromSpeedMps,
   sumBreadcrumbMiles,
-} from "./lib/liveTripHelpers.js";
+} from "../lib/liveTripHelpers.js";
 
 async function fetchMatrixEta(originLat, originLng, destination) {
   const key = getGoogleMapsKey();

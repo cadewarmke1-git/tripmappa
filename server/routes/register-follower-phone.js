@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from "./lib/supabaseAdmin.js";
-import { validateUsPhone } from "./lib/phoneOtp.js";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { validateUsPhone } from "../lib/phoneOtp.js";
 
 /** POST /api/register-follower-phone — follower opts in to ETA SMS alerts. */
 export default async function handler(req, res) {
