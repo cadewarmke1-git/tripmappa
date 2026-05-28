@@ -1,6 +1,30 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
 
+/*
+ * OAuth branding (Google sign-in consent screen)
+ * ─────────────────────────────────────────────
+ * If users see your Supabase project URL instead of "TripMappa":
+ *
+ * 1) Supabase Dashboard → Authentication → URL Configuration
+ *    - Site URL: https://tripmappa.com
+ *    - Redirect URLs: https://tripmappa.com/** and http://localhost:5173/** (dev)
+ *
+ * 2) Supabase Dashboard → Authentication → Providers → Google
+ *    - Ensure the Google client ID/secret match your Google Cloud OAuth client.
+ *
+ * 3) Google Cloud Console → APIs & Services → OAuth consent screen
+ *    - App name: TripMappa
+ *    - App logo: upload the TripMappa logo (120×120 px recommended)
+ *    - Authorized domains: tripmappa.com and your Supabase project domain
+ *
+ * 4) Google Cloud Console → Credentials → OAuth 2.0 Client (Web application)
+ *    - Authorized JavaScript origins: https://tripmappa.com, http://localhost:5173
+ *    - Authorized redirect URIs: https://<project-ref>.supabase.co/auth/v1/callback
+ *
+ * Also set SITE_URL=https://tripmappa.com in Vercel env for production share links.
+ */
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {

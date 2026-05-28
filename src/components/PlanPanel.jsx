@@ -38,11 +38,13 @@ export default function PlanPanel({
   return (
     <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
       <div className="convo-stage">
-        <div className="chat-header">
-          <div className="chat-title">Plan your trip.</div>
-        </div>
+        {!inQuestionFlow && (
+          <div className="chat-header">
+            <div className="chat-title">Plan your trip.</div>
+          </div>
+        )}
         {(currentQuestion || convoComplete) && flowProgress?.totalSteps > 0 && (
-          <QuestionProgress {...flowProgress} />
+          <QuestionProgress {...flowProgress} compact={inQuestionFlow} />
         )}
         {returnedFromResults && (
           <div className="plan-saved-note">Your previous answers are saved</div>
@@ -82,6 +84,7 @@ export default function PlanPanel({
                     prefDraft={prefDraft}
                     prefSkipReady={prefSkipReady}
                     questionHistoryLength={questionHistoryLength}
+                    compact={inQuestionFlow}
                     onResetPlan={onResetPlan}
                     onGoBack={onGoBack}
                     onPickAnswer={onPickAnswer}

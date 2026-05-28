@@ -12,6 +12,7 @@ export default function QuestionChoices({
   prefDraft,
   prefSkipReady,
   questionHistoryLength,
+  compact = false,
   onResetPlan,
   onGoBack,
   onPickAnswer,
@@ -35,7 +36,7 @@ export default function QuestionChoices({
   const isLodging = currentQ.type === "lodging";
 
   return (
-    <div className={`question-choices${frozen ? " choices-frozen" : ""}`}>
+    <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}`}>
       <div className="convo-nav-row">
         {!frozen && (
           <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>

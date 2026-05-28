@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 
@@ -9,77 +9,109 @@ export default function UserNavMenu({
   onSignOut,
   onRefreshCredits,
   onOpenProfile,
-  onOpenTrips,
 }) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const wrapRef = useRef(null);
+  const closeTimerRef = useRef(null);
 
   const displayName = getDisplayName(user, profile);
   const isPremium = creditStatus?.tier === "premium";
+  const tierLabel = isPremium ? "PREMIUM" : "FREE";
+
   const creditsLine = creditStatus?.unlimited
-    ? "Unlimited generations"
+    ? "Unlimited AI trips this month"
     : creditStatus?.tier === "guest"
-      ? `${creditStatus.remaining ?? 1} free try left`
+      ? `${creditStatus.remaining ?? 1} free trip remaining`
       : creditStatus != null
-        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} generations left`
+        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} AI trips left this month`
         : null;
+
+  const closeMenu = useCallback(() => {
+    if (!open || closing) return;
+    setClosing(true);
+    setOpen(false);
+    closeTimerRef.current = setTimeout(() => {
+      setClosing(false);
+    }, 220);
+  }, [open, closing]);
+
+  const openMenu = useCallback(() => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setClosing(false);
+    setOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     onRefreshCredits?.();
     const onPointerDown = (e) => {
       if (wrapRef.current?.contains(e.target)) return;
-      setOpen(false);
+      closeMenu();
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open, onRefreshCredits]);
+  }, [open, onRefreshCredits, closeMenu]);
 
-  function closeAnd(fn) {
-    setOpen(false);
-    fn?.();
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
+
+  function handleSignOut() {
+    closeMenu();
+    onSignOut?.();
   }
 
+  function handleOpenProfile() {
+    closeMenu();
+    onOpenProfile?.();
+  }
+
+  const showDropdown = open || closing;
+
   return (
-    <div className="user-nav-menu-wrap" ref={wrapRef}>
+    <div className="profile-card-menu" ref={wrapRef}>
       <button
         type="button"
-        className="user-nav-menu-trigger"
-        onClick={() => setOpen(o => !o)}
+        className={`profile-card-trigger${open ? " is-active" : ""}`}
+        onClick={() => (open ? closeMenu() : openMenu())}
         aria-expanded={open}
-        aria-label={`Account menu for ${displayName}`}
+        aria-haspopup="dialog"
+        aria-label={`Profile menu for ${displayName}`}
       >
-        <UserAvatar user={user} profile={profile} size="md" />
-        <span className="user-nav-menu-name">{displayName}</span>
-        {isPremium && (
-          <svg className="user-nav-menu-star" width="12" height="12" viewBox="0 0 24 24" fill="#FFD28C" aria-hidden="true">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        )}
+        <UserAvatar user={user} profile={profile} size="md" showRing className="profile-card-trigger-avatar" />
       </button>
-      {open && (
-        <div className="user-nav-menu-dropdown">
-          <div className="user-nav-menu-dropdown-head">
-            <UserAvatar user={user} profile={profile} size="lg" showRing />
-            <div>
-              <div className="user-nav-menu-dropdown-name">{displayName}</div>
-              <div className="user-nav-menu-dropdown-email">{user?.email || ""}</div>
-              {creditsLine && (
-                <div className="user-nav-menu-dropdown-credits">{creditsLine}</div>
-              )}
-            </div>
-          </div>
-          <button type="button" className="user-nav-menu-item" onClick={() => closeAnd(onOpenProfile)}>
-            Profile & settings
-          </button>
-          <button type="button" className="user-nav-menu-item" onClick={() => closeAnd(onOpenTrips)}>
-            My Trips
-          </button>
-          <div className="user-nav-menu-divider" />
+
+      {showDropdown && (
+        <div
+          className={`profile-card-dropdown${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
+          role="dialog"
+          aria-label="Account menu"
+        >
+          <div className="profile-card-dropdown-glow" aria-hidden="true" />
           <button
             type="button"
-            className="user-nav-menu-item user-nav-menu-signout"
-            onClick={() => closeAnd(onSignOut)}
+            className="profile-card-identity"
+            onClick={handleOpenProfile}
+          >
+            <UserAvatar user={user} profile={profile} size={64} showRing className="profile-card-dropdown-avatar" />
+            <div className="profile-card-name">{displayName}</div>
+            <div className="profile-card-email">{user?.email || ""}</div>
+          </button>
+
+          <div className="profile-card-meta">
+            <span className={`profile-card-tier profile-card-tier--${isPremium ? "premium" : "free"}`}>
+              {tierLabel}
+            </span>
+            {creditsLine && (
+              <p className="profile-card-credits">{creditsLine}</p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="profile-card-signout"
+            onClick={handleSignOut}
           >
             Sign out
           </button>

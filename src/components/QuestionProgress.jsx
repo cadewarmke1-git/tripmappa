@@ -1,8 +1,8 @@
-export default function QuestionProgress({ currentStep, totalSteps, progressPercent }) {
+export default function QuestionProgress({ currentStep, totalSteps, progressPercent, compact = false }) {
   if (!totalSteps || totalSteps <= 0) return null;
 
   return (
-    <div className="question-progress">
+    <div className={`question-progress${compact ? " question-progress-compact" : ""}`}>
       <div className="question-progress-track">
         <div className="question-progress-fill" style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }} />
       </div>
