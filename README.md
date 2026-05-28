@@ -26,7 +26,7 @@ Add to `.env.local` locally and to Vercel project settings (never commit secrets
 
 Do not use `NEXT_PUBLIC_*`, hardcoded keys, or `VITE_`-prefixed secrets on the server. The browser client lives in `src/lib/supabaseClient.js`; server admin access uses `api/lib/supabaseAdmin.js`.
 
-Run the SQL in `supabase/migrations/001_trips.sql` in the Supabase SQL Editor to create the `trips` table and RLS policies.
+Run the SQL migrations in `supabase/migrations/` in the Supabase SQL Editor (including `005_live_trips.sql` and `006_live_sharing_enhancements.sql` for Phase 7 live sharing).
 
 In Supabase **Authentication → URL Configuration**, add redirect URLs:
 

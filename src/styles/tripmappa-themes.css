@@ -539,3 +539,28 @@
 .app-wrap .map-day-layer, .app-wrap .map-night-layer {
   transition: opacity 1.8s ease !important;
 }
+
+/* Profile page — day mode */
+.app-wrap.day.profile-view-wrap,
+.app-wrap.day .profile-view-wrap { background: #f4f6fa; color: #0c1222; }
+.app-wrap.day .profile-card,
+.app-wrap.day .profile-stat-card {
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(0,0,0,0.08);
+}
+.app-wrap.day .profile-stat-card:hover { border-color: rgba(255,180,80,0.4); }
+.app-wrap.day .profile-header-banner {
+  background: linear-gradient(135deg, rgba(255,210,140,0.35) 0%, rgba(255,210,140,0.08) 50%, transparent 100%);
+  border-bottom-color: rgba(0,0,0,0.06);
+}
+.app-wrap.day .profile-back-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .profile-tier-badge { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.55); border-color: rgba(0,0,0,0.1); }
+.app-wrap.day .profile-benefits-list { color: rgba(0,0,0,0.65); }
+.app-wrap.day .profile-trip-card { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.08); }
+.app-wrap.day .profile-input { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); color: #0c1222; }
+.app-wrap.day .profile-btn-secondary { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .user-nav-menu-trigger { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .user-nav-menu-dropdown { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .user-nav-menu-item:hover { background: rgba(0,0,0,0.04); }
+.app-wrap.day .nav.transparent .user-nav-menu-trigger { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25); color: #fff; }
+.app-wrap.day .nav.transparent .user-nav-menu-name { color: #fff; }

@@ -88,6 +88,16 @@ export function AuthProvider({ children }) {
       if (error) throw error;
       return data;
     },
+    async updateEmail(email) {
+      if (!supabase) throw new Error("Supabase is not configured");
+      const { error } = await supabase.auth.updateUser({ email: email.trim() });
+      if (error) throw error;
+    },
+    async updatePassword(password) {
+      if (!supabase) throw new Error("Supabase is not configured");
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
   }), [user, session, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

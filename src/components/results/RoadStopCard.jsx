@@ -45,7 +45,7 @@ export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = fals
         >
           Add to Trip
         </button>
-        {stop.category === "Food" && stop.nearbyRestaurants?.length > 0 && (
+        {stop.category?.toLowerCase() === "food" && stop.nearbyRestaurants?.length > 0 && (
           <div className="road-food-stops">
             {stop.nearbyRestaurants.map(r => (
               <RoadFoodStopRow key={r.placeId} restaurant={r} />

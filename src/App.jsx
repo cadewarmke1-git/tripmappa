@@ -36,7 +36,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
 import { getGuestCreditStatus, consumeGuestCredit } from "./lib/guestCredits.js";
-import { fetchUserProfile, saveHomeAddress, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
+import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -44,6 +44,8 @@ import PlanPanel from "./components/PlanPanel.jsx";
 import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
 import SharePanel from "./components/SharePanel.jsx";
+import LiveViewPage from "./components/live/LiveViewPage.jsx";
+import { parseLiveShareToken } from "./lib/liveShareApi.js";
 import GroceryModal from "./components/GroceryModal.jsx";
 import EmailModal from "./components/EmailModal.jsx";
 import SignInModal from "./components/auth/SignInModal.jsx";
@@ -57,11 +59,12 @@ import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
 import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
 import NavLogo from "./components/NavLogo.jsx";
-import AccountBadge from "./components/AccountBadge.jsx";
+import UserNavMenu from "./components/UserNavMenu.jsx";
+import ProfilePage from "./components/ProfilePage.jsx";
 
 export default function App() {
-  const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
-  const [view, setView] = useState("hero"); // "hero" | "app"
+  const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
+  const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
@@ -122,6 +125,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
   const [creditStatus, setCreditStatus] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [homeAddress, setHomeAddress] = useState("");
   const [showHomeAddressModal, setShowHomeAddressModal] = useState(false);
@@ -130,6 +134,8 @@ export default function App() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [highlightedStopId, setHighlightedStopId] = useState(null);
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
+  const [liveSharingActive, setLiveSharingActive] = useState(false);
+  const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const highlightTimerRef = useRef(null);
 
   function openAuthModal(mode) {
@@ -437,14 +443,25 @@ export default function App() {
         .then(setCreditStatus)
         .catch(() => setCreditStatus({ tier: "free", unlimited: false, remaining: 3, limit: 3 }));
       fetchUserProfile(user.id)
-        .then(profile => { if (profile?.home_address) setHomeAddress(profile.home_address); })
+        .then(profile => {
+          if (profile?.home_address) setHomeAddress(profile.home_address);
+          setUserProfile(profile);
+        })
         .catch(() => {});
     } else {
       setCreditStatus(getGuestCreditStatus());
+      setUserProfile(null);
       const guestHome = getGuestHomeAddress();
       if (guestHome) setHomeAddress(guestHome);
     }
   }, [user?.id, session?.access_token, authLoading, generated]);
+
+  useEffect(() => {
+    if (view === "profile" && !authLoading && !user) {
+      setView("app");
+      openAuthModal("signin");
+    }
+  }, [view, user, authLoading]);
 
   // ── Google Maps ──
   const { isLoaded } = useJsApiLoader({
@@ -675,6 +692,37 @@ export default function App() {
     } else {
       setCreditStatus(getGuestCreditStatus());
     }
+  }
+
+  function openProfile() {
+    setView("profile");
+    window.scrollTo(0, 0);
+  }
+
+  function openMyTrips() {
+    setView("app");
+    setTab("trips");
+    setCardCollapsed(false);
+    window.scrollTo(0, 0);
+  }
+
+  async function handleProfileUploadAvatar(file) {
+    const profile = await uploadAvatar(user.id, file);
+    setUserProfile(profile);
+  }
+
+  async function handleProfileSaveDisplayName(name) {
+    const profile = await saveDisplayName(user.id, name);
+    setUserProfile(profile);
+  }
+
+  async function handleProfileSaveNotifications(prefs) {
+    const profile = await saveNotificationPrefs(user.id, prefs);
+    setUserProfile(profile);
+  }
+
+  function handleManageSubscription() {
+    toast_("Subscription management via Stripe — coming in Phase 10");
   }
 
   function goHome() {
@@ -1748,6 +1796,75 @@ export default function App() {
     setGroceryInput("");
   }
 
+  if (liveShareToken) {
+    return <LiveViewPage shareToken={liveShareToken} toast={toast_} />;
+  }
+
+  if (view === "profile" && user) {
+    return (
+      <>
+        <div className={`app-wrap ${theme} profile-view-wrap`}>
+          <NavLogo onClick={goHome} className="app-global-home-logo" />
+          <nav className="nav-app nav app-nav-with-logo app-nav-minimal profile-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 24px 0 148px" }}>
+            <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <UserNavMenu
+                user={user}
+                profile={userProfile}
+                creditStatus={creditStatus}
+                onSignOut={handleSignOut}
+                onRefreshCredits={refreshCredits}
+                onOpenProfile={openProfile}
+                onOpenTrips={openMyTrips}
+              />
+            </div>
+          </nav>
+          <ProfilePage
+            user={user}
+            profile={userProfile}
+            creditStatus={creditStatus}
+            savedTrips={savedTrips}
+            isLoaded={isLoaded}
+            onBack={() => setView("app")}
+            onSignOut={handleSignOut}
+            onUpgrade={() => setShowUpgradeModal(true)}
+            onPlanTrip={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
+            onLoadTrip={handleViewTrip}
+            onDeleteTrip={deleteSavedTrip}
+            onSaveDisplayName={handleProfileSaveDisplayName}
+            onSaveHomeAddress={async (addr) => {
+              const profile = await saveHomeAddress(user.id, addr);
+              setUserProfile(profile);
+              setHomeAddress(addr);
+            }}
+            onSaveEmergencyContact={async (phone) => {
+              const profile = await saveEmergencyContact(user.id, phone);
+              setUserProfile(profile);
+            }}
+            onSaveNotifications={handleProfileSaveNotifications}
+            onUploadAvatar={handleProfileUploadAvatar}
+            onUpdateEmail={updateEmail}
+            onUpdatePassword={updatePassword}
+            onManageSubscription={handleManageSubscription}
+            toast={toast_}
+          />
+        </div>
+        {showUpgradeModal && (
+          <UpgradeModal
+            onClose={() => setShowUpgradeModal(false)}
+            creditStatus={creditStatus}
+          />
+        )}
+        <Toast
+          message={toast}
+          isGold={toastIsGold}
+          actionLabel={toastAction?.label}
+          onAction={toastAction?.onClick}
+        />
+      </>
+    );
+  }
+
   if (view === "hero") return (
     <>
       <HeroView
@@ -1788,6 +1905,11 @@ export default function App() {
         onShowEmailModal={() => openAuthModal("signup")}
         onShowPhoneModal={openPhoneModal}
         onGoHome={goHome}
+        onOpenProfile={openProfile}
+        onOpenTrips={openMyTrips}
+        userProfile={userProfile}
+        creditStatus={creditStatus}
+        onRefreshCredits={refreshCredits}
       />
       {authModal === "signup" && (
         <EmailModal
@@ -1864,8 +1986,22 @@ export default function App() {
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
           </div>
           <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            {liveSharingActive && (
+              <span className="nav-live-badge" title="Live location sharing active">
+                <span className="nav-live-badge-dot" aria-hidden="true" />
+                LIVE
+              </span>
+            )}
             {user ? (
-              <AccountBadge user={user} creditStatus={creditStatus} onSignOut={handleSignOut} onRefreshCredits={refreshCredits} />
+              <UserNavMenu
+                user={user}
+                profile={userProfile}
+                creditStatus={creditStatus}
+                onSignOut={handleSignOut}
+                onRefreshCredits={refreshCredits}
+                onOpenProfile={openProfile}
+                onOpenTrips={openMyTrips}
+              />
             ) : (
               <button type="button" className="nav-btn nav-btn-ghost" onClick={() => openAuthModal("signin")}>Log in</button>
             )}
@@ -2067,9 +2203,19 @@ export default function App() {
                   )}
                   {tab === "share" && (
                     <SharePanel
-                      onCopyLink={() => toast_("Link copied")}
+                      user={user}
+                      profile={userProfile}
+                      session={session}
+                      hasTrip={generated && (stops.length > 0 || roadStops.length > 0 || origin?.trim())}
+                      origin={origin}
+                      dest={dest}
+                      stops={stops}
+                      routeInfo={routeInfo}
+                      isLoaded={isLoaded}
+                      theme={theme}
+                      toast={toast_}
+                      onLiveSharingChange={setLiveSharingActive}
                       onShareTrip={handleShareItinerary}
-                      hasTrip={generated && (stops.length > 0 || roadStops.length > 0)}
                     />
                   )}
                 </div>
