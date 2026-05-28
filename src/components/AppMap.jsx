@@ -41,7 +41,8 @@ export default function AppMap({
   onMarkerSelect,
   onRecenter,
   theme = "night",
-  navigateHomeSlot = null,
+  onNavigateHome = null,
+  navigateHomePending = false,
   showRoutePill = true,
 }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
@@ -169,13 +170,14 @@ export default function AppMap({
           Calculating route…
         </div>
       )}
-      {navigateHomeSlot}
       {showRoutePill && (
         <MapRoutePill
           routeInfo={routeInfo}
           answers={answers}
           tripGenerating={tripGenerating}
           loadingMessageIndex={loadingMessageIndex}
+          onNavigateHome={onNavigateHome}
+          navigateHomePending={navigateHomePending}
         />
       )}
     </div>

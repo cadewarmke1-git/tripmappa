@@ -1923,11 +1923,8 @@ export default function App() {
               onMapStyleChange={setMapStyle}
               onRecenter={recenterMap}
               onMarkerSelect={handleMapMarkerSelect}
-              navigateHomeSlot={(
-                <button type="button" className="navigate-home-float" onClick={handleNavigateHome} disabled={navigateHomePending}>
-                  {navigateHomePending ? "Locating…" : "Navigate Home"}
-                </button>
-              )}
+              onNavigateHome={handleNavigateHome}
+              navigateHomePending={navigateHomePending}
               onMarkerAction={(action, marker) => {
                 if (action === "add") toast_("Added to trip");
                 focusMapOnStop(marker);
@@ -2058,11 +2055,8 @@ export default function App() {
               </div>
               {tab === "plan" && !cardCollapsed && (
                 <PlanPanelDock
-                  routeInfo={routeInfo}
-                  answers={answers}
-                  navigateHomePending={navigateHomePending}
-                  onNavigateHome={handleNavigateHome}
                   isLoaded={isLoaded}
+                  answers={answers}
                   origin={origin}
                   dest={dest}
                   timingMode={timingMode}

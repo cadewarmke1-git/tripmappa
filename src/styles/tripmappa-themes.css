@@ -101,18 +101,15 @@
   background: rgba(26,26,46,0.04) !important;
   border-top-color: rgba(26,26,46,0.08) !important;
 }
-.app-wrap.day .navigate-home-dock {
-  border-top-color: rgba(26,26,46,0.08) !important;
-  background: rgba(255,210,140,0.12) !important;
+.app-wrap.day .navigate-home-map {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(255, 210, 140, 0.45) !important;
   color: #c9922e !important;
+  box-shadow: 0 -4px 24px rgba(26, 26, 46, 0.1) !important;
 }
-.app-wrap.day .plan-route-info-bar {
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-top-color: rgba(255, 210, 140, 0.45) !important;
+.app-wrap.day .navigate-home-map:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.98) !important;
 }
-.app-wrap.day .plan-route-info-type { color: rgba(26, 26, 46, 0.65) !important; }
-.app-wrap.day .plan-route-info-val { color: #c9922e !important; }
-.app-wrap.day .plan-route-info-sep { color: rgba(26, 26, 46, 0.35) !important; }
 .app-wrap.day .route-input {
   background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.1) !important;
   color: #1a1a2e !important;
