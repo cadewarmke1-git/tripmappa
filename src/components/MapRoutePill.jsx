@@ -44,6 +44,7 @@ export default function MapRoutePill({
       {routeInfo && (
         <>
           <div className="map-route-pill" aria-live="polite">
+            {routeInfo.routeOptimized && <span className="map-route-badge map-route-badge-optimized">Optimized Route</span>}
             {routeInfo.truckSafe && <span className="map-route-badge">Truck Safe</span>}
             {routeInfo.rvSafe && <span className="map-route-badge">RV Safe</span>}
             {(routeInfo.scenic || isScenicRoute(answers)) && <span className="map-route-badge">Scenic</span>}

@@ -6,6 +6,7 @@ import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import TripSummaryFooter from "./TripSummaryFooter.jsx";
 import TripAlertsBanner from "../TripAlertsSection.jsx";
+import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 
 export default function TripResultsPanel({
@@ -23,6 +24,8 @@ export default function TripResultsPanel({
   tripAlerts = [],
   activitiesByCity = {},
   restaurantsByCity = {},
+  weatherByCity = {},
+  routeOptimized = false,
   departureTime,
   activeDayIndex = 0,
   highlightedStopId = null,
@@ -89,13 +92,16 @@ export default function TripResultsPanel({
         <TripOverviewHero
           origin={origin}
           dest={dest}
-          routeInfo={routeInfo}
+          routeInfo={{ ...routeInfo, routeOptimized }}
           stops={stops}
           roadStops={roadStops}
           answers={answers}
           tripLegs={tripLegs}
           selectedLodging={selectedLodging}
+          restaurantsByCity={restaurantsByCity}
         />
+
+        <WeatherWarningBanner alerts={tripAlerts} />
 
         {!simplified && days.length > 1 && (
           <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
@@ -106,8 +112,18 @@ export default function TripResultsPanel({
         {simplified ? (
           <SimpleTripSection
             days={days}
+            stops={stops}
             roadStops={roadStops}
             recommendations={recommendations}
+            answers={answers}
+            origin={origin}
+            dest={dest}
+            routeInfo={routeInfo}
+            weatherByCity={weatherByCity}
+            restaurantsByCity={restaurantsByCity}
+            selectedLodging={selectedLodging}
+            onLodgingSelect={onLodgingSelect}
+            onToast={onToast}
             onAddRoadStop={onAddRoadStop}
             highlightedStopId={highlightedStopId}
             stopRefs={stopRefs}
@@ -119,8 +135,12 @@ export default function TripResultsPanel({
               key={day.dayNumber}
               day={day}
               answers={answers}
+              origin={origin}
+              dest={dest}
               routeInfo={routeInfo}
               selectedLodging={selectedLodging}
+              weatherByCity={weatherByCity}
+              restaurantsByCity={restaurantsByCity}
               onLodgingSelect={onLodgingSelect}
               onToast={onToast}
               onAddRoadStop={onAddRoadStop}
@@ -138,6 +158,7 @@ export default function TripResultsPanel({
           tripLegs={tripLegs}
           roadStops={roadStops}
           selectedLodging={selectedLodging}
+          restaurantsByCity={restaurantsByCity}
           onShare={onShare}
         />
       </div>

@@ -22,6 +22,7 @@ export default function PlanPanel({
   returnedFromResults,
   roadStops,
   selectedLodging,
+  restaurantsByCity = {},
   convoEndRef,
   convoScrollRef,
   creditsLabel,
@@ -55,6 +56,7 @@ export default function PlanPanel({
                 tripLegs={tripLegs}
                 roadStops={roadStops}
                 selectedLodging={selectedLodging}
+                restaurantsByCity={restaurantsByCity}
               />
             )}
             {(currentQuestion || qIndex === -2) && (

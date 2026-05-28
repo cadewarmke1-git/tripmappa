@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import ItineraryStopCard from "./ItineraryStopCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
+import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
 import NearbyServicesSection from "../NearbyServicesSection.jsx";
 
 export default function ItineraryDaySection({
@@ -14,6 +15,7 @@ export default function ItineraryDaySection({
   onToast,
   onFocusMap,
   onAddRoadStop,
+  weatherByCity = {},
   isTruckerResults,
   isRvResults,
   sectionRef,
@@ -65,6 +67,13 @@ export default function ItineraryDaySection({
                     routeInfo={routeInfo}
                     selectedLodging={selectedLodging}
                     onLodgingSelect={onLodgingSelect}
+                    onToast={onToast}
+                  />
+                  <RestaurantCardsSection
+                    city={item.city}
+                    lat={item.lat}
+                    lng={item.lng}
+                    answers={answers}
                     onToast={onToast}
                   />
                   <NearbyServicesSection city={item.city} />

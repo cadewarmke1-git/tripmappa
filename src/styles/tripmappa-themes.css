@@ -247,6 +247,23 @@
   color: rgba(26,26,46,0.55) !important;
 }
 .app-wrap.day .lodging-card-rest-area { border-color: rgba(26,26,46,0.12) !important; }
+.app-wrap.day .restaurant-card {
+  background: rgba(255,255,255,0.92) !important;
+  border-color: rgba(26,26,46,0.1) !important;
+}
+.app-wrap.day .restaurant-card-name { color: #1a1a2e !important; }
+.app-wrap.day .restaurant-card-desc { color: rgba(26,26,46,0.65) !important; }
+.app-wrap.day .restaurant-section-label { color: rgba(26,26,46,0.5) !important; }
+.app-wrap.day .road-food-row { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
+.app-wrap.day .road-food-name { color: #1a1a2e !important; }
+.app-wrap.day .weather-warning-banner { background: rgba(220, 80, 80, 0.08) !important; }
+.app-wrap.day .weather-warning-item strong { color: #1a1a2e !important; }
+.app-wrap.day .weather-warning-item span { color: rgba(26,26,46,0.7) !important; }
+.app-wrap.day .simple-trip-weather-badge {
+  background: rgba(255,255,255,0.92) !important;
+  border-color: rgba(26,26,46,0.1) !important;
+}
+.app-wrap.day .simple-trip-weather-city { color: rgba(26,26,46,0.55) !important; }
 .app-wrap.day .fuel-stop-card {
   background: rgba(255,255,255,0.72) !important; border-color: rgba(26,26,46,0.1) !important;
 }

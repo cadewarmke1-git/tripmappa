@@ -1,5 +1,6 @@
 import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
+import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 
 export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = false, cardRef }) {
   function handleClick() {
@@ -44,6 +45,13 @@ export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = fals
         >
           Add to Trip
         </button>
+        {stop.category === "Food" && stop.nearbyRestaurants?.length > 0 && (
+          <div className="road-food-stops">
+            {stop.nearbyRestaurants.map(r => (
+              <RoadFoodStopRow key={r.placeId} restaurant={r} />
+            ))}
+          </div>
+        )}
       </div>
     </article>
   );

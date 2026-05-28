@@ -28,10 +28,12 @@ function AnimatedBudgetValue({ value, animateKey }) {
   return <span className={`budget-row-val${pop ? " animate" : ""}`}>${display.toLocaleString()}</span>;
 }
 
-export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [], selectedLodging = [], compact = false }) {
+export default function BudgetCard({
+  answers, routeInfo, tripLegs, roadStops = [], selectedLodging = [], restaurantsByCity = {}, compact = false,
+}) {
   const est = useMemo(
-    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging }),
-    [answers, routeInfo, tripLegs, roadStops, selectedLodging],
+    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
+    [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
   );
 
   const fuelReady = est.fuel != null;
@@ -88,7 +90,7 @@ export default function BudgetCard({ answers, routeInfo, tripLegs, roadStops = [
       <div className="budget-row">
         <span className="budget-row-label">Food</span>
         {foodReady
-          ? <AnimatedBudgetValue value={est.food ?? 0} animateKey={`food-${est.food}-${est.addedFoodCost}`} />
+          ? <AnimatedBudgetValue value={est.food ?? 0} animateKey={`food-${est.food}-${est.addedFoodCost}-${Object.keys(restaurantsByCity).length}`} />
           : <span className="budget-shimmer" />}
       </div>
       <div className="budget-row budget-row-total">

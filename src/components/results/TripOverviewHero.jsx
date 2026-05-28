@@ -3,10 +3,10 @@ import { computeBudgetEstimate } from "../../lib/budget.js";
 import { parseTravelerCount } from "../../lib/vehicles.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
-export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging }) {
+export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {} }) {
   const budget = useMemo(
-    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging }),
-    [answers, routeInfo, tripLegs, roadStops, selectedLodging],
+    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
+    [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
   );
 
   const overview = getItineraryOverview({

@@ -1,7 +1,7 @@
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { hasPref, parseTravelerCount } from "./vehicles.js";
 import { countFlowQuestionsAnswered } from "./tripFlow.js";
-import { estimateTripFuelCost, estimateStopCost, parsePriceString } from "./fuel.js";
+import { estimateFoodCostFromRestaurants } from "./restaurantPlaces.js";
 
 export const LODGING_NIGHTLY_RATES = {
   Budget: 65,
@@ -69,7 +69,7 @@ function buildAddedStopItems(roadStops) {
 }
 
 export function computeBudgetEstimate(answers, routeInfo, tripLegs, options = {}) {
-  const { roadStops = [], selectedLodging = [] } = options;
+  const { roadStops = [], selectedLodging = [], restaurantsByCity = {} } = options;
 
   let miles = parseMilesFromDistance(routeInfo?.distance);
   if (!miles && tripLegs.length > 0) {
@@ -108,7 +108,11 @@ export function computeBudgetEstimate(answers, routeInfo, tripLegs, options = {}
   const tripDays = hours ? Math.max(1, Math.ceil(hours / 8)) : null;
   const partySize = parseTravelerCount(answers.travelers) ?? 2;
   let food = null;
-  if (tripDays) {
+
+  const placesFood = estimateFoodCostFromRestaurants(restaurantsByCity, answers, nights);
+  if (placesFood != null) {
+    food = placesFood + addedFoodCost;
+  } else if (tripDays) {
     const wantsRestaurants = hasPref(answers, "Sit down restaurants only")
       || hasPref(answers, "Fast food only");
     const perPersonPerDay = wantsRestaurants ? 32 : 12;

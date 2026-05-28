@@ -785,6 +785,11 @@
     font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
     background: #FFD28C; color: #1a1a2e; padding: 2px 7px; border-radius: 99px;
   }
+  .map-route-badge-optimized {
+    background: rgba(107, 203, 119, 0.25);
+    color: #6BCB77;
+    border: 1px solid rgba(107, 203, 119, 0.45);
+  }
 
   /* Floating card — moody mountain-lodge frosted glass */
   .float-card {
@@ -2345,6 +2350,130 @@
   .guest-signup-banner-close {
     width: 28px; height: 28px; border: none; background: transparent; font-size: 20px; cursor: pointer; opacity: 0.6; color: inherit;
   }
+
+  /* Restaurant cards — Phase 5 */
+  .restaurant-section { margin-top: 20px; }
+  .restaurant-section-label {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.55);
+    margin-bottom: 10px;
+  }
+  .restaurant-cards-scroll {
+    display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  }
+  .restaurant-cards-scroll::-webkit-scrollbar { display: none; }
+  .restaurant-card {
+    flex: 0 0 min(88%, 340px); scroll-snap-align: start;
+    border-radius: 16px; overflow: hidden;
+    background: rgba(15, 20, 40, 0.72);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid rgba(255, 210, 140, 0.18);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  }
+  .restaurant-card-photo-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; }
+  .restaurant-card-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .restaurant-card-photo-fallback {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 48px; background: rgba(255,210,140,0.08);
+  }
+  .restaurant-card-photo-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,12,24,0.85) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .restaurant-card-photo-badges {
+    position: absolute; bottom: 10px; left: 10px; right: 10px;
+    display: flex; flex-wrap: wrap; gap: 6px; z-index: 1;
+  }
+  .restaurant-cuisine-badge, .restaurant-slot-badge, .restaurant-feature-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 99px; background: rgba(255,210,140,0.92); color: #1a1a2e;
+  }
+  .restaurant-slot-badge { background: rgba(255,255,255,0.9); }
+  .restaurant-card-body { padding: 14px 16px 16px; }
+  .restaurant-card-name {
+    font-family: "Fraunces", Georgia, serif; font-size: 18px; font-weight: 700;
+    margin: 0 0 8px; letter-spacing: -0.02em; color: #fff;
+  }
+  .restaurant-card-meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .restaurant-stars { display: inline-flex; align-items: center; gap: 2px; }
+  .restaurant-star { font-size: 14px; color: rgba(255,255,255,0.25); line-height: 1; }
+  .restaurant-star.filled { color: #FFD28C; }
+  .restaurant-star-val { font-size: 12px; font-weight: 700; color: #FFD28C; margin-left: 4px; font-family: 'Inter', sans-serif; }
+  .restaurant-price-signs { font-size: 13px; font-weight: 800; color: #FFD28C; font-family: 'Inter', sans-serif; }
+  .restaurant-open-status { font-size: 11px; font-weight: 700; font-family: 'Inter', sans-serif; }
+  .restaurant-open-status.open { color: #6BCB77; }
+  .restaurant-open-status.closed { color: rgba(220, 100, 100, 0.85); }
+  .restaurant-open-status.unknown { color: rgba(255,255,255,0.45); }
+  .restaurant-card-distance { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-family: 'Inter', sans-serif; }
+  .restaurant-card-desc {
+    font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.75);
+    margin: 0 0 12px; font-family: 'Inter', sans-serif;
+  }
+  .restaurant-card-actions { display: flex; gap: 8px; }
+  .restaurant-btn-directions, .restaurant-btn-reserve {
+    flex: 1; padding: 9px 12px; border-radius: 10px; font-size: 12px; font-weight: 700;
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.2s var(--ease);
+  }
+  .restaurant-btn-directions {
+    border: 1px solid rgba(255,210,140,0.35); background: rgba(255,210,140,0.12); color: #FFD28C;
+  }
+  .restaurant-btn-directions:hover { background: rgba(255,210,140,0.22); }
+  .restaurant-btn-reserve {
+    border: 1px solid rgba(255,210,140,0.5); background: #FFD28C; color: #1a1a2e;
+  }
+  .restaurant-btn-reserve:hover { background: #ffe0a8; }
+  .restaurant-disclaimer {
+    margin: 10px 0 0; font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif;
+  }
+  .restaurant-empty { font-size: 13px; color: var(--muted); padding: 8px 0; }
+  .restaurant-card-skeleton .restaurant-card-photo-wrap { min-height: 160px; }
+  .restaurant-skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 8px; }
+  .restaurant-skeleton-line.short { width: 60%; }
+  @media (min-width: 768px) {
+    .restaurant-cards-scroll { flex-direction: column; overflow-x: visible; gap: 16px; }
+    .restaurant-card { flex: none; width: 100%; max-width: none; }
+  }
+  .road-food-stops { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .road-food-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 8px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+    font-family: 'Inter', sans-serif; font-size: 12px;
+  }
+  .road-food-name { font-weight: 700; color: #fff; }
+  .road-food-cuisine { color: rgba(255,255,255,0.65); }
+  .road-food-rating { color: #FFD28C; font-weight: 700; }
+  .road-food-distance { color: var(--muted); }
+  .road-food-sep { color: rgba(255,255,255,0.3); }
+  .overnight-weather-badge {
+    position: absolute; top: 12px; right: 12px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 99px;
+    background: rgba(15, 20, 40, 0.82); border: 1px solid rgba(255,255,255,0.15);
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #fff;
+  }
+  .overnight-weather-temp { color: #FFD28C; }
+  .weather-warning-banner {
+    display: flex; gap: 12px; align-items: flex-start;
+    margin: 0 0 16px; padding: 14px 16px; border-radius: 12px;
+    background: rgba(220, 80, 80, 0.12); border: 1px solid rgba(220, 100, 100, 0.35);
+  }
+  .weather-warning-icon { font-size: 20px; flex-shrink: 0; }
+  .weather-warning-content { display: flex; flex-direction: column; gap: 8px; }
+  .weather-warning-item strong { display: block; font-size: 13px; margin-bottom: 2px; color: #fff; }
+  .weather-warning-item span { font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.45; }
+  .simple-trip-weather-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: 12px; padding: 8px 12px; border-radius: 99px;
+    background: rgba(15, 20, 40, 0.72); border: 1px solid rgba(255,255,255,0.12);
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+  }
+  .simple-trip-weather-city { color: rgba(255,255,255,0.65); font-weight: 500; }
 
   /* Stop highlight sync */
   .stop-highlighted {

@@ -71,6 +71,7 @@ function mapRoadItem(rs, key) {
     localFavorite: isLocalFavorite(rating),
     action: "add",
     stopData: rs,
+    nearbyRestaurants: rs.nearbyRestaurants,
   };
 }
 

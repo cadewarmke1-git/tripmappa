@@ -1,17 +1,39 @@
 import RoadStopCard from "./RoadStopCard.jsx";
 import ActivityDiningCard from "./ActivityDiningCard.jsx";
+import OvernightStayCard from "./OvernightStayCard.jsx";
+import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
+import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
+
+function findCityData(map, city) {
+  if (!city || !map) return null;
+  if (map[city]) return map[city];
+  const key = Object.keys(map).find(k =>
+    k.split(",")[0].trim().toLowerCase() === city.split(",")[0].trim().toLowerCase(),
+  );
+  return key ? map[key] : null;
+}
 
 export default function SimpleTripSection({
   days,
   roadStops,
+  stops = [],
   recommendations = [],
+  answers,
+  origin,
+  dest,
+  routeInfo,
+  weatherByCity = {},
+  restaurantsByCity = {},
+  selectedLodging = [],
+  onLodgingSelect,
+  onToast,
   onAddRoadStop,
   highlightedStopId,
   stopRefs,
   onStopSelect,
 }) {
   const day = days[0];
-  const stops = day?.roadStops?.length ? day.roadStops : roadStops.map((rs, i) => ({
+  const roadItems = day?.roadStops?.length ? day.roadStops : roadStops.map((rs, i) => ({
     id: rs.id || `road-${i}`,
     title: rs.name,
     category: rs.category,
@@ -21,6 +43,7 @@ export default function SimpleTripSection({
     lat: rs.lat,
     lng: rs.lng,
     stopData: rs,
+    nearbyRestaurants: rs.nearbyRestaurants,
   }));
 
   const recs = recommendations.length
@@ -33,6 +56,14 @@ export default function SimpleTripSection({
       distanceMiles: r.distanceMiles,
     }))
     : (day?.activities || []);
+
+  const mealStops = day?.overnight
+    ? [day.overnight]
+    : stops.filter(s => s.city).length
+      ? stops.filter(s => s.city)
+      : dest
+        ? [{ city: dest, lat: null, lng: null, id: "dest-meal" }]
+        : [];
 
   function setStopRef(id) {
     return (el) => {
@@ -53,11 +84,11 @@ export default function SimpleTripSection({
         </p>
       )}
 
-      {stops.length > 0 && (
+      {roadItems.length > 0 && (
         <div className="results-subsection">
           <h3 className="results-subsection-label">Stops Along the Way</h3>
           <div className="results-road-stops-scroll">
-            {stops.map(stop => (
+            {roadItems.map(stop => (
               <RoadStopCard
                 key={stop.id}
                 stop={stop}
@@ -70,6 +101,73 @@ export default function SimpleTripSection({
           </div>
         </div>
       )}
+
+      {day?.overnight && (
+        <div className="results-subsection">
+          <h3 className="results-subsection-label">Tonight&apos;s Stay</h3>
+          <OvernightStayCard
+            overnight={day.overnight}
+            answers={answers}
+            routeInfo={routeInfo}
+            selectedLodging={selectedLodging}
+            weather={findCityData(weatherByCity, day.overnight.city)}
+            onLodgingSelect={onLodgingSelect}
+            onToast={onToast}
+            onSelect={onStopSelect}
+            highlighted={highlightedStopId === (day.overnight.id || `overnight-${day.overnight.city}`)}
+            cardRef={setStopRef(day.overnight.id || `overnight-${day.overnight.city}`)}
+          />
+          <LodgingCardsSection
+            city={day.overnight.city}
+            answers={answers}
+            origin={origin}
+            dest={dest}
+            routeInfo={routeInfo}
+            selectedLodging={selectedLodging}
+            onLodgingSelect={onLodgingSelect}
+            onToast={onToast}
+          />
+          <RestaurantCardsSection
+            city={day.overnight.city}
+            lat={day.overnight.lat}
+            lng={day.overnight.lng}
+            answers={answers}
+            preloaded={findCityData(restaurantsByCity, day.overnight.city)}
+            onToast={onToast}
+          />
+        </div>
+      )}
+
+      {!day?.overnight && mealStops.map((stop, idx) => {
+        const city = stop.city || dest;
+        const weather = findCityData(weatherByCity, city);
+        const preloaded = findCityData(restaurantsByCity, city);
+        const lat = stop.lat ?? weather?.lat;
+        const lng = stop.lng ?? weather?.lng;
+        if (!city) return null;
+        return (
+          <div className="results-subsection" key={stop.id || `meal-${idx}`}>
+            <h3 className="results-subsection-label">
+              {idx === 0 && dest ? "Meals near your destination" : `Meals in ${city.split(",")[0]}`}
+            </h3>
+            {weather?.temperatureDisplay && (
+              <div className="simple-trip-weather-badge" title={weather.condition}>
+                <span className="overnight-weather-icon" aria-hidden="true">{weather.icon}</span>
+                <span className="overnight-weather-temp">{weather.temperatureDisplay}</span>
+                <span className="simple-trip-weather-city">{city.split(",")[0]}</span>
+              </div>
+            )}
+            <RestaurantCardsSection
+              city={city}
+              lat={lat}
+              lng={lng}
+              answers={answers}
+              preloaded={preloaded}
+              onToast={onToast}
+            />
+          </div>
+        );
+      })}
 
       {recs.length > 0 && (
         <div className="results-subsection">

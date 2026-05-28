@@ -1,9 +1,8 @@
-/** Post-generation enrichment: Places data, alerts, and map markers. */
+/** Post-generation enrichment: Places data, restaurants, weather, alerts, and map markers. */
 import {
   geocodeCity,
   searchNearbyServices,
   searchInterestPOIs,
-  searchRestaurants,
   searchNearbyCategory,
   RADIUS_2MI,
 } from "./placesSearch.js";
@@ -18,6 +17,10 @@ import { buildFuelIntervalPoints, getFuelStopMode, sampleRoutePointsEveryMiles }
 import { buildRoadStopsFromRoute } from "./roadStopsFromPlaces.js";
 import { computeBudgetEstimate } from "./budget.js";
 import { parseMilesFromDistance } from "./parsing.js";
+import { fetchRestaurantsForStop } from "./restaurantsClient.js";
+import { fetchWeatherForStops } from "./weatherClient.js";
+import { fetchGeocode } from "./geocodeClient.js";
+import { optimizeStopOrder, shouldOptimizeRoute } from "./routeOptimization.js";
 
 const BASE_SERVICE_IDS = [
   "pharmacy", "hospital", "urgent_care", "auto_repair", "atm",
@@ -38,6 +41,15 @@ function serviceCategoriesForAnswers() {
     .filter(Boolean);
 }
 
+async function resolveStopGeo(stop, mapsReady) {
+  if (stop.lat != null && stop.lng != null) {
+    return { lat: stop.lat, lng: stop.lng };
+  }
+  if (!stop.city) return null;
+  if (mapsReady) return geocodeCity(stop.city);
+  return fetchGeocode(stop.city);
+}
+
 export async function enrichGeneratedTrip({
   answers,
   routeInfo,
@@ -47,68 +59,138 @@ export async function enrichGeneratedTrip({
   selectedLodging = [],
   timingMode = "leave_now",
   departureTime = null,
+  origin = null,
+  destination = null,
+  mapsReady = true,
 }) {
   const nearbyServicesByCity = {};
   const activitiesByCity = {};
   const restaurantsByCity = {};
+  const weatherByCity = {};
   const optionalStopCards = [];
   const poiMarkers = [];
-  const enrichedStops = stops.map(s => ({ ...s }));
+  let enrichedStops = stops.map(s => ({ ...s }));
   let safeRoadStops = roadStops.map(rs => ({ ...rs }));
+  let routeOptimized = false;
 
-  const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
-  safeRoadStops = corridorRoadStops;
+  if (shouldOptimizeRoute(answers, enrichedStops) && origin && destination) {
+    for (const stop of enrichedStops) {
+      if (!stop.city || (stop.lat != null && stop.lng != null)) continue;
+      const geo = await resolveStopGeo(stop, mapsReady);
+      if (geo) {
+        stop.lat = geo.lat;
+        stop.lng = geo.lng;
+      }
+    }
+    const { stops: reordered, optimized } = await optimizeStopOrder(origin, destination, enrichedStops);
+    if (optimized) {
+      enrichedStops = reordered;
+      routeOptimized = true;
+    }
+  }
 
-  const interests = asArray(answers?.stops_interests).filter(i => i !== "No specific interests");
-  const serviceCats = serviceCategoriesForAnswers();
-  const wantsPlaygrounds = interests.some(i => /playground|park/i.test(i));
+  if (mapsReady && routeInfo?.routePoints?.length) {
+    const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
+    safeRoadStops = corridorRoadStops;
+  }
+
+  const interests = mapsReady
+    ? asArray(answers?.stops_interests).filter(i => i !== "No specific interests")
+    : [];
+  const serviceCats = mapsReady ? serviceCategoriesForAnswers() : [];
+  const wantsPlaygrounds = mapsReady && interests.some(i => /playground|park/i.test(i));
 
   for (const stop of enrichedStops) {
     if (!stop.city) continue;
-    const geo = await geocodeCity(stop.city);
+    const geo = await resolveStopGeo(stop, mapsReady);
     if (!geo) continue;
     stop.lat = stop.lat ?? geo.lat;
     stop.lng = stop.lng ?? geo.lng;
 
-    nearbyServicesByCity[stop.city] = await searchNearbyServices(geo.lat, geo.lng, serviceCats);
-    restaurantsByCity[stop.city] = await searchRestaurants(geo.lat, geo.lng, answers);
+    if (mapsReady) {
+      nearbyServicesByCity[stop.city] = await searchNearbyServices(geo.lat, geo.lng, serviceCats);
 
-    for (const interest of interests) {
-      const pois = await searchInterestPOIs(geo.lat, geo.lng, interest);
-      if (!activitiesByCity[stop.city]) activitiesByCity[stop.city] = [];
-      pois.forEach(p => {
-        const entry = { ...p, interest, admissionEstimate: interest.includes("Kid friendly") ? "$15–45/person (est.)" : null };
-        activitiesByCity[stop.city].push(entry);
-        if (p.lat != null && p.lng != null) {
+      for (const interest of interests) {
+        const pois = await searchInterestPOIs(geo.lat, geo.lng, interest);
+        if (!activitiesByCity[stop.city]) activitiesByCity[stop.city] = [];
+        pois.forEach(p => {
+          const entry = { ...p, interest, admissionEstimate: interest.includes("Kid friendly") ? "$15–45/person (est.)" : null };
+          activitiesByCity[stop.city].push(entry);
+          if (p.lat != null && p.lng != null) {
+            poiMarkers.push({
+              id: p.id,
+              lat: p.lat,
+              lng: p.lng,
+              category: interestToMarkerCategory(interest),
+              title: p.name,
+              subtitle: p.address || `${p.distanceMiles ?? "?"} mi`,
+              hours: p.hours,
+              rating: p.rating,
+            });
+          }
+        });
+      }
+
+      Object.entries(nearbyServicesByCity[stop.city] || {}).forEach(([key, items]) => {
+        items?.forEach(item => {
+          if (item.lat == null || item.lng == null) return;
+          const cat = key === "hospital" || key === "pharmacy" ? "medical" : null;
+          if (!cat) return;
           poiMarkers.push({
-            id: p.id,
-            lat: p.lat,
-            lng: p.lng,
-            category: interestToMarkerCategory(interest),
-            title: p.name,
-            subtitle: p.address || `${p.distanceMiles ?? "?"} mi`,
-            hours: p.hours,
-            rating: p.rating,
+            id: `svc-${key}-${item.id}`,
+            lat: item.lat,
+            lng: item.lng,
+            category: cat,
+            title: item.name,
+            subtitle: item.phone ? `${item.distanceMiles ?? "?"} mi · ${item.phone}` : `${item.distanceMiles ?? "?"} mi`,
           });
-        }
+        });
       });
     }
 
-    Object.entries(nearbyServicesByCity[stop.city] || {}).forEach(([key, items]) => {
-      items?.forEach(item => {
-        if (item.lat == null || item.lng == null) return;
-        const cat = key === "hospital" || key === "pharmacy" ? "medical" : null;
-        if (!cat) return;
-        poiMarkers.push({
-          id: `svc-${key}-${item.id}`,
-          lat: item.lat,
-          lng: item.lng,
-          category: cat,
-          title: item.name,
-          subtitle: item.phone ? `${item.distanceMiles ?? "?"} mi · ${item.phone}` : `${item.distanceMiles ?? "?"} mi`,
-        });
-      });
+    restaurantsByCity[stop.city] = await fetchRestaurantsForStop({
+      lat: geo.lat,
+      lng: geo.lng,
+      city: stop.city,
+      answers,
+      limit: 6,
     });
+  }
+
+  // Day / simple trips: enrich destination when no overnight stops
+  const weatherStops = [...enrichedStops];
+  if (!enrichedStops.length && destination) {
+    const destGeo = await resolveStopGeo({ city: destination }, mapsReady);
+    if (destGeo) {
+      restaurantsByCity[destination] = await fetchRestaurantsForStop({
+        lat: destGeo.lat,
+        lng: destGeo.lng,
+        city: destination,
+        answers,
+        limit: 6,
+      });
+      weatherStops.push({ city: destination, lat: destGeo.lat, lng: destGeo.lng });
+    }
+  }
+
+  const weatherData = await fetchWeatherForStops(weatherStops);
+  Object.assign(weatherByCity, weatherData.weatherByCity || {});
+
+  for (const rs of safeRoadStops) {
+    const cat = (rs.category || "").toLowerCase();
+    if (!/food|rest|dining|meal/i.test(cat) && !/mcdonald|starbucks|restaurant|diner|food/i.test(rs.name || "")) {
+      continue;
+    }
+    if (rs.lat == null || rs.lng == null) continue;
+    const quick = await fetchRestaurantsForStop({
+      lat: rs.lat,
+      lng: rs.lng,
+      city: rs.location || rs.name,
+      answers,
+      roadStop: true,
+      limit: 4,
+    });
+    rs.nearbyRestaurants = quick.slice(0, 2);
   }
 
   if (wantsPlaygrounds && routeInfo?.routePoints?.length) {
@@ -142,7 +224,11 @@ export async function enrichGeneratedTrip({
     ? buildFuelIntervalPoints(routeInfo.routePoints, enrichedStops.length, totalMiles, answers)
     : [];
 
-  const budget = computeBudgetEstimate(answers, routeInfo, [], { roadStops: safeRoadStops, selectedLodging });
+  const budget = computeBudgetEstimate(answers, routeInfo, [], {
+    roadStops: safeRoadStops,
+    selectedLodging,
+    restaurantsByCity,
+  });
   const depTime = departureTime || (timingMode === "leave_now" ? new Date() : null);
 
   const tripAlerts = computeTripAlerts({
@@ -155,6 +241,11 @@ export async function enrichGeneratedTrip({
     budgetTotal: budget.total,
     departureTime: depTime,
   });
+
+  const weatherAlerts = (weatherData.severeAlerts || []).filter(
+    a => !tripAlerts.some(t => t.id === a.id),
+  );
+  tripAlerts.unshift(...weatherAlerts);
 
   const cap = getTripBudgetCap(answers);
   if (cap != null && budget.total != null && cap - budget.total <= 50 && enrichedStops.length) {
@@ -180,6 +271,8 @@ export async function enrichGeneratedTrip({
     nearbyServicesByCity,
     activitiesByCity,
     restaurantsByCity,
+    weatherByCity,
+    routeOptimized,
     optionalStopCards,
     tripAlerts,
     mapMarkers,

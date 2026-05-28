@@ -109,6 +109,8 @@ export default function App() {
   const [nearbyServicesByCity, setNearbyServicesByCity] = useState({});
   const [activitiesByCity, setActivitiesByCity] = useState({});
   const [restaurantsByCity, setRestaurantsByCity] = useState({});
+  const [weatherByCity, setWeatherByCity] = useState({});
+  const [routeOptimized, setRouteOptimized] = useState(false);
   const [optionalStopCards, setOptionalStopCards] = useState([]);
   const [nightSegmentPaths, setNightSegmentPaths] = useState([]);
   const [lowFuelSegmentPaths, setLowFuelSegmentPaths] = useState([]);
@@ -720,6 +722,8 @@ export default function App() {
     setNearbyServicesByCity({});
     setActivitiesByCity({});
     setRestaurantsByCity({});
+    setWeatherByCity({});
+    setRouteOptimized(false);
     setOptionalStopCards([]);
     setNightSegmentPaths([]);
     setLowFuelSegmentPaths([]);
@@ -1405,7 +1409,7 @@ export default function App() {
   }, [routeInfo, answers, getDepartureTime]);
 
   async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers) {
-    if (!isLoaded || !window.google) return null;
+    const mapsReady = isLoaded && !!window.google;
     try {
       const enriched = await enrichGeneratedTrip({
         answers: normalizedAnswers,
@@ -1416,16 +1420,28 @@ export default function App() {
         selectedLodging,
         timingMode,
         departureTime: getDepartureTime(),
+        origin: originRef.current?.value?.trim() || origin,
+        destination: destRef.current?.value?.trim() || dest,
+        mapsReady,
       });
       setStops(enriched.stops);
       setRoadStops(enriched.roadStops);
       setNearbyServicesByCity(enriched.nearbyServicesByCity);
       setActivitiesByCity(enriched.activitiesByCity);
       setRestaurantsByCity(enriched.restaurantsByCity || {});
+      setWeatherByCity(enriched.weatherByCity || {});
+      setRouteOptimized(enriched.routeOptimized || false);
+      if (enriched.routeOptimized) {
+        setRouteInfo(prev => (prev ? { ...prev, routeOptimized: true } : prev));
+      }
       setOptionalStopCards(enriched.optionalStopCards || []);
       setTripAlerts(consolidateAndCapAlerts(enriched.tripAlerts));
       setActiveDayIndex(0);
-      setMapMarkers(enriched.mapMarkers);
+      setMapMarkers(
+        mapsReady
+          ? enriched.mapMarkers
+          : stopsToMapMarkers(enriched.stops, enriched.roadStops, customStops, [], answers),
+      );
       setDismissedAlerts([]);
       return enriched;
     } catch (err) {
@@ -1593,6 +1609,8 @@ export default function App() {
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
     setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
     setRestaurantsByCity({});
+    setWeatherByCity({});
+    setRouteOptimized(false);
     setNightSegmentPaths([]); setLowFuelSegmentPaths([]);
     setActiveDayIndex(0); setMapFocusTarget(null);
     setResultsView("planning");
@@ -1640,7 +1658,7 @@ export default function App() {
 
   useEffect(() => {
     if (!generated) return;
-    const budget = computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging });
+    const budget = computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity });
     setTripAlerts(prev => {
       const base = prev.filter(a => a.type !== "budget");
       const cap = getTripBudgetCap(answers);
@@ -1666,7 +1684,7 @@ export default function App() {
       }
       return consolidateAndCapAlerts([...base, ...budgetAlerts]);
     });
-  }, [generated, answers, routeInfo, tripLegs, roadStops, selectedLodging]);
+  }, [generated, answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity]);
 
   function goBackOneQuestion() {
     if (questionHistory.length === 0) return;
@@ -1870,6 +1888,8 @@ export default function App() {
             tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
             activitiesByCity={activitiesByCity}
             restaurantsByCity={restaurantsByCity}
+            weatherByCity={weatherByCity}
+            routeOptimized={routeOptimized}
             departureTime={departureTime}
             activeDayIndex={activeDayIndex}
             highlightedStopId={highlightedStopId}
@@ -2022,6 +2042,7 @@ export default function App() {
                       questionHistoryLength={questionHistory.length}
                       roadStops={roadStops}
                       selectedLodging={selectedLodging}
+                      restaurantsByCity={restaurantsByCity}
                       convoEndRef={convoEndRef}
                       convoScrollRef={convoScrollRef}
                       creditsLabel={formatCreditsLabel(creditStatus)}

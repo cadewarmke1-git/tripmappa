@@ -10,6 +10,7 @@ export default function OvernightStayCard({
   answers,
   routeInfo,
   selectedLodging,
+  weather = null,
   onLodgingSelect,
   onToast,
   onSelect,
@@ -84,6 +85,12 @@ export default function OvernightStayCard({
           className="overnight-card-photo-fallback"
         />
         <div className="overnight-card-gradient"/>
+        {weather?.temperatureDisplay && (
+          <div className="overnight-weather-badge" title={weather.condition}>
+            <span className="overnight-weather-icon" aria-hidden="true">{weather.icon}</span>
+            <span className="overnight-weather-temp">{weather.temperatureDisplay}</span>
+          </div>
+        )}
       </div>
       <div className="overnight-card-body">
         <h3 className="overnight-card-name">{name}</h3>

@@ -2,12 +2,18 @@ import { useRef, useEffect, useCallback } from "react";
 import RoadStopCard from "./RoadStopCard.jsx";
 import OvernightStayCard from "./OvernightStayCard.jsx";
 import ActivityDiningCard from "./ActivityDiningCard.jsx";
+import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
+import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
 
 export default function ResultsDaySection({
   day,
   answers,
+  origin,
+  dest,
   routeInfo,
   selectedLodging,
+  weatherByCity = {},
+  restaurantsByCity = {},
   onLodgingSelect,
   onToast,
   onAddRoadStop,
@@ -78,11 +84,30 @@ export default function ResultsDaySection({
             answers={answers}
             routeInfo={routeInfo}
             selectedLodging={selectedLodging}
+            weather={weatherByCity[day.overnight.city]}
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
             onSelect={onStopSelect}
             highlighted={highlightedStopId === (day.overnight.id || `overnight-${day.overnight.city}`)}
             cardRef={setStopRef(day.overnight.id || `overnight-${day.overnight.city}`)}
+          />
+          <LodgingCardsSection
+            city={day.overnight.city}
+            answers={answers}
+            origin={origin}
+            dest={dest}
+            routeInfo={routeInfo}
+            selectedLodging={selectedLodging}
+            onLodgingSelect={onLodgingSelect}
+            onToast={onToast}
+          />
+          <RestaurantCardsSection
+            city={day.overnight.city}
+            lat={day.overnight.lat}
+            lng={day.overnight.lng}
+            answers={answers}
+            preloaded={restaurantsByCity?.[day.overnight.city]}
+            onToast={onToast}
           />
         </div>
       )}
