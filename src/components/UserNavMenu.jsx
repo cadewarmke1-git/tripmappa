@@ -16,6 +16,13 @@ export default function UserNavMenu({
 
   const displayName = getDisplayName(user, profile);
   const isPremium = creditStatus?.tier === "premium";
+  const creditsLine = creditStatus?.unlimited
+    ? "Unlimited generations"
+    : creditStatus?.tier === "guest"
+      ? `${creditStatus.remaining ?? 1} free try left`
+      : creditStatus != null
+        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} generations left`
+        : null;
 
   useEffect(() => {
     if (!open) return;
@@ -57,10 +64,13 @@ export default function UserNavMenu({
             <div>
               <div className="user-nav-menu-dropdown-name">{displayName}</div>
               <div className="user-nav-menu-dropdown-email">{user?.email || ""}</div>
+              {creditsLine && (
+                <div className="user-nav-menu-dropdown-credits">{creditsLine}</div>
+              )}
             </div>
           </div>
           <button type="button" className="user-nav-menu-item" onClick={() => closeAnd(onOpenProfile)}>
-            Profile
+            Profile & settings
           </button>
           <button type="button" className="user-nav-menu-item" onClick={() => closeAnd(onOpenTrips)}>
             My Trips

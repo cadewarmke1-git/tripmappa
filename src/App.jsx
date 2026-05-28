@@ -61,6 +61,7 @@ import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
 import NavLogo from "./components/NavLogo.jsx";
 import UserNavMenu from "./components/UserNavMenu.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 export default function App() {
   const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
@@ -686,6 +687,11 @@ export default function App() {
     convoComplete,
   }), [answers, questionHistory.length, convoComplete, origin, dest, routeInfo]);
 
+  const inQuestionFlow = !generated && Boolean(
+    currentQuestion || (convoComplete && !returnedFromResults),
+  );
+  const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
+
   function refreshCredits() {
     if (user && session?.access_token) {
       fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
@@ -946,8 +952,8 @@ export default function App() {
 
   const scrollPlanToTop = useCallback(() => {
     window.scrollTo(0, 0);
-    convoScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
-    floatCardScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    convoScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    floatCardScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
   useEffect(() => {
@@ -1279,23 +1285,28 @@ export default function App() {
 
   function submitAnswer(value, extraFields = {}) {
     if (!currentQuestion) return;
-    const ctx = buildQuestionContext({ ...answers, ...extraFields, [currentQuestion.id]: value });
-    const na = normalizeTripAnswers(
-      { ...answers, ...extraFields, [currentQuestion.id]: value },
-      ctx,
-    );
+    try {
+      const ctx = buildQuestionContext({ ...answers, ...extraFields, [currentQuestion.id]: value });
+      const na = normalizeTripAnswers(
+        { ...answers, ...extraFields, [currentQuestion.id]: value },
+        ctx,
+      );
 
-    setAnswers(na);
-    setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
-    loadNextQuestion(na);
-    if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
-      fetchDirections(na.vehicle);
-    }
-    if (currentQuestion.id === "fuel_type" && originRef.current?.value && destRef.current?.value) {
-      fetchDirections(getEffectiveVehicle(na));
-    }
-    if (currentQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
-      fetchDirections(na.vehicle);
+      setAnswers(na);
+      setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
+      loadNextQuestion(na);
+      if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
+        fetchDirections(na.vehicle);
+      }
+      if (currentQuestion.id === "fuel_type" && originRef.current?.value && destRef.current?.value) {
+        fetchDirections(getEffectiveVehicle(na));
+      }
+      if (currentQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
+        fetchDirections(na.vehicle);
+      }
+    } catch (err) {
+      console.error("submitAnswer failed:", err);
+      toast_(err.message || "Could not save your answer");
     }
   }
 
@@ -1819,6 +1830,7 @@ export default function App() {
               />
             </div>
           </nav>
+          <ErrorBoundary label="profile" title="Could not show profile">
           <ProfilePage
             user={user}
             profile={userProfile}
@@ -1848,6 +1860,7 @@ export default function App() {
             onManageSubscription={handleManageSubscription}
             toast={toast_}
           />
+          </ErrorBoundary>
         </div>
         {showUpgradeModal && (
           <UpgradeModal
@@ -1981,6 +1994,13 @@ export default function App() {
                 {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
                   <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
                 ))}
+                <button
+                  type="button"
+                  className={`nav-tab nav-tab-profile${view === "profile" ? " active" : ""}`}
+                  onClick={() => (user ? openProfile() : openAuthModal("signin"))}
+                >
+                  Profile
+                </button>
               </>
             )}
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -2009,7 +2029,8 @@ export default function App() {
         </nav>
 
         {generated && resultsView === "itinerary" ? (
-          <TripResultsPanel
+          <ErrorBoundary label="results" title="Could not show trip results">
+            <TripResultsPanel
             theme={theme}
             origin={origin}
             dest={dest}
@@ -2045,6 +2066,7 @@ export default function App() {
             onGuestSignUp={() => openAuthModal("signup")}
             onDismissGuestBanner={() => setGuestBannerDismissed(true)}
           />
+          </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen">
             <div className="map-float-nav">
@@ -2159,10 +2181,11 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <div className="float-card-body">
+            <div className={`float-card-body${inQuestionFlow ? " float-card-body--plan-flow" : ""}`}>
               <div className="float-card-scroll" ref={floatCardScrollRef}>
                 <div className="sidebar-inner" style={{ background: "transparent" }}>
                   {tab === "plan" && (
+                    <ErrorBoundary label="plan-panel" title="Could not show planner">
                     <PlanPanel
                       qIndex={qIndex}
                       currentQuestion={currentQuestion}
@@ -2184,6 +2207,7 @@ export default function App() {
                       creditsLabel={formatCreditsLabel(creditStatus)}
                       flowProgress={flowProgress}
                       returnedFromResults={returnedFromResults}
+                      inQuestionFlow={inQuestionFlow}
                       onGenerateTrip={generateTrip}
                       onResetPlan={resetPlan}
                       onGoBack={goBackOneQuestion}
@@ -2192,6 +2216,7 @@ export default function App() {
                       onSetPrefDraft={setPrefDraft}
                       getStepMessage={getStepMessage}
                     />
+                    </ErrorBoundary>
                   )}
                   {tab === "trips" && (
                     <TripsPanel
@@ -2220,7 +2245,7 @@ export default function App() {
                   )}
                 </div>
               </div>
-              {tab === "plan" && !cardCollapsed && (
+              {showPlanPanelDock && (
                 <PlanPanelDock
                   isLoaded={isLoaded}
                   answers={answers}

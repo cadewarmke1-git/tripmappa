@@ -420,7 +420,9 @@ export function getFlowProgress(answers, context = {}, options = {}) {
 
   let remaining = 0;
   const sim = { ...answers };
-  while (true) {
+  let guard = 0;
+  while (guard < 32) {
+    guard += 1;
     const result = getNextFlowQuestion(sim, context);
     if (result.done) break;
     remaining++;

@@ -2,6 +2,7 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { hasPref, parseTravelerCount } from "./vehicles.js";
 import { countFlowQuestionsAnswered } from "./tripFlow.js";
 import { estimateFoodCostFromRestaurants } from "./restaurantPlaces.js";
+import { estimateTripFuelCost } from "./fuel.js";
 
 export const LODGING_NIGHTLY_RATES = {
   Budget: 65,

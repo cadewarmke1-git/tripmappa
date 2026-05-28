@@ -20,6 +20,7 @@ export default function PlanPanel({
   questionHistoryLength,
   flowProgress,
   returnedFromResults,
+  inQuestionFlow = false,
   roadStops,
   selectedLodging,
   restaurantsByCity = {},
@@ -35,7 +36,7 @@ export default function PlanPanel({
   getStepMessage,
 }) {
   return (
-    <div className="chat-wrap chat-wrap-plan">
+    <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
       <div className="convo-stage">
         <div className="chat-header">
           <div className="chat-title">Plan your trip.</div>
@@ -48,17 +49,6 @@ export default function PlanPanel({
         )}
         <div className="convo-scroll" ref={convoScrollRef}>
           <div className="plan-view">
-            {answers.vehicle && routeInfo?.distance && (
-              <BudgetCard
-                compact
-                answers={answers}
-                routeInfo={routeInfo}
-                tripLegs={tripLegs}
-                roadStops={roadStops}
-                selectedLodging={selectedLodging}
-                restaurantsByCity={restaurantsByCity}
-              />
-            )}
             {(currentQuestion || qIndex === -2) && (
               <div
                 className={`ai-msg${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
@@ -105,6 +95,17 @@ export default function PlanPanel({
                   </div>
                 )}
               </div>
+            )}
+            {!inQuestionFlow && answers.vehicle && routeInfo?.distance && (
+              <BudgetCard
+                compact
+                answers={answers}
+                routeInfo={routeInfo}
+                tripLegs={tripLegs}
+                roadStops={roadStops}
+                selectedLodging={selectedLodging}
+                restaurantsByCity={restaurantsByCity}
+              />
             )}
             <div ref={convoEndRef}/>
           </div>
