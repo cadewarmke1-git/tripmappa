@@ -101,26 +101,15 @@ export default function HeroView({
           >
             <div className="hero-route-bar">
               <div className="hero-route-row hero-route-labels">
-                <div className="hero-route-col hero-route-col-to">
-                  <div className="hero-input-label">To</div>
-                </div>
                 <div className="hero-route-col hero-route-col-from">
                   <div className="hero-input-label">From</div>
+                </div>
+                <div className="hero-route-col hero-route-col-to">
+                  <div className="hero-input-label">To</div>
                 </div>
               </div>
 
               <div className="hero-route-row hero-route-inputs">
-                <div className="hero-route-col hero-route-col-to">
-                  <div className="hero-input-box">
-                    {isLoaded ? (
-                      <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
-                      </Autocomplete>
-                    ) : (
-                      <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
-                    )}
-                  </div>
-                </div>
                 <div className="hero-route-col hero-route-col-from">
                   <div className="hero-input-box">
                     {isLoaded ? (
@@ -129,6 +118,17 @@ export default function HeroView({
                       </Autocomplete>
                     ) : (
                       <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                    )}
+                  </div>
+                </div>
+                <div className="hero-route-col hero-route-col-to">
+                  <div className="hero-input-box">
+                    {isLoaded ? (
+                      <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
+                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      </Autocomplete>
+                    ) : (
+                      <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
                 </div>
@@ -146,11 +146,11 @@ export default function HeroView({
 
               {(heroDestError || heroOriginError) && (
                 <div className="hero-route-row hero-route-errors">
-                  <div className="hero-route-col hero-route-col-to">
-                    {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
-                  </div>
                   <div className="hero-route-col hero-route-col-from">
                     {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
+                  </div>
+                  <div className="hero-route-col hero-route-col-to">
+                    {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
                   </div>
                 </div>
               )}

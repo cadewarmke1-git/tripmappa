@@ -5,13 +5,13 @@ import { getDisplayName } from "../lib/avatarUtils.js";
 import { computeTripStats, getTripVehicle } from "../lib/tripStats.js";
 
 const FREE_BENEFITS = [
-  "3 AI trip generations per month",
+  "3 Trip Generations per month",
   "Saved trips & Navigate Home",
   "Maps, routing & budget estimates",
 ];
 
 const PREMIUM_BENEFITS = [
-  "Unlimited AI trip generations",
+  "Unlimited Trip Generations",
   "Live location sharing",
   "Offline maps",
   "Priority generation queue",
@@ -331,7 +331,7 @@ export default function ProfilePage({
             <>
               <div className="profile-plan-header">
                 <TierBadge tier="free" />
-                <span className="profile-plan-usage">{used} of {limit} trips used this month</span>
+                <span className="profile-plan-usage">{used} of {limit} Trip Generations used this month</span>
               </div>
               <div className="profile-progress-wrap">
                 <div className="profile-progress-bar" style={{ width: `${progressPct}%` }} />

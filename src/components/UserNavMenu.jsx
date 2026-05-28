@@ -20,12 +20,12 @@ export default function UserNavMenu({
   const tierLabel = isPremium ? "PREMIUM" : "FREE";
 
   const creditsLine = creditStatus?.unlimited
-    ? "Unlimited AI trips this month"
+    ? "Unlimited Trip Generations this month"
     : creditStatus?.tier === "guest"
-      ? `${creditStatus.remaining ?? 1} free trip remaining`
+      ? `${creditStatus.remaining ?? 1} Trip Generation remaining`
       : creditStatus != null
-        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} AI trips left this month`
-        : "Loading trip credits…";
+        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} Trip Generations remaining this month`
+        : "Loading Trip Generations…";
 
   const closeMenu = useCallback(() => {
     if (!open || closing) return;

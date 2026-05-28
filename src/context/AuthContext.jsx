@@ -14,9 +14,14 @@ import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
  *    - Ensure the Google client ID/secret match your Google Cloud OAuth client.
  *
  * 3) Google Cloud Console → APIs & Services → OAuth consent screen
- *    - App name: TripMappa
+ *    - Open: https://console.cloud.google.com/apis/credentials/consent
+ *    - App name: TripMappa  ← must match exactly; this is what users see on the consent screen
+ *    - User support email: your support address
  *    - App logo: upload the TripMappa logo (120×120 px recommended)
- *    - Authorized domains: tripmappa.com and your Supabase project domain
+ *    - Application home page: https://tripmappa.com
+ *    - Authorized domains: tripmappa.com and your Supabase project domain (*.supabase.co)
+ *    - Click SAVE at the bottom — changes do not apply until saved
+ *    - If the app is in "Testing", add test users or publish to Production when ready
  *
  * 4) Google Cloud Console → Credentials → OAuth 2.0 Client (Web application)
  *    - Authorized JavaScript origins: https://tripmappa.com, http://localhost:5173

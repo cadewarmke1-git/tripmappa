@@ -676,10 +676,10 @@ export default function App() {
   function formatCreditsLabel(status) {
     if (!status) return null;
     if (status.unlimited) return "Unlimited";
-    if (status.tier === "guest") return "1 free try";
+    if (status.tier === "guest") return "1 free generation";
     const n = status.remaining ?? 0;
-    if (n === 1) return "1 left";
-    return `${n} left`;
+    if (n === 1) return "1 generation left";
+    return `${n} generations left`;
   }
 
   const flowProgress = useMemo(() => getFlowProgress(answers, buildQuestionContext(answers), {

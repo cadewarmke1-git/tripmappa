@@ -519,7 +519,7 @@ export default async function handler(req, res) {
         const credit = await consumeCredit(admin, user.id);
         if (!credit.ok) {
           return res.status(402).json({
-            error: "No AI trip generations remaining this month",
+            error: "No Trip Generations remaining this month",
             code: "no_credits",
             credits: credit,
           });

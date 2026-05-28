@@ -5,6 +5,29 @@ import ActivityDiningCard from "./ActivityDiningCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
 
+function legLabel(stop) {
+  if (!stop) return null;
+  const parts = [stop.eta, stop.distance].filter(Boolean);
+  if (parts.length) return parts.join(" · ");
+  if (stop.distanceFromRoute != null) {
+    return typeof stop.distanceFromRoute === "number"
+      ? `${stop.distanceFromRoute} mi from route`
+      : String(stop.distanceFromRoute);
+  }
+  return null;
+}
+
+function RouteLegConnector({ label }) {
+  if (!label) return null;
+  return (
+    <div className="results-route-leg" aria-hidden="true">
+      <span className="results-route-leg-line" />
+      <span className="results-route-leg-label">{label}</span>
+      <span className="results-route-leg-line" />
+    </div>
+  );
+}
+
 export default function ResultsDaySection({
   day,
   answers,
@@ -46,6 +69,11 @@ export default function ResultsDaySection({
     };
   }
 
+  const orderedStops = [
+    ...(day.roadStops || []).map(stop => ({ kind: "road", stop })),
+    ...(day.overnight ? [{ kind: "overnight", stop: day.overnight }] : []),
+  ];
+
   return (
     <section className="results-day-section" ref={mergedRef}>
       <div className="results-day-header">
@@ -55,42 +83,47 @@ export default function ResultsDaySection({
       <div className="results-day-divider"/>
 
       <p className="results-driving-summary">
-        {day.drivingSummary?.miles} · {day.drivingSummary?.duration} driving
+        <span className="results-driving-summary-label">Today&apos;s drive</span>
+        {day.drivingSummary?.miles} · {day.drivingSummary?.duration}
       </p>
 
-      {day.roadStops?.length > 0 && (
+      {orderedStops.length > 0 && (
         <div className="results-subsection">
-          <h3 className="results-subsection-label">Stops Along the Way</h3>
-          <div className="results-road-stops-scroll">
-            {day.roadStops.map(stop => (
-              <RoadStopCard
-                key={stop.id}
-                stop={stop}
-                onAdd={onAddRoadStop}
-                onSelect={onStopSelect}
-                highlighted={highlightedStopId === stop.id}
-                cardRef={setStopRef(stop.id)}
-              />
+          <h3 className="results-subsection-label">Stops Along the Route</h3>
+          <div className="results-route-timeline">
+            {orderedStops.map((item, index) => (
+              <div key={item.stop.id || `${item.kind}-${index}`} className="results-route-timeline-item">
+                {index > 0 && <RouteLegConnector label={legLabel(item.stop) || "Continue driving"} />}
+                {item.kind === "road" ? (
+                  <RoadStopCard
+                    stop={item.stop}
+                    onAdd={onAddRoadStop}
+                    onSelect={onStopSelect}
+                    highlighted={highlightedStopId === item.stop.id}
+                    cardRef={setStopRef(item.stop.id)}
+                  />
+                ) : (
+                  <OvernightStayCard
+                    overnight={item.stop}
+                    answers={answers}
+                    routeInfo={routeInfo}
+                    selectedLodging={selectedLodging}
+                    weather={weatherByCity[item.stop.city]}
+                    onLodgingSelect={onLodgingSelect}
+                    onToast={onToast}
+                    onSelect={onStopSelect}
+                    highlighted={highlightedStopId === (item.stop.id || `overnight-${item.stop.city}`)}
+                    cardRef={setStopRef(item.stop.id || `overnight-${item.stop.city}`)}
+                  />
+                )}
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {day.overnight && (
-        <div className="results-subsection">
-          <h3 className="results-subsection-label">Tonight&apos;s Stay</h3>
-          <OvernightStayCard
-            overnight={day.overnight}
-            answers={answers}
-            routeInfo={routeInfo}
-            selectedLodging={selectedLodging}
-            weather={weatherByCity[day.overnight.city]}
-            onLodgingSelect={onLodgingSelect}
-            onToast={onToast}
-            onSelect={onStopSelect}
-            highlighted={highlightedStopId === (day.overnight.id || `overnight-${day.overnight.city}`)}
-            cardRef={setStopRef(day.overnight.id || `overnight-${day.overnight.city}`)}
-          />
+        <>
           <LodgingCardsSection
             city={day.overnight.city}
             answers={answers}
@@ -109,7 +142,7 @@ export default function ResultsDaySection({
             preloaded={restaurantsByCity?.[day.overnight.city]}
             onToast={onToast}
           />
-        </div>
+        </>
       )}
 
       {day.activities?.length > 0 && (

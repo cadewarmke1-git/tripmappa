@@ -6,6 +6,8 @@ import { skipLodgingQuestion, getEffectiveVehicle } from "./vehicles.js";
 export function isSimplifiedTrip({ answers, routeInfo, stops = [], tripFormat }) {
   if (tripFormat === "simplified") return true;
   if (tripFormat === "multi_day") return false;
+  const overnightCount = (stops || []).filter(s => s.city).length;
+  if (overnightCount > 1) return false;
   const tripType = answers?.trip_type;
   const vehicle = getEffectiveVehicle(answers);
   if (skipLodgingQuestion(tripType, vehicle)) return true;
