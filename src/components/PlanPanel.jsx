@@ -1,9 +1,8 @@
-/** Floating planner panel — question flow, budget, route footer. */
+/** Floating planner panel — question flow and budget (footer docked in App.jsx). */
 import { isScenicRoute } from "../lib/vehicles.js";
 import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import SummaryCard from "./SummaryCard.jsx";
-import RouteFooter from "./RouteFooter.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 
 export default function PlanPanel({
@@ -21,15 +20,8 @@ export default function PlanPanel({
   questionHistoryLength,
   flowProgress,
   returnedFromResults,
-  origin,
-  dest,
   roadStops,
   selectedLodging,
-  isLoaded,
-  timingMode,
-  arriveByDate,
-  originRef,
-  destRef,
   convoEndRef,
   convoScrollRef,
   creditsLabel,
@@ -39,16 +31,10 @@ export default function PlanPanel({
   onPickAnswer,
   onSetAnswers,
   onSetPrefDraft,
-  onSwapRoute,
-  onFetchDirections,
-  onSetOrigin,
-  onSetDest,
-  onSetTimingMode,
-  onSetArriveByDate,
   getStepMessage,
 }) {
   return (
-    <div className="chat-wrap">
+    <div className="chat-wrap chat-wrap-plan">
       <div className="convo-stage">
         <div className="chat-header">
           <div className="chat-title">Plan your trip.</div>
@@ -122,22 +108,6 @@ export default function PlanPanel({
           </div>
         </div>
       </div>
-      <RouteFooter
-        isLoaded={isLoaded}
-        origin={origin}
-        dest={dest}
-        answers={answers}
-        timingMode={timingMode}
-        arriveByDate={arriveByDate}
-        originRef={originRef}
-        destRef={destRef}
-        onSwap={onSwapRoute}
-        onFetchDirections={onFetchDirections}
-        onSetOrigin={onSetOrigin}
-        onSetDest={onSetDest}
-        onSetTimingMode={onSetTimingMode}
-        onSetArriveByDate={onSetArriveByDate}
-      />
     </div>
   );
 }

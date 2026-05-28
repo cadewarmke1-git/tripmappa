@@ -42,6 +42,7 @@ export default function AppMap({
   onRecenter,
   theme = "night",
   navigateHomeSlot = null,
+  showRoutePill = true,
 }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
@@ -169,12 +170,14 @@ export default function AppMap({
         </div>
       )}
       {navigateHomeSlot}
-      <MapRoutePill
-        routeInfo={routeInfo}
-        answers={answers}
-        tripGenerating={tripGenerating}
-        loadingMessageIndex={loadingMessageIndex}
-      />
+      {showRoutePill && (
+        <MapRoutePill
+          routeInfo={routeInfo}
+          answers={answers}
+          tripGenerating={tripGenerating}
+          loadingMessageIndex={loadingMessageIndex}
+        />
+      )}
     </div>
   );
 }

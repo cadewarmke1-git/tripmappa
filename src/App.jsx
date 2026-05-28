@@ -41,6 +41,7 @@ import { fetchUserProfile, saveHomeAddress, getGuestHomeAddress, setGuestHomeAdd
 import HeroView from "./components/HeroView.jsx";
 import AppMap from "./components/AppMap.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
+import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
 import SharePanel from "./components/SharePanel.jsx";
 import GroceryModal from "./components/GroceryModal.jsx";
@@ -1963,11 +1964,7 @@ export default function App() {
             onMapStyleChange={setMapStyle}
             onRecenter={recenterMap}
             onMarkerSelect={handleMapMarkerSelect}
-            navigateHomeSlot={(
-              <button type="button" className="navigate-home-float" onClick={handleNavigateHome} disabled={navigateHomePending}>
-                {navigateHomePending ? "Locating…" : "Navigate Home"}
-              </button>
-            )}
+            showRoutePill={false}
             onMarkerAction={(action, marker) => {
               if (action === "add") toast_("Added to trip");
             }}
@@ -2026,15 +2023,8 @@ export default function App() {
                       prefDraft={prefDraft}
                       prefSkipReady={prefSkipReady}
                       questionHistoryLength={questionHistory.length}
-                      origin={origin}
-                      dest={dest}
                       roadStops={roadStops}
                       selectedLodging={selectedLodging}
-                      isLoaded={isLoaded}
-                      timingMode={timingMode}
-                      arriveByDate={arriveByDate}
-                      originRef={originRef}
-                      destRef={destRef}
                       convoEndRef={convoEndRef}
                       convoScrollRef={convoScrollRef}
                       creditsLabel={formatCreditsLabel(creditStatus)}
@@ -2046,12 +2036,6 @@ export default function App() {
                       onPickAnswer={pickAnswer}
                       onSetAnswers={setAnswers}
                       onSetPrefDraft={setPrefDraft}
-                      onSwapRoute={swapRouteCities}
-                      onFetchDirections={fetchDirections}
-                      onSetOrigin={setOrigin}
-                      onSetDest={setDest}
-                      onSetTimingMode={setTimingMode}
-                      onSetArriveByDate={setArriveByDate}
                       getStepMessage={getStepMessage}
                     />
                   )}
@@ -2072,6 +2056,27 @@ export default function App() {
                   )}
                 </div>
               </div>
+              {tab === "plan" && !cardCollapsed && (
+                <PlanPanelDock
+                  routeInfo={routeInfo}
+                  answers={answers}
+                  navigateHomePending={navigateHomePending}
+                  onNavigateHome={handleNavigateHome}
+                  isLoaded={isLoaded}
+                  origin={origin}
+                  dest={dest}
+                  timingMode={timingMode}
+                  arriveByDate={arriveByDate}
+                  originRef={originRef}
+                  destRef={destRef}
+                  onSwap={swapRouteCities}
+                  onFetchDirections={fetchDirections}
+                  onSetOrigin={setOrigin}
+                  onSetDest={setDest}
+                  onSetTimingMode={setTimingMode}
+                  onSetArriveByDate={setArriveByDate}
+                />
+              )}
             </div>
           </div>
         </div>

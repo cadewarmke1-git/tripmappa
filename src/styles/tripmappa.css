@@ -1001,6 +1001,60 @@
   .route-footer .route-swap-btn { width: 24px; height: 24px; font-size: 11px; }
   .route-footer .route-timing-btn { padding: 5px 12px; font-size: 11px; }
   .route-footer .route-arrive-picker { padding: 8px 10px; font-size: 11px; margin-top: 6px; }
+  .plan-panel-dock {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0,0,0,0.12);
+  }
+  .plan-panel-dock .route-footer {
+    border-top: none;
+    background: transparent;
+    padding-bottom: 8px;
+  }
+  .navigate-home-dock {
+    width: 100%;
+    margin: 0;
+    padding: 10px 16px;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0;
+    background: rgba(255,210,140,0.1);
+    color: #FFD28C;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    transition: background 0.2s var(--ease);
+  }
+  .navigate-home-dock:hover:not(:disabled) { background: rgba(255,210,140,0.18); }
+  .navigate-home-dock:disabled { opacity: 0.6; cursor: wait; }
+  .plan-route-info-bar {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255,210,140,0.22);
+    background: rgba(15, 20, 40, 0.85);
+    font-family: 'Inter', sans-serif;
+  }
+  .plan-route-info-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    background: #FFD28C; color: #1a1a2e; padding: 2px 7px; border-radius: 99px;
+  }
+  .plan-route-info-type { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: rgba(255,255,255,0.75); }
+  .plan-route-info-val { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; color: #FFD28C; }
+  .plan-route-info-sep { font-size: 11px; color: rgba(255,255,255,0.35); }
   .route-slim-bar { display: none; }
   .route-info-chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 6px; }
   .route-info-chip {
