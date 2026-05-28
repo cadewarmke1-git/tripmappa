@@ -31,10 +31,14 @@ function AnimatedBudgetValue({ value, animateKey }) {
 export default function BudgetCard({
   answers, routeInfo, tripLegs, roadStops = [], selectedLodging = [], restaurantsByCity = {}, compact = false,
 }) {
-  const est = useMemo(
-    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
-    [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
-  );
+  const est = useMemo(() => {
+    try {
+      return computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity });
+    } catch (err) {
+      console.error("BudgetCard estimate failed:", err);
+      return { fuel: null, lodging: null, food: null, total: null, addedStops: [] };
+    }
+  }, [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity]);
 
   const fuelReady = est.fuel != null;
   const lodgingReady = est.lodging != null;

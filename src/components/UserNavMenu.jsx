@@ -25,7 +25,7 @@ export default function UserNavMenu({
       ? `${creditStatus.remaining ?? 1} free trip remaining`
       : creditStatus != null
         ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} AI trips left this month`
-        : null;
+        : "Loading trip credits…";
 
   const closeMenu = useCallback(() => {
     if (!open || closing) return;
@@ -103,9 +103,7 @@ export default function UserNavMenu({
             <span className={`profile-card-tier profile-card-tier--${isPremium ? "premium" : "free"}`}>
               {tierLabel}
             </span>
-            {creditsLine && (
-              <p className="profile-card-credits">{creditsLine}</p>
-            )}
+            <p className="profile-card-credits">{creditsLine}</p>
           </div>
 
           <button
@@ -113,7 +111,7 @@ export default function UserNavMenu({
             className="profile-card-signout"
             onClick={handleSignOut}
           >
-            Sign out
+            Sign Out
           </button>
         </div>
       )}

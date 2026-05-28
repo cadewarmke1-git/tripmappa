@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 function normalizeChoice(choice) {
   if (choice && typeof choice === "object" && choice.value != null) {
     return { value: choice.value, label: choice.label ?? choice.value };
@@ -13,17 +15,26 @@ export default function QuestionChoices({
   prefSkipReady,
   questionHistoryLength,
   compact = false,
+  showNavRow = true,
   onResetPlan,
   onGoBack,
   onPickAnswer,
   onSetPrefDraft,
   onSetAnswers,
 }) {
-  if (!currentQ) return null;
+  const [vehicleTab, setVehicleTab] = useState(0);
+
+  useEffect(() => {
+    setVehicleTab(0);
+  }, [currentQ?.id]);
+
+  if (!currentQ?.id || !currentQ?.type) return null;
+
   const frozen = !!stepAnim;
   const selected = stepAnim?.answer;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];
   const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) ? currentQ.groups : null;
+  const useVehicleTabs = compact && vehicleGroups;
 
   const mkClass = (val, extra = "") => {
     const sel = selected === val ? " qr-selected" : "";
@@ -35,20 +46,66 @@ export default function QuestionChoices({
   const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers" || currentQ.type === "lodging";
   const isLodging = currentQ.type === "lodging";
 
+  const labeledVehicleGroups = vehicleGroups
+    ? vehicleGroups.filter(g => Array.isArray(g.options) && g.options.length > 0)
+    : [];
+  const activeVehicleGroup = useVehicleTabs
+    ? labeledVehicleGroups[Math.min(vehicleTab, labeledVehicleGroups.length - 1)]
+    : null;
+
   return (
     <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}`}>
-      <div className="convo-nav-row">
-        {!frozen && (
-          <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>
-        )}
-        {questionHistoryLength > 0 && !frozen && (
-          <button type="button" className="convo-nav-btn" onClick={onGoBack}>← Back</button>
-        )}
-      </div>
+      {showNavRow && (
+        <div className="convo-nav-row">
+          {!frozen && (
+            <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>
+          )}
+          {questionHistoryLength > 0 && !frozen && (
+            <button type="button" className="convo-nav-btn" onClick={onGoBack}>← Back</button>
+          )}
+        </div>
+      )}
 
-      {vehicleGroups && vehicleGroups.map(group => (
-        <div key={group.label} className="vehicle-group">
-          <div className="vehicle-group-label">{group.label}</div>
+      {useVehicleTabs && (
+        <>
+          <div className="vehicle-tabs" role="tablist" aria-label="Vehicle categories">
+            {labeledVehicleGroups.map((group, idx) => (
+              <button
+                key={group.label || `group-${idx}`}
+                type="button"
+                role="tab"
+                aria-selected={vehicleTab === idx}
+                className={`vehicle-tab${vehicleTab === idx ? " vehicle-tab-active" : ""}`}
+                disabled={frozen}
+                onClick={() => setVehicleTab(idx)}
+              >
+                {group.label || "More"}
+              </button>
+            ))}
+          </div>
+          {activeVehicleGroup && (
+            <div className="vehicle-group vehicle-group-tabbed">
+              <div className="quick-replies vehicle-group-options">
+                {activeVehicleGroup.options.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={mkClass(opt.value)}
+                    disabled={frozen}
+                    onClick={() => onPickAnswer(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {!useVehicleTabs && vehicleGroups && vehicleGroups.map(group => (
+        <div key={group.label || group.options?.[0]?.value} className="vehicle-group">
+          {group.label && <div className="vehicle-group-label">{group.label}</div>}
           <div className="quick-replies vehicle-group-options">
             {group.options.map(opt => (
               <button

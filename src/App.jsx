@@ -687,8 +687,10 @@ export default function App() {
     convoComplete,
   }), [answers, questionHistory.length, convoComplete, origin, dest, routeInfo]);
 
-  const inQuestionFlow = !generated && Boolean(
-    currentQuestion || (convoComplete && !returnedFromResults),
+  const inQuestionFlow = !generated && (
+    qIndex >= 0 ||
+    Boolean(currentQuestion) ||
+    (convoComplete && !returnedFromResults)
   );
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
 
@@ -1231,20 +1233,31 @@ export default function App() {
   }
 
   function loadNextQuestion(newAnswers) {
-    const ctx = buildQuestionContext(newAnswers);
-    const result = getNextFlowQuestion(newAnswers, ctx);
-    if (result.done) {
-      setCurrentQuestion(null);
-      setQIndex(-2);
-      setConvoComplete(true);
-      setAnswers(normalizeTripAnswers(newAnswers, ctx));
-    } else {
+    try {
+      const ctx = buildQuestionContext(newAnswers);
+      const result = getNextFlowQuestion(newAnswers, ctx);
+      if (!result || result.done) {
+        setCurrentQuestion(null);
+        setQIndex(-2);
+        setConvoComplete(true);
+        setAnswers(normalizeTripAnswers(newAnswers, ctx));
+        return;
+      }
+      if (!result.id || !result.type) {
+        console.error("loadNextQuestion: invalid question payload", result);
+        toast_("Could not load the next question");
+        return;
+      }
       setCurrentQuestion(result);
       setQIndex(0);
+      setConvoComplete(false);
       if (result.type === "multiselect") {
         setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
         setPrefSkipReady(false);
       }
+    } catch (err) {
+      console.error("loadNextQuestion failed:", err);
+      toast_(err.message || "Could not load the next question");
     }
   }
 
@@ -1311,17 +1324,23 @@ export default function App() {
   }
 
   function pickAnswer(value, extraFields) {
-    if (stepAnim) return;
-    setEnterAnim(false);
-    setStepAnim({ answer: typeof value === "string" ? value : "selected", phase: "flash" });
-    if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
-    stepAnimTimer.current = setTimeout(() => {
-      setStepAnim(prev => prev ? { ...prev, phase: "exit" } : null);
+    if (stepAnim || !currentQuestion?.id) return;
+    try {
+      setEnterAnim(false);
+      setStepAnim({ answer: typeof value === "string" ? value : "selected", phase: "flash" });
+      if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
       stepAnimTimer.current = setTimeout(() => {
-        submitAnswer(value, extraFields);
-        setStepAnim(null);
-      }, 300);
-    }, 150);
+        setStepAnim(prev => prev ? { ...prev, phase: "exit" } : null);
+        stepAnimTimer.current = setTimeout(() => {
+          submitAnswer(value, extraFields);
+          setStepAnim(null);
+        }, 300);
+      }, 150);
+    } catch (err) {
+      console.error("pickAnswer failed:", err);
+      setStepAnim(null);
+      toast_(err.message || "Could not save your answer");
+    }
   }
 
   function toastGold(msg) {
@@ -2145,9 +2164,9 @@ export default function App() {
             }}
           />
 
-          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}`}>
+          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}${inQuestionFlow ? " float-card--plan-flow" : ""}`}>
             <div
-              className="float-card-header"
+              className={`float-card-header${inQuestionFlow ? " float-card-header--plan-flow" : ""}`}
               onClick={handlePanelHeaderClick}
               onTouchStart={handlePanelTouchStart}
               onTouchMove={handlePanelTouchMove}

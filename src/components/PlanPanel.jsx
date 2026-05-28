@@ -4,6 +4,7 @@ import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import SummaryCard from "./SummaryCard.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
+import ErrorBoundary from "./ErrorBoundary.jsx";
 
 export default function PlanPanel({
   qIndex,
@@ -35,6 +36,10 @@ export default function PlanPanel({
   onSetPrefDraft,
   getStepMessage,
 }) {
+  const stepMessage = getStepMessage?.() ?? "";
+  const frozen = !!stepAnim;
+  const showProgress = (currentQuestion || convoComplete) && flowProgress?.totalSteps > 0;
+
   return (
     <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
       <div className="convo-stage">
@@ -43,12 +48,29 @@ export default function PlanPanel({
             <div className="chat-title">Plan your trip.</div>
           </div>
         )}
-        {(currentQuestion || convoComplete) && flowProgress?.totalSteps > 0 && (
-          <QuestionProgress {...flowProgress} compact={inQuestionFlow} />
+
+        {inQuestionFlow && showProgress && (
+          <div className="plan-flow-toolbar">
+            <QuestionProgress {...flowProgress} compact />
+            <div className="plan-flow-nav">
+              {!frozen && (
+                <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>
+              )}
+              {questionHistoryLength > 0 && !frozen && (
+                <button type="button" className="convo-nav-btn" onClick={onGoBack}>← Back</button>
+              )}
+            </div>
+          </div>
         )}
+
+        {!inQuestionFlow && showProgress && (
+          <QuestionProgress {...flowProgress} compact={false} />
+        )}
+
         {returnedFromResults && (
           <div className="plan-saved-note">Your previous answers are saved</div>
         )}
+
         <div className="convo-scroll" ref={convoScrollRef}>
           <div className="plan-view">
             {(currentQuestion || qIndex === -2) && (
@@ -56,14 +78,16 @@ export default function PlanPanel({
                 className={`ai-msg${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                 key={currentQuestion?.id ?? qIndex}
               >
-                <div className="ai-bubble">
-                  {getStepMessage()}
-                  {isScenicRoute(answers) && (
-                    <div className="scenic-route-note" style={{ marginTop: 12 }}>
-                      I&apos;ll find the most scenic roads for your trip.
-                    </div>
-                  )}
-                </div>
+                {stepMessage && (
+                  <div className="ai-bubble">
+                    {stepMessage}
+                    {isScenicRoute(answers) && (
+                      <div className="scenic-route-note" style={{ marginTop: inQuestionFlow ? 6 : 12 }}>
+                        I&apos;ll find the most scenic roads for your trip.
+                      </div>
+                    )}
+                  </div>
+                )}
                 {convoComplete && (
                   <div className="generate-inline">
                     <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
@@ -77,20 +101,23 @@ export default function PlanPanel({
                   </div>
                 )}
                 {currentQuestion && (
-                  <QuestionChoices
-                    currentQ={currentQuestion}
-                    stepAnim={stepAnim}
-                    answers={answers}
-                    prefDraft={prefDraft}
-                    prefSkipReady={prefSkipReady}
-                    questionHistoryLength={questionHistoryLength}
-                    compact={inQuestionFlow}
-                    onResetPlan={onResetPlan}
-                    onGoBack={onGoBack}
-                    onPickAnswer={onPickAnswer}
-                    onSetAnswers={onSetAnswers}
-                    onSetPrefDraft={onSetPrefDraft}
-                  />
+                  <ErrorBoundary label="question-choices" title="Could not show choices">
+                    <QuestionChoices
+                      currentQ={currentQuestion}
+                      stepAnim={stepAnim}
+                      answers={answers}
+                      prefDraft={prefDraft}
+                      prefSkipReady={prefSkipReady}
+                      questionHistoryLength={questionHistoryLength}
+                      compact={inQuestionFlow}
+                      showNavRow={!inQuestionFlow}
+                      onResetPlan={onResetPlan}
+                      onGoBack={onGoBack}
+                      onPickAnswer={onPickAnswer}
+                      onSetAnswers={onSetAnswers}
+                      onSetPrefDraft={onSetPrefDraft}
+                    />
+                  </ErrorBoundary>
                 )}
                 {qIndex === -2 && convoComplete && (
                   <div className="payoff-summary-wrap">
@@ -100,15 +127,17 @@ export default function PlanPanel({
               </div>
             )}
             {!inQuestionFlow && answers.vehicle && routeInfo?.distance && (
-              <BudgetCard
-                compact
-                answers={answers}
-                routeInfo={routeInfo}
-                tripLegs={tripLegs}
-                roadStops={roadStops}
-                selectedLodging={selectedLodging}
-                restaurantsByCity={restaurantsByCity}
-              />
+              <ErrorBoundary label="budget-card" title="Could not show budget estimate">
+                <BudgetCard
+                  compact
+                  answers={answers}
+                  routeInfo={routeInfo}
+                  tripLegs={tripLegs}
+                  roadStops={roadStops}
+                  selectedLodging={selectedLodging}
+                  restaurantsByCity={restaurantsByCity}
+                />
+              </ErrorBoundary>
             )}
             <div ref={convoEndRef}/>
           </div>
