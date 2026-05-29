@@ -39,6 +39,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
 import { getGuestCreditStatus, consumeGuestCredit } from "./lib/guestCredits.js";
+import { computeAutoTheme } from "./lib/theme.js";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import HeroView from "./components/HeroView.jsx";
