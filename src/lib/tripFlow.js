@@ -290,8 +290,10 @@ function buildRvPreferencesQuestion(context) {
 function buildTripDetailsQuestion(answers) {
   return {
     id: "trip_details",
+    pageTitle: "Personalize your trip",
+    pageSubtitle: "These preferences help tailor your route recommendations, stops, and dining along the drive.",
     ask: "Anything else we should plan around?",
-    hint: "All optional — skip if defaults work for you.",
+    hint: "All optional — tap again to deselect, or continue with defaults.",
     type: "trip_details",
     sections: [
       { id: "dietary", label: "Food", choices: DIETARY_CHOICES },

@@ -47,11 +47,49 @@ function serviceCategoriesForAnswers() {
 
 async function resolveStopGeo(stop, mapsReady) {
   if (stop.lat != null && stop.lng != null) {
-    return { lat: stop.lat, lng: stop.lng };
+    const lat = Number(stop.lat);
+    const lng = Number(stop.lng);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
   }
   if (!stop.city) return null;
   if (mapsReady) return geocodeCity(stop.city);
   return fetchGeocode(stop.city);
+}
+
+async function resolveDestinationGeo(destination, routeInfo, mapsReady) {
+  if (routeInfo?.destLat != null && routeInfo?.destLng != null) {
+    const lat = Number(routeInfo.destLat);
+    const lng = Number(routeInfo.destLng);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+  }
+  const points = routeInfo?.routePoints;
+  if (points?.length) {
+    const last = points[points.length - 1];
+    if (last?.lat != null && last?.lng != null) {
+      const lat = Number(last.lat);
+      const lng = Number(last.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+    }
+  }
+  if (destination) return resolveStopGeo({ city: destination }, mapsReady);
+  return null;
+}
+
+async function assignRestaurantsForCity(map, city, geo, answers, limit = 6) {
+  if (!city) return;
+  if (!geo?.lat || !geo?.lng) {
+    map[city] = [];
+    return;
+  }
+  const result = await fetchRestaurantsForStop({
+    lat: geo.lat,
+    lng: geo.lng,
+    city,
+    answers,
+    limit,
+  });
+  if (result.error) return;
+  map[city] = result.restaurants || [];
 }
 
 export async function enrichGeneratedTrip({
@@ -162,30 +200,16 @@ export async function enrichGeneratedTrip({
       });
     }
 
-    restaurantsByCity[stop.city] = (await fetchRestaurantsForStop({
-      lat: geo.lat,
-      lng: geo.lng,
-      city: stop.city,
-      answers,
-      limit: 6,
-    })).restaurants;
+    await assignRestaurantsForCity(restaurantsByCity, stop.city, geo, answers, 6);
   }
 
   // Day / simple trips: enrich destination when no overnight stops
   const weatherStops = [...enrichedStops];
   let destGeo = null;
   if (destination) {
-    destGeo = routeInfo?.destLat != null && routeInfo?.destLng != null
-      ? { lat: routeInfo.destLat, lng: routeInfo.destLng }
-      : await resolveStopGeo({ city: destination }, mapsReady);
+    destGeo = await resolveDestinationGeo(destination, routeInfo, mapsReady);
     if (destGeo && !enrichedStops.length) {
-      restaurantsByCity[destination] = (await fetchRestaurantsForStop({
-        lat: destGeo.lat,
-        lng: destGeo.lng,
-        city: destination,
-        answers,
-        limit: 6,
-      })).restaurants;
+      await assignRestaurantsForCity(restaurantsByCity, destination, destGeo, answers, 6);
       weatherStops.push({ city: destination, lat: destGeo.lat, lng: destGeo.lng });
     }
   }
@@ -199,15 +223,17 @@ export async function enrichGeneratedTrip({
       continue;
     }
     if (rs.lat == null || rs.lng == null) continue;
-    const quick = (await fetchRestaurantsForStop({
+    const quickResult = await fetchRestaurantsForStop({
       lat: rs.lat,
       lng: rs.lng,
       city: rs.location || rs.name,
       answers,
       roadStop: true,
       limit: 4,
-    })).restaurants;
-    rs.nearbyRestaurants = quick.slice(0, 2);
+    });
+    if (!quickResult.error) {
+      rs.nearbyRestaurants = (quickResult.restaurants || []).slice(0, 2);
+    }
   }
 
   if (wantsPlaygrounds && routeInfo?.routePoints?.length) {

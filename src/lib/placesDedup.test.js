@@ -5,6 +5,7 @@ import {
   normalizePlaceName,
   placeDedupKey,
   placeGoogleId,
+  placesMatch,
 } from "./placesDedup.js";
 
 describe("placesDedup", () => {
@@ -36,5 +37,16 @@ describe("placesDedup", () => {
       { name: "Other Stop", lat: 33.1, lng: -97.2 },
     ];
     expect(dedupePlaces(places)).toHaveLength(2);
+  });
+
+  it("placesMatch links same place_id and name+coords duplicates", () => {
+    const byId = { place_id: "ChIJabc", name: "Pilot", lat: 35.1, lng: -97.2 };
+    const sameId = { placeId: "ChIJabc", name: "Pilot — duplicate", lat: 36, lng: -98 };
+    expect(placesMatch(byId, sameId)).toBe(true);
+
+    const byGeo = { name: "Pilot Travel Center", lat: 35.1, lng: -97.2 };
+    const nearGeo = { name: "Pilot Travel Center", lat: 35.1001, lng: -97.2001 };
+    expect(placesMatch(byGeo, nearGeo)).toBe(true);
+    expect(dedupePlaces([byGeo, nearGeo])).toHaveLength(1);
   });
 });

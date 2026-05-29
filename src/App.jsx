@@ -32,7 +32,7 @@ import { stopsToMapMarkers } from "./lib/mapMarkers.js";
 import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
-import { roadStopKey } from "./lib/roadStopKeys.js";
+import { roadStopKey, roadStopExistsInList, normalizeRoadStopEntry } from "./lib/roadStopKeys.js";
 import { useLiveTripTips } from "./hooks/useLiveTripTips.js";
 import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraft.js";
 import { useAuth } from "./context/AuthContext.jsx";
@@ -82,7 +82,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
-  const [prefDraft, setPrefDraft] = useState([]);
+  const [prefDraft, setPrefDraft] = useState(null);
   const [hosCompliance, setHosCompliance] = useState(null);
   const [truckSafety, setTruckSafety] = useState(null);
   const [rvSafety, setRvSafety] = useState(null);
@@ -813,7 +813,7 @@ export default function App() {
     setSelectedLodging([]);
     setStopCategory("all");
     setTripLegs([]);
-    setPrefDraft([]);
+    setPrefDraft(null);
     setHosCompliance(null);
     setTruckSafety(null);
     setRvSafety(null);
@@ -1275,7 +1275,7 @@ export default function App() {
     setQIndex(-1);
     setCurrentQuestion(null);
     setTripLegs([]);
-    setPrefDraft([]);
+    setPrefDraft(null);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     loadNextQuestion({});
@@ -1316,7 +1316,7 @@ export default function App() {
       } else if (result.type === "multiselect") {
         setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
       } else {
-        setPrefDraft([]);
+        setPrefDraft(null);
       }
     } catch (err) {
       console.error("loadNextQuestion failed:", err);
@@ -1501,28 +1501,37 @@ export default function App() {
   }
 
   function isRoadStopAdded(stop) {
-    return addedRoadStopIds.includes(roadStopKey(stop));
+    return roadStopExistsInList(roadStops, stop);
   }
 
   function addRoadStopToTrip(stop) {
-    const key = roadStopKey(stop);
-    if (addedRoadStopIds.includes(key)) return;
-    const entry = { ...stop, id: stop.id || key, userAdded: true };
-    setAddedRoadStopIds(prev => [...prev, key]);
-    setRoadStops(prev => [...prev, entry]);
-    if (entry.lat != null && entry.lng != null) {
-      setMapMarkers(prev => [
-        ...prev,
-        {
-          id: entry.id,
-          lat: entry.lat,
-          lng: entry.lng,
-          category: "poi",
-          title: entry.name || entry.title,
-          subtitle: entry.location || entry.city || "",
-          action: "add",
-        },
-      ]);
+    const normalized = normalizeRoadStopEntry(stop);
+    if (!normalized || roadStopExistsInList(roadStops, normalized)) return;
+    const key = roadStopKey(normalized);
+    setRoadStops(prev => {
+      if (roadStopExistsInList(prev, normalized)) return prev;
+      const entry = { ...normalized, id: normalized.id || key, userAdded: true };
+      if (entry.lat != null && entry.lng != null) {
+        setMapMarkers(markers => {
+          if (markers.some(m => m.id === entry.id || roadStopKey(m) === key)) return markers;
+          return [
+            ...markers,
+            {
+              id: entry.id,
+              lat: entry.lat,
+              lng: entry.lng,
+              category: "poi",
+              title: entry.name || entry.title,
+              subtitle: entry.location || entry.city || "",
+              action: "add",
+            },
+          ];
+        });
+      }
+      return [...prev, entry];
+    });
+    if (key) {
+      setAddedRoadStopIds(prev => (prev.includes(key) ? prev : [...prev, key]));
     }
   }
 
@@ -1962,7 +1971,7 @@ export default function App() {
     } else if (last.question.type === "multiselect") {
       setPrefDraft(Array.isArray(last.answer) ? last.answer : []);
     } else {
-      setPrefDraft([]);
+      setPrefDraft(null);
     }
     setAnswers(newAnswers);
     setQuestionHistory(history);

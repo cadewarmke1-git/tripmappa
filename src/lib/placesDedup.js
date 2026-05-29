@@ -38,14 +38,43 @@ export function placeDedupKey(place) {
   return name ? `name:${name}` : null;
 }
 
+const GENERIC_STOP_NAMES = new Set(["road stop", "stop", "along route"]);
+
+export function coordsNear(a, b, thresholdDeg = 0.002) {
+  if (!a || !b) return false;
+  return Math.abs(a.lat - b.lat) <= thresholdDeg && Math.abs(a.lng - b.lng) <= thresholdDeg;
+}
+
+/** True when two place/stop objects refer to the same location (place_id or name+coords). */
+export function placesMatch(a, b) {
+  if (!a || !b) return false;
+
+  const idA = placeGoogleId(a);
+  const idB = placeGoogleId(b);
+  if (idA && idB && idA === idB) return true;
+
+  const keyA = placeDedupKey(a);
+  const keyB = placeDedupKey(b);
+  if (keyA && keyB && keyA === keyB) return true;
+
+  const nameA = normalizePlaceName(placeDisplayName(a));
+  const nameB = normalizePlaceName(placeDisplayName(b));
+  if (!nameA || !nameB || nameA !== nameB) return false;
+  if (GENERIC_STOP_NAMES.has(nameA)) return false;
+
+  const coordsA = placeCoordinates(a);
+  const coordsB = placeCoordinates(b);
+  if (coordsA && coordsB) return coordsNear(coordsA, coordsB);
+  return false;
+}
+
 export function dedupePlaces(places = []) {
-  const seen = new Set();
-  return places.filter((place) => {
-    const key = placeDedupKey(place);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const out = [];
+  for (const place of places) {
+    if (out.some(existing => placesMatch(existing, place))) continue;
+    out.push(place);
+  }
+  return out;
 }
 
 /** Explicit alias for road stop arrays before they reach the UI. */

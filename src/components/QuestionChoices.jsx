@@ -15,6 +15,19 @@ function isGroupDraft(prefDraft) {
   return prefDraft && typeof prefDraft === "object" && !Array.isArray(prefDraft);
 }
 
+function buildGroupDraft(currentQ, prefDraft, answers) {
+  const draft = isGroupDraft(prefDraft) ? { ...prefDraft } : {};
+  for (const sec of currentQ?.sections || []) {
+    if (!Array.isArray(draft[sec.id])) {
+      draft[sec.id] = Array.isArray(answers?.[sec.id]) ? [...answers[sec.id]] : [];
+    }
+  }
+  if (currentQ?.type === "trip_details") {
+    draft.trip_budget = draft.trip_budget || answers?.trip_budget || "No budget limit";
+  }
+  return draft;
+}
+
 export default function QuestionChoices({
   currentQ,
   stepAnim,
@@ -32,12 +45,27 @@ export default function QuestionChoices({
   const [vehicleTab, setVehicleTab] = useState(0);
   const [lodgingDraft, setLodgingDraft] = useState(null);
   const [loyaltyDraft, setLoyaltyDraft] = useState(null);
+  const [groupDraft, setGroupDraft] = useState(null);
+  const [multiDraft, setMultiDraft] = useState([]);
 
   useEffect(() => {
     setVehicleTab(0);
     setLodgingDraft(null);
     setLoyaltyDraft(answers.loyalty_program || null);
   }, [currentQ?.id, answers.loyalty_program]);
+
+  useEffect(() => {
+    if (currentQ?.type === "trip_details" || currentQ?.type === "multiselect_group") {
+      setGroupDraft(buildGroupDraft(currentQ, prefDraft, answers));
+      return;
+    }
+    setGroupDraft(null);
+    if (currentQ?.type === "multiselect") {
+      setMultiDraft(Array.isArray(prefDraft) ? [...prefDraft] : []);
+      return;
+    }
+    setMultiDraft([]);
+  }, [currentQ?.id, currentQ?.type, prefDraft, answers]);
 
   if (!currentQ?.id || !currentQ?.type) return null;
 
@@ -53,12 +81,11 @@ export default function QuestionChoices({
     return `qr-btn${extra}${sel || active}${frozen && selected !== val && answers[currentQ.id] !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
   };
   const mkPrefClass = (p) => {
-    const draft = isGroupDraft(prefDraft) ? prefDraft : prefDraft;
-    const active = Array.isArray(draft) ? draft.includes(p) : false;
+    const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
     return `qr-btn${active ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
   };
   const mkGroupClass = (sectionId, value) => {
-    const sectionDraft = isGroupDraft(prefDraft) ? (prefDraft[sectionId] || []) : [];
+    const sectionDraft = Array.isArray(groupDraft?.[sectionId]) ? groupDraft[sectionId] : [];
     return `qr-btn${sectionDraft.includes(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
   };
 
@@ -66,7 +93,7 @@ export default function QuestionChoices({
   const isLodgingStay = currentQ.type === "lodging_stay";
   const isTripDetails = currentQ.type === "trip_details";
   const routeLocked = Boolean(currentQ.pendingRoute);
-  const budgetDraft = isGroupDraft(prefDraft) ? (prefDraft.trip_budget || "No budget limit") : "No budget limit";
+  const budgetDraft = groupDraft?.trip_budget || "No budget limit";
 
   function pickInstant(value, extraFields) {
     onPickAnswer(value, extraFields, { instant: true });
@@ -80,13 +107,17 @@ export default function QuestionChoices({
     : null;
 
   function toggleGroupSection(sectionId, value) {
-    onSetPrefDraft(prev => {
-      const base = isGroupDraft(prev) ? { ...prev } : {};
+    setGroupDraft(prev => {
+      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, answers);
       const section = Array.isArray(base[sectionId]) ? base[sectionId] : [];
-      base[sectionId] = section.includes(value)
-        ? section.filter(x => x !== value)
-        : [...section, value];
-      return base;
+      const next = {
+        ...base,
+        [sectionId]: section.includes(value)
+          ? section.filter(x => x !== value)
+          : [...section, value],
+      };
+      onSetPrefDraft(next);
+      return next;
     });
   }
 
@@ -96,7 +127,7 @@ export default function QuestionChoices({
   }
 
   function submitTripDetails() {
-    const draft = isGroupDraft(prefDraft) ? prefDraft : {};
+    const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, answers);
     pickInstant({
       dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
       stops_interests: Array.isArray(draft.stops_interests) ? draft.stops_interests : [],
@@ -115,7 +146,29 @@ export default function QuestionChoices({
   }
 
   function setBudgetDraft(value) {
-    onSetPrefDraft(prev => ({ ...(isGroupDraft(prev) ? prev : {}), trip_budget: value }));
+    setGroupDraft(prev => {
+      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, answers);
+      const current = base.trip_budget || "No budget limit";
+      const next = { ...base, trip_budget: current === value ? "No budget limit" : value };
+      onSetPrefDraft(next);
+      return next;
+    });
+  }
+
+  function toggleMultiDraft(value) {
+    setMultiDraft(prev => {
+      const list = Array.isArray(prev) ? prev : [];
+      const next = list.includes(value) ? list.filter(x => x !== value) : [...list, value];
+      onSetPrefDraft(next);
+      return next;
+    });
+  }
+
+  const scrollOptions = compact && currentQ.type !== "loading" && currentQ.type !== "text";
+
+  function wrapScrollable(content) {
+    if (!scrollOptions) return content;
+    return <div className="question-options-scroll">{content}</div>;
   }
 
   return (
@@ -138,24 +191,36 @@ export default function QuestionChoices({
         </div>
       )}
 
+      {isTripDetails && currentQ.pageTitle && (
+        <div className="question-page-header">
+          <h2 className="question-page-title">{currentQ.pageTitle}</h2>
+          {currentQ.pageSubtitle && (
+            <p className="question-page-subtitle">{currentQ.pageSubtitle}</p>
+          )}
+        </div>
+      )}
+
       {useVehicleTabs && (
+        <div className="vehicle-tabs" role="tablist" aria-label="Vehicle categories">
+          {labeledVehicleGroups.map((group, idx) => (
+            <button
+              key={group.label || `group-${idx}`}
+              type="button"
+              role="tab"
+              aria-selected={vehicleTab === idx}
+              className={`vehicle-tab${vehicleTab === idx ? " vehicle-tab-active" : ""}`}
+              disabled={frozen}
+              onClick={() => setVehicleTab(idx)}
+            >
+              {group.label || "More"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {wrapScrollable(
         <>
-          <div className="vehicle-tabs" role="tablist" aria-label="Vehicle categories">
-            {labeledVehicleGroups.map((group, idx) => (
-              <button
-                key={group.label || `group-${idx}`}
-                type="button"
-                role="tab"
-                aria-selected={vehicleTab === idx}
-                className={`vehicle-tab${vehicleTab === idx ? " vehicle-tab-active" : ""}`}
-                disabled={frozen}
-                onClick={() => setVehicleTab(idx)}
-              >
-                {group.label || "More"}
-              </button>
-            ))}
-          </div>
-          {activeVehicleGroup && (
+          {useVehicleTabs && activeVehicleGroup && (
             <div className="vehicle-group vehicle-group-tabbed">
               <div className="quick-replies vehicle-group-options">
                 {activeVehicleGroup.options.map(opt => (
@@ -172,214 +237,221 @@ export default function QuestionChoices({
               </div>
             </div>
           )}
-        </>
-      )}
 
-      {!useVehicleTabs && vehicleGroups && vehicleGroups.map(group => (
-        <div key={group.label || group.options?.[0]?.value} className="vehicle-group">
-          {group.label && <div className="vehicle-group-label">{group.label}</div>}
-          <div className="quick-replies vehicle-group-options">
-            {group.options.map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                className={mkClass(opt.value)}
-                disabled={frozen}
-                onClick={() => onPickAnswer(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
+          {!useVehicleTabs && vehicleGroups && vehicleGroups.map(group => (
+            <div key={group.label || group.options?.[0]?.value} className="vehicle-group">
+              {group.label && <div className="vehicle-group-label">{group.label}</div>}
+              <div className="quick-replies vehicle-group-options">
+                {group.options.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={mkClass(opt.value)}
+                    disabled={frozen}
+                    onClick={() => onPickAnswer(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
 
-      {!vehicleGroups && isSingleSelect && (
-        <div className="quick-replies quick-replies-described">
-          {routeLocked && (
-            <p className="question-pending-note">Route details are still loading — choices unlock in a moment.</p>
+          {!vehicleGroups && isSingleSelect && (
+            <div className="quick-replies quick-replies-described">
+              {routeLocked && (
+                <p className="question-pending-note">Route details are still loading — choices unlock in a moment.</p>
+              )}
+              {choices.map(raw => {
+                const { value, label, description } = normalizeChoice(raw);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`${mkClass(value)}${description ? " qr-btn-described" : ""}`}
+                    disabled={frozen || routeLocked}
+                    onClick={() => onPickAnswer(value)}
+                  >
+                    <span className="qr-btn-label">{label}</span>
+                    {description && <span className="qr-btn-desc">{description}</span>}
+                  </button>
+                );
+              })}
+            </div>
           )}
-          {choices.map(raw => {
-            const { value, label, description } = normalizeChoice(raw);
-            return (
-              <button
-                key={value}
-                type="button"
-                className={`${mkClass(value)}${description ? " qr-btn-described" : ""}`}
-                disabled={frozen || routeLocked}
-                onClick={() => onPickAnswer(value)}
-              >
-                <span className="qr-btn-label">{label}</span>
-                {description && <span className="qr-btn-desc">{description}</span>}
-              </button>
-            );
-          })}
-        </div>
+
+          {isLodgingStay && (
+            <>
+              <div className="quick-replies quick-replies-lodging">
+                {choices.map(raw => {
+                  const { value, label } = normalizeChoice(raw);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className={mkClass(value, " qr-btn-lodging")}
+                      disabled={frozen}
+                      onClick={() => setLodgingDraft(value)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {Array.isArray(currentQ.loyaltyChoices) && currentQ.loyaltyChoices.length > 0 && (
+                <div className="lodging-loyalty-section">
+                  <div className="question-section-label">Hotel loyalty (optional)</div>
+                  <div className="quick-replies">
+                    {currentQ.loyaltyChoices.map(raw => {
+                      const { value, label } = normalizeChoice(raw);
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          className={`qr-btn${loyaltyDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          disabled={frozen}
+                          onClick={() => setLoyaltyDraft(value)}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {currentQ.type === "multiselect" && (
+            <div className="quick-replies">
+              {choices.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  className={mkPrefClass(c)}
+                  disabled={frozen}
+                  onClick={() => toggleMultiDraft(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isTripDetails && (
+            <>
+              {(currentQ.sections || []).map(section => (
+                <div className="question-group-section" key={section.id}>
+                  <div className="question-section-label">{section.label}</div>
+                  <div className="quick-replies">
+                    {(section.choices || []).map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={mkGroupClass(section.id, c)}
+                        disabled={frozen}
+                        onClick={() => toggleGroupSection(section.id, c)}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
+                <div className="question-group-section">
+                  <div className="question-section-label">Budget</div>
+                  <div className="quick-replies">
+                    {currentQ.budgetChoices.map(raw => {
+                      const { value, label } = normalizeChoice(raw);
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          className={`qr-btn${budgetDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          disabled={frozen}
+                          onClick={() => setBudgetDraft(value)}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {currentQ.type === "multiselect_group" && (
+            <>
+              {(currentQ.sections || []).map(section => (
+                <div className="question-group-section" key={section.id}>
+                  <div className="question-section-label">{section.label}</div>
+                  <div className="quick-replies">
+                    {(section.choices || []).map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={mkGroupClass(section.id, c)}
+                        disabled={frozen}
+                        onClick={() => toggleGroupSection(section.id, c)}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </>,
       )}
 
       {isLodgingStay && (
-        <>
-          <div className="quick-replies quick-replies-lodging">
-            {choices.map(raw => {
-              const { value, label } = normalizeChoice(raw);
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  className={mkClass(value, " qr-btn-lodging")}
-                  disabled={frozen}
-                  onClick={() => setLodgingDraft(value)}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-          {Array.isArray(currentQ.loyaltyChoices) && currentQ.loyaltyChoices.length > 0 && (
-            <div className="lodging-loyalty-section">
-              <div className="question-section-label">Hotel loyalty (optional)</div>
-              <div className="quick-replies">
-                {currentQ.loyaltyChoices.map(raw => {
-                  const { value, label } = normalizeChoice(raw);
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`qr-btn${loyaltyDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
-                      disabled={frozen}
-                      onClick={() => setLoyaltyDraft(value)}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          <div className="pref-actions-row">
-            <button
-              type="button"
-              className="btn-generate btn-generate-inline"
-              disabled={frozen || !lodgingDraft}
-              onClick={submitLodgingStay}
-            >
-              Continue
-            </button>
-          </div>
-        </>
+        <div className="pref-actions-row">
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen || !lodgingDraft}
+            onClick={submitLodgingStay}
+          >
+            Continue
+          </button>
+        </div>
       )}
 
       {currentQ.type === "multiselect" && (
-        <>
-          <div className="quick-replies">
-            {choices.map(c => (
-              <button
-                key={c}
-                type="button"
-                className={mkPrefClass(c)}
-                disabled={frozen}
-                onClick={() => onSetPrefDraft(d => {
-                  const list = Array.isArray(d) ? d : [];
-                  return list.includes(c) ? list.filter(x => x !== c) : [...list, c];
-                })}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-          <div className="pref-actions-row">
-            <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={() => pickInstant([...(Array.isArray(prefDraft) ? prefDraft : [])])}>
-              Continue
-            </button>
-            <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
-          </div>
-        </>
+        <div className="pref-actions-row">
+          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])])}>
+            Continue
+          </button>
+          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
+        </div>
       )}
 
       {isTripDetails && (
-        <>
-          {(currentQ.sections || []).map(section => (
-            <div className="question-group-section" key={section.id}>
-              <div className="question-section-label">{section.label}</div>
-              <div className="quick-replies">
-                {(section.choices || []).map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={mkGroupClass(section.id, c)}
-                    disabled={frozen}
-                    onClick={() => toggleGroupSection(section.id, c)}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-          {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
-            <div className="question-group-section">
-              <div className="question-section-label">Budget</div>
-              <div className="quick-replies">
-                {currentQ.budgetChoices.map(raw => {
-                  const { value, label } = normalizeChoice(raw);
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`qr-btn${budgetDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
-                      disabled={frozen}
-                      onClick={() => setBudgetDraft(value)}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          <div className="pref-actions-row">
-            <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={submitTripDetails}>
-              Continue
-            </button>
-            <button type="button" className="convo-nav-btn" disabled={frozen} onClick={skipTripDetails}>
-              Defaults are fine
-            </button>
-          </div>
-        </>
+        <div className="pref-actions-row">
+          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={submitTripDetails}>
+            Continue
+          </button>
+          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={skipTripDetails}>
+            Defaults are fine
+          </button>
+        </div>
       )}
 
       {currentQ.type === "multiselect_group" && (
-        <>
-          {(currentQ.sections || []).map(section => (
-            <div className="question-group-section" key={section.id}>
-              <div className="question-section-label">{section.label}</div>
-              <div className="quick-replies">
-                {(section.choices || []).map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={mkGroupClass(section.id, c)}
-                    disabled={frozen}
-                    onClick={() => toggleGroupSection(section.id, c)}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-          <div className="pref-actions-row">
-            <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={() => pickInstant({
-              dietary: isGroupDraft(prefDraft) ? (prefDraft.dietary || []) : [],
-              stops_interests: isGroupDraft(prefDraft) ? (prefDraft.stops_interests || []) : [],
-            })}>
-              Continue
-            </button>
-            <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant({ dietary: [], stops_interests: [] })}>
-              Nothing special
-            </button>
-          </div>
-        </>
+        <div className="pref-actions-row">
+          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={() => pickInstant({
+            dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
+            stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
+          })}>
+            Continue
+          </button>
+          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant({ dietary: [], stops_interests: [] })}>
+            Nothing special
+          </button>
+        </div>
       )}
 
       {currentQ.type === "text" && (

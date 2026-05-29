@@ -4,16 +4,26 @@ import { selectDisplayRestaurants } from "../../lib/restaurantPlaces.js";
 import RestaurantCard from "./RestaurantCard.jsx";
 import RestaurantCardSkeleton from "./RestaurantCardSkeleton.jsx";
 
-export default function RestaurantCardsSection({ city, lat, lng, answers, preloaded = null, onToast }) {
-  const [loading, setLoading] = useState(!preloaded?.length);
-  const [restaurants, setRestaurants] = useState(() => (preloaded?.length ? selectDisplayRestaurants(preloaded) : []));
-  const [status, setStatus] = useState(preloaded?.length ? "ready" : "loading");
+export default function RestaurantCardsSection({ city, lat, lng, answers, preloaded, onToast }) {
+  const hasPreload = preloaded !== undefined && preloaded !== null;
+  const [loading, setLoading] = useState(!hasPreload);
+  const [restaurants, setRestaurants] = useState(() => (
+    hasPreload ? selectDisplayRestaurants(Array.isArray(preloaded) ? preloaded : []) : []
+  ));
+  const [status, setStatus] = useState(() => {
+    if (hasPreload) {
+      const list = Array.isArray(preloaded) ? preloaded : [];
+      return list.length ? "ready" : "empty";
+    }
+    return "loading";
+  });
 
   useEffect(() => {
-    if (preloaded?.length) {
-      setRestaurants(selectDisplayRestaurants(preloaded));
+    if (preloaded !== undefined && preloaded !== null) {
+      const list = Array.isArray(preloaded) ? preloaded : [];
+      setRestaurants(selectDisplayRestaurants(list));
       setLoading(false);
-      setStatus("ready");
+      setStatus(list.length ? "ready" : "empty");
       return undefined;
     }
     if (!city) {
@@ -21,7 +31,7 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
       setStatus("missing");
       return undefined;
     }
-    if (lat == null || lng == null) {
+    if (lat == null || lng == null || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
       setLoading(false);
       setStatus("missing-location");
       return undefined;
@@ -30,11 +40,17 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
     setLoading(true);
     setStatus("loading");
     (async () => {
-      const result = await fetchRestaurantsForStop({ lat, lng, city, answers, limit: 6 });
+      const result = await fetchRestaurantsForStop({
+        lat: Number(lat),
+        lng: Number(lng),
+        city,
+        answers,
+        limit: 6,
+      });
       if (cancelled) return;
       if (result.error) {
         setRestaurants([]);
-        setStatus(result.error === "unavailable" ? "unavailable" : "failed");
+        setStatus(result.error === "unavailable" ? "unavailable" : result.error === "missing-location" ? "missing-location" : "failed");
       } else if (!result.restaurants.length) {
         setRestaurants([]);
         setStatus("empty");

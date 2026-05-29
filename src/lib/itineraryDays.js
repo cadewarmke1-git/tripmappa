@@ -3,6 +3,7 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { parseRating, isLocalFavorite } from "./ratings.js";
 import { skipLodgingQuestion, getEffectiveVehicle } from "./vehicles.js";
 import { isContinuousDrive } from "./driveMode.js";
+import { dedupeRoadStops } from "./placesDedup.js";
 
 export function isSimplifiedTrip({ answers, routeInfo, stops = [], tripFormat }) {
   if (isContinuousDrive(answers)) return true;
@@ -110,12 +111,13 @@ export function buildItineraryDays({
   const dep = departureTime instanceof Date ? departureTime : (departureTime ? new Date(departureTime) : new Date());
   const overnightStops = stops.filter(s => s.city);
   const dayCount = Math.max(1, overnightStops.length || 1);
-  const roadByDay = distributeRoadStops(roadStops, overnightStops.length || 1);
+  const uniqueRoadStops = dedupeRoadStops(roadStops);
+  const roadByDay = distributeRoadStops(uniqueRoadStops, overnightStops.length || 1);
   const days = [];
 
   if (overnightStops.length === 0) {
     const roadItems = [
-      ...roadStops.map((rs, i) => mapRoadItem(rs, i)),
+      ...dedupeRoadStops(uniqueRoadStops).map((rs, i) => mapRoadItem(rs, i)),
       ...optionalStopCards.slice(0, 3).map((p, i) => mapOptionalItem(p, i)),
     ];
     days.push({

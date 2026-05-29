@@ -1069,7 +1069,7 @@
   }
   .chat-wrap-plan-flow .convo-scroll {
     padding: 0 2px;
-    overflow-y: auto;
+    overflow: hidden;
   }
   .plan-flow-toolbar {
     display: flex;
@@ -1104,6 +1104,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
+    overflow: hidden;
   }
   .chat-wrap-plan-flow .ai-bubble {
     padding: 16px 18px;
@@ -1137,9 +1138,52 @@
     gap: 10px;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+  .chat-wrap-plan-flow .question-options-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-right: -2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,210,140,0.35) transparent;
+  }
+  .chat-wrap-plan-flow .question-options-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .chat-wrap-plan-flow .question-options-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,210,140,0.32);
+    border-radius: 99px;
+  }
+  .chat-wrap-plan-flow .question-options-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+  .question-page-header {
+    flex-shrink: 0;
+    margin-bottom: 2px;
+  }
+  .question-page-title {
+    margin: 0 0 4px;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #FFD28C;
+  }
+  .question-page-subtitle {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.68);
   }
   .vehicle-tabs {
     display: flex;
@@ -1369,7 +1413,28 @@
     background: rgba(255,210,140,0.12); border: 1px solid rgba(255,210,140,0.25);
   }
 
-  .plan-flow-stack { display: flex; flex-direction: column; gap: 12px; }
+  .plan-flow-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .chat-wrap-plan-flow .plan-flow-current {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-wrap-plan-flow .plan-view {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
   .plan-flow-current { margin-top: 0; }
 
   .question-thread {
@@ -1484,7 +1549,6 @@
     border-color: #FFD28C !important;
     color: #1a1a2e !important;
     background: #FFD28C !important;
-    pointer-events: none;
     transition: none;
   }
   .qr-btn.yes, .qr-btn.no { border-color: rgba(255,210,140,0.4); color: #fff; background: rgba(255,255,255,0.08); }

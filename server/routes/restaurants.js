@@ -1,6 +1,6 @@
 /** Google Places — restaurant search near a route stop with preference filtering. */
 import { getGoogleMapsKey, photoUrl } from "../lib/googleKey.js";
-import { cacheThrough, roundCoord } from "../lib/apiCache.js";
+import { cacheGet, cacheSet, roundCoord } from "../lib/apiCache.js";
 
 const NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
@@ -129,25 +129,37 @@ function filterByPreferences(candidates, answers = {}, { roadStop = false } = {}
 
 async function nearbyRestaurants(lat, lng, keyword = "restaurant") {
   const key = getGoogleMapsKey();
-  if (!key) return [];
+  if (!key) return { results: [], apiError: "no_key" };
 
-  const cacheKey = `restaurants-nearby:${roundCoord(lat)}:${roundCoord(lng)}:${keyword}`;
-  const { value } = await cacheThrough(cacheKey, 12 * 60 * 1000, async () => {
+  async function runSearch(searchKeyword) {
     const params = new URLSearchParams({
       key,
       location: `${lat},${lng}`,
       radius: "8047",
       type: "restaurant",
-      keyword,
     });
+    if (searchKeyword) params.set("keyword", searchKeyword);
 
     const res = await fetch(`${NEARBY_URL}?${params}`);
+    if (!res.ok) return { results: [], apiError: `http_${res.status}` };
     const data = await res.json();
-    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") return [];
-    return data.results || [];
-  });
+    if (data.status === "OK" || data.status === "ZERO_RESULTS") {
+      return { results: data.results || [], apiError: null };
+    }
+    console.warn("Places nearby search status:", data.status, data.error_message || "");
+    return { results: [], apiError: data.status || "places_error" };
+  }
 
-  return value || [];
+  const cacheKey = `restaurants-nearby:${roundCoord(lat)}:${roundCoord(lng)}:${keyword || "default"}`;
+  const cached = cacheGet(cacheKey);
+  if (cached && !cached.apiError) return cached;
+
+  let value = await runSearch(keyword);
+  if (value.apiError && keyword) {
+    value = await runSearch(null);
+  }
+  if (!value.apiError) cacheSet(cacheKey, value, 12 * 60 * 1000);
+  return value;
 }
 
 async function fetchDetails(placeId) {
@@ -206,12 +218,22 @@ export default async function handler(req, res) {
   if (!key) return res.status(503).json({ error: "Google Maps API key not configured" });
 
   const { lat, lng, city, answers = {}, limit = 6, roadStop = false } = req.body || {};
-  if (lat == null || lng == null) {
-    return res.status(400).json({ error: "lat and lng are required" });
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+    return res.status(400).json({ error: "lat and lng must be valid numbers" });
   }
 
   try {
-    const raw = await nearbyRestaurants(lat, lng, roadStop ? "fast food casual dining" : "restaurant");
+    const nearby = await nearbyRestaurants(latNum, lngNum, roadStop ? "fast food casual dining" : "restaurant");
+    if (nearby.apiError === "no_key") {
+      return res.status(503).json({ error: "Google Maps API key not configured" });
+    }
+    if (nearby.apiError) {
+      return res.status(502).json({ error: "Places API request failed", status: nearby.apiError });
+    }
+
+    const raw = nearby.results || [];
     const seen = new Set();
     const unique = raw.filter(p => {
       if (!p.place_id || seen.has(p.place_id)) return false;
@@ -221,18 +243,23 @@ export default async function handler(req, res) {
 
     const detailed = await Promise.all(
       unique.slice(0, 10).map(async (place) => {
-        const details = await fetchDetails(place.place_id);
-        return mapRestaurant(place, details, lat, lng, city);
+        try {
+          const details = await fetchDetails(place.place_id);
+          return mapRestaurant(place, details, latNum, lngNum, city);
+        } catch (detailErr) {
+          console.warn("restaurant details fetch failed:", place.place_id, detailErr.message);
+          return mapRestaurant(place, null, latNum, lngNum, city);
+        }
       }),
     );
 
-    const filtered = filterByPreferences(detailed, answers, { roadStop });
-    const pool = filtered.length ? filtered : detailed;
+    const filtered = filterByPreferences(detailed.filter(Boolean), answers, { roadStop });
+    const pool = filtered.length ? filtered : detailed.filter(Boolean);
     const sorted = pool
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.userRatingsTotal ?? 0) - (a.userRatingsTotal ?? 0))
       .slice(0, limit);
 
-    return res.status(200).json({ restaurants: sorted, city: city || null });
+    return res.status(200).json({ restaurants: sorted, city: city || null, empty: sorted.length === 0 });
   } catch (err) {
     console.error("restaurants API error:", err);
     return res.status(500).json({ error: "Failed to fetch restaurants" });
