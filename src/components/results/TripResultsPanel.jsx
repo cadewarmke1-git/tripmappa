@@ -54,6 +54,11 @@ export default function TripResultsPanel({
   onStopSelect,
   onGuestSignUp,
   onDismissGuestBanner,
+  groceryAllowed = false,
+  accessToken = null,
+  onUpgradeGrocery,
+  isGuest = false,
+  onGrocerySignIn,
 }) {
   const dayRefs = useRef([]);
   const stopRefs = useRef({});
@@ -178,6 +183,12 @@ export default function TripResultsPanel({
             highlightedStopId={highlightedStopId}
             stopRefs={stopRefs}
             onStopSelect={onStopSelect}
+            departureTime={departureTime}
+            groceryAllowed={groceryAllowed}
+            accessToken={accessToken}
+            onUpgradeGrocery={onUpgradeGrocery}
+            isGuest={isGuest}
+            onGrocerySignIn={onGrocerySignIn}
           />
         ) : (
           days.map((day, i) => (
@@ -200,6 +211,14 @@ export default function TripResultsPanel({
               stopRefs={stopRefs}
               onStopSelect={onStopSelect}
               sectionRef={el => { dayRefs.current[i] = el; }}
+              showGroceryCard={i === days.length - 1}
+              stops={stops}
+              departureTime={departureTime}
+              groceryAllowed={groceryAllowed}
+              accessToken={accessToken}
+              onUpgradeGrocery={onUpgradeGrocery}
+              isGuest={isGuest}
+              onGrocerySignIn={onGrocerySignIn}
             />
           ))
         )}

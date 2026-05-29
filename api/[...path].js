@@ -11,6 +11,7 @@ const ROUTES = {
   "ev-charging": () => import("../server/routes/ev-charging.js"),
   "fuel-stations": () => import("../server/routes/fuel-stations.js"),
   "geocode": () => import("../server/routes/geocode.js"),
+  "grocery/order": () => import("../server/routes/grocery-order.js"),
   "health": () => import("../server/routes/health.js"),
   "join-convoy": () => import("../server/routes/join-convoy.js"),
   "plan-trip": () => import("../server/routes/plan-trip.js"),

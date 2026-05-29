@@ -3,6 +3,7 @@ import ActivityDiningCard from "./ActivityDiningCard.jsx";
 import OvernightStayCard from "./OvernightStayCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
+import GroceryCard from "../grocery/GroceryCard.jsx";
 import WeatherIcon from "../icons/WeatherIcon.jsx";
 import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
 
@@ -35,6 +36,12 @@ export default function SimpleTripSection({
   stopRefs,
   onStopSelect,
   continuousDrive = false,
+  departureTime = null,
+  groceryAllowed = false,
+  accessToken = null,
+  onUpgradeGrocery,
+  isGuest = false,
+  onGrocerySignIn,
 }) {
   const day = days[0];
   const roadItems = day?.roadStops?.length ? day.roadStops : roadStops.map((rs, i) => ({
@@ -142,6 +149,43 @@ export default function SimpleTripSection({
             answers={answers}
             preloaded={findCityData(restaurantsByCity, day.overnight.city)}
             onToast={onToast}
+          />
+          {dest && (
+            <div className="results-subsection grocery-card-section">
+              <GroceryCard
+                origin={origin}
+                dest={dest}
+                selectedLodging={selectedLodging}
+                stops={stops}
+                routeInfo={routeInfo}
+                departureTime={departureTime}
+                onToast={onToast}
+                groceryAllowed={groceryAllowed}
+                accessToken={accessToken}
+                onUpgrade={onUpgradeGrocery}
+                isGuest={isGuest}
+                onSignIn={onGrocerySignIn}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {dest && (continuousDrive || !day?.overnight) && (
+        <div className="results-subsection grocery-card-section">
+          <GroceryCard
+            origin={origin}
+            dest={dest}
+            selectedLodging={selectedLodging}
+            stops={stops}
+            routeInfo={routeInfo}
+            departureTime={departureTime}
+            onToast={onToast}
+            groceryAllowed={groceryAllowed}
+            accessToken={accessToken}
+            onUpgrade={onUpgradeGrocery}
+            isGuest={isGuest}
+            onSignIn={onGrocerySignIn}
           />
         </div>
       )}

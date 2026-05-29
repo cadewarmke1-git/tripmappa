@@ -48,7 +48,6 @@ import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { parseLiveShareToken } from "./lib/liveShareApi.js";
-import GroceryModal from "./components/GroceryModal.jsx";
 import EmailModal from "./components/EmailModal.jsx";
 import SignInModal from "./components/auth/SignInModal.jsx";
 import PhoneModal from "./components/auth/PhoneModal.jsx";
@@ -132,6 +131,7 @@ export default function App() {
   const [creditStatus, setCreditStatus] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalReason, setUpgradeModalReason] = useState("trips");
   const [homeAddress, setHomeAddress] = useState("");
   const [showHomeAddressModal, setShowHomeAddressModal] = useState(false);
   const [navigateHomePending, setNavigateHomePending] = useState(false);
@@ -361,8 +361,6 @@ export default function App() {
   const panelDragStartY = useRef(null);
   const panelDragMoved = useRef(false);
   const [modal, setModal] = useState(null);
-  const [groceryInput, setGroceryInput] = useState("");
-  const [groceryItems, setGroceryItems] = useState([]);
   const [autoTheme, setAutoTheme] = useState(computeAutoTheme);
   const [themeOverride, setThemeOverride] = useState(null);
   const theme = themeOverride ?? autoTheme;
@@ -768,6 +766,16 @@ export default function App() {
 
   function handleManageSubscription() {
     toast_("Subscription management via Stripe — coming in Phase 10");
+  }
+
+  function openTripsUpgrade() {
+    setUpgradeModalReason("trips");
+    setShowUpgradeModal(true);
+  }
+
+  function openGroceryUpgrade() {
+    setUpgradeModalReason("grocery");
+    setShowUpgradeModal(true);
   }
 
   function goHome() {
@@ -1665,14 +1673,14 @@ export default function App() {
     }
 
     if (!status?.unlimited && (status?.remaining ?? 0) <= 0) {
-      setShowUpgradeModal(true);
+      openTripsUpgrade();
       return;
     }
 
     if (!user) {
       if (!consumeGuestCredit()) {
         setCreditStatus(getGuestCreditStatus());
-        setShowUpgradeModal(true);
+        openTripsUpgrade();
         return;
       }
       setCreditStatus(getGuestCreditStatus());
@@ -1745,13 +1753,13 @@ export default function App() {
         const guestStatus = getGuestCreditStatus();
         setCreditStatus(guestStatus);
         if (guestStatus.remaining <= 0) {
-          setTimeout(() => setShowUpgradeModal(true), 1200);
+          setTimeout(() => openTripsUpgrade(), 1200);
         }
       }
     } catch (err) {
       console.error("Generate trip error:", err);
       if (err.code === "no_credits") {
-        setShowUpgradeModal(true);
+        openTripsUpgrade();
         if (err.credits) setCreditStatus(err.credits);
         setLoading(false);
         return;
@@ -1978,12 +1986,6 @@ export default function App() {
     toast_("Trip loaded");
   }
 
-  function addGroceryItem() {
-    if (!groceryInput.trim()) return;
-    setGroceryItems(g => [...g, groceryInput.trim()]);
-    setGroceryInput("");
-  }
-
   if (liveShareToken) {
     return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
   }
@@ -2016,7 +2018,8 @@ export default function App() {
             isLoaded={isLoaded}
             onBack={() => setView("app")}
             onSignOut={handleSignOut}
-            onUpgrade={() => setShowUpgradeModal(true)}
+            onUpgrade={openTripsUpgrade}
+            onUpgradeTraveler={openGroceryUpgrade}
             onPlanTrip={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
             onLoadTrip={handleViewTrip}
             onDeleteTrip={deleteSavedTrip}
@@ -2043,6 +2046,7 @@ export default function App() {
           <UpgradeModal
             onClose={() => setShowUpgradeModal(false)}
             creditStatus={creditStatus}
+            reason={upgradeModalReason}
           />
         )}
         <Toast
@@ -2253,6 +2257,11 @@ export default function App() {
             onStopSelect={handleResultsStopSelect}
             onGuestSignUp={() => openAuthModal("signup")}
             onDismissGuestBanner={() => setGuestBannerDismissed(true)}
+            groceryAllowed={Boolean(creditStatus?.groceryDelivery)}
+            accessToken={session?.access_token || null}
+            onUpgradeGrocery={openGroceryUpgrade}
+            isGuest={!user}
+            onGrocerySignIn={() => openAuthModal("signin")}
           />
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
@@ -2459,19 +2468,6 @@ export default function App() {
         )}
       </div>
 
-      {modal?.type === "grocery" && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}>
-          <GroceryModal
-            city={modal.city}
-            groceryInput={groceryInput}
-            groceryItems={groceryItems}
-            onInputChange={setGroceryInput}
-            onAddItem={addGroceryItem}
-            onClose={() => setModal(null)}
-            onPlaceOrder={() => { toast_("Grocery order placed"); setModal(null); }}
-          />
-        </div>
-      )}
       {modal?.type === "report" && (
         <ReportIssueModal
           reportText={reportText}
@@ -2531,6 +2527,7 @@ export default function App() {
           creditStatus={creditStatus || getGuestCreditStatus()}
           onClose={() => setShowUpgradeModal(false)}
           onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
+          reason={upgradeModalReason}
         />
       )}
       {showHomeAddressModal && (

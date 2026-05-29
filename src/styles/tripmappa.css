@@ -1732,6 +1732,220 @@
   .grocery-input-row { display: flex; gap: 7px; margin-bottom: 14px; }
   .grocery-input { flex: 1; padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; }
   .grocery-input:focus { border-color: var(--ink); }
+
+  /* ── Grocery card (trip results) ── */
+  .grocery-card-section { margin-top: 8px; }
+  .grocery-card {
+    border-radius: 16px;
+    border: 1px solid rgba(255, 210, 140, 0.28);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-glass, 0 8px 32px rgba(15, 23, 42, 0.12));
+    padding: 20px 18px 22px;
+    font-family: "Inter", sans-serif;
+  }
+  .grocery-card-confirmation { padding-bottom: 18px; }
+  .grocery-card-header { margin-bottom: 16px; }
+  .grocery-card-title {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink, #fff);
+    margin: 0 0 6px;
+  }
+  .grocery-card-subtitle {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+    margin: 0;
+  }
+  .grocery-voice-block { margin-bottom: 14px; }
+  .grocery-mic-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(255, 210, 140, 0.35);
+    background: rgba(255, 210, 140, 0.08);
+    color: var(--ink, #fff);
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .grocery-mic-btn:hover:not(:disabled) {
+    background: rgba(255, 210, 140, 0.14);
+    border-color: rgba(255, 210, 140, 0.55);
+  }
+  .grocery-mic-btn-active {
+    background: rgba(255, 210, 140, 0.22);
+    border-color: #FFD28C;
+    box-shadow: 0 0 0 3px rgba(255, 210, 140, 0.18);
+  }
+  .grocery-mic-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .grocery-mic-icon { width: 22px; height: 22px; flex-shrink: 0; color: #FFD28C; }
+  .grocery-mic-icon-active { color: #fff; }
+  .grocery-mic-label { text-align: left; line-height: 1.35; }
+  .grocery-voice-hint { font-size: 12px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+  .grocery-interim-text {
+    font-size: 13px;
+    font-style: italic;
+    color: rgba(255, 210, 140, 0.9);
+    margin: 10px 0 0;
+    line-height: 1.4;
+  }
+  .grocery-card-list {
+    max-height: 200px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.12);
+  }
+  .grocery-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .grocery-item-name { flex: 1; min-width: 0; }
+  .grocery-item-empty { color: var(--muted); font-size: 12.5px; font-style: italic; border-bottom: none; }
+  .grocery-item-remove {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: rgba(255, 210, 140, 0.85);
+    font-family: "Inter", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .grocery-item-remove:hover { color: #FFD28C; text-decoration: underline; }
+  .grocery-clear-btn {
+    display: block;
+    margin: 0 0 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: "Inter", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+  .grocery-clear-btn:hover { color: #FFD28C; }
+  .grocery-btn {
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .grocery-btn-add {
+    flex: none;
+    padding: 9px 14px;
+    background: rgba(255, 210, 140, 0.15);
+    color: var(--ink, #fff);
+    border: 1px solid rgba(255, 210, 140, 0.35);
+  }
+  .grocery-btn-add:hover { background: rgba(255, 210, 140, 0.25); }
+  .grocery-btn-primary {
+    width: 100%;
+    padding: 14px 18px;
+    background: #FFD28C;
+    color: #1a1a2e;
+    box-shadow: 0 4px 16px rgba(255, 210, 140, 0.22);
+  }
+  .grocery-btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
+  .grocery-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .grocery-btn-secondary {
+    width: 100%;
+    padding: 12px 16px;
+    margin-top: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ink, #fff);
+    border: 1.5px solid rgba(255, 210, 140, 0.35);
+  }
+  .grocery-btn-secondary:hover:not(:disabled) { background: rgba(255, 210, 140, 0.1); }
+  .grocery-delivery-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 16px 0 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .grocery-meta-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .grocery-meta-value {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink, #fff);
+    margin: 0;
+  }
+  .grocery-datetime-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--ink, #fff);
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .grocery-datetime-input:focus {
+    border-color: #FFD28C;
+    box-shadow: 0 0 0 3px rgba(255, 210, 140, 0.15);
+  }
+  .grocery-meta-hint { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+  .grocery-confirm-details { margin: 0 0 16px; }
+  .grocery-confirm-row {
+    display: grid;
+    grid-template-columns: minmax(0, 38%) 1fr;
+    gap: 8px 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 13px;
+  }
+  .grocery-confirm-row:last-child { border-bottom: none; }
+  .grocery-confirm-row dt {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0;
+  }
+  .grocery-confirm-row dd { margin: 0; color: var(--ink, #fff); line-height: 1.45; }
+  .grocery-card-locked .grocery-meta-field { margin-bottom: 16px; }
+  .grocery-locked-benefits {
+    margin: 0 0 16px;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .grocery-locked-benefits li { margin-bottom: 6px; }
+
   .modal-footer { display: flex; gap: 8px; }
   .modal-btn { flex: 1; padding: 11px; border: none; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
   .modal-btn-primary { background: var(--ink); color: #fff; }
@@ -3200,6 +3414,10 @@
     background: linear-gradient(135deg, #ffe4b3 0%, #FFD28C 40%, #d4a017 100%);
     box-shadow: 0 2px 16px rgba(255,210,140,0.45);
   }
+  .profile-card-tier--traveler {
+    background: linear-gradient(135deg, #fff0d4 0%, #FFD28C 35%, #c9922e 100%);
+    box-shadow: 0 2px 18px rgba(255,210,140,0.55);
+  }
   .profile-card-credits {
     margin: 0;
     font-size: 12px;
@@ -3274,6 +3492,11 @@
     background: rgba(255,210,140,0.18); color: #FFD28C;
     border-color: rgba(255,210,140,0.45);
   }
+  .profile-tier-badge-traveler {
+    background: linear-gradient(135deg, rgba(255,210,140,0.28), rgba(255,210,140,0.12));
+    color: #FFD28C;
+    border-color: rgba(255,210,140,0.55);
+  }
   .profile-body { max-width: 960px; margin: 0 auto; padding: 24px 20px 64px; display: flex; flex-direction: column; gap: 20px; }
   .profile-stats-bar {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
@@ -3308,8 +3531,12 @@
   }
   .profile-progress-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFD28C, #ffb347); transition: width 0.4s var(--ease); }
   .profile-plan-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .profile-plan-columns-three { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 900px) { .profile-plan-columns-three { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { .profile-plan-columns { grid-template-columns: 1fr; } }
   .profile-plan-col-title { font-size: 13px; font-weight: 700; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .profile-plan-col-title-traveler { color: #FFD28C; }
+  .profile-plan-col-price { font-size: 12px; font-weight: 700; color: #FFD28C; margin: 0 0 8px; }
   .profile-plan-col-title-premium { color: #FFD28C; }
   .profile-benefits-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.75); }
   .profile-benefits-list li { margin-bottom: 4px; }

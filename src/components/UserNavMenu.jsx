@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
+import { getTierLabel, normalizeTier, TIERS } from "../lib/tiers.js";
 
 export default function UserNavMenu({
   user,
@@ -16,8 +17,9 @@ export default function UserNavMenu({
   const closeTimerRef = useRef(null);
 
   const displayName = getDisplayName(user, profile);
-  const isPremium = creditStatus?.tier === "premium";
-  const tierLabel = isPremium ? "PREMIUM" : "FREE";
+  const tierKey = normalizeTier(creditStatus?.tier);
+  const tierLabel = getTierLabel(tierKey).toUpperCase();
+  const tierClass = tierKey === TIERS.TRAVELER ? "traveler" : tierKey === TIERS.PREMIUM ? "premium" : "free";
 
   const creditsLine = creditStatus?.unlimited
     ? "Unlimited Trip Generations this month"
@@ -100,7 +102,7 @@ export default function UserNavMenu({
           </button>
 
           <div className="profile-card-meta">
-            <span className={`profile-card-tier profile-card-tier--${isPremium ? "premium" : "free"}`}>
+            <span className={`profile-card-tier profile-card-tier--${tierClass}`}>
               {tierLabel}
             </span>
             <p className="profile-card-credits">{creditsLine}</p>

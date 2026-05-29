@@ -11,6 +11,7 @@ export function getGuestCreditStatus() {
     remaining,
     limit: GUEST_SESSION_LIMIT,
     used,
+    groceryDelivery: false,
   };
 }
 

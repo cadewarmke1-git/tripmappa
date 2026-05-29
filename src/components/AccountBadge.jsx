@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getTierLabel, hasUnlimitedTripGenerations, normalizeTier, TIERS } from "../lib/tiers.js";
 
 export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshCredits }) {
   const [open, setOpen] = useState(false);
@@ -8,9 +9,11 @@ export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshC
     || user?.email?.split("@")[0]
     || "Account";
   const email = user?.email || "";
-  const tier = creditStatus?.tier === "premium" ? "Premium" : "Free";
-  const isPremium = creditStatus?.tier === "premium";
-  const generationsLabel = isPremium
+  const tierKey = normalizeTier(creditStatus?.tier);
+  const tier = getTierLabel(tierKey);
+  const isPaid = hasUnlimitedTripGenerations(tierKey);
+  const isTraveler = tierKey === TIERS.TRAVELER;
+  const generationsLabel = isPaid
     ? "Unlimited Trip Generations"
     : `${creditStatus?.remaining ?? 0} of ${creditStatus?.limit ?? 3} Trip Generations remaining this month`;
 
@@ -29,7 +32,7 @@ export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshC
     <div className="account-badge-wrap" ref={wrapRef}>
       <button type="button" className="account-badge" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         <span className="account-badge-name">
-          {isPremium && (
+          {isPaid && (
             <svg className="account-crown" width="14" height="14" viewBox="0 0 24 24" fill="#FFD28C" aria-hidden="true">
               <path d="M5 18h14l-1.5-9.5L12 10 7.5 8.5 5 18zM4 20h16v1H4v-1z"/>
             </svg>

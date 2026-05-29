@@ -4,6 +4,7 @@ import OvernightStayCard from "./OvernightStayCard.jsx";
 import ActivityDiningCard from "./ActivityDiningCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
+import GroceryCard from "../grocery/GroceryCard.jsx";
 
 function legLabel(stop) {
   if (!stop) return null;
@@ -46,6 +47,14 @@ export default function ResultsDaySection({
   stopRefs,
   onStopSelect,
   continuousDrive = false,
+  showGroceryCard = false,
+  stops = [],
+  departureTime = null,
+  groceryAllowed = false,
+  accessToken = null,
+  onUpgradeGrocery,
+  isGuest = false,
+  onGrocerySignIn,
 }) {
   const sectionEl = useRef(null);
 
@@ -146,7 +155,44 @@ export default function ResultsDaySection({
             preloaded={restaurantsByCity?.[day.overnight.city]}
             onToast={onToast}
           />
+          {showGroceryCard && dest && (
+            <div className="results-subsection grocery-card-section">
+              <GroceryCard
+                origin={origin}
+                dest={dest}
+                selectedLodging={selectedLodging}
+                stops={stops}
+                routeInfo={routeInfo}
+                departureTime={departureTime}
+                onToast={onToast}
+                groceryAllowed={groceryAllowed}
+                accessToken={accessToken}
+                onUpgrade={onUpgradeGrocery}
+                isGuest={isGuest}
+                onSignIn={onGrocerySignIn}
+              />
+            </div>
+          )}
         </>
+      )}
+
+      {showGroceryCard && dest && !day.overnight && !continuousDrive && (
+        <div className="results-subsection grocery-card-section">
+          <GroceryCard
+            origin={origin}
+            dest={dest}
+            selectedLodging={selectedLodging}
+            stops={stops}
+            routeInfo={routeInfo}
+            departureTime={departureTime}
+            onToast={onToast}
+            groceryAllowed={groceryAllowed}
+            accessToken={accessToken}
+            onUpgrade={onUpgradeGrocery}
+            isGuest={isGuest}
+            onSignIn={onGrocerySignIn}
+          />
+        </div>
       )}
 
       {day.activities?.length > 0 && (

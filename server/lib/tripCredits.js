@@ -1,4 +1,5 @@
 /** Server-side trip generation credit limits and monthly reset. */
+import { canUseGroceryDelivery, hasUnlimitedTripGenerations, normalizeTier } from "./tiers.js";
 
 export const FREE_MONTHLY_LIMIT = 3;
 
@@ -47,23 +48,27 @@ export async function getOrCreateProfile(admin, userId) {
 }
 
 export function getCreditStatus(profile) {
-  if (profile.tier === "premium") {
+  const tier = normalizeTier(profile.tier);
+
+  if (hasUnlimitedTripGenerations(tier)) {
     return {
-      tier: "premium",
+      tier,
       unlimited: true,
       remaining: null,
       limit: null,
       used: profile.generations_used,
+      groceryDelivery: canUseGroceryDelivery(tier),
     };
   }
 
   const remaining = Math.max(0, FREE_MONTHLY_LIMIT - profile.generations_used);
   return {
-    tier: "free",
+    tier,
     unlimited: false,
     remaining,
     limit: FREE_MONTHLY_LIMIT,
     used: profile.generations_used,
+    groceryDelivery: false,
   };
 }
 
