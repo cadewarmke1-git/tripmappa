@@ -23,7 +23,7 @@ import { fetchGeocode } from "./geocodeClient.js";
 import { fetchLiveTripTips } from "./tripTipsClient.js";
 import { optimizeStopOrder, shouldOptimizeRoute } from "./routeOptimization.js";
 
-import { dedupePlaces } from "./placesDedup.js";
+import { dedupePlaces, dedupeRoadStops } from "./placesDedup.js";
 
 const BASE_SERVICE_IDS = [
   "pharmacy", "hospital", "urgent_care", "auto_repair", "atm",
@@ -73,7 +73,7 @@ export async function enrichGeneratedTrip({
   const optionalStopCards = [];
   const poiMarkers = [];
   let enrichedStops = stops.map(s => ({ ...s }));
-  let safeRoadStops = roadStops.map(rs => ({ ...rs }));
+  let safeRoadStops = dedupeRoadStops(roadStops.map(rs => ({ ...rs })));
   let routeOptimized = false;
 
   if (shouldOptimizeRoute(answers, enrichedStops) && origin && destination) {
@@ -94,7 +94,9 @@ export async function enrichGeneratedTrip({
 
   if (mapsReady && routeInfo?.routePoints?.length) {
     const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
-    safeRoadStops = dedupePlaces(corridorRoadStops);
+    safeRoadStops = dedupeRoadStops([...safeRoadStops, ...corridorRoadStops]);
+  } else {
+    safeRoadStops = dedupeRoadStops(safeRoadStops);
   }
 
   const interests = mapsReady
@@ -286,6 +288,8 @@ export async function enrichGeneratedTrip({
     });
     liveTripTips = tipsResult.tips || [];
   }
+
+  safeRoadStops = dedupeRoadStops(safeRoadStops);
 
   return {
     stops: enrichedStops,

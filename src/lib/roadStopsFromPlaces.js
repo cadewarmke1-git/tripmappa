@@ -30,7 +30,7 @@ async function pickUniquePhoto(placeId, usedPhotoUrls) {
 function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
   return {
     id: place.placeId || place.id,
-    placeId: place.placeId,
+    placeId: place.placeId || place.place_id || place.id,
     location: place.address?.split(",")[0]?.trim() || "Along route",
     distance: distanceLabel,
     eta: "—",
@@ -100,5 +100,5 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
     stops.push(roadStopFromPlace(place, place.category || "discovery", mileLabel, photoUrl));
   }
 
-  return stops.slice(0, 12);
+  return dedupePlaces(stops).slice(0, 12);
 }

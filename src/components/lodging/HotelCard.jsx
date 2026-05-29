@@ -1,5 +1,5 @@
-import StarRating from "./StarRating.jsx";
 import AmenityBadges from "./AmenityBadges.jsx";
+import InlineStarRating from "../results/InlineStarRating.jsx";
 
 const BADGE_LABELS = {
   premium: "Premium Pick",
@@ -21,7 +21,7 @@ export default function HotelCard({ hotel, onSave, onToast }) {
   }
 
   return (
-    <article className="lodging-card lodging-card-hotel">
+    <article className="lodging-card lodging-card-hotel lodging-card-premium">
       <div className="lodging-card-photo-wrap">
         <img
           className="lodging-card-photo"
@@ -39,16 +39,35 @@ export default function HotelCard({ hotel, onSave, onToast }) {
         )}
       </div>
 
-      <div className="lodging-card-body">
-        <h3 className="lodging-card-name">{hotel.name}</h3>
-        <StarRating stars={hotel.stars} />
-        <p className="lodging-card-neighborhood">{hotel.neighborhood}</p>
-        <div className="lodging-card-price">{hotel.priceLabel}</div>
-        <AmenityBadges amenityIds={hotel.amenities} />
-        <p className="lodging-card-desc">{hotel.description}</p>
-        <p className="lodging-card-distance">{hotel.distanceFromRoute} mi from route</p>
+      <div className="lodging-card-body lodging-card-body-premium">
+        <div className="lodging-card-primary">
+          <h3 className="lodging-card-name">{hotel.name}</h3>
+          {hotel.neighborhood && (
+            <p className="lodging-card-neighborhood">{hotel.neighborhood}</p>
+          )}
+          <div className="lodging-card-stats">
+            {hotel.rating != null && (
+              <InlineStarRating rating={hotel.rating} className="lodging-card-inline-rating" />
+            )}
+            <div className="lodging-card-price">{hotel.priceLabel}</div>
+          </div>
+          {hotel.amenities?.length > 0 && (
+            <div className="lodging-card-amenities-wrap">
+              <AmenityBadges amenityIds={hotel.amenities} />
+            </div>
+          )}
+        </div>
 
-        <div className="lodging-card-actions">
+        <div className="lodging-card-secondary">
+          {hotel.description && (
+            <p className="lodging-card-desc">{hotel.description}</p>
+          )}
+          {hotel.distanceFromRoute != null && (
+            <p className="lodging-card-distance">{hotel.distanceFromRoute} mi from route</p>
+          )}
+        </div>
+
+        <div className="lodging-card-actions lodging-card-actions-anchor">
           <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook}>
             Book Now
           </button>

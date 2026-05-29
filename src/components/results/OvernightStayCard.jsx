@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
 import { processLodgingResults } from "../../lib/lodgingPlaces.js";
-import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import WeatherIcon from "../icons/WeatherIcon.jsx";
 import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
 import AmenityBadges from "../lodging/AmenityBadges.jsx";
-import StopLocationActions from "./StopLocationActions.jsx";
+import InlineStarRating from "./InlineStarRating.jsx";
 
 export default function OvernightStayCard({
   overnight,
@@ -47,6 +46,7 @@ export default function OvernightStayCard({
   const price = featured?.priceLabel || (featured?.pricePerNight ? `$${featured.pricePerNight}/night` : null);
   const desc = overnight?.description || featured?.description || "Your home base for the night.";
   const photoUrl = featured?.photo || featured?.photoUrl || null;
+  const rating = featured?.rating ?? overnight?.rating;
 
   function handleBook(e) {
     e?.stopPropagation?.();
@@ -72,7 +72,7 @@ export default function OvernightStayCard({
   return (
     <article
       ref={cardRef}
-      className={`overnight-card${highlighted ? " stop-highlighted" : ""}`}
+      className={`overnight-card overnight-card-premium${highlighted ? " stop-highlighted" : ""}`}
       data-stop-id={overnight?.id || `overnight-${overnight?.city}`}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === "Enter") handleClick(); }}
@@ -98,27 +98,22 @@ export default function OvernightStayCard({
           </div>
         )}
       </div>
-      <div className="overnight-card-body">
-        <h3 className="overnight-card-name">{name}</h3>
-        <div className="overnight-card-rating-row">
-          {formatStarLabel(featured?.rating ?? overnight?.rating)
-            ? <span className="overnight-rating">{formatStarLabel(featured?.rating ?? overnight?.rating)}</span>
-            : <span className="overnight-no-reviews">No reviews yet</span>}
-          {price && <span className="overnight-price">{price}</span>}
+      <div className="overnight-card-body overnight-card-body-premium">
+        <div className="overnight-card-primary">
+          <h3 className="overnight-card-name">{name}</h3>
+          <div className="overnight-card-stats">
+            {rating != null
+              ? <InlineStarRating rating={rating} className="overnight-rating" />
+              : <span className="overnight-no-reviews">No reviews yet</span>}
+            {price && <span className="overnight-price">{price}</span>}
+          </div>
+          {featured?.amenities?.length > 0 && (
+            <div className="overnight-card-amenities-wrap">
+              <AmenityBadges amenityIds={featured.amenities} />
+            </div>
+          )}
         </div>
-        {featured?.amenities && <AmenityBadges amenityIds={featured.amenities} />}
         <p className="overnight-card-desc">{desc}</p>
-        <StopLocationActions
-          stop={{
-            title: name,
-            city: overnight?.city,
-            lat: overnight?.lat ?? featured?.lat,
-            lng: overnight?.lng ?? featured?.lng,
-            address: featured?.address,
-          }}
-          onToast={onToast}
-          compact
-        />
         <button type="button" className="btn-generate overnight-book-btn" onClick={handleBook}>Book Now</button>
       </div>
     </article>

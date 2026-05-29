@@ -639,12 +639,6 @@
 .app-wrap.day .trips-empty-state { background: rgba(255,255,255,0.7) !important; border-color: rgba(0,0,0,0.1) !important; }
 .app-wrap.day .trips-empty-title { color: #0c1222 !important; }
 .app-wrap.day .trips-empty-sub { color: rgba(12,18,34,0.55) !important; }
-.app-wrap.day .stop-location-btn {
-  background: rgba(12,18,34,0.04) !important;
-  border-color: rgba(12,18,34,0.12) !important;
-  color: rgba(12,18,34,0.75) !important;
-}
-.app-wrap.day .stop-location-btn-maps { color: #8a6118 !important; }
 .app-wrap.day .enrichment-notice {
   background: rgba(255,210,140,0.2) !important;
   border-color: rgba(201,146,46,0.35) !important;

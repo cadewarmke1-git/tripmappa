@@ -56,8 +56,10 @@ function inferCategory(rs) {
 
 function mapRoadItem(rs, key) {
   const rating = parseRating(rs.rating ?? String(rs.note || "").match(/(\d+\.?\d*)\s*star/i)?.[1]);
+  const placeId = rs.placeId || rs.place_id || rs.stopData?.placeId;
   return {
-    id: rs.id || `road-${key}`,
+    id: placeId || rs.id || `road-${key}`,
+    placeId,
     type: "road",
     title: rs.name || rs.location || "Road stop",
     city: rs.location,
