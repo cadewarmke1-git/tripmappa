@@ -5,9 +5,11 @@ import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import TripSummaryFooter from "./TripSummaryFooter.jsx";
-import TripAlertsBanner from "../TripAlertsSection.jsx";
+import { TripTipsSection } from "../TripAlertsSection.jsx";
 import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
+import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
+import EnrichmentNotice from "./EnrichmentNotice.jsx";
 
 export default function TripResultsPanel({
   theme,
@@ -22,6 +24,14 @@ export default function TripResultsPanel({
   recommendations = [],
   selectedLodging = [],
   tripAlerts = [],
+  liveTripTips = [],
+  tripTips = [],
+  liveTipsUpdatedAt = null,
+  liveTipsRefreshing = false,
+  enrichingTrip = false,
+  enrichmentLimited = false,
+  onDismissEnrichmentNotice,
+  isStopAdded,
   activitiesByCity = {},
   restaurantsByCity = {},
   weatherByCity = {},
@@ -51,6 +61,19 @@ export default function TripResultsPanel({
     [answers, routeInfo, stops, tripFormat],
   );
 
+  const displayTips = useMemo(() => {
+    if (liveTripTips.length) return liveTripTips.slice(0, 5);
+    const seen = new Set();
+    const lines = [];
+    tripTips.forEach((tip) => {
+      const line = typeof tip === "string" ? tip : (tip.message || tip.title);
+      if (!line || seen.has(line)) return;
+      seen.add(line);
+      lines.push(line);
+    });
+    return lines.slice(0, 5);
+  }, [liveTripTips, tripTips]);
+
   const days = useMemo(() => buildItineraryDays({
     origin,
     dest,
@@ -77,7 +100,7 @@ export default function TripResultsPanel({
   }, [highlightedStopId]);
 
   return (
-    <div className={`trip-results-panel trip-results-panel-${theme || "night"}`}>
+    <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate`}>
       <header className="trip-results-topbar trip-results-topbar-with-logo">
         <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit Trip</button>
         <div className="trip-results-topbar-title">Your Trip</div>
@@ -103,11 +126,21 @@ export default function TripResultsPanel({
 
         <WeatherWarningBanner alerts={tripAlerts} />
 
+        <EnrichmentNotice limited={enrichmentLimited} onDismiss={onDismissEnrichmentNotice} />
+
         {!simplified && days.length > 1 && (
-          <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
+          <div className="route-progress-sticky-wrap">
+            <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
+          </div>
         )}
 
-        <TripAlertsBanner alerts={tripAlerts} onDismiss={onDismissAlert} />
+        <TripTipsSection
+          tips={displayTips}
+          updatedAt={liveTipsUpdatedAt}
+          refreshing={liveTipsRefreshing}
+        />
+
+        {enrichingTrip && <ResultsEnrichmentSkeleton />}
 
         {simplified ? (
           <SimpleTripSection
@@ -125,6 +158,7 @@ export default function TripResultsPanel({
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
             onAddRoadStop={onAddRoadStop}
+            isStopAdded={isStopAdded}
             highlightedStopId={highlightedStopId}
             stopRefs={stopRefs}
             onStopSelect={onStopSelect}
@@ -144,6 +178,7 @@ export default function TripResultsPanel({
               onLodgingSelect={onLodgingSelect}
               onToast={onToast}
               onAddRoadStop={onAddRoadStop}
+              isStopAdded={isStopAdded}
               highlightedStopId={highlightedStopId}
               stopRefs={stopRefs}
               onStopSelect={onStopSelect}

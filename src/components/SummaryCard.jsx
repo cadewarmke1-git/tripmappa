@@ -10,7 +10,9 @@ import {
   MULTI_VEHICLE_TRIP,
 } from "../lib/vehicles.js";
 
-export default function SummaryCard({ answers, hosCompliance }) {
+const PAYOFF_KEYS = ["Trip", "Vehicle", "Fuel", "Party size"];
+
+export default function SummaryCard({ answers, hosCompliance, compactGrid = false }) {
   const effective = getEffectiveVehicle(answers);
   const fuel = inferFuelType(effective, answers.preferences || [], answers);
   const rows = [
@@ -32,14 +34,28 @@ export default function SummaryCard({ answers, hosCompliance }) {
     !answers.fuel_type && fuel && ["Fuel type", fuel],
   ].filter(Boolean);
 
+  const payoffRows = rows.filter(([k]) => PAYOFF_KEYS.includes(k));
+  const showPayoffGrid = compactGrid && payoffRows.length > 0;
+
   return (
-    <div className="summary-card">
-      {rows.map(([k, v]) => (
-        <div className="summary-row" key={k}>
-          <div className="summary-key">{k}</div>
-          <div>{v}</div>
+    <div className={`summary-card${showPayoffGrid ? " summary-card-grid" : ""}`}>
+      {showPayoffGrid ? (
+        <div className="summary-grid">
+          {payoffRows.map(([k, v]) => (
+            <div className="summary-grid-item" key={k}>
+              <div className="summary-key">{k}</div>
+              <div className="summary-val">{v}</div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        rows.map(([k, v]) => (
+          <div className="summary-row" key={k}>
+            <div className="summary-key">{k}</div>
+            <div>{v}</div>
+          </div>
+        ))
+      )}
       {isScenicRoute(answers) && (
         <div className="summary-kids-note">Scenic route selected — viewpoints noted at each stop</div>
       )}

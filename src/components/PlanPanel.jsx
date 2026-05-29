@@ -52,6 +52,9 @@ export default function PlanPanel({
         {inQuestionFlow && showProgress && (
           <div className="plan-flow-toolbar">
             <QuestionProgress {...flowProgress} compact />
+            {creditsLabel && (
+              <span className="plan-flow-credits">{creditsLabel}</span>
+            )}
             <div className="plan-flow-nav">
               {!frozen && (
                 <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>
@@ -68,7 +71,9 @@ export default function PlanPanel({
         )}
 
         {returnedFromResults && (
-          <div className="plan-saved-note">Your previous answers are saved</div>
+          <div className="plan-saved-note">
+            Editing your trip — answers are kept until you regenerate. Start over clears everything.
+          </div>
         )}
 
         <div className="convo-scroll" ref={convoScrollRef}>
@@ -121,7 +126,7 @@ export default function PlanPanel({
                 )}
                 {qIndex === -2 && convoComplete && (
                   <div className="payoff-summary-wrap">
-                    <SummaryCard answers={answers} />
+                    <SummaryCard answers={answers} compactGrid />
                   </div>
                 )}
               </div>

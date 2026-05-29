@@ -612,5 +612,51 @@
 .app-wrap.day .user-nav-menu-trigger { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); color: #0c1222; }
 .app-wrap.day .user-nav-menu-dropdown { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); color: #0c1222; }
 .app-wrap.day .user-nav-menu-item:hover { background: rgba(0,0,0,0.04); }
+
+.app-wrap.day .tm-icon { color: #c9922e; }
+.app-wrap.day .hero-draft-resume {
+  background: rgba(255,255,255,0.88) !important;
+  border-color: rgba(201,146,46,0.35) !important;
+}
+.app-wrap.day .hero-draft-resume-text { color: rgba(12,18,34,0.85) !important; }
+.app-wrap.day .hero-draft-resume-btn {
+  color: #8a6118 !important;
+  border-color: rgba(201,146,46,0.45) !important;
+  background: rgba(255,210,140,0.25) !important;
+}
+.app-wrap.day .share-mode-desc { color: rgba(12,18,34,0.65) !important; }
+.app-wrap.day .panel-loading-fallback { color: rgba(12,18,34,0.6) !important; }
+
+.app-wrap.day .trips-panel-title { color: #0c1222 !important; }
+.app-wrap.day .trips-panel-sub { color: rgba(12,18,34,0.55) !important; }
+.app-wrap.day .trips-saved-card {
+  background: rgba(255,255,255,0.92) !important;
+  border-color: rgba(201,146,46,0.25) !important;
+}
+.app-wrap.day .trips-saved-card-city { color: #0c1222 !important; }
+.app-wrap.day .trips-saved-card-meta { color: rgba(12,18,34,0.55) !important; }
+.app-wrap.day .trips-saved-btn-danger { color: rgba(12,18,34,0.65) !important; border-color: rgba(0,0,0,0.12) !important; }
+.app-wrap.day .trips-empty-state { background: rgba(255,255,255,0.7) !important; border-color: rgba(0,0,0,0.1) !important; }
+.app-wrap.day .trips-empty-title { color: #0c1222 !important; }
+.app-wrap.day .trips-empty-sub { color: rgba(12,18,34,0.55) !important; }
+.app-wrap.day .stop-location-btn {
+  background: rgba(12,18,34,0.04) !important;
+  border-color: rgba(12,18,34,0.12) !important;
+  color: rgba(12,18,34,0.75) !important;
+}
+.app-wrap.day .stop-location-btn-maps { color: #8a6118 !important; }
+.app-wrap.day .enrichment-notice {
+  background: rgba(255,210,140,0.2) !important;
+  border-color: rgba(201,146,46,0.35) !important;
+}
+.app-wrap.day .enrichment-notice-text { color: rgba(12,18,34,0.82) !important; }
+.app-wrap.day .route-progress-sticky-wrap {
+  background: linear-gradient(180deg, #f5f0e8 70%, rgba(245,240,232,0)) !important;
+}
+.app-wrap.day .share-mode-card {
+  background: rgba(255,255,255,0.88) !important;
+  border-color: rgba(201,146,46,0.28) !important;
+}
+.app-wrap.day .share-mode-title { color: #8a6118 !important; }
 .app-wrap.day .nav.transparent .user-nav-menu-trigger { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25); color: #fff; }
 .app-wrap.day .nav.transparent .user-nav-menu-name { color: #fff; }

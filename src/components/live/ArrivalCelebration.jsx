@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { extractDestinationCity } from "../../lib/liveShareUtils.js";
+import DecorMark from "../icons/DecorMark.jsx";
 
 export default function ArrivalCelebration({ destination, show, onDismiss }) {
   const [particles, setParticles] = useState([]);
@@ -35,7 +36,8 @@ export default function ArrivalCelebration({ destination, show, onDismiss }) {
         <p className="arrival-banner-sub">Your convoy has arrived safely.</p>
         {onDismiss && (
           <button type="button" className="profile-btn profile-btn-gold" onClick={onDismiss}>
-            Celebrate ✦
+            <DecorMark className="arrival-celebrate-mark" />
+            Celebrate
           </button>
         )}
       </div>

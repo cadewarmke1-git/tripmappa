@@ -32,7 +32,7 @@ export function mapPlaceToHotel(place, answers, routeInfo) {
     pricePerNight: nightly,
     priceLabel: `$${nightly}/night`,
     amenities: ["wifi", "parking"],
-    description: place.rating ? `${place.rating}★ · ${place.userRatingsTotal ?? 0} reviews` : "Verified on Google Maps",
+    description: place.rating ? `${place.rating} / 5 · ${place.userRatingsTotal ?? 0} reviews` : "Verified on Google Maps",
     distanceFromRoute: place.distanceMiles ?? 1,
     bookUrl: place.bookUrl || place.website || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`,
     photo: place.photoUrl || DEFAULT_PHOTO,

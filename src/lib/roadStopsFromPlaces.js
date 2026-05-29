@@ -36,7 +36,7 @@ function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
     eta: "—",
     category,
     name: place.name,
-    note: place.rating ? `${place.rating}★` : "",
+    note: place.rating ? `${place.rating} / 5` : "",
     lat: place.lat,
     lng: place.lng,
     photoUrl: photoUrl || null,
@@ -66,6 +66,8 @@ async function searchAtSample(pt, sampleIndex, answers, fuelMode) {
   }).then(list => list.map(p => ({ ...p, category: pick.category })));
 }
 
+import { dedupePlaces, placeDedupKey } from "./placesDedup.js";
+
 export async function buildRoadStopsFromRoute(answers, routeInfo) {
   if (!routeInfo?.routePoints?.length || !window.google?.maps?.places) return [];
 
@@ -73,7 +75,7 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
   const totalMiles = parseMilesFromDistance(routeInfo?.distance) || 0;
   const fuelMode = getFuelStopMode(answers);
   const stops = [];
-  const seenPlaceIds = new Set();
+  const seenKeys = new Set();
   const usedPhotoUrls = new Set();
 
   for (let i = 0; i < samples.length; i++) {
@@ -85,15 +87,16 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
       : "—";
 
     const candidates = await searchAtSample(pt, i, answers, fuelMode);
-    const place = candidates.find(p =>
-      p.placeId
-      && !seenPlaceIds.has(p.placeId)
-      && (p.distanceMiles ?? 99) <= 1,
-    );
+    const place = candidates.find(p => {
+      const key = placeDedupKey(p);
+      if (!key || seenKeys.has(key)) return false;
+      return (p.distanceMiles ?? 99) <= 1;
+    });
     if (!place) continue;
 
-    seenPlaceIds.add(place.placeId);
-    const photoUrl = await pickUniquePhoto(place.placeId, usedPhotoUrls);
+    const key = placeDedupKey(place);
+    if (key) seenKeys.add(key);
+    const photoUrl = await pickUniquePhoto(place.placeId || place.id, usedPhotoUrls);
     stops.push(roadStopFromPlace(place, place.category || "discovery", mileLabel, photoUrl));
   }
 

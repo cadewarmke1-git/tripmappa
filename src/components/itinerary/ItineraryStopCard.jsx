@@ -30,7 +30,7 @@ export default function ItineraryStopCard({ item, onAction, onFocusMap, index = 
         <div className="itinerary-card-meta">
           {item.distance && <span>{item.distance}</span>}
           {item.eta && <span>{item.eta}</span>}
-          {item.rating != null && <span>{item.rating}★</span>}
+          {item.rating != null && <span>{item.rating} / 5</span>}
           {item.detourMiles != null && <span>+{item.detourMiles} mi detour</span>}
         </div>
         <div className="itinerary-card-actions">

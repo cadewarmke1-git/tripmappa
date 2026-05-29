@@ -1,31 +1,10 @@
 /** Google Weather API — conditions for overnight stop cities. */
 import { getGoogleMapsKey } from "../lib/googleKey.js";
+import { resolveWeatherIconType } from "../lib/weatherIconTypes.js";
+import { cacheThrough, roundCoord } from "../lib/apiCache.js";
 
 const CURRENT_URL = "https://weather.googleapis.com/v1/currentConditions:lookup";
 const FORECAST_URL = "https://weather.googleapis.com/v1/forecast/days:lookup";
-
-const WEATHER_ICONS = {
-  CLEAR: "☀️",
-  MOSTLY_CLEAR: "🌤️",
-  PARTLY_CLOUDY: "⛅",
-  CLOUDY: "☁️",
-  RAIN: "🌧️",
-  LIGHT_RAIN: "🌦️",
-  HEAVY_RAIN: "🌧️",
-  THUNDERSTORM: "⛈️",
-  SNOW: "❄️",
-  FOG: "🌫️",
-  WINDY: "💨",
-};
-
-function weatherIcon(conditionType) {
-  if (!conditionType) return "🌡️";
-  const key = String(conditionType).toUpperCase().replace(/\s+/g, "_");
-  for (const [k, icon] of Object.entries(WEATHER_ICONS)) {
-    if (key.includes(k)) return icon;
-  }
-  return "🌡️";
-}
 
 function celsiusToF(c) {
   if (c == null) return null;
@@ -33,25 +12,33 @@ function celsiusToF(c) {
 }
 
 async function fetchCurrent(lat, lng, key) {
-  const url = `${CURRENT_URL}?key=${encodeURIComponent(key)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
+  const cacheKey = `weather-current:${roundCoord(lat)}:${roundCoord(lng)}`;
+  const { value } = await cacheThrough(cacheKey, 10 * 60 * 1000, async () => {
+    const url = `${CURRENT_URL}?key=${encodeURIComponent(key)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
+    });
+    if (!res.ok) return null;
+    return res.json();
   });
-  if (!res.ok) return null;
-  return res.json();
+  return value;
 }
 
 async function fetchForecast(lat, lng, key) {
-  const url = `${FORECAST_URL}?key=${encodeURIComponent(key)}&days=1`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
+  const cacheKey = `weather-forecast:${roundCoord(lat)}:${roundCoord(lng)}`;
+  const { value } = await cacheThrough(cacheKey, 30 * 60 * 1000, async () => {
+    const url = `${FORECAST_URL}?key=${encodeURIComponent(key)}&days=1`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
+    });
+    if (!res.ok) return null;
+    return res.json();
   });
-  if (!res.ok) return null;
-  return res.json();
+  return value;
 }
 
 function mapWeather(city, lat, lng, current, forecast) {
@@ -82,7 +69,7 @@ function mapWeather(city, lat, lng, current, forecast) {
     temperatureF: tempF,
     temperatureDisplay: tempF != null ? `${tempF}°F` : "—",
     condition,
-    icon: weatherIcon(condition),
+    iconType: resolveWeatherIconType(condition),
     precipitationChance: precip,
     severeWarnings: severe,
     currentlyOpen: null,

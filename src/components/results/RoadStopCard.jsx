@@ -1,10 +1,17 @@
 import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
+import StopLocationActions from "./StopLocationActions.jsx";
 
-export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = false, cardRef }) {
+export default function RoadStopCard({ stop, onAdd, onSelect, onToast, highlighted = false, cardRef, added = false }) {
   function handleClick() {
     onSelect?.(stop);
+  }
+
+  function handleAdd(e) {
+    e.stopPropagation();
+    if (added) return;
+    onAdd?.(stop);
   }
 
   return (
@@ -38,12 +45,14 @@ export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = fals
             <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
           )}
         </div>
+        <StopLocationActions stop={stop} onToast={onToast} compact />
         <button
           type="button"
           className="road-stop-add-btn"
-          onClick={e => { e.stopPropagation(); onAdd?.(stop); }}
+          disabled={added}
+          onClick={handleAdd}
         >
-          Add to Trip
+          {added ? "Added" : "Add to Trip"}
         </button>
         {stop.category?.toLowerCase() === "food" && stop.nearbyRestaurants?.length > 0 && (
           <div className="road-food-stops">

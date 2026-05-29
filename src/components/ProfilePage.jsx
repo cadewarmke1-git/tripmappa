@@ -3,6 +3,7 @@ import { Autocomplete } from "@react-google-maps/api";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 import { computeTripStats, getTripVehicle } from "../lib/tripStats.js";
+import DecorMark from "./icons/DecorMark.jsx";
 
 const FREE_BENEFITS = [
   "3 Trip Generations per month",
@@ -367,7 +368,7 @@ export default function ProfilePage({
             </div>
           ) : (
             <div className="profile-empty-state">
-              <div className="profile-empty-icon" aria-hidden="true">✦</div>
+              <DecorMark className="profile-empty-icon" />
               <p className="profile-empty-title">Your journey starts here</p>
               <p className="profile-empty-sub">Save trips as you plan and they&apos;ll appear on your travel profile.</p>
               <button type="button" className="profile-btn profile-btn-gold" onClick={onPlanTrip}>

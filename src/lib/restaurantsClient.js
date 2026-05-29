@@ -5,9 +5,11 @@ export async function fetchRestaurantsForStop({ lat, lng, city, answers, roadSto
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ lat, lng, city, answers, roadStop, limit }),
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    return { restaurants: [], error: res.status === 503 ? "unavailable" : "failed" };
+  }
   const data = await res.json();
-  return data.restaurants || [];
+  return { restaurants: data.restaurants || [], error: null };
 }
 
 export async function fetchRestaurantsForStops(stops, answers, { roadStop = false, limit = 6 } = {}) {
@@ -15,7 +17,7 @@ export async function fetchRestaurantsForStops(stops, answers, { roadStop = fals
   await Promise.all(
     stops.map(async (stop) => {
       if (!stop.city || stop.lat == null || stop.lng == null) return;
-      const list = await fetchRestaurantsForStop({
+      const { restaurants } = await fetchRestaurantsForStop({
         lat: stop.lat,
         lng: stop.lng,
         city: stop.city,
@@ -23,7 +25,7 @@ export async function fetchRestaurantsForStops(stops, answers, { roadStop = fals
         roadStop,
         limit,
       });
-      out[stop.city] = list;
+      out[stop.city] = restaurants;
     }),
   );
   return out;

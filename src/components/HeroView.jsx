@@ -42,6 +42,8 @@ export default function HeroView({
   userProfile,
   creditStatus,
   onRefreshCredits,
+  planDraft = null,
+  onResumeDraft,
 }) {
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
@@ -94,23 +96,26 @@ export default function HeroView({
           </h1>
           <p className="hero-sub">Your next trip, planned in seconds.</p>
 
+          {planDraft?.origin && planDraft?.dest && (
+            <div className="hero-draft-resume">
+              <p className="hero-draft-resume-text">
+                Continue planning <strong>{planDraft.origin.split(",")[0]}</strong> to <strong>{planDraft.dest.split(",")[0]}</strong>
+              </p>
+              <button type="button" className="hero-draft-resume-btn" onClick={onResumeDraft}>
+                Resume planning
+              </button>
+            </div>
+          )}
+
           <div
             className="hero-search"
             onMouseEnter={() => onSearchHover(true)}
             onMouseLeave={() => onSearchHover(false)}
           >
             <div className="hero-route-bar">
-              <div className="hero-route-row hero-route-labels">
-                <div className="hero-route-col hero-route-col-from">
+              <div className="hero-route-grid">
+                <div className="hero-route-cell hero-route-from">
                   <div className="hero-input-label">From</div>
-                </div>
-                <div className="hero-route-col hero-route-col-to">
-                  <div className="hero-input-label">To</div>
-                </div>
-              </div>
-
-              <div className="hero-route-row hero-route-inputs">
-                <div className="hero-route-col hero-route-col-from">
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
@@ -120,8 +125,24 @@ export default function HeroView({
                       <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
+                  {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
                 </div>
-                <div className="hero-route-col hero-route-col-to">
+
+                <div className="hero-route-swap-col" aria-hidden="false">
+                  <button
+                    type="button"
+                    className="hero-swap-btn"
+                    onClick={onSwap}
+                    aria-label="Swap destination and origin"
+                  >
+                    <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="hero-route-cell hero-route-to">
+                  <div className="hero-input-label">To</div>
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
@@ -131,29 +152,9 @@ export default function HeroView({
                       <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
+                  {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
                 </div>
-                <button
-                  type="button"
-                  className="hero-swap-btn"
-                  onClick={onSwap}
-                  aria-label="Swap destination and origin"
-                >
-                  <svg className="hero-swap-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
               </div>
-
-              {(heroDestError || heroOriginError) && (
-                <div className="hero-route-row hero-route-errors">
-                  <div className="hero-route-col hero-route-col-from">
-                    {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
-                  </div>
-                  <div className="hero-route-col hero-route-col-to">
-                    {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
-                  </div>
-                </div>
-              )}
             </div>
             <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
               {heroLaunching ? "Checking locations…" : "Plan my trip →"}

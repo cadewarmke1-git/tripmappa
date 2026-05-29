@@ -49,7 +49,7 @@ export default function RestaurantPlacesSection({ city, stopLat, stopLng, answer
               {r.isDetour && <span className="mini-badge detour-badge">+{r.detourMiles} mi detour</span>}
             </div>
             <div className="item-meta">
-              {r.rating ? `${r.rating}★` : ""}
+              {r.rating ? `${r.rating} / 5` : ""}
               {r.distanceMiles != null ? ` · ${r.distanceMiles} mi` : ""}
               {!r.isDetour && r.distanceMiles != null && r.distanceMiles <= 1 ? " · on route" : ""}
             </div>

@@ -241,6 +241,17 @@ export default function SharePanel({
 
   return (
     <div className="share-wrap share-wrap-live">
+      <div className="share-mode-explainer">
+        <div className="share-mode-card">
+          <div className="share-mode-title">Live GPS sharing</div>
+          <p className="share-mode-desc">Friends follow your real-time location on the map while you drive.</p>
+        </div>
+        <div className="share-mode-card share-mode-card-muted">
+          <div className="share-mode-title">Static safety link</div>
+          <p className="share-mode-desc">A read-only itinerary snapshot — no live tracking. Copy it below after you plan.</p>
+        </div>
+      </div>
+
       {showWarning && sharing && (
         <div className="live-share-warning">
           <p>Live sharing uses GPS and data. Your battery may drain faster.</p>

@@ -3,7 +3,10 @@ import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
 import { processLodgingResults } from "../../lib/lodgingPlaces.js";
 import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
+import WeatherIcon from "../icons/WeatherIcon.jsx";
+import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
 import AmenityBadges from "../lodging/AmenityBadges.jsx";
+import StopLocationActions from "./StopLocationActions.jsx";
 
 export default function OvernightStayCard({
   overnight,
@@ -87,7 +90,10 @@ export default function OvernightStayCard({
         <div className="overnight-card-gradient"/>
         {weather?.temperatureDisplay && (
           <div className="overnight-weather-badge" title={weather.condition}>
-            <span className="overnight-weather-icon" aria-hidden="true">{weather.icon}</span>
+            <WeatherIcon
+              type={weather.iconType || resolveWeatherIconType(weather.condition)}
+              className="overnight-weather-icon"
+            />
             <span className="overnight-weather-temp">{weather.temperatureDisplay}</span>
           </div>
         )}
@@ -102,6 +108,17 @@ export default function OvernightStayCard({
         </div>
         {featured?.amenities && <AmenityBadges amenityIds={featured.amenities} />}
         <p className="overnight-card-desc">{desc}</p>
+        <StopLocationActions
+          stop={{
+            title: name,
+            city: overnight?.city,
+            lat: overnight?.lat ?? featured?.lat,
+            lng: overnight?.lng ?? featured?.lng,
+            address: featured?.address,
+          }}
+          onToast={onToast}
+          compact
+        />
         <button type="button" className="btn-generate overnight-book-btn" onClick={handleBook}>Book Now</button>
       </div>
     </article>

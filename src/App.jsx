@@ -32,6 +32,9 @@ import { stopsToMapMarkers } from "./lib/mapMarkers.js";
 import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
+import { roadStopKey } from "./lib/roadStopKeys.js";
+import { useLiveTripTips } from "./hooks/useLiveTripTips.js";
+import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraft.js";
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
@@ -43,8 +46,7 @@ import AppMap from "./components/AppMap.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
 import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
-import SharePanel from "./components/SharePanel.jsx";
-import LiveViewPage from "./components/live/LiveViewPage.jsx";
+import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { parseLiveShareToken } from "./lib/liveShareApi.js";
 import GroceryModal from "./components/GroceryModal.jsx";
 import EmailModal from "./components/EmailModal.jsx";
@@ -57,10 +59,8 @@ import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
-import TripResultsPanel from "./components/results/TripResultsPanel.jsx";
 import NavLogo from "./components/NavLogo.jsx";
 import UserNavMenu from "./components/UserNavMenu.jsx";
-import ProfilePage from "./components/ProfilePage.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 export default function App() {
@@ -102,6 +102,11 @@ export default function App() {
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
+  const [addedRoadStopIds, setAddedRoadStopIds] = useState([]);
+  const [enrichingTrip, setEnrichingTrip] = useState(false);
+  const [enrichmentLimited, setEnrichmentLimited] = useState(false);
+  const [enrichmentNoticeDismissed, setEnrichmentNoticeDismissed] = useState(false);
+  const [planDraft] = useState(() => loadPlanDraft());
   const [roadStops, setRoadStops] = useState([]);
   const [tripFormat, setTripFormat] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
@@ -580,6 +585,10 @@ export default function App() {
             end: leg.end_address.split(",")[0],
             origin: originVal,
             destination: destVal,
+            originLat: typeof leg.start_location.lat === "function" ? leg.start_location.lat() : leg.start_location.lat,
+            originLng: typeof leg.start_location.lng === "function" ? leg.start_location.lng() : leg.start_location.lng,
+            destLat: typeof leg.end_location.lat === "function" ? leg.end_location.lat() : leg.end_location.lat,
+            destLng: typeof leg.end_location.lng === "function" ? leg.end_location.lng() : leg.end_location.lng,
             citiesAlongRoute: citiesAlongRoute.slice(0, 15),
             routePoints: route.overview_path.map(p => ({
               lat: typeof p.lat === "function" ? p.lat() : p.lat,
@@ -648,6 +657,10 @@ export default function App() {
             end: leg.end_address.split(",")[0],
             origin: originVal,
             destination: destVal,
+            originLat: typeof leg.start_location.lat === "function" ? leg.start_location.lat() : leg.start_location.lat,
+            originLng: typeof leg.start_location.lng === "function" ? leg.start_location.lng() : leg.start_location.lng,
+            destLat: typeof leg.end_location.lat === "function" ? leg.end_location.lat() : leg.end_location.lat,
+            destLng: typeof leg.end_location.lng === "function" ? leg.end_location.lng() : leg.end_location.lng,
             routePoints: route.overview_path.map(p => ({
               lat: typeof p.lat === "function" ? p.lat() : p.lat,
               lng: typeof p.lng === "function" ? p.lng() : p.lng,
@@ -693,6 +706,31 @@ export default function App() {
     (convoComplete && !returnedFromResults)
   );
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
+
+  usePlanDraft({
+    active: view === "app" && !generated,
+    origin,
+    dest,
+    answers,
+    questionHistory,
+    convoComplete,
+    qIndex,
+    currentQuestion,
+  });
+
+  const {
+    tips: displayLiveTips,
+    updatedAt: liveTipsUpdatedAt,
+    refreshing: liveTipsRefreshing,
+  } = useLiveTripTips({
+    generated,
+    origin,
+    dest,
+    routePoints: routeInfo?.routePoints || [],
+    stops,
+    liveSharingActive,
+    fallbackTips: tripTips,
+  });
 
   function refreshCredits() {
     if (user && session?.access_token) {
@@ -1408,8 +1446,15 @@ export default function App() {
     setRoadStops(prev => [...prev, roadStop]);
   }
 
+  function isRoadStopAdded(stop) {
+    return addedRoadStopIds.includes(roadStopKey(stop));
+  }
+
   function addRoadStopToTrip(stop) {
-    const entry = { ...stop, id: stop.id || `rs-${Date.now()}` };
+    const key = roadStopKey(stop);
+    if (addedRoadStopIds.includes(key)) return;
+    const entry = { ...stop, id: stop.id || key, userAdded: true };
+    setAddedRoadStopIds(prev => [...prev, key]);
     setRoadStops(prev => [...prev, entry]);
     if (entry.lat != null && entry.lng != null) {
       setMapMarkers(prev => [
@@ -1465,6 +1510,7 @@ export default function App() {
     if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
     if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
     setGenerated(true);
+    setAddedRoadStopIds([]);
     setStopCategory("all");
     setTab("plan");
     setCardCollapsed(false);
@@ -1488,6 +1534,8 @@ export default function App() {
 
   async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers) {
     const mapsReady = isLoaded && !!window.google;
+    setEnrichingTrip(true);
+    setEnrichmentLimited(false);
     try {
       const enriched = await enrichGeneratedTrip({
         answers: normalizedAnswers,
@@ -1521,11 +1569,15 @@ export default function App() {
           : stopsToMapMarkers(enriched.stops, enriched.roadStops, customStops, [], answers),
       );
       setDismissedAlerts([]);
+      if (!mapsReady) setEnrichmentLimited(true);
       return enriched;
     } catch (err) {
       console.warn("Trip enrichment failed:", err);
+      setEnrichmentLimited(true);
       setMapMarkers(stopsToMapMarkers(parsedStops, parsedRoadStops, customStops, [], answers));
       return null;
+    } finally {
+      setEnrichingTrip(false);
     }
   }
 
@@ -1584,6 +1636,8 @@ export default function App() {
     setOrigin(tripOrigin);
     setDest(tripDest);
     setLoading(true);
+    setEnrichmentLimited(false);
+    setEnrichmentNoticeDismissed(false);
 
     if (isLoaded && window.google) {
       await fetchDirections(getEffectiveVehicle(answers));
@@ -1633,6 +1687,7 @@ export default function App() {
       setTab("plan");
       setCardCollapsed(false);
       await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
+      clearPlanDraft();
       if (user && session?.access_token) {
         fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
       } else {
@@ -1682,7 +1737,7 @@ export default function App() {
     setGuestTripPendingSave(false);
     setAnswers({}); setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
-    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]); setStopCategory("all");
+    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setAddedRoadStopIds([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]); setStopCategory("all");
     setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
     setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
@@ -1694,6 +1749,7 @@ export default function App() {
     setResultsView("planning");
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
+    clearPlanDraft();
   }
 
   function dismissTripAlert(alertId) {
@@ -1764,6 +1820,37 @@ export default function App() {
     });
   }, [generated, answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity]);
 
+  function resumePlanDraft() {
+    const draft = loadPlanDraft();
+    if (!draft?.origin || !draft?.dest) return;
+
+    setOrigin(draft.origin);
+    setDest(draft.dest);
+    if (originRef.current) originRef.current.value = draft.origin;
+    if (destRef.current) destRef.current.value = draft.dest;
+
+    setAnswers(draft.answers || {});
+    setQuestionHistory(draft.questionHistory || []);
+    setConvoComplete(!!draft.convoComplete);
+    setGenerated(false);
+    setReturnedFromResults(false);
+    setView("app");
+    setTab("plan");
+    setCardCollapsed(false);
+    setResultsView("planning");
+
+    if (draft.convoComplete) {
+      setQIndex(-2);
+      setCurrentQuestion(null);
+    } else {
+      loadNextQuestion(draft.answers || {});
+    }
+
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => scrollPlanToTop());
+    fetchDirections(draft.answers?.vehicle || "Car");
+  }
+
   function goBackOneQuestion() {
     if (questionHistory.length === 0) return;
     const history = [...questionHistory];
@@ -1827,7 +1914,7 @@ export default function App() {
   }
 
   if (liveShareToken) {
-    return <LiveViewPage shareToken={liveShareToken} toast={toast_} />;
+    return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
   }
 
   if (view === "profile" && user) {
@@ -1850,7 +1937,7 @@ export default function App() {
             </div>
           </nav>
           <ErrorBoundary label="profile" title="Could not show profile">
-          <ProfilePage
+          <LazyProfilePage
             user={user}
             profile={userProfile}
             creditStatus={creditStatus}
@@ -1942,6 +2029,8 @@ export default function App() {
         userProfile={userProfile}
         creditStatus={creditStatus}
         onRefreshCredits={refreshCredits}
+        planDraft={planDraft}
+        onResumeDraft={resumePlanDraft}
       />
       {authModal === "signup" && (
         <EmailModal
@@ -2049,7 +2138,7 @@ export default function App() {
 
         {generated && resultsView === "itinerary" ? (
           <ErrorBoundary label="results" title="Could not show trip results">
-            <TripResultsPanel
+            <LazyTripResultsPanel
             theme={theme}
             origin={origin}
             dest={dest}
@@ -2062,6 +2151,14 @@ export default function App() {
             recommendations={recommendations}
             selectedLodging={selectedLodging}
             tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
+            liveTripTips={displayLiveTips}
+            tripTips={tripTips}
+            liveTipsUpdatedAt={liveTipsUpdatedAt}
+            liveTipsRefreshing={liveTipsRefreshing}
+            enrichingTrip={enrichingTrip}
+            enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
+            onDismissEnrichmentNotice={() => setEnrichmentNoticeDismissed(true)}
+            isStopAdded={isRoadStopAdded}
             activitiesByCity={activitiesByCity}
             restaurantsByCity={restaurantsByCity}
             weatherByCity={weatherByCity}
@@ -2087,7 +2184,7 @@ export default function App() {
           />
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
-          <div className="trip-map-fullscreen">
+          <div className="trip-map-fullscreen view-panel-animate">
             <div className="map-float-nav">
               <button type="button" className="map-float-pill" onClick={() => setResultsView("itinerary")}>← Your Trip</button>
               <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit Trip</button>
@@ -2246,7 +2343,7 @@ export default function App() {
                     />
                   )}
                   {tab === "share" && (
-                    <SharePanel
+                    <LazySharePanel
                       user={user}
                       profile={userProfile}
                       session={session}

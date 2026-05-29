@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { reportClientError } from "../lib/clientErrorReport.js";
 
 /** Catches render errors so one failed panel does not white-screen the app. */
 export default class ErrorBoundary extends Component {
@@ -13,6 +14,11 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error(`ErrorBoundary (${this.props.label || "panel"}):`, error, info);
+    reportClientError({
+      label: this.props.label || "panel",
+      message: error?.message,
+      stack: error?.stack || info?.componentStack,
+    });
   }
 
   handleRetry = () => {

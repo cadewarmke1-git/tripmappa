@@ -1,13 +1,17 @@
 /**
  * Single Vercel serverless entry for all /api/* routes.
- * Handlers live in server/routes/ (not under api/) to stay within Hobby plan limits.
+ * Handlers live in server/routes/ — never add new files under api/ (Hobby plan limit: 12 functions).
  */
+import { logApiRequest } from "../server/lib/apiLog.js";
+
 const ROUTES = {
+  "client-error": () => import("../server/routes/client-error.js"),
   "claude": () => import("../server/routes/claude.js"),
   "distance-matrix": () => import("../server/routes/distance-matrix.js"),
   "ev-charging": () => import("../server/routes/ev-charging.js"),
   "fuel-stations": () => import("../server/routes/fuel-stations.js"),
   "geocode": () => import("../server/routes/geocode.js"),
+  "health": () => import("../server/routes/health.js"),
   "join-convoy": () => import("../server/routes/join-convoy.js"),
   "plan-trip": () => import("../server/routes/plan-trip.js"),
   "register-follower-phone": () => import("../server/routes/register-follower-phone.js"),
@@ -17,6 +21,7 @@ const ROUTES = {
   "share-trip": () => import("../server/routes/share-trip.js"),
   "sos-alert": () => import("../server/routes/sos-alert.js"),
   "trip-credits": () => import("../server/routes/trip-credits.js"),
+  "trip-tips": () => import("../server/routes/trip-tips.js"),
   "update-convoy-location": () => import("../server/routes/update-convoy-location.js"),
   "update-location": () => import("../server/routes/update-location.js"),
   "verify-sms-otp": () => import("../server/routes/verify-sms-otp.js"),
@@ -27,19 +32,35 @@ export default async function handler(req, res) {
   const parts = req.query?.path;
   const route = Array.isArray(parts) ? parts.join("/") : (parts || "");
   const load = ROUTES[route];
+  const started = Date.now();
 
   if (!load) {
+    logApiRequest(route || "unknown", { method: req.method, status: 404, ms: Date.now() - started });
     return res.status(404).json({ error: `Unknown API route: /api/${route}` });
   }
 
   try {
     const mod = await load();
     if (typeof mod.default !== "function") {
+      logApiRequest(route, { method: req.method, status: 500, ms: Date.now() - started });
       return res.status(500).json({ error: `Route handler missing: /api/${route}` });
     }
-    return mod.default(req, res);
+    const result = await mod.default(req, res);
+    if (!res.headersSent) {
+      logApiRequest(route, { method: req.method, status: 200, ms: Date.now() - started });
+    }
+    return result;
   } catch (err) {
+    logApiRequest(route, {
+      method: req.method,
+      status: 500,
+      ms: Date.now() - started,
+      error: err.message,
+    });
     console.error(`API router error (/api/${route}):`, err);
-    return res.status(500).json({ error: err.message || "Internal server error" });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: err.message || "Internal server error" });
+    }
+    return undefined;
   }
 }

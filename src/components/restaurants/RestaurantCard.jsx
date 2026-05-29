@@ -1,5 +1,6 @@
 import GoldStarRating from "./GoldStarRating.jsx";
 import { openStatusLabel } from "../../lib/restaurantPlaces.js";
+import CategoryIcon from "../icons/CategoryIcon.jsx";
 
 const SLOT_LABELS = {
   sit_down: "Sit-down pick",
@@ -29,7 +30,9 @@ export default function RestaurantCard({ restaurant, onToast }) {
         {restaurant.photoUrl ? (
           <img className="restaurant-card-photo" src={restaurant.photoUrl} alt={restaurant.name} loading="lazy" />
         ) : (
-          <div className="restaurant-card-photo-fallback" aria-hidden="true">🍽</div>
+          <div className="restaurant-card-photo-fallback" aria-hidden="true">
+            <CategoryIcon category="food" />
+          </div>
         )}
         <div className="restaurant-card-photo-gradient" />
         <div className="restaurant-card-photo-badges">

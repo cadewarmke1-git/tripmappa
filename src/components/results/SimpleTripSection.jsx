@@ -3,6 +3,8 @@ import ActivityDiningCard from "./ActivityDiningCard.jsx";
 import OvernightStayCard from "./OvernightStayCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
+import WeatherIcon from "../icons/WeatherIcon.jsx";
+import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
 
 function findCityData(map, city) {
   if (!city || !map) return null;
@@ -28,6 +30,7 @@ export default function SimpleTripSection({
   onLodgingSelect,
   onToast,
   onAddRoadStop,
+  isStopAdded,
   highlightedStopId,
   stopRefs,
   onStopSelect,
@@ -93,6 +96,8 @@ export default function SimpleTripSection({
                 key={stop.id}
                 stop={stop}
                 onAdd={onAddRoadStop}
+                onToast={onToast}
+                added={isStopAdded?.(stop)}
                 onSelect={item => onStopSelect?.({ ...item, lat: item.lat ?? item.stopData?.lat, lng: item.lng ?? item.stopData?.lng })}
                 highlighted={highlightedStopId === stop.id}
                 cardRef={setStopRef(stop.id)}
@@ -142,8 +147,14 @@ export default function SimpleTripSection({
         const city = stop.city || dest;
         const weather = findCityData(weatherByCity, city);
         const preloaded = findCityData(restaurantsByCity, city);
-        const lat = stop.lat ?? weather?.lat;
-        const lng = stop.lng ?? weather?.lng;
+        const lat = stop.lat
+          ?? routeInfo?.destLat
+          ?? routeInfo?.routePoints?.[routeInfo.routePoints.length - 1]?.lat
+          ?? weather?.lat;
+        const lng = stop.lng
+          ?? routeInfo?.destLng
+          ?? routeInfo?.routePoints?.[routeInfo.routePoints.length - 1]?.lng
+          ?? weather?.lng;
         if (!city) return null;
         return (
           <div className="results-subsection" key={stop.id || `meal-${idx}`}>
@@ -152,7 +163,10 @@ export default function SimpleTripSection({
             </h3>
             {weather?.temperatureDisplay && (
               <div className="simple-trip-weather-badge" title={weather.condition}>
-                <span className="overnight-weather-icon" aria-hidden="true">{weather.icon}</span>
+                <WeatherIcon
+                  type={weather.iconType || resolveWeatherIconType(weather.condition)}
+                  className="overnight-weather-icon"
+                />
                 <span className="overnight-weather-temp">{weather.temperatureDisplay}</span>
                 <span className="simple-trip-weather-city">{city.split(",")[0]}</span>
               </div>
@@ -174,7 +188,7 @@ export default function SimpleTripSection({
           <h3 className="results-subsection-label">Things to Do and Eat</h3>
           <div className="results-activities-grid">
             {recs.map(item => (
-              <ActivityDiningCard key={item.id} item={item} onAdd={onAddRoadStop}/>
+              <ActivityDiningCard key={item.id} item={item} onAdd={onAddRoadStop} onToast={onToast} added={isStopAdded?.(item)}/>
             ))}
           </div>
         </div>

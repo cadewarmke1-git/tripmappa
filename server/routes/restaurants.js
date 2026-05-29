@@ -1,5 +1,6 @@
 /** Google Places — restaurant search near a route stop with preference filtering. */
 import { getGoogleMapsKey, photoUrl } from "../lib/googleKey.js";
+import { cacheThrough, roundCoord } from "../lib/apiCache.js";
 
 const NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
@@ -130,18 +131,23 @@ async function nearbyRestaurants(lat, lng, keyword = "restaurant") {
   const key = getGoogleMapsKey();
   if (!key) return [];
 
-  const params = new URLSearchParams({
-    key,
-    location: `${lat},${lng}`,
-    radius: "8047",
-    type: "restaurant",
-    keyword,
+  const cacheKey = `restaurants-nearby:${roundCoord(lat)}:${roundCoord(lng)}:${keyword}`;
+  const { value } = await cacheThrough(cacheKey, 12 * 60 * 1000, async () => {
+    const params = new URLSearchParams({
+      key,
+      location: `${lat},${lng}`,
+      radius: "8047",
+      type: "restaurant",
+      keyword,
+    });
+
+    const res = await fetch(`${NEARBY_URL}?${params}`);
+    const data = await res.json();
+    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") return [];
+    return data.results || [];
   });
 
-  const res = await fetch(`${NEARBY_URL}?${params}`);
-  const data = await res.json();
-  if (data.status !== "OK" && data.status !== "ZERO_RESULTS") return [];
-  return data.results || [];
+  return value || [];
 }
 
 async function fetchDetails(placeId) {
@@ -221,7 +227,8 @@ export default async function handler(req, res) {
     );
 
     const filtered = filterByPreferences(detailed, answers, { roadStop });
-    const sorted = filtered
+    const pool = filtered.length ? filtered : detailed;
+    const sorted = pool
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.userRatingsTotal ?? 0) - (a.userRatingsTotal ?? 0))
       .slice(0, limit);
 

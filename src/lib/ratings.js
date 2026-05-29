@@ -6,9 +6,10 @@ export function parseRating(rating) {
   return Math.round(n * 10) / 10;
 }
 
+/** Compact numeric rating label without unicode symbols. */
 export function formatStarLabel(rating) {
   const n = parseRating(rating);
-  return n != null ? `${n}★` : null;
+  return n != null ? `${n} / 5` : null;
 }
 
 export function isLocalFavorite(rating) {

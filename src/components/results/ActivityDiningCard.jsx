@@ -1,7 +1,8 @@
 import { formatStarLabel } from "../../lib/ratings.js";
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
+import StopLocationActions from "./StopLocationActions.jsx";
 
-export default function ActivityDiningCard({ item, onAdd }) {
+export default function ActivityDiningCard({ item, onAdd, onToast, added = false }) {
   return (
     <article className="activity-dining-card">
       <div className="activity-dining-photo-wrap">
@@ -22,7 +23,15 @@ export default function ActivityDiningCard({ item, onAdd }) {
             : <span className="activity-dining-no-reviews">No reviews yet</span>}
           {item.distanceMiles != null && <span>{item.distanceMiles} mi</span>}
         </div>
-        <button type="button" className="activity-dining-add" onClick={() => onAdd?.(item)}>Add to Trip</button>
+        <StopLocationActions stop={item} onToast={onToast} compact />
+        <button
+          type="button"
+          className="activity-dining-add"
+          disabled={added}
+          onClick={() => { if (!added) onAdd?.(item); }}
+        >
+          {added ? "Added" : "Add to Trip"}
+        </button>
       </div>
     </article>
   );

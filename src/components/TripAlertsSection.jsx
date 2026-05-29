@@ -1,29 +1,40 @@
-import { useState } from "react";
+export function TripTipsSection({ tips = [], updatedAt = null, refreshing = false }) {
+  const visible = tips.filter(Boolean).slice(0, 5);
+  if (!visible.length) return null;
 
-export default function TripAlertsBanner({ alerts = [], onDismiss }) {
-  const [open, setOpen] = useState(false);
-  if (!alerts.length) return null;
+  const updatedLabel = updatedAt
+    ? formatUpdatedLabel(updatedAt, refreshing)
+    : null;
 
   return (
-    <div className={`trip-alerts-banner${open ? " open" : ""}`}>
-      <button type="button" className="trip-alerts-banner-toggle" onClick={() => setOpen(o => !o)}>
-        <span className="trip-alerts-banner-count">{alerts.length}</span>
-        <span>{alerts.length === 1 ? "1 trip note" : `${alerts.length} trip notes`}</span>
-        <span className="trip-alerts-banner-chevron">{open ? "▲" : "▼"}</span>
-      </button>
-      {open && (
-        <div className="trip-alerts-banner-panel">
-          {alerts.map(alert => (
-            <div key={alert.id} className={`trip-alert-row trip-alert-${alert.type}`}>
-              <div className="trip-alert-row-text">
-                <strong>{alert.title}</strong>
-                <span>{alert.message}</span>
-              </div>
-              <button type="button" className="trip-alert-row-dismiss" onClick={() => onDismiss?.(alert.id)} aria-label="Dismiss">×</button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <section className="trip-tips-section" aria-label="Trip Tips">
+      <div className="trip-tips-header">
+        <h3 className="trip-tips-title">Trip Tips</h3>
+        {updatedLabel && <span className="trip-tips-updated">{updatedLabel}</span>}
+      </div>
+      <ul className="trip-tips-list">
+        {visible.map((tip, i) => (
+          <li key={`${i}-${tip.slice(0, 24)}`} className="trip-tips-line">{tip}</li>
+        ))}
+      </ul>
+    </section>
   );
+}
+
+function formatUpdatedLabel(updatedAt, refreshing) {
+  if (refreshing) return "Updating…";
+  const mins = Math.max(0, Math.round((Date.now() - updatedAt) / 60000));
+  if (mins < 1) return "Updated just now";
+  if (mins === 1) return "Updated 1 min ago";
+  return `Updated ${mins} min ago`;
+}
+
+/** Back-compat wrapper — maps legacy alert objects to tip lines. */
+export default function TripAlertsBanner({ alerts = [], tips, updatedAt, refreshing }) {
+  const lines = tips ?? alerts.map(a => {
+    if (typeof a === "string") return a;
+    if (a.message && a.title && a.title !== a.message) return `${a.title}: ${a.message}`;
+    return a.message || a.title;
+  }).filter(Boolean);
+  return <TripTipsSection tips={lines} updatedAt={updatedAt} refreshing={refreshing} />;
 }

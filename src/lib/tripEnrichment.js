@@ -20,7 +20,10 @@ import { parseMilesFromDistance } from "./parsing.js";
 import { fetchRestaurantsForStop } from "./restaurantsClient.js";
 import { fetchWeatherForStops } from "./weatherClient.js";
 import { fetchGeocode } from "./geocodeClient.js";
+import { fetchLiveTripTips } from "./tripTipsClient.js";
 import { optimizeStopOrder, shouldOptimizeRoute } from "./routeOptimization.js";
+
+import { dedupePlaces } from "./placesDedup.js";
 
 const BASE_SERVICE_IDS = [
   "pharmacy", "hospital", "urgent_care", "auto_repair", "atm",
@@ -91,7 +94,7 @@ export async function enrichGeneratedTrip({
 
   if (mapsReady && routeInfo?.routePoints?.length) {
     const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
-    safeRoadStops = corridorRoadStops;
+    safeRoadStops = dedupePlaces(corridorRoadStops);
   }
 
   const interests = mapsReady
@@ -148,27 +151,30 @@ export async function enrichGeneratedTrip({
       });
     }
 
-    restaurantsByCity[stop.city] = await fetchRestaurantsForStop({
+    restaurantsByCity[stop.city] = (await fetchRestaurantsForStop({
       lat: geo.lat,
       lng: geo.lng,
       city: stop.city,
       answers,
       limit: 6,
-    });
+    })).restaurants;
   }
 
   // Day / simple trips: enrich destination when no overnight stops
   const weatherStops = [...enrichedStops];
-  if (!enrichedStops.length && destination) {
-    const destGeo = await resolveStopGeo({ city: destination }, mapsReady);
-    if (destGeo) {
-      restaurantsByCity[destination] = await fetchRestaurantsForStop({
+  let destGeo = null;
+  if (destination) {
+    destGeo = routeInfo?.destLat != null && routeInfo?.destLng != null
+      ? { lat: routeInfo.destLat, lng: routeInfo.destLng }
+      : await resolveStopGeo({ city: destination }, mapsReady);
+    if (destGeo && !enrichedStops.length) {
+      restaurantsByCity[destination] = (await fetchRestaurantsForStop({
         lat: destGeo.lat,
         lng: destGeo.lng,
         city: destination,
         answers,
         limit: 6,
-      });
+      })).restaurants;
       weatherStops.push({ city: destination, lat: destGeo.lat, lng: destGeo.lng });
     }
   }
@@ -182,14 +188,14 @@ export async function enrichGeneratedTrip({
       continue;
     }
     if (rs.lat == null || rs.lng == null) continue;
-    const quick = await fetchRestaurantsForStop({
+    const quick = (await fetchRestaurantsForStop({
       lat: rs.lat,
       lng: rs.lng,
       city: rs.location || rs.name,
       answers,
       roadStop: true,
       limit: 4,
-    });
+    })).restaurants;
     rs.nearbyRestaurants = quick.slice(0, 2);
   }
 
@@ -265,6 +271,22 @@ export async function enrichGeneratedTrip({
 
   const mapMarkers = stopsToMapMarkers(enrichedStops, safeRoadStops, customStops, poiMarkers, answers);
 
+  const waypoints = enrichedStops
+    .filter(s => s.lat != null && s.lng != null)
+    .map(s => ({ lat: s.lat, lng: s.lng }));
+  if (destGeo) waypoints.push(destGeo);
+
+  let liveTripTips = [];
+  if (origin && destination) {
+    const tipsResult = await fetchLiveTripTips({
+      origin,
+      destination,
+      routePoints: routeInfo?.routePoints || [],
+      waypoints,
+    });
+    liveTripTips = tipsResult.tips || [];
+  }
+
   return {
     stops: enrichedStops,
     roadStops: safeRoadStops,
@@ -275,6 +297,8 @@ export async function enrichGeneratedTrip({
     routeOptimized,
     optionalStopCards,
     tripAlerts,
+    liveTripTips,
+    destGeo,
     mapMarkers,
   };
 }
