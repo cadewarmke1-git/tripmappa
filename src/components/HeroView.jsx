@@ -44,6 +44,7 @@ export default function HeroView({
   onRefreshCredits,
   planDraft = null,
   onResumeDraft,
+  onDismissDraft,
 }) {
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
@@ -98,11 +99,23 @@ export default function HeroView({
 
           {planDraft?.origin && planDraft?.dest && (
             <div className="hero-draft-resume">
-              <p className="hero-draft-resume-text">
-                Continue planning <strong>{planDraft.origin.split(",")[0]}</strong> to <strong>{planDraft.dest.split(",")[0]}</strong>
-              </p>
-              <button type="button" className="hero-draft-resume-btn" onClick={onResumeDraft}>
-                Resume planning
+              <div className="hero-draft-resume-body">
+                <p className="hero-draft-resume-text">
+                  Continue planning <strong>{planDraft.origin.split(",")[0]}</strong> to <strong>{planDraft.dest.split(",")[0]}</strong>
+                </p>
+                <button type="button" className="hero-draft-resume-btn" onClick={onResumeDraft}>
+                  Resume planning
+                </button>
+              </div>
+              <button
+                type="button"
+                className="hero-draft-resume-dismiss"
+                onClick={onDismissDraft}
+                aria-label="Dismiss saved trip"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
           )}

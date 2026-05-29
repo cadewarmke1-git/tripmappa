@@ -105,7 +105,7 @@ export default function App() {
   const [enrichingTrip, setEnrichingTrip] = useState(false);
   const [enrichmentLimited, setEnrichmentLimited] = useState(false);
   const [enrichmentNoticeDismissed, setEnrichmentNoticeDismissed] = useState(false);
-  const [planDraft] = useState(() => loadPlanDraft());
+  const [planDraft, setPlanDraft] = useState(() => loadPlanDraft());
   const [roadStops, setRoadStops] = useState([]);
   const [tripFormat, setTripFormat] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
@@ -1746,7 +1746,7 @@ export default function App() {
       setTab("plan");
       setCardCollapsed(false);
       await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
-      clearPlanDraft();
+      clearSavedPlanDraft();
       if (user && session?.access_token) {
         fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
       } else {
@@ -1812,7 +1812,7 @@ export default function App() {
     setResultsView("planning");
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
-    clearPlanDraft();
+    clearSavedPlanDraft();
   }
 
   function dismissTripAlert(alertId) {
@@ -1882,6 +1882,11 @@ export default function App() {
       return consolidateAndCapAlerts([...base, ...budgetAlerts]);
     });
   }, [generated, answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity]);
+
+  function clearSavedPlanDraft() {
+    clearPlanDraft();
+    setPlanDraft(null);
+  }
 
   function resumePlanDraft() {
     const draft = loadPlanDraft();
@@ -2107,6 +2112,7 @@ export default function App() {
         onRefreshCredits={refreshCredits}
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
+        onDismissDraft={clearSavedPlanDraft}
       />
       {authModal === "signup" && (
         <EmailModal

@@ -3867,9 +3867,13 @@
 
   /* Hero draft resume banner */
   .hero-draft-resume {
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;
-    margin: 0 auto 20px; max-width: 560px; padding: 12px 16px; border-radius: 14px;
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 auto 20px; max-width: 560px; padding: 12px 12px 12px 16px; border-radius: 14px;
     background: rgba(12, 18, 34, 0.72); border: 1px solid rgba(255, 210, 140, 0.35);
+  }
+  .hero-draft-resume-body {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;
+    flex: 1; min-width: 0;
   }
   .hero-draft-resume-text { margin: 0; font-size: 14px; color: rgba(255,255,255,0.88); }
   .hero-draft-resume-btn {
@@ -3877,6 +3881,15 @@
     background: rgba(255,210,140,0.12); color: #FFD28C; font-size: 13px; font-weight: 600; cursor: pointer;
   }
   .hero-draft-resume-btn:hover { background: rgba(255,210,140,0.2); }
+  .hero-draft-resume-dismiss {
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; padding: 0; border: none; border-radius: 8px;
+    background: transparent; color: rgba(255,255,255,0.4); cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .hero-draft-resume-dismiss:hover {
+    color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.06);
+  }
 
   /* Share mode explainer */
   .share-mode-explainer { display: grid; gap: 10px; margin-bottom: 16px; }

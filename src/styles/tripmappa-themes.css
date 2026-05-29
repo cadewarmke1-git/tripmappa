@@ -624,6 +624,13 @@
   border-color: rgba(201,146,46,0.45) !important;
   background: rgba(255,210,140,0.25) !important;
 }
+.app-wrap.day .hero-draft-resume-dismiss {
+  color: rgba(12,18,34,0.35) !important;
+}
+.app-wrap.day .hero-draft-resume-dismiss:hover {
+  color: rgba(12,18,34,0.6) !important;
+  background: rgba(12,18,34,0.06) !important;
+}
 .app-wrap.day .share-mode-desc { color: rgba(12,18,34,0.65) !important; }
 .app-wrap.day .panel-loading-fallback { color: rgba(12,18,34,0.6) !important; }
 
