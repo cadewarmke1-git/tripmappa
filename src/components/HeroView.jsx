@@ -1,9 +1,7 @@
 import { Autocomplete } from "@react-google-maps/api";
 import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
 import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
-import ThemeToggle from "./ThemeToggle.jsx";
-import NavLogo from "./NavLogo.jsx";
-import AccountSidebarTrigger from "./AccountSidebarTrigger.jsx";
+import AppNavBar from "./AppNavBar.jsx";
 
 export default function HeroView({
   theme,
@@ -17,7 +15,6 @@ export default function HeroView({
   heroSearchHover,
   heroOriginRef,
   heroDestRef,
-  onThemeToggle,
   onLogin,
   onSignup,
   onGoogle,
@@ -36,9 +33,10 @@ export default function HeroView({
   onShowEmailModal,
   onShowPhoneModal,
   onGoHome,
+  navSidebarOpen = false,
+  onToggleNavSidebar,
   accountSidebarOpen = false,
-  onOpenAccountSidebar,
-  onCloseAccountSidebar,
+  onToggleAccountSidebar,
   userProfile,
   planDraft = null,
   onResumeDraft,
@@ -50,25 +48,18 @@ export default function HeroView({
 
   return (
     <>
-      <nav className="nav transparent">
-        <NavLogo onClick={onGoHome} />
-        <div className="nav-right">
-          <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-          {user ? (
-            <AccountSidebarTrigger
-              user={user}
-              profile={userProfile}
-              isOpen={accountSidebarOpen}
-              onOpen={() => (accountSidebarOpen ? onCloseAccountSidebar?.() : onOpenAccountSidebar?.())}
-            />
-          ) : (
-            <>
-              <button type="button" className="nav-btn nav-btn-ghost" onClick={onLogin}>Log in</button>
-              <button type="button" className="nav-btn nav-btn-signup" onClick={onSignup}>Sign up</button>
-            </>
-          )}
-        </div>
-      </nav>
+      <AppNavBar
+        variant="hero"
+        onGoHome={onGoHome}
+        navSidebarOpen={navSidebarOpen}
+        onToggleNavSidebar={onToggleNavSidebar}
+        user={user}
+        userProfile={userProfile}
+        accountSidebarOpen={accountSidebarOpen}
+        onToggleAccountSidebar={onToggleAccountSidebar}
+        onLogin={onLogin}
+        onSignup={onSignup}
+      />
 
       <div className={`hero ${theme}`}>
         <div

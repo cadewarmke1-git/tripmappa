@@ -13,11 +13,8 @@ export default function AccountSidebar({
   creditStatus,
   onRefreshCredits,
   onOpenProfile,
-  onOpenTrips,
-  onOpenShare,
   onOpenSettings,
   onSignOut,
-  activeNav = null,
 }) {
   const displayName = getDisplayName(user, profile);
   const tierKey = normalizeTier(creditStatus?.tier);
@@ -51,22 +48,15 @@ export default function AccountSidebar({
 
   if (!visible) return null;
 
-  function handleNav(action) {
+  function handleAction(action) {
     action?.();
   }
-
-  const navItems = [
-    { id: "profile", label: "Profile", action: onOpenProfile },
-    { id: "trips", label: "Trips", action: onOpenTrips },
-    { id: "share", label: "Share", action: onOpenShare },
-    { id: "settings", label: "Settings", action: onOpenSettings },
-  ];
 
   return createPortal(
     <>
       <button
         type="button"
-        className={`account-sidebar-overlay${open && !closing ? " is-visible" : ""}${closing ? " is-closing" : ""}`}
+        className={`app-sidebar-overlay app-sidebar-overlay-right${open && !closing ? " is-visible" : ""}${closing ? " is-closing" : ""}`}
         aria-label="Close account menu"
         onClick={onClose}
       />
@@ -81,7 +71,7 @@ export default function AccountSidebar({
           <h2 className="account-sidebar-title">Account</h2>
           <button
             type="button"
-            className="account-sidebar-close"
+            className="app-sidebar-close"
             onClick={onClose}
             aria-label="Close account menu"
           >
@@ -94,7 +84,7 @@ export default function AccountSidebar({
         <button
           type="button"
           className="account-sidebar-identity"
-          onClick={() => handleNav(onOpenProfile)}
+          onClick={() => handleAction(onOpenProfile)}
         >
           <UserAvatar user={user} profile={profile} size={64} showRing className="account-sidebar-avatar" />
           <div className="account-sidebar-name">{displayName}</div>
@@ -108,23 +98,18 @@ export default function AccountSidebar({
           <p className="profile-card-credits">{creditsLine}</p>
         </div>
 
-        <nav className="account-sidebar-nav" aria-label="Account navigation">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              className={`account-sidebar-nav-item${activeNav === item.id ? " is-active" : ""}`}
-              onClick={() => handleNav(item.action)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        <button
+          type="button"
+          className="account-sidebar-nav-item account-sidebar-settings-btn"
+          onClick={() => handleAction(onOpenSettings)}
+        >
+          Profile Settings
+        </button>
 
         <button
           type="button"
           className="profile-card-signout account-sidebar-signout"
-          onClick={() => handleNav(onSignOut)}
+          onClick={() => handleAction(onSignOut)}
         >
           Sign Out
         </button>

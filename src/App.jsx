@@ -57,11 +57,10 @@ import UpgradeModal from "./components/UpgradeModal.jsx";
 import HomeAddressModal from "./components/HomeAddressModal.jsx";
 import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
-import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
-import NavLogo from "./components/NavLogo.jsx";
 import AccountSidebar from "./components/AccountSidebar.jsx";
-import AccountSidebarTrigger from "./components/AccountSidebarTrigger.jsx";
+import NavSidebar from "./components/NavSidebar.jsx";
+import AppNavBar from "./components/AppNavBar.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 export default function App() {
@@ -144,8 +143,11 @@ export default function App() {
   const [liveSharingActive, setLiveSharingActive] = useState(false);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
+  const [navSidebarOpen, setNavSidebarOpen] = useState(false);
+  const [navSidebarClosing, setNavSidebarClosing] = useState(false);
   const [accountSidebarOpen, setAccountSidebarOpen] = useState(false);
   const [accountSidebarClosing, setAccountSidebarClosing] = useState(false);
+  const navSidebarTimerRef = useRef(null);
   const accountSidebarTimerRef = useRef(null);
   const highlightTimerRef = useRef(null);
 
@@ -743,7 +745,33 @@ export default function App() {
     }
   }
 
+  function openNavSidebar() {
+    if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
+    setAccountSidebarOpen(false);
+    setAccountSidebarClosing(false);
+    if (navSidebarTimerRef.current) clearTimeout(navSidebarTimerRef.current);
+    setNavSidebarClosing(false);
+    setNavSidebarOpen(true);
+  }
+
+  function closeNavSidebar() {
+    if (!navSidebarOpen || navSidebarClosing) return;
+    setNavSidebarClosing(true);
+    setNavSidebarOpen(false);
+    navSidebarTimerRef.current = setTimeout(() => {
+      setNavSidebarClosing(false);
+    }, 280);
+  }
+
+  function toggleNavSidebar() {
+    if (navSidebarOpen) closeNavSidebar();
+    else openNavSidebar();
+  }
+
   function openAccountSidebar() {
+    if (navSidebarTimerRef.current) clearTimeout(navSidebarTimerRef.current);
+    setNavSidebarOpen(false);
+    setNavSidebarClosing(false);
     if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
     setAccountSidebarClosing(false);
     setAccountSidebarOpen(true);
@@ -756,6 +784,19 @@ export default function App() {
     accountSidebarTimerRef.current = setTimeout(() => {
       setAccountSidebarClosing(false);
     }, 280);
+  }
+
+  function toggleAccountSidebar() {
+    if (accountSidebarOpen) closeAccountSidebar();
+    else openAccountSidebar();
+  }
+
+  function openPlanPanel() {
+    closeNavSidebar();
+    setView("app");
+    setTab("plan");
+    setCardCollapsed(false);
+    window.scrollTo(0, 0);
   }
 
   function openProfile() {
@@ -789,16 +830,6 @@ export default function App() {
     openProfile();
   }
 
-  function handleSidebarOpenTrips() {
-    closeAccountSidebar();
-    openMyTrips();
-  }
-
-  function handleSidebarOpenShare() {
-    closeAccountSidebar();
-    openSharePanel();
-  }
-
   function handleSidebarOpenSettings() {
     closeAccountSidebar();
     openProfileSettings();
@@ -809,12 +840,43 @@ export default function App() {
     handleSignOut();
   }
 
-  const accountSidebarActiveNav = useMemo(() => {
-    if (view === "profile") return profileScrollTo === "settings" ? "settings" : "profile";
+  function handleNavOpenPlan() {
+    openPlanPanel();
+  }
+
+  function handleNavOpenTrips() {
+    closeNavSidebar();
+    openMyTrips();
+  }
+
+  function handleNavOpenShare() {
+    closeNavSidebar();
+    openSharePanel();
+  }
+
+  const navSidebarActiveNav = useMemo(() => {
+    if (view !== "app") return null;
+    if (tab === "plan") return "plan";
     if (tab === "trips") return "trips";
     if (tab === "share") return "share";
     return null;
-  }, [view, tab, profileScrollTo]);
+  }, [view, tab]);
+
+  function renderNavSidebar() {
+    return (
+      <NavSidebar
+        open={navSidebarOpen}
+        closing={navSidebarClosing}
+        onClose={closeNavSidebar}
+        theme={theme}
+        onThemeToggle={toggleTheme}
+        onOpenPlan={handleNavOpenPlan}
+        onOpenTrips={handleNavOpenTrips}
+        onOpenShare={handleNavOpenShare}
+        activeNav={navSidebarActiveNav}
+      />
+    );
+  }
 
   function renderAccountSidebar() {
     if (!user) return null;
@@ -828,11 +890,26 @@ export default function App() {
         creditStatus={creditStatus}
         onRefreshCredits={refreshCredits}
         onOpenProfile={handleSidebarOpenProfile}
-        onOpenTrips={handleSidebarOpenTrips}
-        onOpenShare={handleSidebarOpenShare}
         onOpenSettings={handleSidebarOpenSettings}
         onSignOut={handleSidebarSignOut}
-        activeNav={accountSidebarActiveNav}
+      />
+    );
+  }
+
+  function renderAppNavBar(variant = "app") {
+    return (
+      <AppNavBar
+        variant={variant}
+        onGoHome={goHome}
+        navSidebarOpen={navSidebarOpen}
+        onToggleNavSidebar={toggleNavSidebar}
+        user={user}
+        userProfile={userProfile}
+        accountSidebarOpen={accountSidebarOpen}
+        onToggleAccountSidebar={toggleAccountSidebar}
+        onLogin={() => openAuthModal("signin")}
+        onSignup={() => openAuthModal("signup")}
+        liveSharingActive={liveSharingActive}
       />
     );
   }
@@ -867,8 +944,11 @@ export default function App() {
   }
 
   function goHome() {
+    setNavSidebarOpen(false);
+    setNavSidebarClosing(false);
     setAccountSidebarOpen(false);
     setAccountSidebarClosing(false);
+    if (navSidebarTimerRef.current) clearTimeout(navSidebarTimerRef.current);
     if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
     setAuthModal(null);
     setShowUpgradeModal(false);
@@ -2099,28 +2179,7 @@ export default function App() {
     return (
       <>
         <div className={`app-wrap ${theme} profile-view-wrap`}>
-          <NavLogo onClick={goHome} className="app-global-home-logo" />
-          <nav className="nav-app nav app-nav-with-logo app-nav-minimal profile-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 0 148px" }}>
-            <div className="nav-logo-spacer" aria-hidden="true" />
-            <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "4px", borderRadius: 8, padding: 4, alignItems: "center" }}>
-              <button
-                type="button"
-                className="nav-tab"
-                onClick={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
-              >
-                Plan
-              </button>
-              <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            </div>
-            <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <AccountSidebarTrigger
-                user={user}
-                profile={userProfile}
-                isOpen={accountSidebarOpen}
-                onOpen={() => (accountSidebarOpen ? closeAccountSidebar() : openAccountSidebar())}
-              />
-            </div>
-          </nav>
+          {renderAppNavBar("app")}
           <ErrorBoundary label="profile" title="Could not show profile">
           <LazyProfilePage
             user={user}
@@ -2169,6 +2228,7 @@ export default function App() {
           onAction={toastAction?.onClick}
         />
         {renderAccountSidebar()}
+        {renderNavSidebar()}
       </>
     );
   }
@@ -2187,7 +2247,6 @@ export default function App() {
         heroSearchHover={heroSearchHover}
         heroOriginRef={heroOriginRef}
         heroDestRef={heroDestRef}
-        onThemeToggle={toggleTheme}
         user={user}
         onLogin={() => openAuthModal("signin")}
         onSignup={() => openAuthModal("signup")}
@@ -2212,9 +2271,10 @@ export default function App() {
         onShowEmailModal={() => openAuthModal("signup")}
         onShowPhoneModal={openPhoneModal}
         onGoHome={goHome}
+        navSidebarOpen={navSidebarOpen}
+        onToggleNavSidebar={toggleNavSidebar}
         accountSidebarOpen={accountSidebarOpen}
-        onOpenAccountSidebar={openAccountSidebar}
-        onCloseAccountSidebar={closeAccountSidebar}
+        onToggleAccountSidebar={toggleAccountSidebar}
         userProfile={userProfile}
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
@@ -2273,6 +2333,7 @@ export default function App() {
         onAction={toastAction?.onClick}
       />
       {renderAccountSidebar()}
+      {renderNavSidebar()}
     </>
   );
 
@@ -2282,40 +2343,7 @@ export default function App() {
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
-        <NavLogo onClick={goHome} className="app-global-home-logo" />
-        <nav className="nav-app nav app-nav-with-logo app-nav-minimal" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 0 148px" }}>
-          <div className="nav-logo-spacer" aria-hidden="true"/>
-          <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "4px", borderRadius: 8, padding: 4, alignItems: "center" }}>
-            {!(generated && resultsView === "map") && (
-              <button
-                type="button"
-                className={`nav-tab${tab === "plan" ? " active" : ""}`}
-                onClick={() => setTab("plan")}
-              >
-                Plan
-              </button>
-            )}
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          </div>
-          <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            {liveSharingActive && (
-              <span className="nav-live-badge" title="Live location sharing active">
-                <span className="nav-live-badge-dot" aria-hidden="true" />
-                LIVE
-              </span>
-            )}
-            {user ? (
-              <AccountSidebarTrigger
-                user={user}
-                profile={userProfile}
-                isOpen={accountSidebarOpen}
-                onOpen={() => (accountSidebarOpen ? closeAccountSidebar() : openAccountSidebar())}
-              />
-            ) : (
-              <button type="button" className="nav-btn nav-btn-ghost" onClick={() => openAuthModal("signin")}>Log in</button>
-            )}
-          </div>
-        </nav>
+        {renderAppNavBar("app")}
 
         {generated && resultsView === "itinerary" ? (
           <ErrorBoundary label="results" title="Could not show trip results">
@@ -2651,6 +2679,7 @@ export default function App() {
         onAction={toastAction?.onClick}
       />
       {renderAccountSidebar()}
+      {renderNavSidebar()}
     </>
   );
 }
