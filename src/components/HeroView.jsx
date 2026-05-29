@@ -3,7 +3,7 @@ import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
 import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
 import NavLogo from "./NavLogo.jsx";
-import UserNavMenu from "./UserNavMenu.jsx";
+import AccountSidebarTrigger from "./AccountSidebarTrigger.jsx";
 
 export default function HeroView({
   theme,
@@ -23,7 +23,6 @@ export default function HeroView({
   onGoogle,
   onFacebook,
   onApple,
-  onSignOut,
   user,
   onSearchHover,
   onSwap,
@@ -37,11 +36,10 @@ export default function HeroView({
   onShowEmailModal,
   onShowPhoneModal,
   onGoHome,
-  onOpenProfile,
-  onOpenTrips,
+  accountSidebarOpen = false,
+  onOpenAccountSidebar,
+  onCloseAccountSidebar,
   userProfile,
-  creditStatus,
-  onRefreshCredits,
   planDraft = null,
   onResumeDraft,
   onDismissDraft,
@@ -57,14 +55,11 @@ export default function HeroView({
         <div className="nav-right">
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
           {user ? (
-            <UserNavMenu
+            <AccountSidebarTrigger
               user={user}
               profile={userProfile}
-              creditStatus={creditStatus}
-              onSignOut={onSignOut}
-              onRefreshCredits={onRefreshCredits}
-              onOpenProfile={onOpenProfile}
-              onOpenTrips={onOpenTrips}
+              isOpen={accountSidebarOpen}
+              onOpen={() => (accountSidebarOpen ? onCloseAccountSidebar?.() : onOpenAccountSidebar?.())}
             />
           ) : (
             <>

@@ -113,6 +113,7 @@ export default function ProfilePage({
   onUpdatePassword,
   onManageSubscription,
   toast,
+  scrollToSection = null,
 }) {
   const fileRef = useRef(null);
   const homeInputRef = useRef(null);
@@ -274,6 +275,16 @@ export default function ProfilePage({
       setNotifyNewFeatures(profile.notify_new_features !== false);
     }
   }, [profile?.notify_trip_reminders, profile?.notify_new_features]);
+
+  useEffect(() => {
+    if (!scrollToSection) return undefined;
+    const targetId = scrollToSection === "settings" ? "profile-settings" : null;
+    if (!targetId) return undefined;
+    const timer = window.setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [scrollToSection]);
 
   return (
     <div className="profile-page">
@@ -454,7 +465,7 @@ export default function ProfilePage({
           )}
         </section>
 
-        <section className="profile-card profile-settings-card">
+        <section id="profile-settings" className="profile-card profile-settings-card">
           <h2 className="profile-section-title">Profile Settings</h2>
 
           <div className="profile-settings-row">

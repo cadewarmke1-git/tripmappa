@@ -60,7 +60,8 @@ import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import ThemeToggle from "./components/ThemeToggle.jsx";
 import Toast from "./components/Toast.jsx";
 import NavLogo from "./components/NavLogo.jsx";
-import UserNavMenu from "./components/UserNavMenu.jsx";
+import AccountSidebar from "./components/AccountSidebar.jsx";
+import AccountSidebarTrigger from "./components/AccountSidebarTrigger.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 export default function App() {
@@ -142,6 +143,10 @@ export default function App() {
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
   const [liveSharingActive, setLiveSharingActive] = useState(false);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
+  const [profileScrollTo, setProfileScrollTo] = useState(null);
+  const [accountSidebarOpen, setAccountSidebarOpen] = useState(false);
+  const [accountSidebarClosing, setAccountSidebarClosing] = useState(false);
+  const accountSidebarTimerRef = useRef(null);
   const highlightTimerRef = useRef(null);
 
   function openAuthModal(mode) {
@@ -738,7 +743,23 @@ export default function App() {
     }
   }
 
+  function openAccountSidebar() {
+    if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
+    setAccountSidebarClosing(false);
+    setAccountSidebarOpen(true);
+  }
+
+  function closeAccountSidebar() {
+    if (!accountSidebarOpen || accountSidebarClosing) return;
+    setAccountSidebarClosing(true);
+    setAccountSidebarOpen(false);
+    accountSidebarTimerRef.current = setTimeout(() => {
+      setAccountSidebarClosing(false);
+    }, 280);
+  }
+
   function openProfile() {
+    setProfileScrollTo(null);
     setView("profile");
     window.scrollTo(0, 0);
   }
@@ -748,6 +769,72 @@ export default function App() {
     setTab("trips");
     setCardCollapsed(false);
     window.scrollTo(0, 0);
+  }
+
+  function openSharePanel() {
+    setView("app");
+    setTab("share");
+    setCardCollapsed(false);
+    window.scrollTo(0, 0);
+  }
+
+  function openProfileSettings() {
+    setProfileScrollTo("settings");
+    setView("profile");
+    window.scrollTo(0, 0);
+  }
+
+  function handleSidebarOpenProfile() {
+    closeAccountSidebar();
+    openProfile();
+  }
+
+  function handleSidebarOpenTrips() {
+    closeAccountSidebar();
+    openMyTrips();
+  }
+
+  function handleSidebarOpenShare() {
+    closeAccountSidebar();
+    openSharePanel();
+  }
+
+  function handleSidebarOpenSettings() {
+    closeAccountSidebar();
+    openProfileSettings();
+  }
+
+  function handleSidebarSignOut() {
+    closeAccountSidebar();
+    handleSignOut();
+  }
+
+  const accountSidebarActiveNav = useMemo(() => {
+    if (view === "profile") return profileScrollTo === "settings" ? "settings" : "profile";
+    if (tab === "trips") return "trips";
+    if (tab === "share") return "share";
+    return null;
+  }, [view, tab, profileScrollTo]);
+
+  function renderAccountSidebar() {
+    if (!user) return null;
+    return (
+      <AccountSidebar
+        open={accountSidebarOpen}
+        closing={accountSidebarClosing}
+        onClose={closeAccountSidebar}
+        user={user}
+        profile={userProfile}
+        creditStatus={creditStatus}
+        onRefreshCredits={refreshCredits}
+        onOpenProfile={handleSidebarOpenProfile}
+        onOpenTrips={handleSidebarOpenTrips}
+        onOpenShare={handleSidebarOpenShare}
+        onOpenSettings={handleSidebarOpenSettings}
+        onSignOut={handleSidebarSignOut}
+        activeNav={accountSidebarActiveNav}
+      />
+    );
   }
 
   async function handleProfileUploadAvatar(file) {
@@ -780,6 +867,9 @@ export default function App() {
   }
 
   function goHome() {
+    setAccountSidebarOpen(false);
+    setAccountSidebarClosing(false);
+    if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
     setAuthModal(null);
     setShowUpgradeModal(false);
     setShowHomeAddressModal(false);
@@ -2010,17 +2100,24 @@ export default function App() {
       <>
         <div className={`app-wrap ${theme} profile-view-wrap`}>
           <NavLogo onClick={goHome} className="app-global-home-logo" />
-          <nav className="nav-app nav app-nav-with-logo app-nav-minimal profile-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "0 24px 0 148px" }}>
-            <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <nav className="nav-app nav app-nav-with-logo app-nav-minimal profile-nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, height: "var(--nav-h)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 0 148px" }}>
+            <div className="nav-logo-spacer" aria-hidden="true" />
+            <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "4px", borderRadius: 8, padding: 4, alignItems: "center" }}>
+              <button
+                type="button"
+                className="nav-tab"
+                onClick={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
+              >
+                Plan
+              </button>
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
-              <UserNavMenu
+            </div>
+            <div className="nav-right app-nav-right" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <AccountSidebarTrigger
                 user={user}
                 profile={userProfile}
-                creditStatus={creditStatus}
-                onSignOut={handleSignOut}
-                onRefreshCredits={refreshCredits}
-                onOpenProfile={openProfile}
-                onOpenTrips={openMyTrips}
+                isOpen={accountSidebarOpen}
+                onOpen={() => (accountSidebarOpen ? closeAccountSidebar() : openAccountSidebar())}
               />
             </div>
           </nav>
@@ -2054,6 +2151,7 @@ export default function App() {
             onUpdatePassword={updatePassword}
             onManageSubscription={handleManageSubscription}
             toast={toast_}
+            scrollToSection={profileScrollTo}
           />
           </ErrorBoundary>
         </div>
@@ -2070,6 +2168,7 @@ export default function App() {
           actionLabel={toastAction?.label}
           onAction={toastAction?.onClick}
         />
+        {renderAccountSidebar()}
       </>
     );
   }
@@ -2090,7 +2189,6 @@ export default function App() {
         heroDestRef={heroDestRef}
         onThemeToggle={toggleTheme}
         user={user}
-        onSignOut={handleSignOut}
         onLogin={() => openAuthModal("signin")}
         onSignup={() => openAuthModal("signup")}
         onGoogle={() => handleOAuth("google")}
@@ -2114,11 +2212,10 @@ export default function App() {
         onShowEmailModal={() => openAuthModal("signup")}
         onShowPhoneModal={openPhoneModal}
         onGoHome={goHome}
-        onOpenProfile={openProfile}
-        onOpenTrips={openMyTrips}
+        accountSidebarOpen={accountSidebarOpen}
+        onOpenAccountSidebar={openAccountSidebar}
+        onCloseAccountSidebar={closeAccountSidebar}
         userProfile={userProfile}
-        creditStatus={creditStatus}
-        onRefreshCredits={refreshCredits}
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
@@ -2175,6 +2272,7 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />
+      {renderAccountSidebar()}
     </>
   );
 
@@ -2189,18 +2287,13 @@ export default function App() {
           <div className="nav-logo-spacer" aria-hidden="true"/>
           <div className="nav-center-wrap nav-center" style={{ display: "flex", gap: "4px", borderRadius: 8, padding: 4, alignItems: "center" }}>
             {!(generated && resultsView === "map") && (
-              <>
-                {[["plan", "Plan"], ["trips", "Trips"], ["share", "Share"]].map(([k, l]) => (
-                  <button key={k} className={"nav-tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>
-                ))}
-                <button
-                  type="button"
-                  className={`nav-tab nav-tab-profile${view === "profile" ? " active" : ""}`}
-                  onClick={() => (user ? openProfile() : openAuthModal("signin"))}
-                >
-                  Profile
-                </button>
-              </>
+              <button
+                type="button"
+                className={`nav-tab${tab === "plan" ? " active" : ""}`}
+                onClick={() => setTab("plan")}
+              >
+                Plan
+              </button>
             )}
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
           </div>
@@ -2212,14 +2305,11 @@ export default function App() {
               </span>
             )}
             {user ? (
-              <UserNavMenu
+              <AccountSidebarTrigger
                 user={user}
                 profile={userProfile}
-                creditStatus={creditStatus}
-                onSignOut={handleSignOut}
-                onRefreshCredits={refreshCredits}
-                onOpenProfile={openProfile}
-                onOpenTrips={openMyTrips}
+                isOpen={accountSidebarOpen}
+                onOpen={() => (accountSidebarOpen ? closeAccountSidebar() : openAccountSidebar())}
               />
             ) : (
               <button type="button" className="nav-btn nav-btn-ghost" onClick={() => openAuthModal("signin")}>Log in</button>
@@ -2560,6 +2650,7 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />
+      {renderAccountSidebar()}
     </>
   );
 }
