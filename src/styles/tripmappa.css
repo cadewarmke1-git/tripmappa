@@ -1072,31 +1072,50 @@
     overflow: hidden;
   }
   .plan-flow-toolbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 10px 12px;
     flex-shrink: 0;
-    margin-bottom: 2px;
+    margin-bottom: 8px;
     min-height: 0;
   }
+  .plan-flow-toolbar-left {
+    min-width: 0;
+    justify-self: start;
+  }
+  .plan-flow-toolbar-center {
+    justify-self: center;
+    flex-shrink: 0;
+  }
+  .plan-flow-toolbar-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+    justify-self: end;
+  }
   .plan-flow-toolbar .question-progress-compact {
-    flex: 1;
     min-width: 0;
     padding: 0;
   }
-  .plan-flow-nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+  .plan-flow-toolbar:not(:has(.plan-flow-toolbar-center)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .chat-wrap-plan-flow .question-progress-compact .question-progress-phases {
+    flex-wrap: nowrap;
+    gap: 6px 10px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .chat-wrap-plan-flow .question-progress-compact .question-progress-phase {
+    font-size: 10px;
+    white-space: nowrap;
     flex-shrink: 0;
   }
-  .plan-flow-nav .convo-nav-btn {
-    padding: 4px 10px;
-    font-size: 11px;
-    border-radius: 6px;
-    white-space: nowrap;
-    text-decoration: none;
+  .plan-flow-start-over {
+    font-weight: 600;
   }
   .chat-wrap-plan-flow .ai-msg {
     flex: 1;
@@ -3367,6 +3386,12 @@
     flex-shrink: 0;
     justify-content: flex-end;
   }
+  .app-nav-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
   .app-nav-bar .nav-logo-home {
     font-size: 20px;
     flex-shrink: 0;
@@ -4361,8 +4386,22 @@
 
   /* Plan flow credits */
   .plan-flow-credits {
-    font-size: 11px; font-weight: 600; color: #FFD28C; white-space: nowrap;
-    padding: 4px 10px; border-radius: 99px; background: rgba(255,210,140,0.12);
+    font-size: 10px;
+    font-weight: 600;
+    color: #FFD28C;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: rgba(255,210,140,0.12);
+    border: 1px solid rgba(255,210,140,0.2);
+    line-height: 1.2;
+  }
+  .plan-flow-toolbar-right .convo-nav-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+    white-space: nowrap;
+    text-decoration: none;
   }
 
   /* Lazy panel + enrichment skeletons */
@@ -4460,21 +4499,43 @@
 
   @media (max-width: 520px) {
     .plan-flow-toolbar {
-      flex-wrap: wrap;
-      align-items: stretch;
-      gap: 6px;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
     }
-    .plan-flow-toolbar .question-progress-compact {
-      flex: 1 1 100%;
-      order: 1;
+    .plan-flow-toolbar:not(:has(.plan-flow-toolbar-center)) {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .chat-wrap-plan-flow .question-progress-compact .question-progress-phases {
+      gap: 4px 8px;
+    }
+    .chat-wrap-plan-flow .question-progress-compact .question-progress-phase {
+      font-size: 9px;
     }
     .plan-flow-credits {
-      order: 2;
-      flex: 1 1 100%;
-      text-align: center;
+      font-size: 9px;
+      padding: 3px 8px;
     }
-    .plan-flow-nav {
-      order: 3;
-      margin-left: auto;
+    .plan-flow-toolbar-right .convo-nav-btn {
+      padding: 3px 8px;
+      font-size: 10px;
+    }
+  }
+  @media (max-width: 400px) {
+    .plan-flow-toolbar {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "left left"
+        "center right";
+      row-gap: 6px;
+    }
+    .plan-flow-toolbar-left { grid-area: left; }
+    .plan-flow-toolbar-center { grid-area: center; justify-self: start; }
+    .plan-flow-toolbar-right { grid-area: right; }
+    .plan-flow-toolbar:not(:has(.plan-flow-toolbar-center)) {
+      grid-template-areas: "left right";
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .chat-wrap-plan-flow .question-progress-compact .question-progress-track {
+      display: none;
     }
   }

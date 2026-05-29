@@ -56,13 +56,17 @@ export default function PlanPanel({
 
         {inQuestionFlow && (
           <div className="plan-flow-toolbar">
-            {showProgress && <QuestionProgress {...flowProgress} compact />}
+            <div className="plan-flow-toolbar-left">
+              {showProgress && <QuestionProgress {...flowProgress} compact />}
+            </div>
             {creditsLabel && (
-              <span className="plan-flow-credits">{creditsLabel}</span>
+              <div className="plan-flow-toolbar-center">
+                <span className="plan-flow-credits">{creditsLabel}</span>
+              </div>
             )}
-            <div className="plan-flow-nav">
+            <div className="plan-flow-toolbar-right">
               {!frozen && (
-                <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>
+                <button type="button" className="convo-nav-btn plan-flow-start-over" onClick={onResetPlan}>Start over</button>
               )}
               {questionHistoryLength > 0 && !frozen && (
                 <button type="button" className="convo-nav-btn" onClick={onGoBack}>← Back</button>

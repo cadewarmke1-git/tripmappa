@@ -21,7 +21,6 @@ export default function AppNavBar({
     <nav className={`app-nav-bar nav${isHero ? " transparent" : " nav-app app-nav-with-logo"}`}>
       <div className="app-nav-bar-left">
         <NavLogo onClick={onGoHome} />
-        <HamburgerMenuButton isOpen={navSidebarOpen} onClick={onToggleNavSidebar} />
       </div>
       <div className="app-nav-bar-right">
         {liveSharingActive && (
@@ -30,21 +29,24 @@ export default function AppNavBar({
             LIVE
           </span>
         )}
-        {user ? (
-          <AccountSidebarTrigger
-            user={user}
-            profile={userProfile}
-            isOpen={accountSidebarOpen}
-            onOpen={onToggleAccountSidebar}
-          />
-        ) : isHero ? (
-          <>
+        <div className="app-nav-bar-actions">
+          <HamburgerMenuButton isOpen={navSidebarOpen} onClick={onToggleNavSidebar} />
+          {user ? (
+            <AccountSidebarTrigger
+              user={user}
+              profile={userProfile}
+              isOpen={accountSidebarOpen}
+              onOpen={onToggleAccountSidebar}
+            />
+          ) : isHero ? (
+            <>
+              <button type="button" className="nav-btn nav-btn-ghost" onClick={onLogin}>Log in</button>
+              <button type="button" className="nav-btn nav-btn-signup" onClick={onSignup}>Sign up</button>
+            </>
+          ) : (
             <button type="button" className="nav-btn nav-btn-ghost" onClick={onLogin}>Log in</button>
-            <button type="button" className="nav-btn nav-btn-signup" onClick={onSignup}>Sign up</button>
-          </>
-        ) : (
-          <button type="button" className="nav-btn nav-btn-ghost" onClick={onLogin}>Log in</button>
-        )}
+          )}
+        </div>
       </div>
     </nav>
   );
