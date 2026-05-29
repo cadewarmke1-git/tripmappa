@@ -46,9 +46,18 @@ function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
   };
 }
 
-async function searchAtSample(pt, sampleIndex, answers, fuelMode) {
-  const searches = [...GENERAL_SEARCHES];
-  if (fuelMode !== "none") {
+const CONTINUOUS_DRIVE_SEARCHES = [
+  { type: "gas_station", keyword: "gas station", category: "fuel" },
+  { fuel: true, category: "fuel" },
+  { type: "rest_area", keyword: "rest area", category: "rest" },
+  { type: "park", keyword: "rest stop", category: "rest" },
+];
+
+async function searchAtSample(pt, sampleIndex, answers, fuelMode, continuousDrive) {
+  const searches = continuousDrive
+    ? [...CONTINUOUS_DRIVE_SEARCHES]
+    : [...GENERAL_SEARCHES];
+  if (fuelMode !== "none" && !continuousDrive) {
     searches.unshift({ fuel: true, category: "fuel" });
   }
   const pick = searches[sampleIndex % searches.length];
@@ -71,7 +80,11 @@ import { dedupePlaces, placeDedupKey } from "./placesDedup.js";
 export async function buildRoadStopsFromRoute(answers, routeInfo) {
   if (!routeInfo?.routePoints?.length || !window.google?.maps?.places) return [];
 
-  const samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 30);
+  const continuousDrive = answers?.continuous_drive === true
+    || answers?.overnight_preference === "Drive straight through";
+  const sampleInterval = continuousDrive ? 20 : 30;
+  const maxStops = continuousDrive ? 16 : 12;
+  const samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, sampleInterval);
   const totalMiles = parseMilesFromDistance(routeInfo?.distance) || 0;
   const fuelMode = getFuelStopMode(answers);
   const stops = [];
@@ -86,7 +99,7 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
       ? `${Math.round((i / Math.max(1, samples.length - 1)) * totalMiles)} mi`
       : "—";
 
-    const candidates = await searchAtSample(pt, i, answers, fuelMode);
+    const candidates = await searchAtSample(pt, i, answers, fuelMode, continuousDrive);
     const place = candidates.find(p => {
       const key = placeDedupKey(p);
       if (!key || seenKeys.has(key)) return false;
@@ -100,5 +113,5 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
     stops.push(roadStopFromPlace(place, place.category || "discovery", mileLabel, photoUrl));
   }
 
-  return dedupePlaces(stops).slice(0, 12);
+  return dedupePlaces(stops).slice(0, maxStops);
 }

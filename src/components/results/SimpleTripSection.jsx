@@ -34,6 +34,7 @@ export default function SimpleTripSection({
   highlightedStopId,
   stopRefs,
   onStopSelect,
+  continuousDrive = false,
 }) {
   const day = days[0];
   const roadItems = day?.roadStops?.length ? day.roadStops : roadStops.map((rs, i) => ({
@@ -89,7 +90,9 @@ export default function SimpleTripSection({
 
       {roadItems.length > 0 && (
         <div className="results-subsection">
-          <h3 className="results-subsection-label">Stops Along the Way</h3>
+          <h3 className="results-subsection-label">
+            {continuousDrive ? "Fuel and rest stops along the route" : "Stops Along the Way"}
+          </h3>
           <div className="results-road-stops-scroll">
             {roadItems.map(stop => (
               <RoadStopCard
@@ -107,7 +110,7 @@ export default function SimpleTripSection({
         </div>
       )}
 
-      {day?.overnight && (
+      {day?.overnight && !continuousDrive && (
         <div className="results-subsection">
           <h3 className="results-subsection-label">Tonight&apos;s Stay</h3>
           <OvernightStayCard
@@ -143,7 +146,7 @@ export default function SimpleTripSection({
         </div>
       )}
 
-      {!day?.overnight && mealStops.map((stop, idx) => {
+      {!continuousDrive && !day?.overnight && mealStops.map((stop, idx) => {
         const city = stop.city || dest;
         const weather = findCityData(weatherByCity, city);
         const preloaded = findCityData(restaurantsByCity, city);

@@ -2,8 +2,10 @@
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { parseRating, isLocalFavorite } from "./ratings.js";
 import { skipLodgingQuestion, getEffectiveVehicle } from "./vehicles.js";
+import { isContinuousDrive } from "./driveMode.js";
 
 export function isSimplifiedTrip({ answers, routeInfo, stops = [], tripFormat }) {
+  if (isContinuousDrive(answers)) return true;
   if (tripFormat === "simplified") return true;
   if (tripFormat === "multi_day") return false;
   const overnightCount = (stops || []).filter(s => s.city).length;

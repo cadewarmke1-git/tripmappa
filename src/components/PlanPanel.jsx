@@ -4,6 +4,8 @@ import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import SummaryCard from "./SummaryCard.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
+import QuestionThread from "./QuestionThread.jsx";
+import PlanRouteCard from "./PlanRouteCard.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 
 export default function PlanPanel({
@@ -12,12 +14,14 @@ export default function PlanPanel({
   convoComplete,
   loading,
   answers,
+  origin,
+  dest,
   routeInfo,
   tripLegs,
   stepAnim,
   enterAnim,
   prefDraft,
-  prefSkipReady,
+  questionHistory = [],
   questionHistoryLength,
   flowProgress,
   returnedFromResults,
@@ -38,7 +42,8 @@ export default function PlanPanel({
 }) {
   const stepMessage = getStepMessage?.() ?? "";
   const frozen = !!stepAnim;
-  const showProgress = (currentQuestion || convoComplete) && flowProgress?.totalSteps > 0;
+  const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
+  const routePending = Boolean(currentQuestion?.pendingRoute);
 
   return (
     <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
@@ -49,9 +54,9 @@ export default function PlanPanel({
           </div>
         )}
 
-        {inQuestionFlow && showProgress && (
+        {inQuestionFlow && (
           <div className="plan-flow-toolbar">
-            <QuestionProgress {...flowProgress} compact />
+            {showProgress && <QuestionProgress {...flowProgress} compact />}
             {creditsLabel && (
               <span className="plan-flow-credits">{creditsLabel}</span>
             )}
@@ -64,6 +69,16 @@ export default function PlanPanel({
               )}
             </div>
           </div>
+        )}
+
+        {inQuestionFlow && (origin || dest) && (
+          <PlanRouteCard
+            origin={origin}
+            dest={dest}
+            routeInfo={routeInfo}
+            answers={answers}
+            routePending={routePending}
+          />
         )}
 
         {!inQuestionFlow && showProgress && (
@@ -79,56 +94,60 @@ export default function PlanPanel({
         <div className="convo-scroll" ref={convoScrollRef}>
           <div className="plan-view">
             {(currentQuestion || qIndex === -2) && (
-              <div
-                className={`ai-msg${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
-                key={currentQuestion?.id ?? qIndex}
-              >
-                {stepMessage && (
-                  <div className="ai-bubble">
-                    {stepMessage}
-                    {isScenicRoute(answers) && (
-                      <div className="scenic-route-note" style={{ marginTop: inQuestionFlow ? 6 : 12 }}>
-                        I&apos;ll find the most scenic roads for your trip.
-                      </div>
-                    )}
-                  </div>
-                )}
-                {convoComplete && (
-                  <div className="generate-inline">
-                    <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
-                      {loading ? "Generating…" : (
-                        <>
-                          Generate My Trip →
-                          {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
-                        </>
+              <div className={`plan-flow-stack${convoComplete ? " plan-flow-stack-payoff" : ""}`}>
+                <QuestionThread history={questionHistory} />
+
+                <div
+                  className={`ai-msg plan-flow-current${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit-fast" : ""}${enterAnim && !stepAnim ? " step-enter-fast" : ""}`}
+                >
+                  {stepMessage && (
+                    <div className="ai-bubble">
+                      {stepMessage}
+                      {currentQuestion?.hint && (
+                        <div className="question-hint">{currentQuestion.hint}</div>
                       )}
-                    </button>
-                  </div>
-                )}
-                {currentQuestion && (
-                  <ErrorBoundary label="question-choices" title="Could not show choices">
-                    <QuestionChoices
-                      currentQ={currentQuestion}
-                      stepAnim={stepAnim}
-                      answers={answers}
-                      prefDraft={prefDraft}
-                      prefSkipReady={prefSkipReady}
-                      questionHistoryLength={questionHistoryLength}
-                      compact={inQuestionFlow}
-                      showNavRow={!inQuestionFlow}
-                      onResetPlan={onResetPlan}
-                      onGoBack={onGoBack}
-                      onPickAnswer={onPickAnswer}
-                      onSetAnswers={onSetAnswers}
-                      onSetPrefDraft={onSetPrefDraft}
-                    />
-                  </ErrorBoundary>
-                )}
-                {qIndex === -2 && convoComplete && (
-                  <div className="payoff-summary-wrap">
-                    <SummaryCard answers={answers} compactGrid />
-                  </div>
-                )}
+                      {isScenicRoute(answers) && (
+                        <div className="scenic-route-note" style={{ marginTop: inQuestionFlow ? 6 : 12 }}>
+                          I&apos;ll find the most scenic roads for your trip.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {convoComplete && (
+                    <div className="generate-inline">
+                      <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
+                        {loading ? "Generating…" : (
+                          <>
+                            Generate My Trip →
+                            {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  {currentQuestion && (
+                    <ErrorBoundary label="question-choices" title="Could not show choices">
+                      <QuestionChoices
+                        currentQ={currentQuestion}
+                        stepAnim={stepAnim}
+                        answers={answers}
+                        prefDraft={prefDraft}
+                        questionHistoryLength={questionHistoryLength}
+                        compact={inQuestionFlow}
+                        showNavRow={!inQuestionFlow}
+                        onResetPlan={onResetPlan}
+                        onGoBack={onGoBack}
+                        onPickAnswer={onPickAnswer}
+                        onSetPrefDraft={onSetPrefDraft}
+                      />
+                    </ErrorBoundary>
+                  )}
+                  {qIndex === -2 && convoComplete && (
+                    <div className="payoff-summary-wrap">
+                      <SummaryCard answers={answers} routeInfo={routeInfo} compactGrid />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             {!inQuestionFlow && answers.vehicle && routeInfo?.distance && (

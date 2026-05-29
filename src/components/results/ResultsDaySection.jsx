@@ -45,6 +45,7 @@ export default function ResultsDaySection({
   highlightedStopId,
   stopRefs,
   onStopSelect,
+  continuousDrive = false,
 }) {
   const sectionEl = useRef(null);
 
@@ -72,7 +73,7 @@ export default function ResultsDaySection({
 
   const orderedStops = [
     ...(day.roadStops || []).map(stop => ({ kind: "road", stop })),
-    ...(day.overnight ? [{ kind: "overnight", stop: day.overnight }] : []),
+    ...(!continuousDrive && day.overnight ? [{ kind: "overnight", stop: day.overnight }] : []),
   ];
 
   return (
@@ -125,7 +126,7 @@ export default function ResultsDaySection({
         </div>
       )}
 
-      {day.overnight && (
+      {day.overnight && !continuousDrive && (
         <>
           <LodgingCardsSection
             city={day.overnight.city}

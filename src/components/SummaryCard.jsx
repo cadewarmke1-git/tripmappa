@@ -9,10 +9,11 @@ import {
   formatPartySizeLabel,
   MULTI_VEHICLE_TRIP,
 } from "../lib/vehicles.js";
+import { isContinuousDrive } from "../lib/driveMode.js";
 
 const PAYOFF_KEYS = ["Trip", "Vehicle", "Fuel", "Party size"];
 
-export default function SummaryCard({ answers, hosCompliance, compactGrid = false }) {
+export default function SummaryCard({ answers, hosCompliance, compactGrid = false, routeInfo = null }) {
   const effective = getEffectiveVehicle(answers);
   const fuel = inferFuelType(effective, answers.preferences || [], answers);
   const rows = [
@@ -27,7 +28,8 @@ export default function SummaryCard({ answers, hosCompliance, compactGrid = fals
     isTruckVehicle(effective) && answers.truck_height && ["Assumed specs", `${answers.truck_height} · ${answers.truck_weight} · Diesel · HOS required`],
     isRvVehicle(effective) && answers.rv_height && ["Assumed RV specs", `${answers.rv_height} · ${answers.rv_weight}`],
     formatPartySizeLabel(answers.travelers) && ["Party size", formatPartySizeLabel(answers.travelers)],
-    answers.lodging && ["Lodging", answers.lodging],
+    isContinuousDrive(answers) && ["Drive mode", "Drive straight through"],
+    answers.lodging && !isContinuousDrive(answers) && ["Lodging", answers.lodging],
     Array.isArray(answers.route_restrictions) && answers.route_restrictions.length > 0 && ["Route restrictions", answers.route_restrictions.join(", ")],
     Array.isArray(answers.coordination_needs) && answers.coordination_needs.length > 0 && ["Coordination", answers.coordination_needs.join(", ")],
     Array.isArray(answers.preferences) && answers.preferences.length > 0 && ["Preferences", answers.preferences.join(", ")],
@@ -55,6 +57,12 @@ export default function SummaryCard({ answers, hosCompliance, compactGrid = fals
             <div>{v}</div>
           </div>
         ))
+      )}
+      {isContinuousDrive(answers) && (
+        <div className="summary-kids-note">Drive straight through — no overnight lodging on this trip.</div>
+      )}
+      {!isContinuousDrive(answers) && answers.trip_type === "Day trip" && (
+        <div className="summary-kids-note">Day trip — no overnight stops needed.</div>
       )}
       {isScenicRoute(answers) && (
         <div className="summary-kids-note">Scenic route selected — viewpoints noted at each stop</div>

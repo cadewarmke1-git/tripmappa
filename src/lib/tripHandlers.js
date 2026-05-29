@@ -9,6 +9,7 @@ import {
 } from "./vehicles.js";
 import { computeHOSCompliance } from "./hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
+import { isContinuousDrive, buildContinuousDriveTip } from "./driveMode.js";
 import {
   STOPS_DATA,
   ROAD_STOPS_FALLBACK,
@@ -72,6 +73,9 @@ export function buildFallbackTripData(answers, routeInfo) {
       name: f.name, note: `${f.fuel} · ${f.amenities}`,
       fuel: f.fuel, highClearance: f.highClearance, rvFriendly: f.rvFriendly, def: f.def, amenities: f.amenities,
     })));
+  } else if (isContinuousDrive(answers)) {
+    stops = [];
+    roadStops = ROAD_STOPS_FALLBACK.map(normalizeRoadStop);
   } else if (isDayOrHome) {
     roadStops = [];
   } else {
@@ -106,13 +110,20 @@ export function buildFallbackTripData(answers, routeInfo) {
   }
   if (isScenicRoute(answers)) tips.push("Scenic viewpoints and photo spots noted near each stop.");
   if (hasPref(answers, "Pet friendly")) tips.push("Pet relief areas flagged at rest stops along your route.");
+  if (isContinuousDrive(answers)) {
+    tips.push(buildContinuousDriveTip(routeInfo));
+    tips.push("Fuel and rest stops prioritized for long-haul driving — no overnight lodging on this trip.");
+  }
   if (!tips.length) tips.push("Check weather and road conditions before you leave", "Allow extra time at major interchanges");
 
   return { stops, roadStops, tripTips: tips, hosCompliance: hos, truckSafety, rvSafety };
 }
 
 export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
-  const apiStops = Array.isArray(data.stops) ? data.stops.filter(s => s && (s.city || s.name)) : [];
+  const continuous = isContinuousDrive(answers);
+  const apiStops = continuous
+    ? []
+    : (Array.isArray(data.stops) ? data.stops.filter(s => s && (s.city || s.name)) : []);
   const apiRoadStops = (Array.isArray(data.road_stops) ? data.road_stops : []).map(normalizeRoadStop);
 
   if (apiStops.length > 0) {
@@ -125,12 +136,12 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
       usedFallback: false,
     };
   }
-  if (apiRoadStops.length > 0) {
+  if (apiRoadStops.length > 0 || continuous) {
     return {
       stops: [],
       roadStops: apiRoadStops,
       tripTips: Array.isArray(data.tips) && data.tips.length ? data.tips : [],
-      tripFormat: data.trip_format || "simplified",
+      tripFormat: continuous ? "simplified" : (data.trip_format || "simplified"),
       recommendations: data.recommendations || [],
       usedFallback: false,
     };

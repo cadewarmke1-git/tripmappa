@@ -120,6 +120,10 @@ function buildTripContext(reqBody) {
     towing: answers.towing,
     loyalty: answers.loyalty_program,
     foodAllergies: answers.food_allergies,
+    continuousDrive:
+      answers.continuous_drive === true
+      || answers.overnight_preference === "Drive straight through"
+      || answers.lodging === "No overnight stay",
     leaveTime: formatLeaveTime(departureTime, timingMode),
     isScenic: preferences.includes("Scenic route") || routeInfo.scenic === true,
     tripCategory,
@@ -306,15 +310,19 @@ function buildUniversalRules(ctx, placesContextPrompt) {
   const maxDayPersonal = ctx.youngKids ? "6 hours for families with young children" : "8 hours for personal vehicles";
   const maxDay = ctx.tripCategory === "commercial" ? "11 hours for commercial vehicles" : maxDayPersonal;
 
+  const lodgingRules = ctx.continuousDrive
+    ? "NO OVERNIGHT STOPS: User chose continuous drive — return an empty stops array. Do not recommend hotels or lodging."
+    : `HOTELS: Every hotel must be in the correct overnight stop city on this route — never a city off the corridor. At each overnight stop provide at least 3 lodging options sorted by lodging preference (${ctx.lodging}): budget / mid-range / luxury as applicable.
+RESTAURANTS: At each overnight stop include at least 2 restaurants — one sit-down and one fast food or quick option — in that same stop city.
+SPACING: Space overnight stops evenly; no single driving day exceeds ${maxDay}.`;
+
   return `
 === UNIVERSAL RULES (every trip) ===
 ${placesContextPrompt || ""}
 PLACES DATA RULE: For road_stops and named businesses, use ONLY verified names from placesContext in this request. Never invent business names. If placesContext has no match, use stop city and category only.
 CORRIDOR RULE: Every stop must be a real place along the driving corridor between ${ctx.routeOrigin} and ${ctx.routeDestination}, within 10 miles of the highway — no significant detours.
 CITY FORMAT: Every stop city as "City, ST" (full city name and two-letter state).
-HOTELS: Every hotel must be in the correct overnight stop city on this route — never a city off the corridor. At each overnight stop provide at least 3 lodging options sorted by lodging preference (${ctx.lodging}): budget / mid-range / luxury as applicable.
-RESTAURANTS: At each overnight stop include at least 2 restaurants — one sit-down and one fast food or quick option — in that same stop city.
-SPACING: Space overnight stops evenly; no single driving day exceeds ${maxDay}.
+${lodgingRules}
 TIPS: Include tips array with 5–8 genuinely useful tips specific to THIS route and vehicle — not generic advice (e.g. name a specific weigh station mile marker on I-40, not "check tire pressure"). Include one regional food culture tip unique to this corridor. End tips with one vehicle-specific preparation tip (DOT inspection for truckers, tire/propane for RV, tire/chain/weather for motorcycle, road-trip kit for families).
 ROAD CONDITIONS: Include road_condition_warnings array for mountain passes, desert heat, winter weather, or construction zones actually relevant to this specific route.
 ORDER: Stops must progress geographically from origin toward destination; distance and eta fields must increase logically.`;
@@ -335,6 +343,9 @@ function buildLodgingRules(lodging) {
 
 function buildJsonSchema(ctx, isSimplified) {
   if (isSimplified) {
+    const continuousNote = ctx.continuousDrive
+      ? `\nCONTINUOUS DRIVE: User is driving straight through with no overnight stops. Return empty stops array if present. Prioritize road_stops with category fuel and rest spaced for long-haul driving. First tip must note total drive time is ${ctx.routeDuration}.`
+      : "";
     return `Return JSON:
 {
   "trip_format": "simplified",
@@ -343,7 +354,7 @@ function buildJsonSchema(ctx, isSimplified) {
   "recommendations": [{ "name": "From placesContext", "category": "Activity|Dining|Viewpoint", "rating": "4.5", "note": "Why stop here on THIS route" }],
   "tips": ["5-8 route-specific tips"],
   "road_condition_warnings": ["Warning specific to this route"]
-}`;
+}${continuousNote}`;
   }
 
   if (ctx.tripCategory === "commercial") {
@@ -495,8 +506,9 @@ ${vehicleBlock}
 
 ${buildUniversalRules(ctx, placesContextPrompt)}
 
-Lodging tier for this trip: ${buildLodgingRules(ctx.lodging)}
+Lodging tier for this trip: ${ctx.continuousDrive ? "No overnight stay — continuous drive mode" : buildLodgingRules(ctx.lodging)}
 ${extras.length ? `Additional preference notes:\n${extras.map(e => `- ${e}`).join("\n")}` : ""}
+${ctx.continuousDrive ? `\nCONTINUOUS DRIVE MODE: User chose to drive straight through (${ctx.routeDuration} total). No hotels, motels, or overnight city stops. Focus road_stops on fuel stations and rest areas for long-haul driving.` : ""}
 ${isSimplified ? `\nSHORT TRIP: Distance ${ctx.routeDistance} — use simplified single-page format; no overnight hotel stops unless essential.` : ""}
 
 Plan this trip now. Reference the origin, destination, distance (${ctx.routeDistance}), drive time (${ctx.routeDuration}), vehicle (${ctx.vehicle}), fuel (${ctx.fuel}), and traveler profile (${ctx.travelerType}) in your route_summary, stops, and tips.
@@ -540,7 +552,11 @@ export default async function handler(req, res) {
   const ctx = buildTripContext(req.body);
 
   const tripType = answers?.trip_type || "Road trip";
+  const continuousDrive =
+    answers?.continuous_drive === true
+    || answers?.overnight_preference === "Drive straight through";
   const needsOvernight =
+    !continuousDrive &&
     !["Day trip", "Driving home"].includes(tripType) &&
     answers?.lodging !== "No overnight stay" &&
     answers?.lodging !== "Sleeper cab — no hotel needed";

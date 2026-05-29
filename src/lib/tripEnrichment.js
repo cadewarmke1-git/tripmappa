@@ -22,6 +22,7 @@ import { fetchWeatherForStops } from "./weatherClient.js";
 import { fetchGeocode } from "./geocodeClient.js";
 import { fetchLiveTripTips } from "./tripTipsClient.js";
 import { optimizeStopOrder, shouldOptimizeRoute } from "./routeOptimization.js";
+import { isContinuousDrive } from "./driveMode.js";
 
 import { dedupePlaces, dedupeRoadStops } from "./placesDedup.js";
 
@@ -66,17 +67,18 @@ export async function enrichGeneratedTrip({
   destination = null,
   mapsReady = true,
 }) {
+  const continuousDrive = isContinuousDrive(answers);
   const nearbyServicesByCity = {};
   const activitiesByCity = {};
   const restaurantsByCity = {};
   const weatherByCity = {};
   const optionalStopCards = [];
   const poiMarkers = [];
-  let enrichedStops = stops.map(s => ({ ...s }));
+  let enrichedStops = continuousDrive ? [] : stops.map(s => ({ ...s }));
   let safeRoadStops = dedupeRoadStops(roadStops.map(rs => ({ ...rs })));
   let routeOptimized = false;
 
-  if (shouldOptimizeRoute(answers, enrichedStops) && origin && destination) {
+  if (!continuousDrive && shouldOptimizeRoute(answers, enrichedStops) && origin && destination) {
     for (const stop of enrichedStops) {
       if (!stop.city || (stop.lat != null && stop.lng != null)) continue;
       const geo = await resolveStopGeo(stop, mapsReady);
@@ -97,6 +99,13 @@ export async function enrichGeneratedTrip({
     safeRoadStops = dedupeRoadStops([...safeRoadStops, ...corridorRoadStops]);
   } else {
     safeRoadStops = dedupeRoadStops(safeRoadStops);
+  }
+
+  if (continuousDrive) {
+    safeRoadStops = safeRoadStops
+      .filter(rs => /fuel|rest|gas|diesel|ev|charge|truck stop|pilot|love'?s|ta\b/i.test(`${rs.category || ""} ${rs.name || ""}`))
+      .concat(safeRoadStops.filter(rs => !/fuel|rest|gas|diesel|ev|charge|truck stop|pilot|love'?s|ta\b/i.test(`${rs.category || ""} ${rs.name || ""}`)))
+      .slice(0, 16);
   }
 
   const interests = mapsReady

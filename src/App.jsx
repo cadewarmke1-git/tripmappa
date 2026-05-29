@@ -15,10 +15,10 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress } from "./lib/tripFlow.js";
+import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady } from "./lib/tripFlow.js";
 import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
-import { computeAutoTheme } from "./lib/theme.js";
+import { buildContinuousDriveTip, isContinuousDrive } from "./lib/driveMode.js";
 import { TRUCK_SAFETY_FALLBACK, RV_SAFETY_FALLBACK } from "./lib/tripData.js";
 import { generateTripPlan } from "./lib/apiClient.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
@@ -83,7 +83,6 @@ export default function App() {
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState([]);
-  const [prefSkipReady, setPrefSkipReady] = useState(false);
   const [hosCompliance, setHosCompliance] = useState(null);
   const [truckSafety, setTruckSafety] = useState(null);
   const [rvSafety, setRvSafety] = useState(null);
@@ -696,9 +695,9 @@ export default function App() {
   }
 
   const flowProgress = useMemo(() => getFlowProgress(answers, buildQuestionContext(answers), {
-    questionHistoryLength: questionHistory.length,
     convoComplete,
-  }), [answers, questionHistory.length, convoComplete, origin, dest, routeInfo]);
+    currentQuestionId: convoComplete ? "done" : (currentQuestion?.id || "vehicle"),
+  }), [answers, convoComplete, currentQuestion?.id, origin, dest, routeInfo]);
 
   const inQuestionFlow = !generated && (
     qIndex >= 0 ||
@@ -1015,10 +1014,17 @@ export default function App() {
   useEffect(() => {
     if (currentQuestion && !stepAnim) {
       setEnterAnim(true);
-      const t = setTimeout(() => setEnterAnim(false), 350);
+      const t = setTimeout(() => setEnterAnim(false), 180);
       return () => clearTimeout(t);
     }
   }, [currentQuestion?.id, stepAnim]);
+
+  useEffect(() => {
+    if (!currentQuestion?.id && !convoComplete) return;
+    requestAnimationFrame(() => {
+      convoEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+  }, [currentQuestion?.id, questionHistory.length, convoComplete]);
 
   useEffect(() => {
     if (!trafficAlert) return;
@@ -1278,7 +1284,7 @@ export default function App() {
         setCurrentQuestion(null);
         setQIndex(-2);
         setConvoComplete(true);
-        setAnswers(normalizeTripAnswers(newAnswers, ctx));
+        setAnswers(normalizeTripAnswers(newAnswers, ctx, { forGeneration: true }));
         return;
       }
       if (!result.id || !result.type) {
@@ -1289,9 +1295,19 @@ export default function App() {
       setCurrentQuestion(result);
       setQIndex(0);
       setConvoComplete(false);
-      if (result.type === "multiselect") {
+      if (result.type === "trip_details" || result.type === "multiselect_group") {
+        const draft = {};
+        for (const sec of result.sections || []) {
+          draft[sec.id] = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
+        }
+        if (result.type === "trip_details") {
+          draft.trip_budget = newAnswers.trip_budget || "No budget limit";
+        }
+        setPrefDraft(draft);
+      } else if (result.type === "multiselect") {
         setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
-        setPrefSkipReady(false);
+      } else {
+        setPrefDraft([]);
       }
     } catch (err) {
       console.error("loadNextQuestion failed:", err);
@@ -1307,15 +1323,24 @@ export default function App() {
       routeDistance: routeInfo?.distance,
       routeDuration: routeInfo?.duration,
       routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
+      routeDurationHours: parseHoursFromDuration(routeInfo?.duration),
     };
   }
 
   useEffect(() => {
-    if (currentQuestion?.type !== "multiselect") return;
-    setPrefSkipReady(false);
-    const t = setTimeout(() => setPrefSkipReady(true), 3000);
-    return () => clearTimeout(t);
-  }, [currentQuestion?.id, currentQuestion?.type]);
+    if (!currentQuestion?.pendingRoute) return;
+    const ctx = buildQuestionContext(answers);
+    if (!isRouteContextReady(ctx)) return;
+    loadNextQuestion(answers);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeInfo?.distance, routeInfo?.duration, currentQuestion?.pendingRoute, answers]);
+
+  useEffect(() => {
+    if (convoComplete || generated || !origin?.trim() || !dest?.trim()) return;
+    if (answers.vehicle && routeInfo?.distance) return;
+    fetchDirections(answers.vehicle || "Car");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin, dest, answers.vehicle, generated, convoComplete]);
 
   useEffect(() => {
     if (view !== "app" || generated || convoComplete || qIndex !== -1) return;
@@ -1326,7 +1351,7 @@ export default function App() {
 
   function getStepMessage() {
     if (qIndex === -2) {
-      const completeMsg = getFlowCompleteMessage(answers);
+      const completeMsg = getFlowCompleteMessage(answers, buildQuestionContext(answers));
       if (completeMsg) return completeMsg;
       return "Got it. Ready to generate your trip plan?";
     }
@@ -1337,14 +1362,26 @@ export default function App() {
   function submitAnswer(value, extraFields = {}) {
     if (!currentQuestion) return;
     try {
-      const ctx = buildQuestionContext({ ...answers, ...extraFields, [currentQuestion.id]: value });
-      const na = normalizeTripAnswers(
-        { ...answers, ...extraFields, [currentQuestion.id]: value },
-        ctx,
-      );
+      let patch;
+      if (currentQuestion.type === "trip_details" && value && typeof value === "object" && !Array.isArray(value)) {
+        patch = { ...answers, ...extraFields, ...value };
+      } else if (currentQuestion.type === "multiselect_group" && value && typeof value === "object" && !Array.isArray(value)) {
+        patch = { ...answers, ...extraFields, ...value };
+      } else if (currentQuestion.type === "lodging_stay") {
+        patch = { ...answers, ...extraFields, lodging: value };
+      } else {
+        patch = { ...answers, ...extraFields, [currentQuestion.id]: value };
+      }
+      const ctx = buildQuestionContext(patch);
+      const na = normalizeTripAnswers(patch, ctx);
 
       setAnswers(na);
-      setQuestionHistory(h => [...h, { question: currentQuestion, answer: value }]);
+      if (currentQuestion.id !== "_route_loading") {
+        const historyQuestion = currentQuestion.type === "lodging_stay"
+          ? { ...currentQuestion, _loyalty: extraFields.loyalty_program || "No preference" }
+          : currentQuestion;
+        setQuestionHistory(h => [...h, { question: historyQuestion, answer: value }]);
+      }
       loadNextQuestion(na);
       if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
         fetchDirections(na.vehicle);
@@ -1353,7 +1390,7 @@ export default function App() {
         fetchDirections(getEffectiveVehicle(na));
       }
       if (currentQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
-        fetchDirections(na.vehicle);
+        fetchDirections(getEffectiveVehicle(na));
       }
     } catch (err) {
       console.error("submitAnswer failed:", err);
@@ -1361,19 +1398,27 @@ export default function App() {
     }
   }
 
-  function pickAnswer(value, extraFields) {
+  function pickAnswer(value, extraFields, options = {}) {
     if (stepAnim || !currentQuestion?.id) return;
+    const instant = options.instant ?? (
+      currentQuestion.type === "multiselect"
+      || currentQuestion.type === "multiselect_group"
+      || currentQuestion.type === "trip_details"
+      || currentQuestion.type === "lodging_stay"
+      || currentQuestion.type === "text"
+    );
     try {
+      if (instant) {
+        submitAnswer(value, extraFields);
+        return;
+      }
       setEnterAnim(false);
       setStepAnim({ answer: typeof value === "string" ? value : "selected", phase: "flash" });
       if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
       stepAnimTimer.current = setTimeout(() => {
-        setStepAnim(prev => prev ? { ...prev, phase: "exit" } : null);
-        stepAnimTimer.current = setTimeout(() => {
-          submitAnswer(value, extraFields);
-          setStepAnim(null);
-        }, 300);
-      }, 150);
+        submitAnswer(value, extraFields);
+        setStepAnim(null);
+      }, 70);
     } catch (err) {
       console.error("pickAnswer failed:", err);
       setStepAnim(null);
@@ -1643,8 +1688,9 @@ export default function App() {
       await fetchDirections(getEffectiveVehicle(answers));
     }
 
+    const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
+
     try {
-      const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers));
       const activeRouteInfo = {
         ...routeInfo,
         origin: tripOrigin,
@@ -1672,10 +1718,14 @@ export default function App() {
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
         }, session?.access_token || null);
-      const parsed = parseTripApiResponse(data, answers, routeInfo, buildFallbackTripData);
+      const parsed = parseTripApiResponse(data, normalizedAnswers, routeInfo, buildFallbackTripData);
+      const tips = [...(parsed.tripTips || [])];
+      if (isContinuousDrive(normalizedAnswers)) {
+        tips.unshift(buildContinuousDriveTip(activeRouteInfo));
+      }
       setStops(parsed.stops);
       setRoadStops(parsed.roadStops);
-      setTripTips(parsed.tripTips);
+      setTripTips(tips);
       setTripFormat(parsed.tripFormat || null);
       setRecommendations(parsed.recommendations || []);
       if (parsed.hosCompliance) setHosCompliance(parsed.hosCompliance);
@@ -1706,10 +1756,14 @@ export default function App() {
         setLoading(false);
         return;
       }
-      const fallback = buildFallbackTripData(answers, routeInfo);
+      const fallback = buildFallbackTripData(normalizedAnswers, routeInfo);
+      const fallbackTips = [...(fallback.tripTips || [])];
+      if (isContinuousDrive(normalizedAnswers)) {
+        fallbackTips.unshift(buildContinuousDriveTip(routeInfo));
+      }
       setStops(fallback.stops);
       setRoadStops(fallback.roadStops);
-      setTripTips(fallback.tripTips);
+      setTripTips(fallbackTips);
       setTripFormat("simplified");
       setRecommendations([]);
       if (fallback.hosCompliance) setHosCompliance(fallback.hosCompliance);
@@ -1723,7 +1777,7 @@ export default function App() {
       await enrichAndSetTrip(
         fallback.stops,
         fallback.roadStops,
-        normalizeTripAnswers(answers, buildQuestionContext(answers)),
+        normalizedAnswers,
       );
       if (!user) setGuestTripPendingSave(true);
     }
@@ -1874,7 +1928,24 @@ export default function App() {
       delete newAnswers.coordination_needs;
       delete newAnswers.effective_vehicle;
     }
-    if (last.question.type === "multiselect") {
+    if (last.question.id === "overnight_preference") {
+      delete newAnswers.continuous_drive;
+      delete newAnswers.lodging;
+      delete newAnswers.loyalty_program;
+    }
+    if (last.question.id === "lodging" || last.question.type === "lodging_stay") {
+      delete newAnswers.lodging;
+      delete newAnswers.loyalty_program;
+    }
+    if (last.question.type === "multiselect_group" || last.question.type === "trip_details") {
+      for (const sec of last.question.sections || []) {
+        delete newAnswers[sec.id];
+      }
+      if (last.question.type === "trip_details") {
+        delete newAnswers.trip_budget;
+      }
+      setPrefDraft(last.answer && typeof last.answer === "object" ? last.answer : {});
+    } else if (last.question.type === "multiselect") {
       setPrefDraft(Array.isArray(last.answer) ? last.answer : []);
     } else {
       setPrefDraft([]);
@@ -2174,6 +2245,7 @@ export default function App() {
             }}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
+            onAddFuelStop={addFuelStopToTrip}
             onLodgingSelect={addLodgingSelection}
             onDismissAlert={dismissTripAlert}
             onShare={handleShareItinerary}
@@ -2308,12 +2380,14 @@ export default function App() {
                       convoComplete={convoComplete}
                       loading={loading}
                       answers={answers}
+                      origin={origin}
+                      dest={dest}
                       routeInfo={routeInfo}
                       tripLegs={tripLegs}
                       stepAnim={stepAnim}
                       enterAnim={enterAnim}
                       prefDraft={prefDraft}
-                      prefSkipReady={prefSkipReady}
+                      questionHistory={questionHistory}
                       questionHistoryLength={questionHistory.length}
                       roadStops={roadStops}
                       selectedLodging={selectedLodging}

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useEffect } from "react";
 import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
+import { isContinuousDrive } from "../../lib/driveMode.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
@@ -10,6 +11,7 @@ import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
 import EnrichmentNotice from "./EnrichmentNotice.jsx";
+import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 
 export default function TripResultsPanel({
   theme,
@@ -44,6 +46,7 @@ export default function TripResultsPanel({
   onViewMap,
   onDaySelect,
   onAddRoadStop,
+  onAddFuelStop,
   onLodgingSelect,
   onDismissAlert,
   onShare,
@@ -60,6 +63,8 @@ export default function TripResultsPanel({
     () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),
     [answers, routeInfo, stops, tripFormat],
   );
+
+  const continuousDrive = useMemo(() => isContinuousDrive(answers), [answers]);
 
   const displayTips = useMemo(() => {
     if (liveTripTips.length) return liveTripTips.slice(0, 5);
@@ -142,6 +147,16 @@ export default function TripResultsPanel({
 
         {enrichingTrip && <ResultsEnrichmentSkeleton />}
 
+        {continuousDrive && (
+          <FuelStopsSection
+            answers={answers}
+            routeInfo={routeInfo}
+            stops={stops}
+            onAddFuelStop={onAddFuelStop}
+            onToast={onToast}
+          />
+        )}
+
         {simplified ? (
           <SimpleTripSection
             days={days}
@@ -155,6 +170,7 @@ export default function TripResultsPanel({
             weatherByCity={weatherByCity}
             restaurantsByCity={restaurantsByCity}
             selectedLodging={selectedLodging}
+            continuousDrive={continuousDrive}
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
             onAddRoadStop={onAddRoadStop}
@@ -173,6 +189,7 @@ export default function TripResultsPanel({
               dest={dest}
               routeInfo={routeInfo}
               selectedLodging={selectedLodging}
+              continuousDrive={continuousDrive}
               weatherByCity={weatherByCity}
               restaurantsByCity={restaurantsByCity}
               onLodgingSelect={onLodgingSelect}
