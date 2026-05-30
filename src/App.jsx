@@ -23,6 +23,7 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js
 import { buildContinuousDriveTip, isContinuousDrive } from "./lib/driveMode.js";
 import { TRUCK_SAFETY_FALLBACK, RV_SAFETY_FALLBACK } from "./lib/tripData.js";
 import { generateTripPlan } from "./lib/apiClient.js";
+import { canStartTripGeneration } from "./lib/generateTripFlow.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
@@ -44,7 +45,7 @@ import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraf
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
-import { computeAutoTheme } from "./lib/theme.js";
+import { computeAutoTheme, resolveThemeToggle, SKY_CHECK_MS } from "./lib/theme.js";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import HeroView from "./components/HeroView.jsx";
@@ -383,6 +384,7 @@ export default function App() {
   const [toastAction, setToastAction] = useState(null);
   const toastTimerRef = useRef(null);
   const generateAbortRef = useRef(null);
+  const generateTripInFlightRef = useRef(false);
   const enrichAbortRef = useRef(null);
   const hadUserRef = useRef(false);
   const intentionalSignOutRef = useRef(false);
@@ -933,6 +935,9 @@ export default function App() {
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
         activeNav={navSidebarActiveNav}
+        user={user}
+        onLogin={() => openAuthModal("signin")}
+        onSignup={() => openAuthModal("signup")}
       />
     );
   }
@@ -1230,15 +1235,24 @@ export default function App() {
   }, [view, qIndex, currentQuestion?.id, scrollPlanToTop]);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const updateTheme = () => setAutoTheme(computeAutoTheme());
-    mq.addEventListener("change", updateTheme);
-    const interval = setInterval(updateTheme, 60_000);
+    updateTheme();
+    const interval = setInterval(updateTheme, SKY_CHECK_MS);
+    const onVis = () => {
+      if (document.visibilityState === "visible") updateTheme();
+    };
+    document.addEventListener("visibilitychange", onVis);
     return () => {
-      mq.removeEventListener("change", updateTheme);
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
+
+  useEffect(() => {
+    if (themeOverride && themeOverride === autoTheme) {
+      setThemeOverride(null);
+    }
+  }, [autoTheme, themeOverride]);
 
   useEffect(() => {
     if (currentQuestion && !stepAnim) {
@@ -1373,6 +1387,8 @@ export default function App() {
   function cancelGenerateTrip() {
     generateAbortRef.current?.abort();
     enrichAbortRef.current?.abort();
+    generateTripInFlightRef.current = false;
+    setLoading(false);
   }
 
   function handlePanelTouchStart(e) {
@@ -1545,6 +1561,7 @@ export default function App() {
   }
 
   function loadNextQuestion(newAnswers) {
+    if (generateTripInFlightRef.current) return;
     try {
       const ctx = buildQuestionContext(newAnswers);
       const result = getNextFlowQuestion(newAnswers, ctx);
@@ -1590,6 +1607,7 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (generateTripInFlightRef.current) return;
     if (!currentQuestion?.pendingRoute) return;
     const ctx = buildQuestionContext(answers);
     if (isRouteContextReady(ctx) || ctx.routeFailed) {
@@ -1987,10 +2005,6 @@ export default function App() {
   async function generateTrip() {
     const tripOrigin = originRef.current?.value?.trim() || origin;
     const tripDest = destRef.current?.value?.trim() || dest;
-    if (!tripOrigin || !tripDest) {
-      toast_("Enter origin and destination first");
-      return;
-    }
 
     let status = creditStatus;
     if (user && session?.access_token) {
@@ -2005,9 +2019,29 @@ export default function App() {
       setCreditStatus(status);
     }
 
-    if (!status?.unlimited && (status?.remaining ?? 0) <= 0) {
-      openTripsUpgrade();
-      return;
+    const guard = canStartTripGeneration({
+      inFlight: generateTripInFlightRef.current,
+      origin: tripOrigin,
+      dest: tripDest,
+      convoComplete,
+      creditsRemaining: status?.remaining,
+      unlimited: status?.unlimited,
+    });
+
+    if (!guard.ok) {
+      if (guard.reason === "in_flight") return;
+      if (guard.reason === "missing_route") {
+        toast_("Enter origin and destination first");
+        return;
+      }
+      if (guard.reason === "incomplete_questions") {
+        toast_("Finish the trip questions first, then generate your plan.");
+        return;
+      }
+      if (guard.reason === "no_credits") {
+        openTripsUpgrade();
+        return;
+      }
     }
 
     setOrigin(tripOrigin);
@@ -2016,65 +2050,14 @@ export default function App() {
     setEnrichmentLimited(false);
     setEnrichmentNoticeDismissed(false);
     setTripUsedFallback(false);
+    generateTripInFlightRef.current = true;
 
-    generateAbortRef.current?.abort();
     const generateController = new AbortController();
     generateAbortRef.current = generateController;
 
-    try {
-    if (isLoaded && window.google) {
-      const routeOk = await fetchDirections(getEffectiveVehicle(answers));
-      if (!routeOk) {
-        toast_("Route could not be calculated — trip will use best available estimates.", { isError: true });
-      }
-    }
+    let normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
-    if (generateController.signal.aborted) return;
-
-    const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
-
-      const activeRouteInfo = {
-        ...routeInfo,
-        origin: tripOrigin,
-        destination: tripDest,
-        scenic: isScenicRoute(answers),
-      };
-
-      let placesContext = null;
-      let placesContextPrompt = "";
-      if (isLoaded && window.google && activeRouteInfo.routePoints?.length) {
-        placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
-        placesContextPrompt = formatPlacesContextForPrompt(placesContext);
-      }
-
-      const data = await generateTripPlan({
-          origin: tripOrigin,
-          destination: tripDest,
-          answers: {
-            ...normalizedAnswers,
-            fuel: inferFuelType(normalizedAnswers, normalizedAnswers.preferences || [], normalizedAnswers),
-          },
-          routeInfo: activeRouteInfo,
-          placesContext,
-          placesContextPrompt,
-          generationHints: formatGenerationHints(normalizedAnswers, activeRouteInfo),
-          legs: tripLegs.length > 0 ? tripLegs : undefined,
-          model: "claude-sonnet-4-20250514",
-        }, session?.access_token || null, { signal: generateController.signal });
-
-      if (generateController.signal.aborted) return;
-      const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
-      setTripUsedFallback(Boolean(parsed.usedFallback));
-
-      if (!user && !parsed.usedFallback) {
-        if (!consumeGuestCredit()) {
-          setCreditStatus(getGuestCreditStatus());
-          openTripsUpgrade();
-          return;
-        }
-        setCreditStatus(getGuestCreditStatus());
-      }
-
+    const applyGeneratedTrip = async (parsed, isFallback, activeRouteInfo) => {
       const tips = [...(parsed.tripTips || [])];
       if (isContinuousDrive(normalizedAnswers)) {
         tips.unshift(buildContinuousDriveTip(activeRouteInfo));
@@ -2094,6 +2077,70 @@ export default function App() {
       setCardCollapsed(false);
       await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
       clearSavedPlanDraft();
+      if (isFallback) {
+        toast_("Trip generated with estimated data — live AI planning returned incomplete results.", { isError: true });
+      } else {
+        toast_("Trip planned", true);
+      }
+    };
+
+    try {
+      const hasRoute = Boolean(routeInfo?.distance && routeInfo?.routePoints?.length);
+      if (isLoaded && window.google && !hasRoute) {
+        const routeOk = await fetchDirections(getEffectiveVehicle(answers));
+        if (!routeOk) {
+          toast_("Route could not be calculated — trip will use best available estimates.", { isError: true });
+        }
+      }
+
+      if (generateController.signal.aborted) return;
+
+      normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
+
+      const activeRouteInfo = {
+        ...routeInfo,
+        origin: tripOrigin,
+        destination: tripDest,
+        scenic: isScenicRoute(answers),
+      };
+
+      if (!user) {
+        if (!consumeGuestCredit()) {
+          setCreditStatus(getGuestCreditStatus());
+          openTripsUpgrade();
+          return;
+        }
+        setCreditStatus(getGuestCreditStatus());
+      }
+
+      let placesContext = null;
+      let placesContextPrompt = "";
+      if (isLoaded && window.google && activeRouteInfo.routePoints?.length) {
+        placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
+        placesContextPrompt = formatPlacesContextForPrompt(placesContext);
+      }
+
+      const data = await generateTripPlan({
+        origin: tripOrigin,
+        destination: tripDest,
+        answers: {
+          ...normalizedAnswers,
+          fuel: inferFuelType(normalizedAnswers, normalizedAnswers.preferences || [], normalizedAnswers),
+        },
+        routeInfo: activeRouteInfo,
+        placesContext,
+        placesContextPrompt,
+        generationHints: formatGenerationHints(normalizedAnswers, activeRouteInfo),
+        legs: tripLegs.length > 0 ? tripLegs : undefined,
+        model: "claude-sonnet-4-20250514",
+      }, session?.access_token || null, { signal: generateController.signal });
+
+      if (generateController.signal.aborted) return;
+
+      const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
+      setTripUsedFallback(Boolean(parsed.usedFallback));
+      await applyGeneratedTrip(parsed, Boolean(parsed.usedFallback), activeRouteInfo);
+
       if (user && session?.access_token) {
         fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
       } else if (!parsed.usedFallback) {
@@ -2104,11 +2151,6 @@ export default function App() {
           setTimeout(() => openTripsUpgrade(), 1200);
         }
       }
-      if (parsed.usedFallback) {
-        toast_("Trip generated with estimated data — live AI planning returned incomplete results.", { isError: true });
-      } else {
-        toast_("Trip planned", true);
-      }
     } catch (err) {
       if (err.name === "AbortError") {
         toast_("Trip generation cancelled.");
@@ -2118,37 +2160,31 @@ export default function App() {
       if (err.code === "no_credits") {
         openTripsUpgrade();
         if (err.credits) setCreditStatus(err.credits);
+        if (!user) refundGuestCredit();
         return;
       }
-      refundGuestCredit();
+      if (!user) refundGuestCredit();
       setCreditStatus(getGuestCreditStatus());
-      const fallback = buildFallbackTripData(normalizedAnswers, routeInfo);
+
+      const activeRouteInfo = {
+        ...routeInfo,
+        origin: tripOrigin,
+        destination: tripDest,
+        scenic: isScenicRoute(answers),
+      };
+      const fallback = buildFallbackTripData(normalizedAnswers, activeRouteInfo);
       setTripUsedFallback(true);
-      const fallbackTips = [...(fallback.tripTips || [])];
-      if (isContinuousDrive(normalizedAnswers)) {
-        fallbackTips.unshift(buildContinuousDriveTip(routeInfo));
-      }
-      setStops(fallback.stops);
-      setRoadStops(fallback.roadStops);
-      setTripTips(fallbackTips);
-      setTripFormat("simplified");
-      setRecommendations([]);
-      if (fallback.hosCompliance) setHosCompliance(fallback.hosCompliance);
-      setTruckSafety(fallback.truckSafety);
-      setRvSafety(fallback.rvSafety);
-      setGenerated(true);
-      setResultsView("itinerary");
-      setStopCategory("all");
-      setTab("plan");
-      setCardCollapsed(false);
-      await enrichAndSetTrip(
-        fallback.stops,
-        fallback.roadStops,
-        normalizedAnswers,
-      );
+      const fallbackParsed = {
+        ...fallback,
+        tripFormat: "simplified",
+        recommendations: [],
+        usedFallback: true,
+      };
+      await applyGeneratedTrip(fallbackParsed, true, activeRouteInfo);
       if (!user) setGuestTripPendingSave(true);
       toast_("Could not reach trip planner — showing estimated route instead.", { isError: true });
     } finally {
+      generateTripInFlightRef.current = false;
       if (generateAbortRef.current === generateController) {
         generateAbortRef.current = null;
       }
@@ -2361,7 +2397,7 @@ export default function App() {
   }
 
   function toggleTheme() {
-    setThemeOverride(theme === "day" ? "night" : "day");
+    setThemeOverride(resolveThemeToggle(theme, autoTheme));
   }
 
   function handleViewTrip(trip) {
@@ -2470,6 +2506,7 @@ export default function App() {
     <>
       <HeroView
         theme={theme}
+        themeLocked={themeOverride != null}
         isLoaded={isLoaded}
         heroOrigin={heroOrigin}
         heroDest={heroDest}

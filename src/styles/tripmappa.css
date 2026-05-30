@@ -120,10 +120,10 @@
     transition: background 1.8s ease, opacity 1.8s ease;
   }
   .hero.night .hero-overlay {
-    background: var(--color-hero-overlay);
+    background: rgba(13, 10, 26, 0.55);
   }
   .hero.day .hero-overlay {
-    background: var(--color-hero-overlay);
+    background: rgba(90, 42, 16, 0.45);
   }
 
   /* Hero content */
@@ -4676,7 +4676,18 @@
     margin: 0 0 14px; padding: 10px 14px; border-radius: 10px;
     border: 1px solid rgba(255,180,100,0.35); background: rgba(255,140,60,0.12);
     font-size: 12px; line-height: 1.45; color: rgba(255,220,180,0.95);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
   }
+
+  .trip-fallback-notice-text { margin: 0; flex: 1 1 200px; }
+
+  .trip-fallback-notice-retry {
+    padding: 6px 12px; border-radius: 8px; flex-shrink: 0;
+    border: 1px solid rgba(255,210,140,0.35); background: rgba(255,210,140,0.1);
+    color: var(--gold-primary); font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+
+  .trip-fallback-notice-retry:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .plan-route-card-error { border-color: rgba(248,113,113,0.35); }
   .plan-route-card-error-text { font-size: 11px; color: #f87171; line-height: 1.35; }

@@ -12,6 +12,9 @@ export default function NavSidebar({
   onOpenTrips,
   onOpenShare,
   activeNav = null,
+  user = null,
+  onLogin,
+  onSignup,
 }) {
   const visible = open || closing;
 
@@ -45,7 +48,7 @@ export default function NavSidebar({
     <>
       <button
         type="button"
-        className={`app-sidebar-overlay app-sidebar-overlay-right${open && !closing ? " is-visible" : ""}${closing ? " is-closing" : ""}`}
+        className={`app-sidebar-overlay app-sidebar-overlay-left${open && !closing ? " is-visible" : ""}${closing ? " is-closing" : ""}`}
         aria-label="Close navigation menu"
         onClick={onClose}
       />
@@ -82,6 +85,21 @@ export default function NavSidebar({
             </button>
           ))}
         </nav>
+
+        {!user && (onLogin || onSignup) && (
+          <div className="nav-sidebar-auth">
+            {onLogin && (
+              <button type="button" className="nav-sidebar-auth-btn nav-sidebar-auth-btn-ghost" onClick={() => { onLogin(); onClose?.(); }}>
+                Log in
+              </button>
+            )}
+            {onSignup && (
+              <button type="button" className="nav-sidebar-auth-btn nav-sidebar-auth-btn-primary" onClick={() => { onSignup(); onClose?.(); }}>
+                Sign up
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="nav-sidebar-footer">
           <div className="nav-sidebar-theme-row">

@@ -1,11 +1,11 @@
 import { Autocomplete } from "@react-google-maps/api";
-import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
-import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
+import HeroMountainScene from "./HeroMountainScene.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 export default function HeroView({
   theme,
+  themeLocked = false,
   isLoaded,
   heroOrigin,
   heroDest,
@@ -64,18 +64,7 @@ export default function HeroView({
       />
 
       <div className={`hero ${theme}`}>
-        <div
-          className="hero-slideshow-set"
-          style={{ opacity: theme === "day" ? 1 : 0, pointerEvents: theme === "day" ? "auto" : "none" }}
-        >
-          <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={heroSearchHover} active={theme === "day"} />
-        </div>
-        <div
-          className="hero-slideshow-set"
-          style={{ opacity: theme === "night" ? 1 : 0, pointerEvents: theme === "night" ? "auto" : "none" }}
-        >
-          <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={heroSearchHover} active={theme === "night"} />
-        </div>
+        <HeroMountainScene theme={theme} themeLocked={themeLocked} />
         <div className="hero-overlay" />
 
         <div className="hero-content">

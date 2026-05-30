@@ -42,13 +42,13 @@ export default function AppNavBar({
               isOpen={accountSidebarOpen}
               onOpen={onToggleAccountSidebar}
             />
-          ) : isHero ? (
-            <>
-              <button type="button" className="nav-btn nav-btn-ghost" onClick={onLogin}>Log in</button>
-              <button type="button" className="nav-btn nav-btn-signup" onClick={onSignup}>Sign up</button>
-            </>
           ) : (
-            <button type="button" className="nav-btn nav-btn-ghost" onClick={onLogin}>Log in</button>
+            <>
+              <button type="button" className="nav-btn nav-btn-ghost nav-auth-desktop" onClick={onLogin}>Log in</button>
+              {!isHero && (
+                <button type="button" className="nav-btn nav-btn-signup nav-auth-desktop" onClick={onSignup}>Sign up</button>
+              )}
+            </>
           )}
         </div>
       </div>

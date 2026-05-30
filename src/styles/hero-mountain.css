@@ -1,0 +1,88 @@
+/* Animated SVG mountain hero — sky synced to local time */
+
+.hero-mountain-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-sky-layer {
+  position: absolute;
+  inset: 0;
+  transition: background 2.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sky-layer {
+    transition: none;
+  }
+}
+
+/* Sky gradients by local-time phase */
+.hero-mountain-scene--pre_dawn .hero-sky-layer {
+  background: linear-gradient(180deg, #0D0A1A 0%, #1A1035 55%, #2A1A4A 100%);
+}
+
+.hero-mountain-scene--sunrise .hero-sky-layer {
+  background: linear-gradient(180deg, #1A1035 0%, #FF8C42 38%, #FFD28C 72%, #1A1035 100%);
+}
+
+.hero-mountain-scene--midday .hero-sky-layer {
+  background: linear-gradient(180deg, #1A3A6A 0%, #4A7AAA 48%, #E8D5A8 100%);
+}
+
+.hero-mountain-scene--golden_hour .hero-sky-layer {
+  background: linear-gradient(180deg, #F7C84A 0%, #E06820 42%, #A04010 78%, #5A2A10 100%);
+}
+
+.hero-mountain-scene--dusk .hero-sky-layer {
+  background: linear-gradient(180deg, #5A2A10 0%, #2A1A4A 55%, #1A1035 100%);
+}
+
+.hero-mountain-scene--night .hero-sky-layer {
+  background: linear-gradient(180deg, #0D0A1A 0%, #1A1035 100%);
+}
+
+.hero-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 55%;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+.hero-mountains {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: min(48vh, 420px);
+  min-height: 200px;
+  z-index: 2;
+}
+
+.hero-mountain-far {
+  opacity: 0.72;
+}
+
+.hero-mountain-near {
+  opacity: 1;
+}
+
+/* Theme overlay between sky and hero UI content */
+.hero.night .hero-overlay {
+  background: rgba(13, 10, 26, 0.55) !important;
+}
+
+.hero.day .hero-overlay {
+  background: rgba(90, 42, 16, 0.45) !important;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+}
