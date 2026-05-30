@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 function normalizeChoice(choice) {
   if (choice && typeof choice === "object" && choice.value != null) {
@@ -188,8 +189,7 @@ export default function QuestionChoices({
 
       {currentQ.type === "loading" && (
         <div className="question-loading" aria-live="polite">
-          <span className="question-loading-spinner" aria-hidden="true" />
-          <span>Getting route details…</span>
+          <RouteDrawingLoader variant="inline" />
         </div>
       )}
 

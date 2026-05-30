@@ -1,0 +1,904 @@
+/* TripMappa visual rebrand — day/night desert & deep-space palettes */
+
+/* ── Theme tokens ── */
+.app-wrap.night,
+.hero.night {
+  --tm-base: #0D0A1A;
+  --tm-surface: #1A1035;
+  --tm-card: #2A1A4A;
+  --tm-card-deep: #2A1A4A;
+  --tm-muted: #A89BCF;
+  --tm-ink: #ffffff;
+  --tm-nav-bg: #1A1035;
+  --tm-page-bg: #0D0A1A;
+  --tm-placeholder: rgba(168, 155, 207, 0.55);
+  --tm-cta-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+  --tm-wordmark-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+  --tm-scrollbar-track: #2A1A4A;
+  --tm-scrollbar-thumb: #FF8C42;
+  --tm-loader-bg: #0D0A1A;
+  --tm-focus: #FFD28C;
+  --tm-selection: rgba(255, 210, 140, 0.35);
+  --tm-hover-surface: rgba(42, 26, 74, 0.85);
+  --tm-border-accent: rgba(255, 210, 140, 0.35);
+}
+
+.app-wrap.day,
+.hero.day {
+  --tm-base: #5A2A10;
+  --tm-surface: #F5E6C8;
+  --tm-card: #FDF3E0;
+  --tm-card-deep: #FDF3E0;
+  --tm-muted: rgba(90, 42, 16, 0.65);
+  --tm-ink: #1A0D00;
+  --tm-nav-bg: #EED8A8;
+  --tm-page-bg: #F5E6C8;
+  --tm-placeholder: rgba(90, 42, 16, 0.45);
+  --tm-cta-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+  --tm-wordmark-gradient: linear-gradient(135deg, #C87010 0%, #E06820 100%);
+  --tm-scrollbar-track: #EED8A8;
+  --tm-scrollbar-thumb: #E06820;
+  --tm-loader-bg: #F5E6C8;
+  --tm-focus: #FFD28C;
+  --tm-selection: rgba(255, 210, 140, 0.35);
+  --tm-hover-surface: rgba(238, 216, 168, 0.9);
+  --tm-border-accent: rgba(224, 104, 32, 0.45);
+  --tm-swap: #E06820;
+  --tm-plan-cta-bg: #1A0D00;
+  --tm-plan-cta-text: #FFD28C;
+}
+
+/* ── Global selection & focus ── */
+::selection {
+  background: rgba(255, 210, 140, 0.35);
+  color: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--tm-placeholder, rgba(168, 155, 207, 0.55));
+  opacity: 1;
+}
+
+.app-wrap.day input::placeholder,
+.app-wrap.day textarea::placeholder,
+.hero.day input::placeholder {
+  color: rgba(90, 42, 16, 0.45);
+}
+
+.app-wrap.night input::placeholder,
+.app-wrap.night textarea::placeholder,
+.hero.night input::placeholder {
+  color: rgba(168, 155, 207, 0.55);
+}
+
+:focus-visible {
+  outline: 2px solid #FFD28C;
+  outline-offset: 2px;
+}
+
+/* ── Page backgrounds ── */
+.app-wrap.day {
+  background: #F5E6C8 !important;
+  color: #1A0D00 !important;
+  --ink: #1A0D00;
+  --surface: #F5E6C8;
+  --card: #FDF3E0;
+  --muted: rgba(90, 42, 16, 0.65);
+  --border: rgba(224, 104, 32, 0.2);
+}
+
+.app-wrap.night {
+  background: #0D0A1A !important;
+  color: #ffffff !important;
+  --ink: #ffffff;
+  --surface: #1A1035;
+  --card: #2A1A4A;
+  --muted: #A89BCF;
+  --border: rgba(168, 155, 207, 0.2);
+}
+
+body {
+  transition: background-color 1.8s ease, color 1.8s ease;
+}
+
+/* ── Nav wordmark gradient ── */
+.app-wrap.night .nav-app .nav-logo,
+.app-wrap.night .nav-app .nav-logo-home,
+.hero.night .nav-logo,
+.hero.night .nav-logo-home {
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.app-wrap.night .nav-app .nav-logo span,
+.app-wrap.night .nav-app .nav-logo-home span,
+.hero.night .nav-logo span,
+.hero.night .nav-logo-home span {
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.app-wrap.day .nav-app .nav-logo,
+.app-wrap.day .nav-app .nav-logo-home,
+.hero.day .nav-logo,
+.hero.day .nav-logo-home {
+  background: linear-gradient(135deg, #C87010 0%, #E06820 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.app-wrap.day .nav-app .nav-logo span,
+.app-wrap.day .nav-app .nav-logo-home span,
+.hero.day .nav-logo span,
+.hero.day .nav-logo-home span {
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ── Nav bar surfaces ── */
+.app-wrap.day .nav-app {
+  background: rgba(238, 216, 168, 0.96) !important;
+  border-bottom-color: rgba(224, 104, 32, 0.25) !important;
+}
+
+.app-wrap.day .nav-app .nav-tab {
+  color: rgba(26, 13, 0, 0.55) !important;
+}
+
+.app-wrap.day .nav-app .nav-tab:hover {
+  background: rgba(224, 104, 32, 0.12) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .nav-app .nav-tab.active {
+  background: rgba(255, 210, 140, 0.45) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .nav-center-wrap {
+  background: rgba(224, 104, 32, 0.1) !important;
+}
+
+.app-wrap.day .nav-app .nav-btn {
+  background: rgba(253, 243, 224, 0.85) !important;
+  border-color: rgba(224, 104, 32, 0.3) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .nav-app .nav-btn:hover {
+  background: rgba(253, 243, 224, 1) !important;
+  border-color: rgba(224, 104, 32, 0.45) !important;
+}
+
+.app-wrap.night .nav-app {
+  background: rgba(26, 16, 53, 0.96) !important;
+  border-bottom-color: rgba(168, 155, 207, 0.15) !important;
+}
+
+.app-wrap.night .nav-app .nav-tab.active {
+  background: rgba(42, 26, 74, 0.9) !important;
+  color: #FFD28C !important;
+}
+
+/* ── CTA gradient buttons ── */
+.btn-generate,
+.nav-btn-primary:not(.hero-go-btn),
+.live-share-main-btn,
+.auth-modal-submit:not(:disabled),
+.hero-auth-btn-primary,
+.trip-results-generate-btn,
+.profile-btn-primary,
+.upgrade-modal-cta,
+.trips-saved-btn-primary {
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
+  border: none !important;
+  color: #1A0D00 !important;
+}
+
+.btn-generate:hover:not(:disabled),
+.nav-btn-primary:hover:not(:disabled),
+.live-share-main-btn:hover:not(:disabled),
+.auth-modal-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* Day hero Plan CTA */
+.hero.day .hero-go-btn {
+  background: #1A0D00 !important;
+  color: #FFD28C !important;
+  box-shadow: 0 6px 20px rgba(26, 13, 0, 0.35) !important;
+}
+
+.hero.day .hero-go-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 28px rgba(26, 13, 0, 0.45) !important;
+}
+
+.hero.night .hero-go-btn,
+.hero.day .hero-go-btn:not(:disabled) {
+  /* night keeps gold button from base; day override above */
+}
+
+.hero.day .hero-swap-btn {
+  color: #E06820 !important;
+  border-color: rgba(224, 104, 32, 0.45) !important;
+}
+
+.hero.day .hero-swap-btn:hover {
+  background: rgba(224, 104, 32, 0.15) !important;
+}
+
+/* ── Hero overlays (above photos, below content) ── */
+.hero-overlay {
+  z-index: 1 !important;
+  transition: background 1.8s ease, opacity 1.8s ease !important;
+}
+
+.hero.night .hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(13, 10, 26, 0.72) 0%,
+    rgba(26, 16, 53, 0.65) 100%
+  ) !important;
+}
+
+.hero.day .hero-overlay {
+  background: linear-gradient(
+    150deg,
+    rgba(247, 200, 74, 0.55) 0%,
+    rgba(224, 104, 32, 0.6) 50%,
+    rgba(90, 42, 16, 0.68) 100%
+  ) !important;
+}
+
+/* ── Theme toggle ── */
+.app-wrap.day .theme-toggle-btn {
+  background: rgba(253, 243, 224, 0.9) !important;
+  border-color: rgba(224, 104, 32, 0.35) !important;
+  color: #E06820 !important;
+}
+
+.app-wrap.night .theme-toggle-btn {
+  background: rgba(42, 26, 74, 0.85) !important;
+  border-color: rgba(255, 210, 140, 0.35) !important;
+  color: #FFD28C !important;
+}
+
+.theme-toggle-btn {
+  transition: background 1.8s ease, border-color 1.8s ease, color 1.8s ease, transform 0.2s ease !important;
+}
+
+/* ── LIVE nav badge ── */
+.nav-live-badge {
+  background: linear-gradient(135deg, rgba(255, 210, 140, 0.2) 0%, rgba(255, 140, 66, 0.2) 100%) !important;
+  border: 1px solid transparent !important;
+  border-image: linear-gradient(135deg, #FFD28C, #FF8C42) 1 !important;
+  color: #FFD28C !important;
+}
+
+.app-wrap.day .nav-live-badge {
+  background: linear-gradient(135deg, rgba(255, 210, 140, 0.35) 0%, rgba(255, 140, 66, 0.25) 100%) !important;
+  color: #C87010 !important;
+}
+
+.nav-live-badge-dot {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+}
+
+/* ── Route drawing loader ── */
+.route-drawing-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-drawing-loader--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--tm-loader-bg, #0D0A1A);
+  transition: background 1.8s ease;
+}
+
+.route-drawing-loader--inline {
+  padding: 32px 16px;
+  min-height: 120px;
+}
+
+.route-drawing-loader--compact {
+  padding: 20px 12px;
+  min-height: 72px;
+}
+
+.route-drawing-loader--button {
+  padding: 0;
+  min-height: 0;
+  display: inline-flex;
+}
+
+.route-drawing-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.route-drawing-loader--button .route-drawing-loader-inner {
+  gap: 0;
+}
+
+.route-drawing-loader-svg {
+  width: min(220px, 70vw);
+  height: auto;
+  display: block;
+}
+
+.route-drawing-loader--compact .route-drawing-loader-svg,
+.route-drawing-loader--button .route-drawing-loader-svg {
+  width: 120px;
+}
+
+.route-drawing-loader-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: routeDrawLoop 1.8s ease-in-out infinite;
+}
+
+@keyframes routeDrawLoop {
+  0% { stroke-dashoffset: 1; opacity: 0.4; }
+  40% { opacity: 1; }
+  70% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.35; }
+}
+
+.route-drawing-loader-wordmark {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
+}
+
+.app-wrap.day .route-drawing-loader-wordmark,
+.hero.day .route-drawing-loader-wordmark {
+  background: linear-gradient(135deg, #C87010 0%, #E06820 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.route-drawing-loader-wordmark span {
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+@keyframes loaderWordmarkPulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Custom scrollbars ── */
+.convo-scroll::-webkit-scrollbar,
+.trip-results-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.convo-scroll::-webkit-scrollbar-track,
+.trip-results-scroll::-webkit-scrollbar-track {
+  background: var(--tm-scrollbar-track, #2A1A4A);
+  border-radius: 99px;
+}
+
+.convo-scroll::-webkit-scrollbar-thumb,
+.trip-results-scroll::-webkit-scrollbar-thumb {
+  background: var(--tm-scrollbar-thumb, #FF8C42);
+  border-radius: 99px;
+}
+
+.app-wrap.day .convo-scroll::-webkit-scrollbar-track,
+.app-wrap.day .trip-results-scroll::-webkit-scrollbar-track {
+  background: #EED8A8;
+}
+
+.app-wrap.day .convo-scroll::-webkit-scrollbar-thumb,
+.app-wrap.day .trip-results-scroll::-webkit-scrollbar-thumb {
+  background: #E06820;
+}
+
+/* ── Cards & panels — night ── */
+.app-wrap.night .float-card {
+  background: rgba(26, 16, 53, 0.92) !important;
+  border-color: rgba(255, 210, 140, 0.2) !important;
+}
+
+.app-wrap.night .qr-btn {
+  background: #2A1A4A !important;
+  border-color: rgba(255, 210, 140, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.app-wrap.night .qr-btn:hover {
+  background: rgba(42, 26, 74, 0.95) !important;
+  border-color: rgba(255, 140, 66, 0.5) !important;
+}
+
+.app-wrap.night .qr-btn.qr-selected {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  color: #1A0D00 !important;
+  border-color: transparent !important;
+}
+
+.app-wrap.night .question-choices {
+  border-top-color: rgba(168, 155, 207, 0.15) !important;
+}
+
+.app-wrap.night .vehicle-tab-active,
+.app-wrap.night .filter-tab.active {
+  background: linear-gradient(135deg, rgba(255, 210, 140, 0.25), rgba(255, 140, 66, 0.2)) !important;
+  border-color: rgba(255, 210, 140, 0.45) !important;
+  color: #FFD28C !important;
+}
+
+.app-wrap.night .lodging-card,
+.app-wrap.night .restaurant-card,
+.app-wrap.night .fuel-stop-card,
+.app-wrap.night .stop-card,
+.app-wrap.night .road-stop-card,
+.app-wrap.night .overnight-card {
+  background: #2A1A4A !important;
+  border-color: rgba(168, 155, 207, 0.2) !important;
+}
+
+.app-wrap.night .budget-card {
+  background: #2A1A4A !important;
+  border-color: rgba(255, 210, 140, 0.25) !important;
+}
+
+.app-wrap.night .trip-summary-stats-grid .summary-stat {
+  background: #2A1A4A !important;
+  border-color: rgba(255, 210, 140, 0.2) !important;
+}
+
+.app-wrap.night .share-panel,
+.app-wrap.night .live-share-panel {
+  background: #1A1035 !important;
+}
+
+.app-wrap.night .modal-overlay .modal,
+.app-wrap.night .auth-modal,
+.app-wrap.night .upgrade-modal,
+.app-wrap.night .grocery-modal {
+  background: #1A1035 !important;
+  border-color: rgba(255, 210, 140, 0.2) !important;
+}
+
+.app-wrap.night .account-sidebar,
+.app-wrap.night .nav-sidebar {
+  background: #1A1035 !important;
+  border-color: rgba(168, 155, 207, 0.15) !important;
+}
+
+.app-wrap.night .hero-draft-resume {
+  background: #2A1A4A !important;
+  border-color: rgba(255, 210, 140, 0.35) !important;
+}
+
+.app-wrap.night .section-label,
+.app-wrap.night .lodging-section-label,
+.app-wrap.night .restaurant-section-label,
+.app-wrap.night .stop-section-label,
+.app-wrap.night .trip-tips-label {
+  color: #FFD28C !important;
+}
+
+.app-wrap.night .chat-sub,
+.app-wrap.night .stop-meta,
+.app-wrap.night .item-meta,
+.app-wrap.night .profile-card-email {
+  color: #A89BCF !important;
+}
+
+/* ── Cards & panels — day ── */
+.app-wrap.day .float-card {
+  background: rgba(253, 243, 224, 0.95) !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+}
+
+.app-wrap.day .qr-btn {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.3) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .qr-btn:hover {
+  background: #F5E6C8 !important;
+  border-color: rgba(224, 104, 32, 0.45) !important;
+}
+
+.app-wrap.day .qr-btn.qr-selected {
+  background: #FFD28C !important;
+  border-color: #FFD28C !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .vehicle-tab-active,
+.app-wrap.day .filter-tab.active {
+  background: rgba(255, 210, 140, 0.55) !important;
+  border-color: rgba(224, 104, 32, 0.4) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .lodging-card,
+.app-wrap.day .restaurant-card,
+.app-wrap.day .fuel-stop-card,
+.app-wrap.day .stop-card,
+.app-wrap.day .road-stop-card,
+.app-wrap.day .overnight-card,
+.app-wrap.day .activity-dining-card {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.2) !important;
+}
+
+.app-wrap.day .budget-card {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+}
+
+.app-wrap.day .trip-summary-stats-grid .summary-stat {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.2) !important;
+}
+
+.app-wrap.day .modal-overlay .modal,
+.app-wrap.day .auth-modal,
+.app-wrap.day .upgrade-modal,
+.app-wrap.day .grocery-modal {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .auth-modal-headline,
+.app-wrap.day .auth-modal-sub,
+.app-wrap.day .auth-field-label {
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .auth-field-input {
+  background: #F5E6C8 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .auth-social-btn {
+  background: #F5E6C8 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.day .account-sidebar,
+.app-wrap.day .nav-sidebar {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.2) !important;
+}
+
+.app-wrap.day .hero-draft-resume {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.35) !important;
+}
+
+.app-wrap.day .section-label,
+.app-wrap.day .lodging-section-label,
+.app-wrap.day .restaurant-section-label,
+.app-wrap.day .stop-section-label {
+  color: #C87010 !important;
+}
+
+.app-wrap.day .stat-value,
+.app-wrap.day .budget-row-val.animate,
+.app-wrap.day .trip-overview-stat-val {
+  color: #C87010 !important;
+}
+
+/* Drive straight through option */
+.app-wrap.day .qr-btn[data-answer*="Straight"],
+.app-wrap.day .qr-btn:has(.drive-through-label) {
+  border-color: rgba(224, 104, 32, 0.35) !important;
+}
+
+/* ── Profile page ── */
+.app-wrap.day.profile-view-wrap,
+.app-wrap.day .profile-view-wrap {
+  background: #F5E6C8 !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.night.profile-view-wrap,
+.app-wrap.night .profile-view-wrap {
+  background: #0D0A1A !important;
+}
+
+.app-wrap.day .profile-card,
+.app-wrap.day .profile-stat-card {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.2) !important;
+}
+
+.app-wrap.night .profile-card,
+.app-wrap.night .profile-stat-card {
+  background: #2A1A4A !important;
+  border-color: rgba(168, 155, 207, 0.2) !important;
+}
+
+.app-wrap.day .profile-tier-badge {
+  background: rgba(224, 104, 32, 0.12) !important;
+  color: #C87010 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+}
+
+.app-wrap.night .profile-tier-badge {
+  background: rgba(42, 26, 74, 0.8) !important;
+  color: #FFD28C !important;
+  border-color: rgba(255, 210, 140, 0.3) !important;
+}
+
+.app-wrap.day .profile-input {
+  background: #F5E6C8 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+.app-wrap.night .profile-input {
+  background: #1A1035 !important;
+  border-color: rgba(168, 155, 207, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.app-wrap.day .profile-toggle input,
+.app-wrap.night .profile-toggle input {
+  accent-color: #FFD28C;
+}
+
+/* ── Trips saved page ── */
+.app-wrap.day .trips-saved-card {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+}
+
+.app-wrap.night .trips-saved-card {
+  background: #2A1A4A !important;
+  border-color: rgba(255, 210, 140, 0.2) !important;
+}
+
+.app-wrap.day .trips-saved-card-city { color: #1A0D00 !important; }
+.app-wrap.night .trips-saved-card-city { color: #ffffff !important; }
+.app-wrap.day .trips-saved-card-meta { color: rgba(90, 42, 16, 0.6) !important; }
+.app-wrap.night .trips-saved-card-meta { color: #A89BCF !important; }
+
+/* ── Live view public page ── */
+.live-view-page-day {
+  background: #F5E6C8 !important;
+  color: #1A0D00 !important;
+}
+
+.live-view-page-night {
+  background: #0D0A1A !important;
+  color: #ffffff !important;
+}
+
+.live-view-page-day .live-view-header,
+.live-view-page-day .live-view-eta-card,
+.live-view-page-day .live-view-convoy-card,
+.live-view-page-day .live-view-follower-phone {
+  background: rgba(253, 243, 224, 0.92) !important;
+  border-color: rgba(224, 104, 32, 0.25) !important;
+}
+
+.live-view-page-night .live-view-header,
+.live-view-page-night .live-view-eta-card,
+.live-view-page-night .live-view-convoy-card,
+.live-view-page-night .live-view-follower-phone {
+  background: rgba(42, 26, 74, 0.92) !important;
+  border-color: rgba(255, 210, 140, 0.2) !important;
+}
+
+.live-view-page-day .live-view-eta-label { color: rgba(90, 42, 16, 0.65) !important; }
+.live-view-page-night .live-view-eta-label { color: #A89BCF !important; }
+
+/* ── Hover states ── */
+.app-wrap.night .convo-nav-btn:hover,
+.app-wrap.night .action-btn:hover,
+.app-wrap.night .lodging-btn-save:hover,
+.app-wrap.night .nav-sidebar-link:hover,
+.app-wrap.night .account-sidebar-link:hover,
+.app-wrap.night .item-row:hover,
+.app-wrap.night .trips-saved-btn:hover:not(.trips-saved-btn-danger) {
+  background: rgba(42, 26, 74, 0.95) !important;
+  border-color: rgba(255, 140, 66, 0.4) !important;
+}
+
+.app-wrap.day .convo-nav-btn:hover,
+.app-wrap.day .action-btn:hover,
+.app-wrap.day .lodging-btn-save:hover,
+.app-wrap.day .nav-sidebar-link:hover,
+.app-wrap.day .account-sidebar-link:hover,
+.app-wrap.day .item-row:hover,
+.app-wrap.day .trips-saved-btn:hover:not(.trips-saved-btn-danger) {
+  background: rgba(238, 216, 168, 0.95) !important;
+  border-color: rgba(224, 104, 32, 0.4) !important;
+}
+
+.app-wrap.night .lodging-card:hover,
+.app-wrap.night .restaurant-card:hover,
+.app-wrap.night .fuel-stop-card:hover,
+.app-wrap.night .stop-card:hover {
+  border-color: rgba(255, 140, 66, 0.45) !important;
+  box-shadow: 0 8px 24px rgba(13, 10, 26, 0.45) !important;
+}
+
+.app-wrap.day .lodging-card:hover,
+.app-wrap.day .restaurant-card:hover,
+.app-wrap.day .fuel-stop-card:hover,
+.app-wrap.day .stop-card:hover {
+  border-color: rgba(224, 104, 32, 0.45) !important;
+  box-shadow: 0 8px 24px rgba(90, 42, 16, 0.12) !important;
+}
+
+/* SOS button border */
+.app-wrap.night .sos-btn,
+.live-view-page-night .sos-btn {
+  border-color: rgba(255, 140, 66, 0.55) !important;
+}
+
+.app-wrap.day .sos-btn,
+.live-view-page-day .sos-btn {
+  border-color: rgba(224, 104, 32, 0.55) !important;
+}
+
+/* Map placeholder loader */
+.map-loading {
+  background: var(--tm-loader-bg, #0D0A1A) !important;
+}
+
+.app-wrap.day .map-loading {
+  background: #F5E6C8 !important;
+}
+
+/* Hide legacy spinners & skeletons */
+.loading-spinner,
+.spinner-dark,
+.spinner,
+.question-loading-spinner,
+.skeleton-shimmer,
+.shimmer-block,
+.map-skeleton-bar,
+.results-enrichment-skeleton-label,
+.results-enrichment-skeleton-cards {
+  display: none !important;
+}
+
+.panel-loading-fallback {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  flex: 1;
+}
+
+.question-loading {
+  display: flex !important;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.plan-route-card-loading {
+  display: inline-flex !important;
+  align-items: center;
+}
+
+.route-loading-pill--loader {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 12px !important;
+}
+
+.auth-modal-submit .route-drawing-loader--button,
+.btn-generate-trip .route-drawing-loader--button,
+.hero-go-btn .route-drawing-loader--button {
+  min-height: 20px;
+}
+
+/* Trip results day panel */
+.app-wrap.day .trip-results-panel {
+  background: #F5E6C8 !important;
+}
+
+.app-wrap.night .trip-results-panel {
+  background: #0D0A1A !important;
+}
+
+.app-wrap.day .trip-results-topbar {
+  background: #EED8A8 !important;
+  border-bottom-color: rgba(224, 104, 32, 0.2) !important;
+}
+
+.app-wrap.day .trip-results-topbar-title { color: #1A0D00 !important; }
+
+.app-wrap.night .trip-results-topbar {
+  background: #1A1035 !important;
+}
+
+/* Map day layer behind placeholder */
+.app-wrap .map-day-layer {
+  background: linear-gradient(150deg, #F7C84A 0%, #E06820 40%, #A04010 70%, #5A2A10 100%) !important;
+}
+
+.app-wrap .map-night-layer {
+  background: linear-gradient(150deg, #0D0A1A 0%, #1A1035 50%, #2A1A4A 100%) !important;
+}
+
+/* Auth modal night defaults */
+.app-wrap.night .auth-modal,
+.hero.night ~ .auth-modal-overlay .auth-modal,
+.auth-modal-overlay .auth-modal {
+  background: #1A1035;
+  color: #fff;
+}
+
+.app-wrap.night .auth-field-input {
+  background: #2A1A4A !important;
+  border-color: rgba(168, 155, 207, 0.25) !important;
+  color: #fff !important;
+}
+
+.app-wrap.night .auth-social-btn {
+  background: #2A1A4A !important;
+  border-color: rgba(168, 155, 207, 0.25) !important;
+  color: #fff !important;
+}
+
+.auth-modal-logo {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-modal-logo span {
+  -webkit-text-fill-color: transparent;
+}
+
+.app-wrap.day .auth-modal-logo {
+  background: linear-gradient(135deg, #C87010, #E06820);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Responsive safeguards */
+@media (max-width: 640px) {
+  .route-drawing-loader--fullscreen .route-drawing-loader-svg {
+    width: min(180px, 75vw);
+  }
+
+  .hero-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .float-card,
+  .trip-results-panel,
+  .profile-view-wrap {
+    overflow-x: hidden;
+  }
+}

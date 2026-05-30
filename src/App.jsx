@@ -4,6 +4,7 @@
  * See ROADMAP.md for phase status and conventions.
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
 import { resolveMapStyles } from "./lib/mapStyles.js";
@@ -142,7 +143,6 @@ export default function App() {
   const [showHomeAddressModal, setShowHomeAddressModal] = useState(false);
   const [navigateHomePending, setNavigateHomePending] = useState(false);
   const [returnedFromResults, setReturnedFromResults] = useState(false);
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [highlightedStopId, setHighlightedStopId] = useState(null);
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
   const [liveSharingActive, setLiveSharingActive] = useState(false);
@@ -1135,17 +1135,6 @@ export default function App() {
 
     if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
   }, [directionsResult, routePath, routeInfo, mapMarkers]);
-
-  useEffect(() => {
-    if (!loading) {
-      setLoadingMessageIndex(0);
-      return undefined;
-    }
-    const interval = setInterval(() => {
-      setLoadingMessageIndex(i => (i + 1) % 4);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, [loading]);
 
   useEffect(() => () => {
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
@@ -2412,7 +2401,7 @@ export default function App() {
   }
 
   if (liveShareToken) {
-    return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
+    return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} theme={theme} />;
   }
 
   if (view === "profile" && user) {
@@ -2422,6 +2411,7 @@ export default function App() {
           {renderAppNavBar("app")}
           <ErrorBoundary label="profile" title="Could not show profile">
           <LazyProfilePage
+            theme={theme}
             user={user}
             profile={userProfile}
             creditStatus={creditStatus}
@@ -2585,6 +2575,7 @@ export default function App() {
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
+        {loading && <RouteDrawingLoader theme={theme} variant="fullscreen" />}
         {renderAppNavBar("app")}
         <ConfigWarningBanner missing={configMissing} />
 
@@ -2675,7 +2666,6 @@ export default function App() {
               onDismissTrafficAlert={() => setTrafficAlert(false)}
               routeLoading={routeLoading}
               tripGenerating={loading}
-              loadingMessageIndex={loadingMessageIndex}
               isDarkMode={theme === "night"}
               theme={theme}
               mapRef={mapRef}
@@ -2732,7 +2722,6 @@ export default function App() {
             onDismissTrafficAlert={() => setTrafficAlert(false)}
             routeLoading={routeLoading}
             tripGenerating={loading}
-            loadingMessageIndex={loadingMessageIndex}
             isDarkMode={theme === "night"}
             theme={theme}
             mapRef={mapRef}

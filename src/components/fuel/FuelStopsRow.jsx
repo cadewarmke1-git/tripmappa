@@ -21,13 +21,12 @@ import { applyStopFilters } from "../../lib/placesFilters.js";
 import { needsSafeStopsOnly } from "../../lib/tripAccommodations.js";
 import FuelStopCard from "./FuelStopCard.jsx";
 
+import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
+
 function FuelSkeleton() {
   return (
-    <div className="fuel-stop-card fuel-stop-skeleton" aria-hidden="true">
-      <div className="skeleton-shimmer skeleton-fuel-logo" />
-      <div className="skeleton-line skeleton-shimmer skeleton-fuel-title" />
-      <div className="skeleton-line skeleton-shimmer skeleton-fuel-price" />
-      <div className="skeleton-btn skeleton-shimmer" />
+    <div className="fuel-stop-card fuel-stop-loader" aria-hidden="true">
+      <RouteDrawingLoader variant="compact" />
     </div>
   );
 }

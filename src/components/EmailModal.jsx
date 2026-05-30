@@ -3,6 +3,7 @@ import { useDialogA11y } from "../hooks/useDialogA11y.js";
 import AuthSocialButtons from "./auth/AuthSocialButtons.jsx";
 import { PhoneIcon } from "./auth/PhoneModal.jsx";
 import ModalCloseButton from "./ModalCloseButton.jsx";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 export default function EmailModal({
   email,
@@ -66,7 +67,7 @@ export default function EmailModal({
           />
           {error && <p className="auth-modal-error">{error}</p>}
           <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
-            {loading ? "Creating account…" : "Create My Account →"}
+            {loading ? <RouteDrawingLoader variant="button" /> : "Create My Account →"}
           </button>
         </form>
 

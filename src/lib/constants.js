@@ -31,6 +31,29 @@ export const DARK_MAP_STYLES = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
+/** Warm desert road-atlas palette for day theme. */
+export const DAY_MAP_STYLES = [
+  { elementType: "geometry", stylers: [{ color: "#E8D5A8" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#E8D5A8" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#C8956A" }] },
+  { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#A8B890" }] },
+  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#C8956A" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#A87850" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#F0DEB8" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#C8956A" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#8AA8B8" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3A1A08" }] },
+];
+
 /** Apple Maps–style dark theme applied when app theme is night. */
 export const NIGHT_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },

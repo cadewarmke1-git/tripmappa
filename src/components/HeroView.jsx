@@ -2,6 +2,7 @@ import { Autocomplete } from "@react-google-maps/api";
 import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
 import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
 import AppNavBar from "./AppNavBar.jsx";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 export default function HeroView({
   theme,
@@ -156,7 +157,7 @@ export default function HeroView({
               </div>
             </div>
             <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
-              {heroLaunching ? "Checking locations…" : "Plan my trip →"}
+              {heroLaunching ? <RouteDrawingLoader theme={theme} variant="button" /> : "Plan my trip →"}
             </button>
           </div>
 

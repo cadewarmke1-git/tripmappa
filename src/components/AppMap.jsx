@@ -1,5 +1,6 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
 import { useState, useEffect, useMemo } from "react";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import MapRoutePill from "./MapRoutePill.jsx";
 import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
@@ -22,7 +23,6 @@ export default function AppMap({
   onDismissTrafficAlert = null,
   routeLoading,
   tripGenerating = false,
-  loadingMessageIndex = 0,
   isDarkMode,
   mapRef,
   directions,
@@ -173,14 +173,12 @@ export default function AppMap({
         </>
       ) : (
         <div className="map-loading">
-          <div className="loading-spinner"/>
-          <div className="map-placeholder-text">Loading map…</div>
-          <div className="map-placeholder-sub">Connecting to Google Maps</div>
+          <RouteDrawingLoader theme={theme} variant="inline" />
         </div>
       )}
       {isLoaded && routeLoading && !tripGenerating && (
-        <div className="route-loading-pill">
-          Calculating route…
+        <div className="route-loading-pill route-loading-pill--loader">
+          <RouteDrawingLoader theme={theme} variant="compact" />
         </div>
       )}
       {showRoutePill && (
@@ -188,7 +186,7 @@ export default function AppMap({
           routeInfo={routeInfo}
           answers={answers}
           tripGenerating={tripGenerating}
-          loadingMessageIndex={loadingMessageIndex}
+          theme={theme}
           onNavigateHome={onNavigateHome}
           navigateHomePending={navigateHomePending}
         />

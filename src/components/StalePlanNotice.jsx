@@ -1,4 +1,6 @@
 /** Banner when plan inputs changed after the last generation. */
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+
 export default function StalePlanNotice({ onRegenerate, loading = false, changes = [] }) {
   return (
     <div className="stale-plan-notice" role="status">
@@ -18,7 +20,7 @@ export default function StalePlanNotice({ onRegenerate, loading = false, changes
         onClick={onRegenerate}
         disabled={loading}
       >
-        {loading ? "Regenerating…" : "Regenerate trip"}
+        {loading ? <RouteDrawingLoader variant="button" /> : "Regenerate trip"}
       </button>
     </div>
   );

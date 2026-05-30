@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 import AuthSocialButtons from "./AuthSocialButtons.jsx";
 import ModalCloseButton from "../ModalCloseButton.jsx";
+import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
 
 export default function SignInModal({
   onClose,
@@ -66,7 +67,7 @@ export default function SignInModal({
           </button>
           {error && <p className="auth-modal-error">{error}</p>}
           <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
-            {loading ? "Signing in…" : "Sign In →"}
+            {loading ? <RouteDrawingLoader variant="button" /> : "Sign In →"}
           </button>
         </form>
 

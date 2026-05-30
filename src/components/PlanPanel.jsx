@@ -8,6 +8,7 @@ import QuestionThread from "./QuestionThread.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 export default function PlanPanel({
   qIndex,
@@ -132,7 +133,9 @@ export default function PlanPanel({
                   {convoComplete && (
                     <div className="generate-inline">
                       <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
-                        {loading ? "Generating…" : (
+                        {loading ? (
+                          <RouteDrawingLoader variant="button" />
+                        ) : (
                           <>
                             Generate My Trip →
                             {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}

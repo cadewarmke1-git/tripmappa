@@ -182,7 +182,7 @@ export default function TripResultsPanel({
           refreshing={liveTipsRefreshing}
         />
 
-        {enrichingTrip && <ResultsEnrichmentSkeleton />}
+        {enrichingTrip && <ResultsEnrichmentSkeleton theme={theme} />}
 
         {continuousDrive && (
           <FuelStopsSection

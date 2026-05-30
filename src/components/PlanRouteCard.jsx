@@ -1,5 +1,6 @@
 import { isContinuousDrive } from "../lib/driveMode.js";
 import { isScenicRoute } from "../lib/vehicles.js";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 export default function PlanRouteCard({
   origin,
@@ -34,8 +35,7 @@ export default function PlanRouteCard({
             <span className="plan-route-card-error-text">{routeError}</span>
           ) : routePending || !ready ? (
             <span className="plan-route-card-loading">
-              <span className="question-loading-spinner" aria-hidden="true" />
-              Calculating route…
+              <RouteDrawingLoader variant="compact" />
             </span>
           ) : (
             <>

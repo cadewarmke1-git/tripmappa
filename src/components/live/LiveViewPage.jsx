@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
 import { GoogleMap } from "@react-google-maps/api";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES } from "../../lib/constants.js";
@@ -207,7 +208,7 @@ export default function LiveViewPage({ shareToken, toast }) {
   if (loading) {
     return (
       <div className={`live-view-page live-view-page-${theme}`}>
-        <div className="live-view-loading">Loading live trip…</div>
+        <RouteDrawingLoader theme={theme} variant="inline" />
       </div>
     );
   }

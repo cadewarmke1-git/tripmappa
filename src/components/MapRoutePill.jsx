@@ -1,31 +1,15 @@
-import { useEffect, useState } from "react";
+import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { getRouteTypeLabel, isScenicRoute } from "../lib/vehicles.js";
-
-const LOADING_MESSAGES = [
-  "Planning your route…",
-  "Finding the best stops…",
-  "Checking fuel stations…",
-  "Almost ready…",
-];
 
 export default function MapRoutePill({
   routeInfo,
   answers,
   tripGenerating = false,
-  loadingMessageIndex = 0,
+  theme = "night",
   onNavigateHome = null,
   navigateHomePending = false,
 }) {
-  const [fade, setFade] = useState(true);
-  const message = LOADING_MESSAGES[loadingMessageIndex % LOADING_MESSAGES.length];
   const showNavigateHome = typeof onNavigateHome === "function";
-
-  useEffect(() => {
-    if (!tripGenerating) return undefined;
-    setFade(false);
-    const t = setTimeout(() => setFade(true), 120);
-    return () => clearTimeout(t);
-  }, [loadingMessageIndex, tripGenerating]);
 
   if (!routeInfo && !showNavigateHome) return null;
 
@@ -38,7 +22,11 @@ export default function MapRoutePill({
           onClick={onNavigateHome}
           disabled={navigateHomePending}
         >
-          {navigateHomePending ? "Locating…" : "Navigate Home"}
+          {navigateHomePending ? (
+            <RouteDrawingLoader theme={theme} variant="button" />
+          ) : (
+            "Navigate Home"
+          )}
         </button>
       )}
       {routeInfo && (
@@ -54,11 +42,6 @@ export default function MapRoutePill({
             <span className="map-route-pill-sep">·</span>
             <span className="map-route-pill-val">{routeInfo.duration}</span>
           </div>
-          {tripGenerating && (
-            <div className={`map-generating-msg${fade ? " visible" : ""}`} aria-live="polite">
-              {message}
-            </div>
-          )}
         </>
       )}
     </div>
