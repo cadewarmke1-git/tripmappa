@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
-import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
-import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
+import { HERO_PHOTO_DAY, HERO_PHOTO_NIGHT } from "../lib/constants.js";
 import { buildStarField, resolveSkyPhase, SKY_CHECK_MS } from "../lib/skyTime.js";
 
 const STARS = buildStarField(52);
 
-export default function HeroMountainScene({
-  theme = "night",
-  themeLocked = false,
-  photoPaused = false,
-}) {
+export default function HeroMountainScene({ theme = "night", themeLocked = false }) {
   const [phase, setPhase] = useState(() => resolveSkyPhase({ theme, themeLocked }));
 
   useEffect(() => {
@@ -42,15 +37,15 @@ export default function HeroMountainScene({
 
       <div
         className="hero-photo-set hero-photo-set--day"
-        style={{ opacity: isDay ? 1 : 0, pointerEvents: isDay ? "auto" : "none" }}
+        style={{ opacity: isDay ? 1 : 0 }}
       >
-        <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={photoPaused} active={isDay} />
+        <div className="hero-photo-slide" style={{ backgroundImage: `url(${HERO_PHOTO_DAY})` }} />
       </div>
       <div
         className="hero-photo-set hero-photo-set--night"
-        style={{ opacity: isDay ? 0 : 1, pointerEvents: isDay ? "none" : "auto" }}
+        style={{ opacity: isDay ? 0 : 1 }}
       >
-        <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={photoPaused} active={!isDay} />
+        <div className="hero-photo-slide" style={{ backgroundImage: `url(${HERO_PHOTO_NIGHT})` }} />
       </div>
 
       <div className="hero-horizon-blend" aria-hidden="true" />

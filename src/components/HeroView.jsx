@@ -64,7 +64,7 @@ export default function HeroView({
       />
 
       <div className={`hero ${theme}`}>
-        <HeroMountainScene theme={theme} themeLocked={themeLocked} photoPaused={heroSearchHover} />
+        <HeroMountainScene theme={theme} themeLocked={themeLocked} />
         <div className="hero-overlay" />
 
         <div className="hero-content">

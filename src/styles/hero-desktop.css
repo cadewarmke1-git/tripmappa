@@ -1,6 +1,7 @@
-/* Desktop hero layout — 769px and up; mobile rules live in mobile-layout.css */
+/* Desktop / web layout — 769px and up. Mobile mockup: mobile-layout.css (max-width: 768px). */
 
 @media (min-width: 769px) {
+  /* ── Hero: original horizontal web layout ── */
   .hero {
     min-height: 100vh;
     padding-top: 0;
@@ -14,12 +15,25 @@
     margin-left: auto;
     margin-right: auto;
     padding: 0 28px;
+    margin-top: 0;
+  }
+
+  .hero-title {
+    font-size: clamp(48px, 8.5vw, 96px);
+    margin: 24px 0 36px;
+    line-height: 0.98;
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    margin: 0 auto 52px;
+    max-width: 440px;
   }
 
   .hero-search {
-    flex-direction: row;
-    align-items: center;
-    max-width: 100%;
+    flex-direction: row !important;
+    align-items: center !important;
+    max-width: 820px;
     width: 100%;
     margin: 0 auto 40px;
     padding: 12px 16px;
@@ -34,27 +48,27 @@
   }
 
   .hero-route-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
-    grid-template-rows: auto;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
     column-gap: 10px;
-    row-gap: 0;
+    row-gap: 0 !important;
     align-items: start;
   }
 
   .hero-route-from,
   .hero-route-to,
   .hero-route-swap-col {
-    grid-row: auto;
+    grid-row: auto !important;
   }
 
   .hero-route-swap-col {
-    padding-top: 22px;
+    padding-top: 22px !important;
     justify-self: center;
   }
 
   .hero-go-btn {
-    width: auto;
+    width: auto !important;
     min-height: auto;
     margin-top: 0;
     align-self: center;
@@ -66,17 +80,18 @@
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 40px;
   }
 
   .hero-auth-btns {
-    flex-direction: row;
-    flex-wrap: nowrap;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     justify-content: center;
     gap: 10px;
   }
 
   .hero-auth-btn {
-    width: auto;
+    width: auto !important;
     min-height: auto;
     flex: 0 1 auto;
   }
@@ -85,6 +100,7 @@
     flex-direction: column;
     width: 100%;
     max-width: 400px;
+    margin: 0 auto;
   }
 
   .hero-email-btn,
@@ -95,5 +111,25 @@
 
   .scroll-indicator {
     display: block;
+  }
+
+  .nav-auth-desktop {
+    display: flex !important;
+  }
+
+  /* ── App: floating sidebar planner (not mobile full-bleed sheet) ── */
+  .float-card,
+  .float-card--plan-flow:not(.collapsed) {
+    top: calc(var(--nav-h) + 16px) !important;
+    left: 16px !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 390px !important;
+    max-width: 390px !important;
+    border-radius: 22px !important;
+  }
+
+  .float-card-handle {
+    display: none !important;
   }
 }

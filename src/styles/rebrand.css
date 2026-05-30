@@ -712,11 +712,6 @@ body {
     width: min(180px, 75vw);
   }
 
-  .hero-search {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .float-card,
   .trip-results-panel,
   .profile-view-wrap {

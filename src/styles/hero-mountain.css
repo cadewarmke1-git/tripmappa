@@ -83,23 +83,27 @@
   );
 }
 
-.hero-photo-set .hero-slideshow {
+.hero-photo-set .hero-slideshow,
+.hero-photo-set .hero-photo-slide {
   position: absolute;
   inset: 0;
   background: #0a0a12;
 }
 
-.hero-photo-set .hero-bg-slide {
+.hero-photo-set .hero-bg-slide,
+.hero-photo-set .hero-photo-slide {
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center 72%;
 }
 
-.hero-photo-set--day .hero-bg-slide {
+.hero-photo-set--day .hero-bg-slide,
+.hero-photo-set--day .hero-photo-slide {
   background-position: center 68%;
 }
 
-.hero-photo-set--night .hero-bg-slide {
+.hero-photo-set--night .hero-bg-slide,
+.hero-photo-set--night .hero-photo-slide {
   background-position: center 75%;
 }
 

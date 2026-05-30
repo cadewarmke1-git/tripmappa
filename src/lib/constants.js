@@ -45,6 +45,10 @@ export const HERO_PHOTOS_NIGHT = [
   "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80",
 ];
 
+/** Single hero landscape per theme — sky is animated separately above the horizon. */
+export const HERO_PHOTO_DAY = HERO_PHOTOS_DAY[0];
+export const HERO_PHOTO_NIGHT = HERO_PHOTOS_NIGHT[0];
+
 export const DARK_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
   { elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
