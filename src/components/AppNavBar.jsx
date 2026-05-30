@@ -14,11 +14,14 @@ export default function AppNavBar({
   onSignup,
   liveSharingActive = false,
   variant = "app",
+  theme = "night",
 }) {
   const isHero = variant === "hero";
 
   return (
-    <nav className={`app-nav-bar nav${isHero ? " transparent" : " nav-app app-nav-with-logo"}`}>
+    <nav
+      className={`app-nav-bar nav${isHero ? ` hero ${theme} transparent` : " nav-app app-nav-with-logo"}`}
+    >
       <div className="app-nav-bar-left">
         <NavLogo onClick={onGoHome} />
       </div>

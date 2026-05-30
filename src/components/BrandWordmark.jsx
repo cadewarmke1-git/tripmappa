@@ -1,9 +1,8 @@
-/** TripMappa brand wordmark — theme colors applied via CSS (brand-wordmark-* classes). */
+/** TripMappa brand wordmark — gradient applied via brand-typography.css */
 export default function BrandWordmark({ className = "", as: Tag = "span", ...props }) {
   return (
     <Tag className={`brand-wordmark${className ? ` ${className}` : ""}`} {...props}>
-      <span className="brand-wordmark-trip">Trip</span>
-      <span className="brand-wordmark-mappa">Mappa</span>
+      TripMappa
     </Tag>
   );
 }

@@ -1,4 +1,4 @@
-/* TripMappa brand typography — wordmark + hero headline tokens (wins over legacy hardcoded colors) */
+/* TripMappa brand typography — wordmark gradient + hero headline tokens */
 
 :root {
   --tm-gold: #FFD28C;
@@ -9,104 +9,66 @@
   --tm-hero-tagline-color: rgba(255, 255, 255, 0.8);
   --tm-hero-accent-night: #FFD28C;
   --tm-hero-accent-day: #1A0D00;
+  --tm-wordmark-gradient-night: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+  --tm-wordmark-gradient-day: linear-gradient(135deg, #C87010 0%, #E06820 100%);
 }
 
-/* ── Theme token scopes ── */
 .tm-theme-night,
 .app-wrap.night,
-.hero.night {
-  --tm-wordmark-trip: #FFD28C;
-  --tm-wordmark-mappa: #FF8C42;
+.hero.night,
+.nav.hero.night {
+  --tm-wordmark-gradient: var(--tm-wordmark-gradient-night);
   --tm-hero-accent-color: var(--tm-hero-accent-night);
 }
 
 .tm-theme-day,
 .app-wrap.day,
-.hero.day {
-  --tm-wordmark-trip: #C87010;
-  --tm-wordmark-mappa: #E06820;
+.hero.day,
+.nav.hero.day {
+  --tm-wordmark-gradient: var(--tm-wordmark-gradient-day);
   --tm-hero-accent-color: var(--tm-hero-accent-day);
 }
 
-/* ── Reset legacy hardcoded wordmark colors ── */
-.nav-logo,
-.nav-logo-home,
-.auth-modal-logo,
-.app-global-home-logo,
-.route-drawing-loader-wordmark {
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  background-clip: unset !important;
-  -webkit-text-fill-color: unset !important;
-  color: inherit !important;
-}
-
-.nav-logo span:not(.brand-wordmark-trip):not(.brand-wordmark-mappa),
-.nav-logo-home span:not(.brand-wordmark-trip):not(.brand-wordmark-mappa),
-.auth-modal-logo span:not(.brand-wordmark-trip):not(.brand-wordmark-mappa) {
-  color: inherit !important;
-  -webkit-text-fill-color: unset !important;
-}
-
+/* ── Wordmark — always gradient, never plain text ── */
 .brand-wordmark {
   display: inline;
   font: inherit;
   letter-spacing: inherit;
-}
-
-/* ── Night wordmark: Trip gold, Mappa orange ── */
-.tm-theme-night .brand-wordmark-trip,
-.app-wrap.night .brand-wordmark-trip,
-.hero.night .brand-wordmark-trip {
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
-}
-
-.tm-theme-night .brand-wordmark-mappa,
-.app-wrap.night .brand-wordmark-mappa,
-.hero.night .brand-wordmark-mappa {
-  color: #FF8C42 !important;
-  -webkit-text-fill-color: #FF8C42 !important;
-}
-
-/* Hero nav wordmark — legibility shadow on photography */
-.hero .nav-logo,
-.hero .nav-logo-home {
-  filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.45));
-}
-
-/* ── Day wordmark: ember gradient via background-clip ── */
-.tm-theme-day .brand-wordmark,
-.app-wrap.day .brand-wordmark,
-.hero.day .brand-wordmark,
-.tm-theme-day .nav-logo .brand-wordmark,
-.app-wrap.day .nav-logo .brand-wordmark,
-.hero.day .nav-logo .brand-wordmark,
-.tm-theme-day .auth-modal-logo.brand-wordmark,
-.app-wrap.day .auth-modal-logo.brand-wordmark {
-  background: linear-gradient(135deg, #C87010 0%, #E06820 100%) !important;
+  background: var(--tm-wordmark-gradient, var(--tm-wordmark-gradient-night)) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
 }
 
-.tm-theme-day .brand-wordmark-trip,
-.tm-theme-day .brand-wordmark-mappa,
-.app-wrap.day .brand-wordmark-trip,
-.app-wrap.day .brand-wordmark-mappa,
-.hero.day .brand-wordmark-trip,
-.hero.day .brand-wordmark-mappa {
+.nav-logo,
+.nav-logo-home {
+  /* Prevent inherited nav text color from overriding gradient clip */
   color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
 }
 
-.hero.day .nav-logo,
-.hero.day .nav-logo-home {
+.nav-logo .brand-wordmark,
+.nav-logo-home .brand-wordmark,
+.auth-modal-logo.brand-wordmark,
+.route-drawing-loader-wordmark.brand-wordmark,
+.app-global-home-logo .brand-wordmark {
+  background: var(--tm-wordmark-gradient, var(--tm-wordmark-gradient-night)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+.nav.hero .nav-logo,
+.nav.hero .nav-logo-home {
+  filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.45));
+}
+
+.nav.hero.day .nav-logo,
+.nav.hero.day .nav-logo-home {
   filter: drop-shadow(0 1px 8px rgba(255, 255, 255, 0.35));
 }
 
-/* Auth modal logo sizing */
 .auth-modal-logo.brand-wordmark {
   display: block;
   font-family: "Fraunces", Georgia, serif;
@@ -117,7 +79,6 @@
   text-align: center;
 }
 
-/* Loader wordmark */
 .route-drawing-loader-wordmark.brand-wordmark {
   font-family: "Fraunces", serif;
   font-weight: 700;
@@ -126,9 +87,17 @@
   animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
 }
 
+.route-drawing-loader--night .brand-wordmark {
+  background: var(--tm-wordmark-gradient-night) !important;
+}
+
+.route-drawing-loader--day .brand-wordmark {
+  background: var(--tm-wordmark-gradient-day) !important;
+}
+
 /* ── Hero headline typography ── */
 .hero-title {
-  color: var(--tm-hero-title-color) !important;
+  color: #FFFFFF !important;
 }
 
 .hero-title-line {
@@ -168,31 +137,6 @@
 
 .hero.day .hero-title .highlight {
   color: #1A0D00 !important;
-}
-
-/* Route loader wordmark (fullscreen / inline — outside app-wrap) */
-.route-drawing-loader--night .brand-wordmark-trip {
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
-}
-
-.route-drawing-loader--night .brand-wordmark-mappa {
-  color: #FF8C42 !important;
-  -webkit-text-fill-color: #FF8C42 !important;
-}
-
-.route-drawing-loader--day .brand-wordmark {
-  background: linear-gradient(135deg, #C87010 0%, #E06820 100%) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
-}
-
-.route-drawing-loader--day .brand-wordmark-trip,
-.route-drawing-loader--day .brand-wordmark-mappa {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
 }
 
 @keyframes loaderWordmarkPulse {

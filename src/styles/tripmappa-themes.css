@@ -437,8 +437,8 @@
   transition: opacity 1.8s ease;
   z-index: 0;
 }
-.app-wrap .map-day-layer { background: linear-gradient(150deg, #dceef8 0%, #d4ebe0 55%, #c8dcc8 100%); }
-.app-wrap .map-night-layer { background: linear-gradient(150deg, #040810 0%, #0a1428 50%, #1a2030 100%); }
+.app-wrap .map-day-layer { background: linear-gradient(150deg, #F5E6C8 0%, #EED8A8 55%, #E8D5A8 100%); }
+.app-wrap .map-night-layer { background: linear-gradient(150deg, #0D0A1A 0%, #1A1035 50%, #2A1A4A 100%); }
 .app-wrap .map-placeholder { background: transparent !important; position: relative; }
 .app-wrap .map-placeholder-text, .app-wrap .map-placeholder-sub { position: relative; z-index: 1; }
 
@@ -596,23 +596,6 @@
 .app-wrap.day .user-nav-menu-item:hover { background: rgba(0,0,0,0.04); }
 
 .app-wrap.day .tm-icon { color: #c9922e; }
-.app-wrap.day .hero-draft-resume {
-  background: rgba(255,255,255,0.88) !important;
-  border-color: rgba(201,146,46,0.35) !important;
-}
-.app-wrap.day .hero-draft-resume-text { color: rgba(12,18,34,0.85) !important; }
-.app-wrap.day .hero-draft-resume-btn {
-  color: #8a6118 !important;
-  border-color: rgba(201,146,46,0.45) !important;
-  background: rgba(255,210,140,0.25) !important;
-}
-.app-wrap.day .hero-draft-resume-dismiss {
-  color: rgba(12,18,34,0.35) !important;
-}
-.app-wrap.day .hero-draft-resume-dismiss:hover {
-  color: rgba(12,18,34,0.6) !important;
-  background: rgba(12,18,34,0.06) !important;
-}
 .app-wrap.day .share-mode-desc { color: rgba(12,18,34,0.65) !important; }
 .app-wrap.day .panel-loading-fallback { color: rgba(12,18,34,0.6) !important; }
 

@@ -172,21 +172,7 @@ body {
   transform: translateY(-1px);
 }
 
-/* Day hero Plan CTA */
-.hero.day .hero-go-btn {
-  background: #1A0D00 !important;
-  color: #FFD28C !important;
-  box-shadow: 0 6px 20px rgba(26, 13, 0, 0.35) !important;
-}
-
-.hero.day .hero-go-btn:hover:not(:disabled) {
-  box-shadow: 0 8px 28px rgba(26, 13, 0, 0.45) !important;
-}
-
-.hero.night .hero-go-btn,
-.hero.day .hero-go-btn:not(:disabled) {
-  /* night keeps gold button from base; day override above */
-}
+/* Hero Plan CTA + search/auth/draft: see hero-map-theme.css */
 
 /* ── Hero overlays (above photos, below content) ── */
 .hero-overlay {
@@ -211,72 +197,6 @@ body {
     rgba(90, 42, 16, 0.32) 68%,
     rgba(26, 13, 0, 0.52) 100%
   ) !important;
-}
-
-/* Hero day — cream frosted search panel over photography */
-.hero.day .hero-search {
-  background: rgba(253, 243, 224, 0.88) !important;
-  border-color: rgba(224, 104, 32, 0.22) !important;
-  box-shadow: 0 16px 48px rgba(26, 13, 0, 0.2) !important;
-}
-
-.hero.day .hero-search:focus-within {
-  border-color: rgba(224, 104, 32, 0.38) !important;
-  box-shadow: 0 20px 56px rgba(26, 13, 0, 0.24), 0 0 0 3px rgba(255, 210, 140, 0.25) !important;
-}
-
-.hero.day .hero-input {
-  color: #1A0D00 !important;
-}
-
-.hero.day .hero-input::placeholder {
-  color: rgba(90, 42, 16, 0.45) !important;
-}
-
-.hero.day .hero-route-labels .hero-input-label,
-.hero.day .hero-route-cell .hero-input-label {
-  color: #C87010 !important;
-}
-
-.hero.day .hero-swap-btn {
-  background: rgba(253, 243, 224, 0.95) !important;
-  color: #E06820 !important;
-  border-color: rgba(224, 104, 32, 0.35) !important;
-}
-
-.hero.day .hero-swap-btn:hover {
-  background: #FDF3E0 !important;
-  border-color: rgba(224, 104, 32, 0.5) !important;
-}
-
-.hero.day .hero-auth-btn,
-.hero.day .hero-email-btn,
-.hero.day .hero-phone-btn {
-  background: rgba(253, 243, 224, 0.82) !important;
-  border-color: rgba(224, 104, 32, 0.22) !important;
-  color: #1A0D00 !important;
-}
-
-.hero.day .hero-auth-btn:hover,
-.hero.day .hero-email-btn:hover,
-.hero.day .hero-phone-btn:hover {
-  background: rgba(253, 243, 224, 0.95) !important;
-  border-color: rgba(224, 104, 32, 0.35) !important;
-}
-
-.hero.day .hero-auth-label,
-.hero.day .hero-auth-or span {
-  color: rgba(255, 255, 255, 0.75) !important;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-}
-
-.hero.day .hero-draft-resume {
-  background: rgba(253, 243, 224, 0.92) !important;
-  border-color: rgba(224, 104, 32, 0.28) !important;
-}
-
-.hero.day .hero-draft-resume-text {
-  color: #1A0D00 !important;
 }
 
 /* ── Theme toggle ── */
@@ -487,11 +407,6 @@ body {
   border-color: rgba(168, 155, 207, 0.15) !important;
 }
 
-.app-wrap.night .hero-draft-resume {
-  background: #2A1A4A !important;
-  border-color: rgba(255, 210, 140, 0.35) !important;
-}
-
 .app-wrap.night .section-label,
 .app-wrap.night .lodging-section-label,
 .app-wrap.night .restaurant-section-label,
@@ -589,11 +504,6 @@ body {
 .app-wrap.day .nav-sidebar {
   background: #FDF3E0 !important;
   border-color: rgba(224, 104, 32, 0.2) !important;
-}
-
-.app-wrap.day .hero-draft-resume {
-  background: #FDF3E0 !important;
-  border-color: rgba(224, 104, 32, 0.35) !important;
 }
 
 .app-wrap.day .section-label,
@@ -836,15 +746,6 @@ body {
 
 .app-wrap.night .trip-results-topbar {
   background: #1A1035 !important;
-}
-
-/* Map day layer behind placeholder */
-.app-wrap .map-day-layer {
-  background: linear-gradient(150deg, #F7C84A 0%, #E06820 40%, #A04010 70%, #5A2A10 100%) !important;
-}
-
-.app-wrap .map-night-layer {
-  background: linear-gradient(150deg, #0D0A1A 0%, #1A1035 50%, #2A1A4A 100%) !important;
 }
 
 /* Auth modal night defaults */

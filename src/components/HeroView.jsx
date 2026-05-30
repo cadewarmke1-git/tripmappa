@@ -51,6 +51,7 @@ export default function HeroView({
     <>
       <AppNavBar
         variant="hero"
+        theme={theme}
         onGoHome={onGoHome}
         navSidebarOpen={navSidebarOpen}
         onToggleNavSidebar={onToggleNavSidebar}
@@ -88,7 +89,9 @@ export default function HeroView({
             <div className="hero-draft-resume">
               <div className="hero-draft-resume-body">
                 <p className="hero-draft-resume-text">
-                  Continue planning <strong>{planDraft.origin.split(",")[0]}</strong> to <strong>{planDraft.dest.split(",")[0]}</strong>
+                  Continue planning{" "}
+                  <strong className="hero-draft-route-name">{planDraft.origin.split(",")[0]}</strong> to{" "}
+                  <strong className="hero-draft-route-name">{planDraft.dest.split(",")[0]}</strong>
                 </p>
                 <button type="button" className="hero-draft-resume-btn" onClick={onResumeDraft}>
                   Resume planning

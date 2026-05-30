@@ -3633,8 +3633,8 @@
   .user-avatar-initials { line-height: 1; user-select: none; }
 
   .user-avatar-ring:not(:has(.user-avatar-img)) {
-    background: linear-gradient(145deg, #FFD28C 0%, #e5a045 55%, #c8862e 100%);
-    color: #1a1a2e;
+    background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
+    color: #1A0D00;
     font-weight: 800;
   }
 

@@ -9,6 +9,7 @@ import "./styles/tripmappa.css";
 import "./styles/tripmappa-themes.css";
 import "./styles/rebrand.css";
 import "./styles/brand-typography.css";
+import "./styles/hero-map-theme.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
