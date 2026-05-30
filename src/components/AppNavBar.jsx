@@ -18,9 +18,10 @@ export default function AppNavBar({
 }) {
   const isHero = variant === "hero";
 
+  /* Never add the page `.hero` class here — it applies full-viewport layout and blocks clicks. */
   return (
     <nav
-      className={`app-nav-bar nav${isHero ? ` hero ${theme} transparent` : " nav-app app-nav-with-logo"}`}
+      className={`app-nav-bar nav app-nav-bar--${theme}${isHero ? " transparent" : " nav-app app-nav-with-logo"}`}
     >
       <div className="app-nav-bar-left">
         <NavLogo onClick={onGoHome} />

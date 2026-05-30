@@ -959,6 +959,7 @@ export default function App() {
     return (
       <AppNavBar
         variant={variant}
+        theme={theme}
         onGoHome={goHome}
         navSidebarOpen={navSidebarOpen}
         onToggleNavSidebar={toggleNavSidebar}

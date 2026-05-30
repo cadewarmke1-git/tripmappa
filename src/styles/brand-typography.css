@@ -16,7 +16,7 @@
 .tm-theme-night,
 .app-wrap.night,
 .hero.night,
-.nav.hero.night {
+.app-nav-bar--night {
   --tm-wordmark-gradient: var(--tm-wordmark-gradient-night);
   --tm-hero-accent-color: var(--tm-hero-accent-night);
 }
@@ -24,7 +24,7 @@
 .tm-theme-day,
 .app-wrap.day,
 .hero.day,
-.nav.hero.day {
+.app-nav-bar--day {
   --tm-wordmark-gradient: var(--tm-wordmark-gradient-day);
   --tm-hero-accent-color: var(--tm-hero-accent-day);
 }
@@ -41,12 +41,6 @@
   color: transparent !important;
 }
 
-.nav-logo,
-.nav-logo-home {
-  /* Prevent inherited nav text color from overriding gradient clip */
-  color: transparent !important;
-}
-
 .nav-logo .brand-wordmark,
 .nav-logo-home .brand-wordmark,
 .auth-modal-logo.brand-wordmark,
@@ -59,13 +53,19 @@
   color: transparent !important;
 }
 
-.nav.hero .nav-logo,
-.nav.hero .nav-logo-home {
+.nav-logo-home,
+.nav-logo {
+  /* Keep button chrome visible; gradient lives on .brand-wordmark only */
+  background: none;
+}
+
+.app-nav-bar.transparent .nav-logo,
+.app-nav-bar.transparent .nav-logo-home {
   filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.45));
 }
 
-.nav.hero.day .nav-logo,
-.nav.hero.day .nav-logo-home {
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo,
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home {
   filter: drop-shadow(0 1px 8px rgba(255, 255, 255, 0.35));
 }
 
