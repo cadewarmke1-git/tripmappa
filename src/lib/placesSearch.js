@@ -1,5 +1,5 @@
 /** Extended Google Places searches for trip planning and results. */
-import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, asArray, needsSafeStopsOnly, prefIncludes } from "./tripAccommodations.js";
+import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, needsWheelchairLodgingFilter, asArray, needsSafeStopsOnly, prefIncludes } from "./tripAccommodations.js";
 import { dietaryMatchesRestaurant } from "./dietaryKeywords.js";
 import { applyStopFilters, filterLodgingByBudget, filterSafeStopsOnly } from "./placesFilters.js";
 
@@ -169,16 +169,18 @@ export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5,
 export async function searchLodging(lat, lng, answers, routeInfo = null) {
   const loyalty = getLoyaltyKeyword(answers);
   const lodging = answers?.lodging || "";
+  const wheelchairLodging = needsWheelchairLodgingFilter(answers);
   let keyword = "hotel";
   if (lodging.includes("Camping")) keyword = "campground";
   else if (lodging.includes("Airbnb")) keyword = "vacation rental";
+  else if (wheelchairLodging) keyword = "wheelchair accessible hotel";
   else if (loyalty) keyword = `${loyalty} hotel`;
   let results = await searchNearbyCategory(lat, lng, {
     type: lodging.includes("Camping") ? "campground" : "lodging",
     keyword,
     radius: RADIUS_5MI,
     maxResults: 12,
-    wheelchair: needsWheelchairFilter(answers),
+    wheelchair: needsWheelchairFilter(answers) || wheelchairLodging,
   });
   if (needsSafeStopsOnly(answers)) {
     const safe = filterSafeStopsOnly(results);
@@ -228,6 +230,7 @@ export async function searchInterestPOIs(lat, lng, interest, radius = RADIUS_10M
     "Drive-In Movie Theaters": { keyword: "drive in theater" },
     "Antique Shops or Flea Markets": { keyword: "antique flea market" },
     "Remote work — WiFi cafés": { keyword: "cafe wifi laptop" },
+    "Prayer facilities": { keyword: "mosque church temple synagogue", radius: RADIUS_2MI },
   };
   const cfg = map[interest] || { keyword: interest };
   return enrichPlaces(await searchNearbyCategory(lat, lng, {

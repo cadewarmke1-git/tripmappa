@@ -34,6 +34,9 @@ import { stopsToMapMarkers } from "./lib/mapMarkers.js";
 import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
+import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
+import { describePlanChanges } from "./lib/planSnapshotDiff.js";
+import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
 import { roadStopKey, roadStopExistsInList, normalizeRoadStopEntry } from "./lib/roadStopKeys.js";
 import { useLiveTripTips } from "./hooks/useLiveTripTips.js";
 import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraft.js";
@@ -63,6 +66,7 @@ import AccountSidebar from "./components/AccountSidebar.jsx";
 import NavSidebar from "./components/NavSidebar.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
 
 export default function App() {
   const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
@@ -150,6 +154,7 @@ export default function App() {
   const [planBoundaryKey, setPlanBoundaryKey] = useState(0);
   const [mapBoundaryKey, setMapBoundaryKey] = useState(0);
   const [enrichmentRetryKey, setEnrichmentRetryKey] = useState(0);
+  const [savedPlanSnapshot, setSavedPlanSnapshot] = useState(null);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
   const [navSidebarOpen, setNavSidebarOpen] = useState(false);
@@ -377,6 +382,7 @@ export default function App() {
   const [toastAction, setToastAction] = useState(null);
   const toastTimerRef = useRef(null);
   const generateAbortRef = useRef(null);
+  const enrichAbortRef = useRef(null);
   const hadUserRef = useRef(false);
   const intentionalSignOutRef = useRef(false);
   const sessionExpiredNotifiedRef = useRef(false);
@@ -552,6 +558,8 @@ export default function App() {
     if (hasPref(answers, "Avoid tolls")) routeRequest.avoidTolls = true;
     if (isTowingSelected(answers)) {
       routeRequest.avoidHighways = true;
+      routeRequest.provideRouteAlternatives = true;
+      routeRequest.avoidFerries = true;
     }
 
     const service = new window.google.maps.DirectionsService();
@@ -730,6 +738,30 @@ export default function App() {
     convoComplete,
     currentQuestionId: convoComplete ? "done" : (currentQuestion?.id || "vehicle"),
   }), [answers, convoComplete, currentQuestion?.id, origin, dest, routeInfo]);
+
+  const currentPlanSnapshot = useMemo(() => buildPlanSnapshot({
+    origin: originRef.current?.value?.trim() || origin,
+    dest: destRef.current?.value?.trim() || dest,
+    answers,
+    routeInfo,
+  }), [origin, dest, answers, routeInfo]);
+
+  const planOutOfDate = useMemo(
+    () => generated && isPlanOutOfDate(savedPlanSnapshot, currentPlanSnapshot),
+    [generated, savedPlanSnapshot, currentPlanSnapshot],
+  );
+
+  const planChanges = useMemo(
+    () => describePlanChanges(savedPlanSnapshot, currentPlanSnapshot),
+    [savedPlanSnapshot, currentPlanSnapshot],
+  );
+
+  const configMissing = useMemo(() => {
+    const missing = [];
+    if (!import.meta.env.VITE_GOOGLE_MAPS_KEY) missing.push("maps");
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) missing.push("auth");
+    return missing;
+  }, []);
 
   const inQuestionFlow = !generated && (
     qIndex >= 0 ||
@@ -1349,6 +1381,7 @@ export default function App() {
 
   function cancelGenerateTrip() {
     generateAbortRef.current?.abort();
+    enrichAbortRef.current?.abort();
   }
 
   function handlePanelTouchStart(e) {
@@ -1784,6 +1817,10 @@ export default function App() {
     if (key) {
       setAddedRoadStopIds(prev => (prev.includes(key) ? prev : [...prev, key]));
     }
+    toast_("Added to trip", {
+      actionLabel: "Undo",
+      onAction: () => removeRoadStopFromTrip({ ...normalized, stopData: normalized }),
+    });
   }
 
   function removeRoadStopFromTrip(stop) {
@@ -1865,6 +1902,9 @@ export default function App() {
 
   async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers) {
     const mapsReady = isLoaded && !!window.google;
+    enrichAbortRef.current?.abort();
+    const enrichController = new AbortController();
+    enrichAbortRef.current = enrichController;
     setEnrichingTrip(true);
     setEnrichmentLimited(false);
     try {
@@ -1880,7 +1920,9 @@ export default function App() {
         origin: originRef.current?.value?.trim() || origin,
         destination: destRef.current?.value?.trim() || dest,
         mapsReady,
+        signal: enrichController.signal,
       });
+      if (enrichController.signal.aborted) return null;
       setStops(enriched.stops);
       setRoadStops(enriched.roadStops);
       setNearbyServicesByCity(enriched.nearbyServicesByCity);
@@ -1901,15 +1943,37 @@ export default function App() {
       );
       setDismissedAlerts([]);
       if (!mapsReady) setEnrichmentLimited(true);
+      capturePlanSnapshot();
       return enriched;
     } catch (err) {
+      if (err.name === "AbortError") return null;
       console.warn("Trip enrichment failed:", err);
       setEnrichmentLimited(true);
       setMapMarkers(stopsToMapMarkers(parsedStops, parsedRoadStops, customStops, [], answers));
       return null;
     } finally {
+      if (enrichAbortRef.current === enrichController) {
+        enrichAbortRef.current = null;
+      }
       setEnrichingTrip(false);
     }
+  }
+
+  function cancelEnrichment() {
+    enrichAbortRef.current?.abort();
+    setEnrichingTrip(false);
+    toast_("Enrichment cancelled — basic trip data is still shown.");
+  }
+
+  function capturePlanSnapshot() {
+    const snapshot = buildPlanSnapshot({
+      origin: originRef.current?.value?.trim() || origin,
+      dest: destRef.current?.value?.trim() || dest,
+      answers,
+      routeInfo,
+    });
+    setSavedPlanSnapshot(snapshot);
+    return snapshot;
   }
 
   function addCustomStop(stop) {
@@ -2002,6 +2066,7 @@ export default function App() {
           routeInfo: activeRouteInfo,
           placesContext,
           placesContextPrompt,
+          generationHints: formatGenerationHints(normalizedAnswers, activeRouteInfo),
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
         }, session?.access_token || null, { signal: generateController.signal });
@@ -2107,6 +2172,7 @@ export default function App() {
   function resetPlan() {
     setConfirmResetOpen(false);
     setTripUsedFallback(false);
+    setSavedPlanSnapshot(null);
     setReturnedFromResults(false);
     setGuestTripPendingSave(false);
     setAnswers({}); setQIndex(-1);
@@ -2520,6 +2586,7 @@ export default function App() {
         transition: "color 1.8s ease",
       }}>
         {renderAppNavBar("app")}
+        <ConfigWarningBanner missing={configMissing} />
 
         {generated && resultsView === "itinerary" ? (
           <ErrorBoundary
@@ -2547,6 +2614,11 @@ export default function App() {
             liveTipsRefreshing={liveTipsRefreshing}
             enrichingTrip={enrichingTrip}
             enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
+            planOutOfDate={planOutOfDate}
+            planChanges={planChanges}
+            onRegenerateTrip={generateTrip}
+            generateLoading={loading}
+            onCancelEnrichment={cancelEnrichment}
             onDismissEnrichmentNotice={() => setEnrichmentNoticeDismissed(true)}
             onRetryEnrichment={retryEnrichment}
             tripUsedFallback={tripUsedFallback}
@@ -2555,6 +2627,7 @@ export default function App() {
             restaurantsByCity={restaurantsByCity}
             weatherByCity={weatherByCity}
             routeOptimized={routeOptimized}
+            optionalStopCards={optionalStopCards}
             departureTime={departureTime}
             activeDayIndex={activeDayIndex}
             highlightedStopId={highlightedStopId}
@@ -2772,6 +2845,8 @@ export default function App() {
                       inQuestionFlow={inQuestionFlow}
                       routeError={routeError}
                       onRetryRoute={retryRouteCalculation}
+                      planOutOfDate={planOutOfDate}
+                      planChanges={planChanges}
                       onGenerateTrip={generateTrip}
                       onCancelGenerate={cancelGenerateTrip}
                       onResetPlan={requestResetPlan}

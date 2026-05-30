@@ -4,12 +4,16 @@ import {
   needsElderlyRest,
   needsYoungChildrenRest,
   getTripBudgetCap,
+  needsRefrigeratedMedStops,
+  needsDialysisServices,
+  needsVetServices,
 } from "./tripAccommodations.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { computeNightDrivingBlocks } from "./tripMapSegments.js";
+import { buildScheduleAlerts } from "./scheduleRestrictions.js";
 
-const MAX_ALERTS = 5;
-const ALERT_PRIORITY = ["budget", "low_fuel", "night", "rest", "medical", "vet", "alert"];
+const MAX_ALERTS = 6;
+const ALERT_PRIORITY = ["budget", "schedule", "low_fuel", "night", "rest", "medical", "vet", "alert"];
 
 function mkAlert(type, title, message, meta = {}) {
   return { id: `alert-${type}-${meta.key || type}`, type, title, message, ...meta };
@@ -115,6 +119,57 @@ export function computeTripAlerts({
     raw.push(mkAlert("budget", "Over budget", `Estimated $${Math.round(budgetTotal)} exceeds your $${cap} limit.`, { mapCategory: "budget" }));
   } else if (cap != null && budgetTotal != null && cap - budgetTotal <= 50) {
     raw.push(mkAlert("budget", "Near budget limit", `About $${Math.round(cap - budgetTotal)} remaining in your $${cap} budget.`, { mapCategory: "budget" }));
+  }
+
+  raw.push(...buildScheduleAlerts({ answers, routeInfo, departureTime }));
+
+  if (needsRefrigeratedMedStops(answers) && stops.length) {
+    const missingPharmacy = stops.filter((stop) => {
+      const services = nearbyServicesByCity[stop.city] || {};
+      const pharmacies = services.pharmacy || [];
+      return !pharmacies.length;
+    });
+    if (missingPharmacy.length) {
+      const cities = missingPharmacy.map(s => s.city).filter(Boolean).slice(0, 3).join(", ");
+      raw.push(mkAlert(
+        "medical",
+        "Pharmacy access needed",
+        cities
+          ? `Some overnight stops (${cities}) may lack nearby pharmacies for refrigerated medication. Plan backup cooling or an alternate stop.`
+          : "Verify pharmacy access at each overnight stop for refrigerated medication.",
+        { mapCategory: "medical" },
+      ));
+    }
+  }
+
+  if (needsDialysisServices(answers) && stops.length) {
+    const missingDialysis = stops.filter((stop) => {
+      const services = nearbyServicesByCity[stop.city] || {};
+      return !(services.dialysis || []).length;
+    });
+    if (missingDialysis.length === stops.length) {
+      raw.push(mkAlert(
+        "medical",
+        "Dialysis centers",
+        "No dialysis centers were found near your overnight stops. Confirm treatment locations before you travel.",
+        { mapCategory: "medical" },
+      ));
+    }
+  }
+
+  if (needsVetServices(answers) && stops.length) {
+    const missingVet = stops.filter((stop) => {
+      const services = nearbyServicesByCity[stop.city] || {};
+      return !(services.vet || []).length;
+    });
+    if (missingVet.length === stops.length) {
+      raw.push(mkAlert(
+        "vet",
+        "Veterinary care",
+        "No veterinary clinics were found near your overnight stops. Locate emergency animal care along your route.",
+        { mapCategory: "vet" },
+      ));
+    }
   }
 
   return consolidateAndCapAlerts(raw);

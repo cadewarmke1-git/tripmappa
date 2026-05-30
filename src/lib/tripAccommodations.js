@@ -32,9 +32,13 @@ export const DIETARY_CHOICES = [
 export const ACCESSIBILITY_CHOICES = [
   "No special needs",
   "Wheelchair accessible stops",
+  "Wheelchair accessible lodging required",
   "Traveling with elderly passengers",
   "Traveling with young children",
   "Service animal accommodations",
+  "Refrigerated medication — pharmacy stops needed",
+  "Dialysis centers along route",
+  "Sick pet — veterinary care needed",
 ];
 
 export const STOPS_INTERESTS_BASE = [
@@ -51,6 +55,7 @@ export const STOPS_INTERESTS_BASE = [
   "Comedy Clubs or Sports Bars",
   "Drive-In Movie Theaters",
   "Antique Shops or Flea Markets",
+  "Prayer facilities",
   "No specific interests",
 ];
 
@@ -81,6 +86,8 @@ export const NEARBY_SERVICE_CATEGORIES = [
   { id: "pharmacy", label: "Pharmacy", type: "pharmacy" },
   { id: "hospital", label: "Hospital", type: "hospital" },
   { id: "urgent_care", label: "Urgent care", keyword: "urgent care" },
+  { id: "dialysis", label: "Dialysis center", keyword: "dialysis center" },
+  { id: "vet", label: "Veterinary care", type: "veterinary_care" },
   { id: "auto_repair", label: "Auto repair", type: "car_repair" },
   { id: "atm", label: "ATM", type: "atm" },
   { id: "car_wash", label: "Car wash", type: "car_wash" },
@@ -134,6 +141,31 @@ export function hasAccessibility(answers, option) {
 
 export function needsWheelchairFilter(answers) {
   return hasAccessibility(answers, "Wheelchair accessible stops");
+}
+
+export function needsWheelchairLodgingFilter(answers) {
+  return hasAccessibility(answers, "Wheelchair accessible lodging required");
+}
+
+export function needsRefrigeratedMedStops(answers) {
+  return hasAccessibility(answers, "Refrigerated medication — pharmacy stops needed");
+}
+
+export function needsDialysisServices(answers) {
+  return hasAccessibility(answers, "Dialysis centers along route");
+}
+
+export function needsVetServices(answers) {
+  return hasAccessibility(answers, "Sick pet — veterinary care needed");
+}
+
+/** Nearby service category ids to fetch based on accessibility selections. */
+export function getActiveServiceCategoryIds(answers) {
+  const ids = ["pharmacy", "hospital", "urgent_care", "auto_repair", "atm", "car_wash", "laundry", "tire", "windshield", "shipping"];
+  if (needsDialysisServices(answers)) ids.push("dialysis");
+  if (needsVetServices(answers)) ids.push("vet");
+  if (needsRefrigeratedMedStops(answers) && !ids.includes("pharmacy")) ids.push("pharmacy");
+  return ids;
 }
 
 export function needsElderlyRest(answers) {

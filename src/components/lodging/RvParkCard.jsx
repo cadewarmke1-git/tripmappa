@@ -1,7 +1,10 @@
 import AmenityBadges from "./AmenityBadges.jsx";
 
 export default function RvParkCard({ park, onSave, onToast }) {
+  const bookLabel = park.fromGooglePlaces ? "View on map" : "View listing (soon)";
+
   function handleReserve() {
+    if (!park.reserveUrl) return;
     window.open(park.reserveUrl, "_blank", "noopener,noreferrer");
   }
 
@@ -43,7 +46,7 @@ export default function RvParkCard({ park, onSave, onToast }) {
 
         <div className="lodging-card-actions">
           <button type="button" className="btn-generate lodging-btn-book" onClick={handleReserve}>
-            Reserve Site
+            {bookLabel}
           </button>
           <button type="button" className="lodging-btn-save" onClick={handleSave}>
             Save

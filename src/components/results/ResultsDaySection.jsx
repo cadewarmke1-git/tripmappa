@@ -98,6 +98,9 @@ export default function ResultsDaySection({
         <span className="results-driving-summary-label">Today&apos;s drive</span>
         {day.drivingSummary?.miles} · {day.drivingSummary?.duration}
       </p>
+      {day.scheduleHint && (
+        <p className="results-schedule-hint" role="note">{day.scheduleHint}</p>
+      )}
 
       {orderedStops.length > 0 && (
         <div className="results-subsection">

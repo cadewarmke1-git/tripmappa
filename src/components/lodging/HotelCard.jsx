@@ -17,8 +17,14 @@ export default function HotelCard({ hotel, onSave, onToast }) {
     : hotel.photo;
 
   function handleBook() {
+    if (!hotel.bookUrl) return;
     window.open(hotel.bookUrl, "_blank", "noopener,noreferrer");
   }
+
+  const bookLabel = hotel.fromGooglePlaces ? "View listing" : "View listing (soon)";
+  const bookTitle = hotel.fromGooglePlaces
+    ? "Opens Google Maps or hotel website"
+    : "Live booking links require Booking.com API (coming soon)";
 
   function handleSave() {
     onSave?.(hotel);
@@ -74,8 +80,8 @@ export default function HotelCard({ hotel, onSave, onToast }) {
         </div>
 
         <div className="lodging-card-actions lodging-card-actions-anchor">
-          <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook}>
-            Book Now
+          <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook} title={bookTitle}>
+            {bookLabel}
           </button>
           <button type="button" className="lodging-btn-save" onClick={handleSave}>
             Save

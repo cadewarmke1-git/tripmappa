@@ -12,6 +12,8 @@ import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
 import EnrichmentNotice from "./EnrichmentNotice.jsx";
 import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
+import StalePlanNotice from "../StalePlanNotice.jsx";
+import TripConstraintsBar from "./TripConstraintsBar.jsx";
 
 export default function TripResultsPanel({
   theme,
@@ -32,10 +34,16 @@ export default function TripResultsPanel({
   liveTipsRefreshing = false,
   enrichingTrip = false,
   enrichmentLimited = false,
+  planOutOfDate = false,
+  planChanges = [],
+  onRegenerateTrip,
+  generateLoading = false,
+  onCancelEnrichment,
   tripUsedFallback = false,
   onDismissEnrichmentNotice,
   onRetryEnrichment,
   isStopAdded,
+  optionalStopCards = [],
   activitiesByCity = {},
   restaurantsByCity = {},
   weatherByCity = {},
@@ -94,10 +102,12 @@ export default function TripResultsPanel({
     roadStops,
     routeInfo,
     departureTime,
+    answers,
+    optionalStopCards,
     activitiesByCity,
     restaurantsByCity,
     recommendations,
-  }), [origin, dest, stops, roadStops, routeInfo, departureTime, activitiesByCity, restaurantsByCity, recommendations]);
+  }), [origin, dest, stops, roadStops, routeInfo, departureTime, answers, optionalStopCards, activitiesByCity, restaurantsByCity, recommendations]);
 
   function scrollToDay(index) {
     onDaySelect?.(index);
@@ -113,7 +123,7 @@ export default function TripResultsPanel({
   }, [highlightedStopId]);
 
   return (
-    <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate`}>
+    <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate${planOutOfDate ? " trip-results-stale" : ""}`}>
       <header className="trip-results-topbar trip-results-topbar-with-logo">
         <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit plan</button>
         <div className="trip-results-topbar-title">Your Trip</div>
@@ -146,7 +156,19 @@ export default function TripResultsPanel({
           </div>
         )}
 
-        <EnrichmentNotice limited={enrichmentLimited} onDismiss={onDismissEnrichmentNotice} onRetry={onRetryEnrichment} />
+        {planOutOfDate && (
+          <StalePlanNotice onRegenerate={onRegenerateTrip} loading={generateLoading} changes={planChanges} />
+        )}
+
+        <TripConstraintsBar answers={answers} routeInfo={routeInfo} />
+
+        <EnrichmentNotice
+          limited={enrichmentLimited}
+          onDismiss={onDismissEnrichmentNotice}
+          onRetry={onRetryEnrichment}
+          enriching={enrichingTrip}
+          onCancel={onCancelEnrichment}
+        />
 
         {!simplified && days.length > 1 && (
           <div className="route-progress-sticky-wrap">

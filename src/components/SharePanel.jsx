@@ -303,8 +303,13 @@ export default function SharePanel({
             <button type="button" className="profile-btn profile-btn-gold" onClick={handleCopyLink}>Copy Link</button>
           </div>
           {!showSmsInput ? (
-            <button type="button" className="live-share-sms-btn" onClick={() => setShowSmsInput(true)}>
-              Send via SMS
+            <button
+              type="button"
+              className="live-share-sms-btn live-share-sms-btn-disabled"
+              disabled
+              title="SMS sharing requires Twilio setup (coming soon)"
+            >
+              Send via SMS (soon)
             </button>
           ) : (
             <div className="live-share-sms-row">
@@ -389,7 +394,7 @@ export default function SharePanel({
         </button>
       )}
 
-      {sharing && <SosButton onConfirm={handleSos} className="live-sos-share-panel" />}
+      {sharing && <SosButton onConfirm={handleSos} className="live-sos-share-panel" comingSoon />}
 
       {hasTrip && onShareSafetyTrip && (
         <div className="share-safety-block">

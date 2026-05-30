@@ -152,6 +152,8 @@ function buildTripContext(reqBody) {
     towing: answers.towing,
     loyalty: answers.loyalty_program,
     foodAllergies: answers.food_allergies,
+    scheduleRestrictions: Array.isArray(answers.schedule_restrictions) ? answers.schedule_restrictions : [],
+    scheduleDriveHours: answers.schedule_drive_hours,
     continuousDrive:
       answers.continuous_drive === true
       || answers.overnight_preference === "Drive straight through"
@@ -238,8 +240,11 @@ function buildContextBlock(ctx) {
   if (ctx.accessibility.length) lines.push(`Accessibility: ${ctx.accessibility.join(", ")}`);
   if (ctx.stopsInterests.length) lines.push(`Stop interests: ${ctx.stopsInterests.join(", ")}`);
   if (ctx.tripBudget && ctx.tripBudget !== "No budget limit") lines.push(`Total trip budget cap: ${ctx.tripBudget}`);
-  if (ctx.towing && ctx.towing !== "No") lines.push(`Towing: ${ctx.towing}`);
+  if (ctx.towing && ctx.towing !== "No") lines.push(`Towing: ${ctx.towing} — favor routes with trailer parking and avoid tight turns where possible`);
   if (ctx.loyalty && ctx.loyalty !== "No preference") lines.push(`Hotel loyalty: ${ctx.loyalty}`);
+  if (ctx.scheduleRestrictions.length) {
+    lines.push(`Schedule restrictions: ${ctx.scheduleRestrictions.join(", ")}${ctx.scheduleDriveHours ? ` · preferred hours: ${ctx.scheduleDriveHours}` : ""}`);
+  }
   return lines.join("\n");
 }
 
@@ -272,6 +277,17 @@ Couple: recommend romantic scenic stops, vineyard or winery detours only if genu
     block += `
 Scenic route preference active — name the specific scenic byway or highway for this corridor (e.g. Route 66 vs I-40, Highway 1 vs I-5) with real towns and stops along that byway.`;
   }
+
+  if (ctx.towing && ctx.towing !== "No") {
+    block += `
+Towing (${ctx.towing}): recommend pull-through fuel lanes and stops with trailer parking; avoid tight downtown areas; note low-clearance or sharp-turn risk at each major stop; space stops closer than a non-towing trip.`;
+  }
+
+  if (/electric|tesla|ev/i.test(ctx.fuel)) {
+    block += `
+Electric vehicle: space charging stops within safe range; ${/tesla/i.test(ctx.fuel) ? "Tesla Supercharger network only when specified." : "include Level 3 DC fast charging where available from placesContext EV list."}`;
+  }
+
   return block;
 }
 
@@ -343,21 +359,52 @@ function buildUniversalRules(ctx, placesContextPrompt) {
   const maxDay = ctx.tripCategory === "commercial" ? "11 hours for commercial vehicles" : maxDayPersonal;
 
   const lodgingRules = ctx.continuousDrive
-    ? "NO OVERNIGHT STOPS: User chose continuous drive — return an empty stops array. Do not recommend hotels or lodging."
+    ? "NO OVERNIGHT STOPS: User chose continuous drive — return an empty stops array. Do not recommend hotels or lodging. Space fuel and rest road_stops across the full drive."
     : `HOTELS: Every hotel must be in the correct overnight stop city on this route — never a city off the corridor. At each overnight stop provide at least 3 lodging options sorted by lodging preference (${ctx.lodging}): budget / mid-range / luxury as applicable.
 RESTAURANTS: At each overnight stop include at least 2 restaurants — one sit-down and one fast food or quick option — in that same stop city.
 SPACING: Space overnight stops evenly; no single driving day exceeds ${maxDay}.`;
 
+  let scheduleRules = "";
+  if (ctx.scheduleRestrictions?.length) {
+    scheduleRules = `\nSCHEDULE RESTRICTIONS (mandatory):
+${ctx.scheduleRestrictions.join("; ")}${ctx.scheduleDriveHours ? `\nPreferred driving hours: ${ctx.scheduleDriveHours}` : ""}
+- Adjust driving day boundaries so restricted days have no driving segments.
+- Place overnight stops BEFORE a restricted day begins when needed.`;
+  }
+
+  let dietaryRules = "";
+  if (ctx.dietary?.length) {
+    dietaryRules = `\nDIETARY (mandatory for restaurant picks): ${ctx.dietary.join(", ")}${ctx.foodAllergies ? ` — allergy: ${ctx.foodAllergies}` : ""}
+- Only recommend restaurants that match these dietary needs at each stop city.`;
+  }
+
+  let medicalRules = "";
+  const med = ctx.accessibility || [];
+  if (med.some(a => /pharmacy|refrigerated/i.test(a))) {
+    medicalRules += "\n- Flag pharmacy access at overnight stops for refrigerated medication.";
+  }
+  if (med.some(a => /dialysis/i.test(a))) {
+    medicalRules += "\n- Note dialysis center access within 10 miles of each overnight stop.";
+  }
+  if (med.some(a => /pet|veterinary|sick pet/i.test(a))) {
+    medicalRules += "\n- Note veterinary or emergency animal hospital access near overnight stops.";
+  }
+  if (med.some(a => /wheelchair.*lodging/i.test(a))) {
+    medicalRules += "\n- Lodging must be wheelchair accessible with roll-in showers where possible.";
+  }
+
   return `
 === UNIVERSAL RULES (every trip) ===
 ${placesContextPrompt || ""}
-PLACES DATA RULE: For road_stops and named businesses, use ONLY verified names from placesContext in this request. Never invent business names. If placesContext has no match, use stop city and category only.
+PLACES DATA RULE: For road_stops and named businesses, use ONLY verified names from placesContext in this request. Never invent business names. If placesContext has no match, use stop city and category only — do NOT fabricate a brand name.
 CORRIDOR RULE: Every stop must be a real place along the driving corridor between ${ctx.routeOrigin} and ${ctx.routeDestination}, within 10 miles of the highway — no significant detours.
 CITY FORMAT: Every stop city as "City, ST" (full city name and two-letter state).
-${lodgingRules}
+${lodgingRules}${scheduleRules}${dietaryRules}${medicalRules}
+BUDGET: ${ctx.tripBudget && ctx.tripBudget !== "No budget limit" ? `Keep total estimated trip cost under ${ctx.tripBudget} — favor budget-appropriate stops and lodging.` : "No hard budget cap."}
 TIPS: Include tips array with 5–8 genuinely useful tips specific to THIS route and vehicle — not generic advice (e.g. name a specific weigh station mile marker on I-40, not "check tire pressure"). Include one regional food culture tip unique to this corridor. End tips with one vehicle-specific preparation tip (DOT inspection for truckers, tire/propane for RV, tire/chain/weather for motorcycle, road-trip kit for families).
 ROAD CONDITIONS: Include road_condition_warnings array for mountain passes, desert heat, winter weather, or construction zones actually relevant to this specific route.
-ORDER: Stops must progress geographically from origin toward destination; distance and eta fields must increase logically.`;
+ORDER: Stops must progress geographically from origin toward destination; distance and eta fields must increase logically.
+ANTI-HALLUCINATION: If uncertain whether a business exists, output the city and category without a business name.`;
 }
 
 function buildLodgingRules(lodging) {
@@ -503,7 +550,7 @@ function buildJsonSchema(ctx, isSimplified) {
 }`;
 }
 
-function buildUserPrompt(ctx, placesContextPrompt, isSimplified) {
+function buildUserPrompt(ctx, placesContextPrompt, isSimplified, generationHints = "") {
   let vehicleBlock;
   switch (ctx.tripCategory) {
     case "commercial":
@@ -537,6 +584,7 @@ function buildUserPrompt(ctx, placesContextPrompt, isSimplified) {
 ${vehicleBlock}
 
 ${buildUniversalRules(ctx, placesContextPrompt)}
+${generationHints ? `\n${generationHints}\n` : ""}
 
 Lodging tier for this trip: ${ctx.continuousDrive ? "No overnight stay — continuous drive mode" : buildLodgingRules(ctx.lodging)}
 ${extras.length ? `Additional preference notes:\n${extras.map(e => `- ${e}`).join("\n")}` : ""}
@@ -573,7 +621,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const { origin, destination, answers, routeInfo, legs, model = "claude-sonnet-4-20250514", placesContextPrompt = "" } = req.body;
+  const { origin, destination, answers, routeInfo, legs, model = "claude-sonnet-4-20250514", placesContextPrompt = "", generationHints = "" } = req.body;
 
   if (!origin || !destination) {
     return res.status(400).json({ error: "Missing origin or destination" });
@@ -597,7 +645,7 @@ export default async function handler(req, res) {
     ctx.tripCategory === "water" ||
     ctx.tripCategory === "plane";
 
-  const userPrompt = buildUserPrompt(ctx, placesContextPrompt, isSimplifiedFormat);
+  const userPrompt = buildUserPrompt(ctx, placesContextPrompt, isSimplifiedFormat, generationHints);
   const maxTokens =
     ctx.tripCategory === "commercial" || ctx.tripCategory === "rv" ? 4096 : isSimplifiedFormat ? 1800 : 3200;
 

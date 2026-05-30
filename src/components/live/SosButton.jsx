@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SosButton({ onConfirm, className = "" }) {
+export default function SosButton({ onConfirm, className = "", comingSoon = false }) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -18,17 +18,18 @@ export default function SosButton({ onConfirm, className = "" }) {
     <>
       <button
         type="button"
-        className={`live-sos-btn${className ? ` ${className}` : ""}`}
-        onClick={() => setOpen(true)}
-        aria-label="Emergency SOS"
-        title="Emergency SOS"
+        className={`live-sos-btn${comingSoon ? " live-sos-btn-disabled" : ""}${className ? ` ${className}` : ""}`}
+        onClick={() => !comingSoon && setOpen(true)}
+        disabled={comingSoon}
+        aria-label={comingSoon ? "Emergency SMS coming soon" : "Emergency SOS"}
+        title={comingSoon ? "Emergency SMS requires Twilio setup (coming soon)" : "Emergency SOS"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z" stroke="currentColor" strokeWidth="1.6" fill="rgba(248,113,113,0.15)"/>
         </svg>
-        SOS
+        {comingSoon ? "SOS (soon)" : "SOS"}
       </button>
-      {open && (
+      {open && !comingSoon && (
         <div className="live-sos-dialog-overlay" onClick={() => !sending && setOpen(false)} role="presentation">
           <div className="live-sos-dialog" onClick={e => e.stopPropagation()} role="dialog" aria-labelledby="sos-title">
             <h3 id="sos-title" className="live-sos-dialog-title">Send emergency alert?</h3>

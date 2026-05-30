@@ -4,6 +4,7 @@ import { parseRating, isLocalFavorite } from "./ratings.js";
 import { skipLodgingQuestion, getEffectiveVehicle } from "./vehicles.js";
 import { isContinuousDrive } from "./driveMode.js";
 import { dedupeRoadStops } from "./placesDedup.js";
+import { scheduleHintForDay } from "./scheduleRestrictions.js";
 
 export function isSimplifiedTrip({ answers, routeInfo, stops = [], tripFormat }) {
   if (isContinuousDrive(answers)) return true;
@@ -103,6 +104,7 @@ export function buildItineraryDays({
   roadStops = [],
   routeInfo,
   departureTime = null,
+  answers = {},
   optionalStopCards = [],
   activitiesByCity = {},
   restaurantsByCity = {},
@@ -124,6 +126,7 @@ export function buildItineraryDays({
       dayNumber: 1,
       label: "Day 1",
       date: formatDayDate(dep),
+      scheduleHint: scheduleHintForDay(answers, dep, 0),
       drivingSummary: dayDrivingSummary(0, 1, routeInfo),
       roadStops: roadItems,
       overnight: null,
@@ -143,6 +146,7 @@ export function buildItineraryDays({
       dayNumber: dayIdx + 1,
       label: `Day ${dayIdx + 1}`,
       date: formatDayDate(addDays(dep, dayIdx)),
+      scheduleHint: scheduleHintForDay(answers, dep, dayIdx),
       drivingSummary: dayDrivingSummary(dayIdx, overnightStops.length, routeInfo),
       roadStops: roadItems,
       overnight: {

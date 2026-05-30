@@ -1,10 +1,18 @@
 /** Pre-Sonnet corridor Places prefetch — anti-hallucination context for plan-trip. */
 import { sampleRoutePointsEveryMiles, routePointAtFraction } from "./fuel.js";
-import { searchGasStations } from "./placesStations.js";
-import { geocodeCity, searchRestaurants, searchLodging, searchNearbyCategory, RADIUS_2MI } from "./placesSearch.js";
+import { searchGasStations, searchEvChargingStations } from "./placesStations.js";
+import { geocodeCity, searchRestaurants, searchLodging, searchNearbyCategory, RADIUS_2MI, RADIUS_10MI } from "./placesSearch.js";
 import { applyStopFilters } from "./placesFilters.js";
-import { asArray } from "./tripAccommodations.js";
+import {
+  asArray,
+  isTeslaSuperchargerOnly,
+  needsDialysisServices,
+  needsRefrigeratedMedStops,
+  needsVetServices,
+} from "./tripAccommodations.js";
 import { parseMilesFromDistance } from "./parsing.js";
+import { estimateOvernightStops } from "./budget.js";
+import { parseHoursFromDuration } from "./parsing.js";
 
 const CORRIDOR_RADIUS_M = 1609; // 1 mile
 const SAMPLE_INTERVAL_MI = 30;
@@ -21,11 +29,40 @@ function compactPlace(p) {
   };
 }
 
+function isEvTrip(answers) {
+  const ft = answers?.fuel_type || answers?.fuel || "";
+  return /electric|ev|tesla/i.test(ft);
+}
+
 export function buildRouteBoundary(routeInfo) {
   if (!routeInfo?.routePoints?.length) return { samples: [], totalMiles: 0 };
   const samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, SAMPLE_INTERVAL_MI);
   const totalMiles = parseMilesFromDistance(routeInfo.distance);
   return { samples, totalMiles, intervalMiles: SAMPLE_INTERVAL_MI };
+}
+
+function estimateOvernightCityCount(routeInfo, answers) {
+  const hours = parseHoursFromDuration(routeInfo?.duration);
+  const nights = estimateOvernightStops(hours, answers?.trip_type, answers?.lodging);
+  const corridorCities = routeInfo?.citiesAlongRoute?.length || 0;
+  return Math.max(1, Math.min(5, nights || corridorCities || 2));
+}
+
+async function fetchMedicalAtPoint(lat, lng, answers) {
+  const out = {};
+  if (needsRefrigeratedMedStops(answers)) {
+    const pharmacies = await searchNearbyCategory(lat, lng, { type: "pharmacy", radius: RADIUS_10MI, maxResults: 3 });
+    if (pharmacies.length) out.pharmacies = pharmacies.map(compactPlace);
+  }
+  if (needsDialysisServices(answers)) {
+    const dialysis = await searchNearbyCategory(lat, lng, { keyword: "dialysis center", radius: RADIUS_10MI, maxResults: 3 });
+    if (dialysis.length) out.dialysis = dialysis.map(compactPlace);
+  }
+  if (needsVetServices(answers)) {
+    const vet = await searchNearbyCategory(lat, lng, { type: "veterinary_care", radius: RADIUS_10MI, maxResults: 3 });
+    if (vet.length) out.veterinary = vet.map(compactPlace);
+  }
+  return out;
 }
 
 export async function buildPlacesContext(answers, routeInfo) {
@@ -36,12 +73,23 @@ export async function buildPlacesContext(answers, routeInfo) {
   const boundary = buildRouteBoundary(routeInfo);
   const points = boundary.samples;
   const corridor = [];
+  const evTrip = isEvTrip(answers);
+  const teslaOnly = isTeslaSuperchargerOnly(answers);
 
   for (const pt of points) {
     if (pt.lat == null) continue;
     let gas = await searchGasStations(pt.lat, pt.lng, 8, CORRIDOR_RADIUS_M);
     gas = applyStopFilters(gas.map(g => ({ ...g, distanceMiles: g.distanceMiles })), answers);
     gas = gas.filter(g => (g.distanceMiles ?? 99) <= 1).slice(0, 3);
+
+    let evStations = [];
+    if (evTrip) {
+      evStations = await searchEvChargingStations(pt.lat, pt.lng, 8, CORRIDOR_RADIUS_M);
+      if (teslaOnly) {
+        evStations = evStations.filter(s => /tesla|supercharger/i.test(`${s.name || ""} ${s.address || ""}`));
+      }
+      evStations = evStations.filter(s => (s.distanceMiles ?? 99) <= 1).slice(0, 3);
+    }
 
     let restaurants = await searchRestaurants(pt.lat, pt.lng, answers);
     restaurants = applyStopFilters(restaurants, answers)
@@ -52,6 +100,7 @@ export async function buildPlacesContext(answers, routeInfo) {
       lat: pt.lat,
       lng: pt.lng,
       gasStations: gas.map(compactPlace),
+      evStations: evStations.map(compactPlace),
       restaurants: restaurants.map(r => ({
         ...compactPlace(r),
         isDetour: r.isDetour || false,
@@ -60,7 +109,7 @@ export async function buildPlacesContext(answers, routeInfo) {
   }
 
   const cities = [];
-  const overnightCount = Math.max(1, (routeInfo.citiesAlongRoute || []).length > 0 ? 3 : 1);
+  const overnightCount = estimateOvernightCityCount(routeInfo, answers);
   for (let i = 0; i < overnightCount; i++) {
     const frac = (i + 1) / (overnightCount + 1);
     const pt = routePointAtFraction(routeInfo.routePoints, frac);
@@ -68,11 +117,13 @@ export async function buildPlacesContext(answers, routeInfo) {
     let lodging = await searchLodging(pt.lat, pt.lng, answers, routeInfo);
     lodging = lodging.filter(h => (h.distanceMiles ?? 99) <= 1).slice(0, 4);
     const cityName = routeInfo.citiesAlongRoute?.[Math.min(i, (routeInfo.citiesAlongRoute.length - 1))] || `Route mile ~${Math.round(frac * (boundary.totalMiles || 0))}`;
+    const medical = await fetchMedicalAtPoint(pt.lat, pt.lng, answers);
     cities.push({
       city: cityName,
       lat: pt.lat,
       lng: pt.lng,
       hotels: lodging.map(compactPlace),
+      medical,
     });
   }
 
@@ -84,9 +135,21 @@ export async function buildPlacesContext(answers, routeInfo) {
         radius: RADIUS_2MI,
         maxResults: 3,
       });
-      const filtered = parks.filter(p => (p.distanceMiles ?? 99) <= 1);
+      const filtered = parks.filter(p => (p.distanceMiles ?? 99) <= 2);
       const last = corridor.find(c => c.lat === pt.lat && c.lng === pt.lng);
       if (last) last.playgrounds = filtered.map(compactPlace);
+    }
+  }
+
+  if (interests.some(i => /prayer/i.test(i))) {
+    for (const pt of points.slice(0, Math.min(4, points.length))) {
+      const prayer = await searchNearbyCategory(pt.lat, pt.lng, {
+        keyword: "mosque church temple synagogue",
+        radius: RADIUS_2MI,
+        maxResults: 2,
+      });
+      const last = corridor.find(c => c.lat === pt.lat && c.lng === pt.lng);
+      if (last) last.prayerFacilities = prayer.map(compactPlace);
     }
   }
 
@@ -123,13 +186,19 @@ export function formatPlacesContextForPrompt(ctx) {
   lines.push("\nVERIFIED PLACES CONTEXT (use ONLY these real business names when suggesting stops in matching areas):");
   ctx.corridor?.forEach((seg, i) => {
     lines.push(`Corridor sample ${i + 1} @ ${seg.lat?.toFixed(4)}, ${seg.lng?.toFixed(4)}:`);
-    if (seg.gasStations?.length) lines.push(`  Gas: ${seg.gasStations.map(g => g.name).join(", ")}`);
-    if (seg.restaurants?.length) lines.push(`  Restaurants: ${seg.restaurants.map(r => r.name).join(", ")}`);
+    if (seg.gasStations?.length) lines.push(`  Gas: ${seg.gasStations.map(g => `${g.name}${g.rating ? ` (${g.rating}★)` : ""}`).join(", ")}`);
+    if (seg.evStations?.length) lines.push(`  EV charging: ${seg.evStations.map(e => e.name).join(", ")}`);
+    if (seg.restaurants?.length) lines.push(`  Restaurants: ${seg.restaurants.map(r => `${r.name}${r.rating ? ` (${r.rating}★)` : ""}`).join(", ")}`);
     if (seg.playgrounds?.length) lines.push(`  Parks/playgrounds: ${seg.playgrounds.map(p => p.name).join(", ")}`);
+    if (seg.prayerFacilities?.length) lines.push(`  Prayer facilities: ${seg.prayerFacilities.map(p => p.name).join(", ")}`);
   });
   ctx.cities?.forEach(c => {
-    if (c.hotels?.length) lines.push(`${c.city} hotels (on-route GPS): ${c.hotels.map(h => h.name).join(", ")}`);
+    if (c.hotels?.length) lines.push(`${c.city} hotels (on-route GPS): ${c.hotels.map(h => `${h.name}${h.rating ? ` (${h.rating}★)` : ""}`).join(", ")}`);
+    if (c.medical?.pharmacies?.length) lines.push(`${c.city} pharmacies: ${c.medical.pharmacies.map(p => p.name).join(", ")}`);
+    if (c.medical?.dialysis?.length) lines.push(`${c.city} dialysis: ${c.medical.dialysis.map(d => d.name).join(", ")}`);
+    if (c.medical?.veterinary?.length) lines.push(`${c.city} vet care: ${c.medical.veterinary.map(v => v.name).join(", ")}`);
   });
   lines.push("- Do NOT invent business names when a verified name exists above for that corridor segment.");
+  lines.push("- Mark each road_stop you derive from this list with \"fromLlm\": true only when you add narrative beyond these names; prefer copying verified names exactly.");
   return lines.join("\n");
 }

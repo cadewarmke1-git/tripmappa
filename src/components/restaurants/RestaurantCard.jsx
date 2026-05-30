@@ -19,11 +19,6 @@ export default function RestaurantCard({ restaurant, onToast }) {
     if (directionsUrl) window.open(directionsUrl, "_blank", "noopener,noreferrer");
   }
 
-  function handleReserve(e) {
-    e.stopPropagation();
-    onToast?.("Reservations coming soon");
-  }
-
   return (
     <article className="restaurant-card">
       <div className="restaurant-card-photo-wrap">
@@ -66,8 +61,8 @@ export default function RestaurantCard({ restaurant, onToast }) {
           <button type="button" className="restaurant-btn-directions" onClick={handleDirections}>
             Directions
           </button>
-          <button type="button" className="restaurant-btn-reserve" onClick={handleReserve}>
-            Reserve
+          <button type="button" className="restaurant-btn-reserve restaurant-btn-coming-soon" disabled title="OpenTable reservations coming in a future update">
+            Reserve (soon)
           </button>
         </div>
       </div>

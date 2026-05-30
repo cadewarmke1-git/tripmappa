@@ -132,6 +132,7 @@ export default function QuestionChoices({
       dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
       stops_interests: Array.isArray(draft.stops_interests) ? draft.stops_interests : [],
       accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
+      schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
       trip_budget: draft.trip_budget || "No budget limit",
     });
   }
@@ -141,6 +142,7 @@ export default function QuestionChoices({
       dietary: [],
       stops_interests: [],
       accessibility: [],
+      schedule_restrictions: [],
       trip_budget: "No budget limit",
     });
   }
@@ -425,10 +427,20 @@ export default function QuestionChoices({
 
       {currentQ.type === "multiselect" && (
         <div className="pref-actions-row">
-          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])])}>
+          {currentQ.id === "multi_vehicles" && multiDraft.length === 0 && (
+            <p className="question-inline-hint">Select at least one vehicle, or tap Back to choose a different trip type.</p>
+          )}
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)}
+            onClick={() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])])}
+          >
             Continue
           </button>
-          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
+          {currentQ.id !== "multi_vehicles" && (
+            <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
+          )}
         </div>
       )}
 
@@ -489,6 +501,16 @@ export default function QuestionChoices({
                 className="convo-nav-btn"
                 disabled={frozen}
                 onClick={() => pickInstant("None specified")}
+              >
+                Skip
+              </button>
+            )}
+            {currentQ.id === "schedule_drive_hours" && (
+              <button
+                type="button"
+                className="convo-nav-btn"
+                disabled={frozen}
+                onClick={() => pickInstant("Any reasonable hours")}
               >
                 Skip
               </button>

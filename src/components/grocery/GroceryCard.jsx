@@ -373,6 +373,9 @@ function GroceryCardActive({
 
   return (
     <div className="grocery-card">
+      <div className="grocery-api-preview-notice" role="note">
+        Grocery UI preview — live Instacart delivery connects when the partner API key is configured.
+      </div>
       <div className="grocery-card-header">
         <h3 className="grocery-card-title">Grocery delivery</h3>
         <p className="grocery-card-subtitle">

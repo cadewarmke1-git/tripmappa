@@ -10,8 +10,9 @@ import { computeTripAlerts } from "./tripAlerts.js";
 import { stopsToMapMarkers } from "./mapMarkers.js";
 import {
   asArray,
-  NEARBY_SERVICE_CATEGORIES,
   getTripBudgetCap,
+  getActiveServiceCategoryIds,
+  NEARBY_SERVICE_CATEGORIES,
 } from "./tripAccommodations.js";
 import {
   buildFuelIntervalPoints,
@@ -31,21 +32,22 @@ import { isContinuousDrive } from "./driveMode.js";
 
 import { dedupePlaces, dedupeRoadStops } from "./placesDedup.js";
 
-const BASE_SERVICE_IDS = [
-  "pharmacy", "hospital", "urgent_care", "auto_repair", "atm",
-  "car_wash", "laundry", "tire", "windshield", "shipping",
-];
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+}
 
 function interestToMarkerCategory(interest) {
   if (/playground|park/i.test(interest)) return "playground";
   if (/music|comedy|drive-in|antique|flea|sports bar/i.test(interest)) return "entertainment";
   if (/wifi|remote work/i.test(interest)) return "wifi";
   if (/kid friendly/i.test(interest)) return "playground";
+  if (/prayer/i.test(interest)) return "religious";
   return "poi";
 }
 
-function serviceCategoriesForAnswers() {
-  return BASE_SERVICE_IDS
+function serviceCategoriesForAnswers(answers) {
+  const ids = getActiveServiceCategoryIds(answers);
+  return ids
     .map(id => NEARBY_SERVICE_CATEGORIES.find(c => c.id === id))
     .filter(Boolean);
 }
@@ -109,7 +111,9 @@ export async function enrichGeneratedTrip({
   origin = null,
   destination = null,
   mapsReady = true,
+  signal = null,
 }) {
+  throwIfAborted(signal);
   const continuousDrive = isContinuousDrive(answers);
   const nearbyServicesByCity = {};
   const activitiesByCity = {};
@@ -159,10 +163,11 @@ export async function enrichGeneratedTrip({
   const interests = mapsReady
     ? asArray(answers?.stops_interests).filter(i => i !== "No specific interests")
     : [];
-  const serviceCats = mapsReady ? serviceCategoriesForAnswers() : [];
+  const serviceCats = mapsReady ? serviceCategoriesForAnswers(answers) : [];
   const wantsPlaygrounds = mapsReady && interests.some(i => /playground|park/i.test(i));
 
   for (const stop of enrichedStops) {
+    throwIfAborted(signal);
     if (!stop.city) continue;
     const geo = await resolveStopGeo(stop, mapsReady);
     if (!geo) continue;
@@ -196,7 +201,9 @@ export async function enrichGeneratedTrip({
       Object.entries(nearbyServicesByCity[stop.city] || {}).forEach(([key, items]) => {
         items?.forEach(item => {
           if (item.lat == null || item.lng == null) return;
-          const cat = key === "hospital" || key === "pharmacy" ? "medical" : null;
+          let cat = null;
+          if (key === "hospital" || key === "pharmacy" || key === "urgent_care" || key === "dialysis") cat = "medical";
+          if (key === "vet") cat = "vet";
           if (!cat) return;
           poiMarkers.push({
             id: `svc-${key}-${item.id}`,

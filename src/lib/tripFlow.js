@@ -26,6 +26,7 @@ import {
   needsTowingQuestion,
   isTowingSelected,
 } from "./tripAccommodations.js";
+import { SCHEDULE_CHOICES, needsScheduleHoursDetail } from "./scheduleRestrictions.js";
 
 export { MULTI_VEHICLE_TRIP };
 
@@ -39,7 +40,7 @@ export { isContinuousDrive, requiresMultipleDays } from "./driveMode.js";
 export const FLOW_QUESTION_IDS = [
   "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
   "overnight_preference", "lodging", "loyalty_program", "dietary", "food_allergies", "accessibility",
-  "stops_interests", "trip_budget", "preferences",
+  "stops_interests", "trip_budget", "schedule_restrictions", "schedule_drive_hours", "preferences",
   "hauling_type", "sleeper_cab", "truck_stop_brand", "route_restrictions", "coordination_needs",
 ];
 
@@ -130,7 +131,7 @@ const ROUTE_QUESTION_IDS = new Set([
   "route_restrictions", "coordination_needs",
 ]);
 const DETAILS_QUESTION_IDS = new Set([
-  "trip_details", "food_and_stops", "food_allergies", "accessibility", "trip_budget",
+  "trip_details", "food_and_stops", "food_allergies", "schedule_drive_hours", "accessibility", "trip_budget",
 ]);
 
 export function getFlowPhaseId(questionId, convoComplete = false) {
@@ -152,6 +153,9 @@ export function formatFlowAnswer(question, answer) {
       const items = payload[key];
       if (Array.isArray(items) && items.length) parts.push(...items.slice(0, 2));
     });
+    if (Array.isArray(payload.schedule_restrictions) && payload.schedule_restrictions.length) {
+      parts.push(...payload.schedule_restrictions.slice(0, 1));
+    }
     if (payload.trip_budget) parts.push(payload.trip_budget);
     return parts.length ? parts.slice(0, 3).join(", ") : "Defaults";
   }
@@ -245,6 +249,14 @@ const FOOD_ALLERGIES_QUESTION = {
   placeholder: "e.g. peanuts, shellfish, dairy…",
 };
 
+const SCHEDULE_DRIVE_HOURS_QUESTION = {
+  id: "schedule_drive_hours",
+  ask: "When do you prefer to drive?",
+  hint: "Example: weekdays 8 AM–6 PM only, or no driving after 8 PM.",
+  type: "text",
+  placeholder: "e.g. weekdays 8 AM to 6 PM only",
+};
+
 const ACCESSIBILITY_QUESTION = {
   id: "accessibility",
   ask: "Any accessibility needs?",
@@ -298,7 +310,8 @@ function buildTripDetailsQuestion(answers) {
     sections: [
       { id: "dietary", label: "Food", choices: DIETARY_CHOICES },
       { id: "stops_interests", label: "Fun stops", choices: getStopsInterestsChoices(answers) },
-      { id: "accessibility", label: "Accessibility", choices: ACCESSIBILITY_CHOICES },
+      { id: "accessibility", label: "Accessibility & medical", choices: ACCESSIBILITY_CHOICES },
+      { id: "schedule_restrictions", label: "Schedule", choices: SCHEDULE_CHOICES },
     ],
     budgetChoices: TRIP_BUDGET_CHOICES,
   };
@@ -335,6 +348,7 @@ function isTripDetailsAnswered(answers) {
   return isAnswered("dietary", answers)
     && isAnswered("stops_interests", answers)
     && isAnswered("accessibility", answers)
+    && isAnswered("schedule_restrictions", answers)
     && isAnswered("trip_budget", answers);
 }
 
@@ -413,6 +427,9 @@ function getNextTailQuestions(answers) {
   if (!isTripDetailsAnswered(answers)) return { done: false, ...buildTripDetailsQuestion(answers) };
   if (needsFoodAllergyDetail(answers) && !isAnswered("food_allergies", answers)) {
     return { done: false, ...FOOD_ALLERGIES_QUESTION };
+  }
+  if (needsScheduleHoursDetail(answers) && !isAnswered("schedule_drive_hours", answers)) {
+    return { done: false, ...SCHEDULE_DRIVE_HOURS_QUESTION };
   }
   return null;
 }
@@ -506,7 +523,7 @@ export function normalizeTripAnswers(answers, context = {}, options = {}) {
   if (miles != null) out.trip_type = miles < DAY_TRIP_MILES ? "Day trip" : (out.trip_type || "Road trip");
   else if (!out.trip_type) out.trip_type = "Road trip";
 
-  ["preferences", "dietary", "accessibility", "stops_interests", "route_restrictions", "coordination_needs"].forEach(k => {
+  ["preferences", "dietary", "accessibility", "stops_interests", "route_restrictions", "coordination_needs", "schedule_restrictions"].forEach(k => {
     if (out[k] == null) return;
     if (!Array.isArray(out[k])) out[k] = [out[k]];
   });
@@ -540,7 +557,7 @@ export function normalizeTripAnswers(answers, context = {}, options = {}) {
   if (isWaterVehicle(vehicle)) out.trip_type = "Ferry or Cruise";
 
   if (options.forGeneration) {
-    ["preferences", "dietary", "accessibility", "stops_interests", "route_restrictions", "coordination_needs"].forEach(k => {
+    ["preferences", "dietary", "accessibility", "stops_interests", "route_restrictions", "coordination_needs", "schedule_restrictions"].forEach(k => {
       if (!Array.isArray(out[k])) out[k] = out[k] ? [out[k]] : [];
     });
   }
@@ -679,6 +696,9 @@ export function pruneStaleBranchAnswers(answers, context = {}) {
   }
   if (Array.isArray(out.multi_vehicles) && out.primary_vehicle && !out.multi_vehicles.includes(out.primary_vehicle)) {
     delete out.primary_vehicle;
+  }
+  if (!needsScheduleHoursDetail(out)) {
+    delete out.schedule_drive_hours;
   }
 
   return normalizeTripAnswers(out, context);

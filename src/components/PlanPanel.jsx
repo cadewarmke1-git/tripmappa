@@ -7,6 +7,7 @@ import QuestionProgress from "./QuestionProgress.jsx";
 import QuestionThread from "./QuestionThread.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
+import StalePlanNotice from "./StalePlanNotice.jsx";
 
 export default function PlanPanel({
   qIndex,
@@ -28,6 +29,8 @@ export default function PlanPanel({
   inQuestionFlow = false,
   routeError = null,
   onRetryRoute,
+  planOutOfDate = false,
+  planChanges = [],
   roadStops,
   selectedLodging,
   restaurantsByCity = {},
@@ -98,6 +101,10 @@ export default function PlanPanel({
           <div className="plan-saved-note">
             Editing your trip — answers are kept until you regenerate. Start over clears everything.
           </div>
+        )}
+
+        {planOutOfDate && (
+          <StalePlanNotice onRegenerate={onGenerateTrip} loading={loading} changes={planChanges} />
         )}
 
         <div className="convo-scroll" ref={convoScrollRef}>

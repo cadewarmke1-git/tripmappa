@@ -9,21 +9,25 @@ This document is the single source of truth for project status, upcoming work, a
 
 ## Current Status
 
-**Phases 1–2 are complete.** The app is live with real map routing, a deterministic 5-question planning flow, trucker/RV/family features, a budget card, and a full modular refactor.
+**Phases 1–2 are complete.** The app is live with real map routing, a deterministic planning flow, trucker/RV/family features, a budget card, and a full modular refactor.
 
-**Current period:** Pre–Phase 3 polish. UI fixes applied and committed:
+**Human-thought / recovery layer (no external APIs): complete.** Credits charge only on success, fallback trips are labeled, route failures unblock the flow, stale answers prune on branch changes, map add/remove trip works, generation and enrichment can be cancelled, edit-plan stale banners prompt regenerate, dietary/safe-stops/medical/schedule/wheelchair lodging preferences feed Places and alerts, and placeholder Reserve/SMS/booking buttons are honestly labeled.
 
-| Fix | Location |
+**Current period:** Pre–external-API polish. Lodging cards use Google Places; live Booking.com, OpenTable, Twilio SMS, and GasBuddy pricing await API keys (Phases 3–9 in roadmap below).
+
+| Recent human-thought fixes | Location |
 |-----|----------|
-| Hero dark gradient (replaces photo slideshow) | `src/components/HeroView.jsx` |
-| Swap button centered on desktop + SVG icon | `src/components/HeroView.jsx`, `src/styles/tripmappa.css` |
-| Mobile swap icon (no emoji fallback) | `src/components/HeroView.jsx`, `src/styles/tripmappa.css` |
-| "Leave now" dropdown opens to the right | `src/components/RouteFooter.jsx` |
-| Apple Maps–style dark map styles in night theme | `src/components/AppMap.jsx`, `src/App.jsx` |
-| Removed "5 quick questions" subtitle | `src/components/PlanPanel.jsx` |
-| Mobile plan panel capped at 60% viewport height | `src/styles/tripmappa.css` (plan flow in `PlanPanel.jsx` / `QuestionChoices.jsx`) |
-
-**Next up:** Phase 3 — Lodging and Hotel APIs.
+| Plan stale detection + regenerate banner | `src/lib/planSnapshot.js`, `StalePlanNotice.jsx` |
+| Schedule restrictions + drive-hours question | `src/lib/scheduleRestrictions.js`, `tripFlow.js` |
+| Medical needs (dialysis, vet, pharmacy alerts) | `tripAccommodations.js`, `tripAlerts.js` |
+| Wheelchair lodging filter | `placesSearch.js` |
+| Prayer facilities POI search | `placesSearch.js`, `tripEnrichment.js` |
+| Towing → avoid highways/ferries routing | `App.jsx` `fetchDirections` |
+| Add-to-trip undo toast | `App.jsx` |
+| Honest Reserve/SMS/booking labels | restaurant/lodging/share components |
+| Sonnet `generationHints` + richer placesContext | `tripConstraintsSummary.js`, `placesContext.js`, `plan-trip.js` |
+| Plan change diff + constraints bar on results | `planSnapshotDiff.js`, `TripConstraintsBar.jsx` |
+| Config missing-key banner | `ConfigWarningBanner.jsx` |
 
 ---
 

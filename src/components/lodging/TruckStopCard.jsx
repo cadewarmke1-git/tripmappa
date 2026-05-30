@@ -1,7 +1,10 @@
 import AmenityBadges from "./AmenityBadges.jsx";
 
 export default function TruckStopCard({ stop, onSave, onToast }) {
+  const bookLabel = stop.fromGooglePlaces ? "View on map" : "View listing (soon)";
+
   function handleReserve() {
+    if (!stop.reserveUrl) return;
     window.open(stop.reserveUrl, "_blank", "noopener,noreferrer");
   }
 
@@ -51,7 +54,7 @@ export default function TruckStopCard({ stop, onSave, onToast }) {
 
         <div className="lodging-card-actions">
           <button type="button" className="btn-generate lodging-btn-book" onClick={handleReserve}>
-            Reserve Parking
+            {bookLabel}
           </button>
           <button type="button" className="lodging-btn-save" onClick={handleSave}>
             Save

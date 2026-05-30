@@ -352,7 +352,7 @@ export default function LiveViewPage({ shareToken, toast }) {
         </div>
       )}
 
-      {!tripComplete && <SosButton onConfirm={handleSos} className="live-sos-map" />}
+      {!tripComplete && <SosButton onConfirm={handleSos} className="live-sos-map" comingSoon />}
     </div>
   );
 }
