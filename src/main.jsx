@@ -13,6 +13,7 @@ import "./styles/hero-map-theme.css";
 import "./styles/live-map-mesh.css";
 import "./styles/mobile-layout.css";
 import "./styles/hero-mountain.css";
+/* Web vs mobile split at 769px — load after mobile-layout */
 import "./styles/hero-desktop.css";
 
 createRoot(document.getElementById("root")).render(

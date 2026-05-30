@@ -1,4 +1,4 @@
-/* Mobile layout — 320px–428px target; desktop unchanged above 768px */
+/* Mobile layout — mockup target max-width: 768px ONLY. Web layout: hero-desktop.css (769px+). */
 
 @media (max-width: 768px) {
   html,
