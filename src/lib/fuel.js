@@ -198,6 +198,119 @@ export function takeClosest(stations, max = 3) {
   return sortByDistance(stations).slice(0, max);
 }
 
+/** Preferred truck stop / fuel brand from the question flow (null = no preference). */
+export function getPreferredFuelBrand(answers) {
+  const brand = answers?.truck_stop_brand || answers?.truck_stop_preference;
+  if (!brand || brand === "No preference") return null;
+  return brand;
+}
+
+/** Match a station name to the user's preferred fuel brand. */
+export function matchesPreferredFuelBrand(name, brand) {
+  if (!brand || brand === "No preference") return true;
+  const n = String(name || "").toLowerCase();
+  const b = brand.toLowerCase();
+  if (b.includes("pilot") || b.includes("flying j")) return n.includes("pilot") || n.includes("flying j");
+  if (b.includes("love")) return n.includes("love");
+  if (b.includes("petro")) return n.includes("petro");
+  if (b.includes("ta travel")) return n.includes("ta ") || n.startsWith("ta ") || n.includes("travel center");
+  if (b.includes("allsup")) return n.includes("allsup");
+  return n.includes(b.split(/[\s']/)[0]);
+}
+
+export function isFuelCategoryRoadStop(stop) {
+  const cat = (stop?.category || "").toLowerCase();
+  const name = (stop?.name || stop?.title || "").toLowerCase();
+  const blob = `${cat} ${name}`;
+  return cat === "fuel"
+    || cat === "charging"
+    || /gas station|fuel|diesel|truck stop|pilot|love'?s|petro|allsup|flying j|ta travel|chevron|shell|bp\b|marathon|speedway|casey/i.test(blob);
+}
+
+/** Rough count of fuel stops needed for a route based on vehicle range. */
+export function getFuelStopIntervalCount(answers, totalMiles, overnightStopCount = 0) {
+  const mode = getFuelStopMode(answers);
+  if (mode === "none" || !totalMiles || totalMiles <= 0) {
+    return Math.max(1, overnightStopCount + 1);
+  }
+  if (mode === "ev" || mode === "hybrid") {
+    return Math.max(overnightStopCount + 1, Math.ceil(totalMiles / EV_CHARGE_INTERVAL_MILES));
+  }
+  const mpg = getVehicleMpg(getEffectiveVehicle(answers));
+  const isTruck = mode === "diesel";
+  const tankRange = isTruck ? mpg * 120 : mpg * 12;
+  const stopRange = Math.max(100, Math.min(280, tankRange * 0.75));
+  const byRange = Math.max(1, Math.ceil(totalMiles / stopRange));
+  return Math.max(overnightStopCount + 1, byRange);
+}
+
+function estimateStopRouteMile(stop, routePoints, totalMiles) {
+  if (!routePoints?.length || stop?.lat == null || stop?.lng == null) return 0;
+  let bestIdx = 0;
+  let bestDist = Infinity;
+  routePoints.forEach((pt, idx) => {
+    const d = milesBetweenPoints(stop, pt);
+    if (d < bestDist) {
+      bestDist = d;
+      bestIdx = idx;
+    }
+  });
+  const fraction = routePoints.length > 1 ? bestIdx / (routePoints.length - 1) : 0;
+  return fraction * (totalMiles || 0);
+}
+
+/** Keep one preferred-brand fuel stop per logical fuel interval; drop competing brands when set. */
+export function consolidateFuelRoadStops(roadStops, answers, routeInfo, overnightStopCount = 0) {
+  if (!roadStops?.length) return roadStops;
+
+  const nonFuel = roadStops.filter(rs => !isFuelCategoryRoadStop(rs));
+  let fuel = roadStops.filter(rs => isFuelCategoryRoadStop(rs));
+  const brand = getPreferredFuelBrand(answers);
+
+  if (brand) {
+    fuel = fuel.filter(rs => matchesPreferredFuelBrand(rs.name || rs.title || rs.location, brand));
+  }
+
+  const routePoints = routeInfo?.routePoints;
+  const totalMiles = parseMilesFromDistance(routeInfo?.distance) || 0;
+  if (!routePoints?.length || fuel.length <= 1) {
+    return [...nonFuel, ...fuel];
+  }
+
+  const intervalCount = getFuelStopIntervalCount(answers, totalMiles, overnightStopCount);
+  const intervalMiles = Math.max(80, totalMiles / intervalCount);
+  const buckets = new Map();
+
+  fuel.forEach(stop => {
+    if (stop.lat == null || stop.lng == null) {
+      const loose = buckets.get(-1) || [];
+      loose.push({ stop, mile: 0, distance: stop.distanceMiles ?? 99 });
+      buckets.set(-1, loose);
+      return;
+    }
+    const mile = estimateStopRouteMile(stop, routePoints, totalMiles);
+    const bucket = Math.floor(mile / intervalMiles);
+    const list = buckets.get(bucket) || [];
+    list.push({ stop, mile, distance: stop.distanceMiles ?? 99 });
+    buckets.set(bucket, list);
+  });
+
+  const pickedFuel = [];
+  [...buckets.keys()].sort((a, b) => a - b).forEach(key => {
+    const list = buckets.get(key);
+    list.sort((a, b) => a.distance - b.distance || a.mile - b.mile);
+    if (list[0]?.stop) pickedFuel.push(list[0].stop);
+  });
+
+  return [...nonFuel, ...pickedFuel];
+}
+
+export function filterStationsByPreferredBrand(stations, answers) {
+  const brand = getPreferredFuelBrand(answers);
+  if (!brand || !stations?.length) return stations;
+  return stations.filter(s => matchesPreferredFuelBrand(s.name || s.brand, brand));
+}
+
 /** Keep fuel stations within maxMiles of the route sample point (default 1 mi on-route). */
 export function selectOnRouteFuelStations(stations, maxMiles = 1) {
   const onRoute = stations.filter(s => (s.distanceMiles ?? 99) <= maxMiles);

@@ -2,7 +2,7 @@ import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 import InlineStarRating from "./InlineStarRating.jsx";
 
-export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = false, cardRef, added = false }) {
+export default function RoadStopCard({ stop, onAdd, onRemove, onSelect, highlighted = false, cardRef, added = false }) {
   function handleClick() {
     onSelect?.(stop);
   }
@@ -11,6 +11,12 @@ export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = fals
     e.stopPropagation();
     if (added) return;
     onAdd?.(stop);
+  }
+
+  function handleRemove(e) {
+    e.stopPropagation();
+    if (!added) return;
+    onRemove?.(stop);
   }
 
   return (
@@ -46,11 +52,11 @@ export default function RoadStopCard({ stop, onAdd, onSelect, highlighted = fals
         </div>
         <button
           type="button"
-          className="road-stop-add-btn"
-          disabled={added}
-          onClick={handleAdd}
+          className={`road-stop-add-btn${added ? " road-stop-add-btn-added" : ""}`}
+          disabled={!added && false}
+          onClick={added ? handleRemove : handleAdd}
         >
-          {added ? "Added" : "Add to Trip"}
+          {added ? "Remove from trip" : "Add to Trip"}
         </button>
         {stop.category?.toLowerCase() === "food" && stop.nearbyRestaurants?.length > 0 && (
           <div className="road-food-stops">

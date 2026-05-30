@@ -32,7 +32,9 @@ export default function TripResultsPanel({
   liveTipsRefreshing = false,
   enrichingTrip = false,
   enrichmentLimited = false,
+  tripUsedFallback = false,
   onDismissEnrichmentNotice,
+  onRetryEnrichment,
   isStopAdded,
   activitiesByCity = {},
   restaurantsByCity = {},
@@ -46,6 +48,7 @@ export default function TripResultsPanel({
   onViewMap,
   onDaySelect,
   onAddRoadStop,
+  onRemoveRoadStop,
   onAddFuelStop,
   onLodgingSelect,
   onDismissAlert,
@@ -136,7 +139,13 @@ export default function TripResultsPanel({
 
         <WeatherWarningBanner alerts={tripAlerts} />
 
-        <EnrichmentNotice limited={enrichmentLimited} onDismiss={onDismissEnrichmentNotice} />
+        {tripUsedFallback && (
+          <div className="trip-fallback-notice" role="status">
+            This trip uses estimated route data — live AI planning was unavailable or returned incomplete results.
+          </div>
+        )}
+
+        <EnrichmentNotice limited={enrichmentLimited} onDismiss={onDismissEnrichmentNotice} onRetry={onRetryEnrichment} />
 
         {!simplified && days.length > 1 && (
           <div className="route-progress-sticky-wrap">
@@ -179,6 +188,7 @@ export default function TripResultsPanel({
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
             onAddRoadStop={onAddRoadStop}
+            onRemoveRoadStop={onRemoveRoadStop}
             isStopAdded={isStopAdded}
             highlightedStopId={highlightedStopId}
             stopRefs={stopRefs}
@@ -206,6 +216,7 @@ export default function TripResultsPanel({
               onLodgingSelect={onLodgingSelect}
               onToast={onToast}
               onAddRoadStop={onAddRoadStop}
+            onRemoveRoadStop={onRemoveRoadStop}
               isStopAdded={isStopAdded}
               highlightedStopId={highlightedStopId}
               stopRefs={stopRefs}

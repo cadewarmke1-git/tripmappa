@@ -241,7 +241,7 @@ export function getItineraryOverview({ origin, dest, routeInfo, stops, roadStops
     distance: routeInfo?.distance || (miles ? `${Math.round(miles)} mi` : "—"),
     duration: routeInfo?.duration || (hours ? `${Math.floor(hours)}h ${Math.round((hours % 1) * 60)}m` : "—"),
     dayCount,
-    stopCount: (roadStops?.length || 0) + stops.length,
+    stopCount: (roadStops || []).filter(s => s.userAdded).length,
     overnightCount: stops.filter(s => s.city).length,
     estimatedCost: budgetTotal,
   };

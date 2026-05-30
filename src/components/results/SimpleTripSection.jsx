@@ -31,6 +31,7 @@ export default function SimpleTripSection({
   onLodgingSelect,
   onToast,
   onAddRoadStop,
+  onRemoveRoadStop,
   isStopAdded,
   highlightedStopId,
   stopRefs,
@@ -106,6 +107,7 @@ export default function SimpleTripSection({
                 key={stop.id}
                 stop={stop}
                 onAdd={onAddRoadStop}
+                onRemove={onRemoveRoadStop}
                 onToast={onToast}
                 added={isStopAdded?.(stop)}
                 onSelect={item => onStopSelect?.({ ...item, lat: item.lat ?? item.stopData?.lat, lng: item.lng ?? item.stopData?.lng })}

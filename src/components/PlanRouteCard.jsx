@@ -7,6 +7,8 @@ export default function PlanRouteCard({
   routeInfo,
   answers = {},
   routePending = false,
+  routeError = null,
+  onRetryRoute,
 }) {
   const ready = Boolean(routeInfo?.distance || routeInfo?.duration);
 
@@ -20,7 +22,7 @@ export default function PlanRouteCard({
   ].filter(Boolean);
 
   return (
-    <div className={`plan-route-card${routePending ? " plan-route-card-pending" : ""}`}>
+    <div className={`plan-route-card${routePending ? " plan-route-card-pending" : ""}${routeError ? " plan-route-card-error" : ""}`}>
       <div className="plan-route-card-row">
         <div className="plan-route-card-endpoints">
           <span className="plan-route-card-city">{origin?.split(",")[0]?.trim() || "Origin"}</span>
@@ -28,7 +30,9 @@ export default function PlanRouteCard({
           <span className="plan-route-card-city">{dest?.split(",")[0]?.trim() || "Destination"}</span>
         </div>
         <div className="plan-route-card-stats">
-          {routePending || !ready ? (
+          {routeError ? (
+            <span className="plan-route-card-error-text">{routeError}</span>
+          ) : routePending || !ready ? (
             <span className="plan-route-card-loading">
               <span className="question-loading-spinner" aria-hidden="true" />
               Calculating route…
@@ -42,6 +46,11 @@ export default function PlanRouteCard({
           )}
         </div>
       </div>
+      {routeError && onRetryRoute && (
+        <button type="button" className="plan-route-retry-btn" onClick={onRetryRoute}>
+          Retry route
+        </button>
+      )}
       {chips.length > 0 && (
         <div className="plan-route-card-chips">
           {chips.map(chip => (

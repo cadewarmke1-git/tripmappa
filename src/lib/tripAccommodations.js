@@ -22,6 +22,9 @@ export const DIETARY_CHOICES = [
   "Vegetarian",
   "Vegan",
   "Gluten Free",
+  "Halal",
+  "Kosher",
+  "Pescatarian",
   "Food Allergies — I will specify",
   "Drive-Through Only",
 ];
@@ -147,7 +150,15 @@ export function needsElderlyOrPregnantRest(answers) {
 }
 
 export function needsSafeStopsOnly(answers) {
-  return false;
+  const prefs = asArray(answers?.preferences);
+  if (prefs.includes("Safe, well-lit stops only")) return true;
+  const acc = asArray(answers?.accessibility);
+  return acc.includes("Traveling with elderly passengers")
+    || acc.includes("Traveling with young children");
+}
+
+export function prefIncludes(answers, value) {
+  return asArray(answers?.preferences).includes(value);
 }
 
 export function needsFoodAllergyDetail(answers) {
@@ -179,6 +190,9 @@ export function getDietarySearchKeywords(answers) {
     Vegetarian: "vegetarian restaurant",
     Vegan: "vegan restaurant",
     "Gluten Free": "gluten free restaurant",
+    Halal: "halal restaurant",
+    Kosher: "kosher restaurant",
+    Pescatarian: "seafood restaurant",
     "Drive-Through Only": "drive through restaurant",
   };
   const keys = dietary.filter(d => map[d]).map(d => map[d]);
@@ -186,6 +200,14 @@ export function getDietarySearchKeywords(answers) {
     keys.push(`${answers.food_allergies.trim()} allergy friendly restaurant`);
   }
   return keys;
+}
+
+/** Primary keyword for a single search (legacy). Prefer search terms from full list. */
+export function getPrimaryRestaurantKeyword(answers) {
+  const keys = getDietarySearchKeywords(answers);
+  const remoteWork = asArray(answers?.stops_interests).some(i => /remote work|wifi/i.test(i));
+  if (remoteWork) return "cafe wifi laptop";
+  return keys[0] || "restaurant";
 }
 
 export function getFuelRangeMiles(answers) {

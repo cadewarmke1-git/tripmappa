@@ -1,6 +1,10 @@
 /** Build road stop suggestions exclusively from Google Places along the route polyline. */
-import { sampleRoutePointsEveryMiles } from "./fuel.js";
-import { getFuelStopMode } from "./fuel.js";
+import {
+  sampleRoutePointsEveryMiles,
+  getFuelStopMode,
+  getPreferredFuelBrand,
+  matchesPreferredFuelBrand,
+} from "./fuel.js";
 import { searchNearbyCategory, getPlaceDetails } from "./placesSearch.js";
 import { searchGasStations } from "./placesStations.js";
 import { parseMilesFromDistance } from "./parsing.js";
@@ -63,8 +67,12 @@ async function searchAtSample(pt, sampleIndex, answers, fuelMode, continuousDriv
   const pick = searches[sampleIndex % searches.length];
 
   if (pick.fuel) {
-    const gasList = await searchGasStations(pt.lat, pt.lng, 5, 1609);
-    return gasList.map(g => ({ ...g, category: "fuel" }));
+    const gasList = await searchGasStations(pt.lat, pt.lng, 8, 1609);
+    const brand = getPreferredFuelBrand(answers);
+    const filtered = brand
+      ? gasList.filter(g => matchesPreferredFuelBrand(g.name, brand))
+      : gasList;
+    return filtered.map(g => ({ ...g, category: "fuel" }));
   }
 
   return searchNearbyCategory(pt.lat, pt.lng, {

@@ -1,6 +1,7 @@
 /** Google Places — restaurant search near a route stop with preference filtering. */
 import { getGoogleMapsKey, photoUrl } from "../lib/googleKey.js";
 import { cacheGet, cacheSet, roundCoord } from "../lib/apiCache.js";
+import { getDietarySearchKeywords, dietaryMatchesRestaurant } from "../lib/dietaryKeywords.js";
 
 const NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
@@ -99,6 +100,8 @@ function filterByPreferences(candidates, answers = {}, { roadStop = false } = {}
     || (answers.stops_interests || []).some(i => /kid|child|family|playground/i.test(i));
 
   let list = [...candidates];
+
+  list = list.filter(p => dietaryMatchesRestaurant(p, answers));
 
   if (roadStop) {
     list = list.filter(p => isFastFood(p, p.name) || (p.price_level ?? 2) <= 2);
@@ -225,15 +228,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const nearby = await nearbyRestaurants(latNum, lngNum, roadStop ? "fast food casual dining" : "restaurant");
-    if (nearby.apiError === "no_key") {
-      return res.status(503).json({ error: "Google Maps API key not configured" });
-    }
-    if (nearby.apiError) {
-      return res.status(502).json({ error: "Places API request failed", status: nearby.apiError });
+    const dietaryKeywords = getDietarySearchKeywords(answers);
+    const searchTerms = roadStop
+      ? ["fast food casual dining"]
+      : (dietaryKeywords.length ? dietaryKeywords.slice(0, 4) : ["restaurant"]);
+
+    const rawById = new Map();
+    for (const term of searchTerms) {
+      const nearby = await nearbyRestaurants(latNum, lngNum, term);
+      if (nearby.apiError === "no_key") {
+        return res.status(503).json({ error: "Google Maps API key not configured" });
+      }
+      if (nearby.apiError) {
+        return res.status(502).json({ error: "Places API request failed", status: nearby.apiError });
+      }
+      (nearby.results || []).forEach(p => {
+        if (p.place_id) rawById.set(p.place_id, p);
+      });
     }
 
-    const raw = nearby.results || [];
+    const raw = [...rawById.values()];
     const seen = new Set();
     const unique = raw.filter(p => {
       if (!p.place_id || seen.has(p.place_id)) return false;

@@ -15,6 +15,7 @@ import {
   buildFallbackGasStations,
   buildFallbackEvStations,
   buildFallbackPropane,
+  filterStationsByPreferredBrand,
 } from "../../lib/fuel.js";
 import { applyStopFilters } from "../../lib/placesFilters.js";
 import { needsSafeStopsOnly } from "../../lib/tripAccommodations.js";
@@ -76,6 +77,7 @@ export default function FuelStopsRow({
           }
           gasStations = selectOnRouteFuelStations(gasStations, 1);
           gasStations = applyStopFilters(gasStations, answers);
+          gasStations = filterStationsByPreferredBrand(gasStations, answers);
           gasStations = markBestPriceFuelStations(gasStations, apiMode);
           collected.push(...gasStations.map(s => ({
             ...s,
@@ -98,6 +100,8 @@ export default function FuelStopsRow({
           let dieselStations = dieselRes.stations?.length ? dieselRes.stations : buildFallbackGasStations(lat, lng, "diesel");
           gasStations = selectOnRouteFuelStations(applyStopFilters(gasStations, answers), 1);
           dieselStations = selectOnRouteFuelStations(applyStopFilters(dieselStations, answers), 1);
+          gasStations = filterStationsByPreferredBrand(gasStations, answers);
+          dieselStations = filterStationsByPreferredBrand(dieselStations, answers);
           gasStations = markBestPriceFuelStations(gasStations, "gas");
           dieselStations = markBestPriceFuelStations(dieselStations, "diesel");
           if (gasRes.fallback || dieselRes.fallback) {
@@ -145,7 +149,7 @@ export default function FuelStopsRow({
         }
 
         if (!cancelled) {
-          setCards(takeClosest(collected, 3));
+          setCards(takeClosest(collected, 1));
         }
       } catch {
         if (!cancelled) {

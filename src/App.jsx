@@ -15,7 +15,8 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady } from "./lib/tripFlow.js";
+import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
+import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./lib/guestCredits.js";
 import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { buildContinuousDriveTip, isContinuousDrive } from "./lib/driveMode.js";
@@ -38,7 +39,6 @@ import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraf
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
-import { getGuestCreditStatus, consumeGuestCredit } from "./lib/guestCredits.js";
 import { computeAutoTheme } from "./lib/theme.js";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
@@ -60,7 +60,7 @@ import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import Toast from "./components/Toast.jsx";
 import AccountSidebar from "./components/AccountSidebar.jsx";
 import NavSidebar from "./components/NavSidebar.jsx";
-import AppNavBar from "./components/AppNavBar.jsx";
+import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 export default function App() {
@@ -141,6 +141,11 @@ export default function App() {
   const [highlightedStopId, setHighlightedStopId] = useState(null);
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
   const [liveSharingActive, setLiveSharingActive] = useState(false);
+  const [routeError, setRouteError] = useState(null);
+  const [tripUsedFallback, setTripUsedFallback] = useState(false);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [confirmDeleteTripId, setConfirmDeleteTripId] = useState(null);
+  const [enrichmentRetryKey, setEnrichmentRetryKey] = useState(0);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
   const [navSidebarOpen, setNavSidebarOpen] = useState(false);
@@ -347,7 +352,7 @@ export default function App() {
       try {
         await deleteTrip(user.id, id);
       } catch (err) {
-        toast_(err.message || "Could not delete trip");
+        toast_(err.message || "Could not delete trip", { duration: 6000 });
         return;
       }
     }
@@ -357,6 +362,10 @@ export default function App() {
       try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
     }
     toast_("Trip removed");
+  }
+
+  function requestDeleteSavedTrip(id) {
+    setConfirmDeleteTripId(id);
   }
   const [toast, setToast] = useState(null);
   const [toastIsGold, setToastIsGold] = useState(false);
@@ -544,6 +553,7 @@ export default function App() {
       service.route(routeRequest, (result, status) => {
         setRouteLoading(false);
         if (status === "OK") {
+          setRouteError(null);
           const route = result.routes[0];
           const leg = route.legs[0];
           const warnings = route.warnings || [];
@@ -627,6 +637,16 @@ export default function App() {
           }
           resolve(true);
         } else {
+          const msg = status === "ZERO_RESULTS"
+            ? "No driving route found between these places."
+            : status === "NOT_FOUND"
+              ? "Could not find one or both addresses."
+              : "Could not calculate route. Check addresses and try again.";
+          setRouteError(msg);
+          setRouteInfo(null);
+          setRoutePath(null);
+          setDirectionsResult(null);
+          toast_(msg, { duration: 7000 });
           resolve(false);
         }
       });
@@ -1387,6 +1407,8 @@ export default function App() {
     if (destRef.current) destRef.current.value = fromVal;
     setOrigin(toVal);
     setDest(fromVal);
+    setRouteError(null);
+    setAnswers(prev => pruneRouteDependentAnswers(prev, buildQuestionContext(prev)));
     if (isLoaded && window.google && toVal && fromVal && answers.vehicle) fetchDirections(answers.vehicle);
   }
 
@@ -1503,16 +1525,24 @@ export default function App() {
       routeDuration: routeInfo?.duration,
       routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
       routeDurationHours: parseHoursFromDuration(routeInfo?.duration),
+      routeFailed: Boolean(routeError),
+      routeErrorMessage: routeError || null,
     };
+  }
+
+  function retryRouteCalculation() {
+    setRouteError(null);
+    fetchDirections(getEffectiveVehicle(answers));
   }
 
   useEffect(() => {
     if (!currentQuestion?.pendingRoute) return;
     const ctx = buildQuestionContext(answers);
-    if (!isRouteContextReady(ctx)) return;
-    loadNextQuestion(answers);
+    if (isRouteContextReady(ctx) || ctx.routeFailed) {
+      loadNextQuestion(answers);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeInfo?.distance, routeInfo?.duration, currentQuestion?.pendingRoute, answers]);
+  }, [routeInfo?.distance, routeInfo?.duration, routeError, currentQuestion?.pendingRoute, answers]);
 
   useEffect(() => {
     if (convoComplete || generated || !origin?.trim() || !dest?.trim()) return;
@@ -1551,8 +1581,20 @@ export default function App() {
       } else {
         patch = { ...answers, ...extraFields, [currentQuestion.id]: value };
       }
+
+      if (currentQuestion.id === "overnight_preference" && value === "Drive straight through") {
+        const warn = warnContinuousDriveFeasibility(buildQuestionContext(patch));
+        if (warn && !window.confirm(`${warn}\n\nContinue with straight-through driving?`)) return;
+      }
+
       const ctx = buildQuestionContext(patch);
-      const na = normalizeTripAnswers(patch, ctx);
+      let na = normalizeTripAnswers(patch, ctx);
+      if (currentQuestion.id === "vehicle" || currentQuestion.id === "primary_vehicle") {
+        na = pruneStaleBranchAnswers(na, ctx);
+      }
+      if (currentQuestion.id === "multi_vehicles") {
+        na = pruneStaleBranchAnswers(na, ctx);
+      }
 
       setAnswers(na);
       if (currentQuestion.id !== "_route_loading") {
@@ -1671,15 +1713,24 @@ export default function App() {
   }
 
   function isRoadStopAdded(stop) {
-    return roadStopExistsInList(roadStops, stop);
+    const normalized = normalizeRoadStopEntry(stop?.stopData || stop);
+    if (!normalized) return false;
+    const key = roadStopKey(normalized);
+    return roadStops.some(s => s.userAdded && (s.id === normalized.id || roadStopKey(s) === key));
   }
 
   function addRoadStopToTrip(stop) {
     const normalized = normalizeRoadStopEntry(stop);
-    if (!normalized || roadStopExistsInList(roadStops, normalized)) return;
+    if (!normalized) return;
     const key = roadStopKey(normalized);
     setRoadStops(prev => {
-      if (roadStopExistsInList(prev, normalized)) return prev;
+      const existingIdx = prev.findIndex(s => s.id === normalized.id || roadStopKey(s) === key);
+      if (existingIdx >= 0) {
+        if (prev[existingIdx].userAdded) return prev;
+        const next = [...prev];
+        next[existingIdx] = { ...next[existingIdx], userAdded: true };
+        return next;
+      }
       const entry = { ...normalized, id: normalized.id || key, userAdded: true };
       if (entry.lat != null && entry.lng != null) {
         setMapMarkers(markers => {
@@ -1703,6 +1754,23 @@ export default function App() {
     if (key) {
       setAddedRoadStopIds(prev => (prev.includes(key) ? prev : [...prev, key]));
     }
+  }
+
+  function removeRoadStopFromTrip(stop) {
+    const normalized = normalizeRoadStopEntry(stop?.stopData || stop);
+    if (!normalized) return;
+    const key = roadStopKey(normalized);
+    setRoadStops(prev => {
+      const idx = prev.findIndex(s => s.id === normalized.id || roadStopKey(s) === key);
+      if (idx < 0) return prev;
+      const target = prev[idx];
+      if (target.userAdded) {
+        const next = [...prev];
+        next[idx] = { ...target, userAdded: false };
+        return next;
+      }
+      return prev.filter((_, i) => i !== idx);
+    });
   }
 
   function removeRoadStop(indexOrId) {
@@ -1857,23 +1925,18 @@ export default function App() {
       return;
     }
 
-    if (!user) {
-      if (!consumeGuestCredit()) {
-        setCreditStatus(getGuestCreditStatus());
-        openTripsUpgrade();
-        return;
-      }
-      setCreditStatus(getGuestCreditStatus());
-    }
-
     setOrigin(tripOrigin);
     setDest(tripDest);
     setLoading(true);
     setEnrichmentLimited(false);
     setEnrichmentNoticeDismissed(false);
+    setTripUsedFallback(false);
 
     if (isLoaded && window.google) {
-      await fetchDirections(getEffectiveVehicle(answers));
+      const routeOk = await fetchDirections(getEffectiveVehicle(answers));
+      if (!routeOk) {
+        toast_("Route could not be calculated — trip will use best available estimates.", { duration: 6000 });
+      }
     }
 
     const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
@@ -1906,7 +1969,19 @@ export default function App() {
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
         }, session?.access_token || null);
-      const parsed = parseTripApiResponse(data, normalizedAnswers, routeInfo, buildFallbackTripData);
+      const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
+      setTripUsedFallback(Boolean(parsed.usedFallback));
+
+      if (!user && !parsed.usedFallback) {
+        if (!consumeGuestCredit()) {
+          setCreditStatus(getGuestCreditStatus());
+          openTripsUpgrade();
+          setLoading(false);
+          return;
+        }
+        setCreditStatus(getGuestCreditStatus());
+      }
+
       const tips = [...(parsed.tripTips || [])];
       if (isContinuousDrive(normalizedAnswers)) {
         tips.unshift(buildContinuousDriveTip(activeRouteInfo));
@@ -1928,13 +2003,18 @@ export default function App() {
       clearSavedPlanDraft();
       if (user && session?.access_token) {
         fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
-      } else {
+      } else if (!parsed.usedFallback) {
         setGuestTripPendingSave(true);
         const guestStatus = getGuestCreditStatus();
         setCreditStatus(guestStatus);
         if (guestStatus.remaining <= 0) {
           setTimeout(() => openTripsUpgrade(), 1200);
         }
+      }
+      if (parsed.usedFallback) {
+        toast_("Trip generated with estimated data — live AI planning returned incomplete results.", { duration: 8000 });
+      } else {
+        toast_("Trip planned");
       }
     } catch (err) {
       console.error("Generate trip error:", err);
@@ -1944,7 +2024,10 @@ export default function App() {
         setLoading(false);
         return;
       }
+      refundGuestCredit();
+      setCreditStatus(getGuestCreditStatus());
       const fallback = buildFallbackTripData(normalizedAnswers, routeInfo);
+      setTripUsedFallback(true);
       const fallbackTips = [...(fallback.tripTips || [])];
       if (isContinuousDrive(normalizedAnswers)) {
         fallbackTips.unshift(buildContinuousDriveTip(routeInfo));
@@ -1968,13 +2051,19 @@ export default function App() {
         normalizedAnswers,
       );
       if (!user) setGuestTripPendingSave(true);
+      toast_("Could not reach trip planner — showing estimated route instead.", { duration: 8000 });
     }
 
     setLoading(false);
-    toast_("Trip planned");
+  }
+
+  function requestResetPlan() {
+    setConfirmResetOpen(true);
   }
 
   function resetPlan() {
+    setConfirmResetOpen(false);
+    setTripUsedFallback(false);
     setReturnedFromResults(false);
     setGuestTripPendingSave(false);
     setAnswers({}); setQIndex(-1);
@@ -2120,6 +2209,12 @@ export default function App() {
       delete newAnswers.primary_vehicle;
       delete newAnswers.coordination_needs;
       delete newAnswers.effective_vehicle;
+      delete newAnswers.overnight_preference;
+      delete newAnswers.continuous_drive;
+      delete newAnswers.lodging;
+      delete newAnswers.loyalty_program;
+      delete newAnswers.trip_details;
+      delete newAnswers.food_allergies;
     }
     if (last.question.id === "overnight_preference") {
       delete newAnswers.continuous_drive;
@@ -2155,12 +2250,13 @@ export default function App() {
   }
 
   function handleViewTrip(trip) {
+    const tripAnswers = stripSessionOnlyAnswers(trip.answers || {});
     setOrigin(trip.origin);
     setDest(trip.dest);
     setStops(trip.stops || []);
     setRoadStops(trip.roadStops || []);
     setTripTips(trip.tripTips || []);
-    setAnswers(stripSessionOnlyAnswers(trip.answers || {}));
+    setAnswers(tripAnswers);
     setRouteInfo(trip.routeInfo || null);
     setSelectedLodging(trip.selectedLodging || []);
     setGenerated(true);
@@ -2168,7 +2264,27 @@ export default function App() {
     setConvoComplete(true);
     setTab("plan");
     setView("app");
+    setTripUsedFallback(false);
+    const normalized = normalizeTripAnswers(tripAnswers, buildQuestionContext(tripAnswers));
+    if (trip.routeInfo?.routePoints?.length) {
+      enrichAndSetTrip(trip.stops || [], trip.roadStops || [], normalized);
+    } else {
+      setMapMarkers(stopsToMapMarkers(trip.stops || [], trip.roadStops || [], [], [], tripAnswers));
+      if (isLoaded && window.google && trip.origin && trip.dest) {
+        fetchDirections(getEffectiveVehicle(tripAnswers)).then(() => {
+          enrichAndSetTrip(trip.stops || [], trip.roadStops || [], normalized);
+        });
+      }
+    }
     toast_("Trip loaded");
+  }
+
+  async function retryEnrichment() {
+    if (!generated) return;
+    const normalized = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
+    setEnrichmentNoticeDismissed(false);
+    await enrichAndSetTrip(stops, roadStops, normalized);
+    setEnrichmentRetryKey(k => k + 1);
   }
 
   if (liveShareToken) {
@@ -2193,7 +2309,7 @@ export default function App() {
             onUpgradeTraveler={openGroceryUpgrade}
             onPlanTrip={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
             onLoadTrip={handleViewTrip}
-            onDeleteTrip={deleteSavedTrip}
+            onDeleteTrip={requestDeleteSavedTrip}
             onSaveDisplayName={handleProfileSaveDisplayName}
             onSaveHomeAddress={async (addr) => {
               const profile = await saveHomeAddress(user.id, addr);
@@ -2367,6 +2483,8 @@ export default function App() {
             enrichingTrip={enrichingTrip}
             enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
             onDismissEnrichmentNotice={() => setEnrichmentNoticeDismissed(true)}
+            onRetryEnrichment={retryEnrichment}
+            tripUsedFallback={tripUsedFallback}
             isStopAdded={isRoadStopAdded}
             activitiesByCity={activitiesByCity}
             restaurantsByCity={restaurantsByCity}
@@ -2383,6 +2501,7 @@ export default function App() {
             }}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
+            onRemoveRoadStop={removeRoadStopFromTrip}
             onAddFuelStop={addFuelStopToTrip}
             onLodgingSelect={addLodgingSelection}
             onDismissAlert={dismissTripAlert}
@@ -2400,8 +2519,7 @@ export default function App() {
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen view-panel-animate">
-            <div className="map-float-nav">
-              <button type="button" className="map-float-pill" onClick={() => setResultsView("itinerary")}>← Your Trip</button>
+            <div className="map-float-nav map-float-nav--edit-only">
               <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit Trip</button>
             </div>
             <AppMap
@@ -2431,11 +2549,22 @@ export default function App() {
               onMapStyleOpenChange={setMapStyleOpen}
               onMapStyleChange={setMapStyle}
               onRecenter={recenterMap}
+              onBackToResults={() => setResultsView("itinerary")}
               onMarkerSelect={handleMapMarkerSelect}
               onNavigateHome={handleNavigateHome}
               navigateHomePending={navigateHomePending}
               onMarkerAction={(action, marker) => {
-                if (action === "add") toast_("Added to trip");
+                if (action === "add") {
+                  addRoadStopToTrip({
+                    id: marker.id,
+                    name: marker.title,
+                    location: marker.subtitle,
+                    lat: marker.lat,
+                    lng: marker.lng,
+                    category: marker.category || "poi",
+                  });
+                  toast_("Added to trip");
+                }
                 focusMapOnStop(marker);
               }}
             />
@@ -2472,7 +2601,17 @@ export default function App() {
             onMarkerSelect={handleMapMarkerSelect}
             showRoutePill={false}
             onMarkerAction={(action, marker) => {
-              if (action === "add") toast_("Added to trip");
+              if (action === "add") {
+                addRoadStopToTrip({
+                  id: marker.id,
+                  name: marker.title,
+                  location: marker.subtitle,
+                  lat: marker.lat,
+                  lng: marker.lng,
+                  category: marker.category || "poi",
+                });
+                toast_("Added to trip");
+              }
             }}
           />
 
@@ -2541,8 +2680,10 @@ export default function App() {
                       flowProgress={flowProgress}
                       returnedFromResults={returnedFromResults}
                       inQuestionFlow={inQuestionFlow}
+                      routeError={routeError}
+                      onRetryRoute={retryRouteCalculation}
                       onGenerateTrip={generateTrip}
-                      onResetPlan={resetPlan}
+                      onResetPlan={requestResetPlan}
                       onGoBack={goBackOneQuestion}
                       onPickAnswer={pickAnswer}
                       onSetAnswers={setAnswers}
@@ -2555,7 +2696,7 @@ export default function App() {
                     <TripsPanel
                       savedTrips={savedTrips}
                       onViewTrip={handleViewTrip}
-                      onDeleteTrip={deleteSavedTrip}
+                      onDeleteTrip={requestDeleteSavedTrip}
                       onPlanTrip={() => { setTab("plan"); setCardCollapsed(false); }}
                     />
                   )}
@@ -2672,6 +2813,29 @@ export default function App() {
           onClose={() => { setShowHomeAddressModal(false); setNavigateHomePending(false); }}
         />
       )}
+      <ConfirmDialog
+        open={confirmResetOpen}
+        title="Start over?"
+        message="This clears your answers, generated trip, and saved draft for this plan. This cannot be undone."
+        confirmLabel="Start over"
+        cancelLabel="Keep planning"
+        danger
+        onConfirm={resetPlan}
+        onCancel={() => setConfirmResetOpen(false)}
+      />
+      <ConfirmDialog
+        open={Boolean(confirmDeleteTripId)}
+        title="Delete saved trip?"
+        message="This trip will be removed from your saved list."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        danger
+        onConfirm={() => {
+          if (confirmDeleteTripId) deleteSavedTrip(confirmDeleteTripId);
+          setConfirmDeleteTripId(null);
+        }}
+        onCancel={() => setConfirmDeleteTripId(null)}
+      />
       <Toast
         message={toast}
         isGold={toastIsGold}

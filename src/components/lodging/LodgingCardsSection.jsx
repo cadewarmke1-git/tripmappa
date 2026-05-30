@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import {
+  fetchTruckStopsForCity,
+  fetchRvParksForCity,
+  fetchRestAreasForCity,
+} from "../../lib/commercialLodgingPlaces.js";
+import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
+import { processLodgingResults } from "../../lib/lodgingPlaces.js";
+import {
   getRvParksForStop,
   getTruckStopsForStop,
   getRestAreasForStop,
   saveLodgingToTrips,
 } from "../../lib/lodgingData.js";
-import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
-import { processLodgingResults } from "../../lib/lodgingPlaces.js";
 import { isTruckerTrip, isRvTrip } from "../../lib/vehicles.js";
 import HotelCard from "./HotelCard.jsx";
 import RvParkCard from "./RvParkCard.jsx";
@@ -39,20 +44,49 @@ export default function LodgingCardsSection({
     setLoading(true);
 
     async function load() {
+      const geo = city ? await geocodeCity(city) : null;
+      const mapsReady = geo && window.google?.maps?.places;
+
       if (isRv) {
         setLodgingType("rv");
-        setItems(getRvParksForStop(city));
-        setRestAreas([]);
-        setPlacesSource(false);
+        if (mapsReady) {
+          const parks = await fetchRvParksForCity(geo.lat, geo.lng, answers);
+          if (!cancelled && parks.length) {
+            setItems(parks);
+            setRestAreas([]);
+            setPlacesSource(true);
+            setLoading(false);
+            return;
+          }
+        }
+        if (!cancelled) {
+          setItems(getRvParksForStop(city));
+          setRestAreas([]);
+          setPlacesSource(false);
+        }
       } else if (isTrucker) {
         setLodgingType("truck");
-        setItems(getTruckStopsForStop(city, answers));
-        setRestAreas(getRestAreasForStop(city));
-        setPlacesSource(false);
+        if (mapsReady) {
+          const [stops, areas] = await Promise.all([
+            fetchTruckStopsForCity(geo.lat, geo.lng, answers),
+            fetchRestAreasForCity(geo.lat, geo.lng, answers),
+          ]);
+          if (!cancelled && stops.length) {
+            setItems(stops);
+            setRestAreas(areas.length ? areas : getRestAreasForStop(city));
+            setPlacesSource(true);
+            setLoading(false);
+            return;
+          }
+        }
+        if (!cancelled) {
+          setItems(getTruckStopsForStop(city, answers));
+          setRestAreas(getRestAreasForStop(city));
+          setPlacesSource(false);
+        }
       } else {
         setLodgingType("hotel");
-        const geo = await geocodeCity(city);
-        if (geo && window.google?.maps?.places) {
+        if (mapsReady) {
           const raw = await searchLodging(geo.lat, geo.lng, answers, routeInfo);
           const hotels = processLodgingResults(raw, answers, routeInfo);
           if (!cancelled && hotels.length) {
@@ -96,9 +130,9 @@ export default function LodgingCardsSection({
   }
 
   const sectionLabel = lodgingType === "rv"
-    ? "RV parks & campgrounds"
+    ? (placesSource ? "RV parks — verified on Google Maps" : "RV parks & campgrounds")
     : lodgingType === "truck"
-      ? "Truck stops"
+      ? (placesSource ? "Truck stops — verified on Google Maps" : "Truck stops")
       : placesSource ? "Hotels — verified on Google Maps" : "Hotels & lodging";
 
   const skeletonCount = lodgingType === "truck" ? 4 : 3;

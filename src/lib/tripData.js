@@ -124,10 +124,20 @@ export function normalizeRoadStop(s) {
 
 export function mapHotelStops(apiStops) {
   return apiStops.map(stop => ({
-    city: stop.city || "Stop",
+    city: stop.city || stop.name || "Stop",
     distance: stop.distance || "—",
     eta: stop.eta || "—",
     why: stop.why || "",
+    lat: stop.lat,
+    lng: stop.lng,
+    truckStop: stop.truckStop || stop.truck_stop,
+    motel: stop.motel,
+    restArea: stop.restArea || stop.rest_area,
+    fuelStops: stop.fuelStops || stop.fuel_stops,
+    rvPark: stop.rvPark || stop.rv_park,
+    campground: stop.campground,
+    freeParking: stop.freeParking || stop.free_parking,
+    coordinationNote: stop.coordinationNote || stop.coordination_note,
     hotels: (stop.hotels || []).map(h => ({ name: h.name, stars: h.stars, price: h.price, pet: h.pet })),
     restaurants: (stop.restaurants || []).map(r => ({ name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time })),
   }));

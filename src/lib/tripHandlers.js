@@ -126,6 +126,14 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
     : (Array.isArray(data.stops) ? data.stops.filter(s => s && (s.city || s.name)) : []);
   const apiRoadStops = (Array.isArray(data.road_stops) ? data.road_stops : []).map(normalizeRoadStop);
 
+  const metaFields = {
+    hosCompliance: data.hos_compliance || data.hosCompliance || null,
+    truckSafety: data.safety?.truck || data.truck_safety || null,
+    rvSafety: data.safety?.rv || data.rv_safety || null,
+    routeSummary: data.route_summary || null,
+    roadConditionWarnings: data.road_condition_warnings || [],
+  };
+
   if (apiStops.length > 0) {
     return {
       stops: mapHotelStops(apiStops),
@@ -134,6 +142,7 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
       tripFormat: data.trip_format || "multi_day",
       recommendations: data.recommendations || [],
       usedFallback: false,
+      ...metaFields,
     };
   }
   if (apiRoadStops.length > 0 || continuous) {
@@ -144,6 +153,7 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
       tripFormat: continuous ? "simplified" : (data.trip_format || "simplified"),
       recommendations: data.recommendations || [],
       usedFallback: false,
+      ...metaFields,
     };
   }
   const fallback = fallbackFn(answers, routeInfo);

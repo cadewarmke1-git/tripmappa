@@ -41,6 +41,7 @@ export default function ResultsDaySection({
   onLodgingSelect,
   onToast,
   onAddRoadStop,
+  onRemoveRoadStop,
   isStopAdded,
   sectionRef,
   highlightedStopId,
@@ -109,6 +110,7 @@ export default function ResultsDaySection({
                   <RoadStopCard
                     stop={item.stop}
                     onAdd={onAddRoadStop}
+                    onRemove={onRemoveRoadStop}
                     onToast={onToast}
                     added={isStopAdded?.(item.stop)}
                     onSelect={onStopSelect}

@@ -1,5 +1,5 @@
 /** Extended Google Places searches for trip planning and results. */
-import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, asArray, needsSafeStopsOnly } from "./tripAccommodations.js";
+import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, asArray, needsSafeStopsOnly, prefIncludes } from "./tripAccommodations.js";
 import { applyStopFilters, filterLodgingByBudget, filterSafeStopsOnly } from "./placesFilters.js";
 
 const RADIUS_1MI = 1609;
@@ -118,16 +118,41 @@ export async function searchNearbyCategory(lat, lng, { type, keyword, radius = R
 }
 
 export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5, nightOnly = false } = {}) {
-  const keywords = getDietarySearchKeywords(answers);
   const remoteWork = asArray(answers?.stops_interests).some(i => /remote work|wifi/i.test(i));
-  const keyword = remoteWork ? "cafe wifi laptop" : (keywords[0] || "restaurant");
-  let onRoute = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_1MI, maxResults: 6 });
-  let detour = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_5MI, maxResults: 10 });
-  onRoute = applyStopFilters(onRoute, answers, { nightOnly });
-  detour = applyStopFilters(detour, answers, { nightOnly });
-  const onRouteIds = new Set(onRoute.map(r => r.placeId));
+  const dietaryKeywords = getDietarySearchKeywords(answers);
+  const searchTerms = remoteWork
+    ? ["cafe wifi laptop"]
+    : (dietaryKeywords.length ? dietaryKeywords.slice(0, 4) : ["restaurant"]);
+
+  const onRouteMap = new Map();
+  const detourMap = new Map();
+
+  await Promise.all(searchTerms.map(async (keyword) => {
+    const onRoute = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_1MI, maxResults: 6 });
+    const detour = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_5MI, maxResults: 10 });
+    onRoute.forEach(r => { if (r.placeId) onRouteMap.set(r.placeId, r); });
+    detour.forEach(r => { if (r.placeId && !onRouteMap.has(r.placeId)) detourMap.set(r.placeId, r); });
+  }));
+
+  let onRoute = applyStopFilters([...onRouteMap.values()], answers, { nightOnly });
+  let detour = applyStopFilters([...detourMap.values()], answers, { nightOnly });
+
+  if (prefIncludes(answers, "Fast food only")) {
+    const isFast = r => /mcdonald|burger|wendy|taco|subway|chipotle|drive|quick|fast food/i.test(`${r.name} ${r.address}`);
+    const fastOn = onRoute.filter(isFast);
+    const fastDet = detour.filter(isFast);
+    if (fastOn.length) onRoute = fastOn;
+    if (fastDet.length) detour = fastDet;
+  } else if (prefIncludes(answers, "Sit down restaurants only")) {
+    const isSitDown = r => !/mcdonald|burger king|taco bell|subway|chipotle|fast food|drive.thru/i.test(`${r.name}`);
+    const sitOn = onRoute.filter(isSitDown);
+    const sitDet = detour.filter(isSitDown);
+    if (sitOn.length) onRoute = sitOn;
+    if (sitDet.length) detour = sitDet;
+  }
+
   const detourOnly = detour
-    .filter(r => !onRouteIds.has(r.placeId) && (r.rating ?? 0) >= 4.5 && (r.distanceMiles ?? 99) <= maxDetourMiles)
+    .filter(r => (r.rating ?? 0) >= 4.5 && (r.distanceMiles ?? 99) <= maxDetourMiles)
     .map(r => ({ ...r, isDetour: true, detourMiles: r.distanceMiles }));
   const merged = [...onRoute.map(r => ({ ...r, isDetour: false })), ...detourOnly];
   const enriched = await enrichPlaces(merged);

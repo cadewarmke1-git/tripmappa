@@ -1,7 +1,39 @@
 /** Active trip-generation endpoint (Anthropic Sonnet). Called via src/lib/apiClient.js only. */
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
-import { consumeCredit } from "../lib/tripCredits.js";
+import { fetchCreditStatus, consumeCredit } from "../lib/tripCredits.js";
+
+function parseJsonFromLlm(text) {
+  if (!text) throw new Error("Empty model response");
+  const clean = String(text).replace(/```json|```/g, "").trim();
+  try {
+    return JSON.parse(clean);
+  } catch {
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
+    if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));
+    throw new Error("Could not parse trip JSON from model");
+  }
+}
+
+async function callAnthropic(model, systemPrompt, userPrompt, maxTokens) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+  });
+  const data = await response.json();
+  return { response, data };
+}
 
 const TRUCK_TYPES = ["Semi Truck (18-wheeler)", "Box Truck", "Flatbed", "Tanker"];
 const RV_TYPES = ["RV", "Camper Van"];
@@ -524,22 +556,20 @@ export default async function handler(req, res) {
   }
 
   const user = await getUserFromRequest(req);
-  if (user) {
-    const admin = getSupabaseAdmin();
-    if (admin) {
-      try {
-        const credit = await consumeCredit(admin, user.id);
-        if (!credit.ok) {
-          return res.status(402).json({
-            error: "No Trip Generations remaining this month",
-            code: "no_credits",
-            credits: credit,
-          });
-        }
-      } catch (creditErr) {
-        console.error("Credit consumption failed:", creditErr);
-        return res.status(500).json({ error: "Could not verify trip credits" });
+  const admin = user ? getSupabaseAdmin() : null;
+  if (user && admin) {
+    try {
+      const status = await fetchCreditStatus(admin, user.id);
+      if (!status.unlimited && status.remaining <= 0) {
+        return res.status(402).json({
+          error: "No Trip Generations remaining this month",
+          code: "no_credits",
+          credits: status,
+        });
       }
+    } catch (creditErr) {
+      console.error("Credit check failed:", creditErr);
+      return res.status(500).json({ error: "Could not verify trip credits" });
     }
   }
 
@@ -572,31 +602,36 @@ export default async function handler(req, res) {
     ctx.tripCategory === "commercial" || ctx.tripCategory === "rv" ? 4096 : isSimplifiedFormat ? 1800 : 3200;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(500).json({ error: data.error?.message || "API error" });
+    let anthropicResult = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { response, data } = await callAnthropic(model, SYSTEM_PROMPT, userPrompt, maxTokens);
+      if (!response.ok) {
+        const retryable = response.status === 429 || response.status >= 529;
+        if (retryable && attempt === 0) {
+          await new Promise(r => setTimeout(r, 1500));
+          continue;
+        }
+        return res.status(500).json({ error: data.error?.message || "API error" });
+      }
+      anthropicResult = data;
+      break;
     }
 
-    const text = data.content[0].text;
-    const clean = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
+    const text = anthropicResult?.content?.[0]?.text;
+    const parsed = parseJsonFromLlm(text);
     parsed.trip_format = isSimplifiedFormat ? "simplified" : parsed.trip_format || "multi_day";
+
+    if (user && admin) {
+      const hasContent = (Array.isArray(parsed.stops) && parsed.stops.length > 0)
+        || (Array.isArray(parsed.road_stops) && parsed.road_stops.length > 0);
+      if (hasContent) {
+        try {
+          await consumeCredit(admin, user.id);
+        } catch (creditErr) {
+          console.error("Credit consumption after success failed:", creditErr);
+        }
+      }
+    }
 
     return res.status(200).json(parsed);
   } catch (err) {

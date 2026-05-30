@@ -26,6 +26,8 @@ export default function PlanPanel({
   flowProgress,
   returnedFromResults,
   inQuestionFlow = false,
+  routeError = null,
+  onRetryRoute,
   roadStops,
   selectedLodging,
   restaurantsByCity = {},
@@ -81,7 +83,9 @@ export default function PlanPanel({
             dest={dest}
             routeInfo={routeInfo}
             answers={answers}
-            routePending={routePending}
+            routePending={routePending && !routeError}
+            routeError={routeError}
+            onRetryRoute={onRetryRoute}
           />
         )}
 

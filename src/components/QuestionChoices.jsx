@@ -262,6 +262,9 @@ export default function QuestionChoices({
               {routeLocked && (
                 <p className="question-pending-note">Route details are still loading — choices unlock in a moment.</p>
               )}
+              {currentQ.hint && !routeLocked && (
+                <p className="question-pending-note">{currentQ.hint}</p>
+              )}
               {choices.map(raw => {
                 const { value, label, description } = normalizeChoice(raw);
                 return (
@@ -468,17 +471,29 @@ export default function QuestionChoices({
               }
             }}
           />
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen}
-            onClick={() => {
-              const el = document.querySelector(".question-text-input");
-              if (el?.value?.trim()) pickInstant(el.value.trim());
-            }}
-          >
-            Continue
-          </button>
+          <div className="pref-actions-row">
+            <button
+              type="button"
+              className="btn-generate btn-generate-inline"
+              disabled={frozen}
+              onClick={() => {
+                const el = document.querySelector(".question-text-input");
+                if (el?.value?.trim()) pickInstant(el.value.trim());
+              }}
+            >
+              Continue
+            </button>
+            {currentQ.id === "food_allergies" && (
+              <button
+                type="button"
+                className="convo-nav-btn"
+                disabled={frozen}
+                onClick={() => pickInstant("None specified")}
+              >
+                Skip
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

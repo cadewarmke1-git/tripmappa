@@ -270,7 +270,7 @@ function buildPersonalPreferencesQuestion(context) {
       : "Anything we should avoid or prioritize on your route?",
     hint: "Scenic roads, tolls, pet-friendly stops, and more.",
     type: "multiselect",
-    choices: ["Scenic route", "Avoid tolls", "Pet friendly", "Fast food only", "Sit down restaurants only", "Avoid highways"],
+    choices: ["Scenic route", "Avoid tolls", "Pet friendly", "Safe, well-lit stops only", "Fast food only", "Sit down restaurants only", "Avoid highways"],
   };
 }
 
@@ -358,7 +358,10 @@ function isInstantCompleteVehicle(vehicle) {
 
 function isAnswered(id, answers) {
   if (answers[id] === undefined) return false;
-  if (Array.isArray(answers[id])) return true;
+  if (Array.isArray(answers[id])) {
+    if (id === "multi_vehicles") return answers[id].length > 0;
+    return true;
+  }
   return answers[id] !== "";
 }
 
@@ -422,11 +425,17 @@ function getNextPersonalBranchQuestion(answers, context) {
 
   if (needsOvernightPreferenceQuestion(answers, context) && !isAnswered("overnight_preference", answers)) {
     const overnightQ = buildOvernightPreferenceQuestion(context);
-    if (!isRouteContextReady(context)) {
+    if (!isRouteContextReady(context) && !context.routeFailed) {
       return { done: false, ...overnightQ, pendingRoute: true };
     }
-    if (requiresMultipleDays(context)) {
-      return { done: false, ...overnightQ };
+    if (requiresMultipleDays(context) || context.routeFailed) {
+      return {
+        done: false,
+        ...overnightQ,
+        hint: context.routeFailed
+          ? "We couldn't calculate drive time — choose what fits your plan."
+          : overnightQ.hint,
+      };
     }
   }
   if (needsLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
@@ -450,7 +459,9 @@ function getNextBranchQuestion(effective, answers, context) {
   if (isTruckVehicle(effective)) {
     const truckNext = getNextCommercialQuestion(answers);
     if (truckNext) return truckNext;
-    return getNextUniversalQuestions(answers);
+    const universal = getNextUniversalQuestions(answers);
+    if (universal) return universal;
+    return getNextTailQuestions(answers);
   }
   if (isRvVehicle(effective)) return getNextRvBranchQuestion(answers, context);
   if (isPersonalVehicle(effective)) return getNextPersonalBranchQuestion(answers, context);
@@ -638,8 +649,60 @@ export function getFlowProgress(answers, context = {}, options = {}) {
   };
 }
 
-export function pruneSkippedAnswers(answers) {
-  return normalizeTripAnswers(answers);
+export function pruneSkippedAnswers(answers, context = {}) {
+  return normalizeTripAnswers(answers, context);
+}
+
+/** Drop answers from branches that no longer apply after vehicle or route changes. */
+export function pruneStaleBranchAnswers(answers, context = {}) {
+  const effective = getEffectiveVehicle(answers);
+  const out = { ...answers };
+
+  if (!isTruckVehicle(effective)) {
+    ["hauling_type", "sleeper_cab", "truck_stop_brand", "truck_stop_preference", "route_restrictions", "hos_compliance"].forEach(k => delete out[k]);
+  }
+  if (!isRvVehicle(effective)) {
+    ["rv_height", "rv_weight", "rv_towing"].forEach(k => delete out[k]);
+  }
+  if (!isPersonalVehicle(effective)) {
+    ["towing"].forEach(k => delete out[k]);
+  }
+  if (isTruckVehicle(effective) || isRvVehicle(effective)) {
+    delete out.overnight_preference;
+    delete out.lodging;
+    delete out.loyalty_program;
+  }
+  if (answers.vehicle !== MULTI_VEHICLE_TRIP) {
+    delete out.multi_vehicles;
+    delete out.primary_vehicle;
+    delete out.coordination_needs;
+  }
+  if (Array.isArray(out.multi_vehicles) && out.primary_vehicle && !out.multi_vehicles.includes(out.primary_vehicle)) {
+    delete out.primary_vehicle;
+  }
+
+  return normalizeTripAnswers(out, context);
+}
+
+export function pruneRouteDependentAnswers(answers, context = {}) {
+  const out = { ...answers };
+  delete out.overnight_preference;
+  delete out.continuous_drive;
+  delete out.lodging;
+  delete out.loyalty_program;
+  return normalizeTripAnswers(out, context);
+}
+
+export function warnContinuousDriveFeasibility(context) {
+  const hours = context?.routeDurationHours ?? parseHoursFromDuration(context?.routeDuration);
+  const miles = context?.routeDistanceMiles ?? parseMilesFromDistance(context?.routeDistance);
+  if (hours != null && hours > 10) {
+    return `This route is about ${Math.round(hours)} hours of driving. Federal guidance recommends breaks and rest — are you sure you want to drive straight through?`;
+  }
+  if (miles != null && miles > 600) {
+    return `This route is about ${Math.round(miles)} miles. Driving straight through may not be realistic without rest stops.`;
+  }
+  return null;
 }
 
 export function flowQuestionSkipped() {

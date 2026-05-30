@@ -13,7 +13,12 @@ import {
   NEARBY_SERVICE_CATEGORIES,
   getTripBudgetCap,
 } from "./tripAccommodations.js";
-import { buildFuelIntervalPoints, getFuelStopMode, sampleRoutePointsEveryMiles } from "./fuel.js";
+import {
+  buildFuelIntervalPoints,
+  consolidateFuelRoadStops,
+  getFuelStopMode,
+  sampleRoutePointsEveryMiles,
+} from "./fuel.js";
 import { buildRoadStopsFromRoute } from "./roadStopsFromPlaces.js";
 import { computeBudgetEstimate } from "./budget.js";
 import { parseMilesFromDistance } from "./parsing.js";
@@ -267,7 +272,7 @@ export async function enrichGeneratedTrip({
     ? buildFuelIntervalPoints(routeInfo.routePoints, enrichedStops.length, totalMiles, answers)
     : [];
 
-  const budget = computeBudgetEstimate(answers, routeInfo, [], {
+  const budget = computeBudgetEstimate(answers, routeInfo, enrichedStops, {
     roadStops: safeRoadStops,
     selectedLodging,
     restaurantsByCity,
@@ -325,6 +330,12 @@ export async function enrichGeneratedTrip({
   }
 
   safeRoadStops = dedupeRoadStops(safeRoadStops);
+  safeRoadStops = consolidateFuelRoadStops(
+    safeRoadStops,
+    answers,
+    routeInfo,
+    enrichedStops.length,
+  );
 
   return {
     stops: enrichedStops,

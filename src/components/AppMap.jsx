@@ -8,6 +8,7 @@ import MapRouteOverlays from "./map/MapRouteOverlays.jsx";
 import MapGenerationPulse from "./map/MapGenerationPulse.jsx";
 import MapRecenterButton from "./map/MapRecenterButton.jsx";
 import MapZoomControls from "./map/MapZoomControls.jsx";
+import MapBackToTripButton from "./map/MapBackToTripButton.jsx";
 import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
 import { resolveMapStyles } from "../lib/mapStyles.js";
@@ -40,6 +41,7 @@ export default function AppMap({
   onMarkerAction,
   onMarkerSelect,
   onRecenter,
+  onBackToResults = null,
   theme = "night",
   onNavigateHome = null,
   navigateHomePending = false,
@@ -155,8 +157,13 @@ export default function AppMap({
               </div>
             )}
           </div>
-          <MapZoomControls mapRef={mapRef} />
-          <MapRecenterButton onRecenter={onRecenter} />
+          <div className="map-controls-stack">
+            <MapZoomControls mapRef={mapRef} />
+            <MapRecenterButton onRecenter={onRecenter} />
+          </div>
+          {onBackToResults && (
+            <MapBackToTripButton onBack={onBackToResults} />
+          )}
         </>
       ) : (
         <div className="map-loading">

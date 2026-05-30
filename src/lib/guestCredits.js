@@ -22,6 +22,12 @@ export function consumeGuestCredit() {
   return true;
 }
 
+export function refundGuestCredit() {
+  const used = Number(sessionStorage.getItem(GUEST_KEY) || 0);
+  if (used <= 0) return;
+  sessionStorage.setItem(GUEST_KEY, String(used - 1));
+}
+
 export function guestCreditsExhausted() {
   return getGuestCreditStatus().remaining <= 0;
 }
