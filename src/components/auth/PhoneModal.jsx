@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 import ModalCloseButton from "../ModalCloseButton.jsx";
 import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
+import BrandWordmark from "../BrandWordmark.jsx";
 
 function PhoneIcon() {
   return (
@@ -24,6 +25,7 @@ export default function PhoneModal({
   loading = false,
   error = "",
   initialPhone = "",
+  theme = "night",
 }) {
   const [step, setStep] = useState(initialPhone ? "code" : "phone");
   const [phone, setPhone] = useState(initialPhone);
@@ -50,7 +52,7 @@ export default function PhoneModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className={`modal-overlay auth-modal-overlay tm-theme-${theme}`} role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div
         ref={dialogRef}
         className="auth-modal"
@@ -60,7 +62,7 @@ export default function PhoneModal({
       >
         <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
-        <div className="auth-modal-logo">Trip<span>Mappa</span></div>
+        <BrandWordmark className="auth-modal-logo" as="div" />
 
         {step === "phone" ? (
           <>

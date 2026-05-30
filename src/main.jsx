@@ -8,6 +8,7 @@ import "./index.css";
 import "./styles/tripmappa.css";
 import "./styles/tripmappa-themes.css";
 import "./styles/rebrand.css";
+import "./styles/brand-typography.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

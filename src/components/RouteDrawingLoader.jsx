@@ -1,4 +1,4 @@
-/** Animated route-drawing loader — mimics the gold polyline being calculated on the map. */
+import BrandWordmark from "./BrandWordmark.jsx";
 const ROUTE_PATH =
   "M 12 38 C 36 38, 48 10, 72 14 S 108 42, 138 26 S 176 10, 188 18";
 
@@ -49,9 +49,7 @@ export default function RouteDrawingLoader({ theme, variant = "inline", classNam
           />
         </svg>
         {showWordmark && (
-          <div className="route-drawing-loader-wordmark" aria-hidden="true">
-            Trip<span>Mappa</span>
-          </div>
+          <BrandWordmark className="route-drawing-loader-wordmark" aria-hidden="true" />
         )}
       </div>
     </div>

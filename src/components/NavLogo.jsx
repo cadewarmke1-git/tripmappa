@@ -1,3 +1,5 @@
+import BrandWordmark from "./BrandWordmark.jsx";
+
 /** Clickable TripMappa wordmark — navigates home from any screen. */
 export default function NavLogo({ onClick, className = "" }) {
   return (
@@ -7,7 +9,7 @@ export default function NavLogo({ onClick, className = "" }) {
       onClick={onClick}
       aria-label="TripMappa home"
     >
-      Trip<span>Mappa</span>
+      <BrandWordmark as="span" />
     </button>
   );
 }

@@ -79,8 +79,8 @@ export default function HeroView({
 
         <div className="hero-content">
           <h1 className="hero-title">
-            Travel<br/>
-            <span className="highlight">Reimagined.</span>
+            <span className="hero-title-line">Travel</span>
+            <span className="hero-title-accent">Reimagined.</span>
           </h1>
           <p className="hero-sub">Your next trip, planned in seconds.</p>
 

@@ -4,6 +4,7 @@ import AuthSocialButtons from "./auth/AuthSocialButtons.jsx";
 import { PhoneIcon } from "./auth/PhoneModal.jsx";
 import ModalCloseButton from "./ModalCloseButton.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import BrandWordmark from "./BrandWordmark.jsx";
 
 export default function EmailModal({
   email,
@@ -17,6 +18,7 @@ export default function EmailModal({
   onContinueWithPhone,
   loading = false,
   error = "",
+  theme = "night",
 }) {
   const [password, setPassword] = useState("");
   const dialogRef = useDialogA11y(true, onClose, "signup-headline");
@@ -27,7 +29,7 @@ export default function EmailModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className={`modal-overlay auth-modal-overlay tm-theme-${theme}`} role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div
         ref={dialogRef}
         className="auth-modal"
@@ -37,7 +39,7 @@ export default function EmailModal({
       >
         <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
-        <div className="auth-modal-logo">Trip<span>Mappa</span></div>
+        <BrandWordmark className="auth-modal-logo" as="div" />
         <h2 className="auth-modal-headline" id="signup-headline">Start planning your perfect trip.</h2>
         <p className="auth-modal-sub">Create your free account to save trips, share routes, and unlock premium features.</p>
 

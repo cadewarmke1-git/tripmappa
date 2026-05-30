@@ -102,44 +102,7 @@ body {
   transition: background-color 1.8s ease, color 1.8s ease;
 }
 
-/* ── Nav wordmark gradient ── */
-.app-wrap.night .nav-app .nav-logo,
-.app-wrap.night .nav-app .nav-logo-home,
-.hero.night .nav-logo,
-.hero.night .nav-logo-home {
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.app-wrap.night .nav-app .nav-logo span,
-.app-wrap.night .nav-app .nav-logo-home span,
-.hero.night .nav-logo span,
-.hero.night .nav-logo-home span {
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.app-wrap.day .nav-app .nav-logo,
-.app-wrap.day .nav-app .nav-logo-home,
-.hero.day .nav-logo,
-.hero.day .nav-logo-home {
-  background: linear-gradient(135deg, #C87010 0%, #E06820 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.app-wrap.day .nav-app .nav-logo span,
-.app-wrap.day .nav-app .nav-logo-home span,
-.hero.day .nav-logo span,
-.hero.day .nav-logo-home span {
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
+/* Wordmark + hero typography: see brand-typography.css */
 
 /* ── Nav bar surfaces ── */
 .app-wrap.day .nav-app {
@@ -225,15 +188,6 @@ body {
   /* night keeps gold button from base; day override above */
 }
 
-.hero.day .hero-swap-btn {
-  color: #E06820 !important;
-  border-color: rgba(224, 104, 32, 0.45) !important;
-}
-
-.hero.day .hero-swap-btn:hover {
-  background: rgba(224, 104, 32, 0.15) !important;
-}
-
 /* ── Hero overlays (above photos, below content) ── */
 .hero-overlay {
   z-index: 1 !important;
@@ -249,12 +203,80 @@ body {
 }
 
 .hero.day .hero-overlay {
+  /* Light golden-hour wash — photos stay visible; bottom darkens for UI contrast */
   background: linear-gradient(
-    150deg,
-    rgba(247, 200, 74, 0.55) 0%,
-    rgba(224, 104, 32, 0.6) 50%,
-    rgba(90, 42, 16, 0.68) 100%
+    180deg,
+    rgba(247, 200, 74, 0.22) 0%,
+    rgba(224, 104, 32, 0.14) 38%,
+    rgba(90, 42, 16, 0.32) 68%,
+    rgba(26, 13, 0, 0.52) 100%
   ) !important;
+}
+
+/* Hero day — cream frosted search panel over photography */
+.hero.day .hero-search {
+  background: rgba(253, 243, 224, 0.88) !important;
+  border-color: rgba(224, 104, 32, 0.22) !important;
+  box-shadow: 0 16px 48px rgba(26, 13, 0, 0.2) !important;
+}
+
+.hero.day .hero-search:focus-within {
+  border-color: rgba(224, 104, 32, 0.38) !important;
+  box-shadow: 0 20px 56px rgba(26, 13, 0, 0.24), 0 0 0 3px rgba(255, 210, 140, 0.25) !important;
+}
+
+.hero.day .hero-input {
+  color: #1A0D00 !important;
+}
+
+.hero.day .hero-input::placeholder {
+  color: rgba(90, 42, 16, 0.45) !important;
+}
+
+.hero.day .hero-route-labels .hero-input-label,
+.hero.day .hero-route-cell .hero-input-label {
+  color: #C87010 !important;
+}
+
+.hero.day .hero-swap-btn {
+  background: rgba(253, 243, 224, 0.95) !important;
+  color: #E06820 !important;
+  border-color: rgba(224, 104, 32, 0.35) !important;
+}
+
+.hero.day .hero-swap-btn:hover {
+  background: #FDF3E0 !important;
+  border-color: rgba(224, 104, 32, 0.5) !important;
+}
+
+.hero.day .hero-auth-btn,
+.hero.day .hero-email-btn,
+.hero.day .hero-phone-btn {
+  background: rgba(253, 243, 224, 0.82) !important;
+  border-color: rgba(224, 104, 32, 0.22) !important;
+  color: #1A0D00 !important;
+}
+
+.hero.day .hero-auth-btn:hover,
+.hero.day .hero-email-btn:hover,
+.hero.day .hero-phone-btn:hover {
+  background: rgba(253, 243, 224, 0.95) !important;
+  border-color: rgba(224, 104, 32, 0.35) !important;
+}
+
+.hero.day .hero-auth-label,
+.hero.day .hero-auth-or span {
+  color: rgba(255, 255, 255, 0.75) !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+.hero.day .hero-draft-resume {
+  background: rgba(253, 243, 224, 0.92) !important;
+  border-color: rgba(224, 104, 32, 0.28) !important;
+}
+
+.hero.day .hero-draft-resume-text {
+  color: #1A0D00 !important;
 }
 
 /* ── Theme toggle ── */
@@ -357,30 +379,7 @@ body {
   100% { stroke-dashoffset: 0; opacity: 0.35; }
 }
 
-.route-drawing-loader-wordmark {
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
-}
-
-.app-wrap.day .route-drawing-loader-wordmark,
-.hero.day .route-drawing-loader-wordmark {
-  background: linear-gradient(135deg, #C87010 0%, #E06820 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-.route-drawing-loader-wordmark span {
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
+/* Loader + auth wordmark colors: brand-typography.css */
 
 @keyframes loaderWordmarkPulse {
   0%, 100% { opacity: 0.55; transform: scale(0.98); }
@@ -867,24 +866,6 @@ body {
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #fff !important;
 }
-
-.auth-modal-logo {
-  background: linear-gradient(135deg, #FFD28C, #FF8C42);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.auth-modal-logo span {
-  -webkit-text-fill-color: transparent;
-}
-
-.app-wrap.day .auth-modal-logo {
-  background: linear-gradient(135deg, #C87010, #E06820);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
 /* Responsive safeguards */
 @media (max-width: 640px) {
   .route-drawing-loader--fullscreen .route-drawing-loader-svg {

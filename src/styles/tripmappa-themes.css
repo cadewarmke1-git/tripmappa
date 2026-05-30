@@ -5,10 +5,6 @@
   border-bottom: 1px solid rgba(255,255,255,0.08) !important;
   transition: background 1.8s ease, border-color 1.8s ease;
 }
-.app-wrap.day .app-global-home-logo,
-.app-wrap.night .app-global-home-logo { color: #FFD28C !important; }
-.app-wrap.day .app-global-home-logo span,
-.app-wrap.night .app-global-home-logo span { color: #fff !important; }
 .app-wrap.day .nav-app .nav-tab,
 .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.5) !important; }
 .app-wrap.day .nav-app .nav-tab.active,
@@ -332,10 +328,6 @@
 
 /* ── App theme: Night ── */
 .app-wrap.night .nav-app { transition: background 1.8s ease, border-color 1.8s ease; }
-.app-wrap.night .nav-app .nav-logo,
-.app-wrap.day .nav-app .nav-logo { color: #FFD28C !important; }
-.app-wrap.night .nav-app .nav-logo span,
-.app-wrap.day .nav-app .nav-logo span { color: #fff !important; }
 .app-wrap.night .nav-center-wrap { background: rgba(255,255,255,0.08); }
 .app-wrap.night .nav-app .nav-tab { color: rgba(255,255,255,0.45); }
 .app-wrap.night .nav-app .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; box-shadow: none; }
@@ -378,16 +370,6 @@
 .app-wrap.day .sidebar-inner::after,
 .app-wrap.night .sidebar-inner::before,
 .app-wrap.night .sidebar-inner::after { display: none; }
-
-/* Logo — Trip gold, Mappa white (all views) */
-.app-wrap.night .nav-logo,
-.app-wrap.day .nav-logo,
-.app-wrap.night .app-global-home-logo,
-.app-wrap.day .app-global-home-logo { color: #FFD28C !important; }
-.app-wrap.night .nav-logo span,
-.app-wrap.day .nav-logo span,
-.app-wrap.night .app-global-home-logo span,
-.app-wrap.day .app-global-home-logo span { color: #fff !important; }
 
 .app-wrap.night .chat-wrap, .app-wrap.night .stops-wrap, .app-wrap.night .share-wrap,
 .app-wrap.day .chat-wrap, .app-wrap.day .stops-wrap, .app-wrap.day .share-wrap { position: relative; z-index: 1; }

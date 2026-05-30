@@ -55,15 +55,13 @@
   .nav.solid { background: rgba(12,18,34,0.96); border-bottom: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px); }
   .nav-logo {
     font-family: 'Inter', sans-serif; font-size: 21px; font-weight: 700; letter-spacing: -0.5px;
-    color: #FFD28C;
+    color: inherit;
   }
-  .nav-logo span { color: #fff; }
   .nav-logo-home {
     background: none; border: none; padding: 0; cursor: pointer;
-    color: #FFD28C;
+    color: inherit;
     transition: text-shadow 0.25s var(--ease), transform 0.15s var(--ease);
   }
-  .nav-logo-home span { color: #fff; }
   .nav-logo-home:hover {
     text-shadow: 0 0 18px rgba(255, 210, 140, 0.55), 0 0 6px rgba(255, 210, 140, 0.35);
   }
@@ -150,10 +148,11 @@
   }
   .hero.day .hero-overlay {
     background: linear-gradient(
-      150deg,
-      rgba(247, 200, 74, 0.55) 0%,
-      rgba(224, 104, 32, 0.6) 50%,
-      rgba(90, 42, 16, 0.68) 100%
+      180deg,
+      rgba(247, 200, 74, 0.22) 0%,
+      rgba(224, 104, 32, 0.14) 38%,
+      rgba(90, 42, 16, 0.32) 68%,
+      rgba(26, 13, 0, 0.52) 100%
     );
   }
 
@@ -170,14 +169,14 @@
     font-family: 'Fraunces', serif; font-weight: 700;
     font-size: clamp(48px, 8.5vw, 96px);
     line-height: 0.98; letter-spacing: -0.02em;
-    color: #fff; margin: 24px 0 36px;
+    color: var(--tm-hero-title-color, #FFFFFF);
+    margin: 24px 0 36px;
     text-shadow: 0 2px 24px rgba(0,0,0,0.35);
   }
-  .hero-title .highlight { color: var(--gold); }
 
   .hero-sub {
     font-family: 'Inter', sans-serif;
-    font-size: 17px; color: rgba(255,255,255,0.7); max-width: 440px;
+    font-size: 17px; color: var(--tm-hero-tagline-color, rgba(255,255,255,0.8)); max-width: 440px;
     margin: 0 auto 52px; line-height: 1.65; font-weight: 400;
   }
 
@@ -2088,9 +2087,9 @@
   }
   .auth-modal-logo {
     font-family: "Fraunces", Georgia, serif; font-size: 32px; font-weight: 700;
-    letter-spacing: -0.03em; color: #FFD28C; margin-bottom: 16px; text-align: center;
+    letter-spacing: -0.03em; margin-bottom: 16px; text-align: center;
+    color: inherit;
   }
-  .auth-modal-logo span { color: #fff; }
   .auth-modal-headline {
     font-family: "Fraunces", Georgia, serif; font-size: 22px; font-weight: 700;
     letter-spacing: -0.02em; color: #fff; margin: 0 0 8px; text-align: center; line-height: 1.25;
@@ -3517,9 +3516,8 @@
   .app-global-home-logo {
     position: fixed; top: 0; left: 20px; height: var(--nav-h, 56px); z-index: 210;
     display: flex; align-items: center;
-    color: #FFD28C !important;
+    color: inherit;
   }
-  .app-global-home-logo span { color: #fff !important; }
 
   /* ── App nav bar (logo + hamburger + avatar) ── */
   .app-nav-bar {
@@ -3839,24 +3837,24 @@
     color: #fff;
   }
 
-  /* ── Left navigation sidebar ── */
+  /* ── Navigation sidebar (right, matches account panel) ── */
   .nav-sidebar {
     position: fixed;
     top: 0;
-    left: 0;
+    right: 0;
     bottom: 0;
     width: min(var(--sidebar-w), 100vw);
     z-index: 190;
     display: flex;
     flex-direction: column;
     padding: calc(var(--nav-h) + 8px) 22px 24px;
-    border-right: 1px solid rgba(255,255,255,0.12);
+    border-left: 1px solid rgba(255,255,255,0.12);
     background: linear-gradient(165deg, rgba(22,26,42,0.98) 0%, rgba(12,16,28,0.98) 100%);
     backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    box-shadow: 12px 0 48px rgba(0,0,0,0.45);
+    box-shadow: -12px 0 48px rgba(0,0,0,0.45);
     color: #fff;
-    transform: translateX(-100%);
+    transform: translateX(100%);
     opacity: 0.98;
     pointer-events: none;
     transition: transform 0.32s var(--ease), opacity 0.28s var(--ease);
@@ -3868,7 +3866,7 @@
     pointer-events: auto;
   }
   .nav-sidebar.is-closing {
-    transform: translateX(-100%);
+    transform: translateX(100%);
     pointer-events: none;
   }
   .nav-sidebar-glow {

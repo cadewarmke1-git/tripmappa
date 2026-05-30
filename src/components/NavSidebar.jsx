@@ -45,7 +45,7 @@ export default function NavSidebar({
     <>
       <button
         type="button"
-        className={`app-sidebar-overlay app-sidebar-overlay-left${open && !closing ? " is-visible" : ""}${closing ? " is-closing" : ""}`}
+        className={`app-sidebar-overlay app-sidebar-overlay-right${open && !closing ? " is-visible" : ""}${closing ? " is-closing" : ""}`}
         aria-label="Close navigation menu"
         onClick={onClose}
       />

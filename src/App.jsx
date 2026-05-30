@@ -48,6 +48,7 @@ import { computeAutoTheme } from "./lib/theme.js";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import HeroView from "./components/HeroView.jsx";
+import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
 import PlanPanelDock from "./components/PlanPanelDock.jsx";
@@ -2524,6 +2525,7 @@ export default function App() {
           onApple={() => handleOAuth("apple")}
           loading={authBusy}
           error={authError}
+          theme={theme}
         />
       )}
       {authModal === "phone" && (
@@ -2535,6 +2537,7 @@ export default function App() {
           initialPhone={authPhone}
           loading={authBusy}
           error={authError}
+          theme={theme}
         />
       )}
       {authModal === "signin" && (
@@ -2548,6 +2551,7 @@ export default function App() {
           onApple={() => handleOAuth("apple")}
           loading={authBusy}
           error={authError}
+          theme={theme}
         />
       )}
       {!isAuthConfigured && authModal?.startsWith("oauth-") && (
@@ -2555,6 +2559,7 @@ export default function App() {
           provider={authModal.replace("oauth-", "")}
           onClose={() => setAuthModal(null)}
           onUseEmail={() => openAuthModal("signup")}
+          theme={theme}
         />
       )}
       <Toast
@@ -2923,6 +2928,7 @@ export default function App() {
           onApple={() => handleOAuth("apple")}
           loading={authBusy}
           error={authError}
+          theme={theme}
         />
       )}
       {authModal === "phone" && (
@@ -2934,6 +2940,7 @@ export default function App() {
           initialPhone={authPhone}
           loading={authBusy}
           error={authError}
+          theme={theme}
         />
       )}
       {authModal === "signin" && (
@@ -2947,6 +2954,7 @@ export default function App() {
           onApple={() => handleOAuth("apple")}
           loading={authBusy}
           error={authError}
+          theme={theme}
         />
       )}
       {!isAuthConfigured && authModal?.startsWith("oauth-") && (
@@ -2954,6 +2962,7 @@ export default function App() {
           provider={authModal.replace("oauth-", "")}
           onClose={() => setAuthModal(null)}
           onUseEmail={() => openAuthModal("signup")}
+          theme={theme}
         />
       )}
       {showUpgradeModal && (
