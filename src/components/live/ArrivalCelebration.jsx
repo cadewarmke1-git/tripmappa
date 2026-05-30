@@ -1,3 +1,4 @@
+import { GOLD_PRIMARY, ORANGE_PRIMARY } from "../../lib/palette.js";
 import { useEffect, useState } from "react";
 import { extractDestinationCity } from "../../lib/liveShareUtils.js";
 import DecorMark from "../icons/DecorMark.jsx";
@@ -11,7 +12,7 @@ export default function ArrivalCelebration({ destination, show, onDismiss }) {
       id: i,
       left: `${Math.random() * 100}%`,
       delay: `${Math.random() * 0.8}s`,
-      color: Math.random() > 0.5 ? "#FFD28C" : "#ffb347",
+      color: Math.random() > 0.5 ? GOLD_PRIMARY : ORANGE_PRIMARY,
     }));
     setParticles(next);
   }, [show]);

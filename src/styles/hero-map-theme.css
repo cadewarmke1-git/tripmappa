@@ -1,57 +1,58 @@
-/* Hero UI + map shell — theme-aware colors (loads after rebrand + brand-typography) */
+/* Hero UI + map shell — canonical palette tokens (tripmappa-themes.css) */
 
 /* ══════════════════════════════════════════════════════════════
-   HERO — NIGHT
+   HERO
    ══════════════════════════════════════════════════════════════ */
 .hero.night .hero-draft-resume {
-  background: rgba(26, 16, 53, 0.85) !important;
-  border-color: rgba(255, 210, 140, 0.25) !important;
+  background: var(--color-banner-bg) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .hero.night .hero-draft-resume-text {
-  color: rgba(255, 255, 255, 0.88) !important;
+  color: var(--color-text-primary) !important;
+  opacity: 0.88;
 }
 
 .hero.night .hero-draft-route-name {
-  color: #FFD28C !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .hero.night .hero-draft-resume-btn {
   background: transparent !important;
-  border-color: #FF8C42 !important;
-  color: #FFD28C !important;
+  border-color: var(--color-accent-orange) !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .hero.night .hero-draft-resume-btn:hover {
-  background: rgba(255, 140, 66, 0.12) !important;
+  background: var(--color-tag-fuel-bg) !important;
 }
 
 .hero.night .hero-draft-resume-dismiss {
-  color: rgba(255, 255, 255, 0.45) !important;
+  color: var(--color-text-primary) !important;
+  opacity: 0.45;
 }
 
 .hero.night .hero-draft-resume-dismiss:hover {
-  color: rgba(255, 255, 255, 0.75) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  opacity: 0.75;
+  background: var(--color-btn-secondary-bg) !important;
 }
 
 .hero.night .hero-search {
-  background: rgba(255, 255, 255, 0.07) !important;
-  border-color: rgba(255, 210, 140, 0.2) !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35) !important;
+  background: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .hero.night .hero-search:focus-within {
-  border-color: rgba(255, 210, 140, 0.35) !important;
+  border-color: var(--color-input-border) !important;
   box-shadow: 0 20px 56px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(255, 210, 140, 0.12) !important;
 }
 
 .hero.night .hero-auth-btn,
 .hero.night .hero-email-btn,
 .hero.night .hero-phone-btn {
-  background: rgba(255, 255, 255, 0.07) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
+  background: var(--color-btn-secondary-bg) !important;
+  border-color: var(--color-btn-secondary-border) !important;
+  color: var(--color-btn-secondary-text) !important;
 }
 
 .hero.night .hero-auth-btn:hover,
@@ -62,282 +63,256 @@
 }
 
 .hero.night .hero-go-btn:not(:disabled) {
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
-  color: #1A0D00 !important;
+  background: var(--color-btn-primary-bg) !important;
+  color: var(--color-btn-primary-text) !important;
   border: none !important;
-  box-shadow: 0 6px 20px rgba(255, 140, 66, 0.35) !important;
 }
 
-.hero.night .hero-go-btn:not(:disabled):hover {
-  box-shadow: 0 8px 28px rgba(255, 140, 66, 0.45) !important;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   HERO — DAY
-   ══════════════════════════════════════════════════════════════ */
 .hero.day .hero-draft-resume {
-  background: rgba(245, 230, 200, 0.92) !important;
-  border-color: rgba(160, 64, 16, 0.22) !important;
+  background: var(--color-banner-bg) !important;
+  border-color: var(--color-input-border) !important;
 }
 
-.hero.day .hero-draft-resume-text {
-  color: #1A0D00 !important;
+.hero.day .hero-draft-resume-text,
+.hero.day .hero-draft-route-name {
+  color: var(--color-text-primary) !important;
 }
 
 .hero.day .hero-draft-route-name {
-  color: #1A0D00 !important;
   font-weight: 700;
 }
 
 .hero.day .hero-draft-resume-btn {
   background: transparent !important;
-  border-color: #E06820 !important;
-  color: #E06820 !important;
+  border-color: var(--color-accent-orange) !important;
+  color: var(--color-accent-orange) !important;
 }
 
 .hero.day .hero-draft-resume-btn:hover {
-  background: rgba(224, 104, 32, 0.1) !important;
+  background: var(--color-trip-tips-bg) !important;
 }
 
 .hero.day .hero-draft-resume-dismiss {
-  color: #A04010 !important;
+  color: var(--color-tag-fuel-text) !important;
 }
 
 .hero.day .hero-draft-resume-dismiss:hover {
-  color: #A04010 !important;
-  background: rgba(160, 64, 16, 0.1) !important;
+  background: var(--color-tag-fuel-bg) !important;
 }
 
 .hero.day .hero-search {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(160, 64, 16, 0.25) !important;
-  box-shadow: 0 16px 48px rgba(26, 13, 0, 0.15) !important;
+  background: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .hero.day .hero-search:focus-within {
-  border-color: rgba(160, 64, 16, 0.38) !important;
-  box-shadow: 0 20px 56px rgba(26, 13, 0, 0.2), 0 0 0 3px rgba(255, 210, 140, 0.2) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .hero.day .hero-input {
-  color: #1A0D00 !important;
+  color: var(--color-text-primary) !important;
 }
 
 .hero.day .hero-input::placeholder {
-  color: rgba(90, 42, 16, 0.45) !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .hero.day .hero-route-labels .hero-input-label,
 .hero.day .hero-route-cell .hero-input-label {
-  color: #C87010 !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .hero.day .hero-swap-btn {
   background: rgba(255, 255, 255, 0.9) !important;
-  color: #E06820 !important;
-  border-color: rgba(160, 64, 16, 0.3) !important;
+  color: var(--color-accent-orange) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .hero.day .hero-swap-btn:hover {
-  background: #ffffff !important;
-  border-color: rgba(160, 64, 16, 0.45) !important;
+  background: color-mix(in srgb, var(--color-btn-secondary-bg), white 17%) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-orange) !important;
 }
 
 .hero.day .hero-auth-btn,
 .hero.day .hero-email-btn,
 .hero.day .hero-phone-btn {
-  background: rgba(255, 255, 255, 0.75) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  color: #1A0D00 !important;
+  background: var(--color-btn-secondary-bg) !important;
+  border-color: var(--color-btn-secondary-border) !important;
+  color: var(--color-btn-secondary-text) !important;
 }
 
 .hero.day .hero-auth-btn:hover,
 .hero.day .hero-email-btn:hover,
 .hero.day .hero-phone-btn:hover {
   background: rgba(255, 255, 255, 0.92) !important;
-  border-color: rgba(160, 64, 16, 0.32) !important;
+  border-color: var(--color-btn-secondary-border) !important;
 }
 
 .hero.day .hero-auth-label,
 .hero.day .hero-auth-or span {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--color-hero-subtitle) !important;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
 .hero.day .hero-go-btn:not(:disabled) {
-  background: #1A0D00 !important;
-  color: #FFD28C !important;
+  background: var(--color-btn-primary-bg) !important;
+  color: var(--color-btn-primary-text) !important;
   border: none !important;
-  box-shadow: 0 6px 20px rgba(26, 13, 0, 0.35) !important;
-}
-
-.hero.day .hero-go-btn:not(:disabled):hover {
-  box-shadow: 0 8px 28px rgba(26, 13, 0, 0.45) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AVATAR — both themes
+   AVATAR — both themes (fixed gold gradient)
    ══════════════════════════════════════════════════════════════ */
 .user-avatar-ring:not(:has(.user-avatar-img)),
 .user-avatar:not(:has(.user-avatar-img)) {
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
-  color: #1A0D00 !important;
+  background: var(--color-accent-gradient) !important;
+  color: var(--deep-dark) !important;
 }
 
 .user-avatar-initials {
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MAP SHELL — NIGHT (deep space)
+   MAP SHELL
    ══════════════════════════════════════════════════════════════ */
 .app-wrap.night .map-loading,
 .app-wrap.night .map-placeholder {
-  background: #0D0A1A !important;
-  color: rgba(168, 155, 207, 0.65) !important;
+  background: var(--color-map-surface) !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .app-wrap.night .map-night-layer {
-  background: linear-gradient(150deg, #0D0A1A 0%, #1A1035 50%, #2A1A4A 100%) !important;
+  background: var(--color-map-mesh) !important;
 }
 
 .app-wrap.night .float-card {
-  background: rgba(26, 16, 53, 0.94) !important;
-  border-color: rgba(255, 210, 140, 0.18) !important;
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent) !important;
+  border-color: var(--color-card-border) !important;
 }
 
 .app-wrap.night .float-card-header {
-  background: #1A1035 !important;
-  border-bottom-color: rgba(255, 210, 140, 0.12) !important;
+  background: var(--color-map-panel) !important;
+  border-bottom-color: var(--color-card-border) !important;
 }
 
 .app-wrap.night .trip-map-fullscreen {
-  background: #0D0A1A !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.night .map-style-btn,
 .app-wrap.night .map-recenter-btn,
 .app-wrap.night .map-zoom-btn {
-  background: rgba(26, 16, 53, 0.92) !important;
-  border-color: rgba(255, 210, 140, 0.22) !important;
-  color: #FFD28C !important;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .app-wrap.night .map-style-btn:hover,
 .app-wrap.night .map-recenter-btn:hover,
 .app-wrap.night .map-zoom-btn:hover {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
 }
 
 .app-wrap.night .map-style-menu {
-  background: rgba(26, 16, 53, 0.96) !important;
-  border-color: rgba(255, 210, 140, 0.2) !important;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .app-wrap.night .map-style-item {
-  color: #ffffff !important;
+  color: var(--color-text-primary) !important;
 }
 
 .app-wrap.night .map-style-item:hover {
-  background: rgba(42, 26, 74, 0.85) !important;
+  background: var(--color-surface-elevated) !important;
 }
 
 .app-wrap.night .map-style-item.active {
-  background: rgba(255, 210, 140, 0.15) !important;
+  background: var(--color-tag-local-bg) !important;
 }
 
 .app-wrap.night .float-card-chevron-btn {
-  background: rgba(42, 26, 74, 0.85) !important;
-  border-color: rgba(255, 210, 140, 0.2) !important;
-  color: #FFD28C !important;
-}
-
-.app-wrap.night .float-card-chevron-btn:hover {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .app-wrap.night .map-recenter-btn svg,
 .app-wrap.night .map-zoom-btn svg {
-  color: #FFD28C !important;
+  color: var(--color-accent-gold) !important;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MAP SHELL — DAY (desert cream)
-   ══════════════════════════════════════════════════════════════ */
 .app-wrap.day .map-loading,
 .app-wrap.day .map-placeholder {
-  background: #F5E6C8 !important;
-  color: rgba(90, 42, 16, 0.45) !important;
+  background: var(--color-map-surface) !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .app-wrap.day .map-day-layer {
-  background: linear-gradient(150deg, #F5E6C8 0%, #EED8A8 55%, #E8D5A8 100%) !important;
+  background: var(--color-map-mesh) !important;
 }
 
 .app-wrap.day .map-placeholder-text {
-  color: rgba(26, 13, 0, 0.2) !important;
+  color: color-mix(in srgb, var(--color-text-primary) 20%, transparent) !important;
 }
 
 .app-wrap.day .map-placeholder-sub {
-  color: rgba(26, 13, 0, 0.14) !important;
+  color: color-mix(in srgb, var(--color-text-primary) 14%, transparent) !important;
 }
 
 .app-wrap.day .float-card {
-  background: rgba(245, 230, 200, 0.96) !important;
-  border-color: rgba(160, 64, 16, 0.22) !important;
+  background: color-mix(in srgb, var(--color-map-surface) 96%, transparent) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .app-wrap.day .float-card-header {
-  background: #EED8A8 !important;
-  border-bottom-color: rgba(160, 64, 16, 0.18) !important;
+  background: var(--color-map-panel) !important;
+  border-bottom-color: var(--color-input-border) !important;
 }
 
 .app-wrap.day .trip-map-fullscreen {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.day .map-style-btn,
 .app-wrap.day .map-recenter-btn,
 .app-wrap.day .map-zoom-btn {
-  background: rgba(245, 230, 200, 0.94) !important;
-  border-color: rgba(160, 64, 16, 0.25) !important;
-  color: #1A0D00 !important;
+  background: color-mix(in srgb, var(--color-map-surface) 94%, transparent) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .app-wrap.day .map-style-btn:hover,
 .app-wrap.day .map-recenter-btn:hover,
 .app-wrap.day .map-zoom-btn:hover {
-  background: #EED8A8 !important;
+  background: var(--color-map-panel) !important;
 }
 
 .app-wrap.day .map-style-menu {
-  background: rgba(238, 216, 168, 0.98) !important;
-  border-color: rgba(160, 64, 16, 0.22) !important;
+  background: color-mix(in srgb, var(--color-map-panel) 98%, transparent) !important;
+  border-color: var(--color-input-border) !important;
 }
 
 .app-wrap.day .map-style-item {
-  color: #1A0D00 !important;
-}
-
-.app-wrap.day .map-style-item:hover {
-  background: rgba(245, 230, 200, 0.85) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .app-wrap.day .map-style-item.active {
-  background: rgba(255, 210, 140, 0.45) !important;
+  background: color-mix(in srgb, var(--gold-primary) 45%, transparent) !important;
 }
 
 .app-wrap.day .float-card-chevron-btn {
-  background: rgba(245, 230, 200, 0.94) !important;
-  border-color: rgba(160, 64, 16, 0.22) !important;
-  color: #1A0D00 !important;
+  background: color-mix(in srgb, var(--color-map-surface) 94%, transparent) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .app-wrap.day .float-card-chevron-btn:hover {
-  background: #EED8A8 !important;
+  background: var(--color-map-panel) !important;
 }
 
 .app-wrap.day .map-recenter-btn svg,
 .app-wrap.day .map-zoom-btn svg {
-  color: #E06820 !important;
+  color: var(--color-accent-orange) !important;
 }

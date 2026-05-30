@@ -3,21 +3,21 @@
 /* ── Theme tokens ── */
 .app-wrap.night,
 .hero.night {
-  --tm-base: #0D0A1A;
-  --tm-surface: #1A1035;
-  --tm-card: #2A1A4A;
-  --tm-card-deep: #2A1A4A;
-  --tm-muted: #A89BCF;
+  --tm-base: var(--color-base);
+  --tm-surface: var(--color-surface);
+  --tm-card: var(--color-surface-elevated);
+  --tm-card-deep: var(--color-surface-elevated);
+  --tm-muted: var(--color-text-secondary);
   --tm-ink: #ffffff;
-  --tm-nav-bg: #1A1035;
-  --tm-page-bg: #0D0A1A;
+  --tm-nav-bg: var(--color-surface);
+  --tm-page-bg: var(--color-base);
   --tm-placeholder: rgba(168, 155, 207, 0.55);
-  --tm-cta-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
-  --tm-wordmark-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
-  --tm-scrollbar-track: #2A1A4A;
-  --tm-scrollbar-thumb: #FF8C42;
-  --tm-loader-bg: #0D0A1A;
-  --tm-focus: #FFD28C;
+  --tm-cta-gradient: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%);
+  --tm-wordmark-gradient: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%);
+  --tm-scrollbar-track: var(--color-surface-elevated);
+  --tm-scrollbar-thumb: var(--orange-primary);
+  --tm-loader-bg: var(--color-base);
+  --tm-focus: var(--gold-primary);
   --tm-selection: rgba(255, 210, 140, 0.35);
   --tm-hover-surface: rgba(42, 26, 74, 0.85);
   --tm-border-accent: rgba(255, 210, 140, 0.35);
@@ -26,76 +26,54 @@
 .app-wrap.day,
 .hero.day {
   --tm-base: #5A2A10;
-  --tm-surface: #F5E6C8;
-  --tm-card: #FDF3E0;
-  --tm-card-deep: #FDF3E0;
+  --tm-surface: var(--color-map-surface);
+  --tm-card: var(--color-surface);
+  --tm-card-deep: var(--color-surface);
   --tm-muted: rgba(90, 42, 16, 0.65);
-  --tm-ink: #1A0D00;
-  --tm-nav-bg: #EED8A8;
-  --tm-page-bg: #F5E6C8;
+  --tm-ink: var(--deep-dark);
+  --tm-nav-bg: var(--color-map-panel);
+  --tm-page-bg: var(--color-map-surface);
   --tm-placeholder: rgba(90, 42, 16, 0.45);
-  --tm-cta-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
-  --tm-wordmark-gradient: linear-gradient(135deg, #C87010 0%, #E06820 100%);
-  --tm-scrollbar-track: #EED8A8;
-  --tm-scrollbar-thumb: #E06820;
-  --tm-loader-bg: #F5E6C8;
-  --tm-focus: #FFD28C;
+  --tm-cta-gradient: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%);
+  --tm-wordmark-gradient: linear-gradient(135deg, var(--color-accent-gold) 0%, var(--color-accent-orange) 100%);
+  --tm-scrollbar-track: var(--color-map-panel);
+  --tm-scrollbar-thumb: var(--color-accent-orange);
+  --tm-loader-bg: var(--color-map-surface);
+  --tm-focus: var(--gold-primary);
   --tm-selection: rgba(255, 210, 140, 0.35);
   --tm-hover-surface: rgba(238, 216, 168, 0.9);
   --tm-border-accent: rgba(224, 104, 32, 0.45);
-  --tm-swap: #E06820;
-  --tm-plan-cta-bg: #1A0D00;
-  --tm-plan-cta-text: #FFD28C;
+  --tm-swap: var(--color-accent-orange);
+  --tm-plan-cta-bg: var(--deep-dark);
+  --tm-plan-cta-text: var(--gold-primary);
 }
 
 /* ── Global selection & focus ── */
 ::selection {
-  background: rgba(255, 210, 140, 0.35);
+  background: var(--color-selection);
   color: inherit;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--tm-placeholder, rgba(168, 155, 207, 0.55));
+  color: var(--color-input-placeholder);
   opacity: 1;
 }
 
-.app-wrap.day input::placeholder,
-.app-wrap.day textarea::placeholder,
-.hero.day input::placeholder {
-  color: rgba(90, 42, 16, 0.45);
-}
-
-.app-wrap.night input::placeholder,
-.app-wrap.night textarea::placeholder,
-.hero.night input::placeholder {
-  color: rgba(168, 155, 207, 0.55);
-}
-
 :focus-visible {
-  outline: 2px solid #FFD28C;
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 
 /* ── Page backgrounds ── */
 .app-wrap.day {
-  background: #F5E6C8 !important;
-  color: #1A0D00 !important;
-  --ink: #1A0D00;
-  --surface: #F5E6C8;
-  --card: #FDF3E0;
-  --muted: rgba(90, 42, 16, 0.65);
-  --border: rgba(224, 104, 32, 0.2);
+  background: var(--color-base) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .app-wrap.night {
-  background: #0D0A1A !important;
-  color: #ffffff !important;
-  --ink: #ffffff;
-  --surface: #1A1035;
-  --card: #2A1A4A;
-  --muted: #A89BCF;
-  --border: rgba(168, 155, 207, 0.2);
+  background: var(--color-base) !important;
+  color: var(--color-text-primary) !important;
 }
 
 body {
@@ -116,12 +94,12 @@ body {
 
 .app-wrap.day .nav-app .nav-tab:hover {
   background: rgba(224, 104, 32, 0.12) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .nav-app .nav-tab.active {
   background: rgba(255, 210, 140, 0.45) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .nav-center-wrap {
@@ -131,7 +109,7 @@ body {
 .app-wrap.day .nav-app .nav-btn {
   background: rgba(253, 243, 224, 0.85) !important;
   border-color: rgba(224, 104, 32, 0.3) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .nav-app .nav-btn:hover {
@@ -146,7 +124,7 @@ body {
 
 .app-wrap.night .nav-app .nav-tab.active {
   background: rgba(42, 26, 74, 0.9) !important;
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
 }
 
 /* ── CTA gradient buttons ── */
@@ -159,9 +137,9 @@ body {
 .profile-btn-primary,
 .upgrade-modal-cta,
 .trips-saved-btn-primary {
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%) !important;
   border: none !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .btn-generate:hover:not(:disabled),
@@ -181,35 +159,24 @@ body {
 }
 
 .hero.night .hero-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(13, 10, 26, 0.72) 0%,
-    rgba(26, 16, 53, 0.65) 100%
-  ) !important;
+  background: var(--color-hero-overlay) !important;
 }
 
 .hero.day .hero-overlay {
-  /* Light golden-hour wash — photos stay visible; bottom darkens for UI contrast */
-  background: linear-gradient(
-    180deg,
-    rgba(247, 200, 74, 0.22) 0%,
-    rgba(224, 104, 32, 0.14) 38%,
-    rgba(90, 42, 16, 0.32) 68%,
-    rgba(26, 13, 0, 0.52) 100%
-  ) !important;
+  background: var(--color-hero-overlay) !important;
 }
 
 /* ── Theme toggle ── */
 .app-wrap.day .theme-toggle-btn {
   background: rgba(253, 243, 224, 0.9) !important;
   border-color: rgba(224, 104, 32, 0.35) !important;
-  color: #E06820 !important;
+  color: var(--color-accent-orange) !important;
 }
 
 .app-wrap.night .theme-toggle-btn {
   background: rgba(42, 26, 74, 0.85) !important;
   border-color: rgba(255, 210, 140, 0.35) !important;
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
 }
 
 .theme-toggle-btn {
@@ -220,17 +187,17 @@ body {
 .nav-live-badge {
   background: linear-gradient(135deg, rgba(255, 210, 140, 0.2) 0%, rgba(255, 140, 66, 0.2) 100%) !important;
   border: 1px solid transparent !important;
-  border-image: linear-gradient(135deg, #FFD28C, #FF8C42) 1 !important;
-  color: #FFD28C !important;
+  border-image: linear-gradient(135deg, var(--gold-primary), var(--orange-primary)) 1 !important;
+  color: var(--gold-primary) !important;
 }
 
 .app-wrap.day .nav-live-badge {
   background: linear-gradient(135deg, rgba(255, 210, 140, 0.35) 0%, rgba(255, 140, 66, 0.25) 100%) !important;
-  color: #C87010 !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .nav-live-badge-dot {
-  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  background: linear-gradient(135deg, var(--gold-primary), var(--orange-primary)) !important;
 }
 
 /* ── Route drawing loader ── */
@@ -244,7 +211,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: var(--tm-loader-bg, #0D0A1A);
+  background: var(--tm-loader-bg, var(--color-base));
   transition: background 1.8s ease;
 }
 
@@ -314,24 +281,24 @@ body {
 
 .convo-scroll::-webkit-scrollbar-track,
 .trip-results-scroll::-webkit-scrollbar-track {
-  background: var(--tm-scrollbar-track, #2A1A4A);
+  background: var(--tm-scrollbar-track, var(--color-surface-elevated));
   border-radius: 99px;
 }
 
 .convo-scroll::-webkit-scrollbar-thumb,
 .trip-results-scroll::-webkit-scrollbar-thumb {
-  background: var(--tm-scrollbar-thumb, #FF8C42);
+  background: var(--tm-scrollbar-thumb, var(--orange-primary));
   border-radius: 99px;
 }
 
 .app-wrap.day .convo-scroll::-webkit-scrollbar-track,
 .app-wrap.day .trip-results-scroll::-webkit-scrollbar-track {
-  background: #EED8A8;
+  background: var(--color-map-panel);
 }
 
 .app-wrap.day .convo-scroll::-webkit-scrollbar-thumb,
 .app-wrap.day .trip-results-scroll::-webkit-scrollbar-thumb {
-  background: #E06820;
+  background: var(--color-accent-orange);
 }
 
 /* ── Cards & panels — night ── */
@@ -341,7 +308,7 @@ body {
 }
 
 .app-wrap.night .qr-btn {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(255, 210, 140, 0.3) !important;
   color: #ffffff !important;
 }
@@ -352,8 +319,8 @@ body {
 }
 
 .app-wrap.night .qr-btn.qr-selected {
-  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
-  color: #1A0D00 !important;
+  background: linear-gradient(135deg, var(--gold-primary), var(--orange-primary)) !important;
+  color: var(--deep-dark) !important;
   border-color: transparent !important;
 }
 
@@ -365,7 +332,7 @@ body {
 .app-wrap.night .filter-tab.active {
   background: linear-gradient(135deg, rgba(255, 210, 140, 0.25), rgba(255, 140, 66, 0.2)) !important;
   border-color: rgba(255, 210, 140, 0.45) !important;
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
 }
 
 .app-wrap.night .lodging-card,
@@ -374,36 +341,36 @@ body {
 .app-wrap.night .stop-card,
 .app-wrap.night .road-stop-card,
 .app-wrap.night .overnight-card {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.2) !important;
 }
 
 .app-wrap.night .budget-card {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
 }
 
 .app-wrap.night .trip-summary-stats-grid .summary-stat {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(255, 210, 140, 0.2) !important;
 }
 
 .app-wrap.night .share-panel,
 .app-wrap.night .live-share-panel {
-  background: #1A1035 !important;
+  background: var(--color-surface) !important;
 }
 
 .app-wrap.night .modal-overlay .modal,
 .app-wrap.night .auth-modal,
 .app-wrap.night .upgrade-modal,
 .app-wrap.night .grocery-modal {
-  background: #1A1035 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(255, 210, 140, 0.2) !important;
 }
 
 .app-wrap.night .account-sidebar,
 .app-wrap.night .nav-sidebar {
-  background: #1A1035 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(168, 155, 207, 0.15) !important;
 }
 
@@ -412,14 +379,14 @@ body {
 .app-wrap.night .restaurant-section-label,
 .app-wrap.night .stop-section-label,
 .app-wrap.night .trip-tips-label {
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
 }
 
 .app-wrap.night .chat-sub,
 .app-wrap.night .stop-meta,
 .app-wrap.night .item-meta,
 .app-wrap.night .profile-card-email {
-  color: #A89BCF !important;
+  color: var(--color-text-secondary) !important;
 }
 
 /* ── Cards & panels — day ── */
@@ -429,27 +396,27 @@ body {
 }
 
 .app-wrap.day .qr-btn {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.3) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .qr-btn:hover {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
   border-color: rgba(224, 104, 32, 0.45) !important;
 }
 
 .app-wrap.day .qr-btn.qr-selected {
-  background: #FFD28C !important;
-  border-color: #FFD28C !important;
-  color: #1A0D00 !important;
+  background: var(--gold-primary) !important;
+  border-color: var(--gold-primary) !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .vehicle-tab-active,
 .app-wrap.day .filter-tab.active {
   background: rgba(255, 210, 140, 0.55) !important;
   border-color: rgba(224, 104, 32, 0.4) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .lodging-card,
@@ -459,17 +426,17 @@ body {
 .app-wrap.day .road-stop-card,
 .app-wrap.day .overnight-card,
 .app-wrap.day .activity-dining-card {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.2) !important;
 }
 
 .app-wrap.day .budget-card {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
 }
 
 .app-wrap.day .trip-summary-stats-grid .summary-stat {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.2) !important;
 }
 
@@ -477,32 +444,32 @@ body {
 .app-wrap.day .auth-modal,
 .app-wrap.day .upgrade-modal,
 .app-wrap.day .grocery-modal {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .auth-modal-headline,
 .app-wrap.day .auth-modal-sub,
 .app-wrap.day .auth-field-label {
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .auth-field-input {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .auth-social-btn {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.day .account-sidebar,
 .app-wrap.day .nav-sidebar {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.2) !important;
 }
 
@@ -510,13 +477,13 @@ body {
 .app-wrap.day .lodging-section-label,
 .app-wrap.day .restaurant-section-label,
 .app-wrap.day .stop-section-label {
-  color: #C87010 !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .app-wrap.day .stat-value,
 .app-wrap.day .budget-row-val.animate,
 .app-wrap.day .trip-overview-stat-val {
-  color: #C87010 !important;
+  color: var(--color-accent-gold) !important;
 }
 
 /* Drive straight through option */
@@ -528,101 +495,73 @@ body {
 /* ── Profile page ── */
 .app-wrap.day.profile-view-wrap,
 .app-wrap.day .profile-view-wrap {
-  background: #F5E6C8 !important;
-  color: #1A0D00 !important;
+  background: var(--color-map-surface) !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.night.profile-view-wrap,
 .app-wrap.night .profile-view-wrap {
-  background: #0D0A1A !important;
+  background: var(--color-base) !important;
 }
 
 .app-wrap.day .profile-card,
 .app-wrap.day .profile-stat-card {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.2) !important;
 }
 
 .app-wrap.night .profile-card,
 .app-wrap.night .profile-stat-card {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.2) !important;
 }
 
 .app-wrap.day .profile-tier-badge {
   background: rgba(224, 104, 32, 0.12) !important;
-  color: #C87010 !important;
+  color: var(--color-accent-gold) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
 }
 
 .app-wrap.night .profile-tier-badge {
   background: rgba(42, 26, 74, 0.8) !important;
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
   border-color: rgba(255, 210, 140, 0.3) !important;
 }
 
 .app-wrap.day .profile-input {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
-  color: #1A0D00 !important;
+  color: var(--deep-dark) !important;
 }
 
 .app-wrap.night .profile-input {
-  background: #1A1035 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #ffffff !important;
 }
 
 .app-wrap.day .profile-toggle input,
 .app-wrap.night .profile-toggle input {
-  accent-color: #FFD28C;
+  accent-color: var(--gold-primary);
 }
 
 /* ── Trips saved page ── */
 .app-wrap.day .trips-saved-card {
-  background: #FDF3E0 !important;
+  background: var(--color-surface) !important;
   border-color: rgba(224, 104, 32, 0.25) !important;
 }
 
 .app-wrap.night .trips-saved-card {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(255, 210, 140, 0.2) !important;
 }
 
-.app-wrap.day .trips-saved-card-city { color: #1A0D00 !important; }
+.app-wrap.day .trips-saved-card-city { color: var(--deep-dark) !important; }
 .app-wrap.night .trips-saved-card-city { color: #ffffff !important; }
 .app-wrap.day .trips-saved-card-meta { color: rgba(90, 42, 16, 0.6) !important; }
-.app-wrap.night .trips-saved-card-meta { color: #A89BCF !important; }
+.app-wrap.night .trips-saved-card-meta { color: var(--color-text-secondary) !important; }
 
-/* ── Live view public page ── */
-.live-view-page-day {
-  background: #F5E6C8 !important;
-  color: #1A0D00 !important;
-}
-
-.live-view-page-night {
-  background: #0D0A1A !important;
-  color: #ffffff !important;
-}
-
-.live-view-page-day .live-view-header,
-.live-view-page-day .live-view-eta-card,
-.live-view-page-day .live-view-convoy-card,
-.live-view-page-day .live-view-follower-phone {
-  background: rgba(253, 243, 224, 0.92) !important;
-  border-color: rgba(224, 104, 32, 0.25) !important;
-}
-
-.live-view-page-night .live-view-header,
-.live-view-page-night .live-view-eta-card,
-.live-view-page-night .live-view-convoy-card,
-.live-view-page-night .live-view-follower-phone {
-  background: rgba(42, 26, 74, 0.92) !important;
-  border-color: rgba(255, 210, 140, 0.2) !important;
-}
-
-.live-view-page-day .live-view-eta-label { color: rgba(90, 42, 16, 0.65) !important; }
-.live-view-page-night .live-view-eta-label { color: #A89BCF !important; }
+/* ── Live view public page — see live-map-mesh.css ── */
 
 /* ── Hover states ── */
 .app-wrap.night .convo-nav-btn:hover,
@@ -676,11 +615,11 @@ body {
 
 /* Map placeholder loader */
 .map-loading {
-  background: var(--tm-loader-bg, #0D0A1A) !important;
+  background: var(--tm-loader-bg, var(--color-base)) !important;
 }
 
 .app-wrap.day .map-loading {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
 }
 
 /* Hide legacy spinners & skeletons */
@@ -730,40 +669,40 @@ body {
 
 /* Trip results day panel */
 .app-wrap.day .trip-results-panel {
-  background: #F5E6C8 !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.night .trip-results-panel {
-  background: #0D0A1A !important;
+  background: var(--color-base) !important;
 }
 
 .app-wrap.day .trip-results-topbar {
-  background: #EED8A8 !important;
+  background: var(--color-map-panel) !important;
   border-bottom-color: rgba(224, 104, 32, 0.2) !important;
 }
 
-.app-wrap.day .trip-results-topbar-title { color: #1A0D00 !important; }
+.app-wrap.day .trip-results-topbar-title { color: var(--deep-dark) !important; }
 
 .app-wrap.night .trip-results-topbar {
-  background: #1A1035 !important;
+  background: var(--color-surface) !important;
 }
 
 /* Auth modal night defaults */
 .app-wrap.night .auth-modal,
 .hero.night ~ .auth-modal-overlay .auth-modal,
 .auth-modal-overlay .auth-modal {
-  background: #1A1035;
+  background: var(--color-surface);
   color: #fff;
 }
 
 .app-wrap.night .auth-field-input {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #fff !important;
 }
 
 .app-wrap.night .auth-social-btn {
-  background: #2A1A4A !important;
+  background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #fff !important;
 }

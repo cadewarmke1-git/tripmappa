@@ -1,3 +1,7 @@
+import { GOLD_PRIMARY, ORANGE_PRIMARY, POLYLINE_COLOR, DEEP_DARK } from "./palette.js";
+
+export { GOLD_PRIMARY, ORANGE_PRIMARY, POLYLINE_COLOR, DEEP_DARK };
+
 export const GOOGLE_LIBRARIES = ["places", "routes", "geometry"];
 
 export const STANDARD_MAP_STYLES = [
@@ -57,16 +61,16 @@ export const DAY_MAP_STYLES = [
 /** Apple Maps–style dark theme applied when app theme is night. */
 export const NIGHT_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: GOLD_PRIMARY }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: GOLD_PRIMARY }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: GOLD_PRIMARY }] },
   { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
   { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
   { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#FFD28C" }] },
-  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#FFD28C" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: GOLD_PRIMARY }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: GOLD_PRIMARY }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: GOLD_PRIMARY }] },
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
   { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
@@ -74,7 +78,7 @@ export const NIGHT_MAP_STYLES = [
 ];
 
 export const LEG_MAP_STYLES = {
-  drive: { color: "#FFD28C", dashed: false, animate: true },
+  drive: { color: POLYLINE_COLOR, dashed: false, animate: true },
   fly: { color: "rgba(59,130,246,0.9)", dashed: true },
   ferry: { color: "rgba(20,184,166,0.9)", dashed: true },
   cruise: { color: "rgba(20,184,166,0.9)", dashed: true },
@@ -82,9 +86,9 @@ export const LEG_MAP_STYLES = {
   bus: { color: "rgba(168,85,247,0.9)", dashed: true },
 };
 
-/** Per-day route colors for multi-day itinerary map */
-export const TRIP_ROUTE_GOLD = "#FFD28C";
+export const TRIP_ROUTE_GOLD = POLYLINE_COLOR;
 
+/** Per-day route colors for multi-day itinerary map */
 export const DAY_ROUTE_COLORS = [
   TRIP_ROUTE_GOLD,
   TRIP_ROUTE_GOLD,

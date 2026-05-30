@@ -1,3 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TripMappa canonical color palette — single source of truth.
+   All themed UI must use var(--color-*). Shared constants use var(--gold-primary) etc.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Shared — never change between themes */
+  --font-heading: "Fraunces", Georgia, serif;
+  --font-body: "Inter", sans-serif;
+  --gold-primary: #FFD28C;
+  --orange-primary: #FF8C42;
+  --deep-dark: #1A0D00;
+  --polyline-color: #FFD28C;
+}
+
+/* Night mode palette */
+:root,
+.tm-theme-night,
+.app-wrap.night,
+.hero.night,
+.app-nav-bar--night,
+.live-view-page-night,
+.route-drawing-loader--night {
+  --color-base: #0D0A1A;
+  --color-surface: #1A1035;
+  --color-surface-elevated: #2A1A4A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A89BCF;
+  --color-accent-gold: #FFD28C;
+  --color-accent-orange: #FF8C42;
+  --color-accent-gradient: linear-gradient(135deg, #FFD28C, #FF8C42);
+  --color-wordmark-gradient: linear-gradient(120deg, #FFD28C 0%, #FF8C42 38%, #FFD28C 62%, #FF8C42 100%);
+  --color-hero-title-gradient: linear-gradient(135deg, #FFFFFF 0%, #FFD28C 52%, #FF8C42 100%);
+  --color-hero-accent-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 50%, #FFD28C 100%);
+  --color-accent-text-gradient: linear-gradient(135deg, #FFD28C, #FF8C42);
+  --color-map-mesh: linear-gradient(150deg, #0D0A1A 0%, #1A1035 38%, #2A1A4A 62%, #1A1035 100%);
+  --color-panel-mesh: linear-gradient(145deg, #1A1035 0%, #2A1A4A 48%, #1A1035 100%);
+  --color-btn-primary-bg: linear-gradient(135deg, #FFD28C, #FF8C42);
+  --color-btn-primary-text: #1A0D00;
+  --color-btn-secondary-bg: rgba(255, 255, 255, 0.07);
+  --color-btn-secondary-border: rgba(255, 255, 255, 0.15);
+  --color-btn-secondary-text: #FFFFFF;
+  --color-input-bg: rgba(255, 255, 255, 0.07);
+  --color-input-border: rgba(255, 210, 140, 0.2);
+  --color-input-placeholder: #A89BCF;
+  --color-card-bg: #1A1035;
+  --color-card-border: rgba(255, 210, 140, 0.1);
+  --color-tag-fuel-bg: rgba(255, 140, 66, 0.12);
+  --color-tag-fuel-text: #FF8C42;
+  --color-tag-local-bg: rgba(255, 210, 140, 0.1);
+  --color-tag-local-text: #FFD28C;
+  --color-star: #FFD28C;
+  --color-trip-tips-border: #FF8C42;
+  --color-trip-tips-bg: rgba(255, 140, 66, 0.06);
+  --color-nav-bg: rgba(13, 10, 26, 0.95);
+  --color-nav-border: rgba(255, 140, 66, 0.1);
+  --color-scrollbar-track: #2A1A4A;
+  --color-scrollbar-thumb: #FF8C42;
+  --color-selection: rgba(255, 210, 140, 0.35);
+  --color-focus-ring: #FFD28C;
+  --color-hero-overlay-start: rgba(13, 10, 26, 0.72);
+  --color-hero-overlay-end: rgba(26, 16, 53, 0.65);
+  --color-hero-overlay: linear-gradient(180deg, var(--color-hero-overlay-start) 0%, var(--color-hero-overlay-end) 100%);
+  --color-banner-bg: rgba(26, 16, 53, 0.85);
+  --color-map-surface: #0D0A1A;
+  --color-map-panel: #1A1035;
+  --color-hero-title: #FFFFFF;
+  --color-hero-subtitle: rgba(255, 255, 255, 0.8);
+  --color-hero-accent: #FFD28C;
+
+  /* Legacy bridges — existing rules use these */
+  --ink: var(--color-text-primary);
+  --surface: var(--color-base);
+  --card: var(--color-surface-elevated);
+  --muted: var(--color-text-secondary);
+  --border: var(--color-card-border);
+  --gold: var(--color-accent-gold);
+  --accent: var(--color-accent-gold);
+  --accent2: var(--color-accent-orange);
+  --charcoal: var(--deep-dark);
+  --brand: var(--gold-primary);
+  --brand-hover: var(--gold-primary);
+  --brand-soft: var(--color-tag-local-bg);
+  --gold-soft: var(--color-tag-local-bg);
+  --warm: var(--color-accent-orange);
+}
+
+/* Day mode palette */
+.tm-theme-day,
+.app-wrap.day,
+.hero.day,
+.app-nav-bar--day,
+.live-view-page-day,
+.route-drawing-loader--day {
+  --color-base: #F5E6C8;
+  --color-surface: #FDF3E0;
+  --color-surface-elevated: #EED8A8;
+  --color-text-primary: #1A0D00;
+  --color-text-secondary: #8A6A4A;
+  --color-accent-gold: #C87010;
+  --color-accent-orange: #E06820;
+  --color-accent-gradient: linear-gradient(135deg, #C87010, #E06820);
+  --color-wordmark-gradient: linear-gradient(120deg, #C87010 0%, #E06820 38%, #A04010 52%, #E06820 100%);
+  --color-hero-title-gradient: linear-gradient(135deg, #FFFFFF 0%, #F5E6C8 32%, #C87010 68%, #E06820 100%);
+  --color-hero-accent-gradient: linear-gradient(135deg, #1A0D00 0%, #C87010 46%, #E06820 100%);
+  --color-accent-text-gradient: linear-gradient(135deg, #C87010, #E06820);
+  --color-map-mesh: linear-gradient(150deg, #F5E6C8 0%, #EED8A8 40%, #FDF3E0 65%, #EED8A8 100%);
+  --color-panel-mesh: linear-gradient(145deg, #FDF3E0 0%, #EED8A8 48%, #F5E6C8 100%);
+  --color-btn-primary-bg: #1A0D00;
+  --color-btn-primary-text: #FFD28C;
+  --color-btn-secondary-bg: rgba(255, 255, 255, 0.75);
+  --color-btn-secondary-border: rgba(160, 64, 16, 0.2);
+  --color-btn-secondary-text: #1A0D00;
+  --color-input-bg: rgba(255, 255, 255, 0.82);
+  --color-input-border: rgba(160, 64, 16, 0.25);
+  --color-input-placeholder: #8A6A4A;
+  --color-card-bg: #FDF3E0;
+  --color-card-border: rgba(160, 64, 16, 0.14);
+  --color-tag-fuel-bg: rgba(160, 64, 16, 0.1);
+  --color-tag-fuel-text: #A04010;
+  --color-tag-local-bg: rgba(106, 58, 16, 0.1);
+  --color-tag-local-text: #6A3A10;
+  --color-star: #C87010;
+  --color-trip-tips-border: #E06820;
+  --color-trip-tips-bg: rgba(224, 104, 32, 0.07);
+  --color-nav-bg: #EED8A8;
+  --color-nav-border: rgba(160, 64, 16, 0.15);
+  --color-scrollbar-track: #EED8A8;
+  --color-scrollbar-thumb: #E06820;
+  --color-selection: rgba(255, 210, 140, 0.35);
+  --color-focus-ring: #FFD28C;
+  --color-hero-overlay: linear-gradient(150deg, rgba(247, 200, 74, 0.55), rgba(224, 104, 32, 0.60), rgba(90, 42, 16, 0.68));
+  --color-banner-bg: rgba(245, 230, 200, 0.92);
+  --color-map-surface: #F5E6C8;
+  --color-map-panel: #EED8A8;
+  --color-hero-title: #FFFFFF;
+  --color-hero-subtitle: rgba(255, 255, 255, 0.8);
+  --color-hero-accent: #1A0D00;
+
+  --ink: var(--color-text-primary);
+  --surface: var(--color-base);
+  --card: var(--color-surface);
+  --muted: var(--color-text-secondary);
+  --border: var(--color-card-border);
+  --gold: var(--color-accent-gold);
+  --accent: var(--color-accent-gold);
+  --accent2: var(--color-accent-orange);
+  --charcoal: var(--deep-dark);
+  --brand: var(--gold-primary);
+  --brand-hover: var(--gold-primary);
+  --brand-soft: var(--color-tag-local-bg);
+  --gold-soft: var(--color-tag-local-bg);
+  --warm: var(--color-accent-orange);
+}
+
 /* ── App theme: Day — light & airy ── */
 .app-wrap.day .nav-app,
 .app-wrap.night .nav-app {
@@ -19,13 +174,13 @@
 }
 .app-wrap.day .nav-app .nav-btn-primary,
 .app-wrap.night .nav-app .nav-btn-primary {
-  background: #FFD28C !important; color: #1a1a2e !important; border-color: transparent !important; font-weight: 700;
+  background: var(--gold-primary) !important; color: var(--deep-dark) !important; border-color: transparent !important; font-weight: 700;
 }
 .app-wrap.day .theme-toggle-btn,
 .app-wrap.day .theme-test-btn {
   background: rgba(18, 20, 32, 0.78) !important;
   border-color: rgba(255,255,255,0.32) !important;
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
 }
 .app-wrap.day .theme-toggle-btn:hover,
 .app-wrap.day .theme-test-btn:hover {
@@ -44,8 +199,8 @@
   box-shadow: 0 24px 64px rgba(26,26,46,0.12), inset 0 1px 0 rgba(255,255,255,0.8) !important;
 }
 .app-wrap.day .float-card-title {
-  color: #1a1a2e !important;
-  border-bottom-color: #FFD28C !important;
+  color: var(--deep-dark) !important;
+  border-bottom-color: var(--gold-primary) !important;
 }
 .app-wrap.day .float-card-header {
   background: rgba(255,255,255,0.85) !important;
@@ -54,40 +209,40 @@
 .app-wrap.day .float-card-help-btn {
   border-color: rgba(26,26,46,0.15) !important;
   background: rgba(26,26,46,0.05) !important;
-  color: #1a1a2e !important;
+  color: var(--deep-dark) !important;
 }
 .app-wrap.day .float-card-help-btn:hover {
   border-color: rgba(255,210,140,0.6) !important;
   background: rgba(26,26,46,0.08) !important;
 }
-.app-wrap.day .chat-wrap { color: #1a1a2e !important; }
-.app-wrap.day .chat-title { color: #1a1a2e !important; }
+.app-wrap.day .chat-wrap { color: var(--deep-dark) !important; }
+.app-wrap.day .chat-title { color: var(--deep-dark) !important; }
 .app-wrap.day .chat-sub { color: rgba(26,26,46,0.55) !important; }
 .app-wrap.day .convo-empty p { color: rgba(26,26,46,0.55) !important; }
 .app-wrap.day .ai-bubble {
   background: #ffffff !important; border-color: rgba(26,26,46,0.1) !important;
-  color: #1a1a2e !important; box-shadow: 0 4px 18px rgba(26,26,46,0.08) !important;
+  color: var(--deep-dark) !important; box-shadow: 0 4px 18px rgba(26,26,46,0.08) !important;
 }
 .app-wrap.day .user-bubble {
-  background: #FFD28C !important; color: #1a1a2e !important;
+  background: var(--gold-primary) !important; color: var(--deep-dark) !important;
 }
 .app-wrap.day .qr-btn {
   background: #ffffff !important; border-color: rgba(26,26,46,0.2) !important;
-  color: #1a1a2e !important; box-shadow: 0 2px 8px rgba(26,26,46,0.06) !important;
+  color: var(--deep-dark) !important; box-shadow: 0 2px 8px rgba(26,26,46,0.06) !important;
 }
 .app-wrap.day .qr-btn:hover { background: rgba(255,255,255,0.95) !important; border-color: rgba(26,26,46,0.3) !important; }
 .app-wrap.day .qr-btn.qr-selected {
   animation: qrGoldFlash 150ms ease forwards !important;
-  border-color: #FFD28C !important;
-  color: #1a1a2e !important;
-  background: #FFD28C !important;
+  border-color: var(--gold-primary) !important;
+  color: var(--deep-dark) !important;
+  background: var(--gold-primary) !important;
   box-shadow: 0 0 0 3px rgba(255,210,140,0.25) !important;
   transition: none !important;
 }
 .app-wrap.day .question-choices { border-top-color: rgba(26,26,46,0.08) !important; }
 .app-wrap.day .convo-nav-btn {
   background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.18) !important;
-  color: #1a1a2e !important;
+  color: var(--deep-dark) !important;
 }
 .app-wrap.day .convo-nav-btn:hover { background: rgba(26,26,46,0.1) !important; border-color: rgba(26,26,46,0.28) !important; }
 .app-wrap.day .route-footer {
@@ -108,113 +263,113 @@
 }
 .app-wrap.day .route-input {
   background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.1) !important;
-  color: #1a1a2e !important;
+  color: var(--deep-dark) !important;
 }
 .app-wrap.day .route-input::placeholder { color: rgba(26,26,46,0.4) !important; }
 .app-wrap.day .route-timing-btn {
   background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.12) !important;
-  color: #1a1a2e !important;
+  color: var(--deep-dark) !important;
 }
 .app-wrap.day .timing-menu-fixed {
   background: rgba(255,255,255,0.98) !important;
   border-color: rgba(26,26,46,0.12) !important;
   box-shadow: 0 8px 32px rgba(26,26,46,0.15) !important;
 }
-.app-wrap.day .timing-menu-fixed-item { color: #1a1a2e !important; }
+.app-wrap.day .timing-menu-fixed-item { color: var(--deep-dark) !important; }
 .app-wrap.day .timing-menu-fixed-item:hover { background: rgba(255,210,140,0.15) !important; }
-.app-wrap.day .timing-menu-fixed-item.active { background: rgba(255,210,140,0.25) !important; color: #FFD28C !important; }
+.app-wrap.day .timing-menu-fixed-item.active { background: rgba(255,210,140,0.25) !important; color: var(--gold-primary) !important; }
 .app-wrap.day .map-route-pill {
   background: rgba(255, 255, 255, 0.82) !important;
   border-color: rgba(255, 210, 140, 0.45) !important;
   box-shadow: 0 8px 32px rgba(26, 26, 46, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.9) inset !important;
 }
 .app-wrap.day .map-route-pill-label { color: rgba(26, 26, 46, 0.65) !important; }
-.app-wrap.day .map-route-pill-val { color: #FFD28C !important; }
+.app-wrap.day .map-route-pill-val { color: var(--gold-primary) !important; }
 .app-wrap.day .map-route-pill-sep { color: rgba(26, 26, 46, 0.3) !important; }
 .app-wrap.day .help-menu {
   background: rgba(255,255,255,0.98) !important;
   border-color: rgba(26,26,46,0.12) !important;
   box-shadow: 0 8px 32px rgba(26,26,46,0.15) !important;
 }
-.app-wrap.day .help-menu-item { color: #1a1a2e !important; }
+.app-wrap.day .help-menu-item { color: var(--deep-dark) !important; }
 .app-wrap.day .help-menu-item:hover { background: rgba(255,210,140,0.15) !important; }
 .app-wrap.day .budget-card {
   background: rgba(255,255,255,0.55) !important; border-color: rgba(26,26,46,0.1) !important;
   backdrop-filter: blur(12px) !important;
 }
-.app-wrap.day .budget-card-title { color: #1a1a2e !important; }
+.app-wrap.day .budget-card-title { color: var(--deep-dark) !important; }
 .app-wrap.day .budget-row-label { color: rgba(26,26,46,0.55) !important; }
-.app-wrap.day .budget-row-val { color: #1a1a2e !important; }
-.app-wrap.day .budget-row-val.animate { color: #FFD28C !important; }
-.app-wrap.day .budget-row-total .budget-row-val { color: #FFD28C !important; }
+.app-wrap.day .budget-row-val { color: var(--deep-dark) !important; }
+.app-wrap.day .budget-row-val.animate { color: var(--gold-primary) !important; }
+.app-wrap.day .budget-row-total .budget-row-val { color: var(--gold-primary) !important; }
 .app-wrap.day .budget-disclaimer { color: rgba(26,26,46,0.4) !important; }
 .app-wrap.day .budget-shimmer {
-  background: linear-gradient(90deg, rgba(255,210,140,0.12) 0%, #FFD28C 50%, rgba(255,210,140,0.12) 100%) !important;
+  background: linear-gradient(90deg, rgba(255,210,140,0.12) 0%, var(--gold-primary) 50%, rgba(255,210,140,0.12) 100%) !important;
   background-size: 200% 100% !important;
   animation: budgetShimmer 1.2s ease infinite !important;
 }
 .app-wrap.day .vehicle-group-label { color: rgba(26,26,46,0.45) !important; }
-.app-wrap.day .summary-kids-note { color: #FFD28C !important; border-top-color: rgba(26,26,46,0.08) !important; }
-.app-wrap.day .scenic-route-note { color: #FFD28C !important; }
+.app-wrap.day .summary-kids-note { color: var(--gold-primary) !important; border-top-color: rgba(26,26,46,0.08) !important; }
+.app-wrap.day .scenic-route-note { color: var(--gold-primary) !important; }
 .app-wrap.day .route-info-chip {
   background: rgba(26,26,46,0.05) !important;
   border-color: rgba(26,26,46,0.12) !important;
-  color: #1a1a2e !important;
+  color: var(--deep-dark) !important;
   box-shadow: none !important;
 }
 .app-wrap.day .route-chip-label { color: rgba(26,26,46,0.6) !important; }
-.app-wrap.day .route-chip-val { color: #1a1a2e !important; }
+.app-wrap.day .route-chip-val { color: var(--deep-dark) !important; }
 .app-wrap.day .water-route-note { color: rgba(26,26,46,0.55) !important; }
 .app-wrap.day .route-arrive-picker {
-  background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.12) !important; color: #1a1a2e !important;
+  background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.12) !important; color: var(--deep-dark) !important;
 }
 .app-wrap.day .answer-input {
-  background: #fff !important; border-color: rgba(26,26,46,0.15) !important; color: #1a1a2e !important;
+  background: #fff !important; border-color: rgba(26,26,46,0.15) !important; color: var(--deep-dark) !important;
 }
-.app-wrap.day .results-view { color: #1a1a2e !important; }
+.app-wrap.day .results-view { color: var(--deep-dark) !important; }
 .app-wrap.day .results-back {
-  background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.15) !important; color: #1a1a2e !important;
+  background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.15) !important; color: var(--deep-dark) !important;
 }
 .app-wrap.day .results-back:hover { background: rgba(26,26,46,0.1) !important; }
-.app-wrap.day .results-route { color: #1a1a2e !important; }
+.app-wrap.day .results-route { color: var(--deep-dark) !important; }
 .app-wrap.day .results-header-divider { background: rgba(26,26,46,0.1) !important; }
 .app-wrap.day .stop-card { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
 .app-wrap.day .stop-card-head { background: rgba(26,26,46,0.03) !important; border-color: rgba(26,26,46,0.06) !important; }
-.app-wrap.day .stop-city { color: #1a1a2e !important; }
+.app-wrap.day .stop-city { color: var(--deep-dark) !important; }
 .app-wrap.day .stop-meta { color: rgba(26,26,46,0.5) !important; }
 .app-wrap.day .item-row { background: rgba(26,26,46,0.03) !important; border-color: rgba(26,26,46,0.07) !important; }
-.app-wrap.day .item-name { color: #1a1a2e !important; }
+.app-wrap.day .item-name { color: var(--deep-dark) !important; }
 .app-wrap.day .item-meta { color: rgba(26,26,46,0.5) !important; }
-.app-wrap.day .item-price { color: #1a1a2e !important; }
-.app-wrap.day .stops-panel-title { color: #1a1a2e !important; }
+.app-wrap.day .item-price { color: var(--deep-dark) !important; }
+.app-wrap.day .stops-panel-title { color: var(--deep-dark) !important; }
 .app-wrap.day .stops-panel-sub { color: rgba(26,26,46,0.5) !important; }
-.app-wrap.day .empty-title { color: #1a1a2e !important; }
+.app-wrap.day .empty-title { color: var(--deep-dark) !important; }
 .app-wrap.day .empty-sub { color: rgba(26,26,46,0.5) !important; }
-.app-wrap.day .share-title { color: #1a1a2e !important; }
+.app-wrap.day .share-title { color: var(--deep-dark) !important; }
 .app-wrap.day .share-sub { color: rgba(26,26,46,0.5) !important; }
 .app-wrap.day .person-row { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
-.app-wrap.day .person-name { color: #1a1a2e !important; }
+.app-wrap.day .person-name { color: var(--deep-dark) !important; }
 .app-wrap.day .person-status { color: rgba(26,26,46,0.45) !important; }
-.app-wrap.day .stops-wrap { color: #1a1a2e !important; }
-.app-wrap.day .action-btn { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.1) !important; color: #1a1a2e !important; }
+.app-wrap.day .stops-wrap { color: var(--deep-dark) !important; }
+.app-wrap.day .action-btn { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.1) !important; color: var(--deep-dark) !important; }
 .app-wrap.day .action-btn:hover { background: rgba(26,26,46,0.1) !important; }
 .app-wrap.day .filter-tab { background: rgba(26,26,46,0.06) !important; border-color: rgba(26,26,46,0.12) !important; color: rgba(26,26,46,0.65) !important; }
-.app-wrap.day .filter-tab.active { background: #FFD28C !important; color: #1a1a2e !important; border-color: #FFD28C !important; }
-.app-wrap.day .road-stop-name { color: #1a1a2e !important; }
+.app-wrap.day .filter-tab.active { background: var(--gold-primary) !important; color: var(--deep-dark) !important; border-color: var(--gold-primary) !important; }
+.app-wrap.day .road-stop-name { color: var(--deep-dark) !important; }
 .app-wrap.day .road-stop-loc { color: rgba(26,26,46,0.5) !important; }
 .app-wrap.day .section-sep { background: rgba(26,26,46,0.08) !important; }
 .app-wrap.day .stop-section-label { color: rgba(26,26,46,0.4) !important; }
 .app-wrap.day .item-row:hover { background: rgba(26,26,46,0.06) !important; }
 .app-wrap.day .fuel-row { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
-.app-wrap.day .fuel-label { color: #1a1a2e !important; }
+.app-wrap.day .fuel-label { color: var(--deep-dark) !important; }
 .app-wrap.day .fuel-meta-txt { color: rgba(26,26,46,0.45) !important; }
 .app-wrap.day .lodging-card {
   background: rgba(255,255,255,0.72) !important; border-color: rgba(26,26,46,0.1) !important;
   box-shadow: 0 4px 20px rgba(26,26,46,0.08) !important;
 }
-.app-wrap.day .lodging-card-name { color: #1a1a2e !important; }
+.app-wrap.day .lodging-card-name { color: var(--deep-dark) !important; }
 .app-wrap.day .lodging-star { background: rgba(26,26,46,0.12) !important; }
-.app-wrap.day .lodging-star.filled { background: #FFD28C !important; }
+.app-wrap.day .lodging-star.filled { background: var(--gold-primary) !important; }
 .app-wrap.day .lodging-card-desc { color: rgba(26,26,46,0.65) !important; }
 .app-wrap.day .lodging-card-food { color: rgba(26,26,46,0.7) !important; }
 .app-wrap.day .lodging-amenity-badge {
@@ -223,11 +378,11 @@
 }
 .app-wrap.day .lodging-btn-save {
   background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.12) !important;
-  color: #1a1a2e !important;
+  color: var(--deep-dark) !important;
 }
 .app-wrap.day .lodging-btn-save:hover { background: rgba(26,26,46,0.09) !important; }
 .app-wrap.day .lodging-type-badge {
-  background: rgba(26,26,46,0.8) !important; color: #FFD28C !important;
+  background: rgba(26,26,46,0.8) !important; color: var(--gold-primary) !important;
 }
 .app-wrap.day .skeleton-shimmer {
   background: linear-gradient(90deg, rgba(26,26,46,0.04) 0%, rgba(26,26,46,0.1) 50%, rgba(26,26,46,0.04) 100%) !important;
@@ -247,13 +402,13 @@
   background: rgba(255,255,255,0.92) !important;
   border-color: rgba(26,26,46,0.1) !important;
 }
-.app-wrap.day .restaurant-card-name { color: #1a1a2e !important; }
+.app-wrap.day .restaurant-card-name { color: var(--deep-dark) !important; }
 .app-wrap.day .restaurant-card-desc { color: rgba(26,26,46,0.65) !important; }
 .app-wrap.day .restaurant-section-label { color: rgba(26,26,46,0.5) !important; }
 .app-wrap.day .road-food-row { background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.08) !important; }
-.app-wrap.day .road-food-name { color: #1a1a2e !important; }
+.app-wrap.day .road-food-name { color: var(--deep-dark) !important; }
 .app-wrap.day .weather-warning-banner { background: rgba(220, 80, 80, 0.08) !important; }
-.app-wrap.day .weather-warning-item strong { color: #1a1a2e !important; }
+.app-wrap.day .weather-warning-item strong { color: var(--deep-dark) !important; }
 .app-wrap.day .weather-warning-item span { color: rgba(26,26,46,0.7) !important; }
 .app-wrap.day .simple-trip-weather-badge {
   background: rgba(255,255,255,0.92) !important;
@@ -263,7 +418,7 @@
 .app-wrap.day .fuel-stop-card {
   background: rgba(255,255,255,0.72) !important; border-color: rgba(26,26,46,0.1) !important;
 }
-.app-wrap.day .fuel-stop-name { color: #1a1a2e !important; }
+.app-wrap.day .fuel-stop-name { color: var(--deep-dark) !important; }
 .app-wrap.day .budget-breakdown-label { color: rgba(26,26,46,0.45) !important; }
 .app-wrap.day .budget-breakdown-name { color: rgba(26,26,46,0.55) !important; }
 
@@ -273,7 +428,7 @@
   --results-topbar-bg: rgba(8, 10, 18, 0.96);
   --results-card-bg: rgba(255,255,255,0.82);
   --results-card-border: rgba(255,210,140,0.45);
-  --gold: #FFD28C;
+  --gold: var(--gold-primary);
 }
 .app-wrap.day .trip-results-panel { color: var(--charcoal) !important; }
 .app-wrap.day .trip-results-topbar {
@@ -281,11 +436,11 @@
   background: rgba(8, 10, 18, 0.96) !important;
 }
 .app-wrap.day .trip-results-topbar-title { color: #fff !important; }
-.app-wrap.day .trip-results-back { color: #FFD28C !important; }
+.app-wrap.day .trip-results-back { color: var(--gold-primary) !important; }
 .app-wrap.day .trip-results-map-btn,
 .app-wrap.night .trip-results-map-btn {
-  color: #FFD28C !important;
-  border: 1px solid #FFD28C !important;
+  color: var(--gold-primary) !important;
+  border: 1px solid var(--gold-primary) !important;
   background: transparent !important;
 }
 .app-wrap.day .trip-results-map-btn:hover,
@@ -294,7 +449,7 @@
 }
 .app-wrap.day .trip-overview-hero { box-shadow: 0 16px 48px rgba(26,26,46,0.1) !important; }
 .app-wrap.day .road-stop-add-btn, .app-wrap.day .activity-dining-add {
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
   background: rgba(255,210,140,0.15) !important;
   border-color: rgba(255,210,140,0.45) !important;
 }
@@ -337,7 +492,7 @@
 .app-wrap.night .theme-test-btn {
   background: rgba(18, 20, 32, 0.78) !important;
   border-color: rgba(255,255,255,0.32) !important;
-  color: #FFD28C !important;
+  color: var(--gold-primary) !important;
 }
 .app-wrap.night .theme-toggle-btn:hover,
 .app-wrap.night .theme-test-btn:hover {
@@ -348,10 +503,10 @@
   background: rgba(15,20,40,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
 }
 .app-wrap.night .spinner-dark {
-  border-color: rgba(255,255,255,0.15); border-top-color: #FFD28C;
+  border-color: rgba(255,255,255,0.15); border-top-color: var(--gold-primary);
 }
 .app-wrap.night .empty-icon { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
-.app-wrap.night .empty-cta { background: #FFD28C; color: #1a1a2e; }
+.app-wrap.night .empty-cta { background: var(--gold-primary); color: var(--deep-dark); }
 .app-wrap.night .results-view { color: #fff; }
 .app-wrap.night .results-view .stop-city { color: #fff; }
 .app-wrap.night .results-view .stop-meta { color: rgba(255,255,255,0.5); }
@@ -383,7 +538,7 @@
 .app-wrap.night .stop-card-head { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
 .app-wrap.night .stop-city { color: #fff; }
 .app-wrap.night .stop-meta { color: rgba(255,255,255,0.45); }
-.app-wrap.night .stop-num { background: #FFD28C; color: #1a1a2e; }
+.app-wrap.night .stop-num { background: var(--gold-primary); color: var(--deep-dark); }
 .app-wrap.night .item-row { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
 .app-wrap.night .item-name { color: #fff; }
 .app-wrap.night .item-meta { color: rgba(255,255,255,0.5); }
@@ -400,9 +555,9 @@
 .app-wrap.night .stops-wrap { background: transparent !important; color: #fff; }
 .app-wrap.night .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #fff; }
 .app-wrap.night .action-btn:hover { background: rgba(255,255,255,0.13); }
-.app-wrap.night .action-btn-primary { background: #FFD28C; border-color: #FFD28C; color: #1a1a2e; }
+.app-wrap.night .action-btn-primary { background: var(--gold-primary); border-color: var(--gold-primary); color: var(--deep-dark); }
 .app-wrap.night .filter-tab { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.7) !important; }
-.app-wrap.night .filter-tab.active { background: #FFD28C !important; color: #1a1a2e !important; border-color: #FFD28C !important; }
+.app-wrap.night .filter-tab.active { background: var(--gold-primary) !important; color: var(--deep-dark) !important; border-color: var(--gold-primary) !important; }
 .app-wrap.night .road-stop-name { color: #fff !important; }
 .app-wrap.night .road-stop-loc { color: rgba(255,255,255,0.5) !important; }
 .app-wrap.night .section-sep { background: rgba(255,255,255,0.07); }
@@ -417,11 +572,11 @@
 
 /* Trip results panel — night: dark premium cards */
 .app-wrap.night {
-  --results-bg: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 40%, #12121f 100%);
+  --results-bg: linear-gradient(180deg, #0f0f1a 0%, var(--deep-dark) 40%, #12121f 100%);
   --results-topbar-bg: rgba(8, 10, 18, 0.96);
   --results-card-bg: linear-gradient(145deg, rgba(20,20,35,0.95) 0%, rgba(30,30,50,0.85) 50%, rgba(255,210,140,0.08) 100%);
   --results-card-border: rgba(255,210,140,0.18);
-  --gold: #FFD28C;
+  --gold: var(--gold-primary);
 }
 .app-wrap.night .trip-results-panel { color: #f4f4f5 !important; }
 .app-wrap.night .trip-overview-hero { box-shadow: 0 16px 48px rgba(0,0,0,0.25) !important; }
@@ -437,8 +592,8 @@
   transition: opacity 1.8s ease;
   z-index: 0;
 }
-.app-wrap .map-day-layer { background: linear-gradient(150deg, #F5E6C8 0%, #EED8A8 55%, #E8D5A8 100%); }
-.app-wrap .map-night-layer { background: linear-gradient(150deg, #0D0A1A 0%, #1A1035 50%, #2A1A4A 100%); }
+.app-wrap .map-day-layer { background: linear-gradient(150deg, var(--color-map-surface) 0%, var(--color-map-panel) 55%, #E8D5A8 100%); }
+.app-wrap .map-night-layer { background: linear-gradient(150deg, var(--color-base) 0%, var(--color-surface) 50%, var(--color-surface-elevated) 100%); }
 .app-wrap .map-placeholder { background: transparent !important; position: relative; }
 .app-wrap .map-placeholder-text, .app-wrap .map-placeholder-sub { position: relative; z-index: 1; }
 
@@ -493,9 +648,7 @@
   transition: background 1.8s ease, background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease !important;
 }
 
-/* Override CSS vars per theme so var(--ink) etc all transition together */
-.app-wrap.day { --ink: #1A0D00; --surface: #F5E6C8; --card: #FDF3E0; --border: rgba(224, 104, 32, 0.2); --muted: rgba(90, 42, 16, 0.65); --charcoal: #1A0D00; }
-.app-wrap.night { --ink: #ffffff; --surface: #1A1035; --card: #2A1A4A; --border: rgba(168, 155, 207, 0.2); --muted: #A89BCF; }
+/* Override CSS vars per theme — canonical palette defined at top of file */
 
 /* All non-interactive elements transition at 1.8s */
 .app-wrap .ai-bubble, .app-wrap .user-bubble, .app-wrap .route-input,
@@ -524,7 +677,7 @@
 
 /* Profile page — day mode */
 .app-wrap.day.profile-view-wrap,
-.app-wrap.day .profile-view-wrap { background: #f4f6fa; color: #0c1222; }
+.app-wrap.day .profile-view-wrap { background: #f4f6fa; color: var(--deep-dark); }
 .app-wrap.day .profile-card,
 .app-wrap.day .profile-stat-card {
   background: rgba(255,255,255,0.85);
@@ -535,25 +688,25 @@
   background: linear-gradient(135deg, rgba(255,210,140,0.35) 0%, rgba(255,210,140,0.08) 50%, transparent 100%);
   border-bottom-color: rgba(0,0,0,0.06);
 }
-.app-wrap.day .profile-back-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .profile-back-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
 .app-wrap.day .profile-tier-badge { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.55); border-color: rgba(0,0,0,0.1); }
 .app-wrap.day .profile-benefits-list { color: rgba(0,0,0,0.65); }
 .app-wrap.day .profile-trip-card { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.08); }
-.app-wrap.day .profile-input { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); color: #0c1222; }
-.app-wrap.day .profile-btn-secondary { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .profile-input { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); color: var(--deep-dark); }
+.app-wrap.day .profile-btn-secondary { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
 .app-wrap.day .profile-card-dropdown {
   background: linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(245,247,252,0.98) 100%);
   border-color: rgba(0,0,0,0.1);
   box-shadow: 0 20px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04) inset;
-  color: #0c1222;
+  color: var(--deep-dark);
 }
-.app-wrap.day .profile-card-name { color: #0c1222; }
+.app-wrap.day .profile-card-name { color: var(--deep-dark); }
 .app-wrap.day .profile-card-identity:hover .profile-card-name { color: #b8860b; }
 .app-wrap.day .profile-card-email { color: rgba(12,18,34,0.55); }
 .app-wrap.day .profile-card-credits { color: rgba(12,18,34,0.65); }
 .app-wrap.day .profile-card-meta { border-bottom-color: rgba(0,0,0,0.08); }
 .app-wrap.day .profile-card-signout {
-  color: #0c1222;
+  color: var(--deep-dark);
   border-color: rgba(0,0,0,0.18);
 }
 .app-wrap.day .profile-card-signout:hover {
@@ -579,37 +732,37 @@
 .app-wrap.day .nav.transparent .profile-card-dropdown {
   background: linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(245,247,252,0.98) 100%);
   border-color: rgba(0,0,0,0.1);
-  color: #0c1222;
+  color: var(--deep-dark);
 }
-.app-wrap.day .nav.transparent .profile-card-name { color: #0c1222; }
+.app-wrap.day .nav.transparent .profile-card-name { color: var(--deep-dark); }
 .app-wrap.day .nav.transparent .profile-card-email { color: rgba(12,18,34,0.55); }
 .app-wrap.day .nav.transparent .profile-card-credits { color: rgba(12,18,34,0.65); }
 .app-wrap.day .nav.transparent .profile-card-signout {
-  color: #0c1222;
+  color: var(--deep-dark);
   border-color: rgba(0,0,0,0.18);
 }
 .app-wrap.day .nav.transparent .profile-card-trigger-avatar.user-avatar-ring {
   box-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 0 14px rgba(255,210,140,0.4);
 }
-.app-wrap.day .user-nav-menu-trigger { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); color: #0c1222; }
-.app-wrap.day .user-nav-menu-dropdown { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); color: #0c1222; }
+.app-wrap.day .user-nav-menu-trigger { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
+.app-wrap.day .user-nav-menu-dropdown { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
 .app-wrap.day .user-nav-menu-item:hover { background: rgba(0,0,0,0.04); }
 
 .app-wrap.day .tm-icon { color: #c9922e; }
 .app-wrap.day .share-mode-desc { color: rgba(12,18,34,0.65) !important; }
 .app-wrap.day .panel-loading-fallback { color: rgba(12,18,34,0.6) !important; }
 
-.app-wrap.day .trips-panel-title { color: #0c1222 !important; }
+.app-wrap.day .trips-panel-title { color: var(--deep-dark) !important; }
 .app-wrap.day .trips-panel-sub { color: rgba(12,18,34,0.55) !important; }
 .app-wrap.day .trips-saved-card {
   background: rgba(255,255,255,0.92) !important;
   border-color: rgba(201,146,46,0.25) !important;
 }
-.app-wrap.day .trips-saved-card-city { color: #0c1222 !important; }
+.app-wrap.day .trips-saved-card-city { color: var(--deep-dark) !important; }
 .app-wrap.day .trips-saved-card-meta { color: rgba(12,18,34,0.55) !important; }
 .app-wrap.day .trips-saved-btn-danger { color: rgba(12,18,34,0.65) !important; border-color: rgba(0,0,0,0.12) !important; }
 .app-wrap.day .trips-empty-state { background: rgba(255,255,255,0.7) !important; border-color: rgba(0,0,0,0.1) !important; }
-.app-wrap.day .trips-empty-title { color: #0c1222 !important; }
+.app-wrap.day .trips-empty-title { color: var(--deep-dark) !important; }
 .app-wrap.day .trips-empty-sub { color: rgba(12,18,34,0.55) !important; }
 .app-wrap.day .enrichment-notice {
   background: rgba(255,210,140,0.2) !important;

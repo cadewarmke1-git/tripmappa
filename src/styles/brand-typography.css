@@ -1,61 +1,32 @@
-/* TripMappa brand typography — wordmark gradient + hero headline tokens */
+/* TripMappa brand typography — gradient mesh text from canonical palette */
 
-:root {
-  --tm-gold: #FFD28C;
-  --tm-orange: #FF8C42;
-  --tm-ember-start: #C87010;
-  --tm-ember-end: #E06820;
-  --tm-hero-title-color: #FFFFFF;
-  --tm-hero-tagline-color: rgba(255, 255, 255, 0.8);
-  --tm-hero-accent-night: #FFD28C;
-  --tm-hero-accent-day: #1A0D00;
-  --tm-wordmark-gradient-night: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%);
-  --tm-wordmark-gradient-day: linear-gradient(135deg, #C87010 0%, #E06820 100%);
-}
-
-.tm-theme-night,
-.app-wrap.night,
-.hero.night,
-.app-nav-bar--night {
-  --tm-wordmark-gradient: var(--tm-wordmark-gradient-night);
-  --tm-hero-accent-color: var(--tm-hero-accent-night);
-}
-
-.tm-theme-day,
-.app-wrap.day,
-.hero.day,
-.app-nav-bar--day {
-  --tm-wordmark-gradient: var(--tm-wordmark-gradient-day);
-  --tm-hero-accent-color: var(--tm-hero-accent-day);
-}
-
-/* ── Wordmark — always gradient, never plain text ── */
-.brand-wordmark {
-  display: inline;
-  font: inherit;
-  letter-spacing: inherit;
-  background: var(--tm-wordmark-gradient, var(--tm-wordmark-gradient-night)) !important;
-  -webkit-background-clip: text !important;
+/* Shared gradient-text technique */
+.tm-gradient-text {
   background-clip: text !important;
+  -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
 }
 
+/* ── Wordmark — theme color mesh ── */
+.brand-wordmark,
 .nav-logo .brand-wordmark,
 .nav-logo-home .brand-wordmark,
 .auth-modal-logo.brand-wordmark,
 .route-drawing-loader-wordmark.brand-wordmark,
 .app-global-home-logo .brand-wordmark {
-  background: var(--tm-wordmark-gradient, var(--tm-wordmark-gradient-night)) !important;
-  -webkit-background-clip: text !important;
+  display: inline;
+  font: inherit;
+  letter-spacing: inherit;
+  background: var(--color-wordmark-gradient) !important;
   background-clip: text !important;
+  -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
 }
 
 .nav-logo-home,
 .nav-logo {
-  /* Keep button chrome visible; gradient lives on .brand-wordmark only */
   background: none;
 }
 
@@ -71,7 +42,7 @@
 
 .auth-modal-logo.brand-wordmark {
   display: block;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-heading);
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -80,63 +51,56 @@
 }
 
 .route-drawing-loader-wordmark.brand-wordmark {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-heading);
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.02em;
   animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
 }
 
-.route-drawing-loader--night .brand-wordmark {
-  background: var(--tm-wordmark-gradient-night) !important;
-}
-
-.route-drawing-loader--day .brand-wordmark {
-  background: var(--tm-wordmark-gradient-day) !important;
-}
-
-/* ── Hero headline typography ── */
+/* ── Hero headline — "Travel" + "Reimagined." color meshes ── */
 .hero-title {
-  color: #FFFFFF !important;
+  background: none !important;
 }
 
 .hero-title-line {
   display: block;
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
+  background: var(--color-hero-title-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.35));
 }
 
 .hero-title-accent {
   display: block;
-  color: var(--tm-hero-accent-color) !important;
-  -webkit-text-fill-color: var(--tm-hero-accent-color) !important;
+  background: var(--color-hero-accent-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.3));
 }
 
-.hero.night .hero-title-accent {
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
+.hero.day .hero-title-line {
+  filter: drop-shadow(0 2px 12px rgba(255, 255, 255, 0.4));
 }
 
 .hero.day .hero-title-accent {
-  color: #1A0D00 !important;
-  -webkit-text-fill-color: #1A0D00 !important;
-  text-shadow: 0 1px 12px rgba(255, 255, 255, 0.35);
+  filter: drop-shadow(0 1px 10px rgba(255, 255, 255, 0.35));
 }
 
 .hero-sub {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: var(--color-hero-subtitle) !important;
 }
 
 .hero-title .highlight {
-  color: var(--tm-hero-accent-color) !important;
-}
-
-.hero.night .hero-title .highlight {
-  color: #FFD28C !important;
-}
-
-.hero.day .hero-title .highlight {
-  color: #1A0D00 !important;
+  background: var(--color-hero-accent-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 @keyframes loaderWordmarkPulse {

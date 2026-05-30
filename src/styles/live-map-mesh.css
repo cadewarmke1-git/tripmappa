@@ -1,0 +1,131 @@
+/* Live map + in-app map — desert / deep-space color meshes */
+
+/* ── Map container backgrounds ── */
+.app-wrap.night .map-loading,
+.app-wrap.night .map-placeholder,
+.app-wrap.night .trip-map-fullscreen,
+.live-view-page-night {
+  background: var(--color-map-mesh) !important;
+}
+
+.app-wrap.day .map-loading,
+.app-wrap.day .map-placeholder,
+.app-wrap.day .trip-map-fullscreen,
+.live-view-page-day {
+  background: var(--color-map-mesh) !important;
+}
+
+.app-wrap.night .map-night-layer {
+  background: var(--color-map-mesh) !important;
+}
+
+.app-wrap.day .map-day-layer {
+  background: var(--color-map-mesh) !important;
+}
+
+/* ── Live view overlay panels — surface mesh ── */
+.live-view-page-night .live-view-header,
+.live-view-page-night .live-view-eta-card,
+.live-view-page-night .live-view-convoy-card,
+.live-view-page-night .live-view-follower-phone {
+  background: var(--color-panel-mesh) !important;
+  border-color: var(--color-input-border) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.live-view-page-day .live-view-header,
+.live-view-page-day .live-view-eta-card,
+.live-view-page-day .live-view-convoy-card,
+.live-view-page-day .live-view-follower-phone {
+  background: var(--color-panel-mesh) !important;
+  border-color: var(--color-input-border) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.live-view-page-day {
+  color: var(--color-text-primary) !important;
+}
+
+.live-view-page-night {
+  color: var(--color-text-primary) !important;
+}
+
+/* Gradient mesh accent text on live map UI */
+.live-view-traveler-name,
+.live-view-eta-value,
+.live-view-home-link,
+.live-view-convoy-joined {
+  background: var(--color-accent-text-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+.live-view-status-live {
+  color: var(--color-accent-gold) !important;
+  font-weight: 700;
+}
+
+.live-view-eta-label,
+.live-view-route,
+.live-view-viewers {
+  color: var(--color-text-secondary) !important;
+}
+
+.live-view-status-dot {
+  background: var(--color-accent-orange) !important;
+  box-shadow: 0 0 8px var(--color-accent-gold);
+}
+
+/* In-app map controls — mesh surfaces (extends hero-map-theme) */
+.app-wrap.night .map-style-btn,
+.app-wrap.night .map-recenter-btn,
+.app-wrap.night .map-zoom-btn {
+  background: var(--color-panel-mesh) !important;
+}
+
+.app-wrap.day .map-style-btn,
+.app-wrap.day .map-recenter-btn,
+.app-wrap.day .map-zoom-btn {
+  background: var(--color-panel-mesh) !important;
+}
+
+.app-wrap.night .float-card {
+  background: var(--color-panel-mesh) !important;
+}
+
+.app-wrap.day .float-card {
+  background: var(--color-panel-mesh) !important;
+}
+
+.app-wrap.night .float-card-header {
+  background: var(--color-map-mesh) !important;
+}
+
+.app-wrap.day .float-card-header {
+  background: var(--color-map-mesh) !important;
+}
+
+/* Route info bar over map — night mesh */
+.route-info-bar {
+  background: var(--color-panel-mesh) !important;
+  border-color: var(--color-input-border) !important;
+}
+
+.route-info-bar .rib-val {
+  background: var(--color-accent-text-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.app-wrap.day .route-info-bar .rib-val {
+  background: var(--color-accent-text-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

@@ -1,4 +1,5 @@
 import BrandWordmark from "./BrandWordmark.jsx";
+import { GOLD_PRIMARY, ORANGE_PRIMARY } from "../lib/palette.js";
 const ROUTE_PATH =
   "M 12 38 C 36 38, 48 10, 72 14 S 108 42, 138 26 S 176 10, 188 18";
 
@@ -34,8 +35,8 @@ export default function RouteDrawingLoader({ theme, variant = "inline", classNam
         >
           <defs>
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FFD28C" />
-              <stop offset="100%" stopColor="#FF8C42" />
+              <stop offset="0%" stopColor={GOLD_PRIMARY} />
+              <stop offset="100%" stopColor={ORANGE_PRIMARY} />
             </linearGradient>
           </defs>
           <path

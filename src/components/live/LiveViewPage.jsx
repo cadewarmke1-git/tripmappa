@@ -32,7 +32,7 @@ import { computeAutoTheme } from "../../lib/theme.js";
 
 const CONVOY_MEMBER_KEY = "tripmappa-convoy-member";
 
-export default function LiveViewPage({ shareToken, toast }) {
+export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
     libraries: GOOGLE_LIBRARIES,
@@ -55,7 +55,7 @@ export default function LiveViewPage({ shareToken, toast }) {
   const [localToast, setLocalToast] = useState(null);
   const lastNotificationRef = useRef(null);
 
-  const theme = useMemo(() => computeAutoTheme(), []);
+  const theme = themeProp ?? computeAutoTheme();
   const mapStyles = useMemo(() => resolveMapStyles("standard", theme), [theme]);
 
   const notify = useCallback((msg, isGold = false) => {
