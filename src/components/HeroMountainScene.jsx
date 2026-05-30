@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
+import HeroPhotoSlideshow from "./HeroPhotoSlideshow.jsx";
+import { HERO_PHOTOS_DAY, HERO_PHOTOS_NIGHT } from "../lib/constants.js";
 import { buildStarField, resolveSkyPhase, SKY_CHECK_MS } from "../lib/skyTime.js";
 
 const STARS = buildStarField(52);
 
-export default function HeroMountainScene({ theme = "night", themeLocked = false }) {
+export default function HeroMountainScene({
+  theme = "night",
+  themeLocked = false,
+  photoPaused = false,
+}) {
   const [phase, setPhase] = useState(() => resolveSkyPhase({ theme, themeLocked }));
 
   useEffect(() => {
@@ -14,9 +20,7 @@ export default function HeroMountainScene({ theme = "night", themeLocked = false
   }, [theme, themeLocked]);
 
   const showStars = phase === "night" || phase === "pre_dawn";
-
-  const farRangeFill = theme === "day" ? "#3A2010" : "#2A1A4A";
-  const nearRangeFill = theme === "day" ? "#1A0D00" : "#0D0A1A";
+  const isDay = theme === "day";
 
   return (
     <div className={`hero-mountain-scene hero-mountain-scene--${phase} hero-mountain-scene--theme-${theme}`} aria-hidden="true">
@@ -35,18 +39,21 @@ export default function HeroMountainScene({ theme = "night", themeLocked = false
           ))}
         </svg>
       )}
-      <svg className="hero-mountains" viewBox="0 0 1440 420" preserveAspectRatio="none">
-        <path
-          className="hero-mountain-far"
-          fill={farRangeFill}
-          d="M0,420 L0,260 C120,220 200,180 320,200 C440,220 520,140 640,160 C760,180 860,120 980,150 C1100,180 1200,100 1320,130 L1440,110 L1440,420 Z"
-        />
-        <path
-          className="hero-mountain-near"
-          fill={nearRangeFill}
-          d="M0,420 L0,320 C180,300 280,260 420,280 C560,300 680,240 820,270 C960,300 1080,250 1240,290 L1440,310 L1440,420 Z"
-        />
-      </svg>
+
+      <div
+        className="hero-photo-set hero-photo-set--day"
+        style={{ opacity: isDay ? 1 : 0, pointerEvents: isDay ? "auto" : "none" }}
+      >
+        <HeroPhotoSlideshow photos={HERO_PHOTOS_DAY} paused={photoPaused} active={isDay} />
+      </div>
+      <div
+        className="hero-photo-set hero-photo-set--night"
+        style={{ opacity: isDay ? 0 : 1, pointerEvents: isDay ? "none" : "auto" }}
+      >
+        <HeroPhotoSlideshow photos={HERO_PHOTOS_NIGHT} paused={photoPaused} active={!isDay} />
+      </div>
+
+      <div className="hero-horizon-blend" aria-hidden="true" />
     </div>
   );
 }

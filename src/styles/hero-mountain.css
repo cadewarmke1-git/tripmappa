@@ -1,4 +1,4 @@
-/* Animated SVG mountain hero — sky synced to local time */
+/* Hero — animated sky + original Unsplash mountain photos (horizon-masked) */
 
 .hero-mountain-scene {
   position: absolute;
@@ -11,6 +11,7 @@
 .hero-sky-layer {
   position: absolute;
   inset: 0;
+  z-index: 0;
   transition: background 2.4s ease;
 }
 
@@ -22,55 +23,141 @@
 
 /* Sky gradients by local-time phase */
 .hero-mountain-scene--pre_dawn .hero-sky-layer {
-  background: linear-gradient(180deg, #0D0A1A 0%, #1A1035 55%, #2A1A4A 100%);
+  background: linear-gradient(180deg, #0D0A1A 0%, #1A1035 48%, #2A1A4A 72%, #3D2858 100%);
 }
 
 .hero-mountain-scene--sunrise .hero-sky-layer {
-  background: linear-gradient(180deg, #1A1035 0%, #FF8C42 38%, #FFD28C 72%, #1A1035 100%);
+  background: linear-gradient(180deg, #1A1035 0%, #FF8C42 32%, #FFD28C 58%, #E06820 78%, #5A2A10 100%);
 }
 
 .hero-mountain-scene--midday .hero-sky-layer {
-  background: linear-gradient(180deg, #1A3A6A 0%, #4A7AAA 48%, #E8D5A8 100%);
+  background: linear-gradient(180deg, #1A3A6A 0%, #4A7AAA 42%, #8AB4D4 62%, #E8D5A8 100%);
 }
 
 .hero-mountain-scene--golden_hour .hero-sky-layer {
-  background: linear-gradient(180deg, #F7C84A 0%, #E06820 42%, #A04010 78%, #5A2A10 100%);
+  background: linear-gradient(180deg, #F7C84A 0%, #E06820 38%, #A04010 62%, #5A2A10 82%, #2A1408 100%);
 }
 
 .hero-mountain-scene--dusk .hero-sky-layer {
-  background: linear-gradient(180deg, #5A2A10 0%, #2A1A4A 55%, #1A1035 100%);
+  background: linear-gradient(180deg, #5A2A10 0%, #8B4020 22%, #2A1A4A 52%, #1A1035 100%);
 }
 
 .hero-mountain-scene--night .hero-sky-layer {
-  background: linear-gradient(180deg, #0D0A1A 0%, #1A1035 100%);
+  background: linear-gradient(180deg, #0D0A1A 0%, #12102A 38%, #1A1035 100%);
 }
 
 .hero-stars {
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 55%;
+  height: 58%;
   z-index: 1;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-.hero-mountains {
+/* Photo slideshow — mountains only; sky masked out for animated sky above */
+.hero-photo-set {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: min(48vh, 420px);
-  min-height: 200px;
+  inset: 0;
   z-index: 2;
+  transition: opacity 1.8s ease;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 18%,
+    rgba(0, 0, 0, 0.12) 28%,
+    rgba(0, 0, 0, 0.55) 40%,
+    rgba(0, 0, 0, 0.92) 48%,
+    black 58%,
+    black 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 18%,
+    rgba(0, 0, 0, 0.12) 28%,
+    rgba(0, 0, 0, 0.55) 40%,
+    rgba(0, 0, 0, 0.92) 48%,
+    black 58%,
+    black 100%
+  );
 }
 
-.hero-mountain-far {
-  opacity: 0.72;
+.hero-photo-set .hero-slideshow {
+  position: absolute;
+  inset: 0;
+  background: #0a0a12;
 }
 
-.hero-mountain-near {
-  opacity: 1;
+.hero-photo-set .hero-bg-slide {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center 72%;
+}
+
+.hero-photo-set--day .hero-bg-slide {
+  background-position: center 68%;
+}
+
+.hero-photo-set--night .hero-bg-slide {
+  background-position: center 75%;
+}
+
+/* Soft color harmonization at the sky–mountain horizon */
+.hero-horizon-blend {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 24%,
+    rgba(13, 10, 26, 0.06) 36%,
+    rgba(13, 10, 26, 0.14) 46%,
+    transparent 62%
+  );
+}
+
+.hero-mountain-scene--theme-day .hero-horizon-blend {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 22%,
+    rgba(90, 42, 16, 0.05) 34%,
+    rgba(42, 20, 8, 0.12) 44%,
+    transparent 60%
+  );
+}
+
+.hero-mountain-scene--sunrise .hero-horizon-blend {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 140, 66, 0.06) 28%,
+    rgba(224, 104, 32, 0.1) 40%,
+    transparent 58%
+  );
+}
+
+.hero-mountain-scene--golden_hour .hero-horizon-blend {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(247, 200, 74, 0.05) 26%,
+    rgba(160, 64, 16, 0.12) 42%,
+    transparent 58%
+  );
+}
+
+.hero-mountain-scene--dusk .hero-horizon-blend {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(90, 42, 16, 0.08) 30%,
+    rgba(42, 26, 74, 0.14) 44%,
+    transparent 58%
+  );
 }
 
 /* Theme overlay between sky and hero UI content */

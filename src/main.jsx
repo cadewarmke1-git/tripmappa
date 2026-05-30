@@ -13,6 +13,7 @@ import "./styles/hero-map-theme.css";
 import "./styles/live-map-mesh.css";
 import "./styles/mobile-layout.css";
 import "./styles/hero-mountain.css";
+import "./styles/hero-desktop.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
