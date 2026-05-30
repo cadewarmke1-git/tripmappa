@@ -35,6 +35,7 @@ export default function PlanPanel({
   convoScrollRef,
   creditsLabel,
   onGenerateTrip,
+  onCancelGenerate,
   onResetPlan,
   onGoBack,
   onPickAnswer,
@@ -131,6 +132,11 @@ export default function PlanPanel({
                           </>
                         )}
                       </button>
+                      {loading && onCancelGenerate && (
+                        <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>
+                          Cancel
+                        </button>
+                      )}
                     </div>
                   )}
                   {currentQuestion && (

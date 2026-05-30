@@ -377,6 +377,7 @@
   .badge-truck { background: rgba(59,130,246,0.25); color: rgba(147,197,253,0.95); }
   .action-btn-gold { background: #FFD28C !important; color: #1a1a2e !important; border-color: #FFD28C !important; font-weight: 700; }
   .toast-gold { background: #FFD28C !important; color: #1a1a2e !important; border-color: rgba(255,210,140,0.5) !important; }
+  .toast-error { border-color: rgba(248, 113, 113, 0.55) !important; background: rgba(40, 20, 20, 0.95) !important; }
   .summary-hos-note { margin-top: 10px; font-size: 11px; color: rgba(147,197,253,0.9); }
   .summary-rv-note { margin-top: 10px; font-size: 11px; color: rgba(134,239,172,0.9); }
   .rv-safety-card {
@@ -1633,9 +1634,22 @@
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
   .generate-inline .btn-generate-trip { margin-top: 0; }
+  .btn-cancel-generate {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .btn-cancel-generate:hover { color: #fff; border-color: rgba(255, 255, 255, 0.35); }
   .payoff-summary-wrap { margin-top: 16px; }
   .btn-generate-trip:hover:not(:disabled) {
     transform: translateY(-2px);

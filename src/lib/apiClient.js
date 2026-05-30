@@ -1,7 +1,7 @@
 import { searchGasStations, searchDieselStations, searchEvChargingStations, searchPropaneStations } from "./placesStations.js";
 
 /** Frontend API layer — always call serverless routes, never Anthropic directly. */
-export async function generateTripPlan(payload, accessToken = null) {
+export async function generateTripPlan(payload, accessToken = null, { signal } = {}) {
   const headers = { "Content-Type": "application/json" };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
@@ -9,6 +9,7 @@ export async function generateTripPlan(payload, accessToken = null) {
     method: "POST",
     headers,
     body: JSON.stringify(payload),
+    signal,
   });
   const data = await response.json();
   if (!response.ok) {

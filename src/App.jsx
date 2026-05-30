@@ -352,7 +352,7 @@ export default function App() {
       try {
         await deleteTrip(user.id, id);
       } catch (err) {
-        toast_(err.message || "Could not delete trip", { duration: 6000 });
+        toast_(err.message || "Could not delete trip", { isError: true });
         return;
       }
     }
@@ -369,8 +369,10 @@ export default function App() {
   }
   const [toast, setToast] = useState(null);
   const [toastIsGold, setToastIsGold] = useState(false);
+  const [toastIsError, setToastIsError] = useState(false);
   const [toastAction, setToastAction] = useState(null);
   const toastTimerRef = useRef(null);
+  const generateAbortRef = useRef(null);
   const hadUserRef = useRef(false);
   const intentionalSignOutRef = useRef(false);
   const sessionExpiredNotifiedRef = useRef(false);
@@ -1323,9 +1325,10 @@ export default function App() {
 
   function toast_(msg, options = false) {
     const opts = typeof options === "boolean" ? { isGold: options } : options;
-    const { isGold = false, actionLabel, onAction, duration = 2400 } = opts;
+    const { isGold = false, isError = false, actionLabel, onAction, duration = isError ? 8000 : 2400 } = opts;
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToastIsGold(isGold);
+    setToastIsError(isError);
     setToast(msg);
     if (actionLabel && onAction) {
       setToastAction({ label: actionLabel, onClick: onAction });
@@ -1335,7 +1338,12 @@ export default function App() {
     toastTimerRef.current = setTimeout(() => {
       setToast(null);
       setToastAction(null);
+      setToastIsError(false);
     }, actionLabel ? Math.max(duration, 8000) : duration);
+  }
+
+  function cancelGenerateTrip() {
+    generateAbortRef.current?.abort();
   }
 
   function handlePanelTouchStart(e) {
@@ -1369,6 +1377,8 @@ export default function App() {
   useEffect(() => {
     function onKeyDown(e) {
       if (e.key !== "Escape") return;
+      if (confirmResetOpen) { setConfirmResetOpen(false); e.preventDefault(); return; }
+      if (confirmDeleteTripId) { setConfirmDeleteTripId(null); e.preventDefault(); return; }
       if (showHomeAddressModal) { setShowHomeAddressModal(false); setNavigateHomePending(false); e.preventDefault(); return; }
       if (showUpgradeModal) { setShowUpgradeModal(false); e.preventDefault(); return; }
       if (authModal) { setAuthModal(null); e.preventDefault(); return; }
@@ -1383,7 +1393,7 @@ export default function App() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, generated, resultsView, showHomeAddressModal, showUpgradeModal, authModal, modal, helpMenuOpen, mapStyleOpen]);
+  }, [view, generated, resultsView, showHomeAddressModal, showUpgradeModal, authModal, modal, helpMenuOpen, mapStyleOpen, confirmResetOpen, confirmDeleteTripId]);
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -1932,16 +1942,22 @@ export default function App() {
     setEnrichmentNoticeDismissed(false);
     setTripUsedFallback(false);
 
+    generateAbortRef.current?.abort();
+    const generateController = new AbortController();
+    generateAbortRef.current = generateController;
+
+    try {
     if (isLoaded && window.google) {
       const routeOk = await fetchDirections(getEffectiveVehicle(answers));
       if (!routeOk) {
-        toast_("Route could not be calculated — trip will use best available estimates.", { duration: 6000 });
+        toast_("Route could not be calculated — trip will use best available estimates.", { isError: true });
       }
     }
 
+    if (generateController.signal.aborted) return;
+
     const normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
-    try {
       const activeRouteInfo = {
         ...routeInfo,
         origin: tripOrigin,
@@ -1968,7 +1984,9 @@ export default function App() {
           placesContextPrompt,
           legs: tripLegs.length > 0 ? tripLegs : undefined,
           model: "claude-sonnet-4-20250514",
-        }, session?.access_token || null);
+        }, session?.access_token || null, { signal: generateController.signal });
+
+      if (generateController.signal.aborted) return;
       const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
       setTripUsedFallback(Boolean(parsed.usedFallback));
 
@@ -1976,7 +1994,6 @@ export default function App() {
         if (!consumeGuestCredit()) {
           setCreditStatus(getGuestCreditStatus());
           openTripsUpgrade();
-          setLoading(false);
           return;
         }
         setCreditStatus(getGuestCreditStatus());
@@ -2012,16 +2029,19 @@ export default function App() {
         }
       }
       if (parsed.usedFallback) {
-        toast_("Trip generated with estimated data — live AI planning returned incomplete results.", { duration: 8000 });
+        toast_("Trip generated with estimated data — live AI planning returned incomplete results.", { isError: true });
       } else {
-        toast_("Trip planned");
+        toast_("Trip planned", true);
       }
     } catch (err) {
+      if (err.name === "AbortError") {
+        toast_("Trip generation cancelled.");
+        return;
+      }
       console.error("Generate trip error:", err);
       if (err.code === "no_credits") {
         openTripsUpgrade();
         if (err.credits) setCreditStatus(err.credits);
-        setLoading(false);
         return;
       }
       refundGuestCredit();
@@ -2051,10 +2071,13 @@ export default function App() {
         normalizedAnswers,
       );
       if (!user) setGuestTripPendingSave(true);
-      toast_("Could not reach trip planner — showing estimated route instead.", { duration: 8000 });
+      toast_("Could not reach trip planner — showing estimated route instead.", { isError: true });
+    } finally {
+      if (generateAbortRef.current === generateController) {
+        generateAbortRef.current = null;
+      }
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   function requestResetPlan() {
@@ -2340,6 +2363,7 @@ export default function App() {
         <Toast
           message={toast}
           isGold={toastIsGold}
+          isError={toastIsError}
           actionLabel={toastAction?.label}
           onAction={toastAction?.onClick}
         />
@@ -2445,6 +2469,7 @@ export default function App() {
       <Toast
         message={toast}
         isGold={toastIsGold}
+        isError={toastIsError}
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />
@@ -2520,7 +2545,7 @@ export default function App() {
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen view-panel-animate">
             <div className="map-float-nav map-float-nav--edit-only">
-              <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit Trip</button>
+              <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit plan</button>
             </div>
             <AppMap
               isLoaded={isLoaded}
@@ -2683,6 +2708,7 @@ export default function App() {
                       routeError={routeError}
                       onRetryRoute={retryRouteCalculation}
                       onGenerateTrip={generateTrip}
+                      onCancelGenerate={cancelGenerateTrip}
                       onResetPlan={requestResetPlan}
                       onGoBack={goBackOneQuestion}
                       onPickAnswer={pickAnswer}
@@ -2839,6 +2865,7 @@ export default function App() {
       <Toast
         message={toast}
         isGold={toastIsGold}
+        isError={toastIsError}
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />

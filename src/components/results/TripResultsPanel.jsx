@@ -115,7 +115,7 @@ export default function TripResultsPanel({
   return (
     <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate`}>
       <header className="trip-results-topbar trip-results-topbar-with-logo">
-        <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit Trip</button>
+        <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit plan</button>
         <div className="trip-results-topbar-title">Your Trip</div>
         <button type="button" className="trip-results-map-btn" onClick={onViewMap}>View on Map</button>
       </header>
