@@ -19,6 +19,7 @@ export default function AppMap({
   mapStyle,
   mapStyleOpen,
   trafficAlert,
+  onDismissTrafficAlert = null,
   routeLoading,
   tripGenerating = false,
   loadingMessageIndex = 0,
@@ -142,9 +143,14 @@ export default function AppMap({
             />
           )}
           {trafficAlert && (
-            <div className="traffic-toast">
+            <div className="traffic-toast" role="status" aria-live="polite">
               <span className="traffic-toast-icon">!</span>
-              Traffic delays detected on your route
+              <span>Traffic delays detected on your route</span>
+              {onDismissTrafficAlert && (
+                <button type="button" className="traffic-toast-dismiss" onClick={onDismissTrafficAlert} aria-label="Dismiss traffic alert">
+                  ×
+                </button>
+              )}
             </div>
           )}
           <div className="map-style-toggle">

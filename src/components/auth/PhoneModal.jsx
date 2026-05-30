@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useDialogA11y } from "../../hooks/useDialogA11y.js";
+import ModalCloseButton from "../ModalCloseButton.jsx";
 
 function PhoneIcon() {
   return (
@@ -25,6 +27,7 @@ export default function PhoneModal({
   const [step, setStep] = useState(initialPhone ? "code" : "phone");
   const [phone, setPhone] = useState(initialPhone);
   const [code, setCode] = useState("");
+  const dialogRef = useDialogA11y(true, onClose, "phone-signin-headline");
 
   async function handleSend(e) {
     e?.preventDefault();
@@ -46,14 +49,21 @@ export default function PhoneModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="auth-modal">
+    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div
+        ref={dialogRef}
+        className="auth-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="phone-signin-headline"
+      >
+        <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <div className="auth-modal-logo">Trip<span>Mappa</span></div>
 
         {step === "phone" ? (
           <>
-            <h2 className="auth-modal-headline">Sign in with your phone.</h2>
+            <h2 className="auth-modal-headline" id="phone-signin-headline">Sign in with your phone.</h2>
             <p className="auth-modal-sub">We&apos;ll text you a 6-digit code to verify your number.</p>
             <form className="auth-modal-form" onSubmit={handleSend}>
               <label className="auth-field-label" htmlFor="phone-signin">Phone number</label>

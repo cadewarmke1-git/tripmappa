@@ -138,8 +138,13 @@ export async function enrichGeneratedTrip({
   }
 
   if (mapsReady && routeInfo?.routePoints?.length) {
-    const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
-    safeRoadStops = dedupeRoadStops([...safeRoadStops, ...corridorRoadStops]);
+    const llmRoadStopCount = roadStops.filter(rs => rs.fromLlm).length;
+    if (llmRoadStopCount < 2) {
+      const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
+      safeRoadStops = dedupeRoadStops([...safeRoadStops, ...corridorRoadStops]);
+    } else {
+      safeRoadStops = dedupeRoadStops(safeRoadStops);
+    }
   } else {
     safeRoadStops = dedupeRoadStops(safeRoadStops);
   }

@@ -1,5 +1,11 @@
 /** Map Google Places lodging results to hotel card shape. */
-import { filterLodgingByBudget, filterSafeStopsOnly, estimateNightlyFromPlace } from "./placesFilters.js";
+import {
+  filterLodgingByBudget,
+  filterLodgingByTier,
+  filterSafeStopsOnly,
+  estimateNightlyFromPlace,
+  sortLodgingByLoyalty,
+} from "./placesFilters.js";
 import { getLoyaltyKeyword, needsSafeStopsOnly } from "./tripAccommodations.js";
 
 const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80";
@@ -47,7 +53,9 @@ export function processLodgingResults(places, answers, routeInfo) {
     const safe = filterSafeStopsOnly(out);
     if (safe.length) out = safe;
   }
+  out = filterLodgingByTier(out, answers);
   out = filterLodgingByBudget(out, answers, routeInfo);
+  out = sortLodgingByLoyalty(out, answers);
   return out
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
     .slice(0, 5)

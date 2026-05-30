@@ -596,11 +596,16 @@
     z-index: 25; display: flex; align-items: center; gap: 10px;
     background: rgba(12,18,34,0.92); backdrop-filter: blur(12px);
     border: 1px solid rgba(255,210,140,0.25); border-radius: 99px;
-    padding: 10px 20px; font-size: 13px; font-weight: 500; color: #fff;
+    padding: 10px 16px 10px 20px; font-size: 13px; font-weight: 500; color: #fff;
     box-shadow: 0 4px 24px rgba(0,0,0,0.25);
     animation: trafficToastIn 0.35s var(--ease) both;
     white-space: nowrap; max-width: calc(100vw - 32px);
   }
+  .traffic-toast-dismiss {
+    margin-left: 4px; padding: 0 6px; border: none; background: transparent;
+    color: rgba(255,255,255,0.7); font-size: 18px; line-height: 1; cursor: pointer;
+  }
+  .traffic-toast-dismiss:hover { color: #fff; }
   .traffic-toast-icon {
     color: var(--gold); font-size: 13px; font-weight: 800;
     width: 20px; height: 20px; border-radius: 50%;
@@ -2047,6 +2052,15 @@
   .modal-btn { flex: 1; padding: 11px; border: none; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
   .modal-btn-primary { background: var(--ink); color: #fff; }
   .modal-btn-outline { background: var(--surface); color: var(--ink); border: 1.5px solid var(--border); }
+  .modal { position: relative; }
+  .modal-close-btn {
+    position: absolute; top: 12px; right: 12px; z-index: 2;
+    width: 32px; height: 32px; border: none; border-radius: 999px;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .modal-close-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+  .auth-modal .modal-close-btn { color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.06); }
 
   /* ── Auth modals (premium signup / sign-in) ── */
   .auth-modal-overlay { background: rgba(8, 8, 18, 0.72); backdrop-filter: blur(8px); }
@@ -2760,6 +2774,11 @@
     position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, transparent, #FFD28C, #FFD28C, #FFD28C, transparent);
     background-size: 200% 100%; animation: goldShimmer 3s ease-in-out infinite;
+  }
+  .trip-route-optimized-notice {
+    margin: 0 0 12px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(255,210,140,0.1); border: 1px solid rgba(255,210,140,0.25);
+    color: var(--ink); font-size: 13px; line-height: 1.45;
   }
   .trip-overview-hero-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold, #FFD28C); margin: 0 0 8px; font-weight: 600; }
   .trip-overview-hero-title { font-family: "Fraunces", Georgia, serif; font-size: 26px; font-weight: 700; margin: 0 0 18px; letter-spacing: -0.03em; line-height: 1.15; color: var(--ink); }

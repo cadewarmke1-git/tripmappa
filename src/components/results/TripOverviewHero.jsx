@@ -3,7 +3,7 @@ import { computeBudgetEstimate } from "../../lib/budget.js";
 import { parseTravelerCount } from "../../lib/vehicles.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
-export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {} }) {
+export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false }) {
   const budget = useMemo(
     () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
     [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
@@ -16,6 +16,11 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
   return (
     <header className="trip-overview-hero">
       <div className="trip-overview-hero-accent" aria-hidden="true"/>
+      {routeOptimized && (
+        <div className="trip-route-optimized-notice" role="status">
+          Overnight stops were reordered for a shorter drive — review each day before you go.
+        </div>
+      )}
       <p className="trip-overview-hero-eyebrow">Your Trip</p>
       <h1 className="trip-overview-hero-title">{overview.tripName}</h1>
       <div className="trip-overview-hero-stats">

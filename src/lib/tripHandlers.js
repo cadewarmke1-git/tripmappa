@@ -124,7 +124,8 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
   const apiStops = continuous
     ? []
     : (Array.isArray(data.stops) ? data.stops.filter(s => s && (s.city || s.name)) : []);
-  const apiRoadStops = (Array.isArray(data.road_stops) ? data.road_stops : []).map(normalizeRoadStop);
+  const apiRoadStops = (Array.isArray(data.road_stops) ? data.road_stops : [])
+    .map(s => normalizeRoadStop({ ...s, fromLlm: true }));
 
   const metaFields = {
     hosCompliance: data.hos_compliance || data.hosCompliance || null,

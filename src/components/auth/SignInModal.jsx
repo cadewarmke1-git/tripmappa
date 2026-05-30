@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 import AuthSocialButtons from "./AuthSocialButtons.jsx";
+import ModalCloseButton from "../ModalCloseButton.jsx";
 
 export default function SignInModal({
   onClose,
@@ -14,6 +16,7 @@ export default function SignInModal({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const dialogRef = useDialogA11y(true, onClose, "signin-headline");
 
   function handleSubmit(e) {
     e?.preventDefault();
@@ -21,11 +24,18 @@ export default function SignInModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="auth-modal">
+    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div
+        ref={dialogRef}
+        className="auth-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="signin-headline"
+      >
+        <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <div className="auth-modal-logo">Trip<span>Mappa</span></div>
-        <h2 className="auth-modal-headline">Welcome back.</h2>
+        <h2 className="auth-modal-headline" id="signin-headline">Welcome back.</h2>
         <p className="auth-modal-sub">Sign in to pick up where you left off.</p>
 
         <form className="auth-modal-form" onSubmit={handleSubmit}>

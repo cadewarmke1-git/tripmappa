@@ -25,8 +25,9 @@ export function usePlanDraft({
       convoComplete,
       qIndex,
       currentQuestionId: currentQuestion?.id ?? null,
+      currentQuestion: currentQuestion ?? null,
     });
-  }, [active, origin, dest, answers, questionHistory, convoComplete, qIndex, currentQuestion?.id]);
+  }, [active, origin, dest, answers, questionHistory, convoComplete, qIndex, currentQuestion]);
 }
 
 export { loadPlanDraft, clearPlanDraft };

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { copyToClipboard } from "../lib/copyToClipboard.js";
 import UserAvatar from "./UserAvatar.jsx";
 import ShareMiniMap from "./live/ShareMiniMap.jsx";
 import ConvoyMemberList from "./live/ConvoyMemberList.jsx";
@@ -212,10 +213,11 @@ export default function SharePanel({
     }
   }
 
-  function handleCopyLink() {
+  async function handleCopyLink() {
     if (!shareUrl) return;
-    navigator.clipboard?.writeText(shareUrl).catch(() => {});
-    toast?.("Live link copied", true);
+    const { ok } = await copyToClipboard(shareUrl);
+    if (ok) toast?.("Live link copied", true);
+    else toast?.("Could not copy — select and copy the link manually.", { isError: true, duration: 8000 });
   }
 
   function handleSendSms() {

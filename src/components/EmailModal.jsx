@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 import AuthSocialButtons from "./auth/AuthSocialButtons.jsx";
 import { PhoneIcon } from "./auth/PhoneModal.jsx";
+import ModalCloseButton from "./ModalCloseButton.jsx";
 
 export default function EmailModal({
   email,
@@ -16,6 +18,7 @@ export default function EmailModal({
   error = "",
 }) {
   const [password, setPassword] = useState("");
+  const dialogRef = useDialogA11y(true, onClose, "signup-headline");
 
   function handleSubmit(e) {
     e?.preventDefault();
@@ -23,11 +26,18 @@ export default function EmailModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="auth-modal">
+    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div
+        ref={dialogRef}
+        className="auth-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="signup-headline"
+      >
+        <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <div className="auth-modal-logo">Trip<span>Mappa</span></div>
-        <h2 className="auth-modal-headline">Start planning your perfect trip.</h2>
+        <h2 className="auth-modal-headline" id="signup-headline">Start planning your perfect trip.</h2>
         <p className="auth-modal-sub">Create your free account to save trips, share routes, and unlock premium features.</p>
 
         <form className="auth-modal-form" onSubmit={handleSubmit}>

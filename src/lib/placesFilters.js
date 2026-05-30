@@ -1,5 +1,5 @@
 /** Shared Google Places result filters for trip accommodations. */
-import { getTripBudgetCap, needsSafeStopsOnly } from "./tripAccommodations.js";
+import { getTripBudgetCap, needsSafeStopsOnly, getLoyaltyKeyword } from "./tripAccommodations.js";
 import { estimateOvernightStops } from "./budget.js";
 import { parseHoursFromDuration } from "./parsing.js";
 
@@ -36,6 +36,41 @@ export function filterLodgingByBudget(places, answers, routeInfo) {
   const maxPerNight = lodgingBudget / nights;
   const affordable = places.filter(p => estimateNightlyFromPlace(p) <= maxPerNight);
   return affordable.length ? affordable : places.slice(0, 3);
+}
+
+export function filterLodgingByTier(places, answers) {
+  const tier = answers?.lodging;
+  if (!tier || tier === "Doesn't Matter" || /sleeper|camp|airbnb|vacation rental/i.test(tier)) {
+    return places;
+  }
+  const nightly = p => estimateNightlyFromPlace(p);
+  if (tier === "Budget") {
+    const filtered = places.filter(p => nightly(p) <= 85 || (p.priceLevel ?? 2) <= 1);
+    return filtered.length ? filtered : places;
+  }
+  if (tier === "Mid-Range") {
+    const filtered = places.filter(p => {
+      const n = nightly(p);
+      return n >= 65 && n <= 165;
+    });
+    return filtered.length ? filtered : places;
+  }
+  if (tier === "Luxury") {
+    const filtered = places.filter(p => nightly(p) >= 120 || (p.rating ?? 0) >= 4.3);
+    return filtered.length ? filtered : places;
+  }
+  return places;
+}
+
+export function sortLodgingByLoyalty(places, answers) {
+  const loyalty = getLoyaltyKeyword(answers);
+  if (!loyalty) return places;
+  const key = loyalty.toLowerCase();
+  return [...places].sort((a, b) => {
+    const aMatch = (a.name || "").toLowerCase().includes(key) ? 1 : 0;
+    const bMatch = (b.name || "").toLowerCase().includes(key) ? 1 : 0;
+    return bMatch - aMatch || (b.rating ?? 0) - (a.rating ?? 0);
+  });
 }
 
 export function applyStopFilters(places, answers, { nightOnly = false } = {}) {

@@ -113,12 +113,14 @@ export const ROAD_STOPS_FALLBACK = [
 
 export function normalizeRoadStop(s) {
   return {
+    ...s,
     location: s.location || s.city || "Along route",
     distance: s.distance || "—",
     eta: s.eta || "—",
     category: ["fuel", "food", "rest", "charging"].includes(s.category) ? s.category : "rest",
     name: s.name || "Rest stop",
     note: s.note || "",
+    fromLlm: s.fromLlm === true,
   };
 }
 

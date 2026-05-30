@@ -128,7 +128,8 @@ export default function TripResultsPanel({
         <TripOverviewHero
           origin={origin}
           dest={dest}
-          routeInfo={{ ...routeInfo, routeOptimized }}
+          routeInfo={routeInfo}
+          routeOptimized={routeOptimized || routeInfo?.routeOptimized}
           stops={stops}
           roadStops={roadStops}
           answers={answers}

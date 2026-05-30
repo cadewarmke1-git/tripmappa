@@ -1,5 +1,6 @@
 /** Extended Google Places searches for trip planning and results. */
 import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, asArray, needsSafeStopsOnly, prefIncludes } from "./tripAccommodations.js";
+import { dietaryMatchesRestaurant } from "./dietaryKeywords.js";
 import { applyStopFilters, filterLodgingByBudget, filterSafeStopsOnly } from "./placesFilters.js";
 
 const RADIUS_1MI = 1609;
@@ -136,6 +137,9 @@ export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5,
 
   let onRoute = applyStopFilters([...onRouteMap.values()], answers, { nightOnly });
   let detour = applyStopFilters([...detourMap.values()], answers, { nightOnly });
+
+  onRoute = onRoute.filter(r => dietaryMatchesRestaurant(r, answers));
+  detour = detour.filter(r => dietaryMatchesRestaurant(r, answers));
 
   if (prefIncludes(answers, "Fast food only")) {
     const isFast = r => /mcdonald|burger|wendy|taco|subway|chipotle|drive|quick|fast food/i.test(`${r.name} ${r.address}`);

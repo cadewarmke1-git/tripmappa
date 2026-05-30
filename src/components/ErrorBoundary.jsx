@@ -5,7 +5,7 @@ import { reportClientError } from "../lib/clientErrorReport.js";
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { error: null };
+    this.state = { error: null, retryKey: 0 };
   }
 
   static getDerivedStateFromError(error) {
@@ -22,12 +22,12 @@ export default class ErrorBoundary extends Component {
   }
 
   handleRetry = () => {
-    this.setState({ error: null });
+    this.setState(prev => ({ error: null, retryKey: prev.retryKey + 1 }));
     this.props.onRetry?.();
   };
 
   render() {
-    const { error } = this.state;
+    const { error, retryKey } = this.state;
     if (error) {
       return (
         <div className="error-boundary-fallback" role="alert">
@@ -39,6 +39,6 @@ export default class ErrorBoundary extends Component {
         </div>
       );
     }
-    return this.props.children;
+    return <div key={retryKey} className="error-boundary-content">{this.props.children}</div>;
   }
 }

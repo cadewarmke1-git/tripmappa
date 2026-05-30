@@ -26,6 +26,7 @@ import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } 
 import { resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
 import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
+import { copyToClipboard } from "./lib/copyToClipboard.js";
 import { buildPlacesContext, formatPlacesContextForPrompt } from "./lib/placesContext.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
@@ -145,6 +146,9 @@ export default function App() {
   const [tripUsedFallback, setTripUsedFallback] = useState(false);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [confirmDeleteTripId, setConfirmDeleteTripId] = useState(null);
+  const [resultsBoundaryKey, setResultsBoundaryKey] = useState(0);
+  const [planBoundaryKey, setPlanBoundaryKey] = useState(0);
+  const [mapBoundaryKey, setMapBoundaryKey] = useState(0);
   const [enrichmentRetryKey, setEnrichmentRetryKey] = useState(0);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
@@ -1033,6 +1037,7 @@ export default function App() {
     if (destRef.current) destRef.current.value = "";
     if (heroOriginRef.current) heroOriginRef.current.value = "";
     if (heroDestRef.current) heroDestRef.current.value = "";
+    setPlanDraft(loadPlanDraft());
     window.scrollTo(0, 0);
   }
 
@@ -1374,6 +1379,13 @@ export default function App() {
     setCardCollapsed(c => !c);
   }
 
+  function handlePanelHeaderKeyDown(e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handlePanelHeaderClick();
+    }
+  }
+
   useEffect(() => {
     function onKeyDown(e) {
       if (e.key !== "Escape") return;
@@ -1487,6 +1499,27 @@ export default function App() {
     fetchDirections("Car");
   }
 
+  function applyPrefDraftForQuestion(question, newAnswers) {
+    if (!question) {
+      setPrefDraft(null);
+      return;
+    }
+    if (question.type === "trip_details" || question.type === "multiselect_group") {
+      const draft = {};
+      for (const sec of question.sections || []) {
+        draft[sec.id] = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
+      }
+      if (question.type === "trip_details") {
+        draft.trip_budget = newAnswers.trip_budget || "No budget limit";
+      }
+      setPrefDraft(draft);
+    } else if (question.type === "multiselect") {
+      setPrefDraft(Array.isArray(newAnswers[question.id]) ? newAnswers[question.id] : []);
+    } else {
+      setPrefDraft(null);
+    }
+  }
+
   function loadNextQuestion(newAnswers) {
     try {
       const ctx = buildQuestionContext(newAnswers);
@@ -1506,20 +1539,7 @@ export default function App() {
       setCurrentQuestion(result);
       setQIndex(0);
       setConvoComplete(false);
-      if (result.type === "trip_details" || result.type === "multiselect_group") {
-        const draft = {};
-        for (const sec of result.sections || []) {
-          draft[sec.id] = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
-        }
-        if (result.type === "trip_details") {
-          draft.trip_budget = newAnswers.trip_budget || "No budget limit";
-        }
-        setPrefDraft(draft);
-      } else if (result.type === "multiselect") {
-        setPrefDraft(Array.isArray(newAnswers[result.id]) ? newAnswers[result.id] : []);
-      } else {
-        setPrefDraft(null);
-      }
+      applyPrefDraftForQuestion(result, newAnswers);
     } catch (err) {
       console.error("loadNextQuestion failed:", err);
       toast_(err.message || "Could not load the next question");
@@ -2111,23 +2131,30 @@ export default function App() {
     setMapMarkers(prev => prev.filter(m => m.alertId !== alertId));
   }
 
-  function handleShareItinerary() {
+  async function handleShareItinerary() {
     const link = createItineraryShareLink({
       origin, dest, stops, roadStops, tripTips, answers, routeInfo, selectedLodging,
     });
     if (!link) {
-      toast_("Could not create share link");
+      toast_("Could not create share link", { isError: true });
       return;
     }
-    navigator.clipboard?.writeText(link).catch(() => {});
-    toast_("Safety trip link copied — send to a trusted contact");
+    const { ok } = await copyToClipboard(link);
+    if (ok) toast_("Safety trip link copied — send to a trusted contact", true);
+    else toast_("Could not copy — open Share and copy the link manually.", { isError: true, duration: 8000 });
   }
 
   useEffect(() => {
     const shareId = new URLSearchParams(window.location.search).get("share");
     if (!shareId) return;
     const shared = loadSharedItinerary(shareId);
-    if (!shared) return;
+    if (!shared) {
+      toast_(
+        "This share link only works on the device that created it. Sign in to save trips across devices.",
+        { isError: true, duration: 10000 },
+      );
+      return;
+    }
     setView("app");
     setOrigin(shared.origin || "");
     setDest(shared.dest || "");
@@ -2201,6 +2228,14 @@ export default function App() {
     if (draft.convoComplete) {
       setQIndex(-2);
       setCurrentQuestion(null);
+    } else if (draft.currentQuestion?.id) {
+      const ctx = buildQuestionContext(draft.answers || {});
+      const normalized = normalizeTripAnswers(draft.answers || {}, ctx);
+      setAnswers(normalized);
+      setCurrentQuestion(draft.currentQuestion);
+      setQIndex(0);
+      setConvoComplete(false);
+      applyPrefDraftForQuestion(draft.currentQuestion, normalized);
     } else {
       loadNextQuestion(draft.answers || {});
     }
@@ -2487,7 +2522,12 @@ export default function App() {
         {renderAppNavBar("app")}
 
         {generated && resultsView === "itinerary" ? (
-          <ErrorBoundary label="results" title="Could not show trip results">
+          <ErrorBoundary
+            key={resultsBoundaryKey}
+            label="results"
+            title="Could not show trip results"
+            onRetry={() => setResultsBoundaryKey(k => k + 1)}
+          >
             <LazyTripResultsPanel
             theme={theme}
             origin={origin}
@@ -2547,12 +2587,19 @@ export default function App() {
             <div className="map-float-nav map-float-nav--edit-only">
               <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit plan</button>
             </div>
+            <ErrorBoundary
+              key={mapBoundaryKey}
+              label="map-fullscreen"
+              title="Could not load map"
+              onRetry={() => setMapBoundaryKey(k => k + 1)}
+            >
             <AppMap
               isLoaded={isLoaded}
               mapCenter={mapCenter}
               mapStyle={mapStyle}
               mapStyleOpen={mapStyleOpen}
               trafficAlert={trafficAlert}
+              onDismissTrafficAlert={() => setTrafficAlert(false)}
               routeLoading={routeLoading}
               tripGenerating={loading}
               loadingMessageIndex={loadingMessageIndex}
@@ -2593,15 +2640,23 @@ export default function App() {
                 focusMapOnStop(marker);
               }}
             />
+            </ErrorBoundary>
           </div>
         ) : (
         <div className="app">
+          <ErrorBoundary
+            key={mapBoundaryKey}
+            label="map"
+            title="Could not load map"
+            onRetry={() => setMapBoundaryKey(k => k + 1)}
+          >
           <AppMap
             isLoaded={isLoaded}
             mapCenter={mapCenter}
             mapStyle={mapStyle}
             mapStyleOpen={mapStyleOpen}
             trafficAlert={trafficAlert}
+            onDismissTrafficAlert={() => setTrafficAlert(false)}
             routeLoading={routeLoading}
             tripGenerating={loading}
             loadingMessageIndex={loadingMessageIndex}
@@ -2639,11 +2694,16 @@ export default function App() {
               }
             }}
           />
+          </ErrorBoundary>
 
           <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}${inQuestionFlow ? " float-card--plan-flow" : ""}`}>
             <div
               className={`float-card-header${inQuestionFlow ? " float-card-header--plan-flow" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-expanded={!cardCollapsed}
               onClick={handlePanelHeaderClick}
+              onKeyDown={handlePanelHeaderKeyDown}
               onTouchStart={handlePanelTouchStart}
               onTouchMove={handlePanelTouchMove}
               onTouchEnd={handlePanelTouchEnd}
@@ -2680,7 +2740,12 @@ export default function App() {
               <div className="float-card-scroll" ref={floatCardScrollRef}>
                 <div className="sidebar-inner" style={{ background: "transparent" }}>
                   {tab === "plan" && (
-                    <ErrorBoundary label="plan-panel" title="Could not show planner">
+                    <ErrorBoundary
+                      key={planBoundaryKey}
+                      label="plan-panel"
+                      title="Could not show planner"
+                      onRetry={() => setPlanBoundaryKey(k => k + 1)}
+                    >
                     <PlanPanel
                       qIndex={qIndex}
                       currentQuestion={currentQuestion}
@@ -2774,7 +2839,11 @@ export default function App() {
           reportText={reportText}
           onTextChange={setReportText}
           onClose={() => { setModal(null); setReportText(""); }}
-          onSubmit={() => { toast_("Thanks — we'll review your report"); setModal(null); setReportText(""); }}
+          onSubmit={async () => {
+            toast_("Thanks — we'll review your report", true);
+            setModal(null);
+            setReportText("");
+          }}
         />
       )}
       {authModal === "signup" && (

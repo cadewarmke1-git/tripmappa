@@ -1,3 +1,4 @@
+import { useState } from "react";
 import AmenityBadges from "./AmenityBadges.jsx";
 import InlineStarRating from "../results/InlineStarRating.jsx";
 
@@ -10,6 +11,10 @@ const BADGE_LABELS = {
 
 export default function HotelCard({ hotel, onSave, onToast }) {
   const badges = hotel.badges || [];
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const photoSrc = photoFailed
+    ? "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80"
+    : hotel.photo;
 
   function handleBook() {
     window.open(hotel.bookUrl, "_blank", "noopener,noreferrer");
@@ -25,9 +30,10 @@ export default function HotelCard({ hotel, onSave, onToast }) {
       <div className="lodging-card-photo-wrap">
         <img
           className="lodging-card-photo"
-          src={hotel.photo}
+          src={photoSrc}
           alt={hotel.name}
           loading="lazy"
+          onError={() => setPhotoFailed(true)}
         />
         <div className="lodging-card-photo-gradient" />
         {badges.length > 0 && (
