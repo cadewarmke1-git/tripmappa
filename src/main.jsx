@@ -11,6 +11,7 @@ import "./styles/rebrand.css";
 import "./styles/brand-typography.css";
 import "./styles/hero-map-theme.css";
 import "./styles/live-map-mesh.css";
+import "./styles/mobile-mockup.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

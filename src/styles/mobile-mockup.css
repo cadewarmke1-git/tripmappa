@@ -1,0 +1,144 @@
+/* Mobile mockup layout — scoped to small screens; desktop unchanged */
+
+@media (max-width: 768px) {
+  /* Hero — tighter stack, full-width search */
+  .hero-content {
+    padding: 0 20px;
+    max-width: 100%;
+  }
+
+  .hero-title {
+    font-size: clamp(40px, 11vw, 56px);
+    margin: 16px 0 12px;
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    margin: 0 auto 28px;
+    max-width: 100%;
+  }
+
+  .hero-search {
+    max-width: 100%;
+    margin: 0 auto 24px;
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .hero-go-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* Trip results — 3-column stats row */
+  .trip-overview-hero-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px;
+  }
+
+  .trip-overview-hero-stat {
+    padding: 10px 4px;
+  }
+
+  .trip-overview-hero-val {
+    font-size: 14px;
+    color: var(--color-accent-gold) !important;
+  }
+
+  .app-wrap.day .trip-overview-hero-val {
+    color: var(--color-text-primary) !important;
+  }
+
+  .trip-overview-hero-label {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Trip tips — orange left accent */
+  .trip-tips-section {
+    border: 1px solid var(--color-card-border);
+    border-left: 3px solid var(--color-trip-tips-border);
+    background: var(--color-trip-tips-bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .trip-tips-title {
+    color: var(--color-accent-orange) !important;
+  }
+
+  .trip-tips-line {
+    border-left: none;
+    padding-left: 0;
+    color: var(--color-text-primary);
+  }
+
+  .app-wrap.night .trip-tips-line {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .app-wrap.day .trip-tips-line {
+    color: var(--color-text-primary);
+  }
+
+  /* Section headers — clean orange uppercase */
+  .results-subsection-label {
+    background: none;
+    border: none;
+    backdrop-filter: none;
+    padding: 0;
+    color: var(--color-accent-orange) !important;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+
+  /* Stops — 2×2 grid instead of horizontal scroll */
+  .results-road-stops-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    overflow-x: visible;
+    scroll-snap-type: none;
+    padding-bottom: 0;
+  }
+
+  .road-stop-card {
+    flex: none;
+    width: 100%;
+    scroll-snap-align: unset;
+  }
+
+  .road-stop-card-photo-wrap {
+    height: 80px;
+  }
+
+  .road-stop-card-name {
+    font-size: 13px;
+  }
+
+  .road-stop-card-meta {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .road-stop-add-btn {
+    padding: 6px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .trip-overview-hero-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px;
+  }
+
+  .trip-overview-hero-val {
+    font-size: 12px;
+  }
+
+  .trip-overview-hero-label {
+    font-size: 8px;
+  }
+}

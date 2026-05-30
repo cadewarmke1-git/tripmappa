@@ -120,20 +120,10 @@
     transition: background 1.8s ease, opacity 1.8s ease;
   }
   .hero.night .hero-overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(13, 10, 26, 0.72) 0%,
-      rgba(26, 16, 53, 0.65) 100%
-    );
+    background: var(--color-hero-overlay);
   }
   .hero.day .hero-overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(247, 200, 74, 0.22) 0%,
-      rgba(224, 104, 32, 0.14) 38%,
-      rgba(90, 42, 16, 0.32) 68%,
-      rgba(26, 13, 0, 0.52) 100%
-    );
+    background: var(--color-hero-overlay);
   }
 
   /* Hero content */
@@ -174,7 +164,7 @@
   }
   .hero-search:focus-within {
     border-color: rgba(255,255,255,0.45);
-    box-shadow: 0 20px 56px rgba(0,0,0,0.28), 0 0 0 3px rgba(255,255,255,0.08);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.28);
   }
   /* Hero route bar — dedicated swap column between From and To */
   .hero-route-bar {
@@ -2772,7 +2762,8 @@
   @media (min-width: 520px) { .trip-overview-hero-stats { grid-template-columns: repeat(3, 1fr); } }
   .trip-overview-hero-stat { padding: 10px 8px; border-radius: 12px; background: var(--card); text-align: center; }
   .trip-overview-hero-stat-gold { border: 1px solid rgba(255,210,140,0.25); background: rgba(255,210,140,0.08); }
-  .trip-overview-hero-val { display: block; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+  .trip-overview-hero-val { display: block; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-accent-gold); }
+  .app-wrap.day .trip-overview-hero-val { color: var(--color-text-primary); }
   .trip-overview-hero-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 3px; }
 
   .results-day-section {

@@ -1,14 +1,6 @@
-/* TripMappa brand typography — gradient mesh text from canonical palette */
+/* TripMappa brand typography — mockup-aligned (subtle wordmark gradient, solid hero text) */
 
-/* Shared gradient-text technique */
-.tm-gradient-text {
-  background-clip: text !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
-}
-
-/* ── Wordmark — theme color mesh ── */
+/* ── Wordmark — simple 2-stop gradient ── */
 .brand-wordmark,
 .nav-logo .brand-wordmark,
 .nav-logo-home .brand-wordmark,
@@ -58,37 +50,33 @@
   animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
 }
 
-/* ── Hero headline — "Travel" + "Reimagined." color meshes ── */
+/* ── Hero headline — solid colors per mockup ── */
 .hero-title {
   background: none !important;
 }
 
 .hero-title-line {
   display: block;
-  background: var(--color-hero-title-gradient) !important;
-  background-clip: text !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
+  color: var(--color-hero-title) !important;
+  -webkit-text-fill-color: var(--color-hero-title) !important;
+  background: none !important;
   filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.35));
 }
 
 .hero-title-accent {
   display: block;
-  background: var(--color-hero-accent-gradient) !important;
-  background-clip: text !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
+  color: var(--color-hero-accent) !important;
+  -webkit-text-fill-color: var(--color-hero-accent) !important;
+  background: none !important;
   filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.3));
 }
 
 .hero.day .hero-title-line {
-  filter: drop-shadow(0 2px 12px rgba(255, 255, 255, 0.4));
+  filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.25));
 }
 
 .hero.day .hero-title-accent {
-  filter: drop-shadow(0 1px 10px rgba(255, 255, 255, 0.35));
+  filter: none;
 }
 
 .hero-sub {
@@ -96,11 +84,9 @@
 }
 
 .hero-title .highlight {
-  background: var(--color-hero-accent-gradient) !important;
-  background-clip: text !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
+  color: var(--color-hero-accent) !important;
+  -webkit-text-fill-color: var(--color-hero-accent) !important;
+  background: none !important;
 }
 
 @keyframes loaderWordmarkPulse {

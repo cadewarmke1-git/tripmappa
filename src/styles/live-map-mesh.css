@@ -1,35 +1,49 @@
-/* Live map + in-app map — desert / deep-space color meshes */
+/* Live map + in-app map — mockup-aligned flat themed surfaces */
 
 /* ── Map container backgrounds ── */
 .app-wrap.night .map-loading,
 .app-wrap.night .map-placeholder,
 .app-wrap.night .trip-map-fullscreen,
 .live-view-page-night {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.day .map-loading,
 .app-wrap.day .map-placeholder,
 .app-wrap.day .trip-map-fullscreen,
 .live-view-page-day {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.night .map-night-layer {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.day .map-day-layer {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-map-surface) !important;
 }
 
-/* ── Live view overlay panels — surface mesh ── */
+.live-view-page {
+  background: var(--color-map-surface, #0D0A1A);
+}
+
+.live-view-loading,
+.live-view-error {
+  background: var(--color-map-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Live view overlay panels ── */
 .live-view-page-night .live-view-header,
 .live-view-page-night .live-view-eta-card,
 .live-view-page-night .live-view-convoy-card,
-.live-view-page-night .live-view-follower-phone {
-  background: var(--color-panel-mesh) !important;
+.live-view-page-night .live-view-follower-phone,
+.live-view-page-night .arrival-banner,
+.live-view-page-night .trip-complete-panel,
+.live-view-page-night .live-view-toast {
+  background: var(--color-map-panel) !important;
   border-color: var(--color-input-border) !important;
+  color: var(--color-text-primary);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -37,9 +51,13 @@
 .live-view-page-day .live-view-header,
 .live-view-page-day .live-view-eta-card,
 .live-view-page-day .live-view-convoy-card,
-.live-view-page-day .live-view-follower-phone {
-  background: var(--color-panel-mesh) !important;
+.live-view-page-day .live-view-follower-phone,
+.live-view-page-day .arrival-banner,
+.live-view-page-day .trip-complete-panel,
+.live-view-page-day .live-view-toast {
+  background: var(--color-map-panel) !important;
   border-color: var(--color-input-border) !important;
+  color: var(--color-text-primary);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -52,26 +70,44 @@
   color: var(--color-text-primary) !important;
 }
 
-/* Gradient mesh accent text on live map UI */
-.live-view-traveler-name,
-.live-view-eta-value,
-.live-view-home-link,
-.live-view-convoy-joined {
-  background: var(--color-accent-text-gradient) !important;
-  background-clip: text !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
+.live-view-page-night .live-view-traveler-name,
+.live-view-page-night .trip-complete-title {
+  color: var(--color-text-primary) !important;
 }
 
-.live-view-status-live {
+.live-view-page-day .live-view-traveler-name,
+.live-view-page-day .trip-complete-title {
+  color: var(--color-text-primary) !important;
+}
+
+.live-view-page-night .live-view-eta-value,
+.live-view-page-night .live-view-home-link,
+.live-view-page-night .live-view-convoy-joined,
+.live-view-page-night .live-view-status-live,
+.live-view-page-night .trip-complete-stat-val,
+.live-view-page-night .arrival-banner-title {
   color: var(--color-accent-gold) !important;
-  font-weight: 700;
+  background: none !important;
+  -webkit-text-fill-color: var(--color-accent-gold) !important;
+}
+
+.live-view-page-day .live-view-eta-value,
+.live-view-page-day .live-view-home-link,
+.live-view-page-day .live-view-convoy-joined,
+.live-view-page-day .live-view-status-live,
+.live-view-page-day .trip-complete-stat-val,
+.live-view-page-day .arrival-banner-title {
+  color: var(--color-accent-orange) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--color-accent-orange) !important;
 }
 
 .live-view-eta-label,
 .live-view-route,
-.live-view-viewers {
+.live-view-viewers,
+.live-view-page-night .arrival-banner-sub,
+.live-view-page-day .arrival-banner-sub,
+.trip-complete-stat-lbl {
   color: var(--color-text-secondary) !important;
 }
 
@@ -80,52 +116,119 @@
   box-shadow: 0 0 8px var(--color-accent-gold);
 }
 
-/* In-app map controls — mesh surfaces (extends hero-map-theme) */
+.live-view-page-night .live-traveler-stale-badge {
+  background: var(--color-map-panel) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.live-view-page-day .live-traveler-stale-badge {
+  background: var(--color-map-panel) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.live-view-page-night .trip-complete-badge {
+  background: var(--color-trip-tips-bg) !important;
+  color: var(--color-accent-gold) !important;
+}
+
+.live-view-page-day .trip-complete-badge {
+  background: var(--color-trip-tips-bg) !important;
+  color: var(--color-accent-orange) !important;
+}
+
+/* Share panel mini-map */
+.app-wrap.night .share-mini-map {
+  border-color: var(--color-input-border) !important;
+}
+
+.app-wrap.day .share-mini-map {
+  border-color: var(--color-input-border) !important;
+}
+
+.app-wrap.night .share-mini-map-loading {
+  background: var(--color-map-surface) !important;
+}
+
+.app-wrap.day .share-mini-map-loading {
+  background: var(--color-map-surface) !important;
+}
+
+.app-wrap.night .share-mini-map-badge {
+  background: var(--color-map-panel) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-gold) !important;
+}
+
+.app-wrap.day .share-mini-map-badge {
+  background: var(--color-map-panel) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-orange) !important;
+}
+
+.app-wrap.night .share-mini-map-badge-dot {
+  background: var(--color-accent-orange) !important;
+}
+
+.app-wrap.day .share-mini-map-badge-dot {
+  background: var(--color-accent-orange) !important;
+}
+
+/* In-app map controls */
 .app-wrap.night .map-style-btn,
 .app-wrap.night .map-recenter-btn,
 .app-wrap.night .map-zoom-btn {
-  background: var(--color-panel-mesh) !important;
+  background: var(--color-map-panel) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-gold) !important;
 }
 
 .app-wrap.day .map-style-btn,
 .app-wrap.day .map-recenter-btn,
 .app-wrap.day .map-zoom-btn {
-  background: var(--color-panel-mesh) !important;
+  background: var(--color-map-panel) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .app-wrap.night .float-card {
-  background: var(--color-panel-mesh) !important;
+  background: var(--color-map-panel) !important;
 }
 
 .app-wrap.day .float-card {
-  background: var(--color-panel-mesh) !important;
+  background: var(--color-map-panel) !important;
 }
 
 .app-wrap.night .float-card-header {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-surface) !important;
 }
 
 .app-wrap.day .float-card-header {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-surface-elevated) !important;
 }
 
-/* Route info bar over map — night mesh */
 .route-info-bar {
-  background: var(--color-panel-mesh) !important;
+  background: var(--color-map-panel) !important;
   border-color: var(--color-input-border) !important;
 }
 
 .route-info-bar .rib-val {
-  background: var(--color-accent-text-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--color-accent-gold) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--color-accent-gold) !important;
 }
 
 .app-wrap.day .route-info-bar .rib-val {
-  background: var(--color-accent-text-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-text-primary) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+
+.app-wrap.day .route-info-bar .rib-label {
+  color: var(--color-text-secondary) !important;
+}
+
+.app-wrap.night .route-info-bar .rib-label {
+  color: var(--color-text-secondary) !important;
 }

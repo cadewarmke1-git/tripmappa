@@ -44,7 +44,20 @@
 
 .hero.night .hero-search:focus-within {
   border-color: var(--color-input-border) !important;
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(255, 210, 140, 0.12) !important;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* No focus ring boxes on city inputs — outer panel handles focus state */
+.hero-search .hero-input:focus,
+.hero-search .hero-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.hero-search .hero-input-box:focus-within,
+.hero-search .hero-route-cell:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .hero.night .hero-auth-btn,
@@ -184,7 +197,7 @@
 }
 
 .app-wrap.night .map-night-layer {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.night .float-card {
@@ -250,7 +263,7 @@
 }
 
 .app-wrap.day .map-day-layer {
-  background: var(--color-map-mesh) !important;
+  background: var(--color-map-surface) !important;
 }
 
 .app-wrap.day .map-placeholder-text {

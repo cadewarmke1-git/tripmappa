@@ -45,7 +45,7 @@
   --tm-border-accent: rgba(224, 104, 32, 0.45);
   --tm-swap: var(--color-accent-orange);
   --tm-plan-cta-bg: var(--deep-dark);
-  --tm-plan-cta-text: var(--gold-primary);
+  --tm-plan-cta-text: #FFFFFF;
 }
 
 /* ── Global selection & focus ── */

@@ -29,13 +29,11 @@
   --color-accent-gold: #FFD28C;
   --color-accent-orange: #FF8C42;
   --color-accent-gradient: linear-gradient(135deg, #FFD28C, #FF8C42);
-  --color-wordmark-gradient: linear-gradient(120deg, #FFD28C 0%, #FF8C42 38%, #FFD28C 62%, #FF8C42 100%);
-  --color-hero-title-gradient: linear-gradient(135deg, #FFFFFF 0%, #FFD28C 52%, #FF8C42 100%);
-  --color-hero-accent-gradient: linear-gradient(135deg, #FFD28C 0%, #FF8C42 50%, #FFD28C 100%);
+  --color-wordmark-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-accent-text-gradient: linear-gradient(135deg, #FFD28C, #FF8C42);
-  --color-map-mesh: linear-gradient(150deg, #0D0A1A 0%, #1A1035 38%, #2A1A4A 62%, #1A1035 100%);
-  --color-panel-mesh: linear-gradient(145deg, #1A1035 0%, #2A1A4A 48%, #1A1035 100%);
-  --color-btn-primary-bg: linear-gradient(135deg, #FFD28C, #FF8C42);
+  --color-map-mesh: #0D0A1A;
+  --color-panel-mesh: #1A1035;
+  --color-btn-primary-bg: #FF8C42;
   --color-btn-primary-text: #1A0D00;
   --color-btn-secondary-bg: rgba(255, 255, 255, 0.07);
   --color-btn-secondary-border: rgba(255, 255, 255, 0.15);
@@ -65,7 +63,7 @@
   --color-map-surface: #0D0A1A;
   --color-map-panel: #1A1035;
   --color-hero-title: #FFFFFF;
-  --color-hero-subtitle: rgba(255, 255, 255, 0.8);
+  --color-hero-subtitle: #A89BCF;
   --color-hero-accent: #FFD28C;
 
   /* Legacy bridges — existing rules use these */
@@ -100,14 +98,12 @@
   --color-accent-gold: #C87010;
   --color-accent-orange: #E06820;
   --color-accent-gradient: linear-gradient(135deg, #C87010, #E06820);
-  --color-wordmark-gradient: linear-gradient(120deg, #C87010 0%, #E06820 38%, #A04010 52%, #E06820 100%);
-  --color-hero-title-gradient: linear-gradient(135deg, #FFFFFF 0%, #F5E6C8 32%, #C87010 68%, #E06820 100%);
-  --color-hero-accent-gradient: linear-gradient(135deg, #1A0D00 0%, #C87010 46%, #E06820 100%);
+  --color-wordmark-gradient: linear-gradient(90deg, #C87010, #E06820);
   --color-accent-text-gradient: linear-gradient(135deg, #C87010, #E06820);
-  --color-map-mesh: linear-gradient(150deg, #F5E6C8 0%, #EED8A8 40%, #FDF3E0 65%, #EED8A8 100%);
-  --color-panel-mesh: linear-gradient(145deg, #FDF3E0 0%, #EED8A8 48%, #F5E6C8 100%);
+  --color-map-mesh: #F5E6C8;
+  --color-panel-mesh: #EED8A8;
   --color-btn-primary-bg: #1A0D00;
-  --color-btn-primary-text: #FFD28C;
+  --color-btn-primary-text: #FFFFFF;
   --color-btn-secondary-bg: rgba(255, 255, 255, 0.75);
   --color-btn-secondary-border: rgba(160, 64, 16, 0.2);
   --color-btn-secondary-text: #1A0D00;
@@ -129,12 +125,12 @@
   --color-scrollbar-thumb: #E06820;
   --color-selection: rgba(255, 210, 140, 0.35);
   --color-focus-ring: #FFD28C;
-  --color-hero-overlay: linear-gradient(150deg, rgba(247, 200, 74, 0.55), rgba(224, 104, 32, 0.60), rgba(90, 42, 16, 0.68));
+  --color-hero-overlay: linear-gradient(180deg, rgba(247, 152, 32, 0.88) 0%, rgba(224, 104, 32, 0.82) 42%, rgba(138, 64, 16, 0.86) 72%, rgba(26, 13, 0, 0.94) 100%);
   --color-banner-bg: rgba(245, 230, 200, 0.92);
   --color-map-surface: #F5E6C8;
   --color-map-panel: #EED8A8;
   --color-hero-title: #FFFFFF;
-  --color-hero-subtitle: rgba(255, 255, 255, 0.8);
+  --color-hero-subtitle: rgba(26, 13, 0, 0.72);
   --color-hero-accent: #1A0D00;
 
   --ink: var(--color-text-primary);
@@ -424,19 +420,19 @@
 
 /* Trip results panel — day: light frosted glass */
 .app-wrap.day {
-  --results-bg: linear-gradient(180deg, #f4faf8 0%, #eef6f2 50%, #e8f0ec 100%);
-  --results-topbar-bg: rgba(8, 10, 18, 0.96);
-  --results-card-bg: rgba(255,255,255,0.82);
-  --results-card-border: rgba(255,210,140,0.45);
+  --results-bg: #F5E6C8;
+  --results-topbar-bg: #EED8A8;
+  --results-card-bg: #FDF3E0;
+  --results-card-border: rgba(160, 64, 16, 0.14);
   --gold: var(--gold-primary);
 }
 .app-wrap.day .trip-results-panel { color: var(--charcoal) !important; }
 .app-wrap.day .trip-results-topbar {
-  border-bottom-color: rgba(255,255,255,0.08) !important;
-  background: rgba(8, 10, 18, 0.96) !important;
+  border-bottom-color: rgba(160, 64, 16, 0.15) !important;
+  background: var(--results-topbar-bg) !important;
 }
-.app-wrap.day .trip-results-topbar-title { color: #fff !important; }
-.app-wrap.day .trip-results-back { color: var(--gold-primary) !important; }
+.app-wrap.day .trip-results-topbar-title { color: var(--color-text-primary) !important; }
+.app-wrap.day .trip-results-back { color: var(--color-accent-orange) !important; }
 .app-wrap.day .trip-results-map-btn,
 .app-wrap.night .trip-results-map-btn {
   color: var(--gold-primary) !important;
@@ -572,10 +568,10 @@
 
 /* Trip results panel — night: dark premium cards */
 .app-wrap.night {
-  --results-bg: linear-gradient(180deg, #0f0f1a 0%, var(--deep-dark) 40%, #12121f 100%);
-  --results-topbar-bg: rgba(8, 10, 18, 0.96);
-  --results-card-bg: linear-gradient(145deg, rgba(20,20,35,0.95) 0%, rgba(30,30,50,0.85) 50%, rgba(255,210,140,0.08) 100%);
-  --results-card-border: rgba(255,210,140,0.18);
+  --results-bg: #0D0A1A;
+  --results-topbar-bg: #1A1035;
+  --results-card-bg: #1A1035;
+  --results-card-border: rgba(255, 210, 140, 0.1);
   --gold: var(--gold-primary);
 }
 .app-wrap.night .trip-results-panel { color: #f4f4f5 !important; }
@@ -592,8 +588,8 @@
   transition: opacity 1.8s ease;
   z-index: 0;
 }
-.app-wrap .map-day-layer { background: linear-gradient(150deg, var(--color-map-surface) 0%, var(--color-map-panel) 55%, #E8D5A8 100%); }
-.app-wrap .map-night-layer { background: linear-gradient(150deg, var(--color-base) 0%, var(--color-surface) 50%, var(--color-surface-elevated) 100%); }
+.app-wrap .map-day-layer { background: var(--color-map-surface); }
+.app-wrap .map-night-layer { background: var(--color-map-surface); }
 .app-wrap .map-placeholder { background: transparent !important; position: relative; }
 .app-wrap .map-placeholder-text, .app-wrap .map-placeholder-sub { position: relative; z-index: 1; }
 
