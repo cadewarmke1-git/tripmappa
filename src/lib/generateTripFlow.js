@@ -19,7 +19,21 @@ export function canStartTripGeneration({
   return { ok: true };
 }
 
-/** After a successful API parse, these fields must be present to show results. */
+/** True when the planner returned real trip content (not client-side fallback). */
+export function isTripPlanComplete(parsed) {
+  if (!parsed || parsed.usedFallback) return false;
+  return Boolean(parsed.stops?.length || parsed.roadStops?.length);
+}
+
+export function generationFailureMessage(err) {
+  if (err?.code === "no_credits") return "No trip generations remaining this month.";
+  if (err?.message?.includes("incomplete")) {
+    return "We couldn't build a complete trip plan. Please try again in a moment.";
+  }
+  return "Trip planning failed. Please try again in a moment.";
+}
+
+/** @deprecated use isTripPlanComplete */
 export function assertTripResultReady(parsed) {
-  return Boolean(parsed?.stops?.length);
+  return isTripPlanComplete(parsed);
 }

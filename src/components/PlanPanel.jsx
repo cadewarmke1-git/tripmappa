@@ -32,6 +32,7 @@ export default function PlanPanel({
   onRetryRoute,
   planOutOfDate = false,
   planChanges = [],
+  generationError = null,
   roadStops,
   selectedLodging,
   restaurantsByCity = {},
@@ -106,6 +107,12 @@ export default function PlanPanel({
 
         {planOutOfDate && (
           <StalePlanNotice onRegenerate={onGenerateTrip} loading={loading} changes={planChanges} />
+        )}
+
+        {generationError && convoComplete && (
+          <div className="plan-generation-error" role="alert">
+            {generationError}
+          </div>
         )}
 
         <div className="convo-scroll" ref={convoScrollRef}>

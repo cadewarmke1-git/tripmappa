@@ -16,6 +16,16 @@ function parseJsonFromLlm(text) {
   }
 }
 
+function tripResponseHasContent(parsed) {
+  const stops = Array.isArray(parsed?.stops)
+    ? parsed.stops.filter(s => s && (s.city || s.name))
+    : [];
+  const roadStops = Array.isArray(parsed?.road_stops)
+    ? parsed.road_stops.filter(s => s && (s.name || s.city))
+    : [];
+  return stops.length > 0 || roadStops.length > 0;
+}
+
 async function callAnthropic(model, systemPrompt, userPrompt, maxTokens) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -650,7 +660,7 @@ export default async function handler(req, res) {
     ctx.tripCategory === "commercial" || ctx.tripCategory === "rv" ? 4096 : isSimplifiedFormat ? 1800 : 3200;
 
   try {
-    let anthropicResult = null;
+    let parsed = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       const { response, data } = await callAnthropic(model, SYSTEM_PROMPT, userPrompt, maxTokens);
       if (!response.ok) {
@@ -661,17 +671,32 @@ export default async function handler(req, res) {
         }
         return res.status(500).json({ error: data.error?.message || "API error" });
       }
-      anthropicResult = data;
+
+      const text = data?.content?.[0]?.text;
+      try {
+        parsed = parseJsonFromLlm(text);
+      } catch (parseErr) {
+        if (attempt === 0) {
+          await new Promise(r => setTimeout(r, 1500));
+          continue;
+        }
+        return res.status(502).json({ error: "Trip planner returned invalid data" });
+      }
+
+      parsed.trip_format = isSimplifiedFormat ? "simplified" : parsed.trip_format || "multi_day";
+
+      if (!tripResponseHasContent(parsed) && attempt === 0) {
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      if (!tripResponseHasContent(parsed)) {
+        return res.status(502).json({ error: "Trip planner returned incomplete results" });
+      }
       break;
     }
 
-    const text = anthropicResult?.content?.[0]?.text;
-    const parsed = parseJsonFromLlm(text);
-    parsed.trip_format = isSimplifiedFormat ? "simplified" : parsed.trip_format || "multi_day";
-
     if (user && admin) {
-      const hasContent = (Array.isArray(parsed.stops) && parsed.stops.length > 0)
-        || (Array.isArray(parsed.road_stops) && parsed.road_stops.length > 0);
+      const hasContent = tripResponseHasContent(parsed);
       if (hasContent) {
         try {
           await consumeCredit(admin, user.id);

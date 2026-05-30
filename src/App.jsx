@@ -23,7 +23,7 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js
 import { buildContinuousDriveTip, isContinuousDrive } from "./lib/driveMode.js";
 import { TRUCK_SAFETY_FALLBACK, RV_SAFETY_FALLBACK } from "./lib/tripData.js";
 import { generateTripPlan } from "./lib/apiClient.js";
-import { canStartTripGeneration } from "./lib/generateTripFlow.js";
+import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } from "./lib/generateTripFlow.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
@@ -150,6 +150,7 @@ export default function App() {
   const [liveSharingActive, setLiveSharingActive] = useState(false);
   const [routeError, setRouteError] = useState(null);
   const [tripUsedFallback, setTripUsedFallback] = useState(false);
+  const [generationError, setGenerationError] = useState(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [confirmDeleteTripId, setConfirmDeleteTripId] = useState(null);
   const [resultsBoundaryKey, setResultsBoundaryKey] = useState(0);
@@ -2050,6 +2051,7 @@ export default function App() {
     setEnrichmentLimited(false);
     setEnrichmentNoticeDismissed(false);
     setTripUsedFallback(false);
+    setGenerationError(null);
     generateTripInFlightRef.current = true;
 
     const generateController = new AbortController();
@@ -2057,7 +2059,7 @@ export default function App() {
 
     let normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
-    const applyGeneratedTrip = async (parsed, isFallback, activeRouteInfo) => {
+    const applyGeneratedTrip = async (parsed, activeRouteInfo) => {
       const tips = [...(parsed.tripTips || [])];
       if (isContinuousDrive(normalizedAnswers)) {
         tips.unshift(buildContinuousDriveTip(activeRouteInfo));
@@ -2077,11 +2079,7 @@ export default function App() {
       setCardCollapsed(false);
       await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
       clearSavedPlanDraft();
-      if (isFallback) {
-        toast_("Trip generated with estimated data — live AI planning returned incomplete results.", { isError: true });
-      } else {
-        toast_("Trip planned", true);
-      }
+      toast_("Trip planned", true);
     };
 
     try {
@@ -2089,7 +2087,7 @@ export default function App() {
       if (isLoaded && window.google && !hasRoute) {
         const routeOk = await fetchDirections(getEffectiveVehicle(answers));
         if (!routeOk) {
-          toast_("Route could not be calculated — trip will use best available estimates.", { isError: true });
+          toast_("Route could not be calculated — trip planning may be limited.", { isError: true });
         }
       }
 
@@ -2120,7 +2118,7 @@ export default function App() {
         placesContextPrompt = formatPlacesContextForPrompt(placesContext);
       }
 
-      const data = await generateTripPlan({
+      const planPayload = {
         origin: tripOrigin,
         destination: tripDest,
         answers: {
@@ -2133,31 +2131,55 @@ export default function App() {
         generationHints: formatGenerationHints(normalizedAnswers, activeRouteInfo),
         legs: tripLegs.length > 0 ? tripLegs : undefined,
         model: "claude-sonnet-4-20250514",
-      }, session?.access_token || null, { signal: generateController.signal });
+      };
 
-      if (generateController.signal.aborted) return;
+      let lastErr = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const data = await generateTripPlan(
+            planPayload,
+            session?.access_token || null,
+            { signal: generateController.signal },
+          );
 
-      const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
-      setTripUsedFallback(Boolean(parsed.usedFallback));
-      await applyGeneratedTrip(parsed, Boolean(parsed.usedFallback), activeRouteInfo);
+          if (generateController.signal.aborted) return;
 
-      if (user && session?.access_token) {
-        fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
-      } else if (!parsed.usedFallback) {
-        setGuestTripPendingSave(true);
-        const guestStatus = getGuestCreditStatus();
-        setCreditStatus(guestStatus);
-        if (guestStatus.remaining <= 0) {
-          setTimeout(() => openTripsUpgrade(), 1200);
+          const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
+          if (!isTripPlanComplete(parsed)) {
+            throw new Error("Trip planner returned incomplete results");
+          }
+
+          setGenerationError(null);
+          setTripUsedFallback(false);
+          await applyGeneratedTrip(parsed, activeRouteInfo);
+
+          if (user && session?.access_token) {
+            fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
+          } else {
+            setGuestTripPendingSave(true);
+            const guestStatus = getGuestCreditStatus();
+            setCreditStatus(guestStatus);
+            if (guestStatus.remaining <= 0) {
+              setTimeout(() => openTripsUpgrade(), 1200);
+            }
+          }
+          return;
+        } catch (err) {
+          lastErr = err;
+          if (err.name === "AbortError" || err.code === "no_credits") throw err;
+          if (attempt === 0) continue;
+          throw lastErr;
         }
       }
     } catch (err) {
       if (err.name === "AbortError") {
+        setGenerationError(null);
         toast_("Trip generation cancelled.");
         return;
       }
       console.error("Generate trip error:", err);
       if (err.code === "no_credits") {
+        setGenerationError(null);
         openTripsUpgrade();
         if (err.credits) setCreditStatus(err.credits);
         if (!user) refundGuestCredit();
@@ -2165,24 +2187,9 @@ export default function App() {
       }
       if (!user) refundGuestCredit();
       setCreditStatus(getGuestCreditStatus());
-
-      const activeRouteInfo = {
-        ...routeInfo,
-        origin: tripOrigin,
-        destination: tripDest,
-        scenic: isScenicRoute(answers),
-      };
-      const fallback = buildFallbackTripData(normalizedAnswers, activeRouteInfo);
-      setTripUsedFallback(true);
-      const fallbackParsed = {
-        ...fallback,
-        tripFormat: "simplified",
-        recommendations: [],
-        usedFallback: true,
-      };
-      await applyGeneratedTrip(fallbackParsed, true, activeRouteInfo);
-      if (!user) setGuestTripPendingSave(true);
-      toast_("Could not reach trip planner — showing estimated route instead.", { isError: true });
+      const msg = generationFailureMessage(err);
+      setGenerationError(msg);
+      toast_(msg, { isError: true });
     } finally {
       generateTripInFlightRef.current = false;
       if (generateAbortRef.current === generateController) {
@@ -2199,6 +2206,7 @@ export default function App() {
   function resetPlan() {
     setConfirmResetOpen(false);
     setTripUsedFallback(false);
+    setGenerationError(null);
     setSavedPlanSnapshot(null);
     setReturnedFromResults(false);
     setGuestTripPendingSave(false);
@@ -2879,6 +2887,7 @@ export default function App() {
                       onRetryRoute={retryRouteCalculation}
                       planOutOfDate={planOutOfDate}
                       planChanges={planChanges}
+                      generationError={generationError}
                       onGenerateTrip={generateTrip}
                       onCancelGenerate={cancelGenerateTrip}
                       onResetPlan={requestResetPlan}

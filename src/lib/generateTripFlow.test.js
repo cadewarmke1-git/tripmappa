@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { assertTripResultReady, canStartTripGeneration } from "./generateTripFlow.js";
+import {
+  assertTripResultReady,
+  canStartTripGeneration,
+  generationFailureMessage,
+  isTripPlanComplete,
+} from "./generateTripFlow.js";
 import { parseTripApiResponse } from "./tripHandlers.js";
 
 const noopFallback = () => ({
@@ -37,7 +42,7 @@ describe("generateTripFlow", () => {
     })).toEqual({ ok: true });
   });
 
-  it("always yields displayable stops from API or fallback parse", () => {
+  it("accepts real API stops or road stops and rejects client fallback", () => {
     const parsed = parseTripApiResponse(
       {
         stops: [{ city: "Amarillo, TX", name: "Amarillo" }],
@@ -48,10 +53,25 @@ describe("generateTripFlow", () => {
       {},
       noopFallback,
     );
+    expect(isTripPlanComplete(parsed)).toBe(true);
     expect(assertTripResultReady(parsed)).toBe(true);
 
+    const roadOnly = parseTripApiResponse(
+      { road_stops: [{ name: "Rest area", city: "Amarillo, TX" }], tips: [] },
+      { vehicle: "Car" },
+      {},
+      noopFallback,
+    );
+    expect(isTripPlanComplete(roadOnly)).toBe(true);
+
     const fallback = parseTripApiResponse({}, { vehicle: "Car" }, {}, noopFallback);
-    expect(assertTripResultReady(fallback)).toBe(true);
+    expect(isTripPlanComplete(fallback)).toBe(false);
     expect(fallback.usedFallback).toBe(true);
+  });
+
+  it("returns a user-facing message for planner failures", () => {
+    expect(generationFailureMessage(new Error("Trip planner returned incomplete results")))
+      .toMatch(/complete trip plan/i);
+    expect(generationFailureMessage(new Error("network"))).toMatch(/try again/i);
   });
 });

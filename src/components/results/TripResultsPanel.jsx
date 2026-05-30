@@ -151,20 +151,8 @@ export default function TripResultsPanel({
         <WeatherWarningBanner alerts={tripAlerts} />
 
         {tripUsedFallback && (
-          <div className="trip-fallback-notice" role="alert">
-            <p className="trip-fallback-notice-text">
-              This trip uses estimated route data — live AI planning was unavailable or returned incomplete results.
-            </p>
-            {onRegenerateTrip && (
-              <button
-                type="button"
-                className="trip-fallback-notice-retry"
-                onClick={onRegenerateTrip}
-                disabled={generateLoading}
-              >
-                {generateLoading ? "Retrying…" : "Try again"}
-              </button>
-            )}
+          <div className="trip-fallback-notice" role="status">
+            This trip uses estimated route data from an earlier session.
           </div>
         )}
 
