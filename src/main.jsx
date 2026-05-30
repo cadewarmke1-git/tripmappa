@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import { initViewportLayout } from "./lib/viewportLayout.js";
 import "./index.css";
 import "./styles/tripmappa.css";
 import "./styles/tripmappa-themes.css";
@@ -15,6 +16,8 @@ import "./styles/mobile-layout.css";
 import "./styles/hero-mountain.css";
 /* Web vs mobile split at 769px — load after mobile-layout */
 import "./styles/hero-desktop.css";
+
+initViewportLayout();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

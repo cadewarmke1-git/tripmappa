@@ -5,6 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tripmappa</title>
+    <script>
+      (function () {
+        var w = window.matchMedia("(min-width: 769px)").matches;
+        var fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+        document.documentElement.dataset.layout = w || fine ? "web" : "mobile";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
