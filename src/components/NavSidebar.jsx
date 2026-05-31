@@ -8,6 +8,7 @@ export default function NavSidebar({
   onClose,
   theme,
   onThemeToggle,
+  showThemeToggle = true,
   onOpenPlan,
   onOpenTrips,
   onOpenShare,
@@ -101,12 +102,14 @@ export default function NavSidebar({
           </div>
         )}
 
-        <div className="nav-sidebar-footer">
-          <div className="nav-sidebar-theme-row">
-            <span className="nav-sidebar-theme-label">Appearance</span>
-            <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+        {showThemeToggle && (
+          <div className="nav-sidebar-footer">
+            <div className="nav-sidebar-theme-row">
+              <span className="nav-sidebar-theme-label">Appearance</span>
+              <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+            </div>
           </div>
-        </div>
+        )}
       </aside>
     </>,
     document.body,

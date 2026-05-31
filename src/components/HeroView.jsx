@@ -1,11 +1,13 @@
+import { useMemo } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
+import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
+import { getHeroSurfaceTheme, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
 export default function HeroView({
-  theme,
-  themeLocked = false,
   isLoaded,
   heroOrigin,
   heroDest,
@@ -43,6 +45,19 @@ export default function HeroView({
   onResumeDraft,
   onDismissDraft,
 }) {
+  const {
+    skyHour,
+    liveHour,
+    skyTestEnabled,
+    isDialOverridden,
+    isUrlLocked,
+    setSkyHourOverride,
+    resetToLive,
+  } = useHeroSkyHour();
+
+  const skyPhase = useMemo(() => getSkyPhaseFromHour(skyHour), [skyHour]);
+  const heroTheme = getHeroSurfaceTheme(skyHour);
+
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
   };
@@ -51,7 +66,7 @@ export default function HeroView({
     <>
       <AppNavBar
         variant="hero"
-        theme={theme}
+        theme={heroTheme}
         onGoHome={onGoHome}
         navSidebarOpen={navSidebarOpen}
         onToggleNavSidebar={onToggleNavSidebar}
@@ -63,8 +78,8 @@ export default function HeroView({
         onSignup={onSignup}
       />
 
-      <div className={`hero ${theme}`}>
-        <HeroMountainScene theme={theme} themeLocked={themeLocked} />
+      <div className={`hero ${heroTheme}`}>
+        <HeroMountainScene phase={skyPhase} hour={skyHour} />
         <div className="hero-overlay" />
 
         <div className="hero-content">
@@ -149,7 +164,7 @@ export default function HeroView({
               </div>
             </div>
             <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
-              {heroLaunching ? <RouteDrawingLoader theme={theme} variant="button" /> : "Plan my trip →"}
+              {heroLaunching ? <RouteDrawingLoader theme={heroTheme} variant="button" /> : "Plan my trip →"}
             </button>
           </div>
 
@@ -196,6 +211,18 @@ export default function HeroView({
         <div className="scroll-indicator">
           <div className="scroll-arrow"/>
         </div>
+
+        {skyTestEnabled && (
+          <HeroSkyTestDial
+            hour={skyHour}
+            liveHour={liveHour}
+            phase={skyPhase}
+            isOverridden={isDialOverridden}
+            isUrlLocked={isUrlLocked}
+            onHourChange={setSkyHourOverride}
+            onResetLive={resetToLive}
+          />
+        )}
       </div>
     </>
   );

@@ -166,6 +166,18 @@ body {
   background: var(--color-hero-overlay) !important;
 }
 
+/* Landing hero — neutral vignette; sky tint lives in hero-mountain.css layers */
+.hero:has(.hero-mountain-scene) .hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(8, 10, 18, 0.22) 0%,
+    rgba(8, 10, 18, 0.06) 22%,
+    transparent 42%,
+    transparent 58%,
+    rgba(8, 10, 18, 0.38) 100%
+  ) !important;
+}
+
 /* ── Theme toggle ── */
 .app-wrap.day .theme-toggle-btn {
   background: rgba(253, 243, 224, 0.9) !important;

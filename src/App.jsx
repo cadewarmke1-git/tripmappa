@@ -932,6 +932,7 @@ export default function App() {
         onClose={closeNavSidebar}
         theme={theme}
         onThemeToggle={toggleTheme}
+        showThemeToggle={view !== "hero"}
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
@@ -2513,8 +2514,6 @@ export default function App() {
   if (view === "hero") return (
     <>
       <HeroView
-        theme={theme}
-        themeLocked={themeOverride != null}
         isLoaded={isLoaded}
         heroOrigin={heroOrigin}
         heroDest={heroDest}

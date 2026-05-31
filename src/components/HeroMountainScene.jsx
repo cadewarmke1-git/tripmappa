@@ -1,33 +1,50 @@
-import { useEffect, useState } from "react";
-import { HERO_PHOTO_DAY, HERO_PHOTO_NIGHT } from "../lib/constants.js";
-import { buildStarField, resolveSkyPhase, SKY_CHECK_MS } from "../lib/skyTime.js";
+import { useMemo } from "react";
+import { HERO_PHOTO } from "../lib/constants.js";
+import { buildStarField, getSkyAtmosphere, SKY_PHASES } from "../lib/skyTime.js";
 
-const STARS = buildStarField(52);
+const STARS = buildStarField(64);
 
-export default function HeroMountainScene({ theme = "night", themeLocked = false }) {
-  const [phase, setPhase] = useState(() => resolveSkyPhase({ theme, themeLocked }));
-
-  useEffect(() => {
-    const tick = () => setPhase(resolveSkyPhase({ theme, themeLocked }));
-    tick();
-    const id = setInterval(tick, SKY_CHECK_MS);
-    return () => clearInterval(id);
-  }, [theme, themeLocked]);
-
-  const showStars = phase === "night" || phase === "pre_dawn";
-  const isDay = theme === "day";
+export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 }) {
+  const atmosphere = useMemo(() => getSkyAtmosphere(hour), [hour]);
+  const showStars = atmosphere.starOpacity > 0.04;
+  const showClouds = atmosphere.cloudOpacity > 0.05;
 
   return (
-    <div className={`hero-mountain-scene hero-mountain-scene--${phase} hero-mountain-scene--theme-${theme}`} aria-hidden="true">
-      <div className="hero-sky-layer" />
+    <div
+      className={`hero-mountain-scene hero-mountain-scene--${phase}`}
+      style={atmosphere.cssVars}
+      aria-hidden="true"
+    >
+      <div className="hero-photo-layer">
+        <div className="hero-photo-slide" style={{ backgroundImage: `url(${HERO_PHOTO})` }} />
+      </div>
+
+      <div className="hero-sky-atmosphere">
+        <div className="hero-sky-zenith" />
+        <div className="hero-sky-glow" />
+      </div>
+
+      {showClouds && (
+        <div className="hero-clouds" aria-hidden="true">
+          <div className="hero-cloud hero-cloud--a" />
+          <div className="hero-cloud hero-cloud--b" />
+          <div className="hero-cloud hero-cloud--c" />
+        </div>
+      )}
+
       {showStars && (
-        <svg className="hero-stars" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg
+          className="hero-stars"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          style={{ opacity: atmosphere.starOpacity }}
+        >
           {STARS.map(star => (
             <circle
               key={star.id}
               cx={star.x}
               cy={star.y}
-              r={star.r * 0.15}
+              r={star.r * 0.12}
               fill="#FFFFFF"
               opacity={star.opacity}
             />
@@ -35,20 +52,7 @@ export default function HeroMountainScene({ theme = "night", themeLocked = false
         </svg>
       )}
 
-      <div
-        className="hero-photo-set hero-photo-set--day"
-        style={{ opacity: isDay ? 1 : 0 }}
-      >
-        <div className="hero-photo-slide" style={{ backgroundImage: `url(${HERO_PHOTO_DAY})` }} />
-      </div>
-      <div
-        className="hero-photo-set hero-photo-set--night"
-        style={{ opacity: isDay ? 0 : 1 }}
-      >
-        <div className="hero-photo-slide" style={{ backgroundImage: `url(${HERO_PHOTO_NIGHT})` }} />
-      </div>
-
-      <div className="hero-horizon-blend" aria-hidden="true" />
+      <div className="hero-horizon-haze" aria-hidden="true" />
     </div>
   );
 }
