@@ -105,110 +105,6 @@
   z-index: 1;
 }
 
-/* ── Drifting cloud clusters (CSS puffs — no PNG boxes) ── */
-.hero-clouds {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: var(--sky-clouds, 0.45);
-  animation: heroCloudsPulse 16s ease-in-out infinite;
-}
-
-.hero-cloud-cluster {
-  position: absolute;
-  filter: blur(10px);
-}
-
-.hero-cloud-puff {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.5) 48%,
-    rgba(255, 255, 255, 0.1) 72%,
-    transparent 82%
-  );
-}
-
-.hero-cloud-cluster--a {
-  width: 34%;
-  height: 16%;
-  top: 9%;
-  left: -14%;
-  animation: heroCloudDriftA 130s linear infinite;
-}
-
-.hero-cloud-cluster--a .hero-cloud-puff--1 { width: 42%; height: 70%; top: 20%; left: 8%; }
-.hero-cloud-cluster--a .hero-cloud-puff--2 { width: 55%; height: 85%; top: 8%; left: 28%; }
-.hero-cloud-cluster--a .hero-cloud-puff--3 { width: 38%; height: 62%; top: 28%; left: 52%; }
-.hero-cloud-cluster--a .hero-cloud-puff--4 { width: 30%; height: 50%; top: 12%; left: 68%; }
-.hero-cloud-cluster--a .hero-cloud-puff--5 { width: 22%; height: 38%; top: 32%; left: 78%; opacity: 0.75; }
-
-.hero-cloud-cluster--b {
-  width: 28%;
-  height: 14%;
-  top: 17%;
-  left: 32%;
-  animation: heroCloudDriftB 175s linear infinite;
-}
-
-.hero-cloud-cluster--b .hero-cloud-puff--1 { width: 48%; height: 75%; top: 15%; left: 5%; }
-.hero-cloud-cluster--b .hero-cloud-puff--2 { width: 52%; height: 80%; top: 5%; left: 30%; }
-.hero-cloud-cluster--b .hero-cloud-puff--3 { width: 36%; height: 58%; top: 25%; left: 55%; }
-.hero-cloud-cluster--b .hero-cloud-puff--4 { width: 28%; height: 48%; top: 10%; left: 72%; }
-.hero-cloud-cluster--b .hero-cloud-puff--5 { width: 20%; height: 36%; top: 28%; left: 82%; opacity: 0.7; }
-
-.hero-cloud-cluster--c {
-  width: 26%;
-  height: 12%;
-  top: 5%;
-  left: 60%;
-  animation: heroCloudDriftC 210s linear infinite;
-}
-
-.hero-cloud-cluster--c .hero-cloud-puff--1 { width: 44%; height: 72%; top: 18%; left: 10%; }
-.hero-cloud-cluster--c .hero-cloud-puff--2 { width: 50%; height: 78%; top: 6%; left: 32%; }
-.hero-cloud-cluster--c .hero-cloud-puff--3 { width: 34%; height: 55%; top: 22%; left: 58%; }
-.hero-cloud-cluster--c .hero-cloud-puff--4 { width: 26%; height: 45%; top: 8%; left: 74%; }
-.hero-cloud-cluster--c .hero-cloud-puff--5 { width: 18%; height: 32%; top: 24%; left: 84%; opacity: 0.65; }
-
-.hero-cloud-cluster--d {
-  width: 22%;
-  height: 11%;
-  top: 22%;
-  left: 6%;
-  animation: heroCloudDriftB 195s linear infinite reverse;
-}
-
-.hero-cloud-cluster--d .hero-cloud-puff--1 { width: 40%; height: 68%; top: 20%; left: 12%; }
-.hero-cloud-cluster--d .hero-cloud-puff--2 { width: 46%; height: 74%; top: 8%; left: 34%; }
-.hero-cloud-cluster--d .hero-cloud-puff--3 { width: 32%; height: 52%; top: 24%; left: 56%; }
-.hero-cloud-cluster--d .hero-cloud-puff--4 { width: 24%; height: 42%; top: 14%; left: 70%; }
-.hero-cloud-cluster--d .hero-cloud-puff--5 { width: 16%; height: 30%; top: 26%; left: 80%; opacity: 0.6; }
-
-@keyframes heroCloudsPulse {
-  0%, 100% { opacity: calc(var(--sky-clouds, 0.45) * 0.9); }
-  50% { opacity: var(--sky-clouds, 0.45); }
-}
-
-@keyframes heroCloudDriftA {
-  from { transform: translateX(0); }
-  to { transform: translateX(115vw); }
-}
-
-@keyframes heroCloudDriftB {
-  from { transform: translateX(0); }
-  to { transform: translateX(-120vw); }
-}
-
-@keyframes heroCloudDriftC {
-  from { transform: translateX(0); }
-  to { transform: translateX(-105vw); }
-}
-
 /* ── Photo mountains (masked — sky is animated separately) ── */
 .hero-photo-layer {
   position: absolute;
@@ -278,50 +174,23 @@
   opacity: 1;
 }
 
-/* Distance haze on far peaks — not a flat fog band */
-.hero-peak-haze {
+.hero-photo-day-veil {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 34%,
-    color-mix(in srgb, var(--sky-zenith, rgb(72, 132, 198)) 14%, transparent) 44%,
-    color-mix(in srgb, var(--sky-horizon, rgb(218, 232, 245)) 10%, transparent) 50%,
-    transparent 58%
-  );
-  opacity: var(--peak-haze, 0.15);
-  mix-blend-mode: soft-light;
+  opacity: 0;
   pointer-events: none;
-  transition: opacity 1s ease;
+  transition: opacity 1.2s ease;
+  background: linear-gradient(
+    180deg,
+    rgba(247, 200, 74, 0.12) 0%,
+    rgba(224, 104, 32, 0.08) 38%,
+    rgba(245, 230, 200, 0.06) 58%,
+    transparent 68%
+  );
 }
 
-/* Ridgeline color bleed — ties animated sky to photo mountains */
-.hero-ridge-bleed {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 36%;
-  height: 12%;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--sky-horizon, rgb(218, 232, 245)) 55%, transparent) 0%,
-    color-mix(in srgb, var(--sky-warm, rgb(255, 200, 140)) 35%, transparent) 45%,
-    transparent 100%
-  );
-  opacity: var(--ridge-bleed, 0.3);
-  mix-blend-mode: soft-light;
-  transition: opacity 1s ease;
-}
-
-.hero-mountain-scene--night .hero-ridge-bleed,
-.hero-mountain-scene--pre_dawn .hero-ridge-bleed {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--sky-horizon, rgb(58, 48, 82)) 40%, transparent) 0%,
-    transparent 100%
-  );
+.hero.day .hero-photo-day-veil {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -331,14 +200,6 @@
   }
 
   .hero-star {
-    animation: none;
-  }
-
-  .hero-cloud-cluster--a,
-  .hero-cloud-cluster--b,
-  .hero-cloud-cluster--c,
-  .hero-cloud-cluster--d,
-  .hero-clouds {
     animation: none;
   }
 }

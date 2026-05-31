@@ -449,3 +449,83 @@
   color: rgba(26, 13, 0, 0.72) !important;
   background: rgba(160, 64, 16, 0.08) !important;
 }
+
+/* ── TripMappa sky + scene tints (override generic skyTime blues) ── */
+.hero.night .hero-sky-gradient {
+  background: linear-gradient(
+    180deg,
+    #1A1035 0%,
+    #2A1A4A 38%,
+    rgba(42, 26, 74, 0.92) 62%,
+    rgba(255, 210, 140, 0.12) 100%
+  ) !important;
+}
+
+.hero.day .hero-sky-gradient {
+  background: linear-gradient(
+    180deg,
+    #5A8CB8 0%,
+    #A8C8E8 40%,
+    rgba(247, 200, 74, 0.28) 78%,
+    rgba(224, 104, 32, 0.18) 100%
+  ) !important;
+}
+
+.hero.night:has(.hero-mountain-scene) .hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(26, 16, 53, 0.42) 0%,
+    rgba(42, 26, 74, 0.18) 28%,
+    transparent 46%,
+    transparent 58%,
+    rgba(13, 10, 26, 0.48) 100%
+  ) !important;
+}
+
+.hero.day:has(.hero-mountain-scene) .hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(247, 200, 74, 0.14) 0%,
+    rgba(224, 104, 32, 0.08) 24%,
+    transparent 44%,
+    transparent 58%,
+    rgba(26, 13, 0, 0.32) 100%
+  ) !important;
+}
+
+.hero.night .hero-palette-vignette {
+  background:
+    radial-gradient(ellipse 90% 62% at 0% 0%, rgba(255, 210, 140, 0.14) 0%, transparent 68%),
+    radial-gradient(ellipse 90% 62% at 100% 0%, rgba(255, 140, 66, 0.1) 0%, transparent 68%),
+    radial-gradient(ellipse 82% 58% at 0% 0%, rgba(42, 26, 74, 0.35) 0%, transparent 68%),
+    radial-gradient(ellipse 82% 58% at 100% 0%, rgba(42, 26, 74, 0.35) 0%, transparent 68%) !important;
+}
+
+.hero.night .hero-photo-tint {
+  mix-blend-mode: soft-light !important;
+}
+
+/* Broader label selectors — trippmappa.css sets generic white labels */
+.hero.night .hero-input-label,
+.hero.night .hero-route-labels .hero-input-label,
+.hero.night .hero-route-cell .hero-input-label {
+  color: #FFD28C !important;
+}
+
+.hero.day .hero-input-label,
+.hero.day .hero-route-labels .hero-input-label,
+.hero.day .hero-route-cell .hero-input-label {
+  color: #A04010 !important;
+}
+
+.hero.night .hero-input,
+.hero.night .hero-search .hero-input {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.hero.day .hero-input,
+.hero.day .hero-search .hero-input {
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
+}

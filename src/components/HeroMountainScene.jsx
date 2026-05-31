@@ -8,12 +8,9 @@ const STARS = buildStarField(110, 42).map((star, i) => ({
   twinkleDelay: (i * 0.27) % 5,
 }));
 
-const CLOUD_CLUSTERS = ["a", "b", "c", "d"];
-
 export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 }) {
   const atmosphere = useMemo(() => getSkyAtmosphere(hour), [hour]);
   const showStars = atmosphere.starOpacity > 0.04;
-  const showClouds = atmosphere.cloudOpacity > 0.05;
 
   return (
     <div
@@ -54,20 +51,6 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
             ))}
           </svg>
         )}
-
-        {showClouds && (
-          <div className="hero-clouds" aria-hidden="true">
-            {CLOUD_CLUSTERS.map(id => (
-              <div key={id} className={`hero-cloud-cluster hero-cloud-cluster--${id}`}>
-                <span className="hero-cloud-puff hero-cloud-puff--1" />
-                <span className="hero-cloud-puff hero-cloud-puff--2" />
-                <span className="hero-cloud-puff hero-cloud-puff--3" />
-                <span className="hero-cloud-puff hero-cloud-puff--4" />
-                <span className="hero-cloud-puff hero-cloud-puff--5" />
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="hero-photo-layer">
@@ -77,8 +60,7 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
         />
         <div className="hero-photo-tint" aria-hidden="true" />
         <div className="hero-photo-night-veil" aria-hidden="true" />
-        <div className="hero-peak-haze" aria-hidden="true" />
-        <div className="hero-ridge-bleed" aria-hidden="true" />
+        <div className="hero-photo-day-veil" aria-hidden="true" />
       </div>
     </div>
   );
