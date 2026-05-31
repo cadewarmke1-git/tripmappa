@@ -4,7 +4,6 @@ import { getRouteTypeLabel, isScenicRoute } from "../lib/vehicles.js";
 export default function MapRoutePill({
   routeInfo,
   answers,
-  tripGenerating = false,
   theme = "night",
   onNavigateHome = null,
   navigateHomePending = false,

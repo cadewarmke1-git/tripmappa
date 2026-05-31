@@ -18,7 +18,6 @@ import {
   filterStationsByPreferredBrand,
 } from "../../lib/fuel.js";
 import { applyStopFilters } from "../../lib/placesFilters.js";
-import { needsSafeStopsOnly } from "../../lib/tripAccommodations.js";
 import FuelStopCard from "./FuelStopCard.jsx";
 
 import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
@@ -61,8 +60,8 @@ export default function FuelStopsRow({
         if (mode === "gas" || mode === "diesel" || mode === "hybrid") {
           const apiMode = mode === "diesel" ? "diesel" : "gas";
           const googleStations = apiMode === "diesel"
-            ? await searchDieselStations(lat, lng, 10, ON_ROUTE_RADIUS)
-            : await searchGasStations(lat, lng, 10, ON_ROUTE_RADIUS);
+            ? await searchDieselStations(lat, lng, 10)
+            : await searchGasStations(lat, lng, 10);
           let gasStations = googleStations;
           if (googleStations.length) {
             const enriched = await enrichFuelStations(googleStations, apiMode);
@@ -88,8 +87,8 @@ export default function FuelStopsRow({
 
         if (mode === "rv") {
           const [googleGas, googleDiesel] = await Promise.all([
-            searchGasStations(lat, lng, 10, ON_ROUTE_RADIUS),
-            searchDieselStations(lat, lng, 10, ON_ROUTE_RADIUS),
+            searchGasStations(lat, lng, 10),
+            searchDieselStations(lat, lng, 10),
           ]);
           const [gasRes, dieselRes] = await Promise.all([
             googleGas.length ? enrichFuelStations(googleGas, "gas") : { stations: [], fallback: true },
@@ -121,7 +120,7 @@ export default function FuelStopsRow({
         }
 
         if (mode === "ev" || mode === "hybrid") {
-          const googleEv = await searchEvChargingStations(lat, lng, 10, ON_ROUTE_RADIUS);
+          const googleEv = await searchEvChargingStations(lat, lng, 10);
           let evStations = googleEv;
           if (googleEv.length) {
             const evRes = await enrichEvCharging(googleEv, "ELEC", { teslaOnly: isTeslaSuperchargerOnly(answers) });

@@ -44,7 +44,6 @@ export default function PlanPanel({
   onResetPlan,
   onGoBack,
   onPickAnswer,
-  onSetAnswers,
   onSetPrefDraft,
   getStepMessage,
 }) {

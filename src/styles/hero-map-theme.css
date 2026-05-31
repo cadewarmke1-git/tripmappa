@@ -132,7 +132,7 @@
 
 .hero.day .hero-route-labels .hero-input-label,
 .hero.day .hero-route-cell .hero-input-label {
-  color: var(--color-accent-gold) !important;
+  color: #A04010 !important;
 }
 
 .hero.day .hero-swap-btn {
@@ -175,10 +175,10 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AVATAR — both themes (fixed gold gradient)
+   AVATAR — app shell (hero nav avatar: hero-surface.css)
    ══════════════════════════════════════════════════════════════ */
-.user-avatar-ring:not(:has(.user-avatar-img)),
-.user-avatar:not(:has(.user-avatar-img)) {
+.app-wrap .user-avatar-ring:not(.profile-card-trigger-avatar):not(:has(.user-avatar-img)),
+.app-wrap .user-avatar:not(.profile-card-trigger-avatar):not(:has(.user-avatar-img)) {
   background: var(--color-accent-gradient) !important;
   color: var(--deep-dark) !important;
 }

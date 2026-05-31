@@ -1,9 +1,27 @@
 /** Hero landing chrome — canonical TripMappa palette (synced to sky day/night cycle).
-   Gold is the base accent family; Travel stays white per palette spec. */
+   Loaded last in main.jsx — wins cascade over brand-typography, hero-map-theme, trippmappa.css. */
 
-/* ── TripMappa wordmark ── */
-nav.app-nav-bar.transparent[data-surface-theme="night"] .brand-wordmark {
+/* ── TripMappa wordmark (nav is outside .hero) ── */
+nav.app-nav-bar.transparent[data-surface-theme] .nav-logo-home,
+nav.app-nav-bar.transparent[data-surface-theme] .nav-logo {
+  background: none !important;
+  background-image: none !important;
+  -webkit-text-fill-color: unset !important;
+  color: inherit !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+nav.app-nav-bar.transparent[data-surface-theme] .nav-logo-home:hover,
+nav.app-nav-bar.transparent[data-surface-theme] .nav-logo-home:focus-visible {
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+nav.app-nav-bar.transparent[data-surface-theme="night"] .brand-wordmark,
+html body nav.app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
   background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -12,8 +30,10 @@ nav.app-nav-bar.transparent[data-surface-theme="night"] .brand-wordmark {
   filter: none !important;
 }
 
-nav.app-nav-bar.transparent[data-surface-theme="day"] .brand-wordmark {
+nav.app-nav-bar.transparent[data-surface-theme="day"] .brand-wordmark,
+html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
   background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  background-image: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -22,43 +42,41 @@ nav.app-nav-bar.transparent[data-surface-theme="day"] .brand-wordmark {
   filter: none !important;
 }
 
-nav.app-nav-bar.transparent[data-surface-theme] .nav-logo,
-nav.app-nav-bar.transparent[data-surface-theme] .nav-logo-home {
-  filter: none !important;
-  text-shadow: none !important;
-}
-
-/* ── Travel / Reimagined — night: white + gold; day: white + deep dark ── */
+/* ── Travel / Reimagined — solid colors, no glow washout ── */
 .hero[data-surface-theme="night"] .hero-title-line {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
   background: none !important;
+  background-image: none !important;
   filter: none !important;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45) !important;
 }
 
 .hero[data-surface-theme="night"] .hero-title-accent {
   color: #FFD28C !important;
   -webkit-text-fill-color: #FFD28C !important;
   background: none !important;
+  background-image: none !important;
   filter: none !important;
-  text-shadow: 0 0 24px rgba(255, 140, 66, 0.5), 0 2px 12px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
 }
 
 .hero[data-surface-theme="day"] .hero-title-line {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
   background: none !important;
+  background-image: none !important;
   filter: none !important;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4) !important;
 }
 
 .hero[data-surface-theme="day"] .hero-title-accent {
   color: #1A0D00 !important;
   -webkit-text-fill-color: #1A0D00 !important;
   background: none !important;
+  background-image: none !important;
   filter: none !important;
-  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.45);
+  text-shadow: none !important;
 }
 
 .hero[data-surface-theme="night"] .hero-sub {
@@ -69,28 +87,109 @@ nav.app-nav-bar.transparent[data-surface-theme] .nav-logo-home {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
+/* ── Day search row (white glass + warm labels) ── */
+.hero[data-surface-theme="day"] .hero-search {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(160, 64, 16, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.hero[data-surface-theme="day"] .hero-route-cell .hero-input-label,
+.hero[data-surface-theme="day"] .hero-input-label {
+  color: #A04010 !important;
+}
+
+.hero[data-surface-theme="day"] .hero-input {
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
+}
+
+.hero[data-surface-theme="day"] .hero-swap-btn {
+  background: rgba(224, 104, 32, 0.15) !important;
+  border-color: rgba(224, 104, 32, 0.4) !important;
+  color: #E06820 !important;
+}
+
+.hero[data-surface-theme="day"] .hero-go-btn:not(:disabled) {
+  background: #1A0D00 !important;
+  color: #FFD28C !important;
+  border: none !important;
+}
+
+.hero[data-surface-theme="day"] .hero-auth-label {
+  color: rgba(90, 42, 16, 0.8) !important;
+}
+
+.hero[data-surface-theme="day"] .hero-auth-btn,
+.hero[data-surface-theme="day"] .hero-email-btn,
+.hero[data-surface-theme="day"] .hero-phone-btn {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(160, 64, 16, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+.hero[data-surface-theme="day"] .hero-auth-or::before,
+.hero[data-surface-theme="day"] .hero-auth-or::after {
+  background: rgba(90, 42, 16, 0.2) !important;
+}
+
+.hero[data-surface-theme="day"] .hero-auth-or span {
+  color: rgba(90, 42, 16, 0.55) !important;
+}
+
+/* ── Night search row ── */
+.hero[data-surface-theme="night"] .hero-search {
+  background: rgba(26, 16, 53, 0.65) !important;
+  border-color: rgba(255, 210, 140, 0.25) !important;
+}
+
+.hero[data-surface-theme="night"] .hero-route-cell .hero-input-label,
+.hero[data-surface-theme="night"] .hero-input-label {
+  color: #FFD28C !important;
+}
+
+.hero[data-surface-theme="night"] .hero-input {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.hero[data-surface-theme="night"] .hero-go-btn:not(:disabled) {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  color: #1A0D00 !important;
+  border: none !important;
+}
+
 /* ── Profile avatar on hero nav ── */
-nav.app-nav-bar.transparent[data-surface-theme="night"] .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
+nav.app-nav-bar.transparent[data-surface-theme="night"] .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)),
+html body nav.app-nav-bar.transparent.app-nav-bar--night .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
   background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
   color: #1A0D00 !important;
   box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.45) !important;
 }
 
-nav.app-nav-bar.transparent[data-surface-theme="night"] .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
+nav.app-nav-bar.transparent[data-surface-theme="night"] .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img),
+html body nav.app-nav-bar.transparent.app-nav-bar--night .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
   box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.45) !important;
 }
 
-nav.app-nav-bar.transparent[data-surface-theme="day"] .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
+nav.app-nav-bar.transparent[data-surface-theme="day"] .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)),
+html body nav.app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
   background: linear-gradient(135deg, #C87010 0%, #E06820 100%) !important;
   color: #1A0D00 !important;
   box-shadow: 0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42) !important;
 }
 
-nav.app-nav-bar.transparent[data-surface-theme="day"] .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
+nav.app-nav-bar.transparent[data-surface-theme="day"] .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img),
+html body nav.app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
   box-shadow: 0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42) !important;
 }
 
-/* ── Example city placeholders ── */
+nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .user-avatar-initials {
+  color: #1A0D00 !important;
+}
+
+/* ── City placeholders — dim but readable, no "e.g." prefix ── */
 .hero[data-surface-theme="night"] .hero-search .hero-input::placeholder {
   color: rgba(255, 255, 255, 0.32) !important;
   font-style: italic !important;
@@ -103,6 +202,17 @@ nav.app-nav-bar.transparent[data-surface-theme="day"] .profile-card-trigger-avat
   font-style: italic !important;
   font-weight: 400 !important;
   opacity: 1 !important;
+}
+
+/* Mobile: accent line gets legibility shadow only, not gold glow */
+@media (max-width: 768px) {
+  html[data-layout="mobile"] .hero[data-surface-theme="night"] .hero-title-accent {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  html[data-layout="mobile"] .hero[data-surface-theme="day"] .hero-title-accent {
+    text-shadow: none !important;
+  }
 }
 
 /* Keep hero UI above scene haze */

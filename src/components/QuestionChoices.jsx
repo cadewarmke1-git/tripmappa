@@ -34,7 +34,6 @@ export default function QuestionChoices({
   stepAnim,
   answers,
   prefDraft,
-  prefSkipReady,
   questionHistoryLength,
   compact = false,
   showNavRow = true,

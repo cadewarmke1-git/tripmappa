@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   SKY_LIVE_TICK_MS,
-  SKY_TICK_MS,
   getLiveSkyHour,
   isSkyTestEnabled,
   parseSkyHourParam,
@@ -16,9 +15,9 @@ describe("heroSky", () => {
     expect(parseSkyHourParam("")).toBeNull();
   });
 
-  it("always shows sky test dial until launch", () => {
-    expect(isSkyTestEnabled()).toBe(true);
-    expect(isSkyTestEnabled("?skyTest=0", false)).toBe(true);
+  it("gates sky test dial to dev builds", () => {
+    expect(isSkyTestEnabled()).toBe(import.meta.env.DEV);
+    expect(isSkyTestEnabled("?skyTest=0")).toBe(import.meta.env.DEV);
   });
 
   it("resolves hero hour with URL > dial > live priority", () => {
@@ -34,6 +33,5 @@ describe("heroSky", () => {
 
   it("ticks live sky every second for smooth drift", () => {
     expect(SKY_LIVE_TICK_MS).toBe(1_000);
-    expect(SKY_TICK_MS).toBe(SKY_LIVE_TICK_MS);
   });
 });

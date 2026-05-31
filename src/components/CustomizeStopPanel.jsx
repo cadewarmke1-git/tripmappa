@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Autocomplete } from "@react-google-maps/api";
-import { geocodeCity } from "../lib/placesSearch.js";
 
 export default function CustomizeStopPanel({ city, isLoaded, onAddCustomStop, onBudgetImpact }) {
   const [open, setOpen] = useState(false);

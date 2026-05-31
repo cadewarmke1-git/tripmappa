@@ -3,9 +3,6 @@
 /** Live sky refresh — 1s for smooth sun drift; minute tick when reduced motion. */
 export const SKY_LIVE_TICK_MS = 1_000;
 
-/** @deprecated Use SKY_LIVE_TICK_MS */
-export const SKY_TICK_MS = SKY_LIVE_TICK_MS;
-
 export function getLiveSkyHour(now = new Date()) {
   return now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
 }
@@ -19,9 +16,9 @@ export function parseSkyHourParam(search = "") {
   return Math.max(0, Math.min(24, n));
 }
 
-/** Always show sky test dial until removed before launch. */
+/** Dev-only sky test dial; hidden in production builds. */
 export function isSkyTestEnabled() {
-  return true;
+  return import.meta.env.DEV;
 }
 
 export function resolveHeroSkyHour({ liveHour, dialOverride, urlHour }) {

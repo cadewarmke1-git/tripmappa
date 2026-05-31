@@ -1,12 +1,15 @@
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
-import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
 import { getHeroSurfaceTheme, getSkyPhaseFromHour } from "../lib/skyTime.js";
+
+const HeroSkyTestDial = import.meta.env.DEV
+  ? lazy(() => import("./HeroSkyTestDial.jsx"))
+  : null;
 
 export default function HeroView({
   isLoaded,
@@ -16,7 +19,6 @@ export default function HeroView({
   heroDestError,
   heroLaunching,
   launchDisabled,
-  heroSearchHover,
   heroOriginRef,
   heroDestRef,
   onLogin,
@@ -25,7 +27,6 @@ export default function HeroView({
   onFacebook,
   onApple,
   user,
-  onSearchHover,
   onSwap,
   onHeroOriginAcLoad,
   onHeroDestAcLoad,
@@ -122,11 +123,7 @@ export default function HeroView({
             </div>
           )}
 
-          <div
-            className="hero-search"
-            onMouseEnter={() => onSearchHover(true)}
-            onMouseLeave={() => onSearchHover(false)}
-          >
+          <div className="hero-search">
             <div className="hero-route-bar">
               <div className="hero-route-grid">
                 <div className="hero-route-cell hero-route-from">
@@ -134,10 +131,10 @@ export default function HeroView({
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroOriginRef} className="hero-input" placeholder="e.g. Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                        <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                       </Autocomplete>
                     ) : (
-                      <input className="hero-input" placeholder="e.g. Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
                   {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
@@ -161,10 +158,10 @@ export default function HeroView({
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroDestRef} className="hero-input" placeholder="e.g. Los Angeles, CA" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles, CA" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                       </Autocomplete>
                     ) : (
-                      <input className="hero-input" placeholder="e.g. Los Angeles, CA" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
                   {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
@@ -220,16 +217,18 @@ export default function HeroView({
           <div className="scroll-arrow"/>
         </div>
 
-        {skyTestEnabled && (
-          <HeroSkyTestDial
-            hour={skyHour}
-            liveHour={liveHour}
-            phase={skyPhase}
-            isOverridden={isDialOverridden}
-            isUrlLocked={isUrlLocked}
-            onHourChange={setSkyHourOverride}
-            onResetLive={resetToLive}
-          />
+        {skyTestEnabled && HeroSkyTestDial && (
+          <Suspense fallback={null}>
+            <HeroSkyTestDial
+              hour={skyHour}
+              liveHour={liveHour}
+              phase={skyPhase}
+              isOverridden={isDialOverridden}
+              isUrlLocked={isUrlLocked}
+              onHourChange={setSkyHourOverride}
+              onResetLive={resetToLive}
+            />
+          </Suspense>
         )}
       </div>
     </>

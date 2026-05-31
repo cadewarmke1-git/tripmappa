@@ -99,6 +99,29 @@ async function assignRestaurantsForCity(map, city, geo, answers, limit = 6) {
   map[city] = result.restaurants || [];
 }
 
+function isFoodRoadStop(rs) {
+  const cat = (rs.category || "").toLowerCase();
+  return /food|rest|dining|meal/i.test(cat)
+    || /mcdonald|starbucks|restaurant|diner|food/i.test(rs.name || "");
+}
+
+async function enrichFoodRoadStopRestaurants(roadStops, answers) {
+  for (const rs of roadStops) {
+    if (!isFoodRoadStop(rs) || rs.lat == null || rs.lng == null) continue;
+    const quickResult = await fetchRestaurantsForStop({
+      lat: rs.lat,
+      lng: rs.lng,
+      city: rs.location || rs.name,
+      answers,
+      roadStop: true,
+      limit: 4,
+    });
+    if (!quickResult.error) {
+      rs.nearbyRestaurants = (quickResult.restaurants || []).slice(0, 2);
+    }
+  }
+}
+
 export async function enrichGeneratedTrip({
   answers,
   routeInfo,
@@ -234,24 +257,7 @@ export async function enrichGeneratedTrip({
   const weatherData = await fetchWeatherForStops(weatherStops);
   Object.assign(weatherByCity, weatherData.weatherByCity || {});
 
-  for (const rs of safeRoadStops) {
-    const cat = (rs.category || "").toLowerCase();
-    if (!/food|rest|dining|meal/i.test(cat) && !/mcdonald|starbucks|restaurant|diner|food/i.test(rs.name || "")) {
-      continue;
-    }
-    if (rs.lat == null || rs.lng == null) continue;
-    const quickResult = await fetchRestaurantsForStop({
-      lat: rs.lat,
-      lng: rs.lng,
-      city: rs.location || rs.name,
-      answers,
-      roadStop: true,
-      limit: 4,
-    });
-    if (!quickResult.error) {
-      rs.nearbyRestaurants = (quickResult.restaurants || []).slice(0, 2);
-    }
-  }
+  await enrichFoodRoadStopRestaurants(safeRoadStops, answers);
 
   if (wantsPlaygrounds && routeInfo?.routePoints?.length) {
     const routeSamples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 30);

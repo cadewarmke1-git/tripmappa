@@ -631,7 +631,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const { origin, destination, answers, routeInfo, legs, model = "claude-sonnet-4-20250514", placesContextPrompt = "", generationHints = "" } = req.body;
+  const { origin, destination, answers, model = "claude-sonnet-4-20250514", placesContextPrompt = "", generationHints = "" } = req.body;
 
   if (!origin || !destination) {
     return res.status(400).json({ error: "Missing origin or destination" });
@@ -675,7 +675,7 @@ export default async function handler(req, res) {
       const text = data?.content?.[0]?.text;
       try {
         parsed = parseJsonFromLlm(text);
-      } catch (parseErr) {
+      } catch {
         if (attempt === 0) {
           await new Promise(r => setTimeout(r, 1500));
           continue;

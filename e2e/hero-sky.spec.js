@@ -19,8 +19,9 @@ test.describe("hero sky visuals", () => {
     });
   }
 
-  test("shows sky test dial on hero", async ({ page }) => {
+  test("hides sky test dial in production build", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator(".hero-sky-test-dial")).toBeVisible();
+    await expect(page.locator(".hero-mountain-scene")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".hero-sky-test-dial")).not.toBeVisible();
   });
 });

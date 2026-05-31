@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getTierLabel, hasUnlimitedTripGenerations, normalizeTier, TIERS } from "../lib/tiers.js";
+import { getTierLabel, hasUnlimitedTripGenerations, normalizeTier } from "../lib/tiers.js";
 
 export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshCredits }) {
   const [open, setOpen] = useState(false);
@@ -12,7 +12,6 @@ export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshC
   const tierKey = normalizeTier(creditStatus?.tier);
   const tier = getTierLabel(tierKey);
   const isPaid = hasUnlimitedTripGenerations(tierKey);
-  const isTraveler = tierKey === TIERS.TRAVELER;
   const generationsLabel = isPaid
     ? "Unlimited Trip Generations"
     : `${creditStatus?.remaining ?? 0} of ${creditStatus?.limit ?? 3} Trip Generations remaining this month`;

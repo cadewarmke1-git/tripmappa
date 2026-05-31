@@ -39,7 +39,6 @@
   display: inline-block !important;
 }
 
-.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home,
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
@@ -68,6 +67,8 @@
   -webkit-text-fill-color: #FFD28C !important;
   background: none !important;
   background-image: none !important;
+  filter: none !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
 }
 
 .hero.night .hero-sub {
@@ -89,6 +90,8 @@
   -webkit-text-fill-color: #1A0D00 !important;
   background: none !important;
   background-image: none !important;
+  filter: none !important;
+  text-shadow: none !important;
 }
 
 .hero.day .hero-sub {
@@ -619,6 +622,8 @@ html body .hero.night .hero-content .hero-title-line {
 html body .hero.night .hero-title-accent {
   color: #FFD28C !important;
   -webkit-text-fill-color: #FFD28C !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+  filter: none !important;
 }
 
 html body .hero.day .hero-title-line,
@@ -630,6 +635,8 @@ html body .hero.day .hero-content .hero-title-line {
 html body .hero.day .hero-title-accent {
   color: #1A0D00 !important;
   -webkit-text-fill-color: #1A0D00 !important;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
 html body .hero.night .hero-sub {

@@ -1,9 +1,7 @@
-import crypto from "crypto";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import {
   appendBreadcrumb,
-  assignConvoyColor,
   checkArrival,
   checkEtaNotifications,
   getNextOvernightStop,

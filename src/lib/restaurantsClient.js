@@ -22,22 +22,3 @@ export async function fetchRestaurantsForStop({ lat, lng, city, answers, roadSto
     return { restaurants: [], error: "failed" };
   }
 }
-
-export async function fetchRestaurantsForStops(stops, answers, { roadStop = false, limit = 6 } = {}) {
-  const out = {};
-  await Promise.all(
-    stops.map(async (stop) => {
-      if (!stop.city || stop.lat == null || stop.lng == null) return;
-      const { restaurants } = await fetchRestaurantsForStop({
-        lat: stop.lat,
-        lng: stop.lng,
-        city: stop.city,
-        answers,
-        roadStop,
-        limit,
-      });
-      out[stop.city] = restaurants;
-    }),
-  );
-  return out;
-}

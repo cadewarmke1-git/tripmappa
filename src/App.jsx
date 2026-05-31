@@ -18,10 +18,8 @@ import {
 } from "./lib/vehicles.js";
 import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
 import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./lib/guestCredits.js";
-import { computeHOSCompliance } from "./lib/hos.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { buildContinuousDriveTip, isContinuousDrive } from "./lib/driveMode.js";
-import { TRUCK_SAFETY_FALLBACK, RV_SAFETY_FALLBACK } from "./lib/tripData.js";
 import { generateTripPlan } from "./lib/apiClient.js";
 import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } from "./lib/generateTripFlow.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
@@ -39,7 +37,7 @@ import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
 import { describePlanChanges } from "./lib/planSnapshotDiff.js";
 import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
-import { roadStopKey, roadStopExistsInList, normalizeRoadStopEntry } from "./lib/roadStopKeys.js";
+import { roadStopKey, normalizeRoadStopEntry } from "./lib/roadStopKeys.js";
 import { useLiveTripTips } from "./hooks/useLiveTripTips.js";
 import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraft.js";
 import { useAuth } from "./context/AuthContext.jsx";
@@ -83,7 +81,6 @@ export default function App() {
   const [heroDestError, setHeroDestError] = useState("");
   const [heroLaunching, setHeroLaunching] = useState(false);
   const [heroEmail, setHeroEmail] = useState("");
-  const [heroSearchHover, setHeroSearchHover] = useState(false);
   const [authModal, setAuthModal] = useState(null); // signin | signup | phone | oauth-*
   const [authPhone, setAuthPhone] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
@@ -91,9 +88,6 @@ export default function App() {
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState(null);
-  const [hosCompliance, setHosCompliance] = useState(null);
-  const [truckSafety, setTruckSafety] = useState(null);
-  const [rvSafety, setRvSafety] = useState(null);
   const [mapStyle, setMapStyle] = useState("standard");
   const [mapStyleOpen, setMapStyleOpen] = useState(false);
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
@@ -109,7 +103,6 @@ export default function App() {
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
-  const [addedRoadStopIds, setAddedRoadStopIds] = useState([]);
   const [enrichingTrip, setEnrichingTrip] = useState(false);
   const [enrichmentLimited, setEnrichmentLimited] = useState(false);
   const [enrichmentNoticeDismissed, setEnrichmentNoticeDismissed] = useState(false);
@@ -122,7 +115,6 @@ export default function App() {
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
   const [mapMarkers, setMapMarkers] = useState([]);
   const [customStops, setCustomStops] = useState([]);
-  const [nearbyServicesByCity, setNearbyServicesByCity] = useState({});
   const [activitiesByCity, setActivitiesByCity] = useState({});
   const [restaurantsByCity, setRestaurantsByCity] = useState({});
   const [weatherByCity, setWeatherByCity] = useState({});
@@ -133,7 +125,6 @@ export default function App() {
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [mapFocusTarget, setMapFocusTarget] = useState(null);
   const [tripLegs, setTripLegs] = useState([]);
-  const [stopCategory, setStopCategory] = useState("all");
   const [savedTrips, setSavedTrips] = useState(() => {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
@@ -156,7 +147,6 @@ export default function App() {
   const [resultsBoundaryKey, setResultsBoundaryKey] = useState(0);
   const [planBoundaryKey, setPlanBoundaryKey] = useState(0);
   const [mapBoundaryKey, setMapBoundaryKey] = useState(0);
-  const [enrichmentRetryKey, setEnrichmentRetryKey] = useState(0);
   const [savedPlanSnapshot, setSavedPlanSnapshot] = useState(null);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
@@ -340,25 +330,6 @@ export default function App() {
     return saved;
   }
 
-  async function saveCurrentTrip() {
-    if (!user) {
-      openAuthModal("signin");
-      toast_("Sign in to save trips");
-      return;
-    }
-    if (!origin?.trim() || !dest?.trim()) {
-      toast_("Plan a trip first");
-      return;
-    }
-    try {
-      await persistTripForUser(user.id);
-      toast_("Trip saved", true);
-    } catch (err) {
-      console.error("Save trip error:", err);
-      toast_(err.message || "Could not save trip");
-    }
-  }
-
   async function deleteSavedTrip(id) {
     if (user) {
       try {
@@ -371,7 +342,7 @@ export default function App() {
     const updated = savedTrips.filter(t => t.id !== id);
     setSavedTrips(updated);
     if (!user) {
-      try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch {}
+      try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch { /* quota / private mode */ }
     }
     toast_("Trip removed");
   }
@@ -508,7 +479,7 @@ export default function App() {
   const [routePath, setRoutePath] = useState(null);
   const [directionsResult, setDirectionsResult] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
-  const [mapCenter, setMapCenter] = useState({ lat: 37.0902, lng: -95.7129 });
+  const mapCenter = { lat: 37.0902, lng: -95.7129 };
   const originRef = useRef(null);
   const destRef = useRef(null);
   const heroOriginRef = useRef(null);
@@ -578,28 +549,6 @@ export default function App() {
           const hasTrafficDelay = warnings.some(w => /traffic|delay|congestion|slow/i.test(w))
             || route.legs.some(l => l.duration_in_traffic && l.duration_in_traffic.value > l.duration.value * 1.08);
           if (warnings.length > 0 || hasTrafficDelay) setTrafficAlert(true);
-
-          const hours = parseHoursFromDuration(leg.duration.text);
-          const miles = parseMilesFromDistance(leg.distance.text);
-          const hos = isTruckVehicle(vehicle) && hours ? computeHOSCompliance(hours) : null;
-          setHosCompliance(hos);
-          if (isTruckVehicle(vehicle)) {
-            setRvSafety(null);
-            setTruckSafety({
-              ...TRUCK_SAFETY_FALLBACK,
-              estimatedFuelGal: miles ? Math.ceil(miles / 6) : null,
-            });
-          } else if (isRvVehicle(vehicle)) {
-            setTruckSafety(null);
-            setRvSafety({
-              ...RV_SAFETY_FALLBACK,
-              estimatedFuelGal: miles ? Math.ceil(miles / 9) : null,
-              towing: answers.rv_towing === "Yes",
-            });
-          } else {
-            setTruckSafety(null);
-            setRvSafety(null);
-          }
 
           const citiesAlongRoute = [];
           route.legs[0].steps.forEach(step => {
@@ -1048,17 +997,12 @@ export default function App() {
     setTripFormat(null);
     setRecommendations([]);
     setSelectedLodging([]);
-    setStopCategory("all");
     setTripLegs([]);
     setPrefDraft(null);
-    setHosCompliance(null);
-    setTruckSafety(null);
-    setRvSafety(null);
     setTripAlerts([]);
     setDismissedAlerts([]);
     setMapMarkers([]);
     setCustomStops([]);
-    setNearbyServicesByCity({});
     setActivitiesByCity({});
     setRestaurantsByCity({});
     setWeatherByCity({});
@@ -1223,7 +1167,6 @@ export default function App() {
   const convoEndRef = useRef(null);
   const convoScrollRef = useRef(null);
   const floatCardScrollRef = useRef(null);
-  const stopsEndRef = useRef(null);
 
   const scrollPlanToTop = useCallback(() => {
     window.scrollTo(0, 0);
@@ -1721,12 +1664,6 @@ export default function App() {
     }
   }
 
-  function toastGold(msg) {
-    setToastIsGold(true);
-    setToast(msg);
-    setTimeout(() => { setToast(null); setToastIsGold(false); }, 2800);
-  }
-
   useEffect(() => () => { if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current); }, []);
 
   useEffect(() => {
@@ -1825,9 +1762,6 @@ export default function App() {
       }
       return [...prev, entry];
     });
-    if (key) {
-      setAddedRoadStopIds(prev => (prev.includes(key) ? prev : [...prev, key]));
-    }
     toast_("Added to trip", {
       actionLabel: "Undo",
       onAction: () => removeRoadStopFromTrip({ ...normalized, stopData: normalized }),
@@ -1851,48 +1785,12 @@ export default function App() {
     });
   }
 
-  function removeRoadStop(indexOrId) {
-    setRoadStops(prev => {
-      if (typeof indexOrId === "number") {
-        return prev.filter((_, i) => i !== indexOrId);
-      }
-      return prev.filter(s => s.id !== indexOrId);
-    });
-  }
-
   function addLodgingSelection(lodging) {
     setSelectedLodging(prev => {
       const exists = prev.some(l => l.id === lodging.id);
       if (exists) return prev.filter(l => l.id !== lodging.id);
       return [...prev, lodging];
     });
-  }
-
-  function applyFallbackTrip() {
-    const data = buildFallbackTripData(answers, routeInfo);
-    setStops(data.stops);
-    setRoadStops(data.roadStops);
-    setTripTips(data.tripTips);
-    if (data.hosCompliance) setHosCompliance(data.hosCompliance);
-    setTruckSafety(data.truckSafety);
-    setRvSafety(data.rvSafety);
-  }
-
-  function applyTripData(data) {
-    const parsed = parseTripApiResponse(data, answers, routeInfo, buildFallbackTripData);
-    setStops(parsed.stops);
-    setRoadStops(parsed.roadStops);
-    setTripTips(parsed.tripTips);
-    setTripFormat(parsed.tripFormat || null);
-    setRecommendations(parsed.recommendations || []);
-    if (parsed.hosCompliance) setHosCompliance(parsed.hosCompliance);
-    if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
-    if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
-    setGenerated(true);
-    setAddedRoadStopIds([]);
-    setStopCategory("all");
-    setTab("plan");
-    setCardCollapsed(false);
   }
 
   useEffect(() => {
@@ -1936,7 +1834,6 @@ export default function App() {
       if (enrichController.signal.aborted) return null;
       setStops(enriched.stops);
       setRoadStops(enriched.roadStops);
-      setNearbyServicesByCity(enriched.nearbyServicesByCity);
       setActivitiesByCity(enriched.activitiesByCity);
       setRestaurantsByCity(enriched.restaurantsByCity || {});
       setWeatherByCity(enriched.weatherByCity || {});
@@ -1985,23 +1882,6 @@ export default function App() {
     });
     setSavedPlanSnapshot(snapshot);
     return snapshot;
-  }
-
-  function addCustomStop(stop) {
-    setCustomStops(prev => [...prev, stop]);
-    setMapMarkers(prev => [
-      ...prev,
-      {
-        id: stop.id,
-        lat: stop.lat,
-        lng: stop.lng,
-        category: "custom",
-        title: stop.name,
-        subtitle: stop.address || stop.city,
-        action: "directions",
-      },
-    ]);
-    toast_("Custom stop added to map");
   }
 
   async function generateTrip() {
@@ -2070,12 +1950,8 @@ export default function App() {
       setTripTips(tips);
       setTripFormat(parsed.tripFormat || null);
       setRecommendations(parsed.recommendations || []);
-      if (parsed.hosCompliance) setHosCompliance(parsed.hosCompliance);
-      if (parsed.truckSafety !== undefined) setTruckSafety(parsed.truckSafety);
-      if (parsed.rvSafety !== undefined) setRvSafety(parsed.rvSafety);
       setGenerated(true);
       setResultsView("itinerary");
-      setStopCategory("all");
       setTab("plan");
       setCardCollapsed(false);
       await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
@@ -2213,10 +2089,10 @@ export default function App() {
     setGuestTripPendingSave(false);
     setAnswers({}); setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
-    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setAddedRoadStopIds([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]); setStopCategory("all");
-    setTripLegs([]); setPrefDraft([]); setHosCompliance(null); setTruckSafety(null); setRvSafety(null);
+    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]);
+    setTripLegs([]); setPrefDraft([]);
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
-    setNearbyServicesByCity({}); setActivitiesByCity({}); setOptionalStopCards([]);
+    setActivitiesByCity({}); setOptionalStopCards([]);
     setRestaurantsByCity({});
     setWeatherByCity({});
     setRouteOptimized(false);
@@ -2444,7 +2320,6 @@ export default function App() {
     const normalized = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
     setEnrichmentNoticeDismissed(false);
     await enrichAndSetTrip(stops, roadStops, normalized);
-    setEnrichmentRetryKey(k => k + 1);
   }
 
   if (liveShareToken) {
@@ -2521,7 +2396,6 @@ export default function App() {
         heroDestError={heroDestError}
         heroLaunching={heroLaunching}
         launchDisabled={!heroOrigin.trim() || !heroDest.trim() || !isLoaded || heroLaunching}
-        heroSearchHover={heroSearchHover}
         heroOriginRef={heroOriginRef}
         heroDestRef={heroDestRef}
         user={user}
@@ -2530,7 +2404,6 @@ export default function App() {
         onGoogle={() => handleOAuth("google")}
         onFacebook={() => handleOAuth("facebook")}
         onApple={() => handleOAuth("apple")}
-        onSearchHover={setHeroSearchHover}
         onSwap={swapHeroCities}
         onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; }}
         onHeroDestAcLoad={ac => { heroDestAcRef.current = ac; }}

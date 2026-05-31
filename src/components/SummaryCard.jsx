@@ -13,7 +13,7 @@ import { isContinuousDrive } from "../lib/driveMode.js";
 
 const PAYOFF_KEYS = ["Trip", "Vehicle", "Fuel", "Party size"];
 
-export default function SummaryCard({ answers, hosCompliance, compactGrid = false, routeInfo = null }) {
+export default function SummaryCard({ answers, hosCompliance, compactGrid = false }) {
   const effective = getEffectiveVehicle(answers);
   const fuel = inferFuelType(effective, answers.preferences || [], answers);
   const rows = [
