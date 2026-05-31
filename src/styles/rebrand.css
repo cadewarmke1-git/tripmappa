@@ -170,11 +170,10 @@ body {
 .hero:has(.hero-mountain-scene) .hero-overlay {
   background: linear-gradient(
     180deg,
-    rgba(8, 10, 18, 0.22) 0%,
-    rgba(8, 10, 18, 0.06) 22%,
-    transparent 42%,
-    transparent 58%,
-    rgba(8, 10, 18, 0.38) 100%
+    rgba(8, 10, 18, 0.08) 0%,
+    transparent 30%,
+    transparent 55%,
+    rgba(8, 10, 18, 0.32) 100%
   ) !important;
 }
 

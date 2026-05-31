@@ -7,7 +7,7 @@
 .auth-modal-logo.brand-wordmark,
 .route-drawing-loader-wordmark.brand-wordmark,
 .app-global-home-logo .brand-wordmark {
-  display: inline;
+  display: inline-block;
   font: inherit;
   letter-spacing: inherit;
   background: var(--color-wordmark-gradient) !important;

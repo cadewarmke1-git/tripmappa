@@ -17,74 +17,91 @@
 }
 
 .hero.night .hero-palette-vignette {
+  /* Side purple only — no top-corner wash that reads as fog */
   background:
-    radial-gradient(ellipse 82% 58% at 0% 0%, rgba(42, 26, 74, 0.25) 0%, transparent 68%),
-    radial-gradient(ellipse 82% 58% at 100% 0%, rgba(42, 26, 74, 0.25) 0%, transparent 68%);
+    radial-gradient(ellipse 55% 40% at 0% 22%, rgba(42, 26, 74, 0.18) 0%, transparent 72%),
+    radial-gradient(ellipse 55% 40% at 100% 22%, rgba(42, 26, 74, 0.18) 0%, transparent 72%);
 }
 
 .hero.night .hero-palette-ridge {
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 36%,
-    rgba(255, 210, 140, 0.08) 46%,
-    rgba(255, 210, 140, 0.05) 50%,
-    transparent 58%
-  );
+  background: none;
 }
 
 .hero.day .hero-palette-vignette {
   background:
-    radial-gradient(ellipse 78% 52% at 0% 0%, rgba(247, 200, 74, 0.15) 0%, transparent 66%),
-    radial-gradient(ellipse 78% 52% at 100% 0%, rgba(247, 200, 74, 0.15) 0%, transparent 66%),
-    radial-gradient(ellipse 72% 48% at 0% 100%, rgba(224, 104, 32, 0.12) 0%, transparent 62%),
-    radial-gradient(ellipse 72% 48% at 100% 100%, rgba(224, 104, 32, 0.12) 0%, transparent 62%);
+    radial-gradient(ellipse 55% 40% at 0% 24%, rgba(247, 200, 74, 0.1) 0%, transparent 72%),
+    radial-gradient(ellipse 55% 40% at 100% 24%, rgba(247, 200, 74, 0.1) 0%, transparent 72%),
+    radial-gradient(ellipse 72% 48% at 0% 100%, rgba(224, 104, 32, 0.1) 0%, transparent 62%),
+    radial-gradient(ellipse 72% 48% at 100% 100%, rgba(224, 104, 32, 0.1) 0%, transparent 62%);
 }
 
 .hero.day .hero-palette-ridge {
   background: none;
 }
 
-/* ── Nav wordmark on hero ── */
+/* ── Nav wordmark on hero (nav is outside .hero — needs explicit paths) ── */
+.app-nav-bar.transparent.app-nav-bar--night .nav-logo-home .brand-wordmark,
+.app-nav-bar.transparent.app-nav-bar--night .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
-  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
+  display: inline-block !important;
 }
 
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home,
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark,
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #C87010, #E06820) !important;
+  background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  background-image: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
+  display: inline-block !important;
 }
 
-/* ── Hero headline ── */
-.hero.night .hero-title-line {
+/* ── Hero headline (inside .hero.night / .hero.day) ── */
+.hero.night .hero-title,
+.hero.night .hero-title-line,
+.hero.night .hero-content .hero-title-line {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
+  background: none !important;
+  background-image: none !important;
 }
 
-.hero.night .hero-title-accent {
+.hero.night .hero-title-accent,
+.hero.night .hero-content .hero-title-accent {
   color: #FFD28C !important;
   -webkit-text-fill-color: #FFD28C !important;
+  background: none !important;
+  background-image: none !important;
 }
 
 .hero.night .hero-sub {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.hero.day .hero-title-line {
+.hero.day .hero-title,
+.hero.day .hero-title-line,
+.hero.day .hero-content .hero-title-line {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
+  background: none !important;
+  background-image: none !important;
 }
 
-.hero.day .hero-title-accent {
+.hero.day .hero-title-accent,
+.hero.day .hero-content .hero-title-accent {
   color: #1A0D00 !important;
   -webkit-text-fill-color: #1A0D00 !important;
+  background: none !important;
+  background-image: none !important;
 }
 
 .hero.day .hero-sub {
@@ -474,35 +491,45 @@
 .hero.night:has(.hero-mountain-scene) .hero-overlay {
   background: linear-gradient(
     180deg,
-    rgba(26, 16, 53, 0.42) 0%,
-    rgba(42, 26, 74, 0.18) 28%,
-    transparent 46%,
-    transparent 58%,
-    rgba(13, 10, 26, 0.48) 100%
+    rgba(26, 16, 53, 0.1) 0%,
+    transparent 32%,
+    transparent 55%,
+    rgba(13, 10, 26, 0.42) 100%
   ) !important;
 }
 
 .hero.day:has(.hero-mountain-scene) .hero-overlay {
   background: linear-gradient(
     180deg,
-    rgba(247, 200, 74, 0.14) 0%,
-    rgba(224, 104, 32, 0.08) 24%,
-    transparent 44%,
-    transparent 58%,
-    rgba(26, 13, 0, 0.32) 100%
+    rgba(247, 200, 74, 0.06) 0%,
+    transparent 34%,
+    transparent 55%,
+    rgba(26, 13, 0, 0.28) 100%
   ) !important;
-}
-
-.hero.night .hero-palette-vignette {
-  background:
-    radial-gradient(ellipse 90% 62% at 0% 0%, rgba(255, 210, 140, 0.14) 0%, transparent 68%),
-    radial-gradient(ellipse 90% 62% at 100% 0%, rgba(255, 140, 66, 0.1) 0%, transparent 68%),
-    radial-gradient(ellipse 82% 58% at 0% 0%, rgba(42, 26, 74, 0.35) 0%, transparent 68%),
-    radial-gradient(ellipse 82% 58% at 100% 0%, rgba(42, 26, 74, 0.35) 0%, transparent 68%) !important;
 }
 
 .hero.night .hero-photo-tint {
   mix-blend-mode: soft-light !important;
+}
+
+/* Lighter photo veils — clear upper sky, palette tint lower on mountains */
+.hero.night .hero-photo-night-veil {
+  background: linear-gradient(
+    180deg,
+    rgba(26, 16, 53, 0.38) 0%,
+    rgba(42, 26, 74, 0.28) 34%,
+    rgba(13, 10, 26, 0.18) 52%,
+    transparent 62%
+  ) !important;
+}
+
+.hero.day .hero-photo-day-veil {
+  background: linear-gradient(
+    180deg,
+    rgba(247, 200, 74, 0.06) 0%,
+    rgba(224, 104, 32, 0.04) 32%,
+    transparent 58%
+  ) !important;
 }
 
 /* Broader label selectors — trippmappa.css sets generic white labels */
@@ -526,6 +553,37 @@
 
 .hero.day .hero-input,
 .hero.day .hero-search .hero-input {
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
+}
+
+/* Milky-way band — keep stars; soften upper-sky haze */
+.hero.night .hero-milky-way {
+  opacity: calc(var(--milky-way, 0) * 0.35) !important;
+  filter: blur(4px) !important;
+}
+
+.hero.night .hero-photo-tint {
+  opacity: calc(var(--photo-tint-op, 0) * 0.72) !important;
+}
+
+/* Final cascade — hero typography (nav is outside .hero) */
+html body .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
+  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html body .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
+  background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html body .hero.night .hero-title-accent {
+  color: #FFD28C !important;
+  -webkit-text-fill-color: #FFD28C !important;
+}
+
+html body .hero.day .hero-title-accent {
   color: #1A0D00 !important;
   -webkit-text-fill-color: #1A0D00 !important;
 }
