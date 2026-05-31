@@ -139,8 +139,10 @@
   .hero-title {
     font-family: 'Fraunces', serif; font-weight: 700;
     font-size: clamp(48px, 8.5vw, 96px);
-    line-height: 0.98; letter-spacing: -0.02em;
+    line-height: 1.12; letter-spacing: -0.02em;
     margin: 24px 0 36px;
+    overflow: visible;
+    padding-bottom: 0.1em;
   }
 
   .hero-sub {

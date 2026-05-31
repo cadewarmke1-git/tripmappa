@@ -30,7 +30,9 @@ html[data-layout="web"] .hero-content {
 html[data-layout="web"] .hero-title {
   font-size: clamp(52px, 8.5vw, 96px);
   margin: 24px 0 36px;
-  line-height: 0.98;
+  line-height: 1.12;
+  overflow: visible;
+  padding-bottom: 0.1em;
 }
 
 html[data-layout="web"] .hero-sub {

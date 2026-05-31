@@ -42,49 +42,38 @@ html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
   filter: none !important;
 }
 
-/* ── Travel / Reimagined — gradient clip text ── */
-.hero[data-surface-theme="night"] .hero-title-line {
-  background: linear-gradient(90deg, #5A3A9A, #FFD28C) !important;
-  background-image: linear-gradient(90deg, #5A3A9A, #FFD28C) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
-  filter: none !important;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45) !important;
+/* ── Travel / Reimagined — per-line gradient clip (fit-content so gradient spans text, not container) ── */
+html body .hero .hero-title {
+  overflow: visible;
+  padding-bottom: 0.14em;
 }
 
-.hero[data-surface-theme="night"] .hero-title-accent {
-  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
-  background-image: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+html body .hero .hero-title-line,
+html body .hero .hero-title-accent {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: visible;
+  padding-bottom: 0.08em;
+  line-height: 1.12;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
-  filter: none !important;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
-}
-
-.hero[data-surface-theme="day"] .hero-title-line {
-  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
-  background-image: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
-  filter: none !important;
   text-shadow: none !important;
+  filter: none !important;
 }
 
-.hero[data-surface-theme="day"] .hero-title-accent {
-  background: linear-gradient(90deg, #FF8C42, #C87010) !important;
-  background-image: linear-gradient(90deg, #FF8C42, #C87010) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
-  filter: none !important;
-  text-shadow: none !important;
+html body .hero .hero-title-line {
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+}
+
+html body .hero .hero-title-accent {
+  background-image: linear-gradient(90deg, #FF8C42 0%, #C87010 100%) !important;
 }
 
 .hero[data-surface-theme="night"] .hero-sub {
@@ -214,20 +203,11 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
   opacity: 1 !important;
 }
 
-/* Mobile: accent line gets legibility shadow only, not gold glow */
-@media (max-width: 768px) {
-  html[data-layout="mobile"] .hero[data-surface-theme="night"] .hero-title-accent {
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
-  }
-
-  html[data-layout="mobile"] .hero[data-surface-theme="day"] .hero-title-accent {
-    text-shadow: none !important;
-  }
-}
 
 /* Keep hero UI above scene haze */
 .hero[data-surface-theme] .hero-content {
   position: relative;
   z-index: 15;
   isolation: isolate;
+  overflow: visible;
 }

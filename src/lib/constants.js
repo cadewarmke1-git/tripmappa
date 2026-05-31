@@ -57,7 +57,7 @@ export const HERO_PHOTO_DAY = HERO_PHOTOS_DAY[0];
 export const HERO_PHOTO_NIGHT = HERO_PHOTOS_NIGHT[0];
 
 
-/** Vintage road atlas — day theme with clear land / road / water hierarchy. */
+/** Warm amber desert terrain — day theme with clear land / road / water hierarchy. */
 export const DAY_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },

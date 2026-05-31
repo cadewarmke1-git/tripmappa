@@ -52,7 +52,11 @@
 
 .hero .hero-title-line {
   display: block;
-  background: var(--color-hero-title-gradient);
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -61,7 +65,11 @@
 
 .hero .hero-title-accent {
   display: block;
-  background: var(--color-hero-accent-gradient);
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background-image: linear-gradient(90deg, #FF8C42 0%, #C87010 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

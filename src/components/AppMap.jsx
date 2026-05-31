@@ -37,6 +37,7 @@ export default function AppMap({
   lowFuelSegmentPaths = [],
   mapFocusTarget = null,
   onMapReady,
+  onMapUnmount,
   onMapStyleOpenChange,
   onMapStyleChange,
   onMarkerAction,
@@ -49,17 +50,40 @@ export default function AppMap({
   showRoutePill = true,
 }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [mapInstance, setMapInstance] = useState(null);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
   const mapStyles = useMemo(() => resolveMapStyles(mapStyle, theme), [mapStyle, theme]);
+  const mapOptions = useMemo(() => ({
+    disableDefaultUI: false,
+    zoomControl: false,
+    streetViewControl: false,
+    mapTypeControl: false,
+    fullscreenControl: false,
+    mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
+    styles: mapStyles,
+  }), [mapStyle, mapStyles]);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google) return;
+    if (!mapInstance || !window.google?.maps) return;
     const typeId = mapStyle === "satellite"
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
-    mapRef.current.setMapTypeId(typeId);
-    applyMapThemeStyles(mapRef.current, mapStyle, theme);
-  }, [mapStyle, theme, mapStyles, mapRef, isLoaded]);
+    mapInstance.setMapTypeId(typeId);
+    applyMapThemeStyles(mapInstance, mapStyle, theme);
+  }, [mapInstance, mapStyle, theme]);
+
+  function handleMapLoad(map) {
+    mapRef.current = map;
+    setMapInstance(map);
+    applyMapThemeStyles(map, mapStyle, theme);
+    onMapReady?.();
+  }
+
+  function handleMapUnmount() {
+    mapRef.current = null;
+    setMapInstance(null);
+    onMapUnmount?.();
+  }
 
   useEffect(() => {
     if (!mapFocusTarget?.lat || !mapRef.current || !window.google) return;
@@ -93,19 +117,9 @@ export default function AppMap({
             mapContainerClassName="gmap-wrap"
             center={mapCenter}
             zoom={4}
-            onLoad={map => {
-              mapRef.current = map;
-              onMapReady?.();
-            }}
-            options={{
-              disableDefaultUI: false,
-              zoomControl: false,
-              streetViewControl: false,
-              mapTypeControl: false,
-              fullscreenControl: false,
-              mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
-              styles: mapStyles,
-            }}
+            onLoad={handleMapLoad}
+            onUnmount={handleMapUnmount}
+            options={mapOptions}
             onClick={() => setSelectedMarker(null)}
           >
             {directions && (

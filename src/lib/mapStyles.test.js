@@ -3,6 +3,7 @@ import { DAY_MAP_STYLES, NIGHT_MAP_STYLES } from "./constants.js";
 import {
   MAP_DAY_BASE,
   MAP_DAY_HIGHWAY,
+  MAP_DAY_LOCAL_ROAD,
   MAP_DAY_WATER,
   MAP_NIGHT_BASE,
   MAP_NIGHT_WATER,
@@ -15,13 +16,16 @@ describe("mapStyles", () => {
     expect(resolveMapStyles("standard", "night")).toBe(NIGHT_MAP_STYLES);
   });
 
-  it("day styles distinguish land, highway, and water", () => {
+  it("day styles distinguish land, highway, local roads, and water", () => {
     const colors = DAY_MAP_STYLES.flatMap(rule =>
       (rule.stylers || []).map(s => s.color).filter(Boolean),
     );
     expect(colors).toContain(MAP_DAY_BASE);
     expect(colors).toContain(MAP_DAY_HIGHWAY);
+    expect(colors).toContain(MAP_DAY_LOCAL_ROAD);
     expect(colors).toContain(MAP_DAY_WATER);
+    expect(MAP_DAY_BASE).toBe("#D4A96A");
+    expect(MAP_DAY_HIGHWAY).toBe("#8B3A0F");
   });
 
   it("night styles use deep land and darker water", () => {

@@ -2639,6 +2639,7 @@ export default function App() {
               lowFuelSegmentPaths={lowFuelSegmentPaths}
               mapFocusTarget={mapFocusTarget}
               onMapReady={() => setMapReady(true)}
+              onMapUnmount={() => setMapReady(false)}
               onMapStyleOpenChange={setMapStyleOpen}
               onMapStyleChange={setMapStyle}
               onRecenter={recenterMap}
@@ -2695,6 +2696,7 @@ export default function App() {
             lowFuelSegmentPaths={lowFuelSegmentPaths}
             mapFocusTarget={mapFocusTarget}
             onMapReady={() => setMapReady(true)}
+            onMapUnmount={() => setMapReady(false)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
             onRecenter={recenterMap}

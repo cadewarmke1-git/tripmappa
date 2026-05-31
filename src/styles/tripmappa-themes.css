@@ -100,7 +100,7 @@
   --color-accent-gradient: linear-gradient(135deg, #C87010, #E06820);
   --color-wordmark-gradient: linear-gradient(90deg, #C87010, #E06820);
   --color-accent-text-gradient: linear-gradient(135deg, #C87010, #E06820);
-  --color-map-mesh: #F5E6C8;
+  --color-map-mesh: #D4A96A;
   --color-panel-mesh: #EED8A8;
   --color-btn-primary-bg: #1A0D00;
   --color-btn-primary-text: #FFD28C;
@@ -127,7 +127,7 @@
   --color-focus-ring: #FFD28C;
   --color-hero-overlay: linear-gradient(180deg, rgba(247, 152, 32, 0.88) 0%, rgba(224, 104, 32, 0.82) 42%, rgba(138, 64, 16, 0.86) 72%, rgba(26, 13, 0, 0.94) 100%);
   --color-banner-bg: rgba(245, 230, 200, 0.92);
-  --color-map-surface: #F5E6C8;
+  --color-map-surface: #D4A96A;
   --color-map-panel: #EED8A8;
   --color-hero-title-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-accent-gradient: linear-gradient(90deg, #FF8C42, #C87010);
