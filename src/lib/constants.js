@@ -49,11 +49,6 @@ export const HERO_PHOTOS_NIGHT = [
 export const HERO_PHOTO = "/hero-mountain.jpg";
 export const HERO_PHOTO_PRELOAD = HERO_PHOTO;
 
-/** Photographic celestial + cloud sprites for the animated sky layer. */
-export const HERO_SUN = "/hero/sun.png";
-export const HERO_MOON = "/hero/moon.png";
-export const HERO_CLOUD_WISP = "/hero/cloud-wisp.png";
-
 /** @deprecated Use HERO_PHOTO — kept for legacy imports */
 export const HERO_PHOTO_DAY = HERO_PHOTOS_DAY[0];
 export const HERO_PHOTO_NIGHT = HERO_PHOTOS_NIGHT[0];

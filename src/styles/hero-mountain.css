@@ -47,114 +47,211 @@
   );
 }
 
-/* ── Sun (photographic disk) ── */
+/* ── Sun (CSS — soft corona, no image artifacts) ── */
 .hero-sun {
   position: absolute;
   left: var(--sun-x, 50%);
   top: var(--sun-y, 20%);
-  width: clamp(56px, 10vw, 96px);
-  height: clamp(56px, 10vw, 96px);
   transform: translate(-50%, -50%);
   opacity: var(--sun-visible, 0);
   z-index: 3;
   transition: left 1s ease, top 1s ease, opacity 1s ease;
 }
 
-.hero-sun-glow {
+.hero-sun-corona {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 280%;
-  height: 280%;
+  width: min(88vw, 720px);
+  height: min(88vw, 720px);
   transform: translate(-50%, -50%);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   border-radius: 50%;
-  filter: blur(22px) brightness(1.35) saturate(1.15);
-  opacity: calc(var(--sky-glow, 0) * var(--sun-disc-op, 1) * 0.82);
-  mix-blend-mode: screen;
-  pointer-events: none;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 210, 150)) 32%, transparent) 0%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 180, 100)) 14%, transparent) 42%,
+    transparent 100%
+  );
+  opacity: calc(var(--sky-glow, 0) * 0.9);
+  filter: blur(28px);
 }
 
-.hero-sun-disk {
+.hero-sun-rays {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  left: 50%;
+  top: 50%;
+  width: min(52vw, 420px);
+  height: min(52vw, 420px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 28deg,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 170)) 18%, transparent) 28deg 32deg,
+    transparent 32deg 88deg,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 210, 150)) 14%, transparent) 88deg 92deg,
+    transparent 92deg 148deg,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 170)) 16%, transparent) 148deg 152deg,
+    transparent 152deg 208deg,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 210, 150)) 12%, transparent) 208deg 212deg,
+    transparent 212deg 268deg,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 170)) 15%, transparent) 268deg 272deg,
+    transparent 272deg 328deg,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 210, 150)) 13%, transparent) 328deg 332deg,
+    transparent 332deg 360deg
+  );
+  opacity: calc(var(--sky-glow, 0) * var(--sun-disc-op, 1) * 0.55);
+  filter: blur(6px);
+  animation: heroSunRays 120s linear infinite;
+}
+
+@keyframes heroSunRays {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.hero-sun-halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(36vw, 280px);
+  height: min(36vw, 280px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 170)) 78%, transparent) 0%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 190, 110)) 38%, transparent) 55%,
+    transparent 100%
+  );
+  opacity: calc(var(--sky-glow, 0) * 0.95);
+  filter: blur(14px);
+}
+
+.hero-sun-disc {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(36px, 6.5vw, 64px);
+  height: clamp(36px, 6.5vw, 64px);
+  transform: translate(-50%, -50%);
   border-radius: 50%;
   opacity: var(--sun-disc-op, 1);
-  filter: saturate(1.12) brightness(1.06) contrast(1.04);
-  box-shadow:
-    0 0 28px rgba(255, 210, 140, 0.65),
-    0 0 72px rgba(255, 180, 90, 0.35);
   transition: opacity 1s ease;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 252, 245, 0.15) 0%,
+    rgba(255, 240, 210, 0.4) 62%,
+    rgba(255, 200, 120, 0.55) 100%
+  );
+  box-shadow:
+    0 0 0 2px rgba(255, 235, 200, 0.35),
+    0 0 18px rgba(255, 220, 160, 0.85),
+    0 0 48px rgba(255, 190, 100, 0.55),
+    0 0 96px rgba(255, 170, 80, 0.28);
+  overflow: hidden;
 }
 
-/* ── Moon (photographic disk + phase shadow) ── */
+.hero-sun-core {
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 34%,
+    #fff 0%,
+    #fffef8 28%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 230, 190)) 40%, #fff) 58%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 195, 120)) 70%, #ffe8c8) 100%
+  );
+  box-shadow: inset -3px -2px 6px rgba(255, 160, 80, 0.22);
+}
+
+.hero-sun-flare {
+  position: absolute;
+  top: 18%;
+  left: 62%;
+  width: 22%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, transparent 72%);
+  filter: blur(1px);
+}
+
+/* ── Moon (CSS — shaded disc + craters) ── */
 .hero-moon {
   position: absolute;
   left: var(--moon-x, 50%);
   top: var(--moon-y, 18%);
-  width: clamp(48px, 8vw, 80px);
-  height: clamp(48px, 8vw, 80px);
   transform: translate(-50%, -50%);
   opacity: var(--moon-visible, 0);
   z-index: 3;
   transition: left 1s ease, top 1s ease, opacity 1s ease;
 }
 
-.hero-moon-glow {
+.hero-moon-halo {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 220%;
-  height: 220%;
+  width: min(28vw, 200px);
+  height: min(28vw, 200px);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
     circle closest-side,
-    rgba(220, 228, 255, 0.38) 0%,
-    rgba(180, 190, 230, 0.1) 55%,
+    rgba(220, 228, 255, 0.45) 0%,
+    rgba(180, 190, 230, 0.12) 55%,
     transparent 100%
   );
-  filter: blur(8px);
+  filter: blur(10px);
 }
 
-.hero-moon-body {
+.hero-moon-disc {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: clamp(32px, 5.5vw, 56px);
+  height: clamp(32px, 5.5vw, 56px);
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  overflow: hidden;
+  background: radial-gradient(
+    circle at 42% 38%,
+    #fff 0%,
+    #eef1f8 38%,
+    #c8d0e0 72%,
+    #9aa6bc 100%
+  );
   box-shadow:
-    0 0 16px rgba(210, 220, 245, 0.5),
-    0 0 40px rgba(160, 175, 210, 0.22);
+    0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 0 20px rgba(210, 220, 245, 0.65),
+    0 0 52px rgba(160, 175, 210, 0.28);
+  overflow: hidden;
 }
 
-.hero-moon-disk {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
-  filter: contrast(1.06) brightness(0.98);
-}
-
-.hero-moon-phase {
+.hero-moon-shade {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: linear-gradient(
-    var(--moon-shadow-angle, 90deg),
-    rgba(4, 6, 16, 0.92) 0%,
-    rgba(4, 6, 16, 0.92) var(--moon-shadow-stop, 45%),
-    transparent var(--moon-shadow-stop, 45%),
-    transparent 100%
+  background: radial-gradient(
+    circle at var(--moon-shade-x, 65%) 42%,
+    transparent 0%,
+    transparent 38%,
+    rgba(55, 62, 88, 0.24) 54%,
+    rgba(35, 40, 62, 0.42) 100%
   );
-  mix-blend-mode: multiply;
   transition: background 1.2s ease;
 }
+
+.hero-moon-crater {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(120, 130, 155, 0.22);
+  box-shadow: inset 1px 1px 2px rgba(80, 88, 110, 0.25);
+}
+
+.hero-moon-crater--a { width: 18%; height: 18%; top: 28%; left: 22%; }
+.hero-moon-crater--b { width: 12%; height: 12%; top: 52%; left: 38%; }
+.hero-moon-crater--c { width: 10%; height: 10%; top: 38%; left: 58%; }
+.hero-moon-crater--d { width: 8%; height: 8%; top: 62%; left: 24%; opacity: 0.85; }
+.hero-moon-crater--e { width: 7%; height: 7%; top: 44%; left: 72%; opacity: 0.7; }
 
 .hero-milky-way {
   position: absolute;
@@ -213,108 +310,108 @@
   z-index: 1;
 }
 
-/* ── Photographic cloud wisps (daytime) ── */
+/* ── Drifting cloud clusters (CSS puffs — no PNG boxes) ── */
 .hero-clouds {
   position: absolute;
   inset: 0;
   z-index: 2;
   overflow: hidden;
   pointer-events: none;
-  opacity: var(--sky-clouds, 0.55);
-  animation: heroCloudsPulse 18s ease-in-out infinite;
+  opacity: var(--sky-clouds, 0.45);
+  animation: heroCloudsPulse 16s ease-in-out infinite;
 }
 
-.hero-cloud-sprite {
+.hero-cloud-cluster {
   position: absolute;
-  width: auto;
-  height: auto;
-  max-width: 42%;
-  opacity: 0.72;
-  mix-blend-mode: screen;
-  filter: brightness(1.08) contrast(1.02);
-  pointer-events: none;
-  user-select: none;
+  filter: blur(10px);
 }
 
-.hero-cloud-sprite--flip {
-  transform: scaleX(-1);
+.hero-cloud-puff {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.5) 48%,
+    rgba(255, 255, 255, 0.1) 72%,
+    transparent 82%
+  );
 }
 
-.hero-cloud-sprite--a {
-  top: 6%;
-  left: -18%;
-  max-width: 46%;
-  animation: heroCloudDriftA 135s linear infinite;
+.hero-cloud-cluster--a {
+  width: 34%;
+  height: 16%;
+  top: 9%;
+  left: -14%;
+  animation: heroCloudDriftA 130s linear infinite;
 }
 
-.hero-cloud-sprite--b {
-  top: 14%;
-  left: 28%;
-  max-width: 38%;
+.hero-cloud-cluster--a .hero-cloud-puff--1 { width: 42%; height: 70%; top: 20%; left: 8%; }
+.hero-cloud-cluster--a .hero-cloud-puff--2 { width: 55%; height: 85%; top: 8%; left: 28%; }
+.hero-cloud-cluster--a .hero-cloud-puff--3 { width: 38%; height: 62%; top: 28%; left: 52%; }
+.hero-cloud-cluster--a .hero-cloud-puff--4 { width: 30%; height: 50%; top: 12%; left: 68%; }
+.hero-cloud-cluster--a .hero-cloud-puff--5 { width: 22%; height: 38%; top: 32%; left: 78%; opacity: 0.75; }
+
+.hero-cloud-cluster--b {
+  width: 28%;
+  height: 14%;
+  top: 17%;
+  left: 32%;
   animation: heroCloudDriftB 175s linear infinite;
 }
 
-.hero-cloud-sprite--c {
-  top: 2%;
-  left: 58%;
-  max-width: 34%;
+.hero-cloud-cluster--b .hero-cloud-puff--1 { width: 48%; height: 75%; top: 15%; left: 5%; }
+.hero-cloud-cluster--b .hero-cloud-puff--2 { width: 52%; height: 80%; top: 5%; left: 30%; }
+.hero-cloud-cluster--b .hero-cloud-puff--3 { width: 36%; height: 58%; top: 25%; left: 55%; }
+.hero-cloud-cluster--b .hero-cloud-puff--4 { width: 28%; height: 48%; top: 10%; left: 72%; }
+.hero-cloud-cluster--b .hero-cloud-puff--5 { width: 20%; height: 36%; top: 28%; left: 82%; opacity: 0.7; }
+
+.hero-cloud-cluster--c {
+  width: 26%;
+  height: 12%;
+  top: 5%;
+  left: 60%;
   animation: heroCloudDriftC 210s linear infinite;
 }
 
-.hero-cloud-sprite--d {
-  top: 20%;
-  left: 4%;
-  max-width: 32%;
-  opacity: 0.58;
-  animation: heroCloudDriftB 190s linear infinite reverse;
+.hero-cloud-cluster--c .hero-cloud-puff--1 { width: 44%; height: 72%; top: 18%; left: 10%; }
+.hero-cloud-cluster--c .hero-cloud-puff--2 { width: 50%; height: 78%; top: 6%; left: 32%; }
+.hero-cloud-cluster--c .hero-cloud-puff--3 { width: 34%; height: 55%; top: 22%; left: 58%; }
+.hero-cloud-cluster--c .hero-cloud-puff--4 { width: 26%; height: 45%; top: 8%; left: 74%; }
+.hero-cloud-cluster--c .hero-cloud-puff--5 { width: 18%; height: 32%; top: 24%; left: 84%; opacity: 0.65; }
+
+.hero-cloud-cluster--d {
+  width: 22%;
+  height: 11%;
+  top: 22%;
+  left: 6%;
+  animation: heroCloudDriftB 195s linear infinite reverse;
 }
 
+.hero-cloud-cluster--d .hero-cloud-puff--1 { width: 40%; height: 68%; top: 20%; left: 12%; }
+.hero-cloud-cluster--d .hero-cloud-puff--2 { width: 46%; height: 74%; top: 8%; left: 34%; }
+.hero-cloud-cluster--d .hero-cloud-puff--3 { width: 32%; height: 52%; top: 24%; left: 56%; }
+.hero-cloud-cluster--d .hero-cloud-puff--4 { width: 24%; height: 42%; top: 14%; left: 70%; }
+.hero-cloud-cluster--d .hero-cloud-puff--5 { width: 16%; height: 30%; top: 26%; left: 80%; opacity: 0.6; }
+
 @keyframes heroCloudsPulse {
-  0%, 100% { opacity: calc(var(--sky-clouds, 0.55) * 0.88); }
-  50% { opacity: var(--sky-clouds, 0.55); }
+  0%, 100% { opacity: calc(var(--sky-clouds, 0.45) * 0.9); }
+  50% { opacity: var(--sky-clouds, 0.45); }
 }
 
 @keyframes heroCloudDriftA {
   from { transform: translateX(0); }
-  to { transform: translateX(118vw); }
-}
-
-.hero-cloud-sprite--flip.hero-cloud-sprite--a {
-  animation-name: heroCloudDriftAFlip;
-}
-
-@keyframes heroCloudDriftAFlip {
-  from { transform: scaleX(-1) translateX(0); }
-  to { transform: scaleX(-1) translateX(118vw); }
+  to { transform: translateX(115vw); }
 }
 
 @keyframes heroCloudDriftB {
   from { transform: translateX(0); }
-  to { transform: translateX(-122vw); }
-}
-
-.hero-cloud-sprite--flip.hero-cloud-sprite--b,
-.hero-cloud-sprite--flip.hero-cloud-sprite--d {
-  animation-name: heroCloudDriftBFlip;
-}
-
-@keyframes heroCloudDriftBFlip {
-  from { transform: scaleX(-1) translateX(0); }
-  to { transform: scaleX(-1) translateX(-122vw); }
+  to { transform: translateX(-120vw); }
 }
 
 @keyframes heroCloudDriftC {
   from { transform: translateX(0); }
-  to { transform: translateX(-108vw); }
-}
-
-.hero-cloud-sprite--flip.hero-cloud-sprite--c {
-  animation-name: heroCloudDriftCFlip;
-}
-
-@keyframes heroCloudDriftCFlip {
-  from { transform: scaleX(-1) translateX(0); }
-  to { transform: scaleX(-1) translateX(-108vw); }
+  to { transform: translateX(-105vw); }
 }
 
 /* ── Photo mountains (masked — sky is animated separately) ── */
@@ -422,11 +519,12 @@
     animation: none;
   }
 
-  .hero-cloud-sprite--a,
-  .hero-cloud-sprite--b,
-  .hero-cloud-sprite--c,
-  .hero-cloud-sprite--d,
-  .hero-clouds {
+  .hero-cloud-cluster--a,
+  .hero-cloud-cluster--b,
+  .hero-cloud-cluster--c,
+  .hero-cloud-cluster--d,
+  .hero-clouds,
+  .hero-sun-rays {
     animation: none;
   }
 }

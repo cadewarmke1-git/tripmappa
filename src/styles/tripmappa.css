@@ -436,8 +436,8 @@
   }
   .hero-input::placeholder { color: rgba(255,255,255,0.6); font-weight: 400; }
   .hero-go-btn {
-    background: var(--gold-primary);
-    color: var(--deep-dark); border: none; border-radius: var(--r-lg);
+    background: var(--color-btn-primary-bg);
+    color: var(--color-btn-primary-text); border: none; border-radius: var(--r-lg);
     padding: 15px 28px; font-family: 'Inter', sans-serif;
     font-size: 14px; font-weight: 700; cursor: pointer;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); white-space: nowrap;

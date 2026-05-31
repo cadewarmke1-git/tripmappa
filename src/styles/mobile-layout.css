@@ -115,7 +115,7 @@
     font-size: 14px;
     margin: 0 auto 14px;
     max-width: 100%;
-    color: rgba(255, 255, 255, 0.92) !important;
+    color: var(--color-hero-subtitle) !important;
     text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
   }
 
@@ -127,31 +127,40 @@
     padding: 12px;
     border-radius: 16px;
     gap: 10px;
-    background: rgba(10, 12, 22, 0.5) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-color: rgba(255, 255, 255, 0.22) !important;
+    background: var(--color-input-bg) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-color: var(--color-input-border) !important;
     box-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
   }
 
   html[data-layout="mobile"] .hero-search:focus-within {
-    border-color: rgba(255, 255, 255, 0.32) !important;
+    border-color: var(--color-input-border) !important;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.34) !important;
   }
 
-  html[data-layout="mobile"] .hero.day .hero-input,
   html[data-layout="mobile"] .hero.night .hero-input {
-    color: #fff !important;
+    color: #FFFFFF !important;
   }
 
-  html[data-layout="mobile"] .hero.day .hero-input::placeholder,
+  html[data-layout="mobile"] .hero.day .hero-input {
+    color: #1A0D00 !important;
+  }
+
   html[data-layout="mobile"] .hero.night .hero-input::placeholder {
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
   }
 
-  html[data-layout="mobile"] .hero.day .hero-route-cell .hero-input-label,
+  html[data-layout="mobile"] .hero.day .hero-input::placeholder {
+    color: rgba(26, 13, 0, 0.45) !important;
+  }
+
   html[data-layout="mobile"] .hero.night .hero-route-cell .hero-input-label {
-    color: rgba(255, 210, 160, 0.95) !important;
+    color: #FFD28C !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-route-cell .hero-input-label {
+    color: #A04010 !important;
   }
 
   html[data-layout="mobile"] .hero-route-grid {
@@ -188,10 +197,11 @@
   html[data-layout="mobile"] .hero-auth-btn,
   html[data-layout="mobile"] .hero-email-btn,
   html[data-layout="mobile"] .hero-phone-btn {
-    background: rgba(10, 12, 22, 0.42) !important;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-color: rgba(255, 255, 255, 0.18) !important;
+    background: var(--color-btn-secondary-bg) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-color: var(--color-btn-secondary-border) !important;
+    color: var(--color-btn-secondary-text) !important;
   }
 
   html[data-layout="mobile"] .hero-auth-btns {

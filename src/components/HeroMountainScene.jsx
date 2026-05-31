@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { HERO_CLOUD_WISP, HERO_MOON, HERO_PHOTO, HERO_SUN } from "../lib/constants.js";
+import { HERO_PHOTO } from "../lib/constants.js";
 import { buildStarField, getSkyAtmosphere, SKY_PHASES } from "../lib/skyTime.js";
 
 const STARS = buildStarField(110, 42).map((star, i) => ({
@@ -8,12 +8,7 @@ const STARS = buildStarField(110, 42).map((star, i) => ({
   twinkleDelay: (i * 0.27) % 5,
 }));
 
-const CLOUD_SPRITES = [
-  { id: "a", flip: false },
-  { id: "b", flip: true },
-  { id: "c", flip: false },
-  { id: "d", flip: true },
-];
+const CLOUD_CLUSTERS = ["a", "b", "c", "d"];
 
 export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 }) {
   const atmosphere = useMemo(() => getSkyAtmosphere(hour), [hour]);
@@ -61,32 +56,37 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
         )}
 
         <div className="hero-sun">
-          <div
-            className="hero-sun-glow"
-            style={{ backgroundImage: `url(${HERO_SUN})` }}
-            aria-hidden="true"
-          />
-          <img className="hero-sun-disk" src={HERO_SUN} alt="" draggable={false} />
+          <div className="hero-sun-corona" />
+          <div className="hero-sun-rays" aria-hidden="true" />
+          <div className="hero-sun-halo" />
+          <div className="hero-sun-disc">
+            <div className="hero-sun-core" />
+            <div className="hero-sun-flare" aria-hidden="true" />
+          </div>
         </div>
 
         <div className="hero-moon">
-          <div className="hero-moon-glow" aria-hidden="true" />
-          <div className="hero-moon-body">
-            <img className="hero-moon-disk" src={HERO_MOON} alt="" draggable={false} />
-            <div className="hero-moon-phase" aria-hidden="true" />
+          <div className="hero-moon-halo" />
+          <div className="hero-moon-disc">
+            <div className="hero-moon-shade" />
+            <div className="hero-moon-crater hero-moon-crater--a" />
+            <div className="hero-moon-crater hero-moon-crater--b" />
+            <div className="hero-moon-crater hero-moon-crater--c" />
+            <div className="hero-moon-crater hero-moon-crater--d" />
+            <div className="hero-moon-crater hero-moon-crater--e" />
           </div>
         </div>
 
         {showClouds && (
           <div className="hero-clouds" aria-hidden="true">
-            {CLOUD_SPRITES.map(({ id, flip }) => (
-              <img
-                key={id}
-                className={`hero-cloud-sprite hero-cloud-sprite--${id}${flip ? " hero-cloud-sprite--flip" : ""}`}
-                src={HERO_CLOUD_WISP}
-                alt=""
-                draggable={false}
-              />
+            {CLOUD_CLUSTERS.map(id => (
+              <div key={id} className={`hero-cloud-cluster hero-cloud-cluster--${id}`}>
+                <span className="hero-cloud-puff hero-cloud-puff--1" />
+                <span className="hero-cloud-puff hero-cloud-puff--2" />
+                <span className="hero-cloud-puff hero-cloud-puff--3" />
+                <span className="hero-cloud-puff hero-cloud-puff--4" />
+                <span className="hero-cloud-puff hero-cloud-puff--5" />
+              </div>
             ))}
           </div>
         )}

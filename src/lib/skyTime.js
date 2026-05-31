@@ -161,18 +161,7 @@ function moonPosition(hour) {
   return {
     x: 16 + clamped * 68,
     y: 12 + (1 - Math.sin(clamped * Math.PI)) * 18,
-  };
-}
-
-function moonLighting(hour) {
-  const h = ((hour % 24) + 24) % 24;
-  if (h >= 5 && h < 20) return { shadeX: 65, shadowAngle: 90, shadowStop: 50 };
-  const t = h >= 20 ? (h - 20) / 9 : (h + 4) / 9;
-  const clamped = Math.max(0, Math.min(1, t));
-  return {
     shadeX: 52 + Math.sin(clamped * Math.PI * 2) * 22,
-    shadowAngle: 75 + clamped * 35,
-    shadowStop: 6 + Math.abs(Math.sin(clamped * Math.PI * 2)) * 20,
   };
 }
 
@@ -191,7 +180,6 @@ export function getSkyAtmosphere(hour = 12) {
   const sample = sampleAtmosphere(hour);
   const sun = sunPosition(hour);
   const moon = moonPosition(hour);
-  const moonLight = moonLighting(hour);
   const cloudOpacity = sample.stars > 0.45 ? 0.06 : 0.38 + sample.warmth * 0.35;
   return {
     starOpacity: sample.stars,
@@ -211,8 +199,7 @@ export function getSkyAtmosphere(hour = 12) {
       "--moon-x": moon ? `${moon.x}%` : "50%",
       "--moon-y": moon ? `${moon.y}%` : "50%",
       "--moon-visible": moon ? "1" : "0",
-      "--moon-shadow-angle": `${moonLight.shadowAngle}deg`,
-      "--moon-shadow-stop": `${moonLight.shadowStop}%`,
+      "--moon-shade-x": moon ? `${moon.shadeX}%` : "65%",
       "--ridge-bleed": String(0.12 + sample.warmth * 0.55),
       "--milky-way": String(Math.max(0, sample.stars - 0.15) * 0.85),
       "--peak-haze": String(0.08 + sample.stars * 0.22),
