@@ -1,4 +1,4 @@
-/* Hero — full photo base + subtle atmospheric sky tint (not a flat color filter) */
+/* Hero — procedural alpine sky + layered vector mountains (no photo) */
 
 .hero-mountain-scene {
   position: absolute;
@@ -9,89 +9,102 @@
   background: #0a0c14;
 }
 
-/* ── Photo: full frame, natural sky from the image ── */
-.hero-photo-layer {
+/* ── Full sky gradient (replaces static photo + tint overlay) ── */
+.hero-sky-gradient {
   position: absolute;
   inset: 0;
   z-index: 0;
-}
-
-.hero-photo-layer .hero-photo-slide {
-  position: absolute;
-  inset: 0;
-  background-color: #0a0c14;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center 42%;
-}
-
-/* ── Atmospheric tint layers (low opacity, blend with photo) ── */
-.hero-sky-atmosphere {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  opacity: calc(0.18 + var(--sky-warmth, 0) * 0.28);
-  transition: opacity 2s ease;
-}
-
-.hero-sky-zenith {
-  position: absolute;
-  inset: 0;
   background: linear-gradient(
     180deg,
     var(--sky-zenith, rgb(72, 132, 198)) 0%,
-    color-mix(in srgb, var(--sky-horizon, rgb(218, 232, 245)) 55%, transparent) 38%,
-    transparent 62%
+    color-mix(in srgb, var(--sky-horizon, rgb(218, 232, 245)) 70%, var(--sky-zenith)) 42%,
+    var(--sky-horizon, rgb(218, 232, 245)) 68%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 180)) 35%, var(--sky-horizon)) 100%
   );
 }
 
-.hero-sky-glow {
+/* ── Sun ── */
+.hero-sun-halo {
   position: absolute;
   left: var(--sun-x, 50%);
   top: var(--sun-y, 50%);
-  width: min(62vw, 580px);
-  height: min(62vw, 580px);
+  width: min(72vw, 640px);
+  height: min(72vw, 640px);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
     circle closest-side,
-    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 180)) 55%, transparent) 0%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 180)) 70%, transparent) 0%,
     transparent 100%
   );
-  opacity: calc(var(--sun-visible, 0) * var(--sky-glow, 0) * 0.72);
-  filter: blur(36px);
-  mix-blend-mode: screen;
+  opacity: calc(var(--sun-visible, 0) * var(--sky-glow, 0) * 0.85);
+  filter: blur(42px);
+  z-index: 1;
   transition: left 1s ease, top 1s ease, opacity 1s ease;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-sky-atmosphere,
-  .hero-sky-glow {
-    transition: none;
-  }
+.hero-sun-disc {
+  position: absolute;
+  left: var(--sun-x, 50%);
+  top: var(--sun-y, 50%);
+  width: clamp(30px, 5.5vw, 56px);
+  height: clamp(30px, 5.5vw, 56px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 38%,
+    #fff 0%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 220, 160)) 55%, #fff) 55%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 180, 100)) 80%, transparent) 100%
+  );
+  box-shadow:
+    0 0 24px color-mix(in srgb, var(--sky-warm, rgb(255, 200, 120)) 75%, transparent),
+    0 0 64px color-mix(in srgb, var(--sky-warm, rgb(255, 180, 90)) 45%, transparent);
+  opacity: var(--sun-visible, 0);
+  z-index: 2;
+  transition: left 1s ease, top 1s ease, opacity 1s ease;
+}
+
+/* ── Moon ── */
+.hero-moon-disc {
+  position: absolute;
+  left: var(--moon-x, 50%);
+  top: var(--moon-y, 50%);
+  width: clamp(26px, 4.5vw, 48px);
+  height: clamp(26px, 4.5vw, 48px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 36%,
+    #fff 0%,
+    #dde2ee 42%,
+    #9aa3b8 100%
+  );
+  box-shadow:
+    0 0 18px rgba(220, 228, 245, 0.55),
+    0 0 48px rgba(180, 190, 220, 0.25);
+  opacity: var(--moon-visible, 0);
+  z-index: 2;
+  transition: left 1s ease, top 1s ease, opacity 1s ease;
 }
 
 .hero-stars {
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 48%;
-  z-index: 3;
-  mix-blend-mode: screen;
-  transition: opacity 2s ease;
+  height: 52%;
+  z-index: 1;
+  transition: opacity 1.5s ease;
 }
 
-/* Slow drifting cloud wisps */
+/* ── Drifting clouds ── */
 .hero-clouds {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   overflow: hidden;
   pointer-events: none;
   opacity: var(--sky-clouds, 0.35);
-  mix-blend-mode: soft-light;
 }
 
 .hero-cloud {
@@ -99,34 +112,34 @@
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(255, 255, 255, 0.55) 0%,
-    rgba(255, 255, 255, 0.08) 55%,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(255, 255, 255, 0.22) 52%,
     transparent 72%
   );
-  filter: blur(18px);
+  filter: blur(16px);
 }
 
 .hero-cloud--a {
-  width: 34%;
-  height: 12%;
-  top: 14%;
-  left: -8%;
+  width: 36%;
+  height: 13%;
+  top: 12%;
+  left: -10%;
   animation: heroCloudDriftA 140s linear infinite;
 }
 
 .hero-cloud--b {
-  width: 28%;
-  height: 10%;
-  top: 22%;
-  left: 40%;
+  width: 30%;
+  height: 11%;
+  top: 20%;
+  left: 38%;
   animation: heroCloudDriftB 190s linear infinite;
 }
 
 .hero-cloud--c {
-  width: 22%;
-  height: 8%;
-  top: 10%;
-  left: 68%;
+  width: 24%;
+  height: 9%;
+  top: 8%;
+  left: 66%;
   animation: heroCloudDriftC 220s linear infinite;
 }
 
@@ -145,7 +158,105 @@
   to { transform: translateX(-105vw); }
 }
 
+/* ── Mountain silhouettes ── */
+.hero-mountains {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: min(62vh, 520px);
+  z-index: 4;
+}
+
+.hero-mtn {
+  transition: fill 1s ease;
+}
+
+.hero-mtn--far {
+  fill: var(--mtn-far, rgb(88, 108, 128));
+}
+
+.hero-mtn--mid {
+  fill: var(--mtn-mid, rgb(58, 72, 92));
+}
+
+.hero-mtn--near {
+  fill: var(--mtn-near, rgb(32, 42, 56));
+}
+
+.hero-mtn-snow {
+  fill: var(--mtn-snow, rgb(248, 250, 255));
+  opacity: calc(0.55 + var(--mtn-rim, 0.1) * 0.8);
+  transition: fill 1s ease, opacity 1s ease;
+}
+
+/* Golden-hour rim light on the ridgeline */
+.hero-ridge-glow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(62vh, 520px);
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    transparent 58%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 180, 100)) calc(var(--mtn-rim, 0) * 55%), transparent) 72%,
+    color-mix(in srgb, var(--sky-warm, rgb(255, 200, 140)) calc(var(--mtn-rim, 0) * 35%), transparent) 84%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  opacity: calc(var(--mtn-rim, 0) * 1.2);
+  transition: opacity 1s ease;
+}
+
+/* ── Cloud sea below the peaks ── */
+.hero-cloud-sea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(244, 248, 252, 0.88) 22%,
+    rgba(228, 236, 244, 0.55) 48%,
+    rgba(210, 222, 235, 0.18) 72%,
+    transparent 100%
+  );
+  opacity: var(--cloud-sea, 0.85);
+  transition: opacity 1s ease;
+}
+
+.hero-mountain-scene--night .hero-cloud-sea,
+.hero-mountain-scene--pre_dawn .hero-cloud-sea {
+  background: linear-gradient(
+    to top,
+    rgba(18, 22, 38, 0.92) 0%,
+    rgba(28, 34, 52, 0.72) 28%,
+    rgba(38, 44, 64, 0.35) 55%,
+    transparent 100%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .hero-sun-halo,
+  .hero-sun-disc,
+  .hero-moon-disc,
+  .hero-mtn,
+  .hero-mtn-snow,
+  .hero-ridge-glow,
+  .hero-cloud-sea,
+  .hero-stars {
+    transition: none;
+  }
+
   .hero-cloud--a,
   .hero-cloud--b,
   .hero-cloud--c {
@@ -153,35 +264,16 @@
   }
 }
 
-/* Mist + golden-hour warmth at the ridgeline only */
-.hero-horizon-haze {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      transparent 0%,
-      transparent 44%,
-      color-mix(in srgb, var(--sky-warm, rgb(255, 200, 150)) calc(var(--sky-warmth, 0) * 55%), transparent) 54%,
-      rgba(12, 14, 24, 0.1) 58%,
-      rgba(12, 14, 24, 0.16) 64%,
-      transparent 76%
-    );
-  transition: background 2.4s ease;
-}
-
-/* ── Hero readability vignette (neutral — no orange day filter) ── */
+/* ── Hero readability vignette ── */
 .hero .hero-overlay {
   z-index: 1 !important;
   background: linear-gradient(
     180deg,
-    rgba(8, 10, 18, 0.22) 0%,
-    rgba(8, 10, 18, 0.06) 22%,
-    transparent 42%,
-    transparent 58%,
-    rgba(8, 10, 18, 0.38) 100%
+    rgba(8, 10, 18, 0.18) 0%,
+    rgba(8, 10, 18, 0.04) 20%,
+    transparent 40%,
+    transparent 62%,
+    rgba(8, 10, 18, 0.32) 100%
   ) !important;
   transition: background 2.4s ease, opacity 2.4s ease !important;
 }
@@ -300,20 +392,20 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
-/* ── Mobile: show more sky above the route form ── */
+/* ── Mobile: keep sky visible above the route form ── */
 @media (max-width: 768px) {
-  html[data-layout="mobile"] .hero-photo-layer .hero-photo-slide {
-    background-position: center 26%;
+  html[data-layout="mobile"] .hero-mountains {
+    height: min(56vh, 460px);
   }
 
   html[data-layout="mobile"] .hero:has(.hero-mountain-scene) .hero-overlay {
     background: linear-gradient(
       180deg,
-      rgba(8, 10, 18, 0.06) 0%,
-      rgba(8, 10, 18, 0.02) 16%,
-      transparent 36%,
+      rgba(8, 10, 18, 0.04) 0%,
+      rgba(8, 10, 18, 0.01) 14%,
+      transparent 34%,
       transparent 58%,
-      rgba(8, 10, 18, 0.42) 100%
+      rgba(8, 10, 18, 0.38) 100%
     ) !important;
   }
 

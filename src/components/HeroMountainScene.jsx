@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { HERO_PHOTO } from "../lib/constants.js";
+import { MTN_FAR, MTN_MID, MTN_NEAR, MTN_SNOW } from "../lib/heroMountainPaths.js";
 import { buildStarField, getSkyAtmosphere, SKY_PHASES } from "../lib/skyTime.js";
 
-const STARS = buildStarField(64);
+const STARS = buildStarField(72);
 
 export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 }) {
   const atmosphere = useMemo(() => getSkyAtmosphere(hour), [hour]);
@@ -15,22 +15,7 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
       style={atmosphere.cssVars}
       aria-hidden="true"
     >
-      <div className="hero-photo-layer">
-        <div className="hero-photo-slide" style={{ backgroundImage: `url(${HERO_PHOTO})` }} />
-      </div>
-
-      <div className="hero-sky-atmosphere">
-        <div className="hero-sky-zenith" />
-        <div className="hero-sky-glow" />
-      </div>
-
-      {showClouds && (
-        <div className="hero-clouds" aria-hidden="true">
-          <div className="hero-cloud hero-cloud--a" />
-          <div className="hero-cloud hero-cloud--b" />
-          <div className="hero-cloud hero-cloud--c" />
-        </div>
-      )}
+      <div className="hero-sky-gradient" />
 
       {showStars && (
         <svg
@@ -52,7 +37,32 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
         </svg>
       )}
 
-      <div className="hero-horizon-haze" aria-hidden="true" />
+      <div className="hero-sun-halo" />
+      <div className="hero-sun-disc" />
+      <div className="hero-moon-disc" />
+
+      {showClouds && (
+        <div className="hero-clouds" aria-hidden="true">
+          <div className="hero-cloud hero-cloud--a" />
+          <div className="hero-cloud hero-cloud--b" />
+          <div className="hero-cloud hero-cloud--c" />
+        </div>
+      )}
+
+      <svg
+        className="hero-mountains"
+        viewBox="0 0 1440 520"
+        preserveAspectRatio="xMidYMax slice"
+        aria-hidden="true"
+      >
+        <path className="hero-mtn hero-mtn--far" d={MTN_FAR} />
+        <path className="hero-mtn hero-mtn--mid" d={MTN_MID} />
+        <path className="hero-mtn hero-mtn--near" d={MTN_NEAR} />
+        <path className="hero-mtn-snow" d={MTN_SNOW} />
+      </svg>
+
+      <div className="hero-ridge-glow" aria-hidden="true" />
+      <div className="hero-cloud-sea" aria-hidden="true" />
     </div>
   );
 }
