@@ -1,0 +1,447 @@
+/* Hero page — TripMappa palette presentation (cosmetic only; no animation logic) */
+
+/* ── Sky / mountain palette overlays (above scene, below UI) ── */
+.hero-palette-vignette,
+.hero-palette-ridge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-palette-vignette {
+  z-index: 5;
+}
+
+.hero-palette-ridge {
+  z-index: 6;
+}
+
+.hero.night .hero-palette-vignette {
+  background:
+    radial-gradient(ellipse 82% 58% at 0% 0%, rgba(42, 26, 74, 0.25) 0%, transparent 68%),
+    radial-gradient(ellipse 82% 58% at 100% 0%, rgba(42, 26, 74, 0.25) 0%, transparent 68%);
+}
+
+.hero.night .hero-palette-ridge {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 36%,
+    rgba(255, 210, 140, 0.08) 46%,
+    rgba(255, 210, 140, 0.05) 50%,
+    transparent 58%
+  );
+}
+
+.hero.day .hero-palette-vignette {
+  background:
+    radial-gradient(ellipse 78% 52% at 0% 0%, rgba(247, 200, 74, 0.15) 0%, transparent 66%),
+    radial-gradient(ellipse 78% 52% at 100% 0%, rgba(247, 200, 74, 0.15) 0%, transparent 66%),
+    radial-gradient(ellipse 72% 48% at 0% 100%, rgba(224, 104, 32, 0.12) 0%, transparent 62%),
+    radial-gradient(ellipse 72% 48% at 100% 100%, rgba(224, 104, 32, 0.12) 0%, transparent 62%);
+}
+
+.hero.day .hero-palette-ridge {
+  background: none;
+}
+
+/* ── Nav wordmark on hero ── */
+.app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
+  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+}
+
+.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
+  background: linear-gradient(90deg, #C87010, #E06820) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+}
+
+/* ── Hero headline ── */
+.hero.night .hero-title-line {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.hero.night .hero-title-accent {
+  color: #FFD28C !important;
+  -webkit-text-fill-color: #FFD28C !important;
+}
+
+.hero.night .hero-sub {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.hero.day .hero-title-line {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+.hero.day .hero-title-accent {
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
+}
+
+.hero.day .hero-sub {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ── FROM / TO search row ── */
+.hero.night .hero-search {
+  background: rgba(13, 10, 26, 0.6) !important;
+  border-color: rgba(255, 210, 140, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.hero.night .hero-route-cell .hero-input-label {
+  color: #FFD28C !important;
+}
+
+.hero.night .hero-input {
+  color: #FFFFFF !important;
+}
+
+.hero.night .hero-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.hero.night .hero-swap-btn {
+  background: rgba(255, 140, 66, 0.15) !important;
+  border-color: rgba(255, 140, 66, 0.4) !important;
+  color: #FF8C42 !important;
+}
+
+.hero.night .hero-go-btn:not(:disabled) {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  color: #1A0D00 !important;
+  border: none !important;
+}
+
+.hero.day .hero-search {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(160, 64, 16, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.hero.day .hero-route-cell .hero-input-label {
+  color: #A04010 !important;
+}
+
+.hero.day .hero-input {
+  color: #1A0D00 !important;
+}
+
+.hero.day .hero-input::placeholder {
+  color: rgba(26, 13, 0, 0.45) !important;
+}
+
+.hero.day .hero-swap-btn {
+  background: rgba(224, 104, 32, 0.15) !important;
+  border-color: rgba(224, 104, 32, 0.4) !important;
+  color: #E06820 !important;
+}
+
+.hero.day .hero-go-btn:not(:disabled) {
+  background: #1A0D00 !important;
+  color: #FFD28C !important;
+  border: none !important;
+}
+
+/* ── Auth section ── */
+.hero.night .hero-auth-label {
+  color: rgba(255, 210, 140, 0.6) !important;
+}
+
+.hero.night .hero-auth-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #FFFFFF !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.hero.night .hero-auth-or::before,
+.hero.night .hero-auth-or::after {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.hero.night .hero-auth-or span {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.hero.night .hero-email-btn,
+.hero.night .hero-phone-btn {
+  background: rgba(13, 10, 26, 0.5) !important;
+  border-color: rgba(255, 210, 140, 0.2) !important;
+  color: #FFFFFF !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.hero.day .hero-auth-label {
+  color: rgba(90, 42, 16, 0.8) !important;
+}
+
+.hero.day .hero-auth-btn {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(160, 64, 16, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+.hero.day .hero-auth-or::before,
+.hero.day .hero-auth-or::after {
+  background: rgba(90, 42, 16, 0.2) !important;
+}
+
+.hero.day .hero-auth-or span {
+  color: rgba(90, 42, 16, 0.55) !important;
+}
+
+.hero.day .hero-email-btn,
+.hero.day .hero-phone-btn {
+  background: rgba(245, 230, 200, 0.7) !important;
+  border-color: rgba(160, 64, 16, 0.25) !important;
+  color: #1A0D00 !important;
+}
+
+/* ── Mobile: same palette specs (override mobile-layout.css) ── */
+@media (max-width: 768px) {
+  html[data-layout="mobile"] .hero.night .hero-sub {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-sub {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  html[data-layout="mobile"] .hero.night .hero-search {
+    background: rgba(13, 10, 26, 0.6) !important;
+    border-color: rgba(255, 210, 140, 0.25) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-search {
+    background: rgba(255, 255, 255, 0.75) !important;
+    border-color: rgba(160, 64, 16, 0.3) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  html[data-layout="mobile"] .hero.night .hero-input {
+    color: #FFFFFF !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-input {
+    color: #1A0D00 !important;
+  }
+
+  html[data-layout="mobile"] .hero.night .hero-route-cell .hero-input-label {
+    color: #FFD28C !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-route-cell .hero-input-label {
+    color: #A04010 !important;
+  }
+
+  html[data-layout="mobile"] .hero.night .hero-auth-btn,
+  html[data-layout="mobile"] .hero.night .hero-email-btn,
+  html[data-layout="mobile"] .hero.night .hero-phone-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #FFFFFF !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  html[data-layout="mobile"] .hero.night .hero-email-btn,
+  html[data-layout="mobile"] .hero.night .hero-phone-btn {
+    background: rgba(13, 10, 26, 0.5) !important;
+    border-color: rgba(255, 210, 140, 0.2) !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-auth-btn {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border-color: rgba(160, 64, 16, 0.25) !important;
+    color: #1A0D00 !important;
+  }
+
+  html[data-layout="mobile"] .hero.day .hero-email-btn,
+  html[data-layout="mobile"] .hero.day .hero-phone-btn {
+    background: rgba(245, 230, 200, 0.7) !important;
+    border-color: rgba(160, 64, 16, 0.25) !important;
+    color: #1A0D00 !important;
+  }
+}
+
+/* ── Focus states (keyboard) ── */
+.hero.night .hero-search:focus-within {
+  border-color: rgba(255, 210, 140, 0.45) !important;
+  box-shadow:
+    0 0 0 2px rgba(255, 210, 140, 0.32),
+    0 16px 48px rgba(0, 0, 0, 0.28) !important;
+}
+
+.hero.day .hero-search:focus-within {
+  border-color: rgba(160, 64, 16, 0.45) !important;
+  box-shadow:
+    0 0 0 2px rgba(224, 104, 32, 0.28),
+    0 16px 48px rgba(26, 13, 0, 0.12) !important;
+}
+
+.hero.night .hero-swap-btn:focus-visible,
+.hero.night .hero-go-btn:focus-visible,
+.hero.night .hero-auth-btn:focus-visible,
+.hero.night .hero-email-btn:focus-visible,
+.hero.night .hero-phone-btn:focus-visible,
+.hero.night .hero-draft-resume-btn:focus-visible,
+.hero.night .hero-draft-resume-dismiss:focus-visible {
+  outline: 2px solid #FFD28C !important;
+  outline-offset: 2px;
+}
+
+.hero.day .hero-swap-btn:focus-visible,
+.hero.day .hero-go-btn:focus-visible,
+.hero.day .hero-auth-btn:focus-visible,
+.hero.day .hero-email-btn:focus-visible,
+.hero.day .hero-phone-btn:focus-visible,
+.hero.day .hero-draft-resume-btn:focus-visible,
+.hero.day .hero-draft-resume-dismiss:focus-visible {
+  outline: 2px solid #E06820 !important;
+  outline-offset: 2px;
+}
+
+/* ── Auth button hover / active ── */
+.hero.night .hero-auth-btn,
+.hero.night .hero-email-btn,
+.hero.night .hero-phone-btn,
+.hero.day .hero-auth-btn,
+.hero.day .hero-email-btn,
+.hero.day .hero-phone-btn {
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease !important;
+}
+
+.hero.night .hero-auth-btn:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.hero.night .hero-email-btn:hover,
+.hero.night .hero-phone-btn:hover {
+  background: rgba(13, 10, 26, 0.65) !important;
+  border-color: rgba(255, 210, 140, 0.32) !important;
+}
+
+.hero.night .hero-auth-btn:active,
+.hero.night .hero-email-btn:active,
+.hero.night .hero-phone-btn:active {
+  transform: translateY(1px);
+}
+
+.hero.day .hero-auth-btn:hover {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(160, 64, 16, 0.38) !important;
+}
+
+.hero.day .hero-email-btn:hover,
+.hero.day .hero-phone-btn:hover {
+  background: rgba(245, 230, 200, 0.88) !important;
+  border-color: rgba(160, 64, 16, 0.38) !important;
+}
+
+.hero.day .hero-auth-btn:active,
+.hero.day .hero-email-btn:active,
+.hero.day .hero-phone-btn:active {
+  transform: translateY(1px);
+}
+
+.hero.night .hero-swap-btn:hover {
+  background: rgba(255, 140, 66, 0.22) !important;
+  border-color: rgba(255, 140, 66, 0.55) !important;
+}
+
+.hero.day .hero-swap-btn:hover {
+  background: rgba(224, 104, 32, 0.22) !important;
+  border-color: rgba(224, 104, 32, 0.55) !important;
+}
+
+/* ── Draft resume banner (frosted panel) ── */
+.hero.night .hero-draft-resume {
+  background: rgba(13, 10, 26, 0.6) !important;
+  border-color: rgba(255, 210, 140, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.22);
+}
+
+.hero.night .hero-draft-resume-text {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.hero.night .hero-draft-route-name {
+  color: #FFD28C !important;
+}
+
+.hero.night .hero-draft-resume-btn {
+  background: rgba(255, 140, 66, 0.12) !important;
+  border-color: rgba(255, 210, 140, 0.35) !important;
+  color: #FFD28C !important;
+}
+
+.hero.night .hero-draft-resume-btn:hover {
+  background: rgba(255, 140, 66, 0.2) !important;
+  border-color: rgba(255, 210, 140, 0.5) !important;
+}
+
+.hero.night .hero-draft-resume-dismiss {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.hero.night .hero-draft-resume-dismiss:hover {
+  color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.hero.day .hero-draft-resume {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(160, 64, 16, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 10px 36px rgba(26, 13, 0, 0.08);
+}
+
+.hero.day .hero-draft-resume-text {
+  color: rgba(26, 13, 0, 0.88) !important;
+}
+
+.hero.day .hero-draft-route-name {
+  color: #A04010 !important;
+  font-weight: 700;
+}
+
+.hero.day .hero-draft-resume-btn {
+  background: rgba(224, 104, 32, 0.1) !important;
+  border-color: rgba(160, 64, 16, 0.35) !important;
+  color: #E06820 !important;
+}
+
+.hero.day .hero-draft-resume-btn:hover {
+  background: rgba(224, 104, 32, 0.16) !important;
+  border-color: rgba(160, 64, 16, 0.48) !important;
+}
+
+.hero.day .hero-draft-resume-dismiss {
+  color: rgba(90, 42, 16, 0.45) !important;
+}
+
+.hero.day .hero-draft-resume-dismiss:hover {
+  color: rgba(26, 13, 0, 0.72) !important;
+  background: rgba(160, 64, 16, 0.08) !important;
+}

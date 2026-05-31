@@ -81,6 +81,8 @@ export default function HeroView({
       <div className={`hero ${heroTheme}`}>
         <HeroMountainScene phase={skyPhase} hour={skyHour} />
         <div className="hero-overlay" />
+        <div className="hero-palette-vignette" aria-hidden="true" />
+        <div className="hero-palette-ridge" aria-hidden="true" />
 
         <div className="hero-content">
           <h1 className="hero-title">

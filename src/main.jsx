@@ -16,6 +16,7 @@ import "./styles/mobile-layout.css";
 import "./styles/hero-mountain.css";
 /* Web vs mobile split at 769px — load after mobile-layout */
 import "./styles/hero-desktop.css";
+import "./styles/hero-palette.css";
 
 initViewportLayout();
 
