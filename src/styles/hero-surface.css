@@ -68,7 +68,11 @@ html body .hero .hero-title-accent {
   filter: none !important;
 }
 
-html body .hero .hero-title-line {
+html body .hero.night .hero-title-line {
+  background-image: linear-gradient(90deg, #5A3A9A 0%, #FFD28C 100%) !important;
+}
+
+html body .hero.day .hero-title-line {
   background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
 }
 

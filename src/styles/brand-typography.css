@@ -56,11 +56,18 @@
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+.hero.night .hero-title-line {
+  background-image: linear-gradient(90deg, #5A3A9A 0%, #FFD28C 100%);
+}
+
+.hero.day .hero-title-line {
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%);
 }
 
 .hero .hero-title-accent {
