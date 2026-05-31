@@ -4,22 +4,27 @@ export const ORANGE_PRIMARY = "#FF8C42";
 export const DEEP_DARK = "#1A0D00";
 export const POLYLINE_COLOR = "#FFD28C";
 
-/** Google Maps tile colors — night (deep-space mockup). */
-export const MAP_NIGHT_BASE = "#0D0A1A";
-export const MAP_NIGHT_SURFACE = "#1A1035";
+/** Google Maps tile colors — night (depth + gold/purple hierarchy). */
+export const MAP_NIGHT_BASE = "#1A1035";
+export const MAP_NIGHT_SURFACE = "#241A42";
 export const MAP_NIGHT_ELEVATED = "#2A1A4A";
-export const MAP_NIGHT_HIGHWAY = "#3D3060";
+export const MAP_NIGHT_HIGHWAY = "#4E3B42";
 export const MAP_NIGHT_LABEL = "#A89BCF";
 export const MAP_NIGHT_LABEL_ACCENT = "#FFD28C";
-export const MAP_NIGHT_WATER = "#120E24";
+export const MAP_NIGHT_WATER = "#0D0A1A";
 
-/** Google Maps tile colors — day (desert cream mockup). */
-export const MAP_DAY_BASE = "#F5E6C8";
-export const MAP_DAY_PANEL = "#EED8A8";
-export const MAP_DAY_CARD = "#FDF3E0";
-export const MAP_DAY_ROAD_STROKE = "#D4BC88";
-export const MAP_DAY_HIGHWAY_STROKE = "#C87010";
-export const MAP_DAY_LABEL = "#8A6A4A";
-export const MAP_DAY_LABEL_PRIMARY = "#1A0D00";
-export const MAP_DAY_PARK = "#D8C898";
-export const MAP_DAY_WATER = "#B8C8D0";
+/** Google Maps tile colors — day (vintage road atlas). */
+export const MAP_DAY_BASE = "#E8D5A8";
+export const MAP_DAY_LOCAL_ROAD = "#C8956A";
+export const MAP_DAY_HIGHWAY = "#F0DEB8";
+export const MAP_DAY_ROAD_STROKE = "#A07850";
+export const MAP_DAY_HIGHWAY_STROKE = "#8B3A0F";
+export const MAP_DAY_LABEL = "#8B3A0F";
+export const MAP_DAY_LABEL_PRIMARY = "#8B3A0F";
+export const MAP_DAY_PARK = "#A8B890";
+export const MAP_DAY_WATER = "#8AA8B8";
+
+/** @deprecated Use MAP_DAY_LOCAL_ROAD */
+export const MAP_DAY_PANEL = MAP_DAY_LOCAL_ROAD;
+/** @deprecated Use MAP_DAY_HIGHWAY */
+export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;

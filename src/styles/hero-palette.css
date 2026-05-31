@@ -50,12 +50,16 @@
   background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
   background: linear-gradient(90deg, #C87010, #E06820) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 /* ── Hero headline ── */
@@ -89,7 +93,7 @@
 
 /* ── FROM / TO search row ── */
 .hero.night .hero-search {
-  background: rgba(13, 10, 26, 0.6) !important;
+  background: rgba(26, 16, 53, 0.65) !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
@@ -218,7 +222,7 @@
   }
 
   html[data-layout="mobile"] .hero.night .hero-search {
-    background: rgba(13, 10, 26, 0.6) !important;
+    background: rgba(26, 16, 53, 0.65) !important;
     border-color: rgba(255, 210, 140, 0.25) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
@@ -374,7 +378,7 @@
 
 /* ── Draft resume banner (frosted panel) ── */
 .hero.night .hero-draft-resume {
-  background: rgba(13, 10, 26, 0.6) !important;
+  background: rgba(26, 16, 53, 0.65) !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;

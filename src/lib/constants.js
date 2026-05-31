@@ -11,8 +11,8 @@ import {
   MAP_NIGHT_LABEL_ACCENT,
   MAP_NIGHT_WATER,
   MAP_DAY_BASE,
-  MAP_DAY_PANEL,
-  MAP_DAY_CARD,
+  MAP_DAY_LOCAL_ROAD,
+  MAP_DAY_HIGHWAY,
   MAP_DAY_ROAD_STROKE,
   MAP_DAY_HIGHWAY_STROKE,
   MAP_DAY_LABEL,
@@ -57,14 +57,26 @@ export const DARK_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
   { elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
   { elementType: "labels.text.stroke", stylers: [{ color: MAP_NIGHT_BASE }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_NIGHT_HIGHWAY }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_NIGHT_WATER }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },
   { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: MAP_NIGHT_SURFACE }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_BASE }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
+  { featureType: "road.local", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_NIGHT_HIGHWAY }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_NIGHT_WATER }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#6B5A8F" }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
 ];
 
-/** Desert cream road atlas — day theme mockup. */
+/** Vintage road atlas — day theme with clear land/road/water hierarchy. */
 export const DAY_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
@@ -75,18 +87,21 @@ export const DAY_MAP_STYLES = [
   { featureType: "poi", stylers: [{ visibility: "off" }] },
   { featureType: "poi.park", elementType: "geometry", stylers: [{ color: MAP_DAY_PARK }] },
   { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: MAP_DAY_PANEL }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: MAP_DAY_LOCAL_ROAD }] },
   { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: MAP_DAY_ROAD_STROKE }] },
   { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_DAY_CARD }] },
+  { featureType: "road.local", elementType: "geometry", stylers: [{ color: MAP_DAY_LOCAL_ROAD }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: MAP_DAY_LOCAL_ROAD }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_DAY_HIGHWAY }] },
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: MAP_DAY_HIGHWAY_STROKE }] },
   { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL_PRIMARY }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_DAY_WATER }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
 ];
 
-/** Deep-space purple palette — night theme mockup. */
+/** Deep-space purple palette — night theme with gold highway accents. */
 export const NIGHT_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
   { elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
@@ -97,14 +112,17 @@ export const NIGHT_MAP_STYLES = [
   { featureType: "poi", stylers: [{ visibility: "off" }] },
   { featureType: "poi.park", elementType: "geometry", stylers: [{ color: MAP_NIGHT_SURFACE }] },
   { featureType: "road", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_SURFACE }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_BASE }] },
   { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
+  { featureType: "road.local", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
   { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_NIGHT_HIGHWAY }] },
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_ELEVATED }] },
   { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_NIGHT_WATER }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#6B5A8F" }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
 ];
 
 export const LEG_MAP_STYLES = {

@@ -142,44 +142,9 @@ function sampleAtmosphere(hour) {
   };
 }
 
-function sunPosition(hour) {
-  const h = ((hour % 24) + 24) % 24;
-  if (h < 5 || h >= 21) return null;
-  const t = (h - 5) / 16;
-  return {
-    x: 14 + t * 72,
-    /* Keep sun in the open sky — never over the ridgeline */
-    y: 14 + (1 - Math.sin(t * Math.PI)) * 16,
-  };
-}
-
-function moonPosition(hour) {
-  const h = ((hour % 24) + 24) % 24;
-  if (h >= 5 && h < 20) return null;
-  const t = h >= 20 ? (h - 20) / 9 : (h + 4) / 9;
-  const clamped = Math.max(0, Math.min(1, t));
-  return {
-    x: 16 + clamped * 68,
-    y: 12 + (1 - Math.sin(clamped * Math.PI)) * 18,
-    shadeX: 52 + Math.sin(clamped * Math.PI * 2) * 22,
-  };
-}
-
-/** Sun disc fades at midday — photo already carries natural daylight. */
-function sunDiscOpacity(hour) {
-  const h = ((hour % 24) + 24) % 24;
-  if (h < 5 || h >= 21) return 0;
-  if (h >= 9.5 && h <= 14.5) return 0.06;
-  if (h >= 7.5 && h < 9.5) return 0.15 + ((9.5 - h) / 2) * 0.85;
-  if (h > 14.5 && h <= 17.5) return 0.15 + ((h - 14.5) / 3) * 0.85;
-  return 1;
-}
-
 /** Continuous sky atmosphere — animated sky + graded photo mountains. */
 export function getSkyAtmosphere(hour = 12) {
   const sample = sampleAtmosphere(hour);
-  const sun = sunPosition(hour);
-  const moon = moonPosition(hour);
   const cloudOpacity = sample.stars > 0.45 ? 0.06 : 0.38 + sample.warmth * 0.35;
   return {
     starOpacity: sample.stars,
@@ -192,14 +157,6 @@ export function getSkyAtmosphere(hour = 12) {
       "--sky-stars": String(sample.stars),
       "--sky-glow": String(sample.glow),
       "--sky-clouds": String(cloudOpacity),
-      "--sun-x": sun ? `${sun.x}%` : "50%",
-      "--sun-y": sun ? `${sun.y}%` : "50%",
-      "--sun-visible": sun ? "1" : "0",
-      "--sun-disc-op": sun ? String(sunDiscOpacity(hour)) : "0",
-      "--moon-x": moon ? `${moon.x}%` : "50%",
-      "--moon-y": moon ? `${moon.y}%` : "50%",
-      "--moon-visible": moon ? "1" : "0",
-      "--moon-shade-x": moon ? `${moon.shadeX}%` : "65%",
       "--ridge-bleed": String(0.12 + sample.warmth * 0.55),
       "--milky-way": String(Math.max(0, sample.stars - 0.15) * 0.85),
       "--peak-haze": String(0.08 + sample.stars * 0.22),

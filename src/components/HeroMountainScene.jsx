@@ -55,28 +55,6 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
           </svg>
         )}
 
-        <div className="hero-sun">
-          <div className="hero-sun-corona" />
-          <div className="hero-sun-rays" aria-hidden="true" />
-          <div className="hero-sun-halo" />
-          <div className="hero-sun-disc">
-            <div className="hero-sun-core" />
-            <div className="hero-sun-flare" aria-hidden="true" />
-          </div>
-        </div>
-
-        <div className="hero-moon">
-          <div className="hero-moon-halo" />
-          <div className="hero-moon-disc">
-            <div className="hero-moon-shade" />
-            <div className="hero-moon-crater hero-moon-crater--a" />
-            <div className="hero-moon-crater hero-moon-crater--b" />
-            <div className="hero-moon-crater hero-moon-crater--c" />
-            <div className="hero-moon-crater hero-moon-crater--d" />
-            <div className="hero-moon-crater hero-moon-crater--e" />
-          </div>
-        </div>
-
         {showClouds && (
           <div className="hero-clouds" aria-hidden="true">
             {CLOUD_CLUSTERS.map(id => (
@@ -98,6 +76,7 @@ export default function HeroMountainScene({ phase = SKY_PHASES.night, hour = 12 
           style={{ backgroundImage: `url(${HERO_PHOTO})` }}
         />
         <div className="hero-photo-tint" aria-hidden="true" />
+        <div className="hero-photo-night-veil" aria-hidden="true" />
         <div className="hero-peak-haze" aria-hidden="true" />
         <div className="hero-ridge-bleed" aria-hidden="true" />
       </div>
