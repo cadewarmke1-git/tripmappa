@@ -28,11 +28,12 @@ import {
 } from "../../lib/liveShareUtils.js";
 import { joinConvoy, registerFollowerPhone, sendSosAlert } from "../../lib/liveShareApi.js";
 import { useConvoyBroadcast } from "../../hooks/useConvoyBroadcast.js";
-import { computeAutoTheme, SKY_CHECK_MS } from "../../lib/theme.js";
+import { useTheme } from "../../context/ThemeContext.jsx";
+import ThemeToggle from "../ThemeToggle.jsx";
 
 const CONVOY_MEMBER_KEY = "tripmappa-convoy-member";
 
-export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
+export default function LiveViewPage({ shareToken, toast }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
     libraries: GOOGLE_LIBRARIES,
@@ -55,24 +56,7 @@ export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
   const [localToast, setLocalToast] = useState(null);
   const lastNotificationRef = useRef(null);
   const mapRef = useRef(null);
-
-  const [autoTheme, setAutoTheme] = useState(computeAutoTheme);
-  useEffect(() => {
-    if (themeProp) return undefined;
-    const tick = () => setAutoTheme(computeAutoTheme());
-    tick();
-    const interval = window.setInterval(tick, SKY_CHECK_MS);
-    const onVis = () => {
-      if (document.visibilityState === "visible") tick();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [themeProp]);
-
-  const theme = themeProp ?? autoTheme;
+  const { theme, toggleTheme } = useTheme();
   const mapStyles = useMemo(() => resolveMapStyles("standard", theme), [theme]);
 
   useEffect(() => {
@@ -228,7 +212,7 @@ export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
 
   if (loading) {
     return (
-      <div className={`live-view-page live-view-page-${theme}`}>
+      <div className={`app-wrap ${theme} live-view-page live-view-page-${theme}`}>
         <RouteDrawingLoader theme={theme} variant="inline" />
       </div>
     );
@@ -236,7 +220,7 @@ export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
 
   if (error && !liveTrip) {
     return (
-      <div className={`live-view-page live-view-page-${theme}`}>
+      <div className={`app-wrap ${theme} live-view-page live-view-page-${theme}`}>
         <div className="live-view-error">
           <h1 className="live-view-error-title">Live trip unavailable</h1>
           <p>{error}</p>
@@ -253,8 +237,12 @@ export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
   };
 
   return (
-    <div className={`live-view-page live-view-page-${theme}`}>
+    <div className={`app-wrap ${theme} live-view-page live-view-page-${theme}`}>
       {localToast && <div className="live-view-toast">{localToast}</div>}
+
+      <div className="live-view-top-controls" aria-label="Map controls">
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      </div>
 
       <ArrivalCelebration
         destination={liveTrip.destination}

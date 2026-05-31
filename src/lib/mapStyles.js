@@ -12,5 +12,6 @@ export function resolveMapStyles(mapStyle, theme) {
 /** Push resolved styles onto a live Maps instance (theme toggle / time-based switch). */
 export function applyMapThemeStyles(map, mapStyle, theme) {
   if (!map?.setOptions) return;
-  map.setOptions({ styles: resolveMapStyles(mapStyle, theme) });
+  const styles = resolveMapStyles(mapStyle, theme);
+  map.setOptions({ styles: styles ?? [] });
 }

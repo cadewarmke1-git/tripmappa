@@ -98,9 +98,9 @@
   --color-accent-gold: #C87010;
   --color-accent-orange: #E06820;
   --color-accent-gradient: linear-gradient(135deg, #C87010, #E06820);
-  --color-wordmark-gradient: linear-gradient(90deg, #C87010, #E06820);
+  --color-wordmark-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-accent-text-gradient: linear-gradient(135deg, #C87010, #E06820);
-  --color-map-mesh: #D4A96A;
+  --color-map-mesh: #F0EDE8;
   --color-panel-mesh: #EED8A8;
   --color-btn-primary-bg: #1A0D00;
   --color-btn-primary-text: #FFD28C;
@@ -119,7 +119,7 @@
   --color-star: #C87010;
   --color-trip-tips-border: #E06820;
   --color-trip-tips-bg: rgba(224, 104, 32, 0.07);
-  --color-nav-bg: #EED8A8;
+  --color-nav-bg: #1A0D00;
   --color-nav-border: rgba(160, 64, 16, 0.15);
   --color-scrollbar-track: #EED8A8;
   --color-scrollbar-thumb: #E06820;
@@ -127,7 +127,7 @@
   --color-focus-ring: #FFD28C;
   --color-hero-overlay: linear-gradient(180deg, rgba(247, 152, 32, 0.88) 0%, rgba(224, 104, 32, 0.82) 42%, rgba(138, 64, 16, 0.86) 72%, rgba(26, 13, 0, 0.94) 100%);
   --color-banner-bg: rgba(245, 230, 200, 0.92);
-  --color-map-surface: #D4A96A;
+  --color-map-surface: #F0EDE8;
   --color-map-panel: #EED8A8;
   --color-hero-title-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-accent-gradient: linear-gradient(90deg, #FF8C42, #C87010);
@@ -181,10 +181,14 @@
 }
 
 /* ── App theme: Day — light & airy ── */
-.app-wrap.day .nav-app,
+.app-wrap.day .nav-app {
+  background: #1A0D00 !important;
+  border-bottom: 1px solid rgba(255, 210, 140, 0.12) !important;
+  transition: background 1.8s ease, border-color 1.8s ease;
+}
 .app-wrap.night .nav-app {
-  background: rgba(8, 10, 18, 0.96) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  background: #0D0A1A !important;
+  border-bottom: 1px solid rgba(255, 210, 140, 0.1) !important;
   transition: background 1.8s ease, border-color 1.8s ease;
 }
 .app-wrap.day .nav-app .nav-tab,

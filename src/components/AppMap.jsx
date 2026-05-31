@@ -13,6 +13,8 @@ import MapBackToTripButton from "./map/MapBackToTripButton.jsx";
 import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
 import { resolveMapStyles, applyMapThemeStyles } from "../lib/mapStyles.js";
+import { useTheme } from "../context/ThemeContext.jsx";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function AppMap({
   isLoaded,
@@ -44,11 +46,13 @@ export default function AppMap({
   onMarkerSelect,
   onRecenter,
   onBackToResults = null,
-  theme = "night",
+  theme: themeProp,
   onNavigateHome = null,
   navigateHomePending = false,
   showRoutePill = true,
 }) {
+  const { theme: contextTheme, toggleTheme } = useTheme();
+  const theme = themeProp ?? contextTheme;
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [mapInstance, setMapInstance] = useState(null);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
@@ -167,15 +171,18 @@ export default function AppMap({
               )}
             </div>
           )}
-          <div className="map-style-toggle">
-            <button type="button" className="map-style-btn" onClick={() => onMapStyleOpenChange(o => !o)} aria-label="Map style">Map</button>
-            {mapStyleOpen && (
-              <div className="map-style-menu">
-                {[["standard", "Standard"], ["satellite", "Satellite"], ["dark", "Dark"]].map(([k, l]) => (
-                  <button key={k} type="button" className={`map-style-item${mapStyle === k ? " active" : ""}`} onClick={() => { onMapStyleChange(k); onMapStyleOpenChange(false); }}>{l}</button>
-                ))}
-              </div>
-            )}
+          <div className="map-top-controls" aria-label="Map controls">
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+            <div className="map-style-toggle">
+              <button type="button" className="map-style-btn" onClick={() => onMapStyleOpenChange(o => !o)} aria-label="Map style">Map</button>
+              {mapStyleOpen && (
+                <div className="map-style-menu">
+                  {[["standard", "Standard"], ["satellite", "Satellite"], ["dark", "Dark"]].map(([k, l]) => (
+                    <button key={k} type="button" className={`map-style-item${mapStyle === k ? " active" : ""}`} onClick={() => { onMapStyleChange(k); onMapStyleOpenChange(false); }}>{l}</button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="map-controls-stack">
             <MapZoomControls mapRef={mapRef} />

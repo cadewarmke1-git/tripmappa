@@ -57,7 +57,7 @@ export const HERO_PHOTO_DAY = HERO_PHOTOS_DAY[0];
 export const HERO_PHOTO_NIGHT = HERO_PHOTOS_NIGHT[0];
 
 
-/** Warm amber desert terrain — day theme with clear land / road / water hierarchy. */
+/** Classic road atlas — day theme with cool land base and warm road hierarchy. */
 export const DAY_MAP_STYLES = [
   { elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
@@ -95,7 +95,7 @@ export const NIGHT_MAP_STYLES = [
   { elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
   { elementType: "labels.text.stroke", stylers: [{ color: MAP_NIGHT_BASE }] },
   { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_LOCAL_ROAD }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
   { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
   { featureType: "poi.school", stylers: [{ visibility: "off" }] },
@@ -107,7 +107,7 @@ export const NIGHT_MAP_STYLES = [
   { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
   { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: MAP_NIGHT_ARTERIAL }] },
   { featureType: "road.arterial", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_BASE }] },
-  { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },
+  { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
   { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_NIGHT_HIGHWAY }] },
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_HIGHWAY_STROKE }] },
   { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },

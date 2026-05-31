@@ -3,7 +3,9 @@ import { DAY_MAP_STYLES, NIGHT_MAP_STYLES } from "./constants.js";
 import {
   MAP_DAY_BASE,
   MAP_DAY_HIGHWAY,
+  MAP_DAY_HIGHWAY_STROKE,
   MAP_DAY_LOCAL_ROAD,
+  MAP_DAY_PARK,
   MAP_DAY_WATER,
   MAP_NIGHT_BASE,
   MAP_NIGHT_WATER,
@@ -24,8 +26,11 @@ describe("mapStyles", () => {
     expect(colors).toContain(MAP_DAY_HIGHWAY);
     expect(colors).toContain(MAP_DAY_LOCAL_ROAD);
     expect(colors).toContain(MAP_DAY_WATER);
-    expect(MAP_DAY_BASE).toBe("#D4A96A");
-    expect(MAP_DAY_HIGHWAY).toBe("#8B3A0F");
+    expect(MAP_DAY_BASE).toBe("#F0EDE8");
+    expect(MAP_DAY_HIGHWAY).toBe("#E06820");
+    expect(MAP_DAY_HIGHWAY_STROKE).toBe("#5A2A10");
+    expect(MAP_DAY_WATER).toBe("#4A8AB8");
+    expect(MAP_DAY_PARK).toBe("#6B8F5E");
   });
 
   it("night styles use deep land and darker water", () => {
@@ -39,6 +44,6 @@ describe("mapStyles", () => {
   it("applyMapThemeStyles updates a map instance", () => {
     const map = { setOptions: vi.fn() };
     applyMapThemeStyles(map, "standard", "day");
-    expect(map.setOptions).toHaveBeenCalledWith({ styles: DAY_MAP_STYLES });
+    expect(map.setOptions).toHaveBeenCalledWith({ styles: DAY_MAP_STYLES ?? [] });
   });
 });

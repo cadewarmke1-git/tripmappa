@@ -35,7 +35,7 @@
   --tm-page-bg: var(--color-map-surface);
   --tm-placeholder: rgba(90, 42, 16, 0.45);
   --tm-cta-gradient: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%);
-  --tm-wordmark-gradient: linear-gradient(135deg, var(--color-accent-gold) 0%, var(--color-accent-orange) 100%);
+  --tm-wordmark-gradient: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%);
   --tm-scrollbar-track: var(--color-map-panel);
   --tm-scrollbar-thumb: var(--color-accent-orange);
   --tm-loader-bg: var(--color-map-surface);
@@ -84,8 +84,8 @@ body {
 
 /* ── Nav bar surfaces ── */
 .app-wrap.day .nav-app {
-  background: rgba(238, 216, 168, 0.96) !important;
-  border-bottom-color: rgba(224, 104, 32, 0.25) !important;
+  background: #1A0D00 !important;
+  border-bottom-color: rgba(255, 210, 140, 0.12) !important;
 }
 
 .app-wrap.day .nav-app .nav-tab {
@@ -118,8 +118,8 @@ body {
 }
 
 .app-wrap.night .nav-app {
-  background: rgba(26, 16, 53, 0.96) !important;
-  border-bottom-color: rgba(168, 155, 207, 0.15) !important;
+  background: #0D0A1A !important;
+  border-bottom-color: rgba(255, 210, 140, 0.1) !important;
 }
 
 .app-wrap.night .nav-app .nav-tab.active {
@@ -381,8 +381,46 @@ body {
 
 .app-wrap.night .account-sidebar,
 .app-wrap.night .nav-sidebar {
-  background: var(--color-surface) !important;
-  border-color: rgba(168, 155, 207, 0.15) !important;
+  background: #1A1035 !important;
+  border-left-color: rgba(255, 210, 140, 0.1) !important;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.55) !important;
+}
+
+.app-wrap.night .nav-sidebar-title {
+  color: #FFD28C !important;
+}
+
+.app-wrap.night .nav-sidebar-nav-item {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 210, 140, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+.app-wrap.night .nav-sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 210, 140, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+.app-wrap.night .nav-sidebar-nav-item.is-active {
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
+  border-color: transparent !important;
+  color: #1A0D00 !important;
+  box-shadow: none !important;
+}
+
+.app-wrap.night .app-sidebar-close {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+.app-wrap.night .nav-sidebar-theme-label {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.app-wrap.night .nav-sidebar-footer {
+  border-top-color: rgba(255, 210, 140, 0.1) !important;
 }
 
 .app-wrap.night .section-label,
@@ -480,8 +518,46 @@ body {
 
 .app-wrap.day .account-sidebar,
 .app-wrap.day .nav-sidebar {
-  background: var(--color-surface) !important;
-  border-color: rgba(224, 104, 32, 0.2) !important;
+  background: #1A0D00 !important;
+  border-left-color: rgba(255, 210, 140, 0.15) !important;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.45) !important;
+}
+
+.app-wrap.day .nav-sidebar-title {
+  color: #FFD28C !important;
+}
+
+.app-wrap.day .nav-sidebar-nav-item {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 210, 140, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+.app-wrap.day .nav-sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 210, 140, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+.app-wrap.day .nav-sidebar-nav-item.is-active {
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
+  border-color: transparent !important;
+  color: #1A0D00 !important;
+  box-shadow: none !important;
+}
+
+.app-wrap.day .app-sidebar-close {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+.app-wrap.day .nav-sidebar-theme-label {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.app-wrap.day .nav-sidebar-footer {
+  border-top-color: rgba(255, 210, 140, 0.12) !important;
 }
 
 .app-wrap.day .section-label,

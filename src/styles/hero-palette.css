@@ -42,8 +42,8 @@
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
-  background-image: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -589,10 +589,21 @@
   background: rgba(255, 140, 66, 0.14) !important;
 }
 
+.app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn,
+.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn,
+.app-wrap.night .app-nav-bar.nav-app .hamburger-menu-btn {
+  color: #FFD28C !important;
+}
+
+.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span,
+.app-wrap.night .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span {
+  background: #FFD28C !important;
+}
+
 .app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn.is-active {
-  color: #E06820 !important;
-  border-color: rgba(224, 104, 32, 0.45) !important;
-  background: rgba(255, 255, 255, 0.22) !important;
+  color: #FFD28C !important;
+  border-color: rgba(255, 210, 140, 0.45) !important;
+  background: rgba(255, 140, 66, 0.14) !important;
 }
 
 /* Final cascade — hero typography (nav is outside .hero) */
@@ -605,7 +616,7 @@ html body .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
 }
 
 html body .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;

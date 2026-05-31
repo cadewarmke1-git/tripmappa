@@ -28,6 +28,7 @@ export default function PlanPanel({
   flowProgress,
   returnedFromResults,
   inQuestionFlow = false,
+  toolbarInHeader = false,
   routeError = null,
   onRetryRoute,
   planOutOfDate = false,
@@ -61,7 +62,7 @@ export default function PlanPanel({
           </div>
         )}
 
-        {inQuestionFlow && (
+        {inQuestionFlow && !toolbarInHeader && (
           <div className="plan-flow-toolbar">
             <div className="plan-flow-toolbar-left">
               {showProgress && <QuestionProgress {...flowProgress} compact />}

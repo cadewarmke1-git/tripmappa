@@ -32,8 +32,8 @@ html body nav.app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
 
 nav.app-nav-bar.transparent[data-surface-theme="day"] .brand-wordmark,
 html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
-  background-image: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;

@@ -43,9 +43,10 @@ import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraf
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
-import { computeAutoTheme, resolveThemeToggle, SKY_CHECK_MS } from "./lib/theme.js";
+import { useTheme } from "./context/ThemeContext.jsx";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
+import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
 import HeroView from "./components/HeroView.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -365,9 +366,7 @@ export default function App() {
   const panelDragStartY = useRef(null);
   const panelDragMoved = useRef(false);
   const [modal, setModal] = useState(null);
-  const [autoTheme, setAutoTheme] = useState(computeAutoTheme);
-  const [themeOverride, setThemeOverride] = useState(null);
-  const theme = themeOverride ?? autoTheme;
+  const { theme, toggleTheme } = useTheme();
   const [enterAnim, setEnterAnim] = useState(false);
   const [cardCollapsed, setCardCollapsed] = useState(false);
   const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'selected' | 'exit' }
@@ -1179,26 +1178,6 @@ export default function App() {
     if (view !== "app") return;
     scrollPlanToTop();
   }, [view, qIndex, currentQuestion?.id, scrollPlanToTop]);
-
-  useEffect(() => {
-    const updateTheme = () => setAutoTheme(computeAutoTheme());
-    updateTheme();
-    const interval = setInterval(updateTheme, SKY_CHECK_MS);
-    const onVis = () => {
-      if (document.visibilityState === "visible") updateTheme();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (themeOverride && themeOverride === autoTheme) {
-      setThemeOverride(null);
-    }
-  }, [autoTheme, themeOverride]);
 
   useEffect(() => {
     if (currentQuestion && !stepAnim) {
@@ -2316,10 +2295,6 @@ export default function App() {
     setConvoComplete(false);
   }
 
-  function toggleTheme() {
-    setThemeOverride(resolveThemeToggle(theme, autoTheme));
-  }
-
   function handleViewTrip(trip) {
     const tripAnswers = stripSessionOnlyAnswers(trip.answers || {});
     setOrigin(trip.origin);
@@ -2358,7 +2333,7 @@ export default function App() {
   }
 
   if (liveShareToken) {
-    return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} theme={theme} />;
+    return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
   }
 
   if (view === "profile" && user) {
@@ -2718,45 +2693,59 @@ export default function App() {
           />
           </ErrorBoundary>
 
-          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}${inQuestionFlow ? " float-card--plan-flow" : ""}`}>
+          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}${inQuestionFlow ? " float-card--plan-flow" : ""}${inQuestionFlow && cardCollapsed ? " float-card--plan-flow-collapsed" : ""}`}>
             <div
               className={`float-card-header${inQuestionFlow ? " float-card-header--plan-flow" : ""}`}
-              role="button"
-              tabIndex={0}
+              role={inQuestionFlow ? undefined : "button"}
+              tabIndex={inQuestionFlow ? undefined : 0}
               aria-expanded={!cardCollapsed}
-              onClick={handlePanelHeaderClick}
-              onKeyDown={handlePanelHeaderKeyDown}
-              onTouchStart={handlePanelTouchStart}
-              onTouchMove={handlePanelTouchMove}
-              onTouchEnd={handlePanelTouchEnd}
+              onClick={inQuestionFlow ? undefined : handlePanelHeaderClick}
+              onKeyDown={inQuestionFlow ? undefined : handlePanelHeaderKeyDown}
+              onTouchStart={inQuestionFlow ? undefined : handlePanelTouchStart}
+              onTouchMove={inQuestionFlow ? undefined : handlePanelTouchMove}
+              onTouchEnd={inQuestionFlow ? undefined : handlePanelTouchEnd}
             >
-              <div className="float-card-handle" aria-hidden="true"/>
-              <div className="float-card-header-row">
-                <div className="float-card-title">
-                  {tab === "plan" ? "Plan Your Trip" : tab === "trips" ? "Trips" : "Live Sharing"}
-                </div>
-                <div className="float-card-header-actions" onClick={e => e.stopPropagation()}>
-                  <div className="float-card-help-wrap" ref={helpWrapRef}>
-                    <button type="button" className="float-card-help-btn" onClick={() => setHelpMenuOpen(o => !o)} aria-label="Help">?</button>
-                    {helpMenuOpen && (
-                      <div className="help-menu">
-                        <button type="button" className="help-menu-item" onClick={() => { window.open("https://tripmappa.com/help", "_blank"); setHelpMenuOpen(false); }}>Help center</button>
-                        <button type="button" className="help-menu-item" onClick={() => { setModal({ type: "report" }); setHelpMenuOpen(false); }}>Report an issue</button>
+              {!inQuestionFlow && <div className="float-card-handle" aria-hidden="true"/>}
+              {inQuestionFlow ? (
+                <PlanFlowHeaderBar
+                  flowProgress={flowProgress}
+                  creditsLabel={formatCreditsLabel(creditStatus)}
+                  collapsed={cardCollapsed}
+                  frozen={!!stepAnim}
+                  onResetPlan={requestResetPlan}
+                  onExpand={() => setCardCollapsed(false)}
+                  onCollapse={() => setCardCollapsed(true)}
+                />
+              ) : (
+                <>
+                  <div className="float-card-header-row">
+                    <div className="float-card-title">
+                      {tab === "plan" ? "Plan Your Trip" : tab === "trips" ? "Trips" : "Live Sharing"}
+                    </div>
+                    <div className="float-card-header-actions" onClick={e => e.stopPropagation()}>
+                      <div className="float-card-help-wrap" ref={helpWrapRef}>
+                        <button type="button" className="float-card-help-btn" onClick={() => setHelpMenuOpen(o => !o)} aria-label="Help">?</button>
+                        {helpMenuOpen && (
+                          <div className="help-menu">
+                            <button type="button" className="help-menu-item" onClick={() => { window.open("https://tripmappa.com/help", "_blank"); setHelpMenuOpen(false); }}>Help center</button>
+                            <button type="button" className="help-menu-item" onClick={() => { setModal({ type: "report" }); setHelpMenuOpen(false); }}>Report an issue</button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                      <button
+                        type="button"
+                        className={`float-card-chevron-btn${cardCollapsed ? "" : " open"}`}
+                        onClick={e => { e.stopPropagation(); handlePanelHeaderClick(); }}
+                        aria-label={cardCollapsed ? "Expand plan panel" : "Collapse plan panel"}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    className={`float-card-chevron-btn${cardCollapsed ? "" : " open"}`}
-                    onClick={e => { e.stopPropagation(); handlePanelHeaderClick(); }}
-                    aria-label={cardCollapsed ? "Expand plan panel" : "Collapse plan panel"}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
             </div>
             <div className={`float-card-body${inQuestionFlow ? " float-card-body--plan-flow" : ""}`}>
               <div className="float-card-scroll" ref={floatCardScrollRef}>
@@ -2792,6 +2781,7 @@ export default function App() {
                       flowProgress={flowProgress}
                       returnedFromResults={returnedFromResults}
                       inQuestionFlow={inQuestionFlow}
+                      toolbarInHeader={inQuestionFlow}
                       routeError={routeError}
                       onRetryRoute={retryRouteCalculation}
                       planOutOfDate={planOutOfDate}

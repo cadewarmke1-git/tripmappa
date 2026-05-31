@@ -4,14 +4,32 @@ export const ORANGE_PRIMARY = "#FF8C42";
 export const DEEP_DARK = "#1A0D00";
 export const POLYLINE_COLOR = "#FFD28C";
 
+/** Blend a foreground hex onto a background at given opacity (Google Maps has no alpha in color). */
+function blendHex(fg, bg, fgOpacity) {
+  const fgR = parseInt(fg.slice(1, 3), 16);
+  const fgG = parseInt(fg.slice(3, 5), 16);
+  const fgB = parseInt(fg.slice(5, 7), 16);
+  const bgR = parseInt(bg.slice(1, 3), 16);
+  const bgG = parseInt(bg.slice(3, 5), 16);
+  const bgB = parseInt(bg.slice(5, 7), 16);
+  const t = fgOpacity;
+  const r = Math.round(fgR * t + bgR * (1 - t));
+  const g = Math.round(fgG * t + bgG * (1 - t));
+  const b = Math.round(fgB * t + bgB * (1 - t));
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
+const MAP_NIGHT_HIGHWAY_GOLD = "#C8A060";
+
 /** Google Maps tile colors — night (deep space purple + gold accents). */
 export const MAP_NIGHT_BASE = "#1A1035";
 export const MAP_NIGHT_SURFACE = "#241A42";
 export const MAP_NIGHT_LOCAL_ROAD = "#2A1A4A";
-export const MAP_NIGHT_ARTERIAL = "#3A2E5C";
-/** ~45% #C8A060 over MAP_NIGHT_BASE — soft gold highway fill */
-export const MAP_NIGHT_HIGHWAY = "#685148";
-export const MAP_NIGHT_HIGHWAY_STROKE = "#8A7048";
+export const MAP_NIGHT_ARTERIAL = "#2A1A4A";
+/** #C8A060 at 30% over land base */
+export const MAP_NIGHT_HIGHWAY = blendHex(MAP_NIGHT_HIGHWAY_GOLD, MAP_NIGHT_BASE, 0.3);
+/** #C8A060 at 50% over land base */
+export const MAP_NIGHT_HIGHWAY_STROKE = blendHex(MAP_NIGHT_HIGHWAY_GOLD, MAP_NIGHT_BASE, 0.5);
 export const MAP_NIGHT_LABEL = "#A89BCF";
 export const MAP_NIGHT_LABEL_ACCENT = "#FFD28C";
 export const MAP_NIGHT_WATER = "#0D0A1A";
@@ -20,18 +38,17 @@ export const MAP_NIGHT_PARK = "#1A2A1A";
 /** @deprecated Use MAP_NIGHT_LOCAL_ROAD */
 export const MAP_NIGHT_ELEVATED = MAP_NIGHT_LOCAL_ROAD;
 
-/** Google Maps tile colors — day (warm amber desert terrain). */
-export const MAP_DAY_BASE = "#D4A96A";
+/** Google Maps tile colors — day (classic road atlas: cool base, warm roads). */
+export const MAP_DAY_BASE = "#F0EDE8";
 export const MAP_DAY_LOCAL_ROAD = "#C8956A";
-/** Mid tone between terracotta local roads and deep-rust highways */
-export const MAP_DAY_ARTERIAL = "#B06840";
-export const MAP_DAY_HIGHWAY = "#8B3A0F";
-export const MAP_DAY_ROAD_STROKE = "#704020";
-export const MAP_DAY_HIGHWAY_STROKE = "#5A2408";
+export const MAP_DAY_ARTERIAL = "#C8956A";
+export const MAP_DAY_HIGHWAY = "#E06820";
+export const MAP_DAY_ROAD_STROKE = "#A87048";
+export const MAP_DAY_HIGHWAY_STROKE = "#5A2A10";
 export const MAP_DAY_LABEL = "#3A1A08";
 export const MAP_DAY_LABEL_PRIMARY = "#3A1A08";
-export const MAP_DAY_PARK = "#A8B890";
-export const MAP_DAY_WATER = "#8AA8B8";
+export const MAP_DAY_PARK = "#6B8F5E";
+export const MAP_DAY_WATER = "#4A8AB8";
 
 /** @deprecated Use MAP_DAY_LOCAL_ROAD */
 export const MAP_DAY_PANEL = MAP_DAY_LOCAL_ROAD;
@@ -43,7 +60,7 @@ export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;
  * Gold is the base accent family; wordmark + profile use gold gradients.
  *
  * Night: wordmark #FFD28C→#FF8C42, Travel #5A3A9A→#FFD28C, Reimagined #FF8C42→#C87010
- * Day:   wordmark #C87010→#E06820, Travel #FFD28C→#FF8C42, Reimagined #FF8C42→#C87010
+ * Day:   wordmark #FFD28C→#FF8C42, Travel #FFD28C→#FF8C42, Reimagined #FF8C42→#C87010
  */
 export const HERO_SURFACE_PALETTE = {
   night: {
@@ -56,7 +73,7 @@ export const HERO_SURFACE_PALETTE = {
     avatarRing: "0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.45)",
   },
   day: {
-    wordmarkGradient: "linear-gradient(90deg, #C87010 0%, #E06820 100%)",
+    wordmarkGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     titleLineGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     titleAccentGradient: "linear-gradient(90deg, #FF8C42 0%, #C87010 100%)",
     subtitle: "rgba(255, 255, 255, 0.85)",

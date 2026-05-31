@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { initViewportLayout } from "./lib/viewportLayout.js";
@@ -26,8 +27,10 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary label="app-root" title="TripMappa ran into a problem">
       <AuthProvider>
-        <App />
-        <Analytics />
+        <ThemeProvider>
+          <App />
+          <Analytics />
+        </ThemeProvider>
       </AuthProvider>
     </ErrorBoundary>
   </StrictMode>
