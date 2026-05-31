@@ -29,7 +29,6 @@ import {
 import { joinConvoy, registerFollowerPhone, sendSosAlert } from "../../lib/liveShareApi.js";
 import { useConvoyBroadcast } from "../../hooks/useConvoyBroadcast.js";
 import { useTheme } from "../../context/ThemeContext.jsx";
-import ThemeToggle from "../ThemeToggle.jsx";
 
 const CONVOY_MEMBER_KEY = "tripmappa-convoy-member";
 
@@ -56,7 +55,7 @@ export default function LiveViewPage({ shareToken, toast }) {
   const [localToast, setLocalToast] = useState(null);
   const lastNotificationRef = useRef(null);
   const mapRef = useRef(null);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const mapStyles = useMemo(() => resolveMapStyles("standard", theme), [theme]);
 
   useEffect(() => {
@@ -239,10 +238,6 @@ export default function LiveViewPage({ shareToken, toast }) {
   return (
     <div className={`app-wrap ${theme} live-view-page live-view-page-${theme}`}>
       {localToast && <div className="live-view-toast">{localToast}</div>}
-
-      <div className="live-view-top-controls" aria-label="Map controls">
-        <ThemeToggle theme={theme} onToggle={toggleTheme} />
-      </div>
 
       <ArrivalCelebration
         destination={liveTrip.destination}

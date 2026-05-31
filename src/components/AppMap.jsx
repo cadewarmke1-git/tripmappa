@@ -13,8 +13,6 @@ import MapBackToTripButton from "./map/MapBackToTripButton.jsx";
 import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
 import { resolveMapStyles, applyMapThemeStyles } from "../lib/mapStyles.js";
-import { useTheme } from "../context/ThemeContext.jsx";
-import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function AppMap({
   isLoaded,
@@ -51,8 +49,7 @@ export default function AppMap({
   navigateHomePending = false,
   showRoutePill = true,
 }) {
-  const { theme: contextTheme, toggleTheme } = useTheme();
-  const theme = themeProp ?? contextTheme;
+  const theme = themeProp ?? "night";
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [mapInstance, setMapInstance] = useState(null);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
@@ -172,7 +169,6 @@ export default function AppMap({
             </div>
           )}
           <div className="map-top-controls" aria-label="Map controls">
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <div className="map-style-toggle">
               <button type="button" className="map-style-btn" onClick={() => onMapStyleOpenChange(o => !o)} aria-label="Map style">Map</button>
               {mapStyleOpen && (

@@ -15,6 +15,7 @@
 
 /* Night mode palette */
 :root,
+body.theme-night,
 .tm-theme-night,
 .app-wrap.night,
 .hero.night,
@@ -84,6 +85,7 @@
 }
 
 /* Day mode palette */
+body.theme-day,
 .tm-theme-day,
 .app-wrap.day,
 .hero.day,
@@ -132,6 +134,33 @@
   --color-hero-title-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-accent-gradient: linear-gradient(90deg, #FF8C42, #C87010);
   --color-hero-subtitle: rgba(255, 255, 255, 0.85);
+
+  /* Plan flow + map — canonical day tokens (reference these everywhere) */
+  --color-plan-panel-bg: rgba(245, 230, 200, 0.95);
+  --color-plan-panel-border: rgba(160, 64, 16, 0.2);
+  --color-plan-panel-blur: 16px;
+  --color-question-text: #1A0D00;
+  --color-answer-bg: #FDF3E0;
+  --color-answer-border: rgba(160, 64, 16, 0.2);
+  --color-answer-text: #1A0D00;
+  --color-answer-selected-bg: #1A0D00;
+  --color-answer-selected-text: #FFD28C;
+  --color-tab-active-bg: #E06820;
+  --color-tab-active-text: #FFFFFF;
+  --color-tab-inactive-bg: rgba(160, 64, 16, 0.1);
+  --color-tab-inactive-text: #3A1A08;
+  --color-hamburger: #FFD28C;
+  --color-map-land: #F0EDE8;
+  --color-map-highway: #E06820;
+  --color-map-highway-stroke: #5A2A10;
+  --color-map-local-road: #C8956A;
+  --color-map-water: #4A8AB8;
+  --color-map-park: #6B8F5E;
+  --color-map-label: #3A1A08;
+  --color-autocomplete-bg: #FDF3E0;
+  --color-autocomplete-border: rgba(160, 64, 16, 0.2);
+  --color-autocomplete-match: #E06820;
+  --color-autocomplete-text: #1A0D00;
 
   --ink: var(--color-text-primary);
   --surface: var(--color-base);
@@ -182,8 +211,8 @@
 
 /* ── App theme: Day — light & airy ── */
 .app-wrap.day .nav-app {
-  background: #1A0D00 !important;
-  border-bottom: 1px solid rgba(255, 210, 140, 0.12) !important;
+  background: var(--color-nav-bg) !important;
+  border-bottom: 1px solid var(--color-nav-border) !important;
   transition: background 1.8s ease, border-color 1.8s ease;
 }
 .app-wrap.night .nav-app {
@@ -221,67 +250,101 @@
 .app-wrap.day .map-placeholder-text { color: rgba(0,0,0,0.2); }
 .app-wrap.day .map-placeholder-sub { color: rgba(0,0,0,0.12); }
 
-/* Float card — day: light frosted glass */
+/* Float card — day: warm parchment frosted glass */
 .app-wrap.day .float-card {
-  background: rgba(255,255,255,0.85) !important;
-  backdrop-filter: blur(24px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
-  border: 1px solid rgba(255, 210, 140, 0.35) !important;
-  box-shadow: 0 24px 64px rgba(26,26,46,0.12), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+  background: var(--color-plan-panel-bg) !important;
+  backdrop-filter: blur(var(--color-plan-panel-blur)) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(var(--color-plan-panel-blur)) saturate(1.2) !important;
+  border: 1px solid var(--color-plan-panel-border) !important;
+  box-shadow: 0 20px 56px rgba(58, 26, 8, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 .app-wrap.day .float-card-title {
-  color: var(--deep-dark) !important;
-  border-bottom-color: var(--gold-primary) !important;
+  color: var(--color-question-text) !important;
+  border-bottom-color: var(--color-plan-panel-border) !important;
 }
 .app-wrap.day .float-card-header {
-  background: rgba(255,255,255,0.85) !important;
-  border-bottom-color: rgba(26,26,46,0.08) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-bottom-color: var(--color-plan-panel-border) !important;
 }
 .app-wrap.day .float-card-help-btn {
-  border-color: rgba(26,26,46,0.15) !important;
-  background: rgba(26,26,46,0.05) !important;
-  color: var(--deep-dark) !important;
+  border-color: var(--color-answer-border) !important;
+  background: var(--color-tab-inactive-bg) !important;
+  color: var(--color-question-text) !important;
 }
 .app-wrap.day .float-card-help-btn:hover {
-  border-color: rgba(255,210,140,0.6) !important;
-  background: rgba(26,26,46,0.08) !important;
+  border-color: rgba(160, 64, 16, 0.35) !important;
+  background: rgba(160, 64, 16, 0.14) !important;
 }
-.app-wrap.day .chat-wrap { color: var(--deep-dark) !important; }
-.app-wrap.day .chat-title { color: var(--deep-dark) !important; }
-.app-wrap.day .chat-sub { color: rgba(26,26,46,0.55) !important; }
-.app-wrap.day .convo-empty p { color: rgba(26,26,46,0.55) !important; }
+.app-wrap.day .chat-wrap { color: var(--color-question-text) !important; }
+.app-wrap.day .chat-title { color: var(--color-question-text) !important; }
+.app-wrap.day .chat-sub { color: rgba(26, 13, 0, 0.55) !important; }
+.app-wrap.day .convo-empty p { color: rgba(26, 13, 0, 0.55) !important; }
 .app-wrap.day .ai-bubble {
-  background: #ffffff !important; border-color: rgba(26,26,46,0.1) !important;
-  color: var(--deep-dark) !important; box-shadow: 0 4px 18px rgba(26,26,46,0.08) !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--color-question-text) !important;
+  box-shadow: none !important;
 }
 .app-wrap.day .user-bubble {
-  background: var(--gold-primary) !important; color: var(--deep-dark) !important;
+  background: var(--color-answer-selected-bg) !important;
+  color: var(--color-answer-selected-text) !important;
 }
 .app-wrap.day .qr-btn {
-  background: #ffffff !important; border-color: rgba(26,26,46,0.2) !important;
-  color: var(--deep-dark) !important; box-shadow: 0 2px 8px rgba(26,26,46,0.06) !important;
+  background: var(--color-answer-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-answer-text) !important;
+  box-shadow: none !important;
 }
-.app-wrap.day .qr-btn:hover { background: rgba(255,255,255,0.95) !important; border-color: rgba(26,26,46,0.3) !important; }
+.app-wrap.day .qr-btn:hover {
+  background: rgba(253, 243, 224, 0.95) !important;
+  border-color: rgba(160, 64, 16, 0.35) !important;
+}
 .app-wrap.day .qr-btn.qr-selected {
-  animation: qrGoldFlash 150ms ease forwards !important;
-  border-color: var(--gold-primary) !important;
-  color: var(--deep-dark) !important;
-  background: var(--gold-primary) !important;
-  box-shadow: 0 0 0 3px rgba(255,210,140,0.25) !important;
-  transition: none !important;
+  animation: none !important;
+  background: var(--color-answer-selected-bg) !important;
+  border-color: var(--color-answer-selected-bg) !important;
+  color: var(--color-answer-selected-text) !important;
+  box-shadow: none !important;
+}
+.app-wrap.day .vehicle-tab {
+  background: var(--color-tab-inactive-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-tab-inactive-text) !important;
+}
+.app-wrap.day .vehicle-tab-active,
+.app-wrap.day .filter-tab.active {
+  background: var(--color-tab-active-bg) !important;
+  border-color: var(--color-tab-active-bg) !important;
+  color: var(--color-tab-active-text) !important;
+}
+.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn,
+.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span {
+  color: var(--color-hamburger) !important;
+  background: var(--color-hamburger) !important;
+}
+.app-wrap.day .brand-wordmark {
+  background: var(--color-wordmark-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
 .app-wrap.day .question-choices { border-top-color: rgba(26,26,46,0.08) !important; }
 .app-wrap.day .convo-nav-btn {
-  background: rgba(26,26,46,0.05) !important; border-color: rgba(26,26,46,0.18) !important;
-  color: var(--deep-dark) !important;
+  background: var(--color-tab-inactive-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-question-text) !important;
 }
-.app-wrap.day .convo-nav-btn:hover { background: rgba(26,26,46,0.1) !important; border-color: rgba(26,26,46,0.28) !important; }
+.app-wrap.day .convo-nav-btn:hover {
+  background: rgba(160, 64, 16, 0.14) !important;
+  border-color: rgba(160, 64, 16, 0.35) !important;
+}
 .app-wrap.day .route-footer {
-  background: rgba(26,26,46,0.03) !important; border-top-color: rgba(26,26,46,0.08) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-top-color: var(--color-plan-panel-border) !important;
 }
 .app-wrap.day .plan-panel-dock {
-  background: rgba(26,26,46,0.04) !important;
-  border-top-color: rgba(26,26,46,0.08) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-top-color: var(--color-plan-panel-border) !important;
 }
 .app-wrap.day .navigate-home-map {
   background: rgba(255, 255, 255, 0.92) !important;
@@ -310,23 +373,24 @@
 .app-wrap.day .timing-menu-fixed-item:hover { background: rgba(255,210,140,0.15) !important; }
 .app-wrap.day .timing-menu-fixed-item.active { background: rgba(255,210,140,0.25) !important; color: var(--gold-primary) !important; }
 .app-wrap.day .map-route-pill {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(255, 210, 140, 0.45) !important;
-  box-shadow: 0 8px 32px rgba(26, 26, 46, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.9) inset !important;
+  background: color-mix(in srgb, var(--color-plan-panel-bg) 94%, transparent) !important;
+  border-color: var(--color-plan-panel-border) !important;
+  box-shadow: 0 8px 32px rgba(58, 26, 8, 0.12) !important;
 }
-.app-wrap.day .map-route-pill-label { color: rgba(26, 26, 46, 0.65) !important; }
-.app-wrap.day .map-route-pill-val { color: var(--gold-primary) !important; }
-.app-wrap.day .map-route-pill-sep { color: rgba(26, 26, 46, 0.3) !important; }
+.app-wrap.day .map-route-pill-label { color: rgba(26, 13, 0, 0.65) !important; }
+.app-wrap.day .map-route-pill-val { color: var(--color-tab-active-bg) !important; }
+.app-wrap.day .map-route-pill-sep { color: rgba(26, 13, 0, 0.3) !important; }
 .app-wrap.day .help-menu {
-  background: rgba(255,255,255,0.98) !important;
-  border-color: rgba(26,26,46,0.12) !important;
-  box-shadow: 0 8px 32px rgba(26,26,46,0.15) !important;
+  background: color-mix(in srgb, var(--color-plan-panel-bg) 98%, transparent) !important;
+  border-color: var(--color-plan-panel-border) !important;
+  box-shadow: 0 8px 32px rgba(58, 26, 8, 0.14) !important;
 }
-.app-wrap.day .help-menu-item { color: var(--deep-dark) !important; }
-.app-wrap.day .help-menu-item:hover { background: rgba(255,210,140,0.15) !important; }
+.app-wrap.day .help-menu-item { color: var(--color-question-text) !important; }
+.app-wrap.day .help-menu-item:hover { background: var(--color-tab-inactive-bg) !important; }
 .app-wrap.day .budget-card {
-  background: rgba(255,255,255,0.55) !important; border-color: rgba(26,26,46,0.1) !important;
-  backdrop-filter: blur(12px) !important;
+  background: color-mix(in srgb, var(--color-plan-panel-bg) 88%, transparent) !important;
+  border-color: var(--color-plan-panel-border) !important;
+  backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
 }
 .app-wrap.day .budget-card-title { color: var(--deep-dark) !important; }
 .app-wrap.day .budget-row-label { color: rgba(26,26,46,0.55) !important; }

@@ -491,6 +491,10 @@ export default function App() {
   const polylineAnimRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
 
+  const directionsFetchRef = useRef(null);
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+
   const fetchDirections = useCallback((vehicleType) => {
     const originVal = originRef.current?.value?.trim() || origin?.trim();
     const destVal = destRef.current?.value?.trim() || dest?.trim();
@@ -537,7 +541,12 @@ export default function App() {
     }
 
     const service = new window.google.maps.DirectionsService();
-    return new Promise((resolve) => {
+    const requestKey = `${originVal}|${destVal}|${vehicle}|${timingMode}|${arriveByDate || ""}|${scenic}`;
+    if (directionsFetchRef.current?.key === requestKey) {
+      return directionsFetchRef.current.promise;
+    }
+
+    const promise = new Promise((resolve) => {
       service.route(routeRequest, (result, status) => {
         setRouteLoading(false);
         if (status === "OK") {
@@ -618,6 +627,13 @@ export default function App() {
         }
       });
     });
+    directionsFetchRef.current = { key: requestKey, promise };
+    promise.finally(() => {
+      if (directionsFetchRef.current?.key === requestKey) {
+        directionsFetchRef.current = null;
+      }
+    });
+    return promise;
   }, [timingMode, arriveByDate, answers, origin, dest]);
 
   const fetchRouteBetween = useCallback((originVal, destVal) => {
@@ -881,7 +897,7 @@ export default function App() {
         onClose={closeNavSidebar}
         theme={theme}
         onThemeToggle={toggleTheme}
-        showThemeToggle={view !== "hero"}
+        showThemeToggle
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
@@ -1288,7 +1304,11 @@ export default function App() {
         polylineAnimRef.current = null;
       }
     };
-  }, [tripLegs, routePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic, answers.preferences]);
+  }, [tripLegs, routePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic]);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
 
   function toast_(msg, options = false) {
     const opts = typeof options === "boolean" ? { isGold: options } : options;
@@ -1540,12 +1560,11 @@ export default function App() {
     if (generateTripInFlightRef.current) return;
     if (convoComplete) return;
     if (!currentQuestion?.pendingRoute) return;
-    const ctx = buildQuestionContext(answers);
+    const ctx = buildQuestionContext(answersRef.current);
     if (isRouteContextReady(ctx) || ctx.routeFailed) {
-      loadNextQuestion(answers);
+      loadNextQuestion(answersRef.current);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeInfo?.distance, routeInfo?.duration, routeError, currentQuestion?.pendingRoute, answers]);
+  }, [routeInfo?.distance, routeInfo?.duration, routeError, currentQuestion?.pendingRoute, currentQuestion?.id]);
 
   useEffect(() => {
     if (convoComplete || generated || !origin?.trim() || !dest?.trim()) return;
@@ -1807,7 +1826,8 @@ export default function App() {
     );
   }, [routeInfo, answers, getDepartureTime]);
 
-  async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers) {
+  async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers, routeInfoOverride = null) {
+    const activeRouteInfo = routeInfoOverride ?? routeInfo;
     const mapsReady = isLoaded && !!window.google;
     enrichAbortRef.current?.abort();
     const enrichController = new AbortController();
@@ -1817,7 +1837,7 @@ export default function App() {
     try {
       const enriched = await enrichGeneratedTrip({
         answers: normalizedAnswers,
-        routeInfo,
+        routeInfo: activeRouteInfo,
         stops: parsedStops,
         roadStops: parsedRoadStops,
         customStops,
@@ -1938,10 +1958,13 @@ export default function App() {
 
     let normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
-    const applyGeneratedTrip = async (parsed, activeRouteInfo) => {
+    const applyGeneratedTrip = (parsed, activeRouteInfo) => {
       const tips = [...(parsed.tripTips || [])];
       if (isContinuousDrive(normalizedAnswers)) {
         tips.unshift(buildContinuousDriveTip(activeRouteInfo));
+      }
+      if (activeRouteInfo) {
+        setRouteInfo(prev => ({ ...(prev || {}), ...activeRouteInfo }));
       }
       setStops(parsed.stops);
       setRoadStops(parsed.roadStops);
@@ -1952,7 +1975,7 @@ export default function App() {
       setResultsView("itinerary");
       setTab("plan");
       setCardCollapsed(false);
-      await enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers);
+      void enrichAndSetTrip(parsed.stops, parsed.roadStops, normalizedAnswers, activeRouteInfo);
       clearSavedPlanDraft();
       toast_("Trip planned", true);
     };
@@ -2037,7 +2060,7 @@ export default function App() {
 
           setGenerationError(null);
           setTripUsedFallback(Boolean(parsed.usedFallback));
-          await applyGeneratedTrip(parsed, activeRouteInfo);
+          applyGeneratedTrip(parsed, activeRouteInfo);
 
           if (user && session?.access_token) {
             fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});

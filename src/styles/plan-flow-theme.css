@@ -1,17 +1,17 @@
 /**
- * Plan flow + map overlay panels — canonical day/night palette.
- * Loaded last in main.jsx — wins over tripmappa-themes, rebrand, hero-map-theme.
+ * Plan flow + map overlay panels — uses canonical tokens from trippmappa-themes.css.
+ * Loaded last in main.jsx.
  */
 
 /* ══════════════════════════════════════════════════════════════
-   DAY — warm parchment frosted panels
+   DAY
    ══════════════════════════════════════════════════════════════ */
 html body .app-wrap.day .float-card,
 html body .app-wrap.day .float-card-header {
-  background: rgba(245, 230, 200, 0.95) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
+  background: var(--color-plan-panel-bg) !important;
+  backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
+  border-color: var(--color-plan-panel-border) !important;
 }
 
 html body .app-wrap.day .float-card {
@@ -19,29 +19,28 @@ html body .app-wrap.day .float-card {
 }
 
 html body .app-wrap.day .float-card-header {
-  border-bottom-color: rgba(160, 64, 16, 0.15) !important;
+  border-bottom-color: var(--color-plan-panel-border) !important;
 }
 
 html body .app-wrap.day .float-card-title {
-  color: #1A0D00 !important;
-  border-bottom-color: rgba(160, 64, 16, 0.25) !important;
+  color: var(--color-question-text) !important;
+  border-bottom-color: var(--color-plan-panel-border) !important;
 }
 
 html body .app-wrap.day .plan-panel-dock,
 html body .app-wrap.day .plan-panel-dock .route-footer {
-  background: rgba(245, 230, 200, 0.88) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-color: var(--color-plan-panel-border) !important;
+  backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
 }
 
-/* Question text */
 html body .app-wrap.day .chat-wrap-plan-flow .ai-bubble,
 html body .app-wrap.day .chat-wrap-plan-flow .question-page-title {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  color: #1A0D00 !important;
+  color: var(--color-question-text) !important;
 }
 
 html body .app-wrap.day .chat-wrap-plan-flow .question-page-subtitle,
@@ -50,80 +49,56 @@ html body .app-wrap.day .chat-wrap-plan-flow .scenic-route-note {
   color: rgba(26, 13, 0, 0.72) !important;
 }
 
-/* Answer buttons */
 html body .app-wrap.day .qr-btn {
-  background: #FDF3E0 !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  color: #1A0D00 !important;
+  background: var(--color-answer-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-answer-text) !important;
   box-shadow: none !important;
 }
 
 html body .app-wrap.day .qr-btn:hover:not(:disabled):not(.qr-dimmed) {
   background: rgba(253, 243, 224, 0.95) !important;
   border-color: rgba(160, 64, 16, 0.35) !important;
-  color: #1A0D00 !important;
+  color: var(--color-answer-text) !important;
 }
 
 html body .app-wrap.day .qr-btn.qr-selected {
-  background: #1A0D00 !important;
-  border-color: #1A0D00 !important;
-  color: #FFD28C !important;
+  background: var(--color-answer-selected-bg) !important;
+  border-color: var(--color-answer-selected-bg) !important;
+  color: var(--color-answer-selected-text) !important;
   box-shadow: none !important;
   animation: none !important;
 }
 
-/* Category tabs (Personal, Oversized, …) */
 html body .app-wrap.day .vehicle-tab {
-  background: rgba(245, 230, 200, 0.8) !important;
-  border: 1px solid rgba(160, 64, 16, 0.15) !important;
-  border-left: 1px solid rgba(160, 64, 16, 0.15) !important;
-  color: #1A0D00 !important;
+  background: var(--color-tab-inactive-bg) !important;
+  border: 1px solid var(--color-answer-border) !important;
+  border-left: 1px solid var(--color-answer-border) !important;
+  color: var(--color-tab-inactive-text) !important;
   box-shadow: none !important;
 }
 
 html body .app-wrap.day .vehicle-tab-active {
-  background: #E06820 !important;
-  border-color: #E06820 !important;
-  border-left-color: #E06820 !important;
-  color: #FFFFFF !important;
+  background: var(--color-tab-active-bg) !important;
+  border-color: var(--color-tab-active-bg) !important;
+  border-left-color: var(--color-tab-active-bg) !important;
+  color: var(--color-tab-active-text) !important;
   box-shadow: none !important;
 }
 
 html body .app-wrap.day .filter-tab.active {
-  background: #E06820 !important;
-  border-color: #E06820 !important;
-  color: #FFFFFF !important;
-}
-
-/* Route summary */
-html body .app-wrap.day .plan-route-card,
-html body .app-wrap.day .plan-route-card-endpoints,
-html body .app-wrap.day .plan-route-card-stats,
-html body .app-wrap.day .plan-route-card-city {
-  color: #3A1A08 !important;
-}
-
-/* Start over + step indicator */
-html body .app-wrap.day .plan-flow-start-over {
-  color: #A04010 !important;
-  text-decoration: none !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-html body .app-wrap.day .plan-flow-start-over:hover {
-  color: #8B3A0F !important;
-  background: rgba(160, 64, 16, 0.08) !important;
+  background: var(--color-tab-active-bg) !important;
+  border-color: var(--color-tab-active-bg) !important;
+  color: var(--color-tab-active-text) !important;
 }
 
 html body .app-wrap.day .plan-flow-header-bar .question-progress-phase,
 html body .app-wrap.day .plan-flow-header-bar .question-progress-compact .question-progress-phase {
-  color: #A04010 !important;
+  color: var(--color-tab-inactive-text) !important;
 }
 
 html body .app-wrap.day .question-progress-phase.is-active {
-  color: #A04010 !important;
+  color: var(--color-tab-active-bg) !important;
   opacity: 1 !important;
 }
 
@@ -132,11 +107,11 @@ html body .app-wrap.day .question-progress-phase.is-done {
 }
 
 html body .app-wrap.day .question-progress-track {
-  background: rgba(160, 64, 16, 0.15) !important;
+  background: var(--color-tab-inactive-bg) !important;
 }
 
 html body .app-wrap.day .question-progress-fill {
-  background: #E06820 !important;
+  background: var(--color-tab-active-bg) !important;
 }
 
 /* Map overlay panels — day */
@@ -146,51 +121,42 @@ html body .app-wrap.day .map-style-menu,
 html body .app-wrap.day .map-style-btn,
 html body .app-wrap.day .map-recenter-btn,
 html body .app-wrap.day .map-zoom-btn,
-html body .app-wrap.day .traffic-toast,
-html body .app-wrap.day .route-loading-pill,
-html body .app-wrap.day .timing-menu-fixed {
-  background: rgba(245, 230, 200, 0.95) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  color: #1A0D00 !important;
-}
-
-html body .app-wrap.day .map-info-card.day {
-  background: rgba(245, 230, 200, 0.95) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  color: #1A0D00 !important;
-}
-
-html body .app-wrap.day .map-route-pill-label {
-  color: rgba(58, 26, 8, 0.72) !important;
-}
-
-html body .app-wrap.day .map-route-pill-val {
-  color: #A04010 !important;
-}
-
 html body .app-wrap.day .float-card-help-btn,
 html body .app-wrap.day .float-card-chevron-btn,
-html body .app-wrap.day .convo-nav-btn:not(.plan-flow-start-over) {
-  background: rgba(245, 230, 200, 0.8) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  color: #1A0D00 !important;
+html body .app-wrap.day .plan-flow-collapse-btn {
+  background: color-mix(in srgb, var(--color-plan-panel-bg) 94%, transparent) !important;
+  border-color: var(--color-plan-panel-border) !important;
+  color: var(--color-question-text) !important;
 }
 
-html body .app-wrap.day .question-choices {
-  border-top-color: rgba(160, 64, 16, 0.12) !important;
+html body .app-wrap.day .map-style-item,
+html body .app-wrap.day .help-menu-item {
+  color: var(--color-question-text) !important;
 }
 
-html body .app-wrap.day .question-section-label,
-html body .app-wrap.day .vehicle-group-label {
-  color: #A04010 !important;
+html body .app-wrap.day .map-style-item.active {
+  background: var(--color-tab-inactive-bg) !important;
 }
 
-html body .app-wrap.day .question-text-input {
-  background: rgba(253, 243, 224, 0.85) !important;
-  border-color: rgba(160, 64, 16, 0.2) !important;
-  color: #1A0D00 !important;
+html body .app-wrap.day .plan-route-card,
+html body .app-wrap.day .plan-route-card-endpoints,
+html body .app-wrap.day .plan-route-card-meta {
+  background: var(--color-answer-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-question-text) !important;
+}
+
+html body .app-wrap.day .convo-nav-btn,
+html body .app-wrap.day .plan-flow-start-over {
+  background: var(--color-tab-inactive-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-question-text) !important;
+}
+
+html body .app-wrap.day .btn-generate-trip {
+  background: var(--color-answer-selected-bg) !important;
+  color: var(--color-answer-selected-text) !important;
+  border-color: transparent !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -225,7 +191,6 @@ html body .app-wrap.night .plan-panel-dock .route-footer {
   -webkit-backdrop-filter: blur(16px) !important;
 }
 
-/* Question text */
 html body .app-wrap.night .chat-wrap-plan-flow .ai-bubble,
 html body .app-wrap.night .chat-wrap-plan-flow .question-page-title {
   background: transparent !important;
@@ -240,7 +205,6 @@ html body .app-wrap.night .chat-wrap-plan-flow .scenic-route-note {
   color: rgba(255, 255, 255, 0.72) !important;
 }
 
-/* Answer buttons */
 html body .app-wrap.night .qr-btn {
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
@@ -261,7 +225,6 @@ html body .app-wrap.night .qr-btn.qr-selected {
   box-shadow: none !important;
 }
 
-/* Category tabs */
 html body .app-wrap.night .vehicle-tab {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 210, 140, 0.12) !important;
@@ -276,34 +239,6 @@ html body .app-wrap.night .vehicle-tab-active {
   border-left-color: transparent !important;
   color: #1A0D00 !important;
   box-shadow: none !important;
-}
-
-html body .app-wrap.night .filter-tab.active {
-  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
-  border-color: transparent !important;
-  color: #1A0D00 !important;
-}
-
-/* Route summary */
-html body .app-wrap.night .plan-route-card,
-html body .app-wrap.night .plan-route-card-endpoints,
-html body .app-wrap.night .plan-route-card-stats,
-html body .app-wrap.night .plan-route-card-city {
-  color: #A89BCF !important;
-}
-
-/* Start over + step indicator */
-html body .app-wrap.night .plan-flow-start-over {
-  color: #FF8C42 !important;
-  text-decoration: none !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-html body .app-wrap.night .plan-flow-start-over:hover {
-  color: #FFD28C !important;
-  background: rgba(255, 140, 66, 0.12) !important;
 }
 
 html body .app-wrap.night .plan-flow-header-bar .question-progress-phase,
@@ -328,55 +263,45 @@ html body .app-wrap.night .question-progress-fill {
   background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
 }
 
-/* Map overlay panels — night */
 html body .app-wrap.night .help-menu,
 html body .app-wrap.night .map-route-pill,
 html body .app-wrap.night .map-style-menu,
 html body .app-wrap.night .map-style-btn,
 html body .app-wrap.night .map-recenter-btn,
 html body .app-wrap.night .map-zoom-btn,
-html body .app-wrap.night .traffic-toast,
-html body .app-wrap.night .route-loading-pill {
-  background: rgba(26, 16, 53, 0.92) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-color: rgba(255, 210, 140, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-html body .app-wrap.night .map-info-card.night {
-  background: rgba(26, 16, 53, 0.92) !important;
-  border-color: rgba(255, 210, 140, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-html body .app-wrap.night .map-route-pill-label {
-  color: #A89BCF !important;
-}
-
-html body .app-wrap.night .map-route-pill-val {
-  color: #FFD28C !important;
-}
-
 html body .app-wrap.night .float-card-help-btn,
 html body .app-wrap.night .float-card-chevron-btn,
-html body .app-wrap.night .convo-nav-btn:not(.plan-flow-start-over) {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 210, 140, 0.15) !important;
-  color: #FFD28C !important;
+html body .app-wrap.night .plan-flow-collapse-btn {
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-accent-gold) !important;
 }
 
-html body .app-wrap.night .question-choices {
-  border-top-color: rgba(255, 210, 140, 0.12) !important;
+html body .app-wrap.night .map-style-item {
+  color: var(--color-text-primary) !important;
 }
 
-html body .app-wrap.night .question-section-label,
-html body .app-wrap.night .vehicle-group-label {
-  color: #FFD28C !important;
+html body .app-wrap.night .map-style-item.active {
+  background: var(--color-tag-local-bg) !important;
 }
 
-html body .app-wrap.night .question-text-input {
+html body .app-wrap.night .plan-route-card,
+html body .app-wrap.night .plan-route-card-endpoints,
+html body .app-wrap.night .plan-route-card-meta {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 210, 140, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+html body .app-wrap.night .convo-nav-btn,
+html body .app-wrap.night .plan-flow-start-over {
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
   color: #FFFFFF !important;
+}
+
+html body .app-wrap.night .btn-generate-trip {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  color: #1A0D00 !important;
+  border-color: transparent !important;
 }

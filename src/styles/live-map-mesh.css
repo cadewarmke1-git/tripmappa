@@ -196,16 +196,16 @@
   background: var(--color-map-panel) !important;
 }
 
-.app-wrap.day .float-card {
-  background: var(--color-map-panel) !important;
-}
-
 .app-wrap.night .float-card-header {
   background: var(--color-surface) !important;
 }
 
+.app-wrap.day .float-card {
+  background: var(--color-plan-panel-bg) !important;
+}
+
 .app-wrap.day .float-card-header {
-  background: var(--color-surface-elevated) !important;
+  background: var(--color-plan-panel-bg) !important;
 }
 
 .route-info-bar {

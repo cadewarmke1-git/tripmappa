@@ -31,7 +31,7 @@
   --tm-card-deep: var(--color-surface);
   --tm-muted: rgba(90, 42, 16, 0.65);
   --tm-ink: var(--deep-dark);
-  --tm-nav-bg: var(--color-map-panel);
+  --tm-nav-bg: var(--color-nav-bg);
   --tm-page-bg: var(--color-map-surface);
   --tm-placeholder: rgba(90, 42, 16, 0.45);
   --tm-cta-gradient: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%);
@@ -84,37 +84,37 @@ body {
 
 /* ── Nav bar surfaces ── */
 .app-wrap.day .nav-app {
-  background: #1A0D00 !important;
-  border-bottom-color: rgba(255, 210, 140, 0.12) !important;
+  background: var(--color-nav-bg) !important;
+  border-bottom-color: var(--color-nav-border) !important;
 }
 
 .app-wrap.day .nav-app .nav-tab {
-  color: rgba(26, 13, 0, 0.55) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .app-wrap.day .nav-app .nav-tab:hover {
-  background: rgba(224, 104, 32, 0.12) !important;
-  color: var(--deep-dark) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 .app-wrap.day .nav-app .nav-tab.active {
-  background: rgba(255, 210, 140, 0.45) !important;
-  color: var(--deep-dark) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
 }
 
 .app-wrap.day .nav-center-wrap {
-  background: rgba(224, 104, 32, 0.1) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 .app-wrap.day .nav-app .nav-btn {
-  background: rgba(253, 243, 224, 0.85) !important;
-  border-color: rgba(224, 104, 32, 0.3) !important;
-  color: var(--deep-dark) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .app-wrap.day .nav-app .nav-btn:hover {
-  background: rgba(253, 243, 224, 1) !important;
-  border-color: rgba(224, 104, 32, 0.45) !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
 .app-wrap.night .nav-app {
@@ -440,32 +440,32 @@ body {
 
 /* ── Cards & panels — day ── */
 .app-wrap.day .float-card {
-  background: rgba(253, 243, 224, 0.95) !important;
-  border-color: rgba(224, 104, 32, 0.25) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-color: var(--color-plan-panel-border) !important;
 }
 
 .app-wrap.day .qr-btn {
-  background: var(--color-surface) !important;
-  border-color: rgba(224, 104, 32, 0.3) !important;
-  color: var(--deep-dark) !important;
+  background: var(--color-answer-bg) !important;
+  border-color: var(--color-answer-border) !important;
+  color: var(--color-answer-text) !important;
 }
 
 .app-wrap.day .qr-btn:hover {
-  background: var(--color-map-surface) !important;
-  border-color: rgba(224, 104, 32, 0.45) !important;
+  background: rgba(253, 243, 224, 0.95) !important;
+  border-color: rgba(160, 64, 16, 0.35) !important;
 }
 
 .app-wrap.day .qr-btn.qr-selected {
-  background: var(--gold-primary) !important;
-  border-color: var(--gold-primary) !important;
-  color: var(--deep-dark) !important;
+  background: var(--color-answer-selected-bg) !important;
+  border-color: var(--color-answer-selected-bg) !important;
+  color: var(--color-answer-selected-text) !important;
 }
 
 .app-wrap.day .vehicle-tab-active,
 .app-wrap.day .filter-tab.active {
-  background: rgba(255, 210, 140, 0.55) !important;
-  border-color: rgba(224, 104, 32, 0.4) !important;
-  color: var(--deep-dark) !important;
+  background: var(--color-tab-active-bg) !important;
+  border-color: var(--color-tab-active-bg) !important;
+  color: var(--color-tab-active-text) !important;
 }
 
 .app-wrap.day .lodging-card,

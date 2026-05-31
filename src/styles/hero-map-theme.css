@@ -218,8 +218,7 @@
 
 .app-wrap.night .map-style-btn,
 .app-wrap.night .map-recenter-btn,
-.app-wrap.night .map-zoom-btn,
-.app-wrap.night .map-top-controls .theme-toggle-btn {
+.app-wrap.night .map-zoom-btn {
   background: color-mix(in srgb, var(--color-surface) 92%, transparent) !important;
   border-color: var(--color-input-border) !important;
   color: var(--color-accent-gold) !important;
@@ -227,8 +226,7 @@
 
 .app-wrap.night .map-style-btn:hover,
 .app-wrap.night .map-recenter-btn:hover,
-.app-wrap.night .map-zoom-btn:hover,
-.app-wrap.night .map-top-controls .theme-toggle-btn:hover {
+.app-wrap.night .map-zoom-btn:hover {
   background: var(--color-surface-elevated) !important;
 }
 
@@ -279,13 +277,13 @@
 }
 
 .app-wrap.day .float-card {
-  background: color-mix(in srgb, var(--color-map-surface) 96%, transparent) !important;
-  border-color: var(--color-input-border) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-color: var(--color-plan-panel-border) !important;
 }
 
 .app-wrap.day .float-card-header {
-  background: var(--color-map-panel) !important;
-  border-bottom-color: var(--color-input-border) !important;
+  background: var(--color-plan-panel-bg) !important;
+  border-bottom-color: var(--color-plan-panel-border) !important;
 }
 
 .app-wrap.day .trip-map-fullscreen {
@@ -294,8 +292,7 @@
 
 .app-wrap.day .map-style-btn,
 .app-wrap.day .map-recenter-btn,
-.app-wrap.day .map-zoom-btn,
-.app-wrap.day .map-top-controls .theme-toggle-btn {
+.app-wrap.day .map-zoom-btn {
   background: color-mix(in srgb, var(--color-map-surface) 94%, transparent) !important;
   border-color: var(--color-input-border) !important;
   color: var(--color-text-primary) !important;
@@ -303,8 +300,7 @@
 
 .app-wrap.day .map-style-btn:hover,
 .app-wrap.day .map-recenter-btn:hover,
-.app-wrap.day .map-zoom-btn:hover,
-.app-wrap.day .map-top-controls .theme-toggle-btn:hover {
+.app-wrap.day .map-zoom-btn:hover {
   background: var(--color-map-panel) !important;
 }
 
