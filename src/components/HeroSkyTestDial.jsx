@@ -9,7 +9,7 @@ const PHASE_LABELS = {
   night: "Night",
 };
 
-/** Dev / ?skyTest=1 — scrub local time to preview animated sky. */
+/** Temporary — always visible until launch; scrub local time to preview animated sky. */
 export default function HeroSkyTestDial({
   hour,
   liveHour,

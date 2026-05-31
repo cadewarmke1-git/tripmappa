@@ -19,13 +19,9 @@ export function parseSkyHourParam(search = "") {
   return Math.max(0, Math.min(24, n));
 }
 
-/** Dev: dial on by default. Production: only with ?skyTest=1. Force off with ?skyTest=0. */
-export function isSkyTestEnabled(search = "", dev = import.meta.env.DEV) {
-  const params = new URLSearchParams(search);
-  const flag = params.get("skyTest");
-  if (flag === "1") return true;
-  if (flag === "0") return false;
-  return dev;
+/** Always show sky test dial until removed before launch. */
+export function isSkyTestEnabled() {
+  return true;
 }
 
 export function resolveHeroSkyHour({ liveHour, dialOverride, urlHour }) {

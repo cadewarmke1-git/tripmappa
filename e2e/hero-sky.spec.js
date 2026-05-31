@@ -19,13 +19,8 @@ test.describe("hero sky visuals", () => {
     });
   }
 
-  test("hides sky test dial in production mode", async ({ page }) => {
-    await page.goto("/?skyTest=0");
-    await expect(page.locator(".hero-sky-test-dial")).toHaveCount(0);
-  });
-
-  test("shows sky test dial with ?skyTest=1", async ({ page }) => {
-    await page.goto("/?skyTest=1");
+  test("shows sky test dial on hero", async ({ page }) => {
+    await page.goto("/");
     await expect(page.locator(".hero-sky-test-dial")).toBeVisible();
   });
 });
