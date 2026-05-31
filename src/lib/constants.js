@@ -45,9 +45,9 @@ export const HERO_PHOTOS_NIGHT = [
   "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80",
 ];
 
-/** @deprecated Hero uses procedural SVG mountains — no photo asset */
-export const HERO_PHOTO = null;
-export const HERO_PHOTO_PRELOAD = null;
+/** Self-hosted alpine hero photo — sky is animated separately via CSS mask. */
+export const HERO_PHOTO = "/hero-mountain.jpg";
+export const HERO_PHOTO_PRELOAD = HERO_PHOTO;
 
 /** @deprecated Use HERO_PHOTO — kept for legacy imports */
 export const HERO_PHOTO_DAY = HERO_PHOTOS_DAY[0];

@@ -98,18 +98,18 @@ function rgbStr([r, g, b]) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-/** Hour samples for smooth sky + mountain palette over the vector hero scene. */
+/** Hour samples — animated sky + photo mountain grade. */
 const SKY_ATMOSPHERE_KEYS = [
-  { h: 0, zenith: [12, 16, 38], horizon: [38, 34, 62], warm: [180, 190, 220], warmth: 0, stars: 1, glow: 0, mtnFar: [20, 24, 44], mtnMid: [12, 16, 32], mtnNear: [6, 8, 18], snow: [195, 205, 220], rim: 0.05, cloudSea: 0.28 },
-  { h: 4, zenith: [18, 22, 52], horizon: [58, 48, 82], warm: [210, 170, 140], warmth: 0.04, stars: 0.85, glow: 0, mtnFar: [24, 28, 50], mtnMid: [16, 20, 38], mtnNear: [8, 10, 22], snow: [210, 215, 228], rim: 0.08, cloudSea: 0.32 },
-  { h: 5.5, zenith: [48, 58, 98], horizon: [145, 118, 138], warm: [255, 195, 145], warmth: 0.18, stars: 0.15, glow: 0.28, mtnFar: [52, 58, 82], mtnMid: [38, 44, 68], mtnNear: [22, 28, 48], snow: [235, 228, 218], rim: 0.22, cloudSea: 0.55 },
-  { h: 7, zenith: [82, 128, 178], horizon: [196, 212, 232], warm: [255, 228, 200], warmth: 0.1, stars: 0, glow: 0.32, mtnFar: [78, 98, 122], mtnMid: [52, 68, 88], mtnNear: [30, 40, 54], snow: [248, 250, 255], rim: 0.18, cloudSea: 0.82 },
-  { h: 12, zenith: [72, 132, 198], horizon: [218, 232, 245], warm: [255, 242, 225], warmth: 0.06, stars: 0, glow: 0.38, mtnFar: [88, 108, 128], mtnMid: [58, 72, 92], mtnNear: [32, 42, 56], snow: [252, 254, 255], rim: 0.12, cloudSea: 0.94 },
-  { h: 16, zenith: [88, 118, 168], horizon: [225, 188, 148], warm: [255, 178, 95], warmth: 0.16, stars: 0, glow: 0.42, mtnFar: [82, 98, 118], mtnMid: [54, 66, 86], mtnNear: [30, 38, 52], snow: [250, 242, 232], rim: 0.28, cloudSea: 0.88 },
-  { h: 18.5, zenith: [62, 48, 88], horizon: [195, 115, 72], warm: [255, 145, 70], warmth: 0.22, stars: 0.08, glow: 0.38, mtnFar: [48, 42, 72], mtnMid: [32, 28, 52], mtnNear: [18, 16, 34], snow: [240, 210, 195], rim: 0.35, cloudSea: 0.62 },
-  { h: 20, zenith: [32, 26, 54], horizon: [82, 52, 68], warm: [255, 130, 80], warmth: 0.08, stars: 0.55, glow: 0.12, mtnFar: [28, 24, 48], mtnMid: [18, 16, 36], mtnNear: [10, 10, 24], snow: [210, 200, 210], rim: 0.12, cloudSea: 0.4 },
-  { h: 22, zenith: [14, 18, 40], horizon: [40, 36, 64], warm: [170, 175, 210], warmth: 0, stars: 0.92, glow: 0, mtnFar: [18, 22, 42], mtnMid: [10, 14, 30], mtnNear: [6, 8, 18], snow: [200, 208, 222], rim: 0.06, cloudSea: 0.3 },
-  { h: 24, zenith: [12, 16, 38], horizon: [38, 34, 62], warm: [180, 190, 220], warmth: 0, stars: 1, glow: 0, mtnFar: [20, 24, 44], mtnMid: [12, 16, 32], mtnNear: [6, 8, 18], snow: [195, 205, 220], rim: 0.05, cloudSea: 0.28 },
+  { h: 0, zenith: [12, 16, 38], horizon: [38, 34, 62], warm: [180, 190, 220], warmth: 0, stars: 1, glow: 0, cloudSea: 0.15, photoBright: 0.38, photoContrast: 1.12, photoSat: 0.52, photoTint: [18, 22, 52], photoTintOp: 0.58 },
+  { h: 4, zenith: [18, 22, 52], horizon: [58, 48, 82], warm: [210, 170, 140], warmth: 0.04, stars: 0.85, glow: 0, cloudSea: 0.18, photoBright: 0.48, photoContrast: 1.1, photoSat: 0.62, photoTint: [32, 28, 58], photoTintOp: 0.45 },
+  { h: 5.5, zenith: [48, 58, 98], horizon: [145, 118, 138], warm: [255, 195, 145], warmth: 0.18, stars: 0.15, glow: 0.28, cloudSea: 0.22, photoBright: 0.82, photoContrast: 1.06, photoSat: 1.08, photoTint: [255, 170, 110], photoTintOp: 0.14 },
+  { h: 7, zenith: [82, 128, 178], horizon: [196, 212, 232], warm: [255, 228, 200], warmth: 0.1, stars: 0, glow: 0.32, cloudSea: 0.08, photoBright: 1, photoContrast: 1.04, photoSat: 1.08, photoTint: [255, 220, 190], photoTintOp: 0.06 },
+  { h: 12, zenith: [72, 132, 198], horizon: [218, 232, 245], warm: [255, 242, 225], warmth: 0.06, stars: 0, glow: 0.38, cloudSea: 0, photoBright: 1.02, photoContrast: 1.05, photoSat: 1.1, photoTint: [255, 248, 240], photoTintOp: 0 },
+  { h: 16, zenith: [88, 118, 168], horizon: [225, 188, 148], warm: [255, 178, 95], warmth: 0.16, stars: 0, glow: 0.42, cloudSea: 0.05, photoBright: 0.98, photoContrast: 1.06, photoSat: 1.12, photoTint: [255, 200, 140], photoTintOp: 0.08 },
+  { h: 18.5, zenith: [62, 48, 88], horizon: [195, 115, 72], warm: [255, 145, 70], warmth: 0.22, stars: 0.08, glow: 0.38, cloudSea: 0.12, photoBright: 0.88, photoContrast: 1.08, photoSat: 1.05, photoTint: [255, 140, 80], photoTintOp: 0.16 },
+  { h: 20, zenith: [32, 26, 54], horizon: [82, 52, 68], warm: [255, 130, 80], warmth: 0.08, stars: 0.55, glow: 0.12, cloudSea: 0.2, photoBright: 0.55, photoContrast: 1.1, photoSat: 0.72, photoTint: [45, 32, 68], photoTintOp: 0.38 },
+  { h: 22, zenith: [14, 18, 40], horizon: [40, 36, 64], warm: [170, 175, 210], warmth: 0, stars: 0.92, glow: 0, cloudSea: 0.16, photoBright: 0.4, photoContrast: 1.12, photoSat: 0.55, photoTint: [22, 26, 50], photoTintOp: 0.52 },
+  { h: 24, zenith: [12, 16, 38], horizon: [38, 34, 62], warm: [180, 190, 220], warmth: 0, stars: 1, glow: 0, cloudSea: 0.15, photoBright: 0.38, photoContrast: 1.12, photoSat: 0.52, photoTint: [18, 22, 52], photoTintOp: 0.58 },
 ];
 
 function sampleAtmosphere(hour) {
@@ -127,12 +127,12 @@ function sampleAtmosphere(hour) {
     warmth: lerp(a.warmth, b.warmth, t),
     stars: lerp(a.stars, b.stars, t),
     glow: lerp(a.glow, b.glow, t),
-    mtnFar: lerpRgb(a.mtnFar, b.mtnFar, t),
-    mtnMid: lerpRgb(a.mtnMid, b.mtnMid, t),
-    mtnNear: lerpRgb(a.mtnNear, b.mtnNear, t),
-    snow: lerpRgb(a.snow, b.snow, t),
-    rim: lerp(a.rim, b.rim, t),
     cloudSea: lerp(a.cloudSea, b.cloudSea, t),
+    photoBright: lerp(a.photoBright, b.photoBright, t),
+    photoContrast: lerp(a.photoContrast, b.photoContrast, t),
+    photoSat: lerp(a.photoSat, b.photoSat, t),
+    photoTint: lerpRgb(a.photoTint, b.photoTint, t),
+    photoTintOp: lerp(a.photoTintOp, b.photoTintOp, t),
   };
 }
 
@@ -157,7 +157,7 @@ function moonPosition(hour) {
   };
 }
 
-/** Continuous sky atmosphere for the vector hero — sky, sun/moon, mountains, cloud sea. */
+/** Continuous sky atmosphere — animated sky + graded photo mountains. */
 export function getSkyAtmosphere(hour = 12) {
   const sample = sampleAtmosphere(hour);
   const sun = sunPosition(hour);
@@ -180,12 +180,12 @@ export function getSkyAtmosphere(hour = 12) {
       "--moon-x": moon ? `${moon.x}%` : "50%",
       "--moon-y": moon ? `${moon.y}%` : "50%",
       "--moon-visible": moon ? "1" : "0",
-      "--mtn-far": rgbStr(sample.mtnFar),
-      "--mtn-mid": rgbStr(sample.mtnMid),
-      "--mtn-near": rgbStr(sample.mtnNear),
-      "--mtn-snow": rgbStr(sample.snow),
-      "--mtn-rim": String(sample.rim),
       "--cloud-sea": String(sample.cloudSea),
+      "--photo-bright": String(sample.photoBright),
+      "--photo-contrast": String(sample.photoContrast),
+      "--photo-sat": String(sample.photoSat),
+      "--photo-tint": rgbStr(sample.photoTint),
+      "--photo-tint-op": String(sample.photoTintOp),
     },
   };
 }

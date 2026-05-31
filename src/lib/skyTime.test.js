@@ -66,8 +66,8 @@ describe("skyTime", () => {
     expect(night.cssVars["--sun-visible"]).toBe("0");
     expect(noon.cssVars["--moon-visible"]).toBe("0");
     expect(night.cssVars["--moon-visible"]).toBe("1");
-    expect(noon.cssVars["--mtn-far"]).toMatch(/^rgb\(/);
-    expect(parseFloat(noon.cssVars["--cloud-sea"])).toBeGreaterThan(0.8);
+    expect(noon.cssVars["--photo-bright"]).toBeDefined();
+    expect(parseFloat(night.cssVars["--photo-bright"])).toBeLessThan(0.5);
   });
 
   it("clears theme override when toggled back to the auto default", () => {

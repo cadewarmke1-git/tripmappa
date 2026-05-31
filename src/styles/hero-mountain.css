@@ -1,4 +1,4 @@
-/* Hero — procedural alpine sky + layered vector mountains (no photo) */
+/* Hero — animated sky + masked alpine photo for realistic mountain detail */
 
 .hero-mountain-scene {
   position: absolute;
@@ -158,79 +158,82 @@
   to { transform: translateX(-105vw); }
 }
 
-/* ── Mountain silhouettes ── */
-.hero-mountains {
+/* ── Photo mountains (masked — sky comes from animated layers above) ── */
+.hero-photo-layer {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: min(62vh, 520px);
+  inset: 0;
   z-index: 4;
-}
-
-.hero-mtn {
-  transition: fill 1s ease;
-}
-
-.hero-mtn--far {
-  fill: var(--mtn-far, rgb(88, 108, 128));
-}
-
-.hero-mtn--mid {
-  fill: var(--mtn-mid, rgb(58, 72, 92));
-}
-
-.hero-mtn--near {
-  fill: var(--mtn-near, rgb(32, 42, 56));
-}
-
-.hero-mtn-snow {
-  fill: var(--mtn-snow, rgb(248, 250, 255));
-  opacity: calc(0.55 + var(--mtn-rim, 0.1) * 0.8);
-  transition: fill 1s ease, opacity 1s ease;
-}
-
-/* Golden-hour rim light on the ridgeline */
-.hero-ridge-glow {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: min(62vh, 520px);
-  z-index: 5;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
+  -webkit-mask-image: linear-gradient(
+    to bottom,
     transparent 0%,
-    transparent 58%,
-    color-mix(in srgb, var(--sky-warm, rgb(255, 180, 100)) calc(var(--mtn-rim, 0) * 55%), transparent) 72%,
-    color-mix(in srgb, var(--sky-warm, rgb(255, 200, 140)) calc(var(--mtn-rim, 0) * 35%), transparent) 84%,
-    transparent 100%
+    transparent 24%,
+    rgba(0, 0, 0, 0.15) 32%,
+    rgba(0, 0, 0, 0.55) 40%,
+    black 50%,
+    black 100%
   );
-  mix-blend-mode: screen;
-  opacity: calc(var(--mtn-rim, 0) * 1.2);
-  transition: opacity 1s ease;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 24%,
+    rgba(0, 0, 0, 0.15) 32%,
+    rgba(0, 0, 0, 0.55) 40%,
+    black 50%,
+    black 100%
+  );
 }
 
-/* ── Cloud sea below the peaks ── */
+.hero-photo-slide {
+  position: absolute;
+  inset: 0;
+  background-color: #0a0c14;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center 42%;
+  filter: brightness(var(--photo-bright, 1))
+    contrast(var(--photo-contrast, 1.05))
+    saturate(var(--photo-sat, 1.05));
+  transition: filter 1s ease;
+}
+
+.hero-photo-tint {
+  position: absolute;
+  inset: 0;
+  background: var(--photo-tint, rgb(18, 22, 52));
+  opacity: var(--photo-tint-op, 0);
+  mix-blend-mode: color;
+  transition: opacity 1s ease, background 1s ease;
+}
+
+.hero-photo-sky-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--sky-horizon, rgb(218, 232, 245)) 0%,
+    color-mix(in srgb, var(--sky-horizon, rgb(218, 232, 245)) 65%, transparent) 18%,
+    transparent 38%
+  );
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+/* Subtle night cloud wash over the photo base */
 .hero-cloud-sea {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 42%;
-  z-index: 6;
+  height: 38%;
+  z-index: 5;
   pointer-events: none;
   background: linear-gradient(
     to top,
-    rgba(255, 255, 255, 0.97) 0%,
-    rgba(244, 248, 252, 0.88) 22%,
-    rgba(228, 236, 244, 0.55) 48%,
-    rgba(210, 222, 235, 0.18) 72%,
-    transparent 100%
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(244, 248, 252, 0.18) 30%,
+    transparent 72%
   );
-  opacity: var(--cloud-sea, 0.85);
+  opacity: var(--cloud-sea, 0);
   transition: opacity 1s ease;
 }
 
@@ -238,9 +241,8 @@
 .hero-mountain-scene--pre_dawn .hero-cloud-sea {
   background: linear-gradient(
     to top,
-    rgba(18, 22, 38, 0.92) 0%,
-    rgba(28, 34, 52, 0.72) 28%,
-    rgba(38, 44, 64, 0.35) 55%,
+    rgba(12, 16, 32, 0.55) 0%,
+    rgba(22, 28, 48, 0.28) 35%,
     transparent 100%
   );
 }
@@ -249,9 +251,8 @@
   .hero-sun-halo,
   .hero-sun-disc,
   .hero-moon-disc,
-  .hero-mtn,
-  .hero-mtn-snow,
-  .hero-ridge-glow,
+  .hero-photo-slide,
+  .hero-photo-tint,
   .hero-cloud-sea,
   .hero-stars {
     transition: none;
@@ -394,8 +395,29 @@
 
 /* ── Mobile: keep sky visible above the route form ── */
 @media (max-width: 768px) {
-  html[data-layout="mobile"] .hero-mountains {
-    height: min(56vh, 460px);
+  html[data-layout="mobile"] .hero-photo-slide {
+    background-position: center 28%;
+  }
+
+  html[data-layout="mobile"] .hero-photo-layer {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 20%,
+      rgba(0, 0, 0, 0.2) 28%,
+      rgba(0, 0, 0, 0.6) 36%,
+      black 46%,
+      black 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 20%,
+      rgba(0, 0, 0, 0.2) 28%,
+      rgba(0, 0, 0, 0.6) 36%,
+      black 46%,
+      black 100%
+    );
   }
 
   html[data-layout="mobile"] .hero:has(.hero-mountain-scene) .hero-overlay {
