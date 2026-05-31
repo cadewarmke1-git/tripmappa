@@ -52,21 +52,24 @@
 }
 
 /* ── Hero headline (inside .hero.night / .hero.day) ── */
-.hero.night .hero-title,
 .hero.night .hero-title-line,
 .hero.night .hero-content .hero-title-line {
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-  background: none !important;
-  background-image: none !important;
+  background: linear-gradient(90deg, #5A3A9A, #FFD28C) !important;
+  background-image: linear-gradient(90deg, #5A3A9A, #FFD28C) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 .hero.night .hero-title-accent,
 .hero.night .hero-content .hero-title-accent {
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
-  background: none !important;
-  background-image: none !important;
+  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background-image: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
   filter: none !important;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
 }
@@ -75,21 +78,24 @@
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.hero.day .hero-title,
 .hero.day .hero-title-line,
 .hero.day .hero-content .hero-title-line {
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-  background: none !important;
-  background-image: none !important;
+  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background-image: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 .hero.day .hero-title-accent,
 .hero.day .hero-content .hero-title-accent {
-  color: #1A0D00 !important;
-  -webkit-text-fill-color: #1A0D00 !important;
-  background: none !important;
-  background-image: none !important;
+  background: linear-gradient(90deg, #FF8C42, #C87010) !important;
+  background-image: linear-gradient(90deg, #FF8C42, #C87010) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
   filter: none !important;
   text-shadow: none !important;
 }
@@ -115,7 +121,7 @@
 }
 
 .hero.night .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.32) !important;
+  color: rgba(255, 255, 255, 0.18) !important;
   opacity: 1 !important;
   font-style: italic;
   font-weight: 400 !important;
@@ -149,7 +155,7 @@
 }
 
 .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(26, 13, 0, 0.32) !important;
+  color: rgba(26, 13, 0, 0.18) !important;
   opacity: 1 !important;
   font-style: italic;
   font-weight: 400 !important;
@@ -615,26 +621,42 @@ html body .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
 
 html body .hero.night .hero-title-line,
 html body .hero.night .hero-content .hero-title-line {
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
+  background: linear-gradient(90deg, #5A3A9A, #FFD28C) !important;
+  background-image: linear-gradient(90deg, #5A3A9A, #FFD28C) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 html body .hero.night .hero-title-accent {
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
+  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background-image: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
   filter: none !important;
 }
 
 html body .hero.day .hero-title-line,
 html body .hero.day .hero-content .hero-title-line {
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
+  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background-image: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 html body .hero.day .hero-title-accent {
-  color: #1A0D00 !important;
-  -webkit-text-fill-color: #1A0D00 !important;
+  background: linear-gradient(90deg, #FF8C42, #C87010) !important;
+  background-image: linear-gradient(90deg, #FF8C42, #C87010) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
   text-shadow: none !important;
   filter: none !important;
 }
@@ -653,9 +675,9 @@ html body .hero .hero-search .hero-input::placeholder {
 }
 
 html body .hero.night .hero-search .hero-input::placeholder {
-  color: rgba(255, 210, 140, 0.42) !important;
+  color: rgba(255, 255, 255, 0.18) !important;
 }
 
 html body .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(160, 64, 16, 0.42) !important;
+  color: rgba(26, 13, 0, 0.18) !important;
 }

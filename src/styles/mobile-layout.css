@@ -155,12 +155,12 @@
   }
 
   html[data-layout="mobile"] .hero.night .hero-search .hero-input::placeholder {
-    color: rgba(255, 255, 255, 0.32) !important;
+    color: rgba(255, 255, 255, 0.18) !important;
     font-style: italic;
   }
 
   html[data-layout="mobile"] .hero.day .hero-search .hero-input::placeholder {
-    color: rgba(26, 13, 0, 0.32) !important;
+    color: rgba(26, 13, 0, 0.18) !important;
     font-style: italic;
   }
 

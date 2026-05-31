@@ -1,15 +1,12 @@
-import { lazy, Suspense, useMemo } from "react";
+import { useMemo } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
+import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
 import { getHeroSurfaceTheme, getSkyPhaseFromHour } from "../lib/skyTime.js";
-
-const HeroSkyTestDial = import.meta.env.DEV
-  ? lazy(() => import("./HeroSkyTestDial.jsx"))
-  : null;
 
 export default function HeroView({
   isLoaded,
@@ -217,18 +214,16 @@ export default function HeroView({
           <div className="scroll-arrow"/>
         </div>
 
-        {skyTestEnabled && HeroSkyTestDial && (
-          <Suspense fallback={null}>
-            <HeroSkyTestDial
-              hour={skyHour}
-              liveHour={liveHour}
-              phase={skyPhase}
-              isOverridden={isDialOverridden}
-              isUrlLocked={isUrlLocked}
-              onHourChange={setSkyHourOverride}
-              onResetLive={resetToLive}
-            />
-          </Suspense>
+        {skyTestEnabled && (
+          <HeroSkyTestDial
+            hour={skyHour}
+            liveHour={liveHour}
+            phase={skyPhase}
+            isOverridden={isDialOverridden}
+            isUrlLocked={isUrlLocked}
+            onHourChange={setSkyHourOverride}
+            onResetLive={resetToLive}
+          />
         )}
       </div>
     </>

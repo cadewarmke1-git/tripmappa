@@ -45,23 +45,27 @@
   animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
 }
 
-/* ── Hero headline — solid colors per mockup ── */
+/* ── Hero headline — gradient clip text (Travel / Reimagined only) ── */
 .hero-title {
   background: none !important;
 }
 
 .hero .hero-title-line {
   display: block;
-  color: var(--color-hero-title);
-  -webkit-text-fill-color: var(--color-hero-title);
-  background: none;
+  background: var(--color-hero-title-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .hero .hero-title-accent {
   display: block;
-  color: var(--color-hero-accent);
-  -webkit-text-fill-color: var(--color-hero-accent);
-  background: none;
+  background: var(--color-hero-accent-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .hero.day .hero-title-line,
@@ -74,9 +78,11 @@
 }
 
 .hero-title .highlight {
-  color: var(--color-hero-accent) !important;
-  -webkit-text-fill-color: var(--color-hero-accent) !important;
-  background: none !important;
+  background: var(--color-hero-accent-gradient) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 @keyframes loaderWordmarkPulse {
