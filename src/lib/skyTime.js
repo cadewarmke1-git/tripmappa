@@ -77,13 +77,19 @@ export function buildStarField(count = 48, seed = 42) {
     s = (s * 16807 + 0) % 2147483647;
     return s / 2147483647;
   };
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    x: rand() * 100,
-    y: rand() * 38,
-    r: 0.4 + rand() * 1.1,
-    opacity: 0.2 + rand() * 0.45,
-  }));
+  return Array.from({ length: count }, (_, i) => {
+    const r = 0.28 + rand() * 1.15;
+    const tier = r > 0.95 ? "bright" : r > 0.55 ? "mid" : "dim";
+    return {
+      id: i,
+      x: rand() * 100,
+      y: rand() * 42,
+      r,
+      opacity: tier === "bright" ? 0.65 + rand() * 0.35 : 0.18 + rand() * 0.45,
+      tier,
+      twinkle: tier !== "dim" || rand() > 0.75,
+    };
+  });
 }
 
 function lerp(a, b, t) {
@@ -141,8 +147,9 @@ function sunPosition(hour) {
   if (h < 5 || h >= 21) return null;
   const t = (h - 5) / 16;
   return {
-    x: 10 + t * 80,
-    y: 76 - Math.sin(t * Math.PI) * 44,
+    x: 14 + t * 72,
+    /* Keep sun in the open sky — never over the ridgeline */
+    y: 14 + (1 - Math.sin(t * Math.PI)) * 16,
   };
 }
 
@@ -152,9 +159,21 @@ function moonPosition(hour) {
   const t = h >= 20 ? (h - 20) / 9 : (h + 4) / 9;
   const clamped = Math.max(0, Math.min(1, t));
   return {
-    x: 14 + clamped * 72,
-    y: 74 - Math.sin(clamped * Math.PI) * 40,
+    x: 16 + clamped * 68,
+    y: 12 + (1 - Math.sin(clamped * Math.PI)) * 18,
+    /* Drift shadow for subtle phase feel through the night */
+    shadeX: 52 + Math.sin(clamped * Math.PI * 2) * 22,
   };
+}
+
+/** Sun disc fades at midday — photo already carries natural daylight. */
+function sunDiscOpacity(hour) {
+  const h = ((hour % 24) + 24) % 24;
+  if (h < 5 || h >= 21) return 0;
+  if (h >= 9.5 && h <= 14.5) return 0.06;
+  if (h >= 7.5 && h < 9.5) return 0.15 + ((9.5 - h) / 2) * 0.85;
+  if (h > 14.5 && h <= 17.5) return 0.15 + ((h - 14.5) / 3) * 0.85;
+  return 1;
 }
 
 /** Continuous sky atmosphere — animated sky + graded photo mountains. */
@@ -162,7 +181,7 @@ export function getSkyAtmosphere(hour = 12) {
   const sample = sampleAtmosphere(hour);
   const sun = sunPosition(hour);
   const moon = moonPosition(hour);
-  const cloudOpacity = sample.stars > 0.45 ? 0.08 : 0.22 + sample.warmth * 0.45;
+  const cloudOpacity = sample.stars > 0.45 ? 0.06 : 0.38 + sample.warmth * 0.35;
   return {
     starOpacity: sample.stars,
     cloudOpacity,
@@ -177,9 +196,14 @@ export function getSkyAtmosphere(hour = 12) {
       "--sun-x": sun ? `${sun.x}%` : "50%",
       "--sun-y": sun ? `${sun.y}%` : "50%",
       "--sun-visible": sun ? "1" : "0",
+      "--sun-disc-op": sun ? String(sunDiscOpacity(hour)) : "0",
       "--moon-x": moon ? `${moon.x}%` : "50%",
       "--moon-y": moon ? `${moon.y}%` : "50%",
       "--moon-visible": moon ? "1" : "0",
+      "--moon-shade-x": moon ? `${moon.shadeX}%` : "65%",
+      "--ridge-bleed": String(0.12 + sample.warmth * 0.55),
+      "--milky-way": String(Math.max(0, sample.stars - 0.15) * 0.85),
+      "--peak-haze": String(0.08 + sample.stars * 0.22),
       "--cloud-sea": String(sample.cloudSea),
       "--photo-bright": String(sample.photoBright),
       "--photo-contrast": String(sample.photoContrast),
