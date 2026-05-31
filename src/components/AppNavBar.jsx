@@ -24,7 +24,7 @@ export default function AppNavBar({
       className={`app-nav-bar nav app-nav-bar--${theme}${isHero ? " transparent" : " nav-app app-nav-with-logo"}`}
     >
       <div className="app-nav-bar-left">
-        <NavLogo onClick={onGoHome} />
+        <NavLogo onClick={onGoHome} theme={isHero ? theme : undefined} />
       </div>
       <div className="app-nav-bar-right">
         {liveSharingActive && (
@@ -41,6 +41,7 @@ export default function AppNavBar({
               profile={userProfile}
               isOpen={accountSidebarOpen}
               onOpen={onToggleAccountSidebar}
+              heroTheme={isHero ? theme : undefined}
             />
           ) : (
             <>

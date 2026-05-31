@@ -22,14 +22,19 @@
   background: none;
 }
 
-.app-nav-bar.transparent .nav-logo,
-.app-nav-bar.transparent .nav-logo-home {
-  filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.45));
+.app-nav-bar.transparent .nav-logo .brand-wordmark,
+.app-nav-bar.transparent .nav-logo-home .brand-wordmark {
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
 
-.app-nav-bar.transparent.app-nav-bar--day .nav-logo,
-.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home {
-  filter: drop-shadow(0 1px 8px rgba(255, 255, 255, 0.35));
+.app-nav-bar.transparent .nav-logo,
+.app-nav-bar.transparent .nav-logo-home {
+  filter: none;
+}
+
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
+.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark {
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.35);
 }
 
 .auth-modal-logo.brand-wordmark {

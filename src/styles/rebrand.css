@@ -158,22 +158,22 @@ body {
   transition: background 1.8s ease, opacity 1.8s ease !important;
 }
 
-.hero.night .hero-overlay {
+.hero.night:not(:has(.hero-mountain-scene)) .hero-overlay {
   background: var(--color-hero-overlay) !important;
 }
 
-.hero.day .hero-overlay {
+.hero.day:not(:has(.hero-mountain-scene)) .hero-overlay {
   background: var(--color-hero-overlay) !important;
 }
 
-/* Landing hero — neutral vignette; sky tint lives in hero-mountain.css layers */
+/* Mountain-scene hero — clear upper sky; bottom vignette only for text legibility */
 .hero:has(.hero-mountain-scene) .hero-overlay {
   background: linear-gradient(
     180deg,
-    rgba(8, 10, 18, 0.08) 0%,
-    transparent 30%,
-    transparent 55%,
-    rgba(8, 10, 18, 0.32) 100%
+    transparent 0%,
+    transparent 36%,
+    transparent 58%,
+    rgba(8, 10, 18, 0.24) 100%
   ) !important;
 }
 

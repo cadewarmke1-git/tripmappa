@@ -1,8 +1,10 @@
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
+import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
 
-export default function AccountSidebarTrigger({ user, profile, isOpen, onOpen }) {
+export default function AccountSidebarTrigger({ user, profile, isOpen, onOpen, heroTheme }) {
   const displayName = getDisplayName(user, profile);
+  const heroPalette = heroTheme ? HERO_SURFACE_PALETTE[heroTheme] : null;
 
   return (
     <button
@@ -13,7 +15,14 @@ export default function AccountSidebarTrigger({ user, profile, isOpen, onOpen })
       aria-haspopup="dialog"
       aria-label={`Open account menu for ${displayName}`}
     >
-      <UserAvatar user={user} profile={profile} size="md" showRing className="profile-card-trigger-avatar" />
+      <UserAvatar
+        user={user}
+        profile={profile}
+        size="md"
+        showRing
+        className="profile-card-trigger-avatar"
+        heroPalette={heroPalette}
+      />
     </button>
   );
 }

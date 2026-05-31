@@ -119,10 +119,10 @@
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
     transition: background 1.8s ease, opacity 1.8s ease;
   }
-  .hero.night .hero-overlay {
+  .hero.night:not(:has(.hero-mountain-scene)) .hero-overlay {
     background: rgba(13, 10, 26, 0.55);
   }
-  .hero.day .hero-overlay {
+  .hero.day:not(:has(.hero-mountain-scene)) .hero-overlay {
     background: rgba(90, 42, 16, 0.45);
   }
 

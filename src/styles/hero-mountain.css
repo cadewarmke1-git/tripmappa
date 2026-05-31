@@ -160,10 +160,10 @@
   transition: opacity 1.2s ease;
   background: linear-gradient(
     180deg,
-    rgba(26, 16, 53, 0.38) 0%,
-    rgba(42, 26, 74, 0.28) 34%,
-    rgba(13, 10, 26, 0.18) 52%,
-    transparent 62%
+    transparent 0%,
+    rgba(42, 26, 74, 0.12) 42%,
+    rgba(13, 10, 26, 0.1) 56%,
+    transparent 68%
   );
 }
 
@@ -181,9 +181,9 @@
   transition: opacity 1.2s ease;
   background: linear-gradient(
     180deg,
-    rgba(247, 200, 74, 0.06) 0%,
-    rgba(224, 104, 32, 0.04) 32%,
-    transparent 58%
+    transparent 0%,
+    rgba(224, 104, 32, 0.03) 38%,
+    transparent 62%
   );
 }
 
@@ -207,10 +207,10 @@
   z-index: 1 !important;
   background: linear-gradient(
     180deg,
-    rgba(8, 10, 18, 0.06) 0%,
-    transparent 28%,
-    transparent 55%,
-    rgba(8, 10, 18, 0.28) 100%
+    transparent 0%,
+    transparent 36%,
+    transparent 58%,
+    rgba(8, 10, 18, 0.24) 100%
   ) !important;
   transition: background 2.4s ease, opacity 2.4s ease !important;
 }

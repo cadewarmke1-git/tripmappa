@@ -28,3 +28,23 @@ export const MAP_DAY_WATER = "#8AA8B8";
 export const MAP_DAY_PANEL = MAP_DAY_LOCAL_ROAD;
 /** @deprecated Use MAP_DAY_HIGHWAY */
 export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;
+
+/** Hero landing page typography + avatar accents (day/night). */
+export const HERO_SURFACE_PALETTE = {
+  night: {
+    wordmarkGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
+    titleLine: "#FFFFFF",
+    titleAccent: "#FFD28C",
+    avatarGradient: "linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%)",
+    avatarText: DEEP_DARK,
+    avatarRing: "0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4)",
+  },
+  day: {
+    wordmarkGradient: "linear-gradient(90deg, #C87010 0%, #E06820 100%)",
+    titleLine: "#FFFFFF",
+    titleAccent: DEEP_DARK,
+    avatarGradient: "linear-gradient(135deg, #C87010 0%, #E06820 100%)",
+    avatarText: DEEP_DARK,
+    avatarRing: "0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px rgba(224, 104, 32, 0.35)",
+  },
+};

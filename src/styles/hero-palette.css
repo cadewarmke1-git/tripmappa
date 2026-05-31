@@ -16,25 +16,12 @@
   z-index: 6;
 }
 
-.hero.night .hero-palette-vignette {
-  /* Side purple only — no top-corner wash that reads as fog */
-  background:
-    radial-gradient(ellipse 55% 40% at 0% 22%, rgba(42, 26, 74, 0.18) 0%, transparent 72%),
-    radial-gradient(ellipse 55% 40% at 100% 22%, rgba(42, 26, 74, 0.18) 0%, transparent 72%);
-}
-
-.hero.night .hero-palette-ridge {
+.hero.night .hero-palette-vignette,
+.hero.day .hero-palette-vignette {
   background: none;
 }
 
-.hero.day .hero-palette-vignette {
-  background:
-    radial-gradient(ellipse 55% 40% at 0% 24%, rgba(247, 200, 74, 0.1) 0%, transparent 72%),
-    radial-gradient(ellipse 55% 40% at 100% 24%, rgba(247, 200, 74, 0.1) 0%, transparent 72%),
-    radial-gradient(ellipse 72% 48% at 0% 100%, rgba(224, 104, 32, 0.1) 0%, transparent 62%),
-    radial-gradient(ellipse 72% 48% at 100% 100%, rgba(224, 104, 32, 0.1) 0%, transparent 62%);
-}
-
+.hero.night .hero-palette-ridge,
 .hero.day .hero-palette-ridge {
   background: none;
 }
@@ -491,20 +478,20 @@
 .hero.night:has(.hero-mountain-scene) .hero-overlay {
   background: linear-gradient(
     180deg,
-    rgba(26, 16, 53, 0.1) 0%,
-    transparent 32%,
-    transparent 55%,
-    rgba(13, 10, 26, 0.42) 100%
+    transparent 0%,
+    transparent 38%,
+    transparent 58%,
+    rgba(13, 10, 26, 0.32) 100%
   ) !important;
 }
 
 .hero.day:has(.hero-mountain-scene) .hero-overlay {
   background: linear-gradient(
     180deg,
-    rgba(247, 200, 74, 0.06) 0%,
-    transparent 34%,
-    transparent 55%,
-    rgba(26, 13, 0, 0.28) 100%
+    transparent 0%,
+    transparent 40%,
+    transparent 58%,
+    rgba(26, 13, 0, 0.22) 100%
   ) !important;
 }
 
@@ -516,19 +503,19 @@
 .hero.night .hero-photo-night-veil {
   background: linear-gradient(
     180deg,
-    rgba(26, 16, 53, 0.38) 0%,
-    rgba(42, 26, 74, 0.28) 34%,
-    rgba(13, 10, 26, 0.18) 52%,
-    transparent 62%
+    transparent 0%,
+    rgba(42, 26, 74, 0.12) 42%,
+    rgba(13, 10, 26, 0.1) 56%,
+    transparent 68%
   ) !important;
 }
 
 .hero.day .hero-photo-day-veil {
   background: linear-gradient(
     180deg,
-    rgba(247, 200, 74, 0.06) 0%,
-    rgba(224, 104, 32, 0.04) 32%,
-    transparent 58%
+    transparent 0%,
+    rgba(224, 104, 32, 0.03) 38%,
+    transparent 62%
   ) !important;
 }
 
@@ -557,30 +544,81 @@
   -webkit-text-fill-color: #1A0D00 !important;
 }
 
-/* Milky-way band — keep stars; soften upper-sky haze */
+/* Milky-way band — keep stars; no upper-sky haze */
 .hero.night .hero-milky-way {
-  opacity: calc(var(--milky-way, 0) * 0.35) !important;
-  filter: blur(4px) !important;
+  opacity: calc(var(--milky-way, 0) * 0.12) !important;
+  filter: blur(2px) !important;
 }
 
 .hero.night .hero-photo-tint {
-  opacity: calc(var(--photo-tint-op, 0) * 0.72) !important;
+  opacity: calc(var(--photo-tint-op, 0) * 0.45) !important;
+}
+
+/* Hero nav — profile avatar ring (initials fallback) */
+.app-nav-bar.transparent.app-nav-bar--night .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
+  color: #1A0D00 !important;
+  box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4) !important;
+}
+
+.app-nav-bar.transparent.app-nav-bar--night .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
+  box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4) !important;
+}
+
+.app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
+  background: linear-gradient(135deg, #C87010 0%, #E06820 100%) !important;
+  color: #1A0D00 !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px rgba(224, 104, 32, 0.35) !important;
+}
+
+.app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px rgba(224, 104, 32, 0.35) !important;
+}
+
+.app-nav-bar.transparent.app-nav-bar--night .hamburger-menu-btn.is-active {
+  color: #FFD28C !important;
+  border-color: rgba(255, 210, 140, 0.5) !important;
+  background: rgba(255, 140, 66, 0.14) !important;
+}
+
+.app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn.is-active {
+  color: #E06820 !important;
+  border-color: rgba(224, 104, 32, 0.45) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 /* Final cascade — hero typography (nav is outside .hero) */
 html body .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
   background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
+  display: inline-block !important;
 }
 
 html body .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
   background: linear-gradient(90deg, #C87010 0%, #E06820 100%) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
+  display: inline-block !important;
+}
+
+html body .hero.night .hero-title-line,
+html body .hero.night .hero-content .hero-title-line {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
 }
 
 html body .hero.night .hero-title-accent {
   color: #FFD28C !important;
   -webkit-text-fill-color: #FFD28C !important;
+}
+
+html body .hero.day .hero-title-line,
+html body .hero.day .hero-content .hero-title-line {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
 }
 
 html body .hero.day .hero-title-accent {
