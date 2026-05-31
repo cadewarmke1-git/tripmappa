@@ -83,7 +83,7 @@ export function buildStarField(count = 48, seed = 42) {
     return {
       id: i,
       x: rand() * 100,
-      y: rand() * 42,
+      y: rand() * 36,
       r,
       opacity: tier === "bright" ? 0.65 + rand() * 0.35 : 0.18 + rand() * 0.45,
       tier,

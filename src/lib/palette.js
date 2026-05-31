@@ -29,22 +29,43 @@ export const MAP_DAY_PANEL = MAP_DAY_LOCAL_ROAD;
 /** @deprecated Use MAP_DAY_HIGHWAY */
 export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;
 
-/** Hero landing page typography + avatar accents (day/night). */
+/**
+ * Hero landing chrome — canonical palette (follows sky day/night cycle).
+ * Gold is the base accent family; wordmark + profile use gold gradients.
+ *
+ * Night: wordmark #FFD28C→#FF8C42, Travel #FFFFFF, Reimagined #FFD28C
+ * Day:   wordmark #C87010→#E06820, Travel #FFFFFF, Reimagined #1A0D00
+ */
 export const HERO_SURFACE_PALETTE = {
   night: {
     wordmarkGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     titleLine: "#FFFFFF",
-    titleAccent: "#FFD28C",
+    titleAccent: GOLD_PRIMARY,
+    subtitle: "rgba(255, 255, 255, 0.8)",
     avatarGradient: "linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%)",
     avatarText: DEEP_DARK,
-    avatarRing: "0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4)",
+    avatarRing: "0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.45)",
   },
   day: {
     wordmarkGradient: "linear-gradient(90deg, #C87010 0%, #E06820 100%)",
     titleLine: "#FFFFFF",
     titleAccent: DEEP_DARK,
+    subtitle: "rgba(255, 255, 255, 0.85)",
     avatarGradient: "linear-gradient(135deg, #C87010 0%, #E06820 100%)",
     avatarText: DEEP_DARK,
-    avatarRing: "0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px rgba(224, 104, 32, 0.35)",
+    avatarRing: "0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42)",
   },
 };
+
+/** Inline CSS vars — work with existing !important rules that use var(--color-*). */
+export function getHeroSurfaceCssVars(theme) {
+  const p = HERO_SURFACE_PALETTE[theme];
+  if (!p) return undefined;
+  return {
+    "--color-wordmark-gradient": p.wordmarkGradient,
+    "--color-accent-gradient": p.avatarGradient,
+    "--color-hero-title": p.titleLine,
+    "--color-hero-accent": p.titleAccent,
+    "--color-hero-subtitle": p.subtitle,
+  };
+}

@@ -1,6 +1,7 @@
 import NavLogo from "./NavLogo.jsx";
 import HamburgerMenuButton from "./HamburgerMenuButton.jsx";
 import AccountSidebarTrigger from "./AccountSidebarTrigger.jsx";
+import { getHeroSurfaceCssVars } from "../lib/palette.js";
 
 export default function AppNavBar({
   onGoHome,
@@ -22,6 +23,8 @@ export default function AppNavBar({
   return (
     <nav
       className={`app-nav-bar nav app-nav-bar--${theme}${isHero ? " transparent" : " nav-app app-nav-with-logo"}`}
+      data-surface-theme={isHero ? theme : undefined}
+      style={isHero ? getHeroSurfaceCssVars(theme) : undefined}
     >
       <div className="app-nav-bar-left">
         <NavLogo onClick={onGoHome} theme={isHero ? theme : undefined} />

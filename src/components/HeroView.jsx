@@ -5,7 +5,7 @@ import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
-import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
+import { getHeroSurfaceCssVars } from "../lib/palette.js";
 import { getHeroSurfaceTheme, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
 export default function HeroView({
@@ -58,7 +58,7 @@ export default function HeroView({
 
   const skyPhase = useMemo(() => getSkyPhaseFromHour(skyHour), [skyHour]);
   const heroTheme = getHeroSurfaceTheme(skyHour);
-  const heroPalette = HERO_SURFACE_PALETTE[heroTheme];
+  const heroSurfaceStyle = getHeroSurfaceCssVars(heroTheme);
 
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
@@ -80,7 +80,11 @@ export default function HeroView({
         onSignup={onSignup}
       />
 
-      <div className={`hero ${heroTheme}`}>
+      <div
+        className={`hero ${heroTheme}`}
+        data-surface-theme={heroTheme}
+        style={heroSurfaceStyle}
+      >
         <HeroMountainScene phase={skyPhase} hour={skyHour} />
         <div className="hero-overlay" />
         <div className="hero-palette-vignette" aria-hidden="true" />
@@ -88,18 +92,8 @@ export default function HeroView({
 
         <div className="hero-content">
           <h1 className="hero-title">
-            <span
-              className="hero-title-line"
-              style={{ color: heroPalette.titleLine, WebkitTextFillColor: heroPalette.titleLine }}
-            >
-              Travel
-            </span>
-            <span
-              className="hero-title-accent"
-              style={{ color: heroPalette.titleAccent, WebkitTextFillColor: heroPalette.titleAccent }}
-            >
-              Reimagined.
-            </span>
+            <span className="hero-title-line">Travel</span>
+            <span className="hero-title-accent">Reimagined.</span>
           </h1>
           <p className="hero-sub">Your next trip, planned in seconds.</p>
 
@@ -140,10 +134,10 @@ export default function HeroView({
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                        <input ref={heroOriginRef} className="hero-input" placeholder="e.g. Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                       </Autocomplete>
                     ) : (
-                      <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      <input className="hero-input" placeholder="e.g. Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
                   {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
@@ -167,10 +161,10 @@ export default function HeroView({
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                        <input ref={heroDestRef} className="hero-input" placeholder="e.g. Los Angeles, CA" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                       </Autocomplete>
                     ) : (
-                      <input className="hero-input" placeholder="Los Angeles" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
+                      <input className="hero-input" placeholder="e.g. Los Angeles, CA" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey}/>
                     )}
                   </div>
                   {heroDestError && <div className="hero-input-error">{heroDestError}</div>}

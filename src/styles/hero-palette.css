@@ -111,8 +111,11 @@
   color: #FFFFFF !important;
 }
 
-.hero.night .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.5) !important;
+.hero.night .hero-search .hero-input::placeholder {
+  color: rgba(255, 255, 255, 0.32) !important;
+  opacity: 1 !important;
+  font-style: italic;
+  font-weight: 400 !important;
 }
 
 .hero.night .hero-swap-btn {
@@ -142,8 +145,11 @@
   color: #1A0D00 !important;
 }
 
-.hero.day .hero-input::placeholder {
-  color: rgba(26, 13, 0, 0.45) !important;
+.hero.day .hero-search .hero-input::placeholder {
+  color: rgba(26, 13, 0, 0.32) !important;
+  opacity: 1 !important;
+  font-style: italic;
+  font-weight: 400 !important;
 }
 
 .hero.day .hero-swap-btn {
@@ -568,11 +574,11 @@
 .app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
   background: linear-gradient(135deg, #C87010 0%, #E06820 100%) !important;
   color: #1A0D00 !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px rgba(224, 104, 32, 0.35) !important;
+  box-shadow: 0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42) !important;
 }
 
 .app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 14px rgba(224, 104, 32, 0.35) !important;
+  box-shadow: 0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42) !important;
 }
 
 .app-nav-bar.transparent.app-nav-bar--night .hamburger-menu-btn.is-active {
@@ -624,4 +630,25 @@ html body .hero.day .hero-content .hero-title-line {
 html body .hero.day .hero-title-accent {
   color: #1A0D00 !important;
   -webkit-text-fill-color: #1A0D00 !important;
+}
+
+html body .hero.night .hero-sub {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+html body .hero.day .hero-sub {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+html body .hero .hero-search .hero-input::placeholder {
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+html body .hero.night .hero-search .hero-input::placeholder {
+  color: rgba(255, 210, 140, 0.42) !important;
+}
+
+html body .hero.day .hero-search .hero-input::placeholder {
+  color: rgba(160, 64, 16, 0.42) !important;
 }

@@ -23,27 +23,27 @@
   );
 }
 
-/* ── Celestial layer — clipped to sky band so sun/moon sit behind peaks ── */
+/* ── Celestial layer — clipped to sky band only (never over mountains) ── */
 .hero-sky-celestial {
   position: absolute;
   inset: 0;
   z-index: 2;
   overflow: hidden;
   pointer-events: none;
-  clip-path: inset(0 0 44% 0);
+  clip-path: inset(0 0 62% 0);
   -webkit-mask-image: linear-gradient(
     to bottom,
     black 0%,
-    black 46%,
-    rgba(0, 0, 0, 0.4) 52%,
-    transparent 58%
+    black 30%,
+    rgba(0, 0, 0, 0.35) 36%,
+    transparent 40%
   );
   mask-image: linear-gradient(
     to bottom,
     black 0%,
-    black 46%,
-    rgba(0, 0, 0, 0.4) 52%,
-    transparent 58%
+    black 30%,
+    rgba(0, 0, 0, 0.35) 36%,
+    transparent 40%
   );
 }
 
@@ -112,19 +112,17 @@
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    transparent 28%,
-    rgba(0, 0, 0, 0.35) 38%,
-    rgba(0, 0, 0, 0.85) 46%,
-    black 52%,
+    transparent 22%,
+    rgba(0, 0, 0, 0.65) 32%,
+    black 40%,
     black 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    transparent 28%,
-    rgba(0, 0, 0, 0.35) 38%,
-    rgba(0, 0, 0, 0.85) 46%,
-    black 52%,
+    transparent 22%,
+    rgba(0, 0, 0, 0.65) 32%,
+    black 40%,
     black 100%
   );
 }
@@ -357,19 +355,20 @@
   }
 
   html[data-layout="mobile"] .hero-sky-celestial {
+    clip-path: inset(0 0 62% 0);
     -webkit-mask-image: linear-gradient(
       to bottom,
       black 0%,
-      black 52%,
-      rgba(0, 0, 0, 0.3) 62%,
-      transparent 72%
+      black 30%,
+      rgba(0, 0, 0, 0.35) 36%,
+      transparent 40%
     );
     mask-image: linear-gradient(
       to bottom,
       black 0%,
-      black 52%,
-      rgba(0, 0, 0, 0.3) 62%,
-      transparent 72%
+      black 30%,
+      rgba(0, 0, 0, 0.35) 36%,
+      transparent 40%
     );
   }
 

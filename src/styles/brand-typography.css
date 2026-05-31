@@ -22,19 +22,9 @@
   background: none;
 }
 
-.app-nav-bar.transparent .nav-logo .brand-wordmark,
-.app-nav-bar.transparent .nav-logo-home .brand-wordmark {
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
-}
-
-.app-nav-bar.transparent .nav-logo,
-.app-nav-bar.transparent .nav-logo-home {
-  filter: none;
-}
-
-.app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
-.app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark {
-  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.35);
+.app-nav-bar.transparent[data-surface-theme] .nav-logo .brand-wordmark,
+.app-nav-bar.transparent[data-surface-theme] .nav-logo-home .brand-wordmark {
+  text-shadow: none;
 }
 
 .auth-modal-logo.brand-wordmark {
@@ -60,26 +50,21 @@
   background: none !important;
 }
 
-.hero-title-line {
+.hero .hero-title-line {
   display: block;
-  color: var(--color-hero-title) !important;
-  -webkit-text-fill-color: var(--color-hero-title) !important;
-  background: none !important;
-  filter: drop-shadow(0 2px 16px rgba(0, 0, 0, 0.35));
+  color: var(--color-hero-title);
+  -webkit-text-fill-color: var(--color-hero-title);
+  background: none;
 }
 
-.hero-title-accent {
+.hero .hero-title-accent {
   display: block;
-  color: var(--color-hero-accent) !important;
-  -webkit-text-fill-color: var(--color-hero-accent) !important;
-  background: none !important;
-  filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.3));
+  color: var(--color-hero-accent);
+  -webkit-text-fill-color: var(--color-hero-accent);
+  background: none;
 }
 
-.hero.day .hero-title-line {
-  filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.25));
-}
-
+.hero.day .hero-title-line,
 .hero.day .hero-title-accent {
   filter: none;
 }

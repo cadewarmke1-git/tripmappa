@@ -147,12 +147,14 @@
     color: #1A0D00 !important;
   }
 
-  html[data-layout="mobile"] .hero.night .hero-input::placeholder {
-    color: rgba(255, 255, 255, 0.5) !important;
+  html[data-layout="mobile"] .hero.night .hero-search .hero-input::placeholder {
+    color: rgba(255, 255, 255, 0.32) !important;
+    font-style: italic;
   }
 
-  html[data-layout="mobile"] .hero.day .hero-input::placeholder {
-    color: rgba(26, 13, 0, 0.45) !important;
+  html[data-layout="mobile"] .hero.day .hero-search .hero-input::placeholder {
+    color: rgba(26, 13, 0, 0.32) !important;
+    font-style: italic;
   }
 
   html[data-layout="mobile"] .hero.night .hero-route-cell .hero-input-label {
