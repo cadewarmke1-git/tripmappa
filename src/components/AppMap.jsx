@@ -12,7 +12,7 @@ import MapZoomControls from "./map/MapZoomControls.jsx";
 import MapBackToTripButton from "./map/MapBackToTripButton.jsx";
 import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
-import { resolveMapStyles } from "../lib/mapStyles.js";
+import { resolveMapStyles, applyMapThemeStyles } from "../lib/mapStyles.js";
 
 export default function AppMap({
   isLoaded,
@@ -58,7 +58,7 @@ export default function AppMap({
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapRef.current.setMapTypeId(typeId);
-    mapRef.current.setOptions({ styles: mapStyles });
+    applyMapThemeStyles(mapRef.current, mapStyle, theme);
   }, [mapStyle, theme, mapStyles, mapRef, isLoaded]);
 
   useEffect(() => {

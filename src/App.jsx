@@ -7,7 +7,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
-import { resolveMapStyles } from "./lib/mapStyles.js";
+import { applyMapThemeStyles } from "./lib/mapStyles.js";
 import {
   isTruckVehicle,
   isRvVehicle,
@@ -370,7 +370,7 @@ export default function App() {
   const theme = themeOverride ?? autoTheme;
   const [enterAnim, setEnterAnim] = useState(false);
   const [cardCollapsed, setCardCollapsed] = useState(false);
-  const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'pop' | 'exit' }
+  const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'selected' | 'exit' }
   const stepAnimTimer = useRef(null);
   const helpWrapRef = useRef(null);
 
@@ -495,8 +495,8 @@ export default function App() {
   const fetchDirections = useCallback((vehicleType) => {
     const originVal = originRef.current?.value?.trim() || origin?.trim();
     const destVal = destRef.current?.value?.trim() || dest?.trim();
-    if (!originVal || !destVal) return Promise.resolve(false);
-    if (!window.google) return Promise.resolve(false);
+    if (!originVal || !destVal) return Promise.resolve({ ok: false });
+    if (!window.google) return Promise.resolve({ ok: false });
 
     const vehicle = vehicleType || answers.vehicle || "Car";
     setRouteLoading(true);
@@ -560,7 +560,7 @@ export default function App() {
             }
           });
 
-          setRouteInfo({
+          const nextRouteInfo = {
             distance: leg.distance.text,
             duration: leg.duration.text,
             start: leg.start_address.split(",")[0],
@@ -588,7 +588,8 @@ export default function App() {
             rvHeight: answers.rv_height,
             rvWeight: answers.rv_weight,
             rvTowing: answers.rv_towing,
-          });
+          };
+          setRouteInfo(nextRouteInfo);
           setOrigin(originVal);
           setDest(destVal);
           setRoutePath(route.overview_path);
@@ -602,7 +603,7 @@ export default function App() {
             });
             mapRef.current.fitBounds(bounds, { padding: 60 });
           }
-          resolve(true);
+          resolve({ ok: true, routeInfo: nextRouteInfo });
         } else {
           const msg = status === "ZERO_RESULTS"
             ? "No driving route found between these places."
@@ -614,7 +615,7 @@ export default function App() {
           setRoutePath(null);
           setDirectionsResult(null);
           toast_(msg, { duration: 7000 });
-          resolve(false);
+          resolve({ ok: false });
         }
       });
     });
@@ -1202,7 +1203,7 @@ export default function App() {
   useEffect(() => {
     if (currentQuestion && !stepAnim) {
       setEnterAnim(true);
-      const t = setTimeout(() => setEnterAnim(false), 180);
+      const t = setTimeout(() => setEnterAnim(false), 320);
       return () => clearTimeout(t);
     }
   }, [currentQuestion?.id, stepAnim]);
@@ -1233,7 +1234,7 @@ export default function App() {
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapRef.current.setMapTypeId(typeId);
-    mapRef.current.setOptions({ styles: resolveMapStyles(mapStyle, theme) });
+    applyMapThemeStyles(mapRef.current, mapStyle, theme);
   }, [mapStyle, theme, isLoaded, mapReady]);
 
   useEffect(() => {
@@ -1332,8 +1333,12 @@ export default function App() {
   function cancelGenerateTrip() {
     generateAbortRef.current?.abort();
     enrichAbortRef.current?.abort();
-    generateTripInFlightRef.current = false;
-    setLoading(false);
+  }
+
+  function ensurePayoffScreen() {
+    setConvoComplete(true);
+    setQIndex(-2);
+    setCurrentQuestion(null);
   }
 
   function handlePanelTouchStart(e) {
@@ -1507,6 +1512,7 @@ export default function App() {
 
   function loadNextQuestion(newAnswers) {
     if (generateTripInFlightRef.current) return;
+    if (convoComplete && !generated) return;
     try {
       const ctx = buildQuestionContext(newAnswers);
       const result = getNextFlowQuestion(newAnswers, ctx);
@@ -1553,6 +1559,7 @@ export default function App() {
 
   useEffect(() => {
     if (generateTripInFlightRef.current) return;
+    if (convoComplete) return;
     if (!currentQuestion?.pendingRoute) return;
     const ctx = buildQuestionContext(answers);
     if (isRouteContextReady(ctx) || ctx.routeFailed) {
@@ -1645,18 +1652,30 @@ export default function App() {
       || currentQuestion.type === "lodging_stay"
       || currentQuestion.type === "text"
     );
+    const TAP_DELAY_MS = 80;
+    const STEP_ANIM_MS = 320;
     try {
       if (instant) {
         submitAnswer(value, extraFields);
         return;
       }
       setEnterAnim(false);
-      setStepAnim({ answer: typeof value === "string" ? value : "selected", phase: "flash" });
+      const answerKey = typeof value === "string" ? value : "selected";
+      setStepAnim({ answer: answerKey, phase: "selected" });
       if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
       stepAnimTimer.current = setTimeout(() => {
-        submitAnswer(value, extraFields);
-        setStepAnim(null);
-      }, 70);
+        setStepAnim({ answer: answerKey, phase: "exit" });
+        stepAnimTimer.current = setTimeout(() => {
+          try {
+            submitAnswer(value, extraFields);
+            setStepAnim(null);
+          } catch (err) {
+            console.error("pickAnswer failed:", err);
+            setStepAnim(null);
+            toast_(err.message || "Could not save your answer");
+          }
+        }, STEP_ANIM_MS);
+      }, TAP_DELAY_MS);
     } catch (err) {
       console.error("pickAnswer failed:", err);
       setStepAnim(null);
@@ -1960,20 +1979,25 @@ export default function App() {
     };
 
     try {
-      const hasRoute = Boolean(routeInfo?.distance && routeInfo?.routePoints?.length);
+      let routeSnapshot = routeInfo;
+      const hasRoute = Boolean(routeSnapshot?.distance && routeSnapshot?.routePoints?.length);
       if (isLoaded && window.google && !hasRoute) {
-        const routeOk = await fetchDirections(getEffectiveVehicle(answers));
-        if (!routeOk) {
+        const routeResult = await fetchDirections(getEffectiveVehicle(answers));
+        if (!routeResult?.ok) {
           toast_("Route could not be calculated — trip planning may be limited.", { isError: true });
+        } else if (routeResult.routeInfo) {
+          routeSnapshot = routeResult.routeInfo;
         }
       }
 
-      if (generateController.signal.aborted) return;
+      if (generateController.signal.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
 
       normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
       const activeRouteInfo = {
-        ...routeInfo,
+        ...(routeSnapshot || {}),
         origin: tripOrigin,
         destination: tripDest,
         scenic: isScenicRoute(answers),
@@ -1982,6 +2006,10 @@ export default function App() {
       if (!user) {
         if (!consumeGuestCredit()) {
           setCreditStatus(getGuestCreditStatus());
+          const msg = generationFailureMessage({ code: "no_credits" });
+          setGenerationError(msg);
+          toast_(msg, { isError: true });
+          ensurePayoffScreen();
           openTripsUpgrade();
           return;
         }
@@ -2019,7 +2047,9 @@ export default function App() {
             { signal: generateController.signal },
           );
 
-          if (generateController.signal.aborted) return;
+          if (generateController.signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
 
           const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
           if (!isTripPlanComplete(parsed)) {
@@ -2027,7 +2057,7 @@ export default function App() {
           }
 
           setGenerationError(null);
-          setTripUsedFallback(false);
+          setTripUsedFallback(Boolean(parsed.usedFallback));
           await applyGeneratedTrip(parsed, activeRouteInfo);
 
           if (user && session?.access_token) {
@@ -2051,21 +2081,26 @@ export default function App() {
     } catch (err) {
       if (err.name === "AbortError") {
         setGenerationError(null);
+        ensurePayoffScreen();
         toast_("Trip generation cancelled.");
         return;
       }
       console.error("Generate trip error:", err);
       if (err.code === "no_credits") {
-        setGenerationError(null);
+        const msg = generationFailureMessage(err);
+        setGenerationError(msg);
+        toast_(msg, { isError: true });
         openTripsUpgrade();
         if (err.credits) setCreditStatus(err.credits);
         if (!user) refundGuestCredit();
+        ensurePayoffScreen();
         return;
       }
       if (!user) refundGuestCredit();
       setCreditStatus(getGuestCreditStatus());
       const msg = generationFailureMessage(err);
       setGenerationError(msg);
+      ensurePayoffScreen();
       toast_(msg, { isError: true });
     } finally {
       generateTripInFlightRef.current = false;

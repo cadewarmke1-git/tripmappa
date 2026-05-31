@@ -1,0 +1,40 @@
+import { describe, expect, it, vi } from "vitest";
+import { DAY_MAP_STYLES, NIGHT_MAP_STYLES } from "./constants.js";
+import {
+  MAP_DAY_BASE,
+  MAP_DAY_HIGHWAY,
+  MAP_DAY_WATER,
+  MAP_NIGHT_BASE,
+  MAP_NIGHT_WATER,
+} from "./palette.js";
+import { applyMapThemeStyles, resolveMapStyles } from "./mapStyles.js";
+
+describe("mapStyles", () => {
+  it("resolves day and night palettes for standard map style", () => {
+    expect(resolveMapStyles("standard", "day")).toBe(DAY_MAP_STYLES);
+    expect(resolveMapStyles("standard", "night")).toBe(NIGHT_MAP_STYLES);
+  });
+
+  it("day styles distinguish land, highway, and water", () => {
+    const colors = DAY_MAP_STYLES.flatMap(rule =>
+      (rule.stylers || []).map(s => s.color).filter(Boolean),
+    );
+    expect(colors).toContain(MAP_DAY_BASE);
+    expect(colors).toContain(MAP_DAY_HIGHWAY);
+    expect(colors).toContain(MAP_DAY_WATER);
+  });
+
+  it("night styles use deep land and darker water", () => {
+    const colors = NIGHT_MAP_STYLES.flatMap(rule =>
+      (rule.stylers || []).map(s => s.color).filter(Boolean),
+    );
+    expect(colors).toContain(MAP_NIGHT_BASE);
+    expect(colors).toContain(MAP_NIGHT_WATER);
+  });
+
+  it("applyMapThemeStyles updates a map instance", () => {
+    const map = { setOptions: vi.fn() };
+    applyMapThemeStyles(map, "standard", "day");
+    expect(map.setOptions).toHaveBeenCalledWith({ styles: DAY_MAP_STYLES });
+  });
+});

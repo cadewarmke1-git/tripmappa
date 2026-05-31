@@ -18,6 +18,7 @@ import "./styles/hero-mountain.css";
 import "./styles/hero-desktop.css";
 import "./styles/hero-palette.css";
 import "./styles/hero-surface.css";
+import "./styles/plan-flow-theme.css";
 
 initViewportLayout();
 

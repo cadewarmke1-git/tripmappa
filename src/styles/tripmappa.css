@@ -1363,10 +1363,10 @@
   .ai-msg { display: flex; flex-direction: column; gap: 0; }
   .user-msg { display: flex; justify-content: flex-end; margin-top: 14px; animation: answerSlideIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
   .step-active { animation: none; }
-  .step-exit { animation: stepExit 300ms ease forwards; pointer-events: none; }
-  .step-enter { animation: stepEnter 350ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .step-exit-fast { animation: stepExit 120ms ease forwards; pointer-events: none; }
-  .step-enter-fast { animation: stepEnter 180ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .step-exit { animation: stepExit 320ms ease-in-out forwards; pointer-events: none; }
+  .step-enter { animation: stepEnter 320ms ease-in-out both; }
+  .step-exit-fast { animation: stepExit 320ms ease-in-out forwards; pointer-events: none; }
+  .step-enter-fast { animation: stepEnter 320ms ease-in-out both; }
 
   .plan-route-card {
     margin: 0 0 12px;
@@ -1447,8 +1447,8 @@
 
   .chat-wrap-plan-flow .plan-route-card { margin-top: 8px; }
   .chat-wrap-plan-flow .question-thread { max-height: 120px; }
-  @keyframes stepExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
-  @keyframes stepEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes stepExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
+  @keyframes stepEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes answerSlideIn { from { opacity: 0; transform: translateY(12px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .question-choices {
     margin-top: 16px; padding-top: 16px;

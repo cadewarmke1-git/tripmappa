@@ -73,7 +73,7 @@ html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   filter: none !important;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4) !important;
+  text-shadow: none !important;
 }
 
 .hero[data-surface-theme="day"] .hero-title-accent {
@@ -122,7 +122,9 @@ html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
 .hero[data-surface-theme="day"] .hero-go-btn:not(:disabled) {
   background: #1A0D00 !important;
   color: #FFD28C !important;
+  -webkit-text-fill-color: #FFD28C !important;
   border: none !important;
+  box-shadow: none !important;
 }
 
 .hero[data-surface-theme="day"] .hero-auth-label {
@@ -199,14 +201,14 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 
 /* ── City placeholders — dim but readable, no "e.g." prefix ── */
 .hero[data-surface-theme="night"] .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
   font-style: italic !important;
   font-weight: 400 !important;
   opacity: 1 !important;
 }
 
 .hero[data-surface-theme="day"] .hero-search .hero-input::placeholder {
-  color: rgba(26, 13, 0, 0.18) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
   font-style: italic !important;
   font-weight: 400 !important;
   opacity: 1 !important;

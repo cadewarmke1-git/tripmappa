@@ -19,9 +19,9 @@ export function canStartTripGeneration({
   return { ok: true };
 }
 
-/** True when the planner returned real trip content (not client-side fallback). */
+/** True when the planner returned trip content (API or client-side fallback). */
 export function isTripPlanComplete(parsed) {
-  if (!parsed || parsed.usedFallback) return false;
+  if (!parsed) return false;
   return Boolean(parsed.stops?.length || parsed.roadStops?.length);
 }
 

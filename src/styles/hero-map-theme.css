@@ -169,9 +169,11 @@
 }
 
 .hero.day .hero-go-btn:not(:disabled) {
-  background: var(--color-btn-primary-bg) !important;
-  color: var(--color-btn-primary-text) !important;
+  background: #1A0D00 !important;
+  color: #FFD28C !important;
+  -webkit-text-fill-color: #FFD28C !important;
   border: none !important;
+  box-shadow: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════

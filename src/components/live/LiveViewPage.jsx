@@ -3,7 +3,7 @@ import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
 import { GoogleMap } from "@react-google-maps/api";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES } from "../../lib/constants.js";
-import { resolveMapStyles } from "../../lib/mapStyles.js";
+import { applyMapThemeStyles, resolveMapStyles } from "../../lib/mapStyles.js";
 import AnimatedRoutePath from "../map/AnimatedRoutePath.jsx";
 import LiveTravelerMarker from "./LiveTravelerMarker.jsx";
 import BreadcrumbPath from "./BreadcrumbPath.jsx";
@@ -28,7 +28,7 @@ import {
 } from "../../lib/liveShareUtils.js";
 import { joinConvoy, registerFollowerPhone, sendSosAlert } from "../../lib/liveShareApi.js";
 import { useConvoyBroadcast } from "../../hooks/useConvoyBroadcast.js";
-import { computeAutoTheme } from "../../lib/theme.js";
+import { computeAutoTheme, SKY_CHECK_MS } from "../../lib/theme.js";
 
 const CONVOY_MEMBER_KEY = "tripmappa-convoy-member";
 
@@ -54,9 +54,30 @@ export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
   const [followerPhone, setFollowerPhone] = useState("");
   const [localToast, setLocalToast] = useState(null);
   const lastNotificationRef = useRef(null);
+  const mapRef = useRef(null);
 
-  const theme = themeProp ?? computeAutoTheme();
+  const [autoTheme, setAutoTheme] = useState(computeAutoTheme);
+  useEffect(() => {
+    if (themeProp) return undefined;
+    const tick = () => setAutoTheme(computeAutoTheme());
+    tick();
+    const interval = window.setInterval(tick, SKY_CHECK_MS);
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [themeProp]);
+
+  const theme = themeProp ?? autoTheme;
   const mapStyles = useMemo(() => resolveMapStyles("standard", theme), [theme]);
+
+  useEffect(() => {
+    applyMapThemeStyles(mapRef.current, "standard", theme);
+  }, [theme, isLoaded]);
 
   const notify = useCallback((msg, isGold = false) => {
     if (toast) toast(msg, isGold);
@@ -250,6 +271,10 @@ export default function LiveViewPage({ shareToken, toast, theme: themeProp }) {
           mapContainerClassName="live-view-map"
           center={mapCenter}
           zoom={7}
+          onLoad={map => {
+            mapRef.current = map;
+            applyMapThemeStyles(map, "standard", theme);
+          }}
           options={{
             disableDefaultUI: true,
             zoomControl: true,

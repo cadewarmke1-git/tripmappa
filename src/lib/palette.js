@@ -4,18 +4,27 @@ export const ORANGE_PRIMARY = "#FF8C42";
 export const DEEP_DARK = "#1A0D00";
 export const POLYLINE_COLOR = "#FFD28C";
 
-/** Google Maps tile colors — night (depth + gold/purple hierarchy). */
+/** Google Maps tile colors — night (deep space purple + gold accents). */
 export const MAP_NIGHT_BASE = "#1A1035";
 export const MAP_NIGHT_SURFACE = "#241A42";
-export const MAP_NIGHT_ELEVATED = "#2A1A4A";
-export const MAP_NIGHT_HIGHWAY = "#4E3B42";
+export const MAP_NIGHT_LOCAL_ROAD = "#2A1A4A";
+export const MAP_NIGHT_ARTERIAL = "#3A2E5C";
+/** ~45% #C8A060 over MAP_NIGHT_BASE — soft gold highway fill */
+export const MAP_NIGHT_HIGHWAY = "#685148";
+export const MAP_NIGHT_HIGHWAY_STROKE = "#8A7048";
 export const MAP_NIGHT_LABEL = "#A89BCF";
 export const MAP_NIGHT_LABEL_ACCENT = "#FFD28C";
 export const MAP_NIGHT_WATER = "#0D0A1A";
+export const MAP_NIGHT_PARK = "#1A2A1A";
+
+/** @deprecated Use MAP_NIGHT_LOCAL_ROAD */
+export const MAP_NIGHT_ELEVATED = MAP_NIGHT_LOCAL_ROAD;
 
 /** Google Maps tile colors — day (vintage road atlas). */
 export const MAP_DAY_BASE = "#E8D5A8";
 export const MAP_DAY_LOCAL_ROAD = "#C8956A";
+/** Mid tone between highway warm white and local terracotta */
+export const MAP_DAY_ARTERIAL = "#DEBA9A";
 export const MAP_DAY_HIGHWAY = "#F5ECD8";
 export const MAP_DAY_ROAD_STROKE = "#A07850";
 export const MAP_DAY_HIGHWAY_STROKE = "#8B3A0F";

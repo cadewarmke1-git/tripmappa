@@ -86,6 +86,8 @@
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
 .hero.day .hero-title-accent,
@@ -121,7 +123,7 @@
 }
 
 .hero.night .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
   opacity: 1 !important;
   font-style: italic;
   font-weight: 400 !important;
@@ -155,7 +157,7 @@
 }
 
 .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(26, 13, 0, 0.18) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
   opacity: 1 !important;
   font-style: italic;
   font-weight: 400 !important;
@@ -170,7 +172,9 @@
 .hero.day .hero-go-btn:not(:disabled) {
   background: #1A0D00 !important;
   color: #FFD28C !important;
+  -webkit-text-fill-color: #FFD28C !important;
   border: none !important;
+  box-shadow: none !important;
 }
 
 /* ── Auth section ── */
@@ -648,6 +652,8 @@ html body .hero.day .hero-content .hero-title-line {
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
 html body .hero.day .hero-title-accent {
@@ -675,9 +681,9 @@ html body .hero .hero-search .hero-input::placeholder {
 }
 
 html body .hero.night .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
 }
 
 html body .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(26, 13, 0, 0.18) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
 }

@@ -42,7 +42,7 @@ describe("generateTripFlow", () => {
     })).toEqual({ ok: true });
   });
 
-  it("accepts real API stops or road stops and rejects client fallback", () => {
+  it("accepts real API stops, road stops, and client fallback with content", () => {
     const parsed = parseTripApiResponse(
       {
         stops: [{ city: "Amarillo, TX", name: "Amarillo" }],
@@ -65,8 +65,10 @@ describe("generateTripFlow", () => {
     expect(isTripPlanComplete(roadOnly)).toBe(true);
 
     const fallback = parseTripApiResponse({}, { vehicle: "Car" }, {}, noopFallback);
-    expect(isTripPlanComplete(fallback)).toBe(false);
+    expect(isTripPlanComplete(fallback)).toBe(true);
     expect(fallback.usedFallback).toBe(true);
+
+    expect(isTripPlanComplete({ stops: [], roadStops: [], usedFallback: true })).toBe(false);
   });
 
   it("returns a user-facing message for planner failures", () => {

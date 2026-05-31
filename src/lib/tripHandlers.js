@@ -121,10 +121,12 @@ export function buildFallbackTripData(answers, routeInfo) {
 
 export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
   const continuous = isContinuousDrive(answers);
+  const hasStopLabel = (s) => s && (s.city || s.name || s.location);
   const apiStops = continuous
     ? []
-    : (Array.isArray(data.stops) ? data.stops.filter(s => s && (s.city || s.name)) : []);
+    : (Array.isArray(data.stops) ? data.stops.filter(hasStopLabel) : []);
   const apiRoadStops = (Array.isArray(data.road_stops) ? data.road_stops : [])
+    .filter(hasStopLabel)
     .map(s => normalizeRoadStop({ ...s, fromLlm: true }));
 
   const metaFields = {

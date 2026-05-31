@@ -121,7 +121,7 @@ export default function PlanPanel({
                 <QuestionThread history={questionHistory} />
 
                 <div
-                  className={`ai-msg plan-flow-current${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit-fast" : ""}${enterAnim && !stepAnim ? " step-enter-fast" : ""}`}
+                  className={`ai-msg plan-flow-current${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                 >
                   {stepMessage && (
                     <div className="ai-bubble">
