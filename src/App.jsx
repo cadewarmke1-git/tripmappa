@@ -130,6 +130,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
   const [creditStatus, setCreditStatus] = useState(null);
+  const [creditsNeedRefresh, setCreditsNeedRefresh] = useState(0);
   const [userProfile, setUserProfile] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalReason, setUpgradeModalReason] = useState("trips");
@@ -460,7 +461,7 @@ export default function App() {
       const guestHome = getGuestHomeAddress();
       if (guestHome) setHomeAddress(guestHome);
     }
-  }, [user?.id, session?.access_token, authLoading, generated]);
+  }, [user?.id, session?.access_token, authLoading, creditsNeedRefresh]);
 
   useEffect(() => {
     if (view === "profile" && !authLoading && !user) {
@@ -2063,7 +2064,7 @@ export default function App() {
           applyGeneratedTrip(parsed, activeRouteInfo);
 
           if (user && session?.access_token) {
-            fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
+            setCreditsNeedRefresh(n => n + 1);
           } else {
             setGuestTripPendingSave(true);
             const guestStatus = getGuestCreditStatus();

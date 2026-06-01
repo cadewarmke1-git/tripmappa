@@ -27,10 +27,13 @@ export function useLiveTripTips({
   const [updatedAt, setUpdatedAt] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const waypoints = useMemo(
-    () => stops.filter(s => s.lat != null && s.lng != null).map(s => ({ lat: s.lat, lng: s.lng })),
-    [stops],
-  );
+  // Snapshot stop waypoints when a trip is generated — omit stops from deps so enrichment updates do not re-fetch.
+  const stableWaypoints = useMemo(() => {
+    if (!generated) return [];
+    return stops
+      .filter(s => s.lat != null && s.lng != null)
+      .map(s => ({ lat: s.lat, lng: s.lng }));
+  }, [generated, origin, dest]);
 
   useEffect(() => {
     if (!generated || !origin || !dest) return undefined;
@@ -43,7 +46,7 @@ export function useLiveTripTips({
           origin,
           destination: dest,
           routePoints,
-          waypoints,
+          waypoints: stableWaypoints,
         });
         if (cancelled) return;
         if (result.tips?.length) {
@@ -65,7 +68,7 @@ export function useLiveTripTips({
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [generated, origin, dest, routePoints, waypoints, liveSharingActive, pollMs]);
+  }, [generated, origin, dest, routePoints, stableWaypoints, liveSharingActive, pollMs]);
 
   const tips = useMemo(
     () => mergeTips(liveTips, fallbackTips),

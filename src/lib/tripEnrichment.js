@@ -26,7 +26,6 @@ import { parseMilesFromDistance } from "./parsing.js";
 import { fetchRestaurantsForStop } from "./restaurantsClient.js";
 import { fetchWeatherForStops } from "./weatherClient.js";
 import { fetchGeocode } from "./geocodeClient.js";
-import { fetchLiveTripTips } from "./tripTipsClient.js";
 import { optimizeStopOrder, shouldOptimizeRoute } from "./routeOptimization.js";
 import { isContinuousDrive } from "./driveMode.js";
 
@@ -331,22 +330,6 @@ export async function enrichGeneratedTrip({
 
   const mapMarkers = stopsToMapMarkers(enrichedStops, safeRoadStops, customStops, poiMarkers, answers);
 
-  const waypoints = enrichedStops
-    .filter(s => s.lat != null && s.lng != null)
-    .map(s => ({ lat: s.lat, lng: s.lng }));
-  if (destGeo) waypoints.push(destGeo);
-
-  let liveTripTips = [];
-  if (origin && destination) {
-    const tipsResult = await fetchLiveTripTips({
-      origin,
-      destination,
-      routePoints: routeInfo?.routePoints || [],
-      waypoints,
-    });
-    liveTripTips = tipsResult.tips || [];
-  }
-
   safeRoadStops = dedupeRoadStops(safeRoadStops);
   safeRoadStops = consolidateFuelRoadStops(
     safeRoadStops,
@@ -365,7 +348,7 @@ export async function enrichGeneratedTrip({
     routeOptimized,
     optionalStopCards,
     tripAlerts,
-    liveTripTips,
+    liveTripTips: [],
     destGeo,
     mapMarkers,
   };
