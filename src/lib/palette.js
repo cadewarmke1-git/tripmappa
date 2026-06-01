@@ -59,14 +59,14 @@ export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;
  * Hero landing chrome — canonical palette (follows sky day/night cycle).
  * Gold is the base accent family; wordmark + profile use gold gradients.
  *
- * Night: wordmark #FFD28C→#FF8C42, Travel #5A3A9A→#FFD28C, Reimagined #FF8C42→#C87010
+ * Night: wordmark #FFD28C→#FF8C42, Travel #5A3A9A→#FFD28C, Reimagined #FFD28C→#FF8C42
  * Day:   wordmark #FFD28C→#FF8C42, Travel #FFD28C→#FF8C42, Reimagined #FF8C42→#C87010
  */
 export const HERO_SURFACE_PALETTE = {
   night: {
     wordmarkGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     titleLineGradient: "linear-gradient(90deg, #5A3A9A 0%, #FFD28C 100%)",
-    titleAccentGradient: "linear-gradient(90deg, #FF8C42 0%, #C87010 100%)",
+    titleAccentGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     subtitle: "rgba(255, 255, 255, 0.8)",
     avatarGradient: "linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%)",
     avatarText: DEEP_DARK,

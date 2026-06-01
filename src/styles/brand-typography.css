@@ -70,13 +70,20 @@
   background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%);
 }
 
+.hero.night .hero-title-accent {
+  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%);
+}
+
+.hero.day .hero-title-accent {
+  background-image: linear-gradient(90deg, #FF8C42 0%, #C87010 100%);
+}
+
 .hero .hero-title-accent {
   display: block;
   width: fit-content;
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  background-image: linear-gradient(90deg, #FF8C42 0%, #C87010 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

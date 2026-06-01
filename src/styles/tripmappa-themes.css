@@ -65,7 +65,19 @@ body.theme-night,
   --color-map-panel: #1A1035;
   --color-hero-title-gradient: linear-gradient(90deg, #5A3A9A, #FFD28C);
   --color-hero-accent-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
-  --color-hero-subtitle: #A89BCF;
+  --color-hero-subtitle: rgba(255, 255, 255, 0.8);
+
+  /* Google Places autocomplete */
+  --color-autocomplete-bg: #1A1035;
+  --color-autocomplete-border: rgba(255, 210, 140, 0.15);
+  --color-autocomplete-match: #FFD28C;
+  --color-autocomplete-text-top: #FFFFFF;
+  --color-autocomplete-text-rest: #A89BCF;
+  --color-autocomplete-pin-bg: rgba(255, 210, 140, 0.1);
+  --color-autocomplete-pin-color: #FFD28C;
+  --color-autocomplete-top-bg: rgba(255, 210, 140, 0.06);
+  --color-autocomplete-divider: rgba(255, 210, 140, 0.08);
+  --color-autocomplete-hover-bg: rgba(255, 210, 140, 0.1);
 
   /* Legacy bridges — existing rules use these */
   --ink: var(--color-text-primary);
@@ -160,6 +172,13 @@ body.theme-day,
   --color-autocomplete-bg: #FDF3E0;
   --color-autocomplete-border: rgba(160, 64, 16, 0.2);
   --color-autocomplete-match: #E06820;
+  --color-autocomplete-text-top: #1A0D00;
+  --color-autocomplete-text-rest: #5A3A1A;
+  --color-autocomplete-pin-bg: rgba(160, 64, 16, 0.08);
+  --color-autocomplete-pin-color: #A04010;
+  --color-autocomplete-top-bg: rgba(160, 64, 16, 0.05);
+  --color-autocomplete-divider: rgba(160, 64, 16, 0.1);
+  --color-autocomplete-hover-bg: rgba(160, 64, 16, 0.08);
   --color-autocomplete-text: #1A0D00;
 
   --ink: var(--color-text-primary);
