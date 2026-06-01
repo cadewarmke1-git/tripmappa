@@ -2037,7 +2037,7 @@ export default function App() {
         placesContextPrompt,
         generationHints: formatGenerationHints(normalizedAnswers, activeRouteInfo),
         legs: tripLegs.length > 0 ? tripLegs : undefined,
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
       };
 
       let lastErr = null;
