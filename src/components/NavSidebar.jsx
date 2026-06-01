@@ -58,7 +58,7 @@ export default function NavSidebar({
         onClick={onClose}
       />
       <aside
-        className={`nav-sidebar${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
+        className={`nav-sidebar ${theme}${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"

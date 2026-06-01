@@ -2,6 +2,7 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { fetchCreditStatus, consumeCredit } from "../lib/tripCredits.js";
+import { readUserTripPreferences, formatPreferencesForPrompt } from "./user-trip-preferences.js";
 
 function parseJsonFromLlm(text) {
   if (!text) {
@@ -65,6 +66,13 @@ async function callAnthropic(model, systemPrompt, userPrompt, maxTokens) {
     }),
   });
   const data = await response.json();
+  const inputTokens = data?.usage?.input_tokens ?? 0;
+  const outputTokens = data?.usage?.output_tokens ?? 0;
+  console.log("[plan-trip] Anthropic usage:", {
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: inputTokens + outputTokens,
+  });
   return { response, data };
 }
 
@@ -194,6 +202,8 @@ function buildTripContext(reqBody) {
     leaveTime: formatLeaveTime(departureTime, timingMode),
     isScenic: preferences.includes("Scenic route") || routeInfo.scenic === true,
     tripCategory,
+    truckRestrictions: Array.isArray(routeInfo.restrictions) ? routeInfo.restrictions : [],
+    weighStationCount: Array.isArray(routeInfo.weighStations) ? routeInfo.weighStations.length : 0,
     partySize: (() => {
       const t = answers.travelers;
       if (t === "1") return 1;
@@ -258,6 +268,12 @@ function buildContextBlock(ctx) {
     lines.push(`Sleeper cab: ${ctx.sleeperCab}`);
     lines.push(`Preferred truck stop brand: ${ctx.truckStopBrand}`);
     lines.push(`Assumed truck height: ${ctx.truckHeight} · weight: ${ctx.truckWeight} · hazmat: ${ctx.truckHazmat}`);
+    if (ctx.truckRestrictions?.length) {
+      lines.push(`HERE truck route restrictions along corridor: ${ctx.truckRestrictions.map(r => `${r.roadName ? r.roadName + ": " : ""}${r.message}`).join("; ")}`);
+    }
+    if (ctx.weighStationCount > 0) {
+      lines.push(`HERE weigh stations identified along route: ${ctx.weighStationCount} — include these in road_stops where appropriate`);
+    }
   }
   if (RV_TYPES.includes(ctx.vehicle)) {
     lines.push(`RV height: ${ctx.rvHeight} · weight: ${ctx.rvWeight} · towing: ${ctx.rvTowing}`);
@@ -583,7 +599,7 @@ function buildJsonSchema(ctx, isSimplified) {
 }`;
 }
 
-function buildUserPrompt(ctx, placesContextPrompt, isSimplified, generationHints = "") {
+function buildUserPrompt(ctx, placesContextPrompt, isSimplified, generationHints = "", extraContext = "") {
   let vehicleBlock;
   switch (ctx.tripCategory) {
     case "commercial":
@@ -618,6 +634,7 @@ ${vehicleBlock}
 
 ${buildUniversalRules(ctx, placesContextPrompt)}
 ${generationHints ? `\n${generationHints}\n` : ""}
+${extraContext ? `\n${extraContext}\n` : ""}
 
 Lodging tier for this trip: ${ctx.continuousDrive ? "No overnight stay — continuous drive mode" : buildLodgingRules(ctx.lodging)}
 ${extras.length ? `Additional preference notes:\n${extras.map(e => `- ${e}`).join("\n")}` : ""}
@@ -654,13 +671,27 @@ export default async function handler(req, res) {
     }
   }
 
-  const { origin, destination, answers, model = "claude-sonnet-4-6", placesContextPrompt = "", generationHints = "" } = req.body;
+  const { origin, destination, answers, model = "claude-sonnet-4-6", placesContextPrompt = "", generationHints = "", preferenceContext = "", recentTripsContext = "", answerConfidenceNotes = "", gracefulDegradationNotes = "", fallbackPreferences = null } = req.body;
 
   if (!origin || !destination) {
     return res.status(400).json({ error: "Missing origin or destination" });
   }
 
-  const ctx = buildTripContext(req.body);
+  const mergedAnswers = fallbackPreferences
+    ? { ...fallbackPreferences, ...(answers || {}) }
+    : (answers || {});
+
+  const ctx = buildTripContext({ ...req.body, answers: mergedAnswers });
+
+  let prefsBlock = preferenceContext;
+  if (!prefsBlock && user && admin) {
+    const prefs = await readUserTripPreferences(admin, user.id);
+    prefsBlock = formatPreferencesForPrompt(prefs);
+  }
+
+  const extraContext = [prefsBlock, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes]
+    .filter(Boolean)
+    .join("\n\n");
 
   const tripType = answers?.trip_type || "Road trip";
   const continuousDrive =
@@ -678,7 +709,7 @@ export default async function handler(req, res) {
     ctx.tripCategory === "water" ||
     ctx.tripCategory === "plane";
 
-  const userPrompt = buildUserPrompt(ctx, placesContextPrompt, isSimplifiedFormat, generationHints);
+  const userPrompt = buildUserPrompt(ctx, placesContextPrompt, isSimplifiedFormat, generationHints, extraContext);
   const maxTokens =
     ctx.tripCategory === "commercial" || ctx.tripCategory === "rv" ? 4096 : isSimplifiedFormat ? 1800 : 3200;
 

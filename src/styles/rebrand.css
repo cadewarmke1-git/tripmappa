@@ -380,47 +380,52 @@ body {
 }
 
 .app-wrap.night .account-sidebar,
-.app-wrap.night .nav-sidebar {
+.nav-sidebar.night {
   background: #1A1035 !important;
   border-left-color: rgba(255, 210, 140, 0.1) !important;
   box-shadow: -12px 0 48px rgba(0, 0, 0, 0.55) !important;
 }
 
-.app-wrap.night .nav-sidebar-title {
+.nav-sidebar.night .nav-sidebar-title {
   color: #FFD28C !important;
 }
 
-.app-wrap.night .nav-sidebar-nav-item {
+.nav-sidebar.night .nav-sidebar-nav-item {
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
   color: #FFFFFF !important;
 }
 
-.app-wrap.night .nav-sidebar-nav-item:hover {
+.nav-sidebar.night .nav-sidebar-nav-item:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
   color: #FFFFFF !important;
 }
 
-.app-wrap.night .nav-sidebar-nav-item.is-active {
+.nav-sidebar.night .nav-sidebar-nav-item.is-active {
   background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
   border-color: transparent !important;
   color: #1A0D00 !important;
   box-shadow: none !important;
 }
 
-.app-wrap.night .app-sidebar-close {
+.nav-sidebar.night .app-sidebar-close {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: #FFFFFF !important;
 }
 
-.app-wrap.night .nav-sidebar-theme-label {
-  color: rgba(255, 255, 255, 0.65) !important;
+.nav-sidebar.night .nav-sidebar-theme-label {
+  color: #A89BCF !important;
 }
 
-.app-wrap.night .nav-sidebar-footer {
+.nav-sidebar.night .nav-sidebar-footer {
   border-top-color: rgba(255, 210, 140, 0.1) !important;
+}
+
+html[data-layout="mobile"] .nav-sidebar.night {
+  border-left: none !important;
+  border-right: 1px solid rgba(255, 210, 140, 0.1) !important;
 }
 
 .app-wrap.night .section-label,
@@ -517,47 +522,52 @@ body {
 }
 
 .app-wrap.day .account-sidebar,
-.app-wrap.day .nav-sidebar {
+.nav-sidebar.day {
   background: #1A0D00 !important;
   border-left-color: rgba(255, 210, 140, 0.15) !important;
   box-shadow: -12px 0 48px rgba(0, 0, 0, 0.45) !important;
 }
 
-.app-wrap.day .nav-sidebar-title {
+.nav-sidebar.day .nav-sidebar-title {
   color: #FFD28C !important;
 }
 
-.app-wrap.day .nav-sidebar-nav-item {
+.nav-sidebar.day .nav-sidebar-nav-item {
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
   color: #FFFFFF !important;
 }
 
-.app-wrap.day .nav-sidebar-nav-item:hover {
+.nav-sidebar.day .nav-sidebar-nav-item:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
   color: #FFFFFF !important;
 }
 
-.app-wrap.day .nav-sidebar-nav-item.is-active {
+.nav-sidebar.day .nav-sidebar-nav-item.is-active {
   background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
   border-color: transparent !important;
   color: #1A0D00 !important;
   box-shadow: none !important;
 }
 
-.app-wrap.day .app-sidebar-close {
+.nav-sidebar.day .app-sidebar-close {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: #FFFFFF !important;
 }
 
-.app-wrap.day .nav-sidebar-theme-label {
-  color: rgba(255, 255, 255, 0.65) !important;
+.nav-sidebar.day .nav-sidebar-theme-label {
+  color: rgba(255, 210, 140, 0.6) !important;
 }
 
-.app-wrap.day .nav-sidebar-footer {
+.nav-sidebar.day .nav-sidebar-footer {
   border-top-color: rgba(255, 210, 140, 0.12) !important;
+}
+
+html[data-layout="mobile"] .nav-sidebar.day {
+  border-left: none !important;
+  border-right: 1px solid rgba(255, 210, 140, 0.15) !important;
 }
 
 .app-wrap.day .section-label,

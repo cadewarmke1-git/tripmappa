@@ -48,11 +48,17 @@ export default function AppMap({
   onNavigateHome = null,
   navigateHomePending = false,
   showRoutePill = true,
+  onMapBackgroundClick = null,
+  truckRoutePath = null,
 }) {
   const theme = themeProp ?? "night";
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [mapInstance, setMapInstance] = useState(null);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
+  const activeRoutePath = useMemo(() => {
+    if (truckRoutePath?.length > 1) return truckRoutePath;
+    return directionsPath;
+  }, [truckRoutePath, directionsPath]);
   const mapStyles = useMemo(() => resolveMapStyles(mapStyle, theme), [mapStyle, theme]);
   const mapOptions = useMemo(() => ({
     disableDefaultUI: false,
@@ -121,9 +127,12 @@ export default function AppMap({
             onLoad={handleMapLoad}
             onUnmount={handleMapUnmount}
             options={mapOptions}
-            onClick={() => setSelectedMarker(null)}
+            onClick={() => {
+              setSelectedMarker(null);
+              onMapBackgroundClick?.();
+            }}
           >
-            {directions && (
+            {directions && !truckRoutePath?.length && (
               <DirectionsRenderer
                 directions={directions}
                 options={{
@@ -132,8 +141,8 @@ export default function AppMap({
                 }}
               />
             )}
-            {directionsPath.length > 1 && (
-              <AnimatedRoutePath path={directionsPath} />
+            {activeRoutePath.length > 1 && (
+              <AnimatedRoutePath path={activeRoutePath} />
             )}
             <MapMarkerLayer
               markers={mapMarkers}

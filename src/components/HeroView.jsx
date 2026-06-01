@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
+import HeroExploreMap from "./HeroExploreMap.jsx";
+import HeroExploreRange from "./HeroExploreRange.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
@@ -43,6 +45,17 @@ export default function HeroView({
   planDraft = null,
   onResumeDraft,
   onDismissDraft,
+  exploreRangeEnabled = false,
+  exploreDriveTimeSeconds = 7200,
+  exploreLoading = false,
+  exploreError = null,
+  explorePolygon = [],
+  explorePlaces = [],
+  exploreMapCenter = null,
+  onExploreToggle,
+  onExploreDriveTimeChange,
+  onExploreMapClick,
+  onExplorePlaceSelect,
 }) {
   const {
     skyHour,
@@ -84,6 +97,17 @@ export default function HeroView({
         style={heroSurfaceStyle}
       >
         <HeroMountainScene phase={skyPhase} hour={skyHour} />
+        {exploreRangeEnabled && (
+          <HeroExploreMap
+            isLoaded={isLoaded}
+            center={exploreMapCenter}
+            polygon={explorePolygon}
+            places={explorePlaces}
+            theme={heroTheme}
+            onMapClick={onExploreMapClick}
+            onPlaceSelect={onExplorePlaceSelect}
+          />
+        )}
         <div className="hero-overlay" />
         <div className="hero-palette-vignette" aria-hidden="true" />
         <div className="hero-palette-ridge" aria-hidden="true" />
@@ -121,8 +145,9 @@ export default function HeroView({
           )}
 
           <div className="hero-search">
-            <div className="hero-route-bar">
-              <div className="hero-route-grid">
+            <div className="hero-search-main">
+              <div className="hero-route-bar">
+                <div className="hero-route-grid">
                 <div className="hero-route-cell hero-route-from">
                   <div className="hero-input-label">From</div>
                   <div className="hero-input-box">
@@ -164,6 +189,15 @@ export default function HeroView({
                   {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
                 </div>
               </div>
+              </div>
+              <HeroExploreRange
+                enabled={exploreRangeEnabled}
+                driveTimeSeconds={exploreDriveTimeSeconds}
+                loading={exploreLoading}
+                error={exploreError}
+                onToggle={onExploreToggle}
+                onDriveTimeChange={onExploreDriveTimeChange}
+              />
             </div>
             <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
               {heroLaunching ? <RouteDrawingLoader theme={heroTheme} variant="button" /> : "Plan my trip →"}
