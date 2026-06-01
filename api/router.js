@@ -1,8 +1,12 @@
 /**
  * Single Vercel serverless entry for all /api/* routes.
  * Handlers live in server/routes/ — never add new files under api/ (Hobby plan limit: 12 functions).
+ *
+ * Vite projects do not support Next.js-style api/[...path] catch-alls on Vercel; vercel.json
+ * rewrites /api/* here with ?path=… (see resolveApiRoute).
  */
 import { logApiRequest } from "../server/lib/apiLog.js";
+import { resolveApiRoute } from "./resolveApiRoute.js";
 
 const ROUTES = {
   "client-error": () => import("../server/routes/client-error.js"),
@@ -30,14 +34,13 @@ const ROUTES = {
 };
 
 export default async function handler(req, res) {
-  const parts = req.query?.path;
-  const route = Array.isArray(parts) ? parts.join("/") : (parts || "");
+  const route = resolveApiRoute(req);
   const load = ROUTES[route];
   const started = Date.now();
 
   if (!load) {
     logApiRequest(route || "unknown", { method: req.method, status: 404, ms: Date.now() - started });
-    return res.status(404).json({ error: `Unknown API route: /api/${route}` });
+    return res.status(404).json({ error: `Unknown API route: /api/${route || "(missing path)"}` });
   }
 
   try {

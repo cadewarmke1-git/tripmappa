@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/router?path=$1" },
     { "source": "/live/:token", "destination": "/index.html" }
   ]
 }
