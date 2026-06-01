@@ -631,7 +631,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const { origin, destination, answers, model = "claude-sonnet-4-20250514", placesContextPrompt = "", generationHints = "" } = req.body;
+  const { origin, destination, answers, model = "claude-sonnet-4-6", placesContextPrompt = "", generationHints = "" } = req.body;
 
   if (!origin || !destination) {
     return res.status(400).json({ error: "Missing origin or destination" });
