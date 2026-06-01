@@ -4,15 +4,38 @@ import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { fetchCreditStatus, consumeCredit } from "../lib/tripCredits.js";
 
 function parseJsonFromLlm(text) {
-  if (!text) throw new Error("Empty model response");
-  const clean = String(text).replace(/```json|```/g, "").trim();
+  if (!text) {
+    console.error("parseJsonFromLlm: empty model response");
+    throw new Error("Empty model response");
+  }
+  const raw = String(text);
+
+  let stripped = raw.trim();
+  stripped = stripped.replace(/^```(?:json)?\s*/i, "");
+  stripped = stripped.replace(/\s*```\s*$/i, "");
+  stripped = stripped.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+  let clean = stripped;
+  const firstBrace = clean.indexOf("{");
+  const lastBrace = clean.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    clean = clean.slice(firstBrace, lastBrace + 1);
+  }
+
   try {
     return JSON.parse(clean);
   } catch {
-    const start = clean.indexOf("{");
-    const end = clean.lastIndexOf("}");
-    if (start >= 0 && end > start) return JSON.parse(clean.slice(start, end + 1));
-    throw new Error("Could not parse trip JSON from model");
+    const blockMatch = stripped.match(/\{[\s\S]*\}/);
+    if (blockMatch) {
+      try {
+        return JSON.parse(blockMatch[0]);
+      } catch {
+        // fall through to error logging below
+      }
+    }
+
+    console.error("parseJsonFromLlm: raw Claude response:", raw);
+    throw new Error("Could not parse trip JSON from model — response was not valid JSON");
   }
 }
 
@@ -188,7 +211,7 @@ You never give generic suggestions. Every single recommendation must be specific
 
 You always recommend real places that actually exist along the route corridor. You never recommend a stop that requires a significant detour from the route. You think like a local expert for every city and state along the route.
 
-Respond with a single valid JSON object only — no markdown fences, no commentary before or after the JSON.
+Respond with only valid JSON: a single JSON object and nothing else. No preamble, no markdown code blocks, no backticks, and no extra text before or after the JSON object. Do not wrap the JSON in \`\`\`json fences. Your entire response must be raw JSON parseable by JSON.parse().
 
 Remember — you are not a generic trip planner. You are a specialized expert for the exact vehicle type on the exact route. Every recommendation must prove you understand the difference between planning for an 18-wheeler versus a family minivan versus a motorcycle versus an RV. Generic suggestions are unacceptable. If you are uncertain about a specific real business at a stop location, recommend the stop city and category instead of inventing a business name.
 
