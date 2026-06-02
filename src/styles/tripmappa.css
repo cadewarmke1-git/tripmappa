@@ -282,6 +282,63 @@
     min-width: 0;
     width: 100%;
   }
+  .hero-founding-slots {
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+  }
+  .hero-founding-slots-text {
+    color: var(--color-text-secondary);
+  }
+  .hero-founding-slots-count {
+    color: var(--color-accent-gold);
+    font-weight: 700;
+  }
+  .account-sidebar-referral {
+    margin: 0 0 14px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--color-card-border);
+    background: var(--color-btn-secondary-bg);
+  }
+  .account-sidebar-referral-label {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+  .account-sidebar-referral-url {
+    margin: 0 0 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    word-break: break-all;
+    color: var(--color-text-primary);
+  }
+  .account-sidebar-referral-copy {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--color-card-border);
+    background: var(--color-accent-gradient);
+    color: var(--color-btn-primary-text);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .account-sidebar-referral-copy:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+  .account-sidebar-referral-note {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+  }
   .hero-route-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
@@ -3309,8 +3366,33 @@
   .upgrade-modal-lead { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 0 0 16px; }
   .upgrade-modal-benefits { margin: 0 0 20px; padding-left: 18px; font-size: 14px; line-height: 1.7; }
   .upgrade-modal-benefits li { margin-bottom: 6px; }
+  .upgrade-modal-price {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 14px;
+    background: var(--color-accent-text-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .upgrade-modal-error {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-accent-orange);
+    text-align: center;
+  }
   .upgrade-modal-actions { display: flex; flex-direction: column; gap: 10px; }
-  .upgrade-modal-cta { text-align: center; text-decoration: none; display: block; }
+  .upgrade-modal-cta { text-align: center; text-decoration: none; display: block; width: 100%; }
+  .btn-generate-trip-upgrade { background: var(--color-accent-gradient); color: var(--color-btn-primary-text); }
+  .account-sidebar-manage-subscription {
+    width: 100%;
+    margin-bottom: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-accent-gold);
+    border: 1px solid var(--color-card-border);
+    background: var(--color-btn-secondary-bg);
+  }
   .upgrade-modal-secondary, .upgrade-modal-dismiss {
     background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); padding: 8px;
   }
@@ -3889,9 +3971,72 @@
   .user-avatar-initials { line-height: 1; user-select: none; }
 
   .user-avatar-ring:not(:has(.user-avatar-img)) {
-    background: linear-gradient(135deg, var(--gold-primary) 0%, var(--orange-primary) 100%);
-    color: var(--deep-dark);
+    background: var(--color-accent-gradient);
+    color: var(--color-btn-primary-text);
     font-weight: 800;
+  }
+
+  .user-avatar { position: relative; }
+
+  .user-avatar-tier-badge {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-gold) 35%, transparent);
+    pointer-events: none;
+    color: var(--color-btn-primary-text);
+  }
+
+  .user-avatar-tier-badge svg {
+    width: 8px;
+    height: 8px;
+    display: block;
+  }
+
+  .user-avatar-tier-badge--founder,
+  .user-avatar-tier-badge--trailblazer {
+    background: var(--color-accent-gradient);
+    color: var(--color-btn-primary-text);
+  }
+
+  .user-avatar-tier-badge--voyager {
+    background: var(--color-tier-voyager);
+    color: var(--color-surface);
+  }
+
+  .user-avatar-tier-ring--founder.user-avatar-ring,
+  .user-avatar-tier-ring--trailblazer.user-avatar-ring {
+    box-shadow:
+      0 0 0 2px var(--color-accent-gold),
+      0 0 0 4px var(--color-surface),
+      0 0 18px color-mix(in srgb, var(--color-accent-orange) 45%, transparent);
+  }
+
+  .user-avatar-tier-ring--voyager.user-avatar-ring {
+    box-shadow:
+      0 0 0 2px var(--color-tier-voyager),
+      0 0 0 4px var(--color-surface),
+      0 0 14px color-mix(in srgb, var(--color-tier-voyager) 45%, transparent);
+  }
+
+  .account-sidebar-founder-tag {
+    margin: 6px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    background: var(--color-accent-text-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.35;
   }
 
   /* ── Profile card menu (avatar dropdown) ── */
@@ -4017,13 +4162,21 @@
     background: linear-gradient(135deg, var(--gold-primary) 0%, #f0b85c 100%);
     box-shadow: 0 2px 12px rgba(255,210,140,0.35);
   }
-  .profile-card-tier--premium {
-    background: linear-gradient(135deg, #ffe4b3 0%, var(--gold-primary) 40%, #d4a017 100%);
-    box-shadow: 0 2px 16px rgba(255,210,140,0.45);
+  .profile-card-tier--trailblazer,
+  .profile-card-tier--founder {
+    background: var(--color-accent-gradient);
+    box-shadow: 0 2px 16px color-mix(in srgb, var(--color-accent-gold) 45%, transparent);
   }
-  .profile-card-tier--traveler {
-    background: linear-gradient(135deg, #fff0d4 0%, var(--gold-primary) 35%, #c9922e 100%);
-    box-shadow: 0 2px 18px rgba(255,210,140,0.55);
+  .profile-card-tier--voyager {
+    background: var(--color-tier-voyager);
+    color: var(--color-surface);
+    box-shadow: 0 2px 14px color-mix(in srgb, var(--color-tier-voyager) 40%, transparent);
+  }
+  .profile-card-tier--wanderer {
+    background: var(--color-btn-secondary-bg);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-card-border);
+    box-shadow: none;
   }
   .profile-card-credits {
     margin: 0;
@@ -4398,15 +4551,18 @@
     background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.65);
     border: 1px solid rgba(255,255,255,0.15);
   }
-  .profile-tier-badge-premium {
-    background: rgba(255,210,140,0.18); color: var(--gold-primary);
-    border-color: rgba(255,210,140,0.45);
+  .profile-tier-badge-trailblazer,
+  .profile-tier-badge-founder {
+    background: color-mix(in srgb, var(--color-accent-gold) 18%, transparent);
+    color: var(--color-accent-gold);
+    border-color: color-mix(in srgb, var(--color-accent-gold) 45%, transparent);
   }
-  .profile-tier-badge-traveler {
-    background: linear-gradient(135deg, rgba(255,210,140,0.28), rgba(255,210,140,0.12));
-    color: var(--gold-primary);
-    border-color: rgba(255,210,140,0.55);
+  .profile-tier-badge-voyager {
+    background: color-mix(in srgb, var(--color-tier-voyager) 22%, transparent);
+    color: var(--color-tier-voyager);
+    border-color: color-mix(in srgb, var(--color-tier-voyager) 45%, transparent);
   }
+  .profile-plan-founder-tag { color: var(--color-accent-gold); font-weight: 700; }
   .profile-body { max-width: 960px; margin: 0 auto; padding: 24px 20px 64px; display: flex; flex-direction: column; gap: 20px; }
   .profile-stats-bar {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
@@ -4445,9 +4601,9 @@
   @media (max-width: 900px) { .profile-plan-columns-three { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { .profile-plan-columns { grid-template-columns: 1fr; } }
   .profile-plan-col-title { font-size: 13px; font-weight: 700; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-  .profile-plan-col-title-traveler { color: var(--gold-primary); }
-  .profile-plan-col-price { font-size: 12px; font-weight: 700; color: var(--gold-primary); margin: 0 0 8px; }
-  .profile-plan-col-title-premium { color: var(--gold-primary); }
+  .profile-plan-col-title-voyager { color: var(--color-tier-voyager); }
+  .profile-plan-col-title-trailblazer { color: var(--color-accent-gold); }
+  .profile-plan-col-price { font-size: 12px; font-weight: 700; color: var(--color-accent-gold); margin: 0 0 8px; }
   .profile-benefits-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.75); }
   .profile-benefits-list li { margin-bottom: 4px; }
   .profile-btn {

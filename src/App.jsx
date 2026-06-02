@@ -60,6 +60,10 @@ import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraf
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
+import { runAccountOnboarding } from "./lib/accountOnboardingApi.js";
+import { captureReferralFromUrl, getStoredReferralCode, clearStoredReferralCode } from "./lib/referralCapture.js";
+import { dismissTrialEndedPrompt } from "./lib/trialApi.js";
+import { createPortalSession } from "./lib/stripeApi.js";
 import { useTheme } from "./context/ThemeContext.jsx";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
@@ -156,6 +160,8 @@ export default function App() {
   });
   const [creditStatus, setCreditStatus] = useState(null);
   const [creditsNeedRefresh, setCreditsNeedRefresh] = useState(0);
+  const foundingClaimAttemptedRef = useRef(false);
+  const trialPromptShownRef = useRef(false);
   const [userProfile, setUserProfile] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalReason, setUpgradeModalReason] = useState("trips");
@@ -482,7 +488,7 @@ export default function App() {
     if (user?.id && session?.access_token) {
       fetchTripCredits(session.access_token)
         .then(setCreditStatus)
-        .catch(() => setCreditStatus({ tier: "free", unlimited: false, remaining: 3, limit: 3 }));
+        .catch(() => setCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 }));
       fetchUserProfile(user.id)
         .then(profile => {
           if (profile?.home_address) setHomeAddress(profile.home_address);
@@ -496,6 +502,103 @@ export default function App() {
       if (guestHome) setHomeAddress(guestHome);
     }
   }, [user?.id, session?.access_token, authLoading, creditsNeedRefresh]);
+
+  useEffect(() => {
+    captureReferralFromUrl();
+  }, []);
+
+  useEffect(() => {
+    foundingClaimAttemptedRef.current = false;
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (authLoading || !user?.id || !session?.access_token) return undefined;
+    if (foundingClaimAttemptedRef.current) return undefined;
+    foundingClaimAttemptedRef.current = true;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const refCode = getStoredReferralCode();
+        const result = await runAccountOnboarding(session.access_token, { refCode });
+        if (cancelled) return;
+        if (result.credits) setCreditStatus(result.credits);
+        const profile = await fetchUserProfile(user.id);
+        if (!cancelled && profile) setUserProfile(profile);
+
+        if (result.referral?.applied) {
+          clearStoredReferralCode();
+          toast_("Referral applied. You both received one free month of Voyager.", true);
+        }
+        if (
+          result.credits?.tier === "trailblazer"
+          && profile
+          && !profile.founder_expires_at
+          && !profile.trailblazer_trial_ends_at
+          && !result.trialStarted
+        ) {
+          toast_("Admin access enabled. You have permanent Trailblazer.", true);
+        } else if (result.founder?.claimed && !result.founder?.already) {
+          toast_("You are a Founding member. Trailblazer access is free for one year.", true);
+        } else if (result.trialStarted) {
+          toast_("Your 7-day Trailblazer trial has started.", true);
+        }
+      } catch {
+        /* onboarding optional when DB or slots unavailable */
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [authLoading, user?.id, session?.access_token]);
+
+  useEffect(() => {
+    trialPromptShownRef.current = false;
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (authLoading || !user?.id || !session?.access_token) return undefined;
+    if (!creditStatus?.showTrialEndedPrompt || trialPromptShownRef.current) return undefined;
+
+    trialPromptShownRef.current = true;
+    setUpgradeModalReason("trial-ended");
+    setShowUpgradeModal(true);
+    dismissTrialEndedPrompt(session.access_token)
+      .then(() => setCreditsNeedRefresh(n => n + 1))
+      .catch(() => {});
+
+    return undefined;
+  }, [authLoading, user?.id, session?.access_token, creditStatus?.showTrialEndedPrompt]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get("success");
+    if (success !== "1" && success !== "true") return undefined;
+
+    params.delete("success");
+    const remainder = params.toString();
+    const cleanUrl = `${window.location.pathname}${remainder ? `?${remainder}` : ""}${window.location.hash}`;
+    window.history.replaceState({}, "", cleanUrl);
+
+    setCreditsNeedRefresh(n => n + 1);
+    setShowUpgradeModal(false);
+
+    if (authLoading) return undefined;
+
+    if (user?.id && session?.access_token) {
+      fetchTripCredits(session.access_token)
+        .then(setCreditStatus)
+        .catch(() => {});
+      fetchUserProfile(user.id)
+        .then(profile => {
+          if (profile) setUserProfile(profile);
+        })
+        .catch(() => {});
+      toast_("Welcome to TripMappa Trailblazer.", true);
+    }
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user?.id, session?.access_token]);
 
   useEffect(() => {
     if (view === "profile" && !authLoading && !user) {
@@ -861,6 +964,12 @@ export default function App() {
   );
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
 
+  const creditsExhausted = useMemo(() => {
+    const status = creditStatus || (!user ? getGuestCreditStatus() : null);
+    if (!status) return false;
+    return !status.unlimited && (status.remaining ?? 0) <= 0;
+  }, [creditStatus, user]);
+
   usePlanDraft({
     active: view === "app" && !generated,
     origin,
@@ -1044,7 +1153,10 @@ export default function App() {
         onRefreshCredits={refreshCredits}
         onOpenProfile={handleSidebarOpenProfile}
         onOpenSettings={handleSidebarOpenSettings}
+        onManageSubscription={handleManageSubscription}
         onSignOut={handleSidebarSignOut}
+        onReferralCopied={() => toast_("Referral link copied", true)}
+        onReferralCopyError={() => toast_("Could not copy link", { isError: true })}
       />
     );
   }
@@ -1059,6 +1171,7 @@ export default function App() {
         onToggleNavSidebar={toggleNavSidebar}
         user={user}
         userProfile={userProfile}
+        creditStatus={creditStatus}
         accountSidebarOpen={accountSidebarOpen}
         onToggleAccountSidebar={toggleAccountSidebar}
         onLogin={() => openAuthModal("signin")}
@@ -1083,8 +1196,24 @@ export default function App() {
     setUserProfile(profile);
   }
 
-  function handleManageSubscription() {
-    toast_("Subscription management via Stripe — coming in Phase 10");
+  async function handleManageSubscription() {
+    if (!session?.access_token) {
+      toast_("Sign in to manage your subscription", { isError: true });
+      return;
+    }
+    const customerId = creditStatus?.stripeCustomerId;
+    if (!customerId) {
+      toast_("No billing account found", { isError: true });
+      return;
+    }
+    try {
+      const { url } = await createPortalSession(session.access_token, customerId);
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    } catch (err) {
+      toast_(err.message || "Could not open billing portal", { isError: true });
+    }
   }
 
   function openTripsUpgrade() {
@@ -2681,8 +2810,12 @@ export default function App() {
         {showUpgradeModal && (
           <UpgradeModal
             onClose={() => setShowUpgradeModal(false)}
+            user={user}
+            accessToken={session?.access_token}
             creditStatus={creditStatus}
             reason={upgradeModalReason}
+            onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
+            onCheckoutError={msg => toast_(msg, { isError: true })}
           />
         )}
         <Toast
@@ -2739,6 +2872,7 @@ export default function App() {
         accountSidebarOpen={accountSidebarOpen}
         onToggleAccountSidebar={toggleAccountSidebar}
         userProfile={userProfile}
+        creditStatus={creditStatus}
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
@@ -3096,6 +3230,8 @@ export default function App() {
                       convoEndRef={convoEndRef}
                       convoScrollRef={convoScrollRef}
                       creditsLabel={formatCreditsLabel(creditStatus)}
+                      creditsExhausted={creditsExhausted}
+                      onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}
                       returnedFromResults={returnedFromResults}
                       inQuestionFlow={inQuestionFlow}
@@ -3232,9 +3368,12 @@ export default function App() {
       {showUpgradeModal && (
         <UpgradeModal
           creditStatus={creditStatus || getGuestCreditStatus()}
+          user={user}
+          accessToken={session?.access_token}
           onClose={() => setShowUpgradeModal(false)}
           onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
           reason={upgradeModalReason}
+          onCheckoutError={msg => toast_(msg, { isError: true })}
         />
       )}
       {showHomeAddressModal && (

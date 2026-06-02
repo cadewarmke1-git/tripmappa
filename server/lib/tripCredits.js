@@ -1,10 +1,24 @@
-/** Server-side trip generation credit limits and monthly reset. */
-import { canUseGroceryDelivery, hasUnlimitedTripGenerations, normalizeTier } from "./tiers.js";
+/** Server-side trip generation credit limits (3 lifetime for Wanderer, unlimited for paid tiers). */
+import { canUseGroceryDelivery, hasUnlimitedTripGenerations, isFounderTier } from "./tiers.js";
+import { expireFounderIfNeeded } from "./foundingMembers.js";
+import { expireTrialIfNeeded } from "./trials.js";
+import { getEffectiveTier } from "./tierEffective.js";
+import { buildReferralLink } from "./referrals.js";
 
-export const FREE_MONTHLY_LIMIT = 3;
+export const FREE_LIFETIME_LIMIT = 3;
+
+/** @deprecated use FREE_LIFETIME_LIMIT */
+export const FREE_MONTHLY_LIMIT = FREE_LIFETIME_LIMIT;
 
 export function currentMonthKey(date = new Date()) {
   return date.toISOString().slice(0, 7);
+}
+
+async function refreshProfileLifecycle(admin, profile) {
+  if (!profile) return profile;
+  let next = await expireFounderIfNeeded(admin, profile);
+  next = await expireTrialIfNeeded(admin, next);
+  return next;
 }
 
 export async function getOrCreateProfile(admin, userId) {
@@ -16,27 +30,16 @@ export async function getOrCreateProfile(admin, userId) {
 
   if (error) throw error;
 
-  const month = currentMonthKey();
-
   if (data) {
-    if (data.credits_month !== month) {
-      const { data: updated, error: updateErr } = await admin
-        .from("user_profiles")
-        .update({ generations_used: 0, credits_month: month })
-        .eq("user_id", userId)
-        .select()
-        .single();
-      if (updateErr) throw updateErr;
-      return updated;
-    }
-    return data;
+    return refreshProfileLifecycle(admin, data);
   }
 
+  const month = currentMonthKey();
   const { data: created, error: createErr } = await admin
     .from("user_profiles")
     .insert({
       user_id: userId,
-      tier: "free",
+      tier: "wanderer",
       generations_used: 0,
       credits_month: month,
     })
@@ -48,27 +51,40 @@ export async function getOrCreateProfile(admin, userId) {
 }
 
 export function getCreditStatus(profile) {
-  const tier = normalizeTier(profile.tier);
+  const effectiveTier = getEffectiveTier(profile);
+  const isFounder = isFounderTier(profile.tier);
+  const unlimited = hasUnlimitedTripGenerations(effectiveTier);
+  const groceryDelivery = canUseGroceryDelivery(effectiveTier);
 
-  if (hasUnlimitedTripGenerations(tier)) {
+  const base = {
+    tier: effectiveTier,
+    storedTier: profile.tier,
+    unlimited,
+    used: profile.generations_used,
+    groceryDelivery,
+    stripeCustomerId: profile.stripe_customer_id || null,
+    isFounder,
+    founderExpiresAt: profile.founder_expires_at || null,
+    voyagerBonusUntil: profile.voyager_bonus_until || null,
+    trialEndsAt: profile.trailblazer_trial_ends_at || null,
+    referralCode: profile.referral_code || null,
+    referralLink: buildReferralLink(profile.referral_code),
+    showTrialEndedPrompt: Boolean(profile.show_trial_ended_prompt),
+  };
+
+  if (unlimited) {
     return {
-      tier,
-      unlimited: true,
+      ...base,
       remaining: null,
       limit: null,
-      used: profile.generations_used,
-      groceryDelivery: canUseGroceryDelivery(tier),
     };
   }
 
-  const remaining = Math.max(0, FREE_MONTHLY_LIMIT - profile.generations_used);
+  const remaining = Math.max(0, FREE_LIFETIME_LIMIT - profile.generations_used);
   return {
-    tier,
-    unlimited: false,
+    ...base,
     remaining,
-    limit: FREE_MONTHLY_LIMIT,
-    used: profile.generations_used,
-    groceryDelivery: false,
+    limit: FREE_LIFETIME_LIMIT,
   };
 }
 

@@ -26,7 +26,7 @@ export function isTripPlanComplete(parsed) {
 }
 
 export function generationFailureMessage(err) {
-  if (err?.code === "no_credits") return "No trip generations remaining this month.";
+  if (err?.code === "no_credits") return "No trip generations remaining.";
   if (err?.message?.includes("incomplete")) {
     return "We couldn't build a complete trip plan. Please try again in a moment.";
   }

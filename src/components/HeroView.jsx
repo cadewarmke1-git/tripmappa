@@ -4,6 +4,7 @@ import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import HeroExploreMap from "./HeroExploreMap.jsx";
 import HeroExploreRange from "./HeroExploreRange.jsx";
+import HeroFoundingSlots from "./HeroFoundingSlots.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
@@ -42,6 +43,7 @@ export default function HeroView({
   accountSidebarOpen = false,
   onToggleAccountSidebar,
   userProfile,
+  creditStatus = null,
   planDraft = null,
   onResumeDraft,
   onDismissDraft,
@@ -85,6 +87,7 @@ export default function HeroView({
         onToggleNavSidebar={onToggleNavSidebar}
         user={user}
         userProfile={userProfile}
+        creditStatus={creditStatus}
         accountSidebarOpen={accountSidebarOpen}
         onToggleAccountSidebar={onToggleAccountSidebar}
         onLogin={onLogin}
@@ -190,6 +193,7 @@ export default function HeroView({
                 </div>
               </div>
               </div>
+              <HeroFoundingSlots />
               <HeroExploreRange
                 enabled={exploreRangeEnabled}
                 driveTimeSeconds={exploreDriveTimeSeconds}

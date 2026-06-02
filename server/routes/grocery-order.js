@@ -118,8 +118,8 @@ export default async function handler(req, res) {
   const profile = await getOrCreateProfile(admin, user.id);
   if (!canUseGroceryDelivery(profile.tier)) {
     return res.status(403).json({
-      error: "Grocery delivery requires a Traveler plan",
-      requiredTier: "traveler",
+      error: "Grocery delivery requires a Trailblazer plan",
+      requiredTier: "trailblazer",
     });
   }
 

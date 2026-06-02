@@ -1,63 +1,89 @@
 /** Subscription tiers — single source of truth for client UI and feature gates. */
 
 export const TIERS = {
-  FREE: "free",
-  PREMIUM: "premium",
-  TRAVELER: "traveler",
+  WANDERER: "wanderer",
+  VOYAGER: "voyager",
+  TRAILBLAZER: "trailblazer",
+  FOUNDER: "founder",
 };
 
-/** Display order low → high */
-export const TIER_ORDER = [TIERS.FREE, TIERS.PREMIUM, TIERS.TRAVELER];
+/** Display order low → high (Founder shares Trailblazer feature rank) */
+export const TIER_ORDER = [TIERS.WANDERER, TIERS.VOYAGER, TIERS.TRAILBLAZER];
+
+const LEGACY_TIER_MAP = {
+  free: TIERS.WANDERER,
+  wanderer: TIERS.WANDERER,
+  premium: TIERS.TRAILBLAZER,
+  trailblazer: TIERS.TRAILBLAZER,
+  traveler: TIERS.VOYAGER,
+  voyager: TIERS.VOYAGER,
+  founder: TIERS.FOUNDER,
+};
 
 export const TIER_PRICING = {
-  [TIERS.FREE]: {
-    label: "Free",
+  [TIERS.WANDERER]: {
+    label: "Wanderer",
     priceLabel: "Free",
     priceMonthly: 0,
     upgradeUrl: null,
   },
-  [TIERS.PREMIUM]: {
-    label: "Premium",
+  [TIERS.VOYAGER]: {
+    label: "Voyager",
+    priceLabel: "$4.99/mo",
+    priceMonthly: 4.99,
+    upgradeUrl: null,
+  },
+  [TIERS.TRAILBLAZER]: {
+    label: "Trailblazer",
     priceLabel: "$7.99/mo",
     priceMonthly: 7.99,
-    upgradeUrl: "https://tripmappa.com/upgrade",
+    upgradeUrl: null,
   },
-  [TIERS.TRAVELER]: {
-    label: "Traveler",
-    priceLabel: "$14.99/mo",
-    priceMonthly: 14.99,
-    upgradeUrl: "https://tripmappa.com/upgrade/traveler",
+  [TIERS.FOUNDER]: {
+    label: "Founder",
+    priceLabel: "Founding 1,000",
+    priceMonthly: 0,
+    upgradeUrl: null,
   },
 };
 
-export const FREE_BENEFITS = [
-  "3 Trip Generations per month",
+export const WANDERER_BENEFITS = [
+  "3 Trip Generations total",
   "Saved trips and Navigate Home",
   "Maps, routing, and budget estimates",
 ];
 
-export const PREMIUM_BENEFITS = [
+export const VOYAGER_BENEFITS = [
   "Unlimited Trip Generations",
   "Live location sharing",
   "Offline maps",
-  "Priority generation queue",
 ];
 
-export const TRAVELER_BENEFITS = [
-  "Everything in Premium",
+export const TRAILBLAZER_BENEFITS = [
+  "Everything in Voyager",
   "Grocery delivery to your hotel",
-  "Voice-to-list ordering",
-  "Scheduled delivery before arrival",
+  "Priority generation queue",
+  "Voice-to-list grocery ordering",
 ];
+
+/** @deprecated use WANDERER_BENEFITS */
+export const FREE_BENEFITS = WANDERER_BENEFITS;
+/** @deprecated use TRAILBLAZER_BENEFITS */
+export const PREMIUM_BENEFITS = TRAILBLAZER_BENEFITS;
+/** @deprecated use TRAILBLAZER_BENEFITS */
+export const TRAVELER_BENEFITS = TRAILBLAZER_BENEFITS;
 
 export function normalizeTier(tier) {
-  if (tier === TIERS.TRAVELER || tier === TIERS.PREMIUM) return tier;
-  if (tier === "guest") return TIERS.FREE;
-  return TIERS.FREE;
+  if (tier === "guest") return TIERS.WANDERER;
+  if (!tier) return TIERS.WANDERER;
+  return LEGACY_TIER_MAP[tier] || TIERS.WANDERER;
 }
 
 export function tierRank(tier) {
   const normalized = normalizeTier(tier);
+  if (normalized === TIERS.FOUNDER) {
+    return TIER_ORDER.indexOf(TIERS.TRAILBLAZER);
+  }
   const idx = TIER_ORDER.indexOf(normalized);
   return idx >= 0 ? idx : 0;
 }
@@ -66,22 +92,43 @@ export function isAtLeastTier(currentTier, requiredTier) {
   return tierRank(currentTier) >= tierRank(requiredTier);
 }
 
+export function isFounderTier(tier) {
+  return tier === TIERS.FOUNDER;
+}
+
 export function getTierLabel(tier) {
-  return TIER_PRICING[normalizeTier(tier)]?.label || "Free";
+  const key = normalizeTier(tier);
+  if (isFounderTier(tier)) return TIER_PRICING[TIERS.FOUNDER].label;
+  return TIER_PRICING[key]?.label || "Wanderer";
 }
 
 export function getTierPriceLabel(tier) {
-  return TIER_PRICING[normalizeTier(tier)]?.priceLabel || "Free";
+  const key = normalizeTier(tier);
+  if (isFounderTier(tier)) return TIER_PRICING[TIERS.FOUNDER].priceLabel;
+  return TIER_PRICING[key]?.priceLabel || "Free";
 }
 
 export function hasUnlimitedTripGenerations(tier) {
-  return isAtLeastTier(tier, TIERS.PREMIUM);
+  return isFounderTier(tier) || isAtLeastTier(tier, TIERS.VOYAGER);
 }
 
 export function canUseGroceryDelivery(tier) {
-  return normalizeTier(tier) === TIERS.TRAVELER;
+  return isFounderTier(tier) || isAtLeastTier(tier, TIERS.TRAILBLAZER);
 }
 
-export function getUpgradeUrl(tier) {
-  return TIER_PRICING[normalizeTier(tier)]?.upgradeUrl || TIER_PRICING[TIERS.PREMIUM].upgradeUrl;
+/** Avatar corner star: founder, voyager, or trailblazer (paid tiers only). */
+export function getAvatarTierBadge(tier) {
+  if (isFounderTier(tier)) return "founder";
+  const key = normalizeTier(tier);
+  if (key === TIERS.TRAILBLAZER) return "trailblazer";
+  if (key === TIERS.VOYAGER) return "voyager";
+  return null;
+}
+
+export function getTierCssClass(tier) {
+  const key = normalizeTier(tier);
+  if (isFounderTier(tier)) return "founder";
+  if (key === TIERS.TRAILBLAZER) return "trailblazer";
+  if (key === TIERS.VOYAGER) return "voyager";
+  return "wanderer";
 }

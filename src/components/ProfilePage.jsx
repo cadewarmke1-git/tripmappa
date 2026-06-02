@@ -5,15 +5,18 @@ import { getDisplayName } from "../lib/avatarUtils.js";
 import { computeTripStats, getTripVehicle } from "../lib/tripStats.js";
 import DecorMark from "./icons/DecorMark.jsx";
 import {
-  FREE_BENEFITS,
-  PREMIUM_BENEFITS,
+  WANDERER_BENEFITS,
+  VOYAGER_BENEFITS,
+  TRAILBLAZER_BENEFITS,
   TIERS,
   TIER_PRICING,
-  TRAVELER_BENEFITS,
   getTierLabel,
   getTierPriceLabel,
   hasUnlimitedTripGenerations,
+  isFounderTier,
   normalizeTier,
+  getTierCssClass,
+  getAvatarTierBadge,
 } from "../lib/tiers.js";
 
 function formatMemberSince(dateStr) {
@@ -35,12 +38,22 @@ function formatRenewalDate(dateStr) {
 }
 
 function TierBadge({ tier }) {
+  if (isFounderTier(tier)) {
+    return (
+      <span className="profile-tier-badge profile-tier-badge-founder">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Founder
+      </span>
+    );
+  }
   const normalized = normalizeTier(tier);
-  const isTraveler = normalized === TIERS.TRAVELER;
-  const isPremium = normalized === TIERS.PREMIUM;
+  const tierClass = getTierCssClass(tier);
+  const showStar = normalized === TIERS.VOYAGER || normalized === TIERS.TRAILBLAZER;
   return (
-    <span className={`profile-tier-badge${isTraveler ? " profile-tier-badge-traveler" : isPremium ? " profile-tier-badge-premium" : ""}`}>
-      {(isPremium || isTraveler) && (
+    <span className={`profile-tier-badge profile-tier-badge-${tierClass}`}>
+      {showStar && (
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
@@ -133,9 +146,12 @@ export default function ProfilePage({
   const [saving, setSaving] = useState(false);
 
   const displayName = getDisplayName(user, profile);
-  const tier = normalizeTier(creditStatus?.tier);
-  const isTraveler = tier === TIERS.TRAVELER;
-  const isPremium = hasUnlimitedTripGenerations(tier);
+  const rawTier = creditStatus?.tier || profile?.tier;
+  const isFounder = isFounderTier(rawTier) || creditStatus?.isFounder;
+  const tier = normalizeTier(rawTier);
+  const isTrailblazer = tier === TIERS.TRAILBLAZER;
+  const isVoyager = tier === TIERS.VOYAGER;
+  const isPremium = hasUnlimitedTripGenerations(rawTier);
   const memberSince = formatMemberSince(user?.created_at || profile?.created_at);
   const stats = useMemo(() => computeTripStats(savedTrips), [savedTrips]);
 
@@ -292,7 +308,14 @@ export default function ProfilePage({
         <button type="button" className="profile-back-btn" onClick={onBack}>← Back</button>
         <div className="profile-header-inner">
           <div className="profile-photo-wrap">
-            <UserAvatar user={user} profile={profile} size="xl" showRing className="profile-photo" />
+            <UserAvatar
+              user={user}
+              profile={profile}
+              size="xl"
+              showRing
+              tierBadge={getAvatarTierBadge(rawTier)}
+              className="profile-photo"
+            />
             <button
               type="button"
               className="profile-photo-camera"
@@ -311,7 +334,7 @@ export default function ProfilePage({
           </div>
           <h1 className="profile-display-name">{displayName}</h1>
           <p className="profile-member-since">Member since {memberSince}</p>
-          <TierBadge tier={tier} />
+          <TierBadge tier={rawTier} />
         </div>
       </div>
 
@@ -325,34 +348,49 @@ export default function ProfilePage({
 
         <section className="profile-card profile-plan-card">
           <h2 className="profile-section-title">Current Plan</h2>
-          {isTraveler ? (
+          {isFounder ? (
             <>
               <div className="profile-plan-header">
-                <TierBadge tier={TIERS.TRAVELER} />
-                <span className="profile-plan-renewal">
-                  {getTierPriceLabel(TIERS.TRAVELER)} · Renews {formatRenewalDate(profile?.premium_renewal_at)}
+                <TierBadge tier={TIERS.FOUNDER} />
+                <span className="profile-plan-renewal profile-plan-founder-tag">
+                  Founder Member — Founding 1,000
+                  {creditStatus?.founderExpiresAt && (
+                    <> · Trailblazer access until {formatRenewalDate(creditStatus.founderExpiresAt)}</>
+                  )}
                 </span>
               </div>
               <ul className="profile-benefits-list">
-                {TRAVELER_BENEFITS.map(b => <li key={b}>{b}</li>)}
+                {TRAILBLAZER_BENEFITS.map(b => <li key={b}>{b}</li>)}
+              </ul>
+            </>
+          ) : isTrailblazer ? (
+            <>
+              <div className="profile-plan-header">
+                <TierBadge tier={TIERS.TRAILBLAZER} />
+                <span className="profile-plan-renewal">
+                  {getTierPriceLabel(TIERS.TRAILBLAZER)} · Renews {formatRenewalDate(profile?.premium_renewal_at)}
+                </span>
+              </div>
+              <ul className="profile-benefits-list">
+                {TRAILBLAZER_BENEFITS.map(b => <li key={b}>{b}</li>)}
               </ul>
               <button type="button" className="profile-btn profile-btn-secondary" onClick={onManageSubscription}>
                 Manage Subscription
               </button>
             </>
-          ) : isPremium ? (
+          ) : isVoyager ? (
             <>
               <div className="profile-plan-header">
-                <TierBadge tier={TIERS.PREMIUM} />
+                <TierBadge tier={TIERS.VOYAGER} />
                 <span className="profile-plan-renewal">
-                  {getTierPriceLabel(TIERS.PREMIUM)} · Renews {formatRenewalDate(profile?.premium_renewal_at)}
+                  {getTierPriceLabel(TIERS.VOYAGER)} · Renews {formatRenewalDate(profile?.premium_renewal_at)}
                 </span>
               </div>
               <ul className="profile-benefits-list">
-                {PREMIUM_BENEFITS.map(b => <li key={b}>{b}</li>)}
+                {VOYAGER_BENEFITS.map(b => <li key={b}>{b}</li>)}
               </ul>
-              <button type="button" className="profile-btn profile-btn-gold" onClick={onUpgradeTraveler}>
-                Upgrade to Traveler — {getTierPriceLabel(TIERS.TRAVELER)}
+              <button type="button" className="profile-btn profile-btn-gold" onClick={onUpgrade}>
+                Upgrade to Trailblazer — {getTierPriceLabel(TIERS.TRAILBLAZER)}
               </button>
               <button type="button" className="profile-btn profile-btn-secondary" onClick={onManageSubscription}>
                 Manage Subscription
@@ -361,36 +399,36 @@ export default function ProfilePage({
           ) : (
             <>
               <div className="profile-plan-header">
-                <TierBadge tier={TIERS.FREE} />
-                <span className="profile-plan-usage">{used} of {limit} Trip Generations used this month</span>
+                <TierBadge tier={TIERS.WANDERER} />
+                <span className="profile-plan-usage">{used} of {limit} Trip Generations used</span>
               </div>
               <div className="profile-progress-wrap">
                 <div className="profile-progress-bar" style={{ width: `${progressPct}%` }} />
               </div>
               <div className="profile-plan-columns profile-plan-columns-three">
                 <div>
-                  <h3 className="profile-plan-col-title">Free</h3>
+                  <h3 className="profile-plan-col-title">Wanderer</h3>
                   <ul className="profile-benefits-list">
-                    {FREE_BENEFITS.map(b => <li key={b}>{b}</li>)}
+                    {WANDERER_BENEFITS.map(b => <li key={b}>{b}</li>)}
                   </ul>
                 </div>
                 <div>
-                  <h3 className="profile-plan-col-title profile-plan-col-title-premium">Premium</h3>
-                  <p className="profile-plan-col-price">{TIER_PRICING[TIERS.PREMIUM].priceLabel}</p>
+                  <h3 className="profile-plan-col-title profile-plan-col-title-voyager">Voyager</h3>
+                  <p className="profile-plan-col-price">{TIER_PRICING[TIERS.VOYAGER].priceLabel}</p>
                   <ul className="profile-benefits-list">
-                    {PREMIUM_BENEFITS.map(b => <li key={b}>{b}</li>)}
+                    {VOYAGER_BENEFITS.map(b => <li key={b}>{b}</li>)}
                   </ul>
                 </div>
                 <div>
-                  <h3 className="profile-plan-col-title profile-plan-col-title-traveler">Traveler</h3>
-                  <p className="profile-plan-col-price">{TIER_PRICING[TIERS.TRAVELER].priceLabel}</p>
+                  <h3 className="profile-plan-col-title profile-plan-col-title-trailblazer">Trailblazer</h3>
+                  <p className="profile-plan-col-price">{TIER_PRICING[TIERS.TRAILBLAZER].priceLabel}</p>
                   <ul className="profile-benefits-list">
-                    {TRAVELER_BENEFITS.map(b => <li key={b}>{b}</li>)}
+                    {TRAILBLAZER_BENEFITS.map(b => <li key={b}>{b}</li>)}
                   </ul>
                 </div>
               </div>
               <button type="button" className="profile-btn profile-btn-gold" onClick={onUpgrade}>
-                Upgrade to Premium — {getTierPriceLabel(TIERS.PREMIUM)}
+                Upgrade to Trailblazer — {getTierPriceLabel(TIERS.TRAILBLAZER)}
               </button>
             </>
           )}

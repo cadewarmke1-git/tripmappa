@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { fetchCreditStatus } from "../lib/tripCredits.js";
+import { ensureReferralCode } from "../lib/referrals.js";
 
 /** GET /api/trip-credits — remaining AI generations for signed-in user. */
 export default async function handler(req, res) {
@@ -19,6 +20,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    await ensureReferralCode(admin, user.id);
     const status = await fetchCreditStatus(admin, user.id);
     return res.status(200).json(status);
   } catch (err) {

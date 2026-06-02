@@ -660,7 +660,7 @@ export default async function handler(req, res) {
       const status = await fetchCreditStatus(admin, user.id);
       if (!status.unlimited && status.remaining <= 0) {
         return res.status(402).json({
-          error: "No Trip Generations remaining this month",
+          error: "No Trip Generations remaining",
           code: "no_credits",
           credits: status,
         });

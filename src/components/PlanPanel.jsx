@@ -40,6 +40,8 @@ export default function PlanPanel({
   convoEndRef,
   convoScrollRef,
   creditsLabel,
+  creditsExhausted = false,
+  onUpgrade,
   onGenerateTrip,
   onCancelGenerate,
   onResetPlan,
@@ -139,16 +141,22 @@ export default function PlanPanel({
                   )}
                   {convoComplete && (
                     <div className="generate-inline">
-                      <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
-                        {loading ? (
-                          <RouteDrawingLoader variant="button" />
-                        ) : (
-                          <>
-                            Generate My Trip →
-                            {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
-                          </>
-                        )}
-                      </button>
+                      {creditsExhausted && onUpgrade ? (
+                        <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
+                          Upgrade to Trailblazer — unlock unlimited trips
+                        </button>
+                      ) : (
+                        <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
+                          {loading ? (
+                            <RouteDrawingLoader variant="button" />
+                          ) : (
+                            <>
+                              Generate My Trip →
+                              {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
+                            </>
+                          )}
+                        </button>
+                      )}
                       {loading && onCancelGenerate && (
                         <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>
                           Cancel

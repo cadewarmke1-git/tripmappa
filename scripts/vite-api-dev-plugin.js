@@ -2,20 +2,12 @@ import { loadEnv } from "vite";
 import apiRouter from "../api/router.js";
 import { resolveApiRoute } from "../api/resolveApiRoute.js";
 
-function readRequestBody(req) {
-  if (req.method === "GET" || req.method === "HEAD") return Promise.resolve(undefined);
+function readRawRequestBody(req) {
+  if (req.method === "GET" || req.method === "HEAD") return Promise.resolve(Buffer.alloc(0));
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on("data", (chunk) => chunks.push(chunk));
-    req.on("end", () => {
-      const raw = Buffer.concat(chunks).toString();
-      if (!raw) return resolve(undefined);
-      try {
-        resolve(JSON.parse(raw));
-      } catch (err) {
-        reject(err);
-      }
-    });
+    req.on("end", () => resolve(Buffer.concat(chunks)));
     req.on("error", reject);
   });
 }
@@ -76,16 +68,35 @@ export function viteApiDevPlugin(mode = "development") {
         try {
           const pathname = url.split("?")[0];
           const routeFromPath = pathname.replace(/^\/api\/?/, "");
-          const body = await readRequestBody(req);
-          const mockReq = {
+          const rawBody = await readRawRequestBody(req);
+          const route = resolveApiRoute({
             method: req.method,
             url,
             headers: req.headers,
             query: { path: routeFromPath },
-            body,
+          });
+          const isStripeWebhook = route === "stripe/webhook";
+          const mockReq = {
+            method: req.method,
+            url,
+            headers: req.headers,
+            query: { path: route },
+            rawBody,
           };
-          const route = resolveApiRoute(mockReq);
-          mockReq.query = { path: route };
+          if (isStripeWebhook) {
+            mockReq.body = undefined;
+          } else if (rawBody.length) {
+            try {
+              mockReq.body = JSON.parse(rawBody.toString("utf8"));
+            } catch (parseErr) {
+              res.statusCode = 400;
+              res.setHeader("Content-Type", "application/json; charset=utf-8");
+              res.end(JSON.stringify({ error: "Invalid JSON body" }));
+              return;
+            }
+          } else {
+            mockReq.body = undefined;
+          }
 
           await apiRouter(mockReq, createVercelLikeResponse(res));
           if (!res.writableEnded) {

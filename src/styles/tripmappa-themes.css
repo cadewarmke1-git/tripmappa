@@ -66,6 +66,7 @@ body.theme-night,
   --color-hero-title-gradient: linear-gradient(90deg, #5A3A9A, #FFD28C);
   --color-hero-accent-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-subtitle: rgba(255, 255, 255, 0.8);
+  --color-tier-voyager: #8A7AAF;
 
   /* Google Places autocomplete */
   --color-autocomplete-bg: #1A1035;
@@ -146,6 +147,7 @@ body.theme-day,
   --color-hero-title-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-accent-gradient: linear-gradient(90deg, #FF8C42, #C87010);
   --color-hero-subtitle: rgba(255, 255, 255, 0.85);
+  --color-tier-voyager: #6A5A8A;
 
   /* Plan flow + map — canonical day tokens (reference these everywhere) */
   --color-plan-panel-bg: rgba(245, 230, 200, 0.95);

@@ -6,13 +6,18 @@
  * rewrites /api/* here with ?path=… (see resolveApiRoute).
  */
 import { logApiRequest } from "../server/lib/apiLog.js";
+import { readRawBody } from "../server/lib/readRawBody.js";
 import { resolveApiRoute } from "./resolveApiRoute.js";
 
 const ROUTES = {
+  "account-onboarding": () => import("../server/routes/account-onboarding.js"),
   "client-error": () => import("../server/routes/client-error.js"),
+  "cron/trial-jobs": () => import("../server/routes/cron/trial-jobs.js"),
   "claude": () => import("../server/routes/claude.js"),
   "distance-matrix": () => import("../server/routes/distance-matrix.js"),
   "ev-charging": () => import("../server/routes/ev-charging.js"),
+  "founding-claim": () => import("../server/routes/founding-claim.js"),
+  "founding-slots": () => import("../server/routes/founding-slots.js"),
   "fuel-stations": () => import("../server/routes/fuel-stations.js"),
   "geocode": () => import("../server/routes/geocode.js"),
   "grocery/order": () => import("../server/routes/grocery-order.js"),
@@ -26,6 +31,10 @@ const ROUTES = {
   "send-sms-otp": () => import("../server/routes/send-sms-otp.js"),
   "share-trip": () => import("../server/routes/share-trip.js"),
   "sos-alert": () => import("../server/routes/sos-alert.js"),
+  "stripe/create-checkout-session": () => import("../server/routes/stripe/create-checkout-session.js"),
+  "stripe/create-portal-session": () => import("../server/routes/stripe/create-portal-session.js"),
+  "stripe/webhook": () => import("../server/routes/stripe/webhook.js"),
+  "trial/dismiss-prompt": () => import("../server/routes/trial/dismiss-prompt.js"),
   "trip-credits": () => import("../server/routes/trip-credits.js"),
   "trip-tips": () => import("../server/routes/trip-tips.js"),
   "truck-routing": () => import("../server/routes/truck-routing.js"),
@@ -36,10 +45,57 @@ const ROUTES = {
   "weather": () => import("../server/routes/weather.js"),
 };
 
+async function ensureRequestBody(req, route) {
+  if (req.method === "GET" || req.method === "HEAD") return;
+
+  if (req.rawBody !== undefined) {
+    if (route === "stripe/webhook") return;
+    if (req.body === undefined) {
+      if (!req.rawBody.length) {
+        req.body = {};
+        return;
+      }
+      try {
+        req.body = JSON.parse(req.rawBody.toString("utf8"));
+      } catch {
+        req.body = {};
+      }
+    }
+    return;
+  }
+
+  if (req.body !== undefined) return;
+
+  const raw = await readRawBody(req);
+  req.rawBody = raw;
+
+  if (route === "stripe/webhook") return;
+
+  if (!raw.length) {
+    req.body = {};
+    return;
+  }
+  try {
+    req.body = JSON.parse(raw.toString("utf8"));
+  } catch {
+    req.body = {};
+  }
+}
+
 export default async function handler(req, res) {
   const route = resolveApiRoute(req);
   const load = ROUTES[route];
   const started = Date.now();
+
+  try {
+    await ensureRequestBody(req, route);
+  } catch (err) {
+    logApiRequest(route || "unknown", { method: req.method, status: 400, ms: Date.now() - started });
+    if (!res.headersSent) {
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+    return undefined;
+  }
 
   if (!load) {
     logApiRequest(route || "unknown", { method: req.method, status: 404, ms: Date.now() - started });

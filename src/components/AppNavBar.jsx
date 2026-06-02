@@ -9,6 +9,7 @@ export default function AppNavBar({
   onToggleNavSidebar,
   user,
   userProfile,
+  creditStatus = null,
   accountSidebarOpen = false,
   onToggleAccountSidebar,
   onLogin,
@@ -42,6 +43,7 @@ export default function AppNavBar({
             <AccountSidebarTrigger
               user={user}
               profile={userProfile}
+              creditStatus={creditStatus}
               isOpen={accountSidebarOpen}
               onOpen={onToggleAccountSidebar}
               heroTheme={isHero ? theme : undefined}

@@ -11,7 +11,7 @@ import {
   resolveGroceryDestination,
   splitSpokenGroceryItems,
 } from "../../lib/groceryDelivery.js";
-import { TIERS, TIER_PRICING, TRAVELER_BENEFITS, getTierPriceLabel } from "../../lib/tiers.js";
+import { TRAILBLAZER_BENEFITS, TIER_PRICING, TIERS, getTierPriceLabel } from "../../lib/tiers.js";
 
 function MicIcon({ active }) {
   return (
@@ -64,13 +64,12 @@ function GroceryCardLocked({ destination, onUpgrade, isGuest = false, onSignIn }
         <p className="grocery-card-subtitle">
           {isGuest
             ? "Sign in to order groceries to your hotel before you arrive."
-            : `Stock your hotel before you arrive. Available on the ${TIER_PRICING[TIERS.TRAVELER].label} plan.`}
+            : `Stock your hotel before you arrive. Included with ${TIER_PRICING[TIERS.TRAILBLAZER].label}.`}
         </p>
       </div>
       <ul className="grocery-locked-benefits">
-        {TRAVELER_BENEFITS.slice(1).map(item => (
-          <li key={item}>{item}</li>
-        ))}
+        <li>{TRAILBLAZER_BENEFITS.find(b => b.toLowerCase().includes("grocery")) || TRAILBLAZER_BENEFITS[1]}</li>
+        <li>Unlimited Trip Generations</li>
       </ul>
       <div className="grocery-meta-field">
         <span className="grocery-meta-label">Delivery address</span>
@@ -82,7 +81,7 @@ function GroceryCardLocked({ destination, onUpgrade, isGuest = false, onSignIn }
         </button>
       ) : (
         <button type="button" className="grocery-btn grocery-btn-primary" onClick={onUpgrade}>
-          Upgrade to Traveler — {getTierPriceLabel(TIERS.TRAVELER)}
+          Upgrade to Trailblazer — {getTierPriceLabel(TIERS.TRAILBLAZER)}
         </button>
       )}
     </div>

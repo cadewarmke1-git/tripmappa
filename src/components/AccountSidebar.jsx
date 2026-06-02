@@ -2,7 +2,16 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
-import { getTierLabel, normalizeTier, TIERS } from "../lib/tiers.js";
+import {
+  getTierLabel,
+  hasUnlimitedTripGenerations,
+  isFounderTier,
+  normalizeTier,
+  getAvatarTierBadge,
+  getTierCssClass,
+  TIERS,
+} from "../lib/tiers.js";
+import AccountSidebarReferral from "./AccountSidebarReferral.jsx";
 
 export default function AccountSidebar({
   open,
@@ -14,19 +23,28 @@ export default function AccountSidebar({
   onRefreshCredits,
   onOpenProfile,
   onOpenSettings,
+  onManageSubscription,
   onSignOut,
+  onReferralCopied,
+  onReferralCopyError,
 }) {
   const displayName = getDisplayName(user, profile);
   const tierKey = normalizeTier(creditStatus?.tier);
   const tierLabel = getTierLabel(tierKey).toUpperCase();
-  const tierClass = tierKey === TIERS.TRAVELER ? "traveler" : tierKey === TIERS.PREMIUM ? "premium" : "free";
+  const tierClass = getTierCssClass(creditStatus?.tier || profile?.tier);
+  const tierBadge = getAvatarTierBadge(creditStatus?.tier || profile?.tier);
+  const showFounderTag = isFounderTier(creditStatus?.tier) || creditStatus?.isFounder;
+  const showManageSubscription =
+    !showFounderTag
+    && hasUnlimitedTripGenerations(tierKey)
+    && Boolean(creditStatus?.stripeCustomerId);
 
   const creditsLine = creditStatus?.unlimited
-    ? "Unlimited Trip Generations this month"
+    ? "Unlimited Trip Generations"
     : creditStatus?.tier === "guest"
       ? `${creditStatus.remaining ?? 1} Trip Generation remaining`
       : creditStatus != null
-        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} Trip Generations remaining this month`
+        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} Trip Generations remaining`
         : "Loading Trip Generations…";
 
   const visible = open || closing;
@@ -86,9 +104,19 @@ export default function AccountSidebar({
           className="account-sidebar-identity"
           onClick={() => handleAction(onOpenProfile)}
         >
-          <UserAvatar user={user} profile={profile} size={64} showRing className="account-sidebar-avatar" />
+          <UserAvatar
+            user={user}
+            profile={profile}
+            size={64}
+            showRing
+            tierBadge={tierBadge}
+            className="account-sidebar-avatar"
+          />
           <div className="account-sidebar-name">{displayName}</div>
           <div className="account-sidebar-email">{user?.email || ""}</div>
+          {showFounderTag && (
+            <p className="account-sidebar-founder-tag">Founder Member — Founding 1,000</p>
+          )}
         </button>
 
         <div className="account-sidebar-meta">
@@ -97,6 +125,22 @@ export default function AccountSidebar({
           </span>
           <p className="profile-card-credits">{creditsLine}</p>
         </div>
+
+        <AccountSidebarReferral
+          referralLink={creditStatus?.referralLink}
+          onCopied={onReferralCopied}
+          onCopyError={onReferralCopyError}
+        />
+
+        {showManageSubscription && (
+          <button
+            type="button"
+            className="account-sidebar-nav-item account-sidebar-manage-subscription"
+            onClick={() => handleAction(onManageSubscription)}
+          >
+            Manage Subscription
+          </button>
+        )}
 
         <button
           type="button"

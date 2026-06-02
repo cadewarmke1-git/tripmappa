@@ -2,35 +2,56 @@ import { describe, expect, it } from "vitest";
 import {
   TIERS,
   canUseGroceryDelivery,
+  getAvatarTierBadge,
   getTierLabel,
   getTierPriceLabel,
   hasUnlimitedTripGenerations,
   isAtLeastTier,
+  isFounderTier,
+  normalizeTier,
 } from "./tiers.js";
 
 describe("tiers", () => {
   it("ranks tiers correctly", () => {
-    expect(isAtLeastTier(TIERS.FREE, TIERS.PREMIUM)).toBe(false);
-    expect(isAtLeastTier(TIERS.PREMIUM, TIERS.PREMIUM)).toBe(true);
-    expect(isAtLeastTier(TIERS.TRAVELER, TIERS.PREMIUM)).toBe(true);
-    expect(isAtLeastTier(TIERS.PREMIUM, TIERS.TRAVELER)).toBe(false);
+    expect(isAtLeastTier(TIERS.WANDERER, TIERS.VOYAGER)).toBe(false);
+    expect(isAtLeastTier(TIERS.VOYAGER, TIERS.VOYAGER)).toBe(true);
+    expect(isAtLeastTier(TIERS.TRAILBLAZER, TIERS.VOYAGER)).toBe(true);
+    expect(isAtLeastTier(TIERS.VOYAGER, TIERS.TRAILBLAZER)).toBe(false);
+    expect(isAtLeastTier(TIERS.FOUNDER, TIERS.TRAILBLAZER)).toBe(true);
   });
 
-  it("gates grocery to Traveler only", () => {
-    expect(canUseGroceryDelivery(TIERS.FREE)).toBe(false);
-    expect(canUseGroceryDelivery(TIERS.PREMIUM)).toBe(false);
-    expect(canUseGroceryDelivery(TIERS.TRAVELER)).toBe(true);
+  it("maps legacy tier slugs", () => {
+    expect(normalizeTier("free")).toBe(TIERS.WANDERER);
+    expect(normalizeTier("premium")).toBe(TIERS.TRAILBLAZER);
+    expect(normalizeTier("traveler")).toBe(TIERS.VOYAGER);
   });
 
-  it("gives unlimited generations to Premium and Traveler", () => {
-    expect(hasUnlimitedTripGenerations(TIERS.FREE)).toBe(false);
-    expect(hasUnlimitedTripGenerations(TIERS.PREMIUM)).toBe(true);
-    expect(hasUnlimitedTripGenerations(TIERS.TRAVELER)).toBe(true);
+  it("gates grocery to Trailblazer and Founder", () => {
+    expect(canUseGroceryDelivery(TIERS.WANDERER)).toBe(false);
+    expect(canUseGroceryDelivery(TIERS.VOYAGER)).toBe(false);
+    expect(canUseGroceryDelivery(TIERS.TRAILBLAZER)).toBe(true);
+    expect(canUseGroceryDelivery(TIERS.FOUNDER)).toBe(true);
   });
 
-  it("exposes sit-in pricing labels", () => {
-    expect(getTierLabel(TIERS.TRAVELER)).toBe("Traveler");
-    expect(getTierPriceLabel(TIERS.PREMIUM)).toBe("$7.99/mo");
-    expect(getTierPriceLabel(TIERS.TRAVELER)).toBe("$14.99/mo");
+  it("gives unlimited generations to Voyager and above", () => {
+    expect(hasUnlimitedTripGenerations(TIERS.WANDERER)).toBe(false);
+    expect(hasUnlimitedTripGenerations(TIERS.VOYAGER)).toBe(true);
+    expect(hasUnlimitedTripGenerations(TIERS.TRAILBLAZER)).toBe(true);
+    expect(hasUnlimitedTripGenerations(TIERS.FOUNDER)).toBe(true);
+  });
+
+  it("exposes renamed pricing labels", () => {
+    expect(getTierLabel(TIERS.VOYAGER)).toBe("Voyager");
+    expect(getTierPriceLabel(TIERS.VOYAGER)).toBe("$4.99/mo");
+    expect(getTierPriceLabel(TIERS.TRAILBLAZER)).toBe("$7.99/mo");
+    expect(getTierLabel(TIERS.FOUNDER)).toBe("Founder");
+  });
+
+  it("returns avatar tier badges for paid tiers", () => {
+    expect(getAvatarTierBadge(TIERS.WANDERER)).toBeNull();
+    expect(getAvatarTierBadge(TIERS.VOYAGER)).toBe("voyager");
+    expect(getAvatarTierBadge(TIERS.TRAILBLAZER)).toBe("trailblazer");
+    expect(getAvatarTierBadge(TIERS.FOUNDER)).toBe("founder");
+    expect(isFounderTier(TIERS.FOUNDER)).toBe(true);
   });
 });

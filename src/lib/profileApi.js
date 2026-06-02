@@ -3,7 +3,7 @@ import { resizeImageToSquare } from "./avatarUtils.js";
 
 const GUEST_HOME_KEY = "tripmappa-home-address";
 
-const PROFILE_FIELDS = "display_name, avatar_url, home_address, emergency_contact_phone, tier, generations_used, credits_month, notify_trip_reminders, notify_new_features, premium_renewal_at, created_at";
+const PROFILE_FIELDS = "display_name, avatar_url, home_address, emergency_contact_phone, tier, generations_used, credits_month, notify_trip_reminders, notify_new_features, premium_renewal_at, founder_expires_at, referral_code, created_at";
 
 export function getGuestHomeAddress() {
   try {
