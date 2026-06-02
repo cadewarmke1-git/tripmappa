@@ -89,7 +89,7 @@ export default function FuelStopCard({ stop, type, onAdd, required }) {
         <div className="fuel-live-badge">Prices updated live</div>
       )}
       {stop.estimated && (
-        <div className="fuel-estimate-note">Estimated — live prices unavailable</div>
+        <div className="fuel-estimate-note">Regional avg — updated weekly</div>
       )}
 
       <button type="button" className="btn-generate fuel-add-btn" onClick={() => onAdd(stop, type)}>

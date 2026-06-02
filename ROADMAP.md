@@ -129,7 +129,6 @@ Set variables in `.env.local` locally and in Vercel manually (see `.env.example`
 - `SUPABASE_URL` — Supabase project URL for admin client
 - `SUPABASE_SERVICE_ROLE_KEY` — admin Supabase access (via `api/lib/supabaseAdmin.js`)
 - `NREL_API_KEY` — EV charging enrichment
-- `MAPQUEST_API_KEY` — fuel price enrichment
 
 ### Build & deploy
 

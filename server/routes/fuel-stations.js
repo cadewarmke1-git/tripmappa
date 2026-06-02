@@ -1,5 +1,93 @@
-/** MapQuest API — fuel price enrichment for Google-found gas stations only. */
-const MAPQUEST_RADIUS = "https://www.mapquestapi.com/search/v2/radius";
+/** Fuel price enrichment for Google-found gas stations (EIA regional averages). */
+
+const EIA_DATA_URL = "https://api.eia.gov/v2/petroleum/pri/gnd/data";
+const EIA_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const EIA_PRODUCTS = ["EPMR", "EPMP", "EPD2D"];
+
+const FALLBACK_EIA = {
+  regular: 3.45,
+  premium: 4.05,
+  diesel: 3.95,
+};
+
+let eiaPriceCache = null;
+
+function buildEIAQuery() {
+  const params = new URLSearchParams();
+  params.set("frequency", "weekly");
+  params.append("data[0]", "value");
+  params.append("facets[duoarea][]", "NUS");
+  EIA_PRODUCTS.forEach(product => params.append("facets[product][]", product));
+  params.set("sort[0][column]", "period");
+  params.set("sort[0][direction]", "desc");
+  params.set("length", "12");
+  return params;
+}
+
+function parseEIADataRows(rows = []) {
+  const byProduct = {};
+  for (const row of rows) {
+    if (!row?.product || byProduct[row.product]) continue;
+    const value = parseFloat(row.value);
+    if (!Number.isFinite(value)) continue;
+    byProduct[row.product] = { value, period: row.period };
+  }
+  return {
+    regular: byProduct.EPMR?.value ?? null,
+    premium: byProduct.EPMP?.value ?? null,
+    diesel: byProduct.EPD2D?.value ?? null,
+    period: byProduct.EPMR?.period || byProduct.EPD2D?.period || null,
+  };
+}
+
+function formatGalPrice(dollars) {
+  if (!Number.isFinite(dollars)) return null;
+  return `$${dollars.toFixed(2)}/gal`;
+}
+
+async function requestEIAPrices(apiKey) {
+  const params = buildEIAQuery();
+  if (apiKey) params.set("api_key", apiKey);
+  const res = await fetch(`${EIA_DATA_URL}?${params}`);
+  const json = await res.json();
+  return { res, json };
+}
+
+async function fetchEIAFuelPrices() {
+  if (eiaPriceCache && Date.now() - eiaPriceCache.fetchedAt < EIA_CACHE_TTL_MS) {
+    return eiaPriceCache;
+  }
+
+  try {
+    let { res, json } = await requestEIAPrices(null);
+    if (json.error?.code === "API_KEY_MISSING") {
+      ({ res, json } = await requestEIAPrices("DEMO_KEY"));
+    }
+    if (!res.ok || json.error) {
+      console.warn("EIA fuel price fetch failed:", json.error?.message || res.status);
+      return eiaPriceCache || null;
+    }
+
+    const parsed = parseEIADataRows(json.response?.data);
+    if (parsed.regular == null && parsed.diesel == null) {
+      console.warn("EIA fuel price fetch returned no usable rows");
+      return eiaPriceCache || null;
+    }
+
+    eiaPriceCache = {
+      fetchedAt: Date.now(),
+      regular: parsed.regular ?? FALLBACK_EIA.regular,
+      premium: parsed.premium ?? (parsed.regular != null ? parsed.regular + 0.6 : FALLBACK_EIA.premium),
+      diesel: parsed.diesel ?? FALLBACK_EIA.diesel,
+      period: parsed.period,
+      source: "eia",
+    };
+    return eiaPriceCache;
+  } catch (err) {
+    console.warn("EIA fuel price fetch error:", err.message);
+    return eiaPriceCache || null;
+  }
+}
 
 function inferBrand(name) {
   const n = (name || "").toLowerCase();
@@ -16,46 +104,27 @@ function inferBrand(name) {
   return name?.split(" ")[0] || "Gas Station";
 }
 
-function estimatePrices(mode) {
+function estimatePrices(mode, eia) {
+  const regular = eia?.regular ?? FALLBACK_EIA.regular;
+  const premium = eia?.premium ?? FALLBACK_EIA.premium;
+  const diesel = eia?.diesel ?? FALLBACK_EIA.diesel;
+
   if (mode === "diesel") {
-    return { dieselPrice: "$3.95/gal", fuelTypes: ["Diesel"], hasDef: true };
+    return { dieselPrice: formatGalPrice(diesel), fuelTypes: ["Diesel"], hasDef: true };
   }
   return {
-    regularPrice: "$3.45/gal",
-    premiumPrice: "$4.05/gal",
+    regularPrice: formatGalPrice(regular),
+    premiumPrice: formatGalPrice(premium),
     fuelTypes: ["Regular", "Premium"],
     hasDef: false,
   };
 }
 
-async function fetchMapQuestPrices(lat, lng, mode) {
-  const apiKey = process.env.MAPQUEST_API_KEY;
-  if (!apiKey) return null;
-
-  const params = new URLSearchParams({
-    key: apiKey,
-    origin: `${lat},${lng}`,
-    radius: "0.5",
-    units: "m",
-    maxMatches: "3",
-    hostedData: "mqap.ntpois|group_sic_code=?|554101",
-  });
-
-  const response = await fetch(`${MAPQUEST_RADIUS}?${params}`);
-  const data = await response.json();
-  if (!response.ok || data.info?.statuscode !== 0) return null;
-
-  const results = data.searchResults || [];
-  if (!results.length) return null;
-
-  return estimatePrices(mode);
-}
-
-function enrichStation(googleStation, prices, mode) {
+function enrichStation(googleStation, mode, eia) {
   const name = googleStation.name || "Gas Station";
   const brand = inferBrand(name);
   const isTruckStop = /pilot|love|ta |petro|flying j/i.test(name);
-  const priceData = prices || estimatePrices(mode);
+  const priceData = estimatePrices(mode, eia);
 
   return {
     id: googleStation.id || googleStation.placeId,
@@ -68,8 +137,8 @@ function enrichStation(googleStation, prices, mode) {
     lng: googleStation.lng,
     ...priceData,
     hasDef: mode === "diesel" || isTruckStop,
-    estimated: !prices,
-    livePrices: !!prices,
+    estimated: true,
+    livePrices: false,
   };
 }
 
@@ -82,27 +151,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    let anyLive = false;
-    const enriched = await Promise.all(stations.map(async (googleStation) => {
-      if (googleStation.lat == null || googleStation.lng == null) {
-        return enrichStation(googleStation, null, mode);
-      }
-      const prices = await fetchMapQuestPrices(googleStation.lat, googleStation.lng, mode);
-      if (prices) anyLive = true;
-      return enrichStation(googleStation, prices, mode);
-    }));
+    const eia = await fetchEIAFuelPrices();
+    const enriched = stations.map(s => enrichStation(s, mode, eia));
 
     return res.status(200).json({
       stations: enriched,
-      fallback: !anyLive,
-      livePrices: anyLive,
+      fallback: true,
+      livePrices: false,
     });
   } catch (err) {
-    console.error("MapQuest enrich error:", err);
+    console.error("fuel-stations enrich error:", err);
+    const eia = await fetchEIAFuelPrices();
     return res.status(200).json({
-      stations: stations.map(s => enrichStation(s, null, mode)),
+      stations: stations.map(s => enrichStation(s, mode, eia)),
       fallback: true,
-      error: "Failed to fetch fuel prices",
+      livePrices: false,
+      error: "Failed to enrich fuel stations",
     });
   }
 }
