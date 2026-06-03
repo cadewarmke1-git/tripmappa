@@ -1,10 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TRAILBLAZER_BENEFITS,
+  VOYAGER_BENEFITS,
   TIERS,
   getTierPriceLabel,
 } from "../lib/tiers.js";
-import { createCheckoutSession } from "../lib/stripeApi.js";
+import { createCheckoutSession, createVoyagerCheckoutSession } from "../lib/stripeApi.js";
+
+const UPGRADE_PLANS = [
+  {
+    id: TIERS.VOYAGER,
+    label: "Voyager",
+    priceLabel: getTierPriceLabel(TIERS.VOYAGER),
+    benefits: VOYAGER_BENEFITS,
+  },
+  {
+    id: TIERS.TRAILBLAZER,
+    label: "Trailblazer",
+    priceLabel: getTierPriceLabel(TIERS.TRAILBLAZER),
+    benefits: TRAILBLAZER_BENEFITS,
+  },
+];
 
 export default function UpgradeModal({
   onClose,
@@ -15,11 +31,16 @@ export default function UpgradeModal({
   reason = "trips",
   onCheckoutError,
 }) {
+  const isGrocery = reason === "grocery";
+  const [selectedPlan, setSelectedPlan] = useState(TIERS.TRAILBLAZER);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
 
+  useEffect(() => {
+    if (isGrocery) setSelectedPlan(TIERS.TRAILBLAZER);
+  }, [isGrocery]);
+
   const isGuest = creditStatus?.tier === "guest";
-  const isGrocery = reason === "grocery";
   const isTrialEnded = reason === "trial-ended";
 
   const title = isTrialEnded
@@ -31,14 +52,14 @@ export default function UpgradeModal({
         : "Trip generations used";
 
   const lead = isTrialEnded
-    ? "Subscribe to Trailblazer to keep unlimited trip generations, grocery delivery, and priority planning."
+    ? "Choose a plan to keep unlimited trip generations and premium features."
     : isGrocery
-      ? "Order groceries to your hotel with voice-to-list ordering and scheduled delivery before you arrive."
+      ? "Grocery delivery to your hotel is included with Trailblazer."
       : isGuest
-        ? "Create a free account for 3 Trip Generations total, or upgrade for unlimited planning and grocery delivery."
-        : "You've used all 3 Trip Generations. Upgrade to Trailblazer for unlimited trip planning and grocery delivery.";
+        ? "Create a free account for 3 Trip Generations total, or choose a paid plan below."
+        : "You've used all 3 Trip Generations. Choose Voyager or Trailblazer to keep planning.";
 
-  const priceLabel = getTierPriceLabel(TIERS.TRAILBLAZER);
+  const selected = UPGRADE_PLANS.find(p => p.id === selectedPlan) || UPGRADE_PLANS[1];
 
   async function handleCheckout() {
     if (!user?.id || !accessToken) {
@@ -48,10 +69,11 @@ export default function UpgradeModal({
     setCheckoutError("");
     setCheckoutLoading(true);
     try {
-      const { url } = await createCheckoutSession(accessToken, {
-        userId: user.id,
-        email: user.email || undefined,
-      });
+      const payload = { userId: user.id, email: user.email || undefined };
+      const startCheckout = selectedPlan === TIERS.VOYAGER
+        ? createVoyagerCheckoutSession
+        : createCheckoutSession;
+      const { url } = await startCheckout(accessToken, payload);
       if (url) {
         window.location.href = url;
         return;
@@ -68,17 +90,73 @@ export default function UpgradeModal({
 
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
-      <div className="modal upgrade-modal" onClick={e => e.stopPropagation()} role="dialog" aria-labelledby="upgrade-title">
+      <div
+        className="modal upgrade-modal"
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="upgrade-title"
+        style={{ maxWidth: 480 }}
+      >
         <button type="button" className="modal-close" onClick={onClose} aria-label="Close">×</button>
-        <div className="upgrade-modal-badge">TripMappa Trailblazer</div>
+        <div className="upgrade-modal-badge">Upgrade your plan</div>
         <h2 id="upgrade-title" className="upgrade-modal-title">{title}</h2>
         <p className="upgrade-modal-lead">{lead}</p>
-        <p className="upgrade-modal-price">{priceLabel}</p>
-        <ul className="upgrade-modal-benefits">
-          {TRAILBLAZER_BENEFITS.map(item => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+
+        <div
+          role="radiogroup"
+          aria-label="Choose a subscription plan"
+          style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}
+        >
+          {UPGRADE_PLANS.map(plan => {
+            const isSelected = selectedPlan === plan.id;
+            const isDisabled = isGrocery && plan.id === TIERS.VOYAGER;
+            return (
+              <label
+                key={plan.id}
+                style={{
+                  display: "block",
+                  cursor: isDisabled ? "not-allowed" : "pointer",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  border: isSelected
+                    ? "2px solid var(--gold-primary)"
+                    : "1px solid var(--border)",
+                  background: isSelected
+                    ? "rgba(255, 210, 140, 0.08)"
+                    : "rgba(255, 255, 255, 0.04)",
+                  opacity: isDisabled ? 0.55 : 1,
+                }}
+              >
+                <input
+                  type="radio"
+                  name="upgrade-plan"
+                  value={plan.id}
+                  checked={isSelected}
+                  disabled={isDisabled}
+                  onChange={() => {
+                    if (!isDisabled) setSelectedPlan(plan.id);
+                  }}
+                  style={{ marginRight: 8 }}
+                />
+                <span style={{ fontWeight: 700, marginRight: 8 }}>{plan.label}</span>
+                <span className="upgrade-modal-price" style={{ display: "inline", margin: 0 }}>
+                  {plan.priceLabel}
+                </span>
+                <ul className="upgrade-modal-benefits" style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                  {plan.benefits.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                {isDisabled && (
+                  <p className="upgrade-modal-lead" style={{ margin: "8px 0 0", fontSize: 12 }}>
+                    Grocery delivery requires Trailblazer.
+                  </p>
+                )}
+              </label>
+            );
+          })}
+        </div>
+
         <div className="upgrade-modal-actions">
           <button
             type="button"
@@ -86,7 +164,9 @@ export default function UpgradeModal({
             onClick={handleCheckout}
             disabled={checkoutLoading}
           >
-            {checkoutLoading ? "Starting checkout…" : `Subscribe — ${priceLabel}`}
+            {checkoutLoading
+              ? "Starting checkout…"
+              : `Subscribe to ${selected.label} — ${selected.priceLabel}`}
           </button>
           {checkoutError && (
             <p className="upgrade-modal-error" role="alert">{checkoutError}</p>

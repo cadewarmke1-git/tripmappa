@@ -1,10 +1,19 @@
 /** Stripe customer, checkout, portal, and webhook profile updates. */
 import {
   getStripe,
-  PREMIUM_PRICE_CENTS,
-  PREMIUM_PRODUCT_NAME,
+  getStripeVoyagerPriceId,
+  getStripeTrailblazerPriceId,
   getSiteOrigin,
 } from "./stripe.js";
+
+function requireStripePriceId(priceId, envName) {
+  if (!priceId) {
+    const err = new Error(`Missing ${envName}`);
+    err.code = "stripe_not_configured";
+    throw err;
+  }
+  return priceId;
+}
 
 export async function ensureStripeCustomer(stripe, admin, userId, email) {
   const { data: profile, error } = await admin
@@ -49,27 +58,16 @@ export async function ensureStripeCustomer(stripe, admin, userId, email) {
   return customer.id;
 }
 
-export async function createPremiumCheckoutSession(stripe, { customerId, userId }) {
+function checkoutSessionBase({ customerId, userId, plan }) {
   const origin = getSiteOrigin();
-  return stripe.checkout.sessions.create({
+  return {
     customer: customerId,
     mode: "subscription",
     client_reference_id: userId,
-    metadata: { supabase_user_id: userId },
+    metadata: { supabase_user_id: userId, plan },
     subscription_data: {
-      metadata: { supabase_user_id: userId },
+      metadata: { supabase_user_id: userId, plan },
     },
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          unit_amount: PREMIUM_PRICE_CENTS,
-          recurring: { interval: "month" },
-          product_data: { name: PREMIUM_PRODUCT_NAME },
-        },
-        quantity: 1,
-      },
-    ],
     success_url: `${origin}?success=1`,
     cancel_url: origin,
     allow_promotion_codes: true,
@@ -77,6 +75,28 @@ export async function createPremiumCheckoutSession(stripe, { customerId, userId 
     ...(process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION
       ? { payment_method_configuration: process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION }
       : {}),
+  };
+}
+
+export async function createVoyagerCheckoutSession(stripe, { customerId, userId }) {
+  const price = requireStripePriceId(
+    getStripeVoyagerPriceId(),
+    "STRIPE_VOYAGER_PRICE_ID",
+  );
+  return stripe.checkout.sessions.create({
+    ...checkoutSessionBase({ customerId, userId, plan: "voyager" }),
+    line_items: [{ price, quantity: 1 }],
+  });
+}
+
+export async function createPremiumCheckoutSession(stripe, { customerId, userId }) {
+  const price = requireStripePriceId(
+    getStripeTrailblazerPriceId(),
+    "STRIPE_TRAILBLAZER_PRICE_ID",
+  );
+  return stripe.checkout.sessions.create({
+    ...checkoutSessionBase({ customerId, userId, plan: "trailblazer" }),
+    line_items: [{ price, quantity: 1 }],
   });
 }
 
@@ -117,9 +137,11 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
     }
   }
 
+  const plan = session.metadata?.plan === "voyager" ? "voyager" : "trailblazer";
+
   const patch = {
     user_id: userId,
-    tier: "trailblazer",
+    tier: plan,
     stripe_customer_id: customerId || undefined,
     stripe_subscription_id: subscriptionId || undefined,
     premium_renewal_at: renewalAt,

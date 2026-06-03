@@ -59,10 +59,8 @@ async function fetchEIAFuelPrices() {
   }
 
   try {
-    let { res, json } = await requestEIAPrices(null);
-    if (json.error?.code === "API_KEY_MISSING") {
-      ({ res, json } = await requestEIAPrices("DEMO_KEY"));
-    }
+    const apiKey = process.env.EIA_API_KEY?.trim() || "DEMO_KEY";
+    const { res, json } = await requestEIAPrices(apiKey);
     if (!res.ok || json.error) {
       console.warn("EIA fuel price fetch failed:", json.error?.message || res.status);
       return eiaPriceCache || null;

@@ -32,6 +32,7 @@ const ROUTES = {
   "share-trip": () => import("../server/routes/share-trip.js"),
   "sos-alert": () => import("../server/routes/sos-alert.js"),
   "stripe/create-checkout-session": () => import("../server/routes/stripe/create-checkout-session.js"),
+  "stripe/create-voyager-checkout-session": () => import("../server/routes/stripe/create-voyager-checkout-session.js"),
   "stripe/create-portal-session": () => import("../server/routes/stripe/create-portal-session.js"),
   "stripe/webhook": () => import("../server/routes/stripe/webhook.js"),
   "trial/dismiss-prompt": () => import("../server/routes/trial/dismiss-prompt.js"),

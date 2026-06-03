@@ -60,6 +60,7 @@ import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraf
 import { useAuth } from "./context/AuthContext.jsx";
 import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
 import { fetchTripCredits } from "./lib/tripCreditsApi.js";
+import { TIERS, normalizeTier } from "./lib/tiers.js";
 import { runAccountOnboarding } from "./lib/accountOnboardingApi.js";
 import { captureReferralFromUrl, getStoredReferralCode, clearStoredReferralCode } from "./lib/referralCapture.js";
 import { dismissTrialEndedPrompt } from "./lib/trialApi.js";
@@ -587,14 +588,21 @@ export default function App() {
 
     if (user?.id && session?.access_token) {
       fetchTripCredits(session.access_token)
-        .then(setCreditStatus)
+        .then(credits => {
+          setCreditStatus(credits);
+          const paidTier = normalizeTier(credits?.storedTier ?? credits?.tier);
+          if (paidTier === TIERS.VOYAGER) {
+            toast_("Welcome to TripMappa Voyager.", true);
+          } else if (paidTier === TIERS.TRAILBLAZER) {
+            toast_("Welcome to TripMappa Trailblazer.", true);
+          }
+        })
         .catch(() => {});
       fetchUserProfile(user.id)
         .then(profile => {
           if (profile) setUserProfile(profile);
         })
         .catch(() => {});
-      toast_("Welcome to TripMappa Trailblazer.", true);
     }
     return undefined;
   // eslint-disable-next-line react-hooks/exhaustive-deps

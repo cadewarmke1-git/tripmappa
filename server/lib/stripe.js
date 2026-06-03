@@ -32,8 +32,16 @@ export function respondStripeError(res, err, logLabel = "stripe") {
   return res.status(500).json({ error: "Billing request failed" });
 }
 
-export const PREMIUM_PRICE_CENTS = 799;
+export const VOYAGER_PRODUCT_NAME = "TripMappa Voyager";
 export const PREMIUM_PRODUCT_NAME = "TripMappa Trailblazer";
+
+export function getStripeVoyagerPriceId() {
+  return process.env.STRIPE_VOYAGER_PRICE_ID?.trim() || null;
+}
+
+export function getStripeTrailblazerPriceId() {
+  return process.env.STRIPE_TRAILBLAZER_PRICE_ID?.trim() || null;
+}
 
 export function getSiteOrigin() {
   const fromEnv = process.env.TRIPMAPPA_SITE_URL || process.env.SITE_URL;
