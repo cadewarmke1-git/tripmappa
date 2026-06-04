@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchRestaurantsForStop } from "../../lib/restaurantsClient.js";
+import { isRestaurantPreloadInFlight, subscribeRestaurantPreload } from "../../lib/tripEnrichment.js";
 import { selectDisplayRestaurants } from "../../lib/restaurantPlaces.js";
 import RestaurantCard from "./RestaurantCard.jsx";
 import RestaurantCardSkeleton from "./RestaurantCardSkeleton.jsx";
@@ -17,6 +18,9 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
     }
     return "loading";
   });
+  const [preloadRevision, setPreloadRevision] = useState(0);
+
+  useEffect(() => subscribeRestaurantPreload(() => setPreloadRevision(n => n + 1)), []);
 
   useEffect(() => {
     if (preloaded !== undefined && preloaded !== null) {
@@ -34,6 +38,11 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
     if (lat == null || lng == null || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
       setLoading(false);
       setStatus("missing-location");
+      return undefined;
+    }
+    if (isRestaurantPreloadInFlight(city, lat, lng)) {
+      setLoading(true);
+      setStatus("loading");
       return undefined;
     }
     let cancelled = false;
@@ -61,7 +70,7 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [city, lat, lng, answers, preloaded]);
+  }, [city, lat, lng, answers, preloaded, preloadRevision]);
 
   if (!city) return null;
 

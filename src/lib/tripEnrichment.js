@@ -31,6 +31,34 @@ import { isContinuousDrive } from "./driveMode.js";
 
 import { dedupePlaces, dedupeRoadStops } from "./placesDedup.js";
 
+const restaurantPreloadInFlight = new Set();
+const restaurantPreloadListeners = new Set();
+
+function restaurantPreloadKey(city, lat, lng) {
+  if (!city) return null;
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+    return `${city}|${latNum.toFixed(4)}|${lngNum.toFixed(4)}`;
+  }
+  return city;
+}
+
+function notifyRestaurantPreloadListeners() {
+  restaurantPreloadListeners.forEach(listener => listener());
+}
+
+/** True while enrichGeneratedTrip is fetching restaurants for this city/coords. */
+export function isRestaurantPreloadInFlight(city, lat, lng) {
+  const key = restaurantPreloadKey(city, lat, lng);
+  return key != null && restaurantPreloadInFlight.has(key);
+}
+
+export function subscribeRestaurantPreload(listener) {
+  restaurantPreloadListeners.add(listener);
+  return () => restaurantPreloadListeners.delete(listener);
+}
+
 function throwIfAborted(signal) {
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 }
@@ -87,15 +115,27 @@ async function assignRestaurantsForCity(map, city, geo, answers, limit = 6) {
     map[city] = [];
     return;
   }
-  const result = await fetchRestaurantsForStop({
-    lat: geo.lat,
-    lng: geo.lng,
-    city,
-    answers,
-    limit,
-  });
-  if (result.error) return;
-  map[city] = result.restaurants || [];
+  const preloadKey = restaurantPreloadKey(city, geo.lat, geo.lng);
+  if (preloadKey) restaurantPreloadInFlight.add(preloadKey);
+  try {
+    const result = await fetchRestaurantsForStop({
+      lat: geo.lat,
+      lng: geo.lng,
+      city,
+      answers,
+      limit,
+    });
+    if (result.error) {
+      map[city] = [];
+      return;
+    }
+    map[city] = result.restaurants || [];
+  } finally {
+    if (preloadKey) {
+      restaurantPreloadInFlight.delete(preloadKey);
+      notifyRestaurantPreloadListeners();
+    }
+  }
 }
 
 function isFoodRoadStop(rs) {

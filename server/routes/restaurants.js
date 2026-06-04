@@ -118,16 +118,24 @@ export default async function handler(req, res) {
       : (dietaryKeywords.length ? dietaryKeywords.slice(0, 4) : ["restaurant"]);
 
     const rawById = new Map();
+    const termErrors = [];
     for (const term of searchTerms) {
       const nearby = await nearbyRestaurants(latNum, lngNum, term);
       if (nearby.apiError === "no_key") {
         return res.status(503).json({ error: "Google Maps API key not configured" });
       }
       if (nearby.apiError) {
-        return res.status(502).json({ error: "Places API request failed", status: nearby.apiError });
+        termErrors.push(nearby.apiError);
+        continue;
       }
       (nearby.results || []).forEach(p => {
         if (p.place_id) rawById.set(p.place_id, p);
+      });
+    }
+    if (rawById.size === 0 && termErrors.length === searchTerms.length) {
+      return res.status(502).json({
+        error: "Places API request failed",
+        status: termErrors[termErrors.length - 1],
       });
     }
 

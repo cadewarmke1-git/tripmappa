@@ -1,4 +1,4 @@
-/** Shared restaurant preference filtering for Google Places and Foursquare. */
+/** Shared restaurant preference filtering for Google Places. */
 import { dietaryMatchesRestaurant } from "./dietaryKeywords.js";
 
 const FAST_FOOD_RE = /\b(mcdonald|burger king|wendy|taco bell|kfc|subway|chipotle|panda express|arby|sonic|jack in the box|dairy queen|popeyes|chick-fil-a|five guys|in-n-out|whataburger|culver|zaxby|raising cane|del taco|white castle|hardee|carl's jr|pizza hut|domino|little caesar|papa john|panera|starbucks|dunkin|jamba|smoothie king|bojangles|checkers|rally|steak 'n shake|culver's|qdoba|moe's|jersey mike|firehouse subs|jimmy john|potbelly|noodles|fast food|quick service)\b/i;
