@@ -1105,6 +1105,9 @@ export default function App() {
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
+        onOpenProfile={openProfile}
+        onRefreshCredits={refreshCredits}
+        onUploadAvatar={handleProfileUploadAvatar}
         onGetStarted={() => openAuthModal("signup")}
         onSignIn={() => openAuthModal("signin")}
         onSignOut={handleSignOut}
@@ -2841,9 +2844,11 @@ export default function App() {
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
+        onOpenProfile={openProfile}
+        onRefreshCredits={refreshCredits}
+        onUploadAvatar={handleProfileUploadAvatar}
         onGetStarted={() => openAuthModal("signup")}
         onSignIn={() => openAuthModal("signin")}
-        onSignOut={handleSignOut}
         userProfile={userProfile}
         creditStatus={creditStatus}
         planDraft={planDraft}

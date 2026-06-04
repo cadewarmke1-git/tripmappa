@@ -11,6 +11,9 @@ export default function AppNavBar({
   onOpenPlan,
   onOpenTrips,
   onOpenShare,
+  onOpenProfile,
+  onRefreshCredits,
+  onUploadAvatar,
   onGetStarted,
   onSignIn,
   onSignOut,
@@ -37,19 +40,32 @@ export default function AppNavBar({
           </span>
         )}
         <div className="app-nav-bar-actions">
-          <NavProfileMenu
-            user={user}
-            profile={userProfile}
-            creditStatus={creditStatus}
-            activeNav={activeNav}
-            heroTheme={isHero ? theme : undefined}
-            onOpenPlan={onOpenPlan}
-            onOpenTrips={onOpenTrips}
-            onOpenShare={onOpenShare}
-            onGetStarted={onGetStarted}
-            onSignIn={onSignIn}
-            onSignOut={onSignOut}
-          />
+          {!user && (
+            <>
+              <button type="button" className="nav-btn nav-btn-signup nav-auth-cta" onClick={onGetStarted}>
+                Get Started
+              </button>
+              <button type="button" className="nav-btn nav-btn-ghost nav-auth-cta" onClick={onSignIn}>
+                Sign In
+              </button>
+            </>
+          )}
+          {user && (
+            <NavProfileMenu
+              user={user}
+              profile={userProfile}
+              creditStatus={creditStatus}
+              activeNav={activeNav}
+              heroTheme={isHero ? theme : undefined}
+              onOpenPlan={onOpenPlan}
+              onOpenTrips={onOpenTrips}
+              onOpenShare={onOpenShare}
+              onOpenProfile={onOpenProfile}
+              onRefreshCredits={onRefreshCredits}
+              onUploadAvatar={onUploadAvatar}
+              onSignOut={onSignOut}
+            />
+          )}
         </div>
       </div>
     </nav>

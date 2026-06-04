@@ -34,9 +34,11 @@ export default function HeroView({
   onOpenPlan,
   onOpenTrips,
   onOpenShare,
+  onOpenProfile,
+  onRefreshCredits,
+  onUploadAvatar,
   onGetStarted,
   onSignIn,
-  onSignOut,
   userProfile,
   creditStatus = null,
   planDraft = null,
@@ -74,9 +76,11 @@ export default function HeroView({
         onOpenPlan={onOpenPlan}
         onOpenTrips={onOpenTrips}
         onOpenShare={onOpenShare}
+        onOpenProfile={onOpenProfile}
+        onRefreshCredits={onRefreshCredits}
+        onUploadAvatar={onUploadAvatar}
         onGetStarted={onGetStarted}
         onSignIn={onSignIn}
-        onSignOut={onSignOut}
       />
 
       <div
