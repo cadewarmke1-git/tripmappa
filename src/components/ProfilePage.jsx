@@ -156,6 +156,7 @@ export default function ProfilePage({
   const memberSince = formatMemberSince(user?.created_at || profile?.created_at);
   const stats = useMemo(() => computeTripStats(savedTrips), [savedTrips]);
 
+  const hideTripUsage = Boolean(creditStatus?.isAdmin);
   const used = creditStatus?.used ?? 0;
   const limit = creditStatus?.limit ?? 3;
   const progressPct = isPremium ? 100 : Math.min(100, Math.round((used / limit) * 100));
@@ -401,11 +402,15 @@ export default function ProfilePage({
             <>
               <div className="profile-plan-header">
                 <TierBadge tier={TIERS.WANDERER} />
-                <span className="profile-plan-usage">{used} of {limit} Trip Generations used</span>
+                {!hideTripUsage && (
+                  <span className="profile-plan-usage">{used} of {limit} Trip Generations used</span>
+                )}
               </div>
-              <div className="profile-progress-wrap">
-                <div className="profile-progress-bar" style={{ width: `${progressPct}%` }} />
-              </div>
+              {!hideTripUsage && (
+                <div className="profile-progress-wrap">
+                  <div className="profile-progress-bar" style={{ width: `${progressPct}%` }} />
+                </div>
+              )}
               <div className="profile-plan-columns profile-plan-columns-three">
                 <div>
                   <h3 className="profile-plan-col-title">Wanderer</h3>
