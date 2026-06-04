@@ -2,13 +2,12 @@ import { useMemo } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
-import HeroExploreMap from "./HeroExploreMap.jsx";
-import HeroExploreRange from "./HeroExploreRange.jsx";
 import HeroFoundingSlots from "./HeroFoundingSlots.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
+import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { getHeroSurfaceTheme, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
 export default function HeroView({
@@ -47,17 +46,6 @@ export default function HeroView({
   planDraft = null,
   onResumeDraft,
   onDismissDraft,
-  exploreRangeEnabled = false,
-  exploreDriveTimeSeconds = 7200,
-  exploreLoading = false,
-  exploreError = null,
-  explorePolygon = [],
-  explorePlaces = [],
-  exploreMapCenter = null,
-  onExploreToggle,
-  onExploreDriveTimeChange,
-  onExploreMapClick,
-  onExplorePlaceSelect,
 }) {
   const {
     skyHour,
@@ -100,17 +88,6 @@ export default function HeroView({
         style={heroSurfaceStyle}
       >
         <HeroMountainScene phase={skyPhase} hour={skyHour} />
-        {exploreRangeEnabled && (
-          <HeroExploreMap
-            isLoaded={isLoaded}
-            center={exploreMapCenter}
-            polygon={explorePolygon}
-            places={explorePlaces}
-            theme={heroTheme}
-            onMapClick={onExploreMapClick}
-            onPlaceSelect={onExplorePlaceSelect}
-          />
-        )}
         <div className="hero-overlay" />
         <div className="hero-palette-vignette" aria-hidden="true" />
         <div className="hero-palette-ridge" aria-hidden="true" />
@@ -194,16 +171,13 @@ export default function HeroView({
               </div>
               </div>
               <HeroFoundingSlots />
-              <HeroExploreRange
-                enabled={exploreRangeEnabled}
-                driveTimeSeconds={exploreDriveTimeSeconds}
-                loading={exploreLoading}
-                error={exploreError}
-                onToggle={onExploreToggle}
-                onDriveTimeChange={onExploreDriveTimeChange}
-              />
             </div>
-            <button type="button" className="hero-go-btn" onClick={onLaunch} disabled={launchDisabled}>
+            <button
+              type="button"
+              className="hero-go-btn"
+              onClick={() => { triggerPrimaryHaptic(); onLaunch?.(); }}
+              disabled={launchDisabled}
+            >
               {heroLaunching ? <RouteDrawingLoader theme={heroTheme} variant="button" /> : "Plan my trip →"}
             </button>
           </div>

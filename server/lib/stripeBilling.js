@@ -113,7 +113,7 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
     session.metadata?.supabase_user_id ||
     session.client_reference_id ||
     null;
-  const customerId =
+  let customerId =
     typeof session.customer === "string" ? session.customer : session.customer?.id;
   const subscriptionId =
     typeof session.subscription === "string"
@@ -123,6 +123,16 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
   if (!userId) {
     console.warn("stripe webhook: checkout.session.completed missing user id");
     return;
+  }
+
+  if (!customerId && session.id) {
+    try {
+      const full = await stripe.checkout.sessions.retrieve(session.id);
+      customerId =
+        typeof full.customer === "string" ? full.customer : full.customer?.id;
+    } catch (err) {
+      console.warn("stripe webhook: could not retrieve session for customer id", err.message);
+    }
   }
 
   let renewalAt = null;

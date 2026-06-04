@@ -16,6 +16,7 @@ import AccountSidebarReferral from "./AccountSidebarReferral.jsx";
 export default function AccountSidebar({
   open,
   closing,
+  blockedByOtherSidebar = false,
   onClose,
   user,
   profile,
@@ -23,6 +24,7 @@ export default function AccountSidebar({
   onRefreshCredits,
   onOpenProfile,
   onOpenSettings,
+  onOpenPreferences,
   onManageSubscription,
   onSignOut,
   onReferralCopied,
@@ -36,9 +38,9 @@ export default function AccountSidebar({
   const showFounderTag = isFounderTier(creditStatus?.tier) || creditStatus?.isFounder;
   const showManageSubscription =
     !showFounderTag
-    && hasUnlimitedTripGenerations(tierKey)
-    && Boolean(creditStatus?.stripeCustomerId);
+    && (tierKey === TIERS.VOYAGER || tierKey === TIERS.TRAILBLAZER);
 
+  const showCreditsLine = !creditStatus?.isAdmin;
   const creditsLine = creditStatus?.unlimited
     ? "Unlimited Trip Generations"
     : creditStatus?.tier === "guest"
@@ -47,7 +49,7 @@ export default function AccountSidebar({
         ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} Trip Generations remaining`
         : "Loading Trip Generations…";
 
-  const visible = open || closing;
+  const visible = (open || closing) && !blockedByOtherSidebar;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -123,7 +125,9 @@ export default function AccountSidebar({
           <span className={`profile-card-tier profile-card-tier--${tierClass}`}>
             {tierLabel}
           </span>
-          <p className="profile-card-credits">{creditsLine}</p>
+          {showCreditsLine && (
+            <p className="profile-card-credits">{creditsLine}</p>
+          )}
         </div>
 
         <AccountSidebarReferral
@@ -139,6 +143,16 @@ export default function AccountSidebar({
             onClick={() => handleAction(onManageSubscription)}
           >
             Manage Subscription
+          </button>
+        )}
+
+        {onOpenPreferences && (
+          <button
+            type="button"
+            className="account-sidebar-nav-item"
+            onClick={() => handleAction(onOpenPreferences)}
+          >
+            Trip preferences
           </button>
         )}
 

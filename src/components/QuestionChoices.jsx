@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import { triggerPrimaryHaptic } from "../lib/haptic.js";
 
 function normalizeChoice(choice) {
   if (choice && typeof choice === "object" && choice.value != null) {
@@ -47,6 +48,7 @@ export default function QuestionChoices({
   const [loyaltyDraft, setLoyaltyDraft] = useState(null);
   const [groupDraft, setGroupDraft] = useState(null);
   const [multiDraft, setMultiDraft] = useState([]);
+  const [expandedDetailSections, setExpandedDetailSections] = useState(() => new Set());
 
   useEffect(() => {
     setVehicleTab(0);
@@ -57,6 +59,10 @@ export default function QuestionChoices({
   useEffect(() => {
     if (currentQ?.type === "trip_details" || currentQ?.type === "multiselect_group") {
       setGroupDraft(buildGroupDraft(currentQ, prefDraft, answers));
+      if (currentQ?.type === "trip_details") {
+        const firstId = currentQ.sections?.[0]?.id;
+        setExpandedDetailSections(firstId ? new Set([firstId]) : new Set());
+      }
       return;
     }
     setGroupDraft(null);
@@ -97,6 +103,13 @@ export default function QuestionChoices({
 
   function pickInstant(value, extraFields) {
     onPickAnswer(value, extraFields, { instant: true });
+  }
+
+  function continueWithHaptic(handler) {
+    return () => {
+      triggerPrimaryHaptic();
+      handler();
+    };
   }
 
   const labeledVehicleGroups = vehicleGroups
@@ -259,12 +272,9 @@ export default function QuestionChoices({
           ))}
 
           {!vehicleGroups && isSingleSelect && (
-            <div className="quick-replies quick-replies-described">
+            <div className={`quick-replies quick-replies-described${currentQ.id === "fuel_type" ? " question-choices-scroll" : ""}`}>
               {routeLocked && (
                 <p className="question-pending-note">Route details are still loading — choices unlock in a moment.</p>
-              )}
-              {currentQ.hint && !routeLocked && (
-                <p className="question-pending-note">{currentQ.hint}</p>
               )}
               {choices.map(raw => {
                 const { value, label, description } = normalizeChoice(raw);
@@ -344,24 +354,44 @@ export default function QuestionChoices({
 
           {isTripDetails && (
             <>
-              {(currentQ.sections || []).map(section => (
-                <div className="question-group-section" key={section.id}>
-                  <div className="question-section-label">{section.label}</div>
-                  <div className="quick-replies">
-                    {(section.choices || []).map(c => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={mkGroupClass(section.id, c)}
-                        disabled={frozen}
-                        onClick={() => toggleGroupSection(section.id, c)}
-                      >
-                        {c}
-                      </button>
-                    ))}
+              {(currentQ.sections || []).map(section => {
+                const expanded = expandedDetailSections.has(section.id);
+                return (
+                  <div className="question-group-section question-group-collapsible" key={section.id}>
+                    <button
+                      type="button"
+                      className="question-section-toggle"
+                      onClick={() => {
+                        setExpandedDetailSections(prev => {
+                          const next = new Set(prev);
+                          if (next.has(section.id)) next.delete(section.id);
+                          else next.add(section.id);
+                          return next;
+                        });
+                      }}
+                      aria-expanded={expanded}
+                    >
+                      <span className="question-section-label">{section.label}</span>
+                      <span className="question-section-chevron" aria-hidden="true">{expanded ? "−" : "+"}</span>
+                    </button>
+                    {expanded && (
+                      <div className="quick-replies question-choices-scroll">
+                        {(section.choices || []).map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            className={mkGroupClass(section.id, c)}
+                            disabled={frozen}
+                            onClick={() => toggleGroupSection(section.id, c)}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
                 <div className="question-group-section">
                   <div className="question-section-label">Budget</div>
@@ -417,7 +447,7 @@ export default function QuestionChoices({
             type="button"
             className="btn-generate btn-generate-inline"
             disabled={frozen || !lodgingDraft}
-            onClick={submitLodgingStay}
+            onClick={continueWithHaptic(submitLodgingStay)}
           >
             Continue
           </button>
@@ -433,7 +463,7 @@ export default function QuestionChoices({
             type="button"
             className="btn-generate btn-generate-inline"
             disabled={frozen || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)}
-            onClick={() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])])}
+            onClick={continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]))}
           >
             Continue
           </button>
@@ -445,10 +475,10 @@ export default function QuestionChoices({
 
       {isTripDetails && (
         <div className="pref-actions-row">
-          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={submitTripDetails}>
+          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={continueWithHaptic(submitTripDetails)}>
             Continue
           </button>
-          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={skipTripDetails}>
+          <button type="button" className="convo-nav-btn convo-nav-btn-defaults" disabled={frozen} onClick={skipTripDetails}>
             Defaults are fine
           </button>
         </div>
@@ -456,10 +486,15 @@ export default function QuestionChoices({
 
       {currentQ.type === "multiselect_group" && (
         <div className="pref-actions-row">
-          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={() => pickInstant({
-            dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
-            stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
-          })}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={continueWithHaptic(() => pickInstant({
+              dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
+              stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
+            }))}
+          >
             Continue
           </button>
           <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant({ dietary: [], stops_interests: [] })}>
@@ -478,6 +513,7 @@ export default function QuestionChoices({
             disabled={frozen}
             onKeyDown={e => {
               if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                triggerPrimaryHaptic();
                 pickInstant(e.currentTarget.value.trim());
               }
             }}
@@ -487,10 +523,10 @@ export default function QuestionChoices({
               type="button"
               className="btn-generate btn-generate-inline"
               disabled={frozen}
-              onClick={() => {
+              onClick={continueWithHaptic(() => {
                 const el = document.querySelector(".question-text-input");
                 if (el?.value?.trim()) pickInstant(el.value.trim());
-              }}
+              })}
             >
               Continue
             </button>

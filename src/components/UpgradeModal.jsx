@@ -113,19 +113,7 @@ export default function UpgradeModal({
             return (
               <label
                 key={plan.id}
-                style={{
-                  display: "block",
-                  cursor: isDisabled ? "not-allowed" : "pointer",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  border: isSelected
-                    ? "2px solid var(--gold-primary)"
-                    : "1px solid var(--border)",
-                  background: isSelected
-                    ? "rgba(255, 210, 140, 0.08)"
-                    : "rgba(255, 255, 255, 0.04)",
-                  opacity: isDisabled ? 0.55 : 1,
-                }}
+                className={`upgrade-plan-card${isSelected ? " is-selected" : ""}${isDisabled ? " is-disabled" : ""}`}
               >
                 <input
                   type="radio"
@@ -142,7 +130,7 @@ export default function UpgradeModal({
                 <span className="upgrade-modal-price" style={{ display: "inline", margin: 0 }}>
                   {plan.priceLabel}
                 </span>
-                <ul className="upgrade-modal-benefits" style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                <ul className="upgrade-modal-benefits upgrade-plan-benefits">
                   {plan.benefits.map(item => (
                     <li key={item}>{item}</li>
                   ))}

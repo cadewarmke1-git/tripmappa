@@ -125,6 +125,7 @@ export default function ProfilePage({
   onUpdateEmail,
   onUpdatePassword,
   onManageSubscription,
+  onOpenPreferences,
   toast,
   scrollToSection = null,
 }) {
@@ -500,6 +501,18 @@ export default function ProfilePage({
                 Add Home Address
               </button>
             </div>
+          )}
+        </section>
+
+        <section className="profile-card">
+          <h2 className="profile-section-title">Trip preferences</h2>
+          <p className="profile-settings-hint">
+            Save default vehicle, fuel, lodging, and other planner answers so new trips start pre-filled.
+          </p>
+          {onOpenPreferences && (
+            <button type="button" className="profile-btn profile-btn-gold" onClick={onOpenPreferences}>
+              Edit trip preferences
+            </button>
           )}
         </section>
 

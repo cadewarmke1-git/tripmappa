@@ -1,12 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { computeAutoTheme, resolveThemeToggle, SKY_CHECK_MS } from "../lib/theme.js";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { computeAutoTheme, SKY_CHECK_MS } from "../lib/theme.js";
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [autoTheme, setAutoTheme] = useState(computeAutoTheme);
-  const [themeOverride, setThemeOverride] = useState(null);
-  const theme = themeOverride ?? autoTheme;
+  const [theme, setTheme] = useState(computeAutoTheme);
 
   useEffect(() => {
     document.body.classList.remove("theme-day", "theme-night");
@@ -17,7 +15,7 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   useEffect(() => {
-    const updateTheme = () => setAutoTheme(computeAutoTheme());
+    const updateTheme = () => setTheme(computeAutoTheme());
     updateTheme();
     const interval = window.setInterval(updateTheme, SKY_CHECK_MS);
     const onVis = () => {
@@ -30,23 +28,7 @@ export function ThemeProvider({ children }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (themeOverride && themeOverride === autoTheme) {
-      setThemeOverride(null);
-    }
-  }, [autoTheme, themeOverride]);
-
-  const toggleTheme = useCallback(() => {
-    setThemeOverride(resolveThemeToggle(theme, autoTheme));
-  }, [theme, autoTheme]);
-
-  const value = useMemo(() => ({
-    theme,
-    autoTheme,
-    themeOverride,
-    toggleTheme,
-    setThemeOverride,
-  }), [theme, autoTheme, themeOverride, toggleTheme]);
+  const value = useMemo(() => ({ theme }), [theme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

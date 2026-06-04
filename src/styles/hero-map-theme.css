@@ -179,14 +179,14 @@
 /* ══════════════════════════════════════════════════════════════
    AVATAR — app shell (hero nav avatar: hero-surface.css)
    ══════════════════════════════════════════════════════════════ */
-.app-wrap .user-avatar-ring:not(.profile-card-trigger-avatar):not(:has(.user-avatar-img)),
-.app-wrap .user-avatar:not(.profile-card-trigger-avatar):not(:has(.user-avatar-img)) {
-  background: var(--color-accent-gradient) !important;
-  color: var(--deep-dark) !important;
+.app-wrap .user-avatar-ring:not(:has(.user-avatar-img)),
+.app-wrap .user-avatar:not(:has(.user-avatar-img)) {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  color: #1A0D00 !important;
 }
 
 .user-avatar-initials {
-  color: var(--deep-dark) !important;
+  color: #1A0D00 !important;
 }
 
 /* ══════════════════════════════════════════════════════════════

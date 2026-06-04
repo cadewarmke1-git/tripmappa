@@ -9,6 +9,7 @@ import PlanRouteCard from "./PlanRouteCard.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import { triggerPrimaryHaptic } from "../lib/haptic.js";
 
 export default function PlanPanel({
   qIndex,
@@ -139,31 +140,6 @@ export default function PlanPanel({
                       )}
                     </div>
                   )}
-                  {convoComplete && (
-                    <div className="generate-inline">
-                      {creditsExhausted && onUpgrade ? (
-                        <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
-                          Upgrade to Trailblazer — unlock unlimited trips
-                        </button>
-                      ) : (
-                        <button type="button" className="btn-generate-trip" onClick={onGenerateTrip} disabled={loading}>
-                          {loading ? (
-                            <RouteDrawingLoader variant="button" />
-                          ) : (
-                            <>
-                              Generate My Trip →
-                              {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
-                            </>
-                          )}
-                        </button>
-                      )}
-                      {loading && onCancelGenerate && (
-                        <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  )}
                   {currentQuestion && (
                     <ErrorBoundary label="question-choices" title="Could not show choices">
                       <QuestionChoices
@@ -205,6 +181,36 @@ export default function PlanPanel({
             <div ref={convoEndRef}/>
           </div>
         </div>
+        {inQuestionFlow && convoComplete && (
+          <div className="plan-generate-sticky">
+            {creditsExhausted && onUpgrade ? (
+              <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
+                Upgrade to Trailblazer — unlock unlimited trips
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-generate-trip btn-generate-trip--pulse"
+                onClick={() => { triggerPrimaryHaptic(); onGenerateTrip?.(); }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <RouteDrawingLoader variant="button" />
+                ) : (
+                  <>
+                    Generate My Trip →
+                    {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
+                  </>
+                )}
+              </button>
+            )}
+            {loading && onCancelGenerate && (
+              <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>
+                Cancel
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

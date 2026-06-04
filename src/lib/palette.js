@@ -77,9 +77,9 @@ export const HERO_SURFACE_PALETTE = {
     titleLineGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     titleAccentGradient: "linear-gradient(90deg, #FF8C42 0%, #C87010 100%)",
     subtitle: "rgba(255, 255, 255, 0.85)",
-    avatarGradient: "linear-gradient(135deg, #C87010 0%, #E06820 100%)",
+    avatarGradient: "linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%)",
     avatarText: DEEP_DARK,
-    avatarRing: "0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42)",
+    avatarRing: "0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.45)",
   },
 };
 

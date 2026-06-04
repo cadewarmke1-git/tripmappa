@@ -29,10 +29,12 @@ export default function HeroFoundingSlots() {
   if (remaining == null) return null;
 
   return (
-    <p className="hero-founding-slots" aria-live="polite">
-      <span className="hero-founding-slots-text">Founding 1,000 — </span>
-      <span className="hero-founding-slots-count">{remaining.toLocaleString()}</span>
-      <span className="hero-founding-slots-text"> spots remaining</span>
-    </p>
+    <div className="hero-founding-badge" aria-live="polite">
+      <span className="hero-founding-badge-label">Founding Members</span>
+      <span className="hero-founding-badge-sep" aria-hidden="true">·</span>
+      <span className="hero-founding-badge-count">
+        {remaining.toLocaleString()} spots remaining
+      </span>
+    </div>
   );
 }

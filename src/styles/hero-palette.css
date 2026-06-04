@@ -583,13 +583,13 @@
 }
 
 .app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:not(:has(.user-avatar-img)) {
-  background: linear-gradient(135deg, #C87010 0%, #E06820 100%) !important;
+  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
   color: #1A0D00 !important;
-  box-shadow: 0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42) !important;
+  box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4) !important;
 }
 
 .app-nav-bar.transparent.app-nav-bar--day .profile-card-trigger-avatar.user-avatar-ring:has(.user-avatar-img) {
-  box-shadow: 0 0 0 2px rgba(200, 112, 16, 0.92), 0 0 14px rgba(224, 104, 32, 0.42) !important;
+  box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4) !important;
 }
 
 .app-nav-bar.transparent.app-nav-bar--night .hamburger-menu-btn.is-active {
@@ -604,9 +604,13 @@
   color: #FFD28C !important;
 }
 
+.app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn .hamburger-menu-lines span {
+  background: #1A0D00 !important;
+}
+
 .app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span,
 .app-wrap.night .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span {
-  background: #FFD28C !important;
+  background: currentColor !important;
 }
 
 .app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn.is-active {

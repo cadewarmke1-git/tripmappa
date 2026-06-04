@@ -111,7 +111,21 @@ html body .app-wrap.day .question-progress-track {
 }
 
 html body .app-wrap.day .question-progress-fill {
-  background: var(--color-tab-active-bg) !important;
+  background: linear-gradient(90deg, var(--color-accent-gold), var(--color-accent-orange)) !important;
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html body .app-wrap.day .plan-flow-credits,
+html body .app-wrap.day .generate-credits-badge {
+  color: var(--color-text-secondary) !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+html body .app-wrap.day .plan-route-card-chip {
+  color: var(--color-accent-gold) !important;
+  background: color-mix(in srgb, var(--color-accent-gold) 14%, var(--color-card-bg)) !important;
+  border-color: color-mix(in srgb, var(--color-accent-gold) 42%, transparent) !important;
 }
 
 /* Map overlay panels — day */
@@ -260,7 +274,21 @@ html body .app-wrap.night .question-progress-track {
 }
 
 html body .app-wrap.night .question-progress-fill {
-  background: linear-gradient(90deg, #FFD28C, #FF8C42) !important;
+  background: linear-gradient(90deg, var(--color-accent-gold), var(--color-accent-orange)) !important;
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html body .app-wrap.night .plan-flow-credits,
+html body .app-wrap.night .generate-credits-badge {
+  color: var(--color-text-secondary) !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+html body .app-wrap.night .plan-route-card-chip {
+  color: var(--color-accent-gold) !important;
+  background: color-mix(in srgb, var(--color-accent-gold) 14%, var(--color-card-bg)) !important;
+  border-color: color-mix(in srgb, var(--color-accent-gold) 42%, transparent) !important;
 }
 
 html body .app-wrap.night .help-menu,

@@ -1,15 +1,13 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTheme } from "../context/ThemeContext.jsx";
-import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function NavSidebar({
   open,
   closing,
   onClose,
   theme: themeProp,
-  onThemeToggle: onThemeToggleProp,
-  showThemeToggle = true,
+  blockedByOtherSidebar = false,
   onOpenPlan,
   onOpenTrips,
   onOpenShare,
@@ -18,10 +16,9 @@ export default function NavSidebar({
   onLogin,
   onSignup,
 }) {
-  const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
+  const { theme: contextTheme } = useTheme();
   const theme = themeProp ?? contextTheme;
-  const onThemeToggle = onThemeToggleProp ?? contextToggleTheme;
-  const visible = open || closing;
+  const visible = (open || closing) && !blockedByOtherSidebar;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -111,12 +108,6 @@ export default function NavSidebar({
             <a href="/privacy">Privacy Policy</a>
             <a href="/terms">Terms of Service</a>
           </nav>
-          {showThemeToggle && (
-            <div className="nav-sidebar-theme-row">
-              <span className="nav-sidebar-theme-label">Appearance</span>
-              <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-            </div>
-          )}
         </div>
       </aside>
     </>,

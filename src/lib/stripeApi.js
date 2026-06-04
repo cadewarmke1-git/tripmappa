@@ -28,14 +28,14 @@ export async function createCheckoutSession(accessToken, { userId, email }) {
   return data;
 }
 
-export async function createPortalSession(accessToken, customerId) {
+export async function createPortalSession(accessToken) {
   const res = await fetch("/api/stripe/create-portal-session", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ customerId }),
+    body: JSON.stringify({}),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Could not open billing portal");

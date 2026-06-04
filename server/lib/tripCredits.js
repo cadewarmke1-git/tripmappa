@@ -4,6 +4,7 @@ import { expireFounderIfNeeded } from "./foundingMembers.js";
 import { expireTrialIfNeeded } from "./trials.js";
 import { getEffectiveTier } from "./tierEffective.js";
 import { buildReferralLink } from "./referrals.js";
+import { isExemptFounderUser } from "./foundingMembers.js";
 
 export const FREE_LIFETIME_LIMIT = 3;
 
@@ -50,10 +51,11 @@ export async function getOrCreateProfile(admin, userId) {
   return created;
 }
 
-export function getCreditStatus(profile) {
+export function getCreditStatus(profile, userId = null) {
   const effectiveTier = getEffectiveTier(profile);
   const isFounder = isFounderTier(profile.tier);
-  const unlimited = hasUnlimitedTripGenerations(effectiveTier);
+  const isAdmin = isExemptFounderUser(userId || profile?.user_id);
+  const unlimited = isAdmin || hasUnlimitedTripGenerations(effectiveTier);
   const groceryDelivery = canUseGroceryDelivery(effectiveTier);
 
   const base = {
@@ -70,6 +72,7 @@ export function getCreditStatus(profile) {
     referralCode: profile.referral_code || null,
     referralLink: buildReferralLink(profile.referral_code),
     showTrialEndedPrompt: Boolean(profile.show_trial_ended_prompt),
+    isAdmin,
   };
 
   if (unlimited) {
@@ -90,12 +93,12 @@ export function getCreditStatus(profile) {
 
 export async function fetchCreditStatus(admin, userId) {
   const profile = await getOrCreateProfile(admin, userId);
-  return getCreditStatus(profile);
+  return getCreditStatus(profile, userId);
 }
 
 export async function consumeCredit(admin, userId) {
   const profile = await getOrCreateProfile(admin, userId);
-  const status = getCreditStatus(profile);
+  const status = getCreditStatus(profile, userId);
 
   if (!status.unlimited && status.remaining <= 0) {
     return { ok: false, ...status };

@@ -65,10 +65,15 @@ import { runAccountOnboarding } from "./lib/accountOnboardingApi.js";
 import { captureReferralFromUrl, getStoredReferralCode, clearStoredReferralCode } from "./lib/referralCapture.js";
 import { dismissTrialEndedPrompt } from "./lib/trialApi.js";
 import { createPortalSession } from "./lib/stripeApi.js";
+import { fetchPlanPreferences } from "./lib/planPreferencesApi.js";
+import FounderWelcomeOverlay from "./components/FounderWelcomeOverlay.jsx";
+import UserPreferencesPage from "./components/UserPreferencesPage.jsx";
+import { getDisplayName } from "./lib/avatarUtils.js";
 import { useTheme } from "./context/ThemeContext.jsx";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
+import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -186,6 +191,8 @@ export default function App() {
   const AppRoutePage = useMemo(() => resolveAppRoute(), []);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
+  const [founderWelcomeName, setFounderWelcomeName] = useState(null);
+  const planPreferencesRef = useRef({});
   const [navSidebarOpen, setNavSidebarOpen] = useState(false);
   const [navSidebarClosing, setNavSidebarClosing] = useState(false);
   const [accountSidebarOpen, setAccountSidebarOpen] = useState(false);
@@ -410,7 +417,7 @@ export default function App() {
   const panelDragStartY = useRef(null);
   const panelDragMoved = useRef(false);
   const [modal, setModal] = useState(null);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [enterAnim, setEnterAnim] = useState(false);
   const [cardCollapsed, setCardCollapsed] = useState(false);
   const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'selected' | 'exit' }
@@ -511,6 +518,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!user?.id || !session?.access_token) {
+      planPreferencesRef.current = {};
+      return undefined;
+    }
+    let cancelled = false;
+    fetchPlanPreferences(session.access_token)
+      .then(prefs => {
+        if (!cancelled) planPreferencesRef.current = prefs || {};
+      })
+      .catch(() => {
+        if (!cancelled) planPreferencesRef.current = {};
+      });
+    return () => { cancelled = true; };
+  }, [user?.id, session?.access_token]);
+
+  function withPlanPreferenceDefaults(base = {}) {
+    return { ...(planPreferencesRef.current || {}), ...base };
+  }
+
+  useEffect(() => {
     foundingClaimAttemptedRef.current = false;
   }, [user?.id]);
 
@@ -542,7 +569,8 @@ export default function App() {
         ) {
           toast_("Admin access enabled. You have permanent Trailblazer.", true);
         } else if (result.founder?.claimed && !result.founder?.already) {
-          toast_("You are a Founding member. Trailblazer access is free for one year.", true);
+          const welcomeName = getDisplayName(user, profile).split(" ")[0] || "Explorer";
+          setFounderWelcomeName(welcomeName);
         } else if (result.trialStarted) {
           toast_("Your 7-day Trailblazer trial has started.", true);
         }
@@ -931,6 +959,7 @@ export default function App() {
 
   function formatCreditsLabel(status) {
     if (!status) return null;
+    if (status.isAdmin) return null;
     if (status.unlimited) return "Unlimited";
     if (status.tier === "guest") return "1 free generation";
     const n = status.remaining ?? 0;
@@ -1093,6 +1122,11 @@ export default function App() {
     window.scrollTo(0, 0);
   }
 
+  function openProfilePreferences() {
+    setView("preferences");
+    window.scrollTo(0, 0);
+  }
+
   function handleSidebarOpenProfile() {
     closeAccountSidebar();
     openProfile();
@@ -1135,10 +1169,9 @@ export default function App() {
       <NavSidebar
         open={navSidebarOpen}
         closing={navSidebarClosing}
+        blockedByOtherSidebar={accountSidebarOpen || accountSidebarClosing}
         onClose={closeNavSidebar}
         theme={theme}
-        onThemeToggle={toggleTheme}
-        showThemeToggle
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
@@ -1156,6 +1189,7 @@ export default function App() {
       <AccountSidebar
         open={accountSidebarOpen}
         closing={accountSidebarClosing}
+        blockedByOtherSidebar={navSidebarOpen || navSidebarClosing}
         onClose={closeAccountSidebar}
         user={user}
         profile={userProfile}
@@ -1163,6 +1197,7 @@ export default function App() {
         onRefreshCredits={refreshCredits}
         onOpenProfile={handleSidebarOpenProfile}
         onOpenSettings={handleSidebarOpenSettings}
+        onOpenPreferences={openProfilePreferences}
         onManageSubscription={handleManageSubscription}
         onSignOut={handleSidebarSignOut}
         onReferralCopied={() => toast_("Referral link copied", true)}
@@ -1211,13 +1246,8 @@ export default function App() {
       toast_("Sign in to manage your subscription", { isError: true });
       return;
     }
-    const customerId = creditStatus?.stripeCustomerId;
-    if (!customerId) {
-      toast_("No billing account found", { isError: true });
-      return;
-    }
     try {
-      const { url } = await createPortalSession(session.access_token, customerId);
+      const { url } = await createPortalSession(session.access_token);
       if (url) {
         window.open(url, "_blank", "noopener,noreferrer");
       }
@@ -1261,7 +1291,7 @@ export default function App() {
     setHeroDest("");
     setHeroOriginError("");
     setHeroDestError("");
-    setAnswers({});
+    setAnswers(withPlanPreferenceDefaults({}));
     setQIndex(-1);
     setCurrentQuestion(null);
     setQuestionHistory([]);
@@ -1848,7 +1878,8 @@ export default function App() {
     if (originRef.current) originRef.current.value = fromAddr;
     if (destRef.current) destRef.current.value = toAddr;
 
-    setAnswers({});
+    const seededAnswers = withPlanPreferenceDefaults({});
+    setAnswers(seededAnswers);
     setConvoComplete(false);
     setGenerated(false);
     setQuestionHistory([]);
@@ -1858,7 +1889,7 @@ export default function App() {
     setPrefDraft(null);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
-    loadNextQuestion({});
+    loadNextQuestion(seededAnswers);
     setHeroLaunching(false);
     requestAnimationFrame(() => scrollPlanToTop());
 
@@ -2542,7 +2573,7 @@ export default function App() {
     setSavedPlanSnapshot(null);
     setReturnedFromResults(false);
     setGuestTripPendingSave(false);
-    setAnswers({}); setQIndex(-1);
+    setAnswers(withPlanPreferenceDefaults({})); setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
     setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]);
     setTripLegs([]); setPrefDraft([]);
@@ -2678,8 +2709,7 @@ export default function App() {
     fetchDirections(draft.answers?.vehicle || "Car");
   }
 
-  function goBackOneQuestion() {
-    if (questionHistory.length === 0) return;
+  function applyGoBackOneQuestion() {
     const history = [...questionHistory];
     const last = history.pop();
     const newAnswers = { ...answers };
@@ -2736,6 +2766,34 @@ export default function App() {
     setConvoComplete(false);
   }
 
+  function goBackOneQuestion() {
+    if (questionHistory.length === 0 || stepAnim) return;
+    const STEP_ANIM_MS = 320;
+    setEnterAnim(false);
+    setStepAnim({ answer: null, phase: "exit" });
+    if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
+    stepAnimTimer.current = setTimeout(() => {
+      applyGoBackOneQuestion();
+      setStepAnim(null);
+    }, STEP_ANIM_MS);
+  }
+
+  const planPanelHelpButton = (
+    <PlanPanelHelpButton
+      open={helpMenuOpen}
+      onToggle={() => setHelpMenuOpen(o => !o)}
+      onHelpCenter={() => {
+        window.open("https://tripmappa.com/help", "_blank");
+        setHelpMenuOpen(false);
+      }}
+      onReportIssue={() => {
+        setModal({ type: "report" });
+        setHelpMenuOpen(false);
+      }}
+      wrapRef={helpWrapRef}
+    />
+  );
+
   function handleViewTrip(trip) {
     const tripAnswers = stripSessionOnlyAnswers(trip.answers || {});
     setOrigin(trip.origin);
@@ -2781,6 +2839,31 @@ export default function App() {
     return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
   }
 
+  if (view === "preferences" && user) {
+    return (
+      <>
+        <div className={`app-wrap ${theme} profile-view-wrap`}>
+          {renderAppNavBar("app")}
+          <ErrorBoundary label="preferences" title="Could not show preferences">
+            <UserPreferencesPage
+              accessToken={session?.access_token}
+              onBack={() => setView("profile")}
+              onToast={toast_}
+              onSaved={prefs => { planPreferencesRef.current = prefs || {}; }}
+            />
+          </ErrorBoundary>
+        </div>
+        <Toast
+          message={toast}
+          isGold={toastIsGold}
+          isError={toastIsError}
+          actionLabel={toastAction?.label}
+          onAction={toastAction?.onClick}
+        />
+      </>
+    );
+  }
+
   if (view === "profile" && user) {
     return (
       <>
@@ -2816,6 +2899,7 @@ export default function App() {
             onUpdateEmail={updateEmail}
             onUpdatePassword={updatePassword}
             onManageSubscription={handleManageSubscription}
+            onOpenPreferences={openProfilePreferences}
             toast={toast_}
             scrollToSection={profileScrollTo}
           />
@@ -2890,18 +2974,13 @@ export default function App() {
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
-        exploreRangeEnabled={heroExploreEnabled}
-        exploreDriveTimeSeconds={heroExploreDriveSeconds}
-        exploreLoading={heroExploreLoading}
-        exploreError={heroExploreError}
-        explorePolygon={heroExplorePolygon}
-        explorePlaces={heroExplorePlaces}
-        exploreMapCenter={heroOriginCoords}
-        onExploreToggle={handleHeroExploreToggle}
-        onExploreDriveTimeChange={handleHeroExploreDriveTimeChange}
-        onExploreMapClick={handleHeroExploreMapClick}
-        onExplorePlaceSelect={handleHeroExplorePlaceSelect}
       />
+      {founderWelcomeName && (
+        <FounderWelcomeOverlay
+          firstName={founderWelcomeName}
+          onDismiss={() => setFounderWelcomeName(null)}
+        />
+      )}
       {authModal === "signup" && (
         <EmailModal
           email={heroEmail}
@@ -2959,6 +3038,12 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />
+      {founderWelcomeName && (
+        <FounderWelcomeOverlay
+          firstName={founderWelcomeName}
+          onDismiss={() => setFounderWelcomeName(null)}
+        />
+      )}
       {renderAccountSidebar()}
       {renderNavSidebar()}
     </>
@@ -3178,6 +3263,7 @@ export default function App() {
                   creditsLabel={formatCreditsLabel(creditStatus)}
                   collapsed={cardCollapsed}
                   frozen={!!stepAnim}
+                  helpButton={planPanelHelpButton}
                   onResetPlan={requestResetPlan}
                   onExpand={() => setCardCollapsed(false)}
                   onCollapse={() => setCardCollapsed(true)}
@@ -3189,15 +3275,7 @@ export default function App() {
                       {tab === "plan" ? "Plan Your Trip" : tab === "trips" ? "Trips" : "Live Sharing"}
                     </div>
                     <div className="float-card-header-actions" onClick={e => e.stopPropagation()}>
-                      <div className="float-card-help-wrap" ref={helpWrapRef}>
-                        <button type="button" className="float-card-help-btn" onClick={() => setHelpMenuOpen(o => !o)} aria-label="Help">?</button>
-                        {helpMenuOpen && (
-                          <div className="help-menu">
-                            <button type="button" className="help-menu-item" onClick={() => { window.open("https://tripmappa.com/help", "_blank"); setHelpMenuOpen(false); }}>Help center</button>
-                            <button type="button" className="help-menu-item" onClick={() => { setModal({ type: "report" }); setHelpMenuOpen(false); }}>Report an issue</button>
-                          </div>
-                        )}
-                      </div>
+                      {planPanelHelpButton}
                       <button
                         type="button"
                         className={`float-card-chevron-btn${cardCollapsed ? "" : " open"}`}

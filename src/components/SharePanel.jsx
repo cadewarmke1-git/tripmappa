@@ -19,6 +19,7 @@ import {
   breadcrumbsToPath,
 } from "../lib/liveShareUtils.js";
 import { useLiveLocationBroadcast } from "../hooks/useLiveLocationBroadcast.js";
+import LocationPermissionModal from "./LocationPermissionModal.jsx";
 
 const WARN_KEY = "tripmappa-live-share-warn";
 
@@ -48,6 +49,8 @@ export default function SharePanel({
   const [showSmsInput, setShowSmsInput] = useState(false);
   const [smsPhone, setSmsPhone] = useState("");
   const [showArrival, setShowArrival] = useState(false);
+  const [locationPromptOpen, setLocationPromptOpen] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
   const [showWarning, setShowWarning] = useState(() => {
     try { return !sessionStorage.getItem(WARN_KEY); } catch { return true; }
   });
@@ -123,32 +126,33 @@ export default function SharePanel({
     });
   }, [shareToken, sharing, user?.id, displayName]);
 
-  async function handleShareMyTrip() {
-    if (!user || !session?.access_token) {
-      toast?.("Sign in to share your live location");
-      return;
-    }
-    if (!hasTrip || !origin?.trim() || !dest?.trim()) {
-      toast?.("Plan a trip first to share live location");
-      return;
-    }
+  function requestDeviceLocation() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported in this browser"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        err => reject(err),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+      );
+    });
+  }
 
+  async function startLiveShareWithLocation() {
     setStarting(true);
     try {
       let lat = null;
       let lng = null;
-      if (navigator.geolocation) {
-        await new Promise(resolve => {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              lat = pos.coords.latitude;
-              lng = pos.coords.longitude;
-              resolve();
-            },
-            () => resolve(),
-            { enableHighAccuracy: true, timeout: 8000 },
-          );
-        });
+      try {
+        const coords = await requestDeviceLocation();
+        lat = coords.lat;
+        lng = coords.lng;
+      } catch {
+        setLocationDenied(true);
+        setLocationPromptOpen(true);
+        return;
       }
 
       const result = await createLiveShare(session.access_token, {
@@ -175,6 +179,35 @@ export default function SharePanel({
       toast?.(err.message || "Could not start live sharing");
     } finally {
       setStarting(false);
+    }
+  }
+
+  async function handleShareMyTrip() {
+    if (!user || !session?.access_token) {
+      toast?.("Sign in to share your live location");
+      return;
+    }
+    if (!hasTrip || !origin?.trim() || !dest?.trim()) {
+      toast?.("Plan a trip first to share live location");
+      return;
+    }
+    if (!navigator.geolocation) {
+      toast?.("Location is not available in this browser", { isError: true });
+      return;
+    }
+    setLocationDenied(false);
+    setLocationPromptOpen(true);
+  }
+
+  async function handleAllowLocation() {
+    setLocationPromptOpen(false);
+    await startLiveShareWithLocation();
+  }
+
+  function handleDenyLocation() {
+    setLocationPromptOpen(false);
+    if (locationDenied) {
+      toast?.("Live sharing needs location access. Enable it in browser settings to continue.", { isError: true });
     }
   }
 
@@ -407,6 +440,12 @@ export default function SharePanel({
           </button>
         </div>
       )}
+      <LocationPermissionModal
+        open={locationPromptOpen}
+        denied={locationDenied}
+        onAllow={handleAllowLocation}
+        onDeny={handleDenyLocation}
+      />
     </div>
   );
 }
