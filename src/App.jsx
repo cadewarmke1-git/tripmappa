@@ -77,6 +77,7 @@ import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { parseLiveShareToken } from "./lib/liveShareApi.js";
+import { resolveAppRoute } from "./lib/appRouter.js";
 import EmailModal from "./components/EmailModal.jsx";
 import SignInModal from "./components/auth/SignInModal.jsx";
 import PhoneModal from "./components/auth/PhoneModal.jsx";
@@ -182,6 +183,7 @@ export default function App() {
   const [planBoundaryKey, setPlanBoundaryKey] = useState(0);
   const [mapBoundaryKey, setMapBoundaryKey] = useState(0);
   const [savedPlanSnapshot, setSavedPlanSnapshot] = useState(null);
+  const AppRoutePage = useMemo(() => resolveAppRoute(), []);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
   const [navSidebarOpen, setNavSidebarOpen] = useState(false);
@@ -2769,6 +2771,10 @@ export default function App() {
     const normalized = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
     setEnrichmentNoticeDismissed(false);
     await enrichAndSetTrip(stops, roadStops, normalized);
+  }
+
+  if (AppRoutePage) {
+    return <AppRoutePage />;
   }
 
   if (liveShareToken) {

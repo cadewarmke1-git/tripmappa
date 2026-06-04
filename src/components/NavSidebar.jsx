@@ -106,14 +106,18 @@ export default function NavSidebar({
           </div>
         )}
 
-        {showThemeToggle && (
-          <div className="nav-sidebar-footer">
+        <div className="nav-sidebar-footer">
+          <nav className="nav-sidebar-legal" aria-label="Legal">
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+          </nav>
+          {showThemeToggle && (
             <div className="nav-sidebar-theme-row">
               <span className="nav-sidebar-theme-label">Appearance</span>
               <ThemeToggle theme={theme} onToggle={onThemeToggle} />
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </>,
     document.body,

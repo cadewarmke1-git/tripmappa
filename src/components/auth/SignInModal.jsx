@@ -71,6 +71,12 @@ export default function SignInModal({
           <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
             {loading ? <RouteDrawingLoader variant="button" /> : "Sign In →"}
           </button>
+          <p className="auth-modal-footer">
+            By continuing you agree to our{" "}
+            <a href="/terms" className="auth-modal-link-btn">Terms of Service</a>
+            {" "}and{" "}
+            <a href="/privacy" className="auth-modal-link-btn">Privacy Policy</a>.
+          </p>
         </form>
 
         <div className="auth-modal-divider"><span>or sign in with</span></div>
