@@ -784,21 +784,20 @@ html[data-layout="mobile"] .nav-sidebar.day {
   background: var(--color-surface) !important;
 }
 
-/* Auth modal night defaults */
-.app-wrap.night .auth-modal,
-.hero.night ~ .auth-modal-overlay .auth-modal,
-.auth-modal-overlay .auth-modal {
+/* Auth modal defaults — skip when explicit tm-theme palette is on overlay */
+.auth-modal-overlay:not(.tm-theme-night):not(.tm-theme-day) .auth-modal,
+.app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-modal {
   background: var(--color-surface);
   color: #fff;
 }
 
-.app-wrap.night .auth-field-input {
+.app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-field-input {
   background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #fff !important;
 }
 
-.app-wrap.night .auth-social-btn {
+.app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-social-btn {
   background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #fff !important;

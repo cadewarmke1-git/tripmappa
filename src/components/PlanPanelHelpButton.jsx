@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 export default function PlanPanelHelpButton({
   open,
   onToggle,
@@ -7,48 +5,24 @@ export default function PlanPanelHelpButton({
   onReportIssue,
   wrapRef,
 }) {
-  const [tipVisible, setTipVisible] = useState(false);
-
-  function showTip() {
-    setTipVisible(true);
-  }
-
-  function hideTip() {
-    setTipVisible(false);
-  }
-
   return (
-    <div
-      className={`float-card-help-wrap${tipVisible ? " is-tip-visible" : ""}`}
-      ref={wrapRef}
-      onMouseEnter={showTip}
-      onMouseLeave={hideTip}
-      onFocus={showTip}
-      onBlur={hideTip}
-    >
+    <div className="float-card-help-wrap" ref={wrapRef}>
       <button
         type="button"
         className="float-card-help-btn"
-        onClick={() => {
-          onToggle?.();
-          hideTip();
-        }}
-        onTouchStart={() => setTipVisible(true)}
+        onClick={onToggle}
         aria-label="Help — open menu for help center and reporting issues"
         aria-expanded={open}
-        aria-describedby="plan-panel-help-tip"
+        aria-haspopup="menu"
       >
         ?
-        <span className="float-card-help-tooltip" id="plan-panel-help-tip" role="tooltip">
-          Open help options: visit the help center or report an issue with your trip plan.
-        </span>
       </button>
       {open && (
-        <div className="help-menu">
-          <button type="button" className="help-menu-item" onClick={onHelpCenter}>
+        <div className="help-menu" role="menu">
+          <button type="button" className="help-menu-item" role="menuitem" onClick={onHelpCenter}>
             Help center
           </button>
-          <button type="button" className="help-menu-item" onClick={onReportIssue}>
+          <button type="button" className="help-menu-item" role="menuitem" onClick={onReportIssue}>
             Report an issue
           </button>
         </div>

@@ -27,9 +27,30 @@ const LODGING_CHOICES = [
 
 const PARTY_CHOICES = ["1", "2", "3 to 5", "6 or more"];
 
+const SECTIONS = [
+  { id: "vehicle", label: "Vehicle type", key: "vehicle", choices: VEHICLE_CHOICES },
+  { id: "fuel_type", label: "Fuel type", key: "fuel_type", choices: FUEL_TYPE_CHOICES },
+  { id: "travelers", label: "Party size", key: "travelers", choices: PARTY_CHOICES },
+  { id: "lodging", label: "Lodging preference", key: "lodging", choices: LODGING_CHOICES },
+  { id: "stops_interests", label: "Interests along the route", key: "stops_interests", choices: STOPS_INTERESTS_BASE, multi: true },
+  { id: "accessibility", label: "Accessibility and medical", key: "accessibility", choices: ACCESSIBILITY_CHOICES, multi: true },
+  { id: "dietary", label: "Dietary preferences", key: "dietary", choices: DIETARY_CHOICES, multi: true },
+  { id: "trip_budget", label: "Budget range", key: "trip_budget", choices: TRIP_BUDGET_CHOICES },
+];
+
 function toggleInList(list, value) {
   if (!Array.isArray(list)) return [value];
   return list.includes(value) ? list.filter(v => v !== value) : [...list, value];
+}
+
+function summarizeValue(section, prefs) {
+  const value = prefs[section.key];
+  if (section.multi) {
+    if (!Array.isArray(value) || value.length === 0) return "None selected";
+    if (value.length <= 2) return value.join(", ");
+    return `${value.length} selected`;
+  }
+  return value || "Not set";
 }
 
 export default function UserPreferencesPage({
@@ -40,6 +61,7 @@ export default function UserPreferencesPage({
 }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState(() => new Set(["vehicle"]));
   const [prefs, setPrefs] = useState({
     vehicle: "",
     fuel_type: "",
@@ -96,108 +118,89 @@ export default function UserPreferencesPage({
     setPrefs(prev => ({ ...prev, [key]: value }));
   }
 
+  function toggleSection(id) {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
     <div className="user-preferences-page">
-      <div className="user-preferences-header">
-        <button type="button" className="profile-back-btn" onClick={onBack}>← Back to profile</button>
+      <header className="user-preferences-header">
+        <button type="button" className="user-preferences-close" onClick={onBack}>
+          ← Back
+        </button>
         <h1 className="user-preferences-title">Trip preferences</h1>
         <p className="user-preferences-lead">
           Saved defaults pre-fill the planner so you can skip repeating the same answers.
         </p>
-      </div>
+      </header>
 
       {loading ? (
         <p className="user-preferences-loading">Loading preferences…</p>
       ) : (
-        <form
-          className="user-preferences-form"
-          onSubmit={e => {
-            e.preventDefault();
-            handleSave();
-          }}
-        >
-          <PreferenceSection label="Vehicle type">
-            <ChoiceGrid
-              choices={VEHICLE_CHOICES}
-              selected={prefs.vehicle}
-              onSelect={v => setField("vehicle", v)}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Fuel type">
-            <ChoiceGrid
-              choices={FUEL_TYPE_CHOICES}
-              selected={prefs.fuel_type}
-              onSelect={v => setField("fuel_type", v)}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Party size">
-            <ChoiceGrid
-              choices={PARTY_CHOICES}
-              selected={prefs.travelers}
-              onSelect={v => setField("travelers", v)}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Lodging preference">
-            <ChoiceGrid
-              choices={LODGING_CHOICES}
-              selected={prefs.lodging}
-              onSelect={v => setField("lodging", v)}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Interests along the route">
-            <ChoiceGrid
-              multi
-              choices={STOPS_INTERESTS_BASE}
-              selected={prefs.stops_interests}
-              onSelect={v => setField("stops_interests", toggleInList(prefs.stops_interests, v))}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Accessibility and medical">
-            <ChoiceGrid
-              multi
-              choices={ACCESSIBILITY_CHOICES}
-              selected={prefs.accessibility}
-              onSelect={v => setField("accessibility", toggleInList(prefs.accessibility, v))}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Dietary preferences">
-            <ChoiceGrid
-              multi
-              choices={DIETARY_CHOICES}
-              selected={prefs.dietary}
-              onSelect={v => setField("dietary", toggleInList(prefs.dietary, v))}
-            />
-          </PreferenceSection>
-
-          <PreferenceSection label="Budget range">
-            <ChoiceGrid
-              choices={TRIP_BUDGET_CHOICES}
-              selected={prefs.trip_budget}
-              onSelect={v => setField("trip_budget", v)}
-            />
-          </PreferenceSection>
-
-          <button type="submit" className="btn-generate user-preferences-save" disabled={saving}>
-            {saving ? "Saving…" : "Save preferences"}
-          </button>
-        </form>
+        <>
+          <form
+            className="user-preferences-form"
+            onSubmit={e => {
+              e.preventDefault();
+              handleSave();
+            }}
+          >
+            <div className="user-preferences-sections">
+              {SECTIONS.map(section => {
+                const isOpen = expanded.has(section.id);
+                return (
+                  <section key={section.id} className="user-preferences-collapsible">
+                    <button
+                      type="button"
+                      className="user-preferences-collapsible-toggle"
+                      aria-expanded={isOpen}
+                      onClick={() => toggleSection(section.id)}
+                    >
+                      <span className="user-preferences-collapsible-heading">
+                        <span className="user-preferences-section-title">{section.label}</span>
+                        {!isOpen && (
+                          <span className="user-preferences-collapsible-summary">
+                            {summarizeValue(section, prefs)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="user-preferences-collapsible-chevron" aria-hidden="true">
+                        {isOpen ? "−" : "+"}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="user-preferences-collapsible-body">
+                        <ChoiceGrid
+                          choices={section.choices}
+                          selected={prefs[section.key]}
+                          multi={section.multi}
+                          onSelect={v => setField(section.key, v)}
+                        />
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          </form>
+          <div className="user-preferences-footer-sticky">
+            <button
+              type="button"
+              className="btn-generate user-preferences-save"
+              disabled={saving}
+              onClick={handleSave}
+            >
+              {saving ? "Saving…" : "Save preferences"}
+            </button>
+          </div>
+        </>
       )}
     </div>
-  );
-}
-
-function PreferenceSection({ label, children }) {
-  return (
-    <section className="user-preferences-section">
-      <h2 className="user-preferences-section-title">{label}</h2>
-      {children}
-    </section>
   );
 }
 
@@ -213,7 +216,7 @@ function ChoiceGrid({ choices, selected, onSelect, multi = false }) {
             key={choice}
             type="button"
             className={`user-preferences-choice${active ? " is-active" : ""}`}
-            onClick={() => onSelect(choice)}
+            onClick={() => onSelect(multi ? toggleInList(selected, choice) : choice)}
           >
             {choice}
           </button>

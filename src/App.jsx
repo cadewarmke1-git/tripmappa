@@ -92,8 +92,7 @@ import HomeAddressModal from "./components/HomeAddressModal.jsx";
 import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import Toast from "./components/Toast.jsx";
-import AccountSidebar from "./components/AccountSidebar.jsx";
-import NavSidebar from "./components/NavSidebar.jsx";
+import AppSidebar from "./components/AppSidebar.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
@@ -193,12 +192,9 @@ export default function App() {
   const [profileScrollTo, setProfileScrollTo] = useState(null);
   const [founderWelcomeName, setFounderWelcomeName] = useState(null);
   const planPreferencesRef = useRef({});
-  const [navSidebarOpen, setNavSidebarOpen] = useState(false);
-  const [navSidebarClosing, setNavSidebarClosing] = useState(false);
-  const [accountSidebarOpen, setAccountSidebarOpen] = useState(false);
-  const [accountSidebarClosing, setAccountSidebarClosing] = useState(false);
-  const navSidebarTimerRef = useRef(null);
-  const accountSidebarTimerRef = useRef(null);
+  const [appSidebarOpen, setAppSidebarOpen] = useState(false);
+  const [appSidebarClosing, setAppSidebarClosing] = useState(false);
+  const appSidebarTimerRef = useRef(null);
   const highlightTimerRef = useRef(null);
 
   function openAuthModal(mode) {
@@ -1042,54 +1038,28 @@ export default function App() {
     }
   }
 
-  function openNavSidebar() {
-    if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
-    setAccountSidebarOpen(false);
-    setAccountSidebarClosing(false);
-    if (navSidebarTimerRef.current) clearTimeout(navSidebarTimerRef.current);
-    setNavSidebarClosing(false);
-    setNavSidebarOpen(true);
+  function openAppSidebar() {
+    if (appSidebarTimerRef.current) clearTimeout(appSidebarTimerRef.current);
+    setAppSidebarClosing(false);
+    setAppSidebarOpen(true);
   }
 
-  function closeNavSidebar() {
-    if (!navSidebarOpen || navSidebarClosing) return;
-    setNavSidebarClosing(true);
-    setNavSidebarOpen(false);
-    navSidebarTimerRef.current = setTimeout(() => {
-      setNavSidebarClosing(false);
+  function closeAppSidebar() {
+    if (!appSidebarOpen || appSidebarClosing) return;
+    setAppSidebarClosing(true);
+    setAppSidebarOpen(false);
+    appSidebarTimerRef.current = setTimeout(() => {
+      setAppSidebarClosing(false);
     }, 280);
   }
 
-  function toggleNavSidebar() {
-    if (navSidebarOpen) closeNavSidebar();
-    else openNavSidebar();
-  }
-
-  function openAccountSidebar() {
-    if (navSidebarTimerRef.current) clearTimeout(navSidebarTimerRef.current);
-    setNavSidebarOpen(false);
-    setNavSidebarClosing(false);
-    if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
-    setAccountSidebarClosing(false);
-    setAccountSidebarOpen(true);
-  }
-
-  function closeAccountSidebar() {
-    if (!accountSidebarOpen || accountSidebarClosing) return;
-    setAccountSidebarClosing(true);
-    setAccountSidebarOpen(false);
-    accountSidebarTimerRef.current = setTimeout(() => {
-      setAccountSidebarClosing(false);
-    }, 280);
-  }
-
-  function toggleAccountSidebar() {
-    if (accountSidebarOpen) closeAccountSidebar();
-    else openAccountSidebar();
+  function toggleAppSidebar() {
+    if (appSidebarOpen) closeAppSidebar();
+    else openAppSidebar();
   }
 
   function openPlanPanel() {
-    closeNavSidebar();
+    closeAppSidebar();
     setView("app");
     setTab("plan");
     setCardCollapsed(false);
@@ -1128,17 +1098,17 @@ export default function App() {
   }
 
   function handleSidebarOpenProfile() {
-    closeAccountSidebar();
+    closeAppSidebar();
     openProfile();
   }
 
   function handleSidebarOpenSettings() {
-    closeAccountSidebar();
+    closeAppSidebar();
     openProfileSettings();
   }
 
   function handleSidebarSignOut() {
-    closeAccountSidebar();
+    closeAppSidebar();
     handleSignOut();
   }
 
@@ -1147,16 +1117,16 @@ export default function App() {
   }
 
   function handleNavOpenTrips() {
-    closeNavSidebar();
+    closeAppSidebar();
     openMyTrips();
   }
 
   function handleNavOpenShare() {
-    closeNavSidebar();
+    closeAppSidebar();
     openSharePanel();
   }
 
-  const navSidebarActiveNav = useMemo(() => {
+  const appSidebarActiveNav = useMemo(() => {
     if (view !== "app") return null;
     if (tab === "plan") return "plan";
     if (tab === "trips") return "trips";
@@ -1164,33 +1134,17 @@ export default function App() {
     return null;
   }, [view, tab]);
 
-  function renderNavSidebar() {
+  function renderAppSidebar() {
     return (
-      <NavSidebar
-        open={navSidebarOpen}
-        closing={navSidebarClosing}
-        blockedByOtherSidebar={accountSidebarOpen || accountSidebarClosing}
-        onClose={closeNavSidebar}
+      <AppSidebar
+        open={appSidebarOpen}
+        closing={appSidebarClosing}
+        onClose={closeAppSidebar}
         theme={theme}
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
-        activeNav={navSidebarActiveNav}
-        user={user}
-        onLogin={() => openAuthModal("signin")}
-        onSignup={() => openAuthModal("signup")}
-      />
-    );
-  }
-
-  function renderAccountSidebar() {
-    if (!user) return null;
-    return (
-      <AccountSidebar
-        open={accountSidebarOpen}
-        closing={accountSidebarClosing}
-        blockedByOtherSidebar={navSidebarOpen || navSidebarClosing}
-        onClose={closeAccountSidebar}
+        activeNav={appSidebarActiveNav}
         user={user}
         profile={userProfile}
         creditStatus={creditStatus}
@@ -1200,6 +1154,8 @@ export default function App() {
         onOpenPreferences={openProfilePreferences}
         onManageSubscription={handleManageSubscription}
         onSignOut={handleSidebarSignOut}
+        onGetStarted={() => openAuthModal("signup")}
+        onSignIn={() => openAuthModal("signin")}
         onReferralCopied={() => toast_("Referral link copied", true)}
         onReferralCopyError={() => toast_("Could not copy link", { isError: true })}
       />
@@ -1212,15 +1168,13 @@ export default function App() {
         variant={variant}
         theme={theme}
         onGoHome={goHome}
-        navSidebarOpen={navSidebarOpen}
-        onToggleNavSidebar={toggleNavSidebar}
+        appSidebarOpen={appSidebarOpen}
+        onToggleAppSidebar={toggleAppSidebar}
         user={user}
         userProfile={userProfile}
         creditStatus={creditStatus}
-        accountSidebarOpen={accountSidebarOpen}
-        onToggleAccountSidebar={toggleAccountSidebar}
-        onLogin={() => openAuthModal("signin")}
-        onSignup={() => openAuthModal("signup")}
+        onGetStarted={() => openAuthModal("signup")}
+        onSignIn={() => openAuthModal("signin")}
         liveSharingActive={liveSharingActive}
       />
     );
@@ -1267,12 +1221,9 @@ export default function App() {
   }
 
   function goHome() {
-    setNavSidebarOpen(false);
-    setNavSidebarClosing(false);
-    setAccountSidebarOpen(false);
-    setAccountSidebarClosing(false);
-    if (navSidebarTimerRef.current) clearTimeout(navSidebarTimerRef.current);
-    if (accountSidebarTimerRef.current) clearTimeout(accountSidebarTimerRef.current);
+    setAppSidebarOpen(false);
+    setAppSidebarClosing(false);
+    if (appSidebarTimerRef.current) clearTimeout(appSidebarTimerRef.current);
     setAuthModal(null);
     setShowUpgradeModal(false);
     setShowHomeAddressModal(false);
@@ -2923,8 +2874,7 @@ export default function App() {
           actionLabel={toastAction?.label}
           onAction={toastAction?.onClick}
         />
-        {renderAccountSidebar()}
-        {renderNavSidebar()}
+        {renderAppSidebar()}
       </>
     );
   }
@@ -2942,11 +2892,6 @@ export default function App() {
         heroOriginRef={heroOriginRef}
         heroDestRef={heroDestRef}
         user={user}
-        onLogin={() => openAuthModal("signin")}
-        onSignup={() => openAuthModal("signup")}
-        onGoogle={() => handleOAuth("google")}
-        onFacebook={() => handleOAuth("facebook")}
-        onApple={() => handleOAuth("apple")}
         onSwap={swapHeroCities}
         onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; }}
         onHeroDestAcLoad={ac => { heroDestAcRef.current = ac; }}
@@ -2962,13 +2907,11 @@ export default function App() {
         onHeroOriginChange={v => { setHeroOrigin(v); setHeroOriginError(""); }}
         onHeroDestChange={v => { setHeroDest(v); setHeroDestError(""); }}
         onLaunch={launchFromHero}
-        onShowEmailModal={() => openAuthModal("signup")}
-        onShowPhoneModal={openPhoneModal}
         onGoHome={goHome}
-        navSidebarOpen={navSidebarOpen}
-        onToggleNavSidebar={toggleNavSidebar}
-        accountSidebarOpen={accountSidebarOpen}
-        onToggleAccountSidebar={toggleAccountSidebar}
+        appSidebarOpen={appSidebarOpen}
+        onToggleAppSidebar={toggleAppSidebar}
+        onGetStarted={() => openAuthModal("signup")}
+        onSignIn={() => openAuthModal("signin")}
         userProfile={userProfile}
         creditStatus={creditStatus}
         planDraft={planDraft}
@@ -3044,8 +2987,7 @@ export default function App() {
           onDismiss={() => setFounderWelcomeName(null)}
         />
       )}
-      {renderAccountSidebar()}
-      {renderNavSidebar()}
+      {renderAppSidebar()}
     </>
   );
 
@@ -3506,8 +3448,7 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />
-      {renderAccountSidebar()}
-      {renderNavSidebar()}
+      {renderAppSidebar()}
     </>
   );
 }

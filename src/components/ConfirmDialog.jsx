@@ -1,3 +1,5 @@
+import { useTheme } from "../context/ThemeContext.jsx";
+
 /** Lightweight confirm modal for destructive or irreversible actions. */
 export default function ConfirmDialog({
   open,
@@ -9,10 +11,15 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const { theme } = useTheme();
   if (!open) return null;
 
   return (
-    <div className="modal-overlay confirm-dialog-overlay" role="presentation" onClick={onCancel}>
+    <div
+      className={`modal-overlay confirm-dialog-overlay tm-theme-${theme}`}
+      role="presentation"
+      onClick={onCancel}
+    >
       <div
         className="modal confirm-dialog"
         role="alertdialog"

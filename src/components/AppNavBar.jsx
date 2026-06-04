@@ -5,22 +5,19 @@ import { getHeroSurfaceCssVars } from "../lib/palette.js";
 
 export default function AppNavBar({
   onGoHome,
-  navSidebarOpen = false,
-  onToggleNavSidebar,
+  appSidebarOpen = false,
+  onToggleAppSidebar,
   user,
   userProfile,
   creditStatus = null,
-  accountSidebarOpen = false,
-  onToggleAccountSidebar,
-  onLogin,
-  onSignup,
+  onGetStarted,
+  onSignIn,
   liveSharingActive = false,
   variant = "app",
   theme = "night",
 }) {
   const isHero = variant === "hero";
 
-  /* Never add the page `.hero` class here — it applies full-viewport layout and blocks clicks. */
   return (
     <nav
       className={`app-nav-bar nav app-nav-bar--${theme}${isHero ? " transparent" : " nav-app app-nav-with-logo"}`}
@@ -38,23 +35,26 @@ export default function AppNavBar({
           </span>
         )}
         <div className="app-nav-bar-actions">
-          <HamburgerMenuButton isOpen={navSidebarOpen} onClick={onToggleNavSidebar} />
-          {user ? (
+          {!user && (
+            <>
+              <button type="button" className="nav-btn nav-btn-signup nav-auth-cta" onClick={onGetStarted}>
+                Get Started
+              </button>
+              <button type="button" className="nav-btn nav-btn-ghost nav-auth-cta" onClick={onSignIn}>
+                Sign In
+              </button>
+            </>
+          )}
+          <HamburgerMenuButton isOpen={appSidebarOpen} onClick={onToggleAppSidebar} />
+          {user && (
             <AccountSidebarTrigger
               user={user}
               profile={userProfile}
               creditStatus={creditStatus}
-              isOpen={accountSidebarOpen}
-              onOpen={onToggleAccountSidebar}
+              isOpen={appSidebarOpen}
+              onOpen={onToggleAppSidebar}
               heroTheme={isHero ? theme : undefined}
             />
-          ) : (
-            <>
-              <button type="button" className="nav-btn nav-btn-ghost nav-auth-desktop" onClick={onLogin}>Log in</button>
-              {!isHero && (
-                <button type="button" className="nav-btn nav-btn-signup nav-auth-desktop" onClick={onSignup}>Sign up</button>
-              )}
-            </>
           )}
         </div>
       </div>
