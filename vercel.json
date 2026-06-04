@@ -3,7 +3,8 @@
     { "source": "/api/(.*)", "destination": "/api/router?path=$1" },
     { "source": "/live/:token", "destination": "/index.html" },
     { "source": "/privacy", "destination": "/index.html" },
-    { "source": "/terms", "destination": "/index.html" }
+    { "source": "/terms", "destination": "/index.html" },
+    { "source": "/auth/callback", "destination": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cron/trial-jobs", "schedule": "0 15 * * *" }

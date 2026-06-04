@@ -27,7 +27,7 @@ export default function SignInModal({
   }
 
   return (
-    <div className={`modal-overlay auth-modal-overlay tm-theme-${theme}`} role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div
         ref={dialogRef}
         className="auth-modal"

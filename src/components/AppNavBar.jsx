@@ -1,17 +1,19 @@
 import NavLogo from "./NavLogo.jsx";
-import HamburgerMenuButton from "./HamburgerMenuButton.jsx";
-import AccountSidebarTrigger from "./AccountSidebarTrigger.jsx";
+import NavProfileMenu from "./NavProfileMenu.jsx";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
 
 export default function AppNavBar({
   onGoHome,
-  appSidebarOpen = false,
-  onToggleAppSidebar,
   user,
   userProfile,
   creditStatus = null,
+  activeNav = null,
+  onOpenPlan,
+  onOpenTrips,
+  onOpenShare,
   onGetStarted,
   onSignIn,
+  onSignOut,
   liveSharingActive = false,
   variant = "app",
   theme = "night",
@@ -35,27 +37,19 @@ export default function AppNavBar({
           </span>
         )}
         <div className="app-nav-bar-actions">
-          {!user && (
-            <>
-              <button type="button" className="nav-btn nav-btn-signup nav-auth-cta" onClick={onGetStarted}>
-                Get Started
-              </button>
-              <button type="button" className="nav-btn nav-btn-ghost nav-auth-cta" onClick={onSignIn}>
-                Sign In
-              </button>
-            </>
-          )}
-          <HamburgerMenuButton isOpen={appSidebarOpen} onClick={onToggleAppSidebar} />
-          {user && (
-            <AccountSidebarTrigger
-              user={user}
-              profile={userProfile}
-              creditStatus={creditStatus}
-              isOpen={appSidebarOpen}
-              onOpen={onToggleAppSidebar}
-              heroTheme={isHero ? theme : undefined}
-            />
-          )}
+          <NavProfileMenu
+            user={user}
+            profile={userProfile}
+            creditStatus={creditStatus}
+            activeNav={activeNav}
+            heroTheme={isHero ? theme : undefined}
+            onOpenPlan={onOpenPlan}
+            onOpenTrips={onOpenTrips}
+            onOpenShare={onOpenShare}
+            onGetStarted={onGetStarted}
+            onSignIn={onSignIn}
+            onSignOut={onSignOut}
+          />
         </div>
       </div>
     </nav>

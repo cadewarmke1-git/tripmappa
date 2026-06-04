@@ -30,10 +30,13 @@ export default function HeroView({
   onHeroDestChange,
   onLaunch,
   onGoHome,
-  appSidebarOpen = false,
-  onToggleAppSidebar,
+  activeNav = null,
+  onOpenPlan,
+  onOpenTrips,
+  onOpenShare,
   onGetStarted,
   onSignIn,
+  onSignOut,
   userProfile,
   creditStatus = null,
   planDraft = null,
@@ -64,13 +67,16 @@ export default function HeroView({
         variant="hero"
         theme={heroTheme}
         onGoHome={onGoHome}
-        appSidebarOpen={appSidebarOpen}
-        onToggleAppSidebar={onToggleAppSidebar}
         user={user}
         userProfile={userProfile}
         creditStatus={creditStatus}
+        activeNav={activeNav}
+        onOpenPlan={onOpenPlan}
+        onOpenTrips={onOpenTrips}
+        onOpenShare={onOpenShare}
         onGetStarted={onGetStarted}
         onSignIn={onSignIn}
+        onSignOut={onSignOut}
       />
 
       <div

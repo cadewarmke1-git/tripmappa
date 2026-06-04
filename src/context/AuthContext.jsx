@@ -105,8 +105,7 @@ export function AuthProvider({ children }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/`,
-          skipBrowserRedirect: false,
+          redirectTo: "https://tripmappa.com/auth/callback",
         },
       });
       if (error) throw error;

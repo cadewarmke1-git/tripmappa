@@ -11,9 +11,10 @@ export const SKY_PHASES = {
   night: "night",
 };
 
-/** App theme default: day before 7 PM local, night at/after 7 PM. */
+/** App theme follows the same sky-cycle surface as the hero (day vs night panels). */
 export function computeAutoTheme(now = new Date()) {
-  return now.getHours() >= 19 ? "night" : "day";
+  const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  return getHeroSurfaceTheme(hour);
 }
 
 /** Toggle target; clears manual override when it matches the time-based default. */

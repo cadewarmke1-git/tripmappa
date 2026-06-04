@@ -4,7 +4,7 @@ export default function OAuthComingSoonModal({ provider, onClose, onUseEmail, th
   const label = provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : "Apple";
 
   return (
-    <div className={`modal-overlay auth-modal-overlay tm-theme-${theme}`} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay auth-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="auth-modal auth-modal-compact">
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <BrandWordmark className="auth-modal-logo" as="div" />

@@ -92,7 +92,6 @@ import HomeAddressModal from "./components/HomeAddressModal.jsx";
 import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import Toast from "./components/Toast.jsx";
-import AppSidebar from "./components/AppSidebar.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
@@ -192,9 +191,6 @@ export default function App() {
   const [profileScrollTo, setProfileScrollTo] = useState(null);
   const [founderWelcomeName, setFounderWelcomeName] = useState(null);
   const planPreferencesRef = useRef({});
-  const [appSidebarOpen, setAppSidebarOpen] = useState(false);
-  const [appSidebarClosing, setAppSidebarClosing] = useState(false);
-  const appSidebarTimerRef = useRef(null);
   const highlightTimerRef = useRef(null);
 
   function openAuthModal(mode) {
@@ -1038,28 +1034,7 @@ export default function App() {
     }
   }
 
-  function openAppSidebar() {
-    if (appSidebarTimerRef.current) clearTimeout(appSidebarTimerRef.current);
-    setAppSidebarClosing(false);
-    setAppSidebarOpen(true);
-  }
-
-  function closeAppSidebar() {
-    if (!appSidebarOpen || appSidebarClosing) return;
-    setAppSidebarClosing(true);
-    setAppSidebarOpen(false);
-    appSidebarTimerRef.current = setTimeout(() => {
-      setAppSidebarClosing(false);
-    }, 280);
-  }
-
-  function toggleAppSidebar() {
-    if (appSidebarOpen) closeAppSidebar();
-    else openAppSidebar();
-  }
-
   function openPlanPanel() {
-    closeAppSidebar();
     setView("app");
     setTab("plan");
     setCardCollapsed(false);
@@ -1097,36 +1072,19 @@ export default function App() {
     window.scrollTo(0, 0);
   }
 
-  function handleSidebarOpenProfile() {
-    closeAppSidebar();
-    openProfile();
-  }
-
-  function handleSidebarOpenSettings() {
-    closeAppSidebar();
-    openProfileSettings();
-  }
-
-  function handleSidebarSignOut() {
-    closeAppSidebar();
-    handleSignOut();
-  }
-
   function handleNavOpenPlan() {
     openPlanPanel();
   }
 
   function handleNavOpenTrips() {
-    closeAppSidebar();
     openMyTrips();
   }
 
   function handleNavOpenShare() {
-    closeAppSidebar();
     openSharePanel();
   }
 
-  const appSidebarActiveNav = useMemo(() => {
+  const navActiveTab = useMemo(() => {
     if (view !== "app") return null;
     if (tab === "plan") return "plan";
     if (tab === "trips") return "trips";
@@ -1134,47 +1092,22 @@ export default function App() {
     return null;
   }, [view, tab]);
 
-  function renderAppSidebar() {
-    return (
-      <AppSidebar
-        open={appSidebarOpen}
-        closing={appSidebarClosing}
-        onClose={closeAppSidebar}
-        theme={theme}
-        onOpenPlan={handleNavOpenPlan}
-        onOpenTrips={handleNavOpenTrips}
-        onOpenShare={handleNavOpenShare}
-        activeNav={appSidebarActiveNav}
-        user={user}
-        profile={userProfile}
-        creditStatus={creditStatus}
-        onRefreshCredits={refreshCredits}
-        onOpenProfile={handleSidebarOpenProfile}
-        onOpenSettings={handleSidebarOpenSettings}
-        onOpenPreferences={openProfilePreferences}
-        onManageSubscription={handleManageSubscription}
-        onSignOut={handleSidebarSignOut}
-        onGetStarted={() => openAuthModal("signup")}
-        onSignIn={() => openAuthModal("signin")}
-        onReferralCopied={() => toast_("Referral link copied", true)}
-        onReferralCopyError={() => toast_("Could not copy link", { isError: true })}
-      />
-    );
-  }
-
   function renderAppNavBar(variant = "app") {
     return (
       <AppNavBar
         variant={variant}
         theme={theme}
         onGoHome={goHome}
-        appSidebarOpen={appSidebarOpen}
-        onToggleAppSidebar={toggleAppSidebar}
         user={user}
         userProfile={userProfile}
         creditStatus={creditStatus}
+        activeNav={navActiveTab}
+        onOpenPlan={handleNavOpenPlan}
+        onOpenTrips={handleNavOpenTrips}
+        onOpenShare={handleNavOpenShare}
         onGetStarted={() => openAuthModal("signup")}
         onSignIn={() => openAuthModal("signin")}
+        onSignOut={handleSignOut}
         liveSharingActive={liveSharingActive}
       />
     );
@@ -1221,9 +1154,6 @@ export default function App() {
   }
 
   function goHome() {
-    setAppSidebarOpen(false);
-    setAppSidebarClosing(false);
-    if (appSidebarTimerRef.current) clearTimeout(appSidebarTimerRef.current);
     setAuthModal(null);
     setShowUpgradeModal(false);
     setShowHomeAddressModal(false);
@@ -2874,7 +2804,6 @@ export default function App() {
           actionLabel={toastAction?.label}
           onAction={toastAction?.onClick}
         />
-        {renderAppSidebar()}
       </>
     );
   }
@@ -2908,10 +2837,13 @@ export default function App() {
         onHeroDestChange={v => { setHeroDest(v); setHeroDestError(""); }}
         onLaunch={launchFromHero}
         onGoHome={goHome}
-        appSidebarOpen={appSidebarOpen}
-        onToggleAppSidebar={toggleAppSidebar}
+        activeNav={null}
+        onOpenPlan={handleNavOpenPlan}
+        onOpenTrips={handleNavOpenTrips}
+        onOpenShare={handleNavOpenShare}
         onGetStarted={() => openAuthModal("signup")}
         onSignIn={() => openAuthModal("signin")}
+        onSignOut={handleSignOut}
         userProfile={userProfile}
         creditStatus={creditStatus}
         planDraft={planDraft}
@@ -2987,7 +2919,6 @@ export default function App() {
           onDismiss={() => setFounderWelcomeName(null)}
         />
       )}
-      {renderAppSidebar()}
     </>
   );
 
@@ -3448,7 +3379,6 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction?.onClick}
       />
-      {renderAppSidebar()}
     </>
   );
 }

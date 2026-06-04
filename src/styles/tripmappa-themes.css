@@ -95,6 +95,10 @@ body.theme-night,
   --brand-soft: var(--color-tag-local-bg);
   --gold-soft: var(--color-tag-local-bg);
   --warm: var(--color-accent-orange);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --input-bg: var(--color-input-bg);
+  --elevated: var(--color-surface-elevated);
 }
 
 /* Day mode palette */
@@ -197,6 +201,10 @@ body.theme-day,
   --brand-soft: var(--color-tag-local-bg);
   --gold-soft: var(--color-tag-local-bg);
   --warm: var(--color-accent-orange);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --input-bg: var(--color-input-bg);
+  --elevated: var(--color-surface-elevated);
 }
 
 /* Hero landing — frosted panels over photo sky (wins over generic night/day tokens) */

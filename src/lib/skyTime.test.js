@@ -14,9 +14,11 @@ import {
 } from "./skyTime.js";
 
 describe("skyTime", () => {
-  it("defaults theme to day before 7 PM and night at/after 7 PM", () => {
-    expect(computeAutoTheme(new Date("2026-05-23T18:59:00"))).toBe("day");
-    expect(computeAutoTheme(new Date("2026-05-23T19:00:00"))).toBe("night");
+  it("matches hero surface theme to the sky cycle", () => {
+    expect(computeAutoTheme(new Date("2026-05-23T12:00:00"))).toBe("day");
+    expect(computeAutoTheme(new Date("2026-05-23T18:59:00"))).toBe("night");
+    expect(computeAutoTheme(new Date("2026-05-23T22:00:00"))).toBe("night");
+    expect(computeAutoTheme(new Date("2026-05-23T08:00:00"))).toBe("day");
   });
 
   it("maps local hours to sky phases", () => {

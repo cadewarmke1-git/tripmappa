@@ -374,21 +374,23 @@ export default function QuestionChoices({
                       <span className="question-section-label">{section.label}</span>
                       <span className="question-section-chevron" aria-hidden="true">{expanded ? "−" : "+"}</span>
                     </button>
-                    {expanded && (
-                      <div className="quick-replies question-choices-scroll">
-                        {(section.choices || []).map(c => (
-                          <button
-                            key={c}
-                            type="button"
-                            className={mkGroupClass(section.id, c)}
-                            disabled={frozen}
-                            onClick={() => toggleGroupSection(section.id, c)}
-                          >
-                            {c}
-                          </button>
-                        ))}
+                    <div className={`question-collapsible-panel${expanded ? " is-open" : ""}`}>
+                      <div className="question-collapsible-inner">
+                        <div className="quick-replies question-choices-scroll">
+                          {(section.choices || []).map(c => (
+                            <button
+                              key={c}
+                              type="button"
+                              className={mkGroupClass(section.id, c)}
+                              disabled={frozen}
+                              onClick={() => toggleGroupSection(section.id, c)}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}
