@@ -1,8 +1,11 @@
 /** Live Trip Tips — weather conditions and traffic along the route. */
 import { getGoogleMapsKey } from "../lib/googleKey.js";
+import {
+  fetchGoogleCurrentConditions,
+  weatherConditionText,
+  weatherTemperatureF,
+} from "../lib/googleWeather.js";
 import { cacheGet, cacheSet, cacheThrough, roundCoord } from "../lib/apiCache.js";
-
-const CURRENT_URL = "https://weather.googleapis.com/v1/currentConditions:lookup";
 const DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json";
 const TRAFFIC_BUCKET_MS = 10 * 60 * 1000;
 const WEATHER_TTL = 10 * 60 * 1000;
@@ -24,19 +27,10 @@ async function fetchWeatherTip(lat, lng, key) {
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  const res = await fetch(`${CURRENT_URL}?key=${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const tempC = data?.temperature?.degrees ?? data?.temperature?.value;
-  const tempF = tempC != null ? Math.round((tempC * 9) / 5 + 32) : null;
-  const condition = data?.weatherCondition?.description
-    || data?.weatherCondition?.type
-    || data?.condition
-    || null;
+  const data = await fetchGoogleCurrentConditions(key, lat, lng);
+  if (!data) return null;
+  const tempF = weatherTemperatureF(data);
+  const condition = weatherConditionText(data);
   if (!condition && tempF == null) return null;
   const parts = [];
   if (tempF != null) parts.push(`${tempF}F`);

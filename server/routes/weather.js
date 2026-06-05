@@ -1,55 +1,35 @@
 /** Google Weather API — conditions for overnight stop cities. */
 import { getGoogleMapsKey } from "../lib/googleKey.js";
+import {
+  fetchGoogleCurrentConditions,
+  fetchGoogleDailyForecast,
+  forecastPrecipitationPercent,
+  weatherConditionText,
+  weatherTemperatureF,
+} from "../lib/googleWeather.js";
 import { resolveWeatherIconType } from "../lib/weatherIconTypes.js";
 import { cacheThrough, roundCoord } from "../lib/apiCache.js";
 
-const CURRENT_URL = "https://weather.googleapis.com/v1/currentConditions:lookup";
-const FORECAST_URL = "https://weather.googleapis.com/v1/forecast/days:lookup";
-
-function celsiusToF(c) {
-  if (c == null) return null;
-  return Math.round((c * 9) / 5 + 32);
-}
-
 async function fetchCurrent(lat, lng, key) {
   const cacheKey = `weather-current:${roundCoord(lat)}:${roundCoord(lng)}`;
-  const { value } = await cacheThrough(cacheKey, 10 * 60 * 1000, async () => {
-    const url = `${CURRENT_URL}?key=${encodeURIComponent(key)}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
-    });
-    if (!res.ok) return null;
-    return res.json();
-  });
+  const { value } = await cacheThrough(cacheKey, 10 * 60 * 1000, async () =>
+    fetchGoogleCurrentConditions(key, lat, lng),
+  );
   return value;
 }
 
 async function fetchForecast(lat, lng, key) {
   const cacheKey = `weather-forecast:${roundCoord(lat)}:${roundCoord(lng)}`;
-  const { value } = await cacheThrough(cacheKey, 30 * 60 * 1000, async () => {
-    const url = `${FORECAST_URL}?key=${encodeURIComponent(key)}&days=1`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
-    });
-    if (!res.ok) return null;
-    return res.json();
-  });
+  const { value } = await cacheThrough(cacheKey, 30 * 60 * 1000, async () =>
+    fetchGoogleDailyForecast(key, lat, lng, 1),
+  );
   return value;
 }
 
 function mapWeather(city, lat, lng, current, forecast) {
-  const tempC = current?.temperature?.degrees ?? current?.temperature?.value;
-  const tempF = celsiusToF(tempC);
-  const condition = current?.weatherCondition?.type
-    || current?.weatherCondition?.description
-    || current?.condition
-    || "Unknown";
-  const precip = forecast?.forecastDays?.[0]?.daytimeForecast?.precipitation?.probability?.percent
-    ?? forecast?.forecastDays?.[0]?.precipitation?.probability?.percent
+  const tempF = weatherTemperatureF(current);
+  const condition = weatherConditionText(current) || "Unknown";
+  const precip = forecastPrecipitationPercent(forecast)
     ?? current?.precipitation?.probability?.percent
     ?? null;
 

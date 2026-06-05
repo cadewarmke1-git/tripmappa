@@ -1,6 +1,6 @@
 /** Shared Google Maps Platform key for serverless routes. */
 export function getGoogleMapsKey() {
-  return process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_KEY || null;
+  return process.env.GOOGLE_MAPS_API_KEY || null;
 }
 
 export function photoUrl(photoReference, maxWidth = 800) {
