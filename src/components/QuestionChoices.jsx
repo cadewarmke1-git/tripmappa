@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
+import { ROUTE_PENDING_UNLOCK_MS } from "../lib/tripFlow.js";
 
 function normalizeChoice(choice) {
   if (choice && typeof choice === "object" && choice.value != null) {
@@ -42,13 +43,28 @@ export default function QuestionChoices({
   onGoBack,
   onPickAnswer,
   onSetPrefDraft,
+  onSkipRoutePending,
+  onRoutePendingTimeout,
 }) {
   const [vehicleTab, setVehicleTab] = useState(0);
   const [lodgingDraft, setLodgingDraft] = useState(null);
   const [loyaltyDraft, setLoyaltyDraft] = useState(null);
   const [groupDraft, setGroupDraft] = useState(null);
   const [multiDraft, setMultiDraft] = useState([]);
+  const [partyAdults, setPartyAdults] = useState(2);
+  const [partyChildren, setPartyChildren] = useState(0);
   const [expandedDetailSections, setExpandedDetailSections] = useState(() => new Set());
+  const [routePendingExpired, setRoutePendingExpired] = useState(false);
+
+  useEffect(() => {
+    setRoutePendingExpired(false);
+    if (!currentQ?.pendingRoute) return undefined;
+    const timer = setTimeout(() => {
+      setRoutePendingExpired(true);
+      onRoutePendingTimeout?.();
+    }, ROUTE_PENDING_UNLOCK_MS);
+    return () => clearTimeout(timer);
+  }, [currentQ?.id, currentQ?.pendingRoute, onRoutePendingTimeout]);
 
   useEffect(() => {
     setVehicleTab(0);
@@ -68,6 +84,12 @@ export default function QuestionChoices({
     setGroupDraft(null);
     if (currentQ?.type === "multiselect") {
       setMultiDraft(Array.isArray(prefDraft) ? [...prefDraft] : []);
+      return;
+    }
+    if (currentQ?.type === "party_composition") {
+      const draft = isGroupDraft(prefDraft) ? prefDraft : {};
+      setPartyAdults(draft.adults ?? answers.adult_count ?? 2);
+      setPartyChildren(draft.children ?? answers.child_count ?? 0);
       return;
     }
     setMultiDraft([]);
@@ -98,7 +120,8 @@ export default function QuestionChoices({
   const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers";
   const isLodgingStay = currentQ.type === "lodging_stay";
   const isTripDetails = currentQ.type === "trip_details";
-  const routeLocked = Boolean(currentQ.pendingRoute);
+  const routePending = Boolean(currentQ.pendingRoute);
+  const routeLocked = routePending && !routePendingExpired;
   const budgetDraft = groupDraft?.trip_budget || "No budget limit";
 
   function pickInstant(value, extraFields) {
@@ -139,15 +162,25 @@ export default function QuestionChoices({
     pickInstant(lodgingDraft, { loyalty_program: loyaltyDraft || "No preference" });
   }
 
+  function isTripDetailsDraftEmpty(draft) {
+    const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
+    const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
+    const accessibility = Array.isArray(draft.accessibility) ? draft.accessibility : [];
+    const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
+    const budget = draft.trip_budget || "No budget limit";
+    return !dietary.length && !stops.length && !accessibility.length && !schedule.length && budget === "No budget limit";
+  }
+
   function submitTripDetails() {
     const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, answers);
+    const empty = isTripDetailsDraftEmpty(draft);
     pickInstant({
       dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
       stops_interests: Array.isArray(draft.stops_interests) ? draft.stops_interests : [],
       accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
       schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
       trip_budget: draft.trip_budget || "No budget limit",
-    });
+    }, { trip_details_defaults_confirmed: empty });
   }
 
   function skipTripDetails() {
@@ -157,7 +190,7 @@ export default function QuestionChoices({
       accessibility: [],
       schedule_restrictions: [],
       trip_budget: "No budget limit",
-    });
+    }, { trip_details_defaults_confirmed: true });
   }
 
   function setBudgetDraft(value) {
@@ -175,6 +208,25 @@ export default function QuestionChoices({
       const list = Array.isArray(prev) ? prev : [];
       const next = list.includes(value) ? list.filter(x => x !== value) : [...list, value];
       onSetPrefDraft(next);
+      return next;
+    });
+  }
+
+  function submitPartyComposition() {
+    pickInstant({ adults: Number(partyAdults), children: Number(partyChildren) });
+  }
+
+  function adjustPartyCount(field, delta) {
+    const [min, max] = field === "adults"
+      ? (currentQ.adultRange || [1, 8])
+      : (currentQ.childRange || [0, 6]);
+    const setter = field === "adults" ? setPartyAdults : setPartyChildren;
+    setter(prev => {
+      const next = Math.min(max, Math.max(min, Number(prev) + delta));
+      onSetPrefDraft({
+        adults: field === "adults" ? next : partyAdults,
+        children: field === "children" ? next : partyChildren,
+      });
       return next;
     });
   }
@@ -273,8 +325,11 @@ export default function QuestionChoices({
 
           {!vehicleGroups && isSingleSelect && (
             <div className={`quick-replies quick-replies-described${currentQ.id === "fuel_type" ? " question-choices-scroll" : ""}`}>
-              {routeLocked && (
+              {routePending && routeLocked && (
                 <p className="question-pending-note">Route details are still loading — choices unlock in a moment.</p>
+              )}
+              {routePending && routePendingExpired && (
+                <p className="question-pending-note">Route details are still loading — your answer will be used as-is.</p>
               )}
               {choices.map(raw => {
                 const { value, label, description } = normalizeChoice(raw);
@@ -291,6 +346,16 @@ export default function QuestionChoices({
                   </button>
                 );
               })}
+              {routePending && onSkipRoutePending && (
+                <button
+                  type="button"
+                  className="question-skip-route-link"
+                  disabled={frozen}
+                  onClick={onSkipRoutePending}
+                >
+                  Skip for now
+                </button>
+              )}
             </div>
           )}
 
@@ -352,6 +417,40 @@ export default function QuestionChoices({
             </div>
           )}
 
+          {currentQ.type === "party_composition" && (
+            <div className="party-composition-inputs">
+              {[
+                { field: "adults", label: "Adults", value: partyAdults, range: currentQ.adultRange || [1, 8] },
+                { field: "children", label: "Children", value: partyChildren, range: currentQ.childRange || [0, 6] },
+              ].map(({ field, label, value, range }) => (
+                <div className="party-composition-row" key={field}>
+                  <span className="party-composition-label">{label}</span>
+                  <div className="party-composition-stepper">
+                    <button
+                      type="button"
+                      className="party-composition-btn"
+                      disabled={frozen || value <= range[0]}
+                      onClick={() => adjustPartyCount(field, -1)}
+                      aria-label={`Fewer ${label.toLowerCase()}`}
+                    >
+                      −
+                    </button>
+                    <span className="party-composition-value">{value}</span>
+                    <button
+                      type="button"
+                      className="party-composition-stepper-btn"
+                      disabled={frozen || value >= range[1]}
+                      onClick={() => adjustPartyCount(field, 1)}
+                      aria-label={`More ${label.toLowerCase()}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {isTripDetails && (
             <>
               {(currentQ.sections || []).map(section => {
@@ -377,17 +476,20 @@ export default function QuestionChoices({
                     <div className={`question-collapsible-panel${expanded ? " is-open" : ""}`}>
                       <div className="question-collapsible-inner">
                         <div className="quick-replies question-choices-scroll">
-                          {(section.choices || []).map(c => (
-                            <button
-                              key={c}
-                              type="button"
-                              className={mkGroupClass(section.id, c)}
-                              disabled={frozen}
-                              onClick={() => toggleGroupSection(section.id, c)}
-                            >
-                              {c}
-                            </button>
-                          ))}
+                          {(section.choices || []).map(raw => {
+                            const { value, label } = normalizeChoice(raw);
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                className={mkGroupClass(section.id, value)}
+                                disabled={frozen}
+                                onClick={() => toggleGroupSection(section.id, value)}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -456,20 +558,40 @@ export default function QuestionChoices({
         </div>
       )}
 
+      {currentQ.type === "party_composition" && (
+        <div className="pref-actions-row">
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={continueWithHaptic(submitPartyComposition)}
+          >
+            Continue
+          </button>
+        </div>
+      )}
+
       {currentQ.type === "multiselect" && (
         <div className="pref-actions-row">
           {currentQ.id === "multi_vehicles" && multiDraft.length === 0 && (
             <p className="question-inline-hint">Select at least one vehicle, or tap Back to choose a different trip type.</p>
           )}
+          {currentQ.id === "kids_ages" && multiDraft.length === 0 && (
+            <p className="question-inline-hint">Select at least one age band, or choose &ldquo;Not sure / prefer not to say&rdquo;.</p>
+          )}
           <button
             type="button"
             className="btn-generate btn-generate-inline"
-            disabled={frozen || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)}
+            disabled={
+              frozen
+              || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)
+              || (currentQ.id === "kids_ages" && multiDraft.length === 0)
+            }
             onClick={continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]))}
           >
             Continue
           </button>
-          {currentQ.id !== "multi_vehicles" && (
+          {currentQ.id !== "multi_vehicles" && currentQ.id !== "kids_ages" && (
             <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
           )}
         </div>

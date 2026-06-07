@@ -19,10 +19,11 @@ import {
 import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
 import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./lib/guestCredits.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
-import { buildContinuousDriveTip, isContinuousDrive } from "./lib/driveMode.js";
+import { buildContinuousDriveTip, isContinuousDrive, OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { generateTripPlan } from "./lib/apiClient.js";
 import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } from "./lib/generateTripFlow.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
+import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } from "./lib/postGenerationPersistence.js";
 import { resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
 import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
@@ -35,7 +36,7 @@ import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/trip
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
-import { describePlanChanges } from "./lib/planSnapshotDiff.js";
+import { describePlanChanges, formatRegenerateDiffBlock } from "./lib/planSnapshotDiff.js";
 import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
 import { fetchTruckRoute, shouldUseTruckRouting, truckRestrictionsToTips, weighStationsToRoadStops } from "./lib/truckRoutingApi.js";
 import { createAnswerChangeTracker, recordAnswerChange, formatAnswerConfidenceNotes, buildQuestionLabelMap } from "./lib/answerIntent.js";
@@ -46,7 +47,15 @@ import {
   formatGracefulDegradationNotes,
   fetchUserTripPreferences,
   recordUserStopPreferences,
+  buildFlowPrefillFromPreferences,
+  mergeDisplayAnswers,
+  stripAnswersForSonnet,
 } from "./lib/generationContext.js";
+import { formatCreditsDisplay } from "./lib/creditsDisplay.js";
+import {
+  buildUserPatternSummary,
+  buildRecentTripsPreferencesRollup,
+} from "./lib/tripHistoryAnalysis.js";
 import {
   fetchIsoline,
   pointInPolygon,
@@ -65,7 +74,7 @@ import { runAccountOnboarding } from "./lib/accountOnboardingApi.js";
 import { captureReferralFromUrl, getStoredReferralCode, clearStoredReferralCode } from "./lib/referralCapture.js";
 import { dismissTrialEndedPrompt } from "./lib/trialApi.js";
 import { createPortalSession } from "./lib/stripeApi.js";
-import { fetchPlanPreferences } from "./lib/planPreferencesApi.js";
+import { fetchPlanPreferencesFull } from "./lib/planPreferencesApi.js";
 import FounderWelcomeOverlay from "./components/FounderWelcomeOverlay.jsx";
 import UserPreferencesPage from "./components/UserPreferencesPage.jsx";
 import { getDisplayName } from "./lib/avatarUtils.js";
@@ -129,6 +138,8 @@ export default function App() {
   const [reportText, setReportText] = useState("");
   const [trafficAlert, setTrafficAlert] = useState(false);
   const [answers, setAnswers] = useState({});
+  const [flowPrefill, setFlowPrefill] = useState({});
+  const [continuousDriveConfirm, setContinuousDriveConfirm] = useState(null);
   const [qIndex, setQIndex] = useState(-1);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionHistory, setQuestionHistory] = useState([]);
@@ -163,6 +174,8 @@ export default function App() {
   const [savedTrips, setSavedTrips] = useState(() => {
     try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
   });
+  const savedTripsRef = useRef(savedTrips);
+  const [planGenerationCount, setPlanGenerationCount] = useState(0);
   const [creditStatus, setCreditStatus] = useState(null);
   const [creditsNeedRefresh, setCreditsNeedRefresh] = useState(0);
   const foundingClaimAttemptedRef = useRef(false);
@@ -170,6 +183,9 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalReason, setUpgradeModalReason] = useState("trips");
+  const [upgradeModalResetDate, setUpgradeModalResetDate] = useState(null);
+  const [upgradeModalInitialPlan, setUpgradeModalInitialPlan] = useState(null);
+  const [upgradeModalBillingInterval, setUpgradeModalBillingInterval] = useState("month");
   const [homeAddress, setHomeAddress] = useState("");
   const [showHomeAddressModal, setShowHomeAddressModal] = useState(false);
   const [navigateHomePending, setNavigateHomePending] = useState(false);
@@ -192,6 +208,22 @@ export default function App() {
   const [founderWelcomeName, setFounderWelcomeName] = useState(null);
   const planPreferencesRef = useRef({});
   const highlightTimerRef = useRef(null);
+
+  function applySavedTrips(next) {
+    savedTripsRef.current = next;
+    setSavedTrips(next);
+  }
+
+  function prependSavedTrip(saved) {
+    applySavedTrips([saved, ...savedTripsRef.current.filter(t => t.id !== saved.id)]);
+  }
+
+  function applyPlanPreferencesSaved(prefs, meta) {
+    planPreferencesRef.current = prefs || {};
+    if (meta?.generation_count != null) {
+      setPlanGenerationCount(Number(meta.generation_count) || 0);
+    }
+  }
 
   function openAuthModal(mode) {
     setAuthError("");
@@ -361,7 +393,7 @@ export default function App() {
   async function persistTripForUser(userId) {
     const tripPayload = buildTripSavePayload();
     const saved = await saveTrip(userId, tripPayload);
-    setSavedTrips(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+    prependSavedTrip(saved);
     const userAddedStops = (roadStops || []).filter(s => s.userAdded);
     if (userAddedStops.length && session?.access_token) {
       void recordUserStopPreferences(
@@ -383,8 +415,8 @@ export default function App() {
         return;
       }
     }
-    const updated = savedTrips.filter(t => t.id !== id);
-    setSavedTrips(updated);
+    const updated = savedTripsRef.current.filter(t => t.id !== id);
+    applySavedTrips(updated);
     if (!user) {
       try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch { /* quota / private mode */ }
     }
@@ -420,9 +452,9 @@ export default function App() {
     if (authLoading) return undefined;
     if (!user) {
       try {
-        setSavedTrips(JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"));
+        applySavedTrips(JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"));
       } catch {
-        setSavedTrips([]);
+        applySavedTrips([]);
       }
       return undefined;
     }
@@ -435,7 +467,7 @@ export default function App() {
       try {
         await migrateLocalTrips(user.id);
         const trips = await fetchTrips(user.id);
-        if (!cancelled) setSavedTrips(trips);
+        if (!cancelled) applySavedTrips(trips);
       } catch (err) {
         console.warn("Could not load saved trips:", err);
       }
@@ -472,6 +504,18 @@ export default function App() {
     (async () => {
       try {
         await persistTripForUser(user.id);
+        const normalizedAnswers = normalizeTripAnswers(
+          answers,
+          buildQuestionContext(answers),
+          { forGeneration: true },
+        );
+        if (session?.access_token) {
+          void writeBackPlanPreferencesSilently(
+            session.access_token,
+            normalizedAnswers,
+            applyPlanPreferencesSaved,
+          );
+        }
         if (!cancelled) {
           setGuestTripPendingSave(false);
           toast_("Your trip has been saved to your account.", true);
@@ -512,21 +556,42 @@ export default function App() {
   useEffect(() => {
     if (!user?.id || !session?.access_token) {
       planPreferencesRef.current = {};
+      setPlanGenerationCount(0);
       return undefined;
     }
     let cancelled = false;
-    fetchPlanPreferences(session.access_token)
-      .then(prefs => {
-        if (!cancelled) planPreferencesRef.current = prefs || {};
+    fetchPlanPreferencesFull(session.access_token)
+      .then(({ preferences, meta }) => {
+        if (!cancelled) {
+          applyPlanPreferencesSaved(preferences, meta);
+          if (!convoComplete && !generated && questionHistory.length === 0) {
+            buildFlowPrefillForUser().then(setFlowPrefill);
+          }
+        }
       })
       .catch(() => {
-        if (!cancelled) planPreferencesRef.current = {};
+        if (!cancelled) {
+          planPreferencesRef.current = {};
+          setPlanGenerationCount(0);
+        }
       });
     return () => { cancelled = true; };
   }, [user?.id, session?.access_token]);
 
   function withPlanPreferenceDefaults(base = {}) {
-    return { ...(planPreferencesRef.current || {}), ...base };
+    return { ...base };
+  }
+
+  async function buildFlowPrefillForUser() {
+    let tripPrefs = null;
+    if (user?.id && session?.access_token) {
+      try {
+        tripPrefs = await fetchUserTripPreferences(session.access_token);
+      } catch {
+        tripPrefs = null;
+      }
+    }
+    return buildFlowPrefillFromPreferences(planPreferencesRef.current, tripPrefs);
   }
 
   useEffect(() => {
@@ -647,6 +712,7 @@ export default function App() {
   const [truckRoutePath, setTruckRoutePath] = useState(null);
   const [directionsResult, setDirectionsResult] = useState(null);
   const answerChangeCountsRef = useRef(createAnswerChangeTracker());
+  const reAnswerFromEditRef = useRef(false);
   const [routeLoading, setRouteLoading] = useState(false);
   const mapCenter = { lat: 37.0902, lng: -95.7129 };
   const originRef = useRef(null);
@@ -950,19 +1016,23 @@ export default function App() {
   }, []);
 
   function formatCreditsLabel(status) {
-    if (!status) return null;
-    if (status.isAdmin) return null;
-    if (status.unlimited) return "Unlimited";
-    if (status.tier === "guest") return "1 free generation";
-    const n = status.remaining ?? 0;
-    if (n === 1) return "1 generation left";
-    return `${n} generations left`;
+    return formatCreditsDisplay(status).label;
   }
+
+  const creditsNudge = useMemo(
+    () => formatCreditsDisplay(creditStatus).nudge,
+    [creditStatus],
+  );
 
   const flowProgress = useMemo(() => getFlowProgress(answers, buildQuestionContext(answers), {
     convoComplete,
     currentQuestionId: convoComplete ? "done" : (currentQuestion?.id || "vehicle"),
   }), [answers, convoComplete, currentQuestion?.id, origin, dest, routeInfo]);
+
+  const displayAnswers = useMemo(
+    () => mergeDisplayAnswers(answers, flowPrefill, questionHistory),
+    [answers, flowPrefill, questionHistory],
+  );
 
   const currentPlanSnapshot = useMemo(() => buildPlanSnapshot({
     origin: originRef.current?.value?.trim() || origin,
@@ -1146,8 +1216,26 @@ export default function App() {
     }
   }
 
-  function openTripsUpgrade() {
+  function openPricingPage() {
+    setShowUpgradeModal(false);
+    setProfileScrollTo("plans");
+    setView("profile");
+    window.scrollTo(0, 0);
+  }
+
+  function openTripsUpgrade(options = {}) {
+    setUpgradeModalResetDate(options.resetDate ?? null);
+    setUpgradeModalReason(options.limitReached ? "monthly-limit" : "trips");
+    setUpgradeModalInitialPlan(options.plan ?? TIERS.TRAILBLAZER);
+    setUpgradeModalBillingInterval(options.billingPeriod === "year" ? "year" : "month");
+    setShowUpgradeModal(true);
+  }
+
+  function openVoyagerUpgrade(options = {}) {
+    setUpgradeModalResetDate(null);
     setUpgradeModalReason("trips");
+    setUpgradeModalInitialPlan(TIERS.VOYAGER);
+    setUpgradeModalBillingInterval(options.billingPeriod === "year" ? "year" : "month");
     setShowUpgradeModal(true);
   }
 
@@ -1175,7 +1263,8 @@ export default function App() {
     setHeroDest("");
     setHeroOriginError("");
     setHeroDestError("");
-    setAnswers(withPlanPreferenceDefaults({}));
+    setAnswers({});
+    setFlowPrefill({});
     setQIndex(-1);
     setCurrentQuestion(null);
     setQuestionHistory([]);
@@ -1762,8 +1851,9 @@ export default function App() {
     if (originRef.current) originRef.current.value = fromAddr;
     if (destRef.current) destRef.current.value = toAddr;
 
-    const seededAnswers = withPlanPreferenceDefaults({});
-    setAnswers(seededAnswers);
+    const prefill = await buildFlowPrefillForUser();
+    setFlowPrefill(prefill);
+    setAnswers({});
     setConvoComplete(false);
     setGenerated(false);
     setQuestionHistory([]);
@@ -1773,14 +1863,15 @@ export default function App() {
     setPrefDraft(null);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
-    loadNextQuestion(seededAnswers);
+    loadNextQuestion({}, { flowPrefill: prefill });
     setHeroLaunching(false);
     requestAnimationFrame(() => scrollPlanToTop());
 
     fetchDirections("Car");
   }
 
-  function applyPrefDraftForQuestion(question, newAnswers) {
+  function applyPrefDraftForQuestion(question, newAnswers, prefillOverride) {
+    const prefillSource = prefillOverride || flowPrefill;
     if (!question) {
       setPrefDraft(null);
       return;
@@ -1788,20 +1879,29 @@ export default function App() {
     if (question.type === "trip_details" || question.type === "multiselect_group") {
       const draft = {};
       for (const sec of question.sections || []) {
-        draft[sec.id] = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
+        const fromAnswers = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
+        const fromPrefill = Array.isArray(prefillSource[sec.id]) ? prefillSource[sec.id] : [];
+        draft[sec.id] = fromAnswers.length ? fromAnswers : fromPrefill;
       }
       if (question.type === "trip_details") {
-        draft.trip_budget = newAnswers.trip_budget || "No budget limit";
+        draft.trip_budget = newAnswers.trip_budget || prefillSource.trip_budget || "No budget limit";
       }
       setPrefDraft(draft);
     } else if (question.type === "multiselect") {
-      setPrefDraft(Array.isArray(newAnswers[question.id]) ? newAnswers[question.id] : []);
+      const fromAnswers = Array.isArray(newAnswers[question.id]) ? newAnswers[question.id] : [];
+      const fromPrefill = Array.isArray(prefillSource[question.id]) ? prefillSource[question.id] : [];
+      setPrefDraft(fromAnswers.length ? fromAnswers : fromPrefill);
+    } else if (question.type === "party_composition") {
+      setPrefDraft({
+        adults: newAnswers.adult_count ?? prefillSource.adult_count ?? 2,
+        children: newAnswers.child_count ?? prefillSource.child_count ?? 0,
+      });
     } else {
       setPrefDraft(null);
     }
   }
 
-  function loadNextQuestion(newAnswers) {
+  function loadNextQuestion(newAnswers, options = {}) {
     if (generateTripInFlightRef.current) return;
     if (convoComplete && !generated) return;
     try {
@@ -1811,6 +1911,7 @@ export default function App() {
         setCurrentQuestion(null);
         setQIndex(-2);
         setConvoComplete(true);
+        reAnswerFromEditRef.current = false;
         setAnswers(normalizeTripAnswers(newAnswers, ctx, { forGeneration: true }));
         return;
       }
@@ -1822,7 +1923,7 @@ export default function App() {
       setCurrentQuestion(result);
       setQIndex(0);
       setConvoComplete(false);
-      applyPrefDraftForQuestion(result, newAnswers);
+      applyPrefDraftForQuestion(result, newAnswers, options.flowPrefill);
     } catch (err) {
       console.error("loadNextQuestion failed:", err);
       toast_(err.message || "Could not load the next question");
@@ -1846,6 +1947,31 @@ export default function App() {
   function retryRouteCalculation() {
     setRouteError(null);
     fetchDirections(getEffectiveVehicle(answers));
+  }
+
+  function handleSkipRoutePending() {
+    if (!currentQuestion?.pendingRoute) return;
+    const patch = { ...answersRef.current, route_context_unavailable: true };
+    const ctx = buildQuestionContext(patch);
+    const na = normalizeTripAnswers(patch, ctx);
+    setAnswers(na);
+    loadNextQuestion(na);
+  }
+
+  function handleRoutePendingTimeout() {
+    if (answersRef.current.route_context_unavailable) return;
+    setAnswers(prev => ({ ...prev, route_context_unavailable: true }));
+  }
+
+  function confirmContinuousDrive() {
+    if (!continuousDriveConfirm) return;
+    const { patch } = continuousDriveConfirm;
+    setContinuousDriveConfirm(null);
+    submitAnswer(OVERNIGHT_PREFERENCE_CONTINUOUS, {}, { patch, skipContinuousConfirm: true });
+  }
+
+  function cancelContinuousDrive() {
+    setContinuousDriveConfirm(null);
   }
 
   useEffect(() => {
@@ -1882,59 +2008,87 @@ export default function App() {
     return null;
   }
 
-  function submitAnswer(value, extraFields = {}) {
-    if (!currentQuestion) return;
+  function submitAnswer(value, extraFields = {}, options = {}) {
+    const activeQuestion = options.question || currentQuestion;
+    if (!activeQuestion) return;
     try {
-      let patch;
-      if (currentQuestion.type === "trip_details" && value && typeof value === "object" && !Array.isArray(value)) {
-        patch = { ...answers, ...extraFields, ...value };
-      } else if (currentQuestion.type === "multiselect_group" && value && typeof value === "object" && !Array.isArray(value)) {
-        patch = { ...answers, ...extraFields, ...value };
-      } else if (currentQuestion.type === "lodging_stay") {
-        patch = { ...answers, ...extraFields, lodging: value };
-      } else {
-        patch = { ...answers, ...extraFields, [currentQuestion.id]: value };
+      let patch = options.patch;
+      if (!patch) {
+        if (activeQuestion.type === "trip_details" && value && typeof value === "object" && !Array.isArray(value)) {
+          patch = { ...answers, ...extraFields, ...value };
+        } else if (activeQuestion.type === "multiselect_group" && value && typeof value === "object" && !Array.isArray(value)) {
+          patch = { ...answers, ...extraFields, ...value };
+        } else if (activeQuestion.type === "lodging_stay") {
+          patch = { ...answers, ...extraFields, lodging: value };
+        } else if (activeQuestion.type === "party_composition" && value && typeof value === "object") {
+          patch = {
+            ...answers,
+            ...extraFields,
+            adult_count: value.adults,
+            child_count: value.children,
+          };
+        } else {
+          patch = { ...answers, ...extraFields, [activeQuestion.id]: value };
+        }
       }
 
-      if (currentQuestion.id === "overnight_preference" && value === "Drive straight through") {
+      if (
+        !options.skipContinuousConfirm
+        && activeQuestion.id === "overnight_preference"
+        && value === OVERNIGHT_PREFERENCE_CONTINUOUS
+      ) {
         const warn = warnContinuousDriveFeasibility(buildQuestionContext(patch));
-        if (warn && !window.confirm(`${warn}\n\nContinue with straight-through driving?`)) return;
+        if (warn) {
+          setContinuousDriveConfirm({ patch, warn });
+          return;
+        }
       }
 
       const ctx = buildQuestionContext(patch);
-      let na = normalizeTripAnswers(patch, ctx);
-      if (currentQuestion.id === "vehicle" || currentQuestion.id === "primary_vehicle") {
-        na = pruneStaleBranchAnswers(na, ctx);
+      if (activeQuestion.id === "overnight_preference" && !isRouteContextReady(ctx) && !ctx.routeFailed) {
+        patch.route_context_unavailable = true;
       }
-      if (currentQuestion.id === "multi_vehicles") {
+
+      let na = normalizeTripAnswers(patch, ctx);
+      const fromSummaryEdit = reAnswerFromEditRef.current;
+      const shouldPruneStale = (
+        fromSummaryEdit
+        || activeQuestion.id === "vehicle"
+        || activeQuestion.id === "primary_vehicle"
+        || activeQuestion.id === "multi_vehicles"
+        || activeQuestion.id === "travelers"
+        || activeQuestion.id === "overnight_preference"
+        || activeQuestion.type === "trip_details"
+      );
+      if (shouldPruneStale) {
         na = pruneStaleBranchAnswers(na, ctx);
       }
 
-      const prevVal = answers[currentQuestion.id];
+      const prevVal = answers[activeQuestion.id];
       if (prevVal !== undefined) {
         answerChangeCountsRef.current = recordAnswerChange(
           answerChangeCountsRef.current,
-          currentQuestion.id,
+          activeQuestion.id,
           prevVal,
           value,
         );
       }
 
       setAnswers(na);
-      if (currentQuestion.id !== "_route_loading") {
-        const historyQuestion = currentQuestion.type === "lodging_stay"
-          ? { ...currentQuestion, _loyalty: extraFields.loyalty_program || "No preference" }
-          : currentQuestion;
+      if (activeQuestion.id !== "_route_loading") {
+        const historyQuestion = activeQuestion.type === "lodging_stay"
+          ? { ...activeQuestion, _loyalty: extraFields.loyalty_program || "No preference" }
+          : activeQuestion;
         setQuestionHistory(h => [...h, { question: historyQuestion, answer: value }]);
       }
       loadNextQuestion(na);
-      if (currentQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
+      if (activeQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
         fetchDirections(na.vehicle);
       }
-      if (currentQuestion.id === "fuel_type" && originRef.current?.value && destRef.current?.value) {
+      if (activeQuestion.id === "fuel_type" && originRef.current?.value && destRef.current?.value) {
         fetchDirections(getEffectiveVehicle(na));
       }
-      if (currentQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
+      if (activeQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
         fetchDirections(getEffectiveVehicle(na));
       }
     } catch (err) {
@@ -1950,6 +2104,7 @@ export default function App() {
       || currentQuestion.type === "multiselect_group"
       || currentQuestion.type === "trip_details"
       || currentQuestion.type === "lodging_stay"
+      || currentQuestion.type === "party_composition"
       || currentQuestion.type === "text"
     );
     const TAP_DELAY_MS = 80;
@@ -2244,7 +2399,7 @@ export default function App() {
         return;
       }
       if (guard.reason === "no_credits") {
-        openTripsUpgrade();
+        openTripsUpgrade({ limitReached: status?.billingPeriod === "monthly", resetDate: status?.resetDate });
         return;
       }
     }
@@ -2263,19 +2418,7 @@ export default function App() {
 
     let normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
-    const applyGeneratedTrip = (parsed, activeRouteInfo) => {
-      const restrictionTips = truckRestrictionsToTips(activeRouteInfo?.restrictions || []);
-      const tips = [...restrictionTips, ...(parsed.tripTips || [])];
-      if (isContinuousDrive(normalizedAnswers)) {
-        tips.unshift(buildContinuousDriveTip(activeRouteInfo));
-      }
-      const weighStops = weighStationsToRoadStops(activeRouteInfo?.weighStations || []);
-      const mergedRoadStops = [...(parsed.roadStops || [])];
-      for (const ws of weighStops) {
-        if (!mergedRoadStops.some(s => s.id === ws.id || (s.lat === ws.lat && s.lng === ws.lng))) {
-          mergedRoadStops.push(ws);
-        }
-      }
+    const applyGeneratedTrip = (parsed, activeRouteInfo, { tips, mergedRoadStops }) => {
       if (activeRouteInfo) {
         setRouteInfo(prev => ({ ...(prev || {}), ...activeRouteInfo }));
       }
@@ -2314,9 +2457,15 @@ export default function App() {
       const userPrefs = user && session?.access_token
         ? await fetchUserTripPreferences(session.access_token)
         : null;
-      normalizedAnswers = resolveAnswersWithFallback(normalizedAnswers, userPrefs);
+      normalizedAnswers = resolveAnswersWithFallback(normalizedAnswers, userPrefs, {
+        planPrefs: planPreferencesRef.current,
+      });
+      normalizedAnswers = stripAnswersForSonnet(normalizedAnswers);
       const answerGaps = detectAnswerGaps(normalizedAnswers);
-      const recentTripsContext = buildRecentTripsContext(user ? savedTrips : [], 3);
+      const tripsForContext = user ? savedTripsRef : [];
+      const recentTripsContext = buildRecentTripsContext(tripsForContext, 3);
+      const userTravelPatterns = buildUserPatternSummary(tripsForContext);
+      const recentTripsPreferencesRollup = buildRecentTripsPreferencesRollup(tripsForContext, 3);
       const answerConfidenceNotes = formatAnswerConfidenceNotes(
         answerChangeCountsRef.current,
         buildQuestionLabelMap(questionHistory),
@@ -2325,6 +2474,7 @@ export default function App() {
         normalizedAnswers,
         userPrefs,
         answerGaps,
+        user ? savedTripsRef.current.length : null,
       );
 
       const activeRouteInfo = {
@@ -2341,7 +2491,7 @@ export default function App() {
           setGenerationError(msg);
           toast_(msg, { isError: true });
           ensurePayoffScreen();
-          openTripsUpgrade();
+          openTripsUpgrade({ limitReached: false });
           return;
         }
         setCreditStatus(getGuestCreditStatus());
@@ -2364,11 +2514,23 @@ export default function App() {
         routeInfo: activeRouteInfo,
         placesContext,
         placesContextPrompt,
-        generationHints: formatGenerationHints(normalizedAnswers, activeRouteInfo),
+        generationHints: formatGenerationHints(
+          normalizedAnswers,
+          activeRouteInfo,
+          {
+            regenerateDiffBlock: savedPlanSnapshot
+              ? formatRegenerateDiffBlock(savedPlanSnapshot, currentPlanSnapshot)
+              : "",
+          },
+        ),
         recentTripsContext,
+        recentTripsPreferencesRollup,
+        userTravelPatterns,
         answerConfidenceNotes,
         gracefulDegradationNotes,
-        fallbackPreferences: userPrefs ? resolveAnswersWithFallback({}, userPrefs) : undefined,
+        fallbackPreferences: userPrefs
+          ? resolveAnswersWithFallback({}, userPrefs, { planPrefs: planPreferencesRef.current })
+          : undefined,
         legs: tripLegs.length > 0 ? tripLegs : undefined,
         model: "claude-sonnet-4-6",
       };
@@ -2393,16 +2555,48 @@ export default function App() {
 
           setGenerationError(null);
           setTripUsedFallback(Boolean(parsed.usedFallback));
-          applyGeneratedTrip(parsed, activeRouteInfo);
+
+          const restrictionTips = truckRestrictionsToTips(activeRouteInfo?.restrictions || []);
+          const tips = [...restrictionTips, ...(parsed.tripTips || [])];
+          if (isContinuousDrive(normalizedAnswers)) {
+            tips.unshift(buildContinuousDriveTip(activeRouteInfo));
+          }
+          const weighStops = weighStationsToRoadStops(activeRouteInfo?.weighStations || []);
+          const mergedRoadStops = [...(parsed.roadStops || [])];
+          for (const ws of weighStops) {
+            if (!mergedRoadStops.some(s => s.id === ws.id || (s.lat === ws.lat && s.lng === ws.lng))) {
+              mergedRoadStops.push(ws);
+            }
+          }
+
+          applyGeneratedTrip(parsed, activeRouteInfo, { tips, mergedRoadStops });
 
           if (user && session?.access_token) {
             setCreditsNeedRefresh(n => n + 1);
+            void persistAfterSuccessfulGeneration({
+              userId: user.id,
+              accessToken: session.access_token,
+              tripPayload: {
+                origin: tripOrigin,
+                dest: tripDest,
+                date: new Date().toLocaleDateString(),
+                stops: parsed.stops,
+                roadStops: mergedRoadStops,
+                tripTips: tips,
+                answers: stripSessionOnlyAnswers(normalizedAnswers),
+                routeInfo: activeRouteInfo,
+                selectedLodging,
+              },
+              normalizedAnswers,
+              onTripSaved: prependSavedTrip,
+              onPreferencesSaved: applyPlanPreferencesSaved,
+            });
           } else {
             setGuestTripPendingSave(true);
             const guestStatus = getGuestCreditStatus();
             setCreditStatus(guestStatus);
             if (guestStatus.remaining <= 0) {
-              setTimeout(() => openTripsUpgrade(), 1200);
+              setTimeout(() => openTripsUpgrade({ limitReached: false }), 1200);
             }
           }
           return;
@@ -2421,11 +2615,29 @@ export default function App() {
         return;
       }
       console.error("Generate trip error:", err);
+      if (err.code === "rate_limited" || err.rateLimited) {
+        const msg = generationFailureMessage(err);
+        setGenerationError(msg);
+        toast_(msg, { isError: true });
+        ensurePayoffScreen();
+        return;
+      }
+      if (err.code === "unauthenticated") {
+        const msg = "Sign in to generate a trip plan.";
+        setGenerationError(msg);
+        toast_(msg, { isError: true });
+        openAuthModal("signin");
+        ensurePayoffScreen();
+        return;
+      }
       if (err.code === "no_credits") {
         const msg = generationFailureMessage(err);
         setGenerationError(msg);
         toast_(msg, { isError: true });
-        openTripsUpgrade();
+        openTripsUpgrade({
+          limitReached: Boolean(err.limitReached) || err.credits?.billingPeriod === "monthly",
+          resetDate: err.resetDate || err.credits?.resetDate,
+        });
         if (err.credits) setCreditStatus(err.credits);
         if (!user) refundGuestCredit();
         ensurePayoffScreen();
@@ -2457,7 +2669,9 @@ export default function App() {
     setSavedPlanSnapshot(null);
     setReturnedFromResults(false);
     setGuestTripPendingSave(false);
-    setAnswers(withPlanPreferenceDefaults({})); setQIndex(-1);
+    setAnswers({});
+    buildFlowPrefillForUser().then(setFlowPrefill);
+    setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
     setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]);
     setTripLegs([]); setPrefDraft([]);
@@ -2593,50 +2807,115 @@ export default function App() {
     fetchDirections(draft.answers?.vehicle || "Car");
   }
 
+  function revertAnswerForHistoryEntry(newAnswers, entry) {
+    const out = { ...newAnswers };
+    const q = entry.question;
+    delete out[q.id];
+    if (q.id === "travelers") {
+      delete out.kids_ages;
+      delete out.adult_count;
+      delete out.child_count;
+    }
+    if (q.id === "party_composition") {
+      delete out.adult_count;
+      delete out.child_count;
+    }
+    if (q.id === "vehicle") {
+      delete out.fuel_type;
+      delete out.towing;
+      delete out.truck_height;
+      delete out.truck_weight;
+      delete out.truck_hazmat;
+      delete out.hos_compliance;
+      delete out.rv_height;
+      delete out.rv_weight;
+      delete out.rv_towing;
+      delete out.multi_vehicles;
+      delete out.primary_vehicle;
+      delete out.coordination_needs;
+      delete out.effective_vehicle;
+      delete out.overnight_preference;
+      delete out.continuous_drive;
+      delete out.lodging;
+      delete out.loyalty_program;
+      delete out.trip_details;
+      delete out.trip_details_defaults_confirmed;
+      delete out.food_allergies;
+      delete out.kids_ages;
+      delete out.schedule_drive_hours;
+    }
+    if (q.id === "overnight_preference") {
+      delete out.continuous_drive;
+      delete out.lodging;
+      delete out.loyalty_program;
+      delete out.trip_nights;
+    }
+    if (q.id === "lodging" || q.type === "lodging_stay") {
+      delete out.lodging;
+      delete out.loyalty_program;
+      delete out.trip_nights;
+    }
+    if (q.id === "sleeper_cab") {
+      delete out.lodging;
+    }
+    if (q.type === "multiselect_group" || q.type === "trip_details") {
+      for (const sec of q.sections || []) {
+        delete out[sec.id];
+      }
+      if (q.type === "trip_details") {
+        delete out.trip_budget;
+        delete out.trip_details_defaults_confirmed;
+        delete out.food_allergies;
+        delete out.kids_ages;
+        delete out.schedule_drive_hours;
+      }
+    }
+    if (q.id === "kids_ages") {
+      delete out.kids_ages;
+    }
+    return out;
+  }
+
+  function jumpToQuestion(questionId) {
+    if (stepAnim || !questionId) return;
+    const idx = questionHistory.findIndex(h => h.question?.id === questionId);
+    if (idx < 0) return;
+
+    reAnswerFromEditRef.current = true;
+
+    let newAnswers = { ...answers };
+    let history = [...questionHistory];
+    while (history.length > idx) {
+      newAnswers = revertAnswerForHistoryEntry(newAnswers, history.pop());
+    }
+    const target = questionHistory[idx];
+    newAnswers = revertAnswerForHistoryEntry(newAnswers, target);
+    history = questionHistory.slice(0, idx);
+
+    setAnswers(newAnswers);
+    setQuestionHistory(history);
+    setCurrentQuestion(target.question);
+    setQIndex(0);
+    setConvoComplete(false);
+    setReturnedFromResults(true);
+    setGenerated(false);
+    setStepAnim(null);
+
+    if (target.question.type === "trip_details" || target.question.type === "multiselect_group") {
+      setPrefDraft(target.answer && typeof target.answer === "object" ? target.answer : {});
+    } else if (target.question.type === "multiselect") {
+      setPrefDraft(Array.isArray(target.answer) ? target.answer : []);
+    } else {
+      setPrefDraft(null);
+    }
+    scrollPlanToTop();
+  }
+
   function applyGoBackOneQuestion() {
     const history = [...questionHistory];
     const last = history.pop();
-    const newAnswers = { ...answers };
-    delete newAnswers[last.question.id];
-    if (last.question.id === "travelers") {
-      delete newAnswers.kids_ages;
-    }
-    if (last.question.id === "vehicle") {
-      delete newAnswers.fuel_type;
-      delete newAnswers.truck_height;
-      delete newAnswers.truck_weight;
-      delete newAnswers.truck_hazmat;
-      delete newAnswers.hos_compliance;
-      delete newAnswers.rv_height;
-      delete newAnswers.rv_weight;
-      delete newAnswers.rv_towing;
-      delete newAnswers.multi_vehicles;
-      delete newAnswers.primary_vehicle;
-      delete newAnswers.coordination_needs;
-      delete newAnswers.effective_vehicle;
-      delete newAnswers.overnight_preference;
-      delete newAnswers.continuous_drive;
-      delete newAnswers.lodging;
-      delete newAnswers.loyalty_program;
-      delete newAnswers.trip_details;
-      delete newAnswers.food_allergies;
-    }
-    if (last.question.id === "overnight_preference") {
-      delete newAnswers.continuous_drive;
-      delete newAnswers.lodging;
-      delete newAnswers.loyalty_program;
-    }
-    if (last.question.id === "lodging" || last.question.type === "lodging_stay") {
-      delete newAnswers.lodging;
-      delete newAnswers.loyalty_program;
-    }
+    const newAnswers = revertAnswerForHistoryEntry(answers, last);
     if (last.question.type === "multiselect_group" || last.question.type === "trip_details") {
-      for (const sec of last.question.sections || []) {
-        delete newAnswers[sec.id];
-      }
-      if (last.question.type === "trip_details") {
-        delete newAnswers.trip_budget;
-      }
       setPrefDraft(last.answer && typeof last.answer === "object" ? last.answer : {});
     } else if (last.question.type === "multiselect") {
       setPrefDraft(Array.isArray(last.answer) ? last.answer : []);
@@ -2733,7 +3012,7 @@ export default function App() {
               accessToken={session?.access_token}
               onBack={() => setView("profile")}
               onToast={toast_}
-              onSaved={prefs => { planPreferencesRef.current = prefs || {}; }}
+              onSaved={(prefs, meta) => applyPlanPreferencesSaved(prefs, meta)}
             />
           </ErrorBoundary>
         </div>
@@ -2760,10 +3039,12 @@ export default function App() {
             profile={userProfile}
             creditStatus={creditStatus}
             savedTrips={savedTrips}
+            generationCount={planGenerationCount}
             isLoaded={isLoaded}
             onBack={() => setView("app")}
             onSignOut={handleSignOut}
             onUpgrade={openTripsUpgrade}
+            onUpgradeVoyager={openVoyagerUpgrade}
             onUpgradeTraveler={openGroceryUpgrade}
             onPlanTrip={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
             onLoadTrip={handleViewTrip}
@@ -2792,10 +3073,14 @@ export default function App() {
         {showUpgradeModal && (
           <UpgradeModal
             onClose={() => setShowUpgradeModal(false)}
+            onOpenPricing={openPricingPage}
             user={user}
             accessToken={session?.access_token}
             creditStatus={creditStatus}
             reason={upgradeModalReason}
+            resetDate={upgradeModalResetDate}
+            initialPlan={upgradeModalInitialPlan ?? TIERS.TRAILBLAZER}
+            initialBillingInterval={upgradeModalBillingInterval}
             onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
             onCheckoutError={msg => toast_(msg, { isError: true })}
           />
@@ -3184,7 +3469,7 @@ export default function App() {
                       currentQuestion={currentQuestion}
                       convoComplete={convoComplete}
                       loading={loading}
-                      answers={answers}
+                      answers={displayAnswers}
                       origin={origin}
                       dest={dest}
                       routeInfo={routeInfo}
@@ -3200,6 +3485,7 @@ export default function App() {
                       convoEndRef={convoEndRef}
                       convoScrollRef={convoScrollRef}
                       creditsLabel={formatCreditsLabel(creditStatus)}
+                      creditsNudge={creditsNudge}
                       creditsExhausted={creditsExhausted}
                       onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}
@@ -3216,8 +3502,13 @@ export default function App() {
                       onResetPlan={requestResetPlan}
                       onGoBack={goBackOneQuestion}
                       onPickAnswer={pickAnswer}
-                      onSetAnswers={setAnswers}
                       onSetPrefDraft={setPrefDraft}
+                      onSkipRoutePending={handleSkipRoutePending}
+                      onRoutePendingTimeout={handleRoutePendingTimeout}
+                      continuousDriveConfirm={continuousDriveConfirm}
+                      onConfirmContinuousDrive={confirmContinuousDrive}
+                      onCancelContinuousDrive={cancelContinuousDrive}
+                      onEditQuestion={jumpToQuestion}
                       getStepMessage={getStepMessage}
                     />
                     </ErrorBoundary>
@@ -3341,8 +3632,12 @@ export default function App() {
           user={user}
           accessToken={session?.access_token}
           onClose={() => setShowUpgradeModal(false)}
+          onOpenPricing={openPricingPage}
           onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
           reason={upgradeModalReason}
+          resetDate={upgradeModalResetDate}
+          initialPlan={upgradeModalInitialPlan ?? TIERS.TRAILBLAZER}
+          initialBillingInterval={upgradeModalBillingInterval}
           onCheckoutError={msg => toast_(msg, { isError: true })}
         />
       )}

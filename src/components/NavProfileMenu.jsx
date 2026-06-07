@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { subscribePwaInstall, promptPwaInstall } from "../lib/pwaInstall.js";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
@@ -27,6 +28,7 @@ export default function NavProfileMenu({
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [installAvailable, setInstallAvailable] = useState(false);
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -83,6 +85,13 @@ export default function NavProfileMenu({
   useEffect(() => () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
   }, []);
+
+  useEffect(() => subscribePwaInstall(setInstallAvailable), []);
+
+  async function handleInstallApp() {
+    await promptPwaInstall();
+    closeMenu();
+  }
 
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
@@ -190,6 +199,16 @@ export default function NavProfileMenu({
           >
             {uploadingPhoto ? "Uploading…" : "Change Profile Photo"}
           </button>
+
+          {installAvailable && (
+            <button
+              type="button"
+              className="profile-card-photo-btn"
+              onClick={() => void handleInstallApp()}
+            >
+              Install App
+            </button>
+          )}
 
           <button
             type="button"

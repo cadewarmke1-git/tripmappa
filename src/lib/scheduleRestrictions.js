@@ -1,6 +1,6 @@
-/** Travel schedule restrictions — alerts and itinerary guidance without external APIs. */
 import { asArray } from "./tripAccommodations.js";
 import { parseHoursFromDuration } from "./parsing.js";
+import { getEffectiveVehicle, isTruckVehicle, isWaterVehicle } from "./vehicles.js";
 
 export const SCHEDULE_CHOICES = [
   "No restrictions",
@@ -9,12 +9,47 @@ export const SCHEDULE_CHOICES = [
   "Drive only during specific hours — I will specify",
 ];
 
+/** Alias for preferences UI and API documentation. */
+export const SCHEDULE_RESTRICTION_CHOICES = SCHEDULE_CHOICES;
+
+export const SCHEDULE_NO_RESTRICTIONS = "No restrictions";
+
 export const SCHEDULE_SABBATH = "Cannot travel on Saturdays — Sabbath observant";
 export const SCHEDULE_SUNDAY = "Cannot travel on Sundays";
 export const SCHEDULE_SPECIFIC_HOURS = "Drive only during specific hours — I will specify";
+export const SCHEDULE_TRAVEL_SPECIFIC_HOURS = "Travel only during specific hours — I will specify";
+
+export const SCHEDULE_SPECIFIC_HOURS_VALUES = [
+  SCHEDULE_SPECIFIC_HOURS,
+  SCHEDULE_TRAVEL_SPECIFIC_HOURS,
+];
+
+/** Schedule multiselect choices with transport-appropriate labels (values unchanged). */
+export function getScheduleChoicesForContext(answers = {}) {
+  const effective = getEffectiveVehicle(answers);
+  const isTravelMode = effective === "Plane" || effective === "Ferry" || isWaterVehicle(effective);
+  const isTruck = isTruckVehicle(effective);
+
+  return SCHEDULE_CHOICES.map((choice) => {
+    if (choice !== SCHEDULE_SPECIFIC_HOURS) return choice;
+    if (isTravelMode) {
+      return {
+        value: SCHEDULE_TRAVEL_SPECIFIC_HOURS,
+        label: SCHEDULE_TRAVEL_SPECIFIC_HOURS,
+      };
+    }
+    if (isTruck) {
+      return {
+        value: SCHEDULE_SPECIFIC_HOURS,
+        label: "On the road only during specific hours — I will specify",
+      };
+    }
+    return choice;
+  });
+}
 
 export function needsScheduleHoursDetail(answers) {
-  return asArray(answers?.schedule_restrictions).includes(SCHEDULE_SPECIFIC_HOURS);
+  return asArray(answers?.schedule_restrictions).some(s => SCHEDULE_SPECIFIC_HOURS_VALUES.includes(s));
 }
 
 export function getScheduleRestrictionLabels(answers) {
@@ -62,7 +97,7 @@ export function buildScheduleAlerts({ answers, routeInfo, departureTime = null }
     });
   }
 
-  if (restrictions.includes(SCHEDULE_SPECIFIC_HOURS)) {
+  if (restrictions.some(s => SCHEDULE_SPECIFIC_HOURS_VALUES.includes(s))) {
     const window = answers?.schedule_drive_hours?.trim();
     alerts.push({
       type: "schedule",

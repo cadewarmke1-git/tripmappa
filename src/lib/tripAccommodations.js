@@ -1,5 +1,6 @@
 /** Shared constants and helpers for human-possibility accommodations. */
-import { getEffectiveVehicle, isTruckVehicle, isRvVehicle, parseTravelerCount } from "./vehicles.js";
+import { getEffectiveVehicle, isTruckVehicle, isRvVehicle, isWaterVehicle, parseTravelerCount } from "./vehicles.js";
+import { parseMilesFromDistance } from "./parsing.js";
 
 export const FUEL_TYPE_CHOICES = [
   "Gasoline",
@@ -22,11 +23,16 @@ export const DIETARY_CHOICES = [
   "Vegetarian",
   "Vegan",
   "Gluten Free",
-  "Halal",
-  "Kosher",
   "Pescatarian",
   "Food Allergies — I will specify",
   "Drive-Through Only",
+];
+
+/** Profile / saved preferences only — includes options removed from per-trip trip_details flow. */
+export const DIETARY_PREFERENCE_CHOICES = [
+  ...DIETARY_CHOICES,
+  "Halal",
+  "Kosher",
 ];
 
 export const ACCESSIBILITY_CHOICES = [
@@ -64,6 +70,39 @@ export const FAMILY_INTERESTS = [
   "Breastfeeding friendly stop",
   "Kid friendly attractions",
 ];
+
+/** Plane and ferry destination interests — not used on road-trip fun-stops lists. */
+export const DESTINATION_INTEREST_LABELS = {
+  music_nightlife: "Music and nightlife",
+};
+
+export const DESTINATION_INTEREST_CHOICES = [
+  "Nature and outdoors",
+  "Cities and culture",
+  "Food and dining",
+  { value: "music_nightlife", label: "Music and nightlife" },
+  "Adventure and activities",
+  "History and landmarks",
+  "Relaxation and beaches",
+  "No specific interests",
+];
+
+export function formatStopInterestForHints(value) {
+  return DESTINATION_INTEREST_LABELS[value] || value;
+}
+
+export function getStopsInterestsHintLabel(answers = {}) {
+  const effective = getEffectiveVehicle(answers);
+  if (effective === "Plane" || effective === "Ferry" || isWaterVehicle(effective)) {
+    return "Destination interests";
+  }
+  return "Fun stops";
+}
+
+export function formatStopsInterestsForHints(answers = {}) {
+  const interests = asArray(answers.stops_interests).filter(i => i && i !== "No specific interests");
+  return interests.map(formatStopInterestForHints).join(", ");
+}
 
 export const TRIP_BUDGET_CHOICES = [
   "No budget limit",
@@ -108,9 +147,38 @@ export function isNonCommercial(answers) {
   return isPersonalVehicle(v) || isRvVehicle(v);
 }
 
-export function needsTowingQuestion(answers) {
+const MOTORCYCLE_TOWING_MILES = 80;
+
+export function needsTowingQuestion(answers, context = {}) {
   const v = getEffectiveVehicle(answers);
-  return v === "Car" || v === "SUV or Van";
+  if (v === "Rental Car") return true;
+  if (v === "Car" || v === "SUV or Van") return true;
+  if (v === "Motorcycle") {
+    const miles = context.routeDistanceMiles ?? parseMilesFromDistance(context?.routeDistance);
+    return miles == null || miles >= MOTORCYCLE_TOWING_MILES;
+  }
+  return false;
+}
+
+export function isMotorcycleTowingQuestion(answers) {
+  return getEffectiveVehicle(answers) === "Motorcycle";
+}
+
+export const MOTORCYCLE_TOWING_CHOICES = [
+  "No",
+  "Yes — trailer",
+  "Yes — sidecar",
+];
+
+export function needsKidsAgesDetail(answers) {
+  const childCount = Number(answers?.child_count);
+  if (childCount > 0) return true;
+  return hasAccessibility(answers, "Traveling with young children");
+}
+
+export function needsTruckExternalLodging(answers) {
+  const v = getEffectiveVehicle(answers);
+  return isTruckVehicle(v) && answers.sleeper_cab?.startsWith("No");
 }
 
 export function isTowingSelected(answers) {

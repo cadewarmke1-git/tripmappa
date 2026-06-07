@@ -31,12 +31,16 @@ export const TIER_PRICING = {
     label: "Voyager",
     priceLabel: "$4.99/mo",
     priceMonthly: 4.99,
+    priceAnnual: 39.99,
+    priceAnnualLabel: "$39.99/yr",
     upgradeUrl: null,
   },
   [TIERS.TRAILBLAZER]: {
     label: "Trailblazer",
-    priceLabel: "$7.99/mo",
-    priceMonthly: 7.99,
+    priceLabel: "$9.99/mo",
+    priceMonthly: 9.99,
+    priceAnnual: 79.99,
+    priceAnnualLabel: "$79.99/yr",
     upgradeUrl: null,
   },
   [TIERS.FOUNDER]: {
@@ -102,10 +106,20 @@ export function getTierLabel(tier) {
   return TIER_PRICING[key]?.label || "Wanderer";
 }
 
-export function getTierPriceLabel(tier) {
+export function getTierPriceLabel(tier, billingPeriod = "month") {
   const key = normalizeTier(tier);
   if (isFounderTier(tier)) return TIER_PRICING[TIERS.FOUNDER].priceLabel;
-  return TIER_PRICING[key]?.priceLabel || "Free";
+  const pricing = TIER_PRICING[key];
+  if (!pricing) return "Free";
+  if (billingPeriod === "year" && pricing.priceAnnualLabel) return pricing.priceAnnualLabel;
+  return pricing.priceLabel || "Free";
+}
+
+export function getTierAnnualMonthlyEquivalent(tier) {
+  const key = normalizeTier(tier);
+  const pricing = TIER_PRICING[key];
+  if (!pricing?.priceAnnual) return null;
+  return (pricing.priceAnnual / 12).toFixed(2);
 }
 
 export function hasUnlimitedTripGenerations(tier) {

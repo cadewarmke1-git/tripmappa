@@ -22,6 +22,9 @@ describe("scheduleRestrictions", () => {
       schedule_restrictions: [SCHEDULE_SPECIFIC_HOURS],
     })).toBe(true);
     expect(needsScheduleHoursDetail({
+      schedule_restrictions: ["Travel only during specific hours — I will specify"],
+    })).toBe(true);
+    expect(needsScheduleHoursDetail({
       schedule_restrictions: ["No restrictions"],
     })).toBe(false);
   });

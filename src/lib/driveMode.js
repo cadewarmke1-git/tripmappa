@@ -34,8 +34,14 @@ export function requiresMultipleDays(context) {
   if (hours != null && hours > 11) return true;
   const miles = getRouteDistanceMiles(context);
   if (miles == null || miles < 150) return false;
-  if (hours != null && hours > 6) return true;
+  if (hours != null && hours > 3.5) return true;
   return hours == null;
+}
+
+/** 3.5–6 hr range — optional overnight hint on the preference question. */
+export function isMediumLengthTrip(context) {
+  const hours = getRouteDurationHours(context);
+  return hours != null && hours >= 3.5 && hours <= 6;
 }
 
 export function buildContinuousDriveTip(routeInfo) {

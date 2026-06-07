@@ -88,33 +88,40 @@ export function finalizeTripPreferenceStats(existing, tripStopCount = 1) {
   };
 }
 
-export function formatPreferencesForPrompt(prefs) {
-  if (!prefs) return "";
+export function formatPreferencesForPrompt(prefs, recentTripsPreferencesRollup = "") {
+  if (!prefs && !recentTripsPreferencesRollup) return "";
   const lines = ["=== USER LEARNED PREFERENCES (from past trips — weight suggestions toward these) ==="];
 
-  const cats = Object.entries(prefs.stop_categories || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
-  if (cats.length) {
-    lines.push(`Frequently added stop categories: ${cats.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
+  if (prefs) {
+    const cats = Object.entries(prefs.stop_categories || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+    if (cats.length) {
+      lines.push(`Frequently added stop categories: ${cats.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
+    }
+
+    const brands = Object.entries(prefs.fuel_brands || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+    if (brands.length) {
+      lines.push(`Preferred fuel brands (from stops actually added): ${brands.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
+    }
+
+    const rests = Object.entries(prefs.restaurant_types || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+    if (rests.length) {
+      lines.push(`Preferred restaurant types: ${rests.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
+    }
+
+    if (prefs.avg_stops_per_trip > 0) {
+      lines.push(`Average user-added stops per trip: ${prefs.avg_stops_per_trip}`);
+    }
   }
 
-  const brands = Object.entries(prefs.fuel_brands || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-  if (brands.length) {
-    lines.push(`Preferred fuel brands (from stops actually added): ${brands.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
-  }
-
-  const rests = Object.entries(prefs.restaurant_types || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-  if (rests.length) {
-    lines.push(`Preferred restaurant types: ${rests.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
-  }
-
-  if (prefs.avg_stops_per_trip > 0) {
-    lines.push(`Average user-added stops per trip: ${prefs.avg_stops_per_trip}`);
+  if (recentTripsPreferencesRollup?.trim()) {
+    lines.push("");
+    lines.push(recentTripsPreferencesRollup.trim());
   }
 
   if (lines.length <= 1) return "";

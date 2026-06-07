@@ -3,6 +3,7 @@ import { readRawBody } from "../../lib/readRawBody.js";
 import { getStripe, stripeNotConfiguredResponse } from "../../lib/stripe.js";
 import {
   applyPremiumFromCheckout,
+  applySubscriptionRenewal,
   downgradeUserToFree,
 } from "../../lib/stripeBilling.js";
 
@@ -63,6 +64,16 @@ export default async function handler(req, res) {
       }
       case "customer.subscription.deleted": {
         await downgradeUserToFree(admin, event.data.object);
+        break;
+      }
+      case "customer.subscription.updated": {
+        const subscription = event.data.object;
+        const prev = event.data.previous_attributes;
+        const periodRenewed = prev?.current_period_start != null
+          && subscription.current_period_start !== prev.current_period_start;
+        if (periodRenewed) {
+          await applySubscriptionRenewal(admin, stripe, subscription);
+        }
         break;
       }
       default:

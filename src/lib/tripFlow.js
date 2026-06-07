@@ -9,6 +9,7 @@ import {
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import {
   isContinuousDrive,
+  isMediumLengthTrip,
   OVERNIGHT_PREFERENCE_CONTINUOUS,
   OVERNIGHT_PREFERENCE_OVERNIGHT,
   requiresMultipleDays,
@@ -17,16 +18,21 @@ import {
   isPersonalVehicle,
   FUEL_TYPE_CHOICES,
   TOWING_CHOICES,
+  MOTORCYCLE_TOWING_CHOICES,
   DIETARY_CHOICES,
   ACCESSIBILITY_CHOICES,
   TRIP_BUDGET_CHOICES,
   LOYALTY_CHOICES,
   getStopsInterestsChoices,
+  DESTINATION_INTEREST_CHOICES,
   needsFoodAllergyDetail,
   needsTowingQuestion,
+  needsKidsAgesDetail,
+  needsTruckExternalLodging,
   isTowingSelected,
+  asArray,
 } from "./tripAccommodations.js";
-import { SCHEDULE_CHOICES, needsScheduleHoursDetail } from "./scheduleRestrictions.js";
+import { SCHEDULE_CHOICES, needsScheduleHoursDetail, getScheduleChoicesForContext, SCHEDULE_SPECIFIC_HOURS, SCHEDULE_TRAVEL_SPECIFIC_HOURS } from "./scheduleRestrictions.js";
 
 export { MULTI_VEHICLE_TRIP };
 
@@ -34,14 +40,33 @@ export const MARINE_SKIP_MESSAGE =
   "Marine routing is approximate — Google Maps does not support water navigation. Showing departure and arrival port recommendations only.";
 export const PLANE_SKIP_MESSAGE =
   "Showing airport transport, layover recommendations, and destination activity suggestions only.";
+export const ROUTE_PENDING_UNLOCK_MS = 8000;
 
-export { isContinuousDrive, requiresMultipleDays } from "./driveMode.js";
+export const SUMMARY_EDIT_QUESTION_BY_ROW = {
+  "Vehicle": "vehicle",
+  "Primary vehicle": "primary_vehicle",
+  "Vehicles on trip": "multi_vehicles",
+  "Party size": "travelers",
+  "Party composition": "party_composition",
+  "Overnight nights": "trip_nights",
+  "Lodging": "lodging",
+  "Fuel": "fuel_type",
+  "Hauling": "hauling_type",
+  "Sleeper cab": "sleeper_cab",
+  "Truck stops": "truck_stop_brand",
+  "Route restrictions": "route_restrictions",
+  "Coordination": "coordination_needs",
+  "Preferences": "preferences",
+  "Drive mode": "overnight_preference",
+  "Fuel type": "fuel_type",
+};
 
 export const FLOW_QUESTION_IDS = [
   "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
-  "overnight_preference", "lodging", "loyalty_program", "dietary", "food_allergies", "accessibility",
+  "party_composition", "adult_count", "child_count",
+  "overnight_preference", "lodging", "trip_nights", "loyalty_program", "dietary", "food_allergies", "accessibility",
   "stops_interests", "trip_budget", "schedule_restrictions", "schedule_drive_hours", "preferences",
-  "hauling_type", "sleeper_cab", "truck_stop_brand", "route_restrictions", "coordination_needs",
+  "hauling_type", "sleeper_cab", "truck_stop_brand", "route_restrictions", "coordination_needs", "kids_ages",
 ];
 
 export const VEHICLE_GROUPS = [
@@ -87,7 +112,16 @@ export const VEHICLE_GROUPS = [
 export const VEHICLE_CHOICES = VEHICLE_GROUPS.flatMap(g => g.options.map(o => o.value));
 export const MULTI_VEHICLE_CHOICES = VEHICLE_CHOICES.filter(v => v !== MULTI_VEHICLE_TRIP);
 
-export const KIDS_AGE_CHOICES = [];
+export const KIDS_AGES_SKIP = "Not sure / prefer not to say";
+
+export const KIDS_AGE_CHOICES = [
+  "Infants (under 2)",
+  "Toddlers (2-4)",
+  "Young children (5-10)",
+  "Tweens (11-13)",
+  "Teenagers (14-17)",
+  KIDS_AGES_SKIP,
+];
 
 const DAY_TRIP_MILES = 150;
 
@@ -123,11 +157,11 @@ export const FLOW_PHASES = [
 ];
 
 const ABOUT_QUESTION_IDS = new Set([
-  "vehicle", "fuel_type", "towing", "travelers", "multi_vehicles", "primary_vehicle",
+  "vehicle", "fuel_type", "towing", "travelers", "party_composition", "multi_vehicles", "primary_vehicle",
   "hauling_type", "sleeper_cab", "truck_stop_brand",
 ]);
 const ROUTE_QUESTION_IDS = new Set([
-  "preferences", "overnight_preference", "lodging", "_route_loading",
+  "preferences", "overnight_preference", "lodging", "trip_nights", "_route_loading",
   "route_restrictions", "coordination_needs",
 ]);
 const DETAILS_QUESTION_IDS = new Set([
@@ -163,6 +197,14 @@ export function formatFlowAnswer(question, answer) {
     const loyalty = question._loyalty || "";
     return loyalty && loyalty !== "No preference" ? `${answer} · ${loyalty}` : String(answer);
   }
+  if (question.id === "party_composition" || question.type === "party_composition") {
+    const payload = answer && typeof answer === "object" ? answer : {};
+    const adults = payload.adults ?? payload.adult_count;
+    const children = payload.children ?? payload.child_count;
+    if (adults != null && children != null) {
+      return `${adults} adult${adults === 1 ? "" : "s"}, ${children} child${children === 1 ? "" : "ren"}`;
+    }
+  }
   if (Array.isArray(answer)) return answer.length ? answer.join(", ") : "None";
   if (typeof answer === "object") return "Selected";
   return String(answer);
@@ -184,6 +226,19 @@ const TOWING_QUESTION = {
   choices: TOWING_CHOICES,
 };
 
+const MOTORCYCLE_TOWING_QUESTION = {
+  id: "towing",
+  ask: "Are you traveling with a trailer or sidecar?",
+  hint: "Only applies on longer rides — affects stop and parking suggestions.",
+  type: "choice",
+  choices: MOTORCYCLE_TOWING_CHOICES,
+};
+
+function buildTowingQuestion(answers) {
+  if (getEffectiveVehicle(answers) === "Motorcycle") return MOTORCYCLE_TOWING_QUESTION;
+  return TOWING_QUESTION;
+}
+
 const TRAVELERS_QUESTION = {
   id: "travelers",
   ask: "Who's coming along?",
@@ -191,6 +246,47 @@ const TRAVELERS_QUESTION = {
   type: "travelers",
   choices: ["1", "2", "3 to 5", "6 or more"],
 };
+
+const PARTY_COMPOSITION_QUESTION = {
+  id: "party_composition",
+  ask: "How many are adults and how many are children?",
+  hint: "Helps us size lodging and family-friendly stops.",
+  type: "party_composition",
+  adultRange: [1, 8],
+  childRange: [0, 6],
+};
+
+const TRIP_NIGHTS_QUESTION = {
+  id: "trip_nights",
+  ask: "How many nights are you planning to stop?",
+  hint: "We'll spread overnight stops evenly across your route.",
+  type: "choice",
+  choices: ["1 night", "2 nights", "3 nights", "4+ nights", "Not sure"],
+};
+
+function needsPartyCompositionQuestion(answers) {
+  const t = answers.travelers;
+  if (t !== "3 to 5" && t !== "6 or more") return false;
+  return answers.adult_count == null || answers.child_count == null;
+}
+
+function needsTripNightsQuestion(answers, context) {
+  if (answers.overnight_preference !== OVERNIGHT_PREFERENCE_OVERNIGHT) return false;
+  if (!requiresMultipleDays(context)) return false;
+  if (isContinuousDrive(answers)) return false;
+  if (isDayTripByDistance(context)) return false;
+  const effective = getEffectiveVehicle(answers);
+  if (isRvVehicle(effective) || isTruckVehicle(effective)) return false;
+  if (!isAnswered("lodging", answers)) return false;
+  return !isAnswered("trip_nights", answers);
+}
+
+function needsRvTripNightsQuestion(answers, context) {
+  if (!requiresMultipleDays(context)) return false;
+  if (!isRvVehicle(getEffectiveVehicle(answers))) return false;
+  if (!isAnswered("preferences", answers)) return false;
+  return !isAnswered("trip_nights", answers);
+}
 
 function buildOvernightPreferenceQuestion(context) {
   const snapshot = formatRouteSnapshot(context);
@@ -202,6 +298,9 @@ function buildOvernightPreferenceQuestion(context) {
     ask,
     routeSnapshot: snapshot,
     hint: "You can always edit this later before generating.",
+    mediumTripHint: isMediumLengthTrip(context)
+      ? "Most people complete this drive in one day, but stopping overnight is always an option."
+      : null,
     type: "choice",
     choices: [
       {
@@ -257,13 +356,55 @@ const SCHEDULE_DRIVE_HOURS_QUESTION = {
   placeholder: "e.g. weekdays 8 AM to 6 PM only",
 };
 
-const ACCESSIBILITY_QUESTION = {
-  id: "accessibility",
-  ask: "Any accessibility needs?",
-  hint: "We'll prioritize suitable stops and lodging.",
+export function buildScheduleDriveHoursQuestion(answers = {}) {
+  const effective = getEffectiveVehicle(answers);
+  if (effective === "Plane" || effective === "Ferry") {
+    return {
+      id: "schedule_drive_hours",
+      ask: "When do you prefer to travel?",
+      hint: "Example: weekday mornings only, or no late-night connections.",
+      type: "text",
+      placeholder: "e.g. weekdays 8 AM to 6 PM only",
+    };
+  }
+  if (isWaterVehicle(effective)) {
+    return {
+      id: "schedule_drive_hours",
+      ask: "When do you prefer to travel?",
+      hint: "Example: sail only during daylight, or avoid overnight crossings.",
+      type: "text",
+      placeholder: "e.g. daylight hours only",
+    };
+  }
+  if (isTruckVehicle(effective)) {
+    return {
+      id: "schedule_drive_hours",
+      ask: "What are your preferred hours on the road?",
+      hint: "Example: weekdays 6 AM–8 PM only, or no driving after 10 PM.",
+      type: "text",
+      placeholder: "e.g. weekdays 6 AM to 8 PM only",
+    };
+  }
+  return { ...SCHEDULE_DRIVE_HOURS_QUESTION };
+}
+
+const KIDS_AGES_QUESTION = {
+  id: "kids_ages",
+  ask: "What ages are the children traveling with you?",
+  hint: "Helps us suggest age-appropriate stops and rest break spacing.",
   type: "multiselect",
-  choices: ACCESSIBILITY_CHOICES,
+  choices: KIDS_AGE_CHOICES,
 };
+
+function buildTruckLodgingQuestion() {
+  return {
+    id: "lodging",
+    ask: "What tier of motel or hotel do you prefer for overnight stops?",
+    hint: "Truck-accessible lodging near major stops along your route.",
+    type: "choice",
+    choices: LODGING_CHOICE_OPTIONS.map(o => o.value),
+  };
+}
 
 const TRIP_BUDGET_QUESTION = {
   id: "trip_budget",
@@ -300,10 +441,14 @@ function buildRvPreferencesQuestion(context) {
 }
 
 function buildTripDetailsQuestion(answers) {
+  const effective = getEffectiveVehicle(answers);
+  const isTruck = isTruckVehicle(effective);
   return {
     id: "trip_details",
     pageTitle: "Personalize your trip",
-    pageSubtitle: "These preferences help tailor your route recommendations, stops, and dining along the drive.",
+    pageSubtitle: isTruck
+      ? "These preferences help tailor rest breaks, fuel stops, and dining along your route."
+      : "These preferences help tailor your route recommendations, stops, and dining along the drive.",
     ask: "Anything else we should plan around?",
     hint: "All optional — tap again to deselect, or continue with defaults.",
     type: "trip_details",
@@ -311,10 +456,74 @@ function buildTripDetailsQuestion(answers) {
       { id: "dietary", label: "Food", choices: DIETARY_CHOICES },
       { id: "stops_interests", label: "Fun stops", choices: getStopsInterestsChoices(answers) },
       { id: "accessibility", label: "Accessibility & medical", choices: ACCESSIBILITY_CHOICES },
-      { id: "schedule_restrictions", label: "Schedule", choices: SCHEDULE_CHOICES },
+      { id: "schedule_restrictions", label: "Schedule", choices: getScheduleChoicesForContext(answers) },
     ],
     budgetChoices: TRIP_BUDGET_CHOICES,
   };
+}
+
+function isThinTransportVehicle(vehicle) {
+  return vehicle === "Plane" || isWaterVehicle(vehicle);
+}
+
+function needsThinTransportDestinationInterests(answers) {
+  const effective = getEffectiveVehicle(answers);
+  return effective === "Plane" || effective === "Ferry";
+}
+
+function isThinTransportDetailsAnswered(answers) {
+  const base = isAnswered("dietary", answers)
+    && isAnswered("accessibility", answers)
+    && isAnswered("schedule_restrictions", answers)
+    && isAnswered("trip_budget", answers);
+  if (needsThinTransportDestinationInterests(answers)) {
+    return base && isAnswered("stops_interests", answers);
+  }
+  return base;
+}
+
+function buildThinTransportDetailsQuestion(answers) {
+  const withDest = needsThinTransportDestinationInterests(answers);
+  const effective = getEffectiveVehicle(answers);
+  const isPlane = effective === "Plane";
+  return {
+    id: "trip_details",
+    pageTitle: "Personalize your trip",
+    pageSubtitle: isPlane
+      ? "Your carrier handles routing — tell us about your party and what you want at the destination."
+      : withDest
+        ? "Tell us about your party and what you'd like to explore when you arrive."
+        : "Tell us about your party so we can tailor port and activity suggestions.",
+    ask: "Anything we should plan around for this trip?",
+    hint: "All optional — tap again to deselect, or continue with defaults.",
+    type: "trip_details",
+    sections: [
+      { id: "dietary", label: "Food", choices: DIETARY_CHOICES },
+      ...(withDest ? [{ id: "stops_interests", label: "Destination interests", choices: DESTINATION_INTEREST_CHOICES }] : []),
+      { id: "accessibility", label: "Accessibility & medical", choices: ACCESSIBILITY_CHOICES },
+      { id: "schedule_restrictions", label: "Schedule", choices: getScheduleChoicesForContext(answers) },
+    ],
+    budgetChoices: TRIP_BUDGET_CHOICES,
+  };
+}
+
+function getNextThinTransportQuestions(answers) {
+  if (!isAnswered("travelers", answers)) {
+    const effective = getEffectiveVehicle(answers);
+    const hint = effective === "Plane"
+      ? "Helps size airport dining, lodging, and activity suggestions."
+      : "Helps size dining, lodging, and activity suggestions along your trip.";
+    return { done: false, ...TRAVELERS_QUESTION, hint };
+  }
+  if (needsPartyCompositionQuestion(answers)) {
+    return { done: false, ...PARTY_COMPOSITION_QUESTION };
+  }
+  if (!isThinTransportDetailsAnswered(answers)) {
+    return { done: false, ...buildThinTransportDetailsQuestion(answers) };
+  }
+  const tail = getNextTailFollowups(answers);
+  if (tail) return tail;
+  return null;
 }
 
 export const TRUCKER_QUESTION_SEQUENCE = [
@@ -352,8 +561,8 @@ function isTripDetailsAnswered(answers) {
     && isAnswered("trip_budget", answers);
 }
 
-export function hasKidsToddlers() {
-  return false;
+export function hasKidsToddlers(answers) {
+  return asArray(answers?.kids_ages).some(a => /Infants \(under 2\)|Toddlers \(2-4\)/.test(a));
 }
 
 export function getRouteDistanceMiles(context) {
@@ -366,8 +575,10 @@ export function isDayTripByDistance(context) {
   return miles != null && miles < DAY_TRIP_MILES;
 }
 
-function isInstantCompleteVehicle(vehicle) {
-  return isWaterVehicle(vehicle) || vehicle === "Plane";
+function shouldPendingOvernightRoute(answers, context) {
+  return !isRouteContextReady(context)
+    && !context.routeFailed
+    && !answers.route_context_unavailable;
 }
 
 function isAnswered(id, answers) {
@@ -391,6 +602,7 @@ function needsOvernightPreferenceQuestion(answers, context) {
 }
 
 function needsLodgingQuestion(answers, context) {
+  if (answers.overnight_preference !== OVERNIGHT_PREFERENCE_OVERNIGHT) return false;
   if (isContinuousDrive(answers)) return false;
   if (isDayTripByDistance(context)) return false;
   const effective = getEffectiveVehicle(answers);
@@ -403,7 +615,7 @@ function needsLodgingQuestion(answers, context) {
 }
 
 function buildVehicleQuestion() {
-  return { done: false, id: "vehicle", ask: "What kind of vehicle are you driving?", type: "vehicle", groups: VEHICLE_GROUPS, choices: VEHICLE_CHOICES };
+  return { done: false, id: "vehicle", ask: "How are you traveling?", type: "vehicle", groups: VEHICLE_GROUPS, choices: VEHICLE_CHOICES };
 }
 
 function buildPrimaryVehicleQuestion(selectedVehicles) {
@@ -418,45 +630,55 @@ function getNextCommercialQuestion(answers) {
   return null;
 }
 
-function getNextUniversalQuestions(answers) {
-  if (!isAnswered("accessibility", answers)) return { done: false, ...ACCESSIBILITY_QUESTION };
+function getNextTailFollowups(answers) {
+  if (needsKidsAgesDetail(answers) && !isAnswered("kids_ages", answers)) {
+    return { done: false, ...KIDS_AGES_QUESTION };
+  }
+  if (needsFoodAllergyDetail(answers) && !isAnswered("food_allergies", answers)) {
+    return { done: false, ...FOOD_ALLERGIES_QUESTION };
+  }
+  if (needsScheduleHoursDetail(answers) && !isAnswered("schedule_drive_hours", answers)) {
+    return { done: false, ...buildScheduleDriveHoursQuestion(answers) };
+  }
   return null;
 }
 
 function getNextTailQuestions(answers) {
   if (!isTripDetailsAnswered(answers)) return { done: false, ...buildTripDetailsQuestion(answers) };
-  if (needsFoodAllergyDetail(answers) && !isAnswered("food_allergies", answers)) {
-    return { done: false, ...FOOD_ALLERGIES_QUESTION };
-  }
-  if (needsScheduleHoursDetail(answers) && !isAnswered("schedule_drive_hours", answers)) {
-    return { done: false, ...SCHEDULE_DRIVE_HOURS_QUESTION };
-  }
-  return null;
+  return getNextTailFollowups(answers);
 }
 
 function getNextPersonalBranchQuestion(answers, context) {
   if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_QUESTION };
-  if (needsTowingQuestion(answers) && !isAnswered("towing", answers)) return { done: false, ...TOWING_QUESTION };
+  if (needsTowingQuestion(answers, context) && !isAnswered("towing", answers)) {
+    return { done: false, ...buildTowingQuestion(answers) };
+  }
   if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
+  if (needsPartyCompositionQuestion(answers)) return { done: false, ...PARTY_COMPOSITION_QUESTION };
   if (!isAnswered("preferences", answers)) return { done: false, ...buildPersonalPreferencesQuestion(context) };
 
   if (needsOvernightPreferenceQuestion(answers, context) && !isAnswered("overnight_preference", answers)) {
     const overnightQ = buildOvernightPreferenceQuestion(context);
-    if (!isRouteContextReady(context) && !context.routeFailed) {
+    if (shouldPendingOvernightRoute(answers, context)) {
       return { done: false, ...overnightQ, pendingRoute: true };
     }
-    if (requiresMultipleDays(context) || context.routeFailed) {
+    if (requiresMultipleDays(context) || context.routeFailed || answers.route_context_unavailable) {
       return {
         done: false,
         ...overnightQ,
-        hint: context.routeFailed
-          ? "We couldn't calculate drive time — choose what fits your plan."
-          : overnightQ.hint,
+        hint: answers.route_context_unavailable
+          ? "Route details are still loading — your answer will be used as-is."
+          : context.routeFailed
+            ? "We couldn't calculate drive time — choose what fits your plan."
+            : overnightQ.hint,
       };
     }
   }
   if (needsLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
     return { done: false, ...buildLodgingQuestion(context) };
+  }
+  if (needsTripNightsQuestion(answers, context)) {
+    return { done: false, ...TRIP_NIGHTS_QUESTION };
   }
 
   const tail = getNextTailQuestions(answers);
@@ -467,17 +689,56 @@ function getNextPersonalBranchQuestion(answers, context) {
 function getNextRvBranchQuestion(answers, context) {
   if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_QUESTION };
   if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
+  if (needsPartyCompositionQuestion(answers)) return { done: false, ...PARTY_COMPOSITION_QUESTION };
   if (!isAnswered("preferences", answers)) return { done: false, ...buildRvPreferencesQuestion(context) };
+  if (needsRvTripNightsQuestion(answers, context)) {
+    return { done: false, ...TRIP_NIGHTS_QUESTION };
+  }
   return getNextTailQuestions(answers);
 }
 
+/** Personal-car overnight/lodging — must not appear for RV or truck primaries (incl. multi-vehicle). */
+function isPersonalOvernightOrLodgingQuestion(question) {
+  if (!question) return false;
+  return question.id === "overnight_preference"
+    || question.id === "lodging"
+    || question.type === "lodging_stay";
+}
+
+/**
+ * Multi-vehicle routing after primary_vehicle:
+ * - Plane/Boat/Ferry primary → thin transport mini-flow (travelers → trip_details → follow-ups).
+ * - RV primary → full RV branch (fuel → travelers → preferences → trip_nights if multi-day → trip_details), then coordination.
+ * - Truck primary → full truck branch (hauling → sleeper → truck stop → restrictions → lodging if no sleeper → trip_details), then coordination.
+ * - Car/other personal primary → personal branch (may include overnight/lodging), then coordination.
+ */
+function guardMultiVehicleBranchNext(effective, branchNext, answers, context) {
+  if (isRvVehicle(effective) || isTruckVehicle(effective)) {
+    if (isPersonalOvernightOrLodgingQuestion(branchNext)) {
+      if (isTruckVehicle(effective)) {
+        const truckNext = getNextCommercialQuestion(answers);
+        if (truckNext) return truckNext;
+        if (needsTruckExternalLodging(answers) && !isAnswered("lodging", answers)) {
+          return { done: false, ...buildTruckLodgingQuestion() };
+        }
+        return getNextTailQuestions(answers);
+      }
+      return getNextRvBranchQuestion(answers, context);
+    }
+  }
+  return branchNext;
+}
+
 function getNextBranchQuestion(effective, answers, context) {
-  if (isInstantCompleteVehicle(effective)) return null;
+  if (isThinTransportVehicle(effective)) {
+    return getNextThinTransportQuestions(answers);
+  }
   if (isTruckVehicle(effective)) {
     const truckNext = getNextCommercialQuestion(answers);
     if (truckNext) return truckNext;
-    const universal = getNextUniversalQuestions(answers);
-    if (universal) return universal;
+    if (needsTruckExternalLodging(answers) && !isAnswered("lodging", answers)) {
+      return { done: false, ...buildTruckLodgingQuestion() };
+    }
     return getNextTailQuestions(answers);
   }
   if (isRvVehicle(effective)) return getNextRvBranchQuestion(answers, context);
@@ -488,7 +749,13 @@ function getNextBranchQuestion(effective, answers, context) {
 function getNextMultiVehicleQuestion(answers, context) {
   if (!isAnswered("multi_vehicles", answers)) return { done: false, ...MULTI_VEHICLES_QUESTION };
   if (!answers.primary_vehicle) return buildPrimaryVehicleQuestion(answers.multi_vehicles);
-  const branchNext = getNextBranchQuestion(getEffectiveVehicle(answers), answers, context);
+  const effective = getEffectiveVehicle(answers);
+  const branchNext = guardMultiVehicleBranchNext(
+    effective,
+    getNextBranchQuestion(effective, answers, context),
+    answers,
+    context,
+  );
   if (branchNext) return branchNext;
   if (!isAnswered("coordination_needs", answers)) return { done: false, ...COORDINATION_QUESTION };
   return null;
@@ -507,7 +774,7 @@ function mapFuelTypeToFuel(fuelType) {
 function mapTruckerAnswers(answers) {
   const out = { ...answers };
   if (out.sleeper_cab?.startsWith("Yes")) out.lodging = "Sleeper cab — no hotel needed";
-  else if (out.sleeper_cab?.startsWith("No")) out.lodging = "Motel near truck stop";
+  else if (out.sleeper_cab?.startsWith("No") && !out.lodging) out.lodging = "Mid-Range";
   if (out.truck_stop_brand && out.truck_stop_brand !== "No preference") out.truck_stop_preference = out.truck_stop_brand;
   return out;
 }
@@ -542,6 +809,14 @@ export function normalizeTripAnswers(answers, context = {}, options = {}) {
 
   if (isRvVehicle(effective)) out.lodging = "RV parks and campgrounds";
   if (isWaterVehicle(vehicle)) { out.fuel_type = out.fuel_type || "Gasoline"; out.fuel = out.fuel || "Gasoline"; }
+
+  const thinTransport = effective === "Plane" || effective === "Ferry" || isWaterVehicle(effective);
+  if (thinTransport && Array.isArray(out.schedule_restrictions)) {
+    out.schedule_restrictions = out.schedule_restrictions.map(s =>
+      s === SCHEDULE_SPECIFIC_HOURS ? SCHEDULE_TRAVEL_SPECIFIC_HOURS : s,
+    );
+  }
+
   if (isDayTripByDistance(context)) { delete out.lodging; out.trip_type = "Day trip"; }
   if (isContinuousDrive(out)) {
     out.continuous_drive = true;
@@ -597,8 +872,11 @@ export function getNextFlowQuestion(answers, context = {}) {
     if (multiNext) return multiNext;
     return { done: true, skipMessage: getFlowCompleteMessage(answers, context) };
   }
-  if (isWaterVehicle(answers.vehicle)) return { done: true, skipMessage: MARINE_SKIP_MESSAGE };
-  if (answers.vehicle === "Plane") return { done: true, skipMessage: PLANE_SKIP_MESSAGE };
+  if (isWaterVehicle(answers.vehicle) || answers.vehicle === "Plane") {
+    const branchNext = getNextBranchQuestion(getEffectiveVehicle(answers), answers, context);
+    if (branchNext) return branchNext;
+    return { done: true, skipMessage: getFlowCompleteMessage(answers, context) };
+  }
 
   const branchNext = getNextBranchQuestion(getEffectiveVehicle(answers), answers, context);
   if (branchNext) return branchNext;
@@ -631,6 +909,11 @@ function applyDummyAnswer(sim, q) {
   if (q.type === "lodging_stay") {
     sim.lodging = "Mid-Range";
     sim.loyalty_program = "No preference";
+    return;
+  }
+  if (q.type === "party_composition") {
+    sim.adult_count = 2;
+    sim.child_count = 1;
     return;
   }
   sim[q.id] = dummyAnswerForQuestion(q);
@@ -700,6 +983,20 @@ export function pruneStaleBranchAnswers(answers, context = {}) {
   if (!needsScheduleHoursDetail(out)) {
     delete out.schedule_drive_hours;
   }
+  if (!needsKidsAgesDetail(out)) {
+    delete out.kids_ages;
+  }
+  if (out.travelers !== "3 to 5" && out.travelers !== "6 or more") {
+    delete out.adult_count;
+    delete out.child_count;
+  }
+  if (!needsTripNightsQuestion(out, context) && !needsRvTripNightsQuestion(out, context)) {
+    delete out.trip_nights;
+  }
+  if (isTruckVehicle(effective) && !needsTruckExternalLodging(out)) {
+    if (out.sleeper_cab?.startsWith("Yes")) out.lodging = "Sleeper cab — no hotel needed";
+    else if (out.sleeper_cab?.startsWith("No")) delete out.lodging;
+  }
 
   return normalizeTripAnswers(out, context);
 }
@@ -710,6 +1007,8 @@ export function pruneRouteDependentAnswers(answers, context = {}) {
   delete out.continuous_drive;
   delete out.lodging;
   delete out.loyalty_program;
+  delete out.trip_nights;
+  delete out.route_context_unavailable;
   return normalizeTripAnswers(out, context);
 }
 

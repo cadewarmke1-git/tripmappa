@@ -19,10 +19,18 @@ describe("tripFlow resilience", () => {
       sleeper_cab: "Yes I have a sleeper cab",
       truck_stop_brand: "Love's",
       route_restrictions: ["No restrictions"],
-      accessibility: ["No special needs"],
     };
     const next = getNextFlowQuestion(answers, longTripContext);
     expect(next.id).toBe("trip_details");
+  });
+
+  it("skips standalone accessibility on the truck branch", () => {
+    const answers = {
+      vehicle: "Semi Truck (18-wheeler)",
+      hauling_type: "General freight",
+    };
+    const next = getNextFlowQuestion(answers, longTripContext);
+    expect(next.id).toBe("sleeper_cab");
   });
 
   it("unlocks overnight question when route calculation failed", () => {
@@ -52,5 +60,21 @@ describe("tripFlow resilience", () => {
     expect(pruned.hauling_type).toBeUndefined();
     expect(pruned.truck_stop_brand).toBeUndefined();
     expect(pruned.overnight_preference).toBeDefined();
+  });
+
+  it("multi-vehicle plane primary runs mini-flow before coordination", () => {
+    const answers = {
+      vehicle: "Multi-Vehicle Trip",
+      multi_vehicles: ["Car", "Plane"],
+      primary_vehicle: "Plane",
+      travelers: "2",
+      dietary: [],
+      stops_interests: ["Food and dining"],
+      accessibility: [],
+      schedule_restrictions: [],
+      trip_budget: "No budget limit",
+    };
+    const next = getNextFlowQuestion(answers, longTripContext);
+    expect(next.id).toBe("coordination_needs");
   });
 });

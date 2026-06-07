@@ -11,7 +11,9 @@ const ALLOWED_KEYS = new Set([
   "trip_budget",
   "dietary",
   "schedule_restrictions",
+  "preferences",
 ]);
+
 
 function sanitizePreferences(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -26,6 +28,31 @@ function sanitizePreferences(raw) {
     if (typeof value === "string") out[key] = value.trim();
   }
   return out;
+}
+
+function extractMetadata(raw = {}) {
+  const meta = {};
+  if (raw.last_generated_preferences && typeof raw.last_generated_preferences === "object") {
+    meta.last_generated_preferences = raw.last_generated_preferences;
+  }
+  if (raw.generation_count != null && !Number.isNaN(Number(raw.generation_count))) {
+    meta.generation_count = Number(raw.generation_count);
+  }
+  return meta;
+}
+
+function buildStoredPreferences(userPrefs, metaOverrides = null, existingRaw = {}) {
+  const existingMeta = extractMetadata(existingRaw);
+  const meta = { ...existingMeta };
+  if (metaOverrides && typeof metaOverrides === "object") {
+    if (metaOverrides.last_generated_preferences != null) {
+      meta.last_generated_preferences = metaOverrides.last_generated_preferences;
+    }
+    if (metaOverrides.generation_count != null) {
+      meta.generation_count = Number(metaOverrides.generation_count) || 0;
+    }
+  }
+  return { ...userPrefs, ...meta };
 }
 
 /** GET/PUT /api/plan-preferences — saved defaults for the question flow. */
@@ -43,21 +70,37 @@ export default async function handler(req, res) {
       .eq("user_id", authUser.id)
       .maybeSingle();
     if (error) return res.status(500).json({ error: error.message });
+    const raw = data?.plan_preferences || {};
     return res.status(200).json({
-      preferences: sanitizePreferences(data?.plan_preferences),
+      preferences: sanitizePreferences(raw),
+      meta: extractMetadata(raw),
     });
   }
 
   if (req.method === "PUT") {
-    const preferences = sanitizePreferences(req.body?.preferences);
+    const { data: existingRow, error: readError } = await admin
+      .from("user_profiles")
+      .select("plan_preferences")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+    if (readError) return res.status(500).json({ error: readError.message });
+
+    const existingRaw = existingRow?.plan_preferences || {};
+    const userPrefs = sanitizePreferences(req.body?.preferences);
+    const metaOverrides = req.body?.meta && typeof req.body.meta === "object" ? req.body.meta : null;
+    const stored = buildStoredPreferences(userPrefs, metaOverrides, existingRaw);
+
     const { error } = await admin
       .from("user_profiles")
       .upsert(
-        { user_id: authUser.id, plan_preferences: preferences },
+        { user_id: authUser.id, plan_preferences: stored },
         { onConflict: "user_id" },
       );
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ preferences });
+    return res.status(200).json({
+      preferences: sanitizePreferences(stored),
+      meta: extractMetadata(stored),
+    });
   }
 
   return res.status(405).json({ error: "Method not allowed" });

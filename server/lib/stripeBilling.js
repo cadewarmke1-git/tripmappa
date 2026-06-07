@@ -2,9 +2,13 @@
 import {
   getStripe,
   getStripeVoyagerPriceId,
+  getStripeVoyagerAnnualPriceId,
   getStripeTrailblazerPriceId,
+  getStripeTrailblazerAnnualPriceId,
+  tierFromStripePriceId,
   getSiteOrigin,
 } from "./stripe.js";
+import { resetMonthlyGenerationAllowance } from "./tripCredits.js";
 
 function requireStripePriceId(priceId, envName) {
   if (!priceId) {
@@ -58,15 +62,15 @@ export async function ensureStripeCustomer(stripe, admin, userId, email) {
   return customer.id;
 }
 
-function checkoutSessionBase({ customerId, userId, plan }) {
+function checkoutSessionBase({ customerId, userId, plan, billingInterval = "month" }) {
   const origin = getSiteOrigin();
   return {
     customer: customerId,
     mode: "subscription",
     client_reference_id: userId,
-    metadata: { supabase_user_id: userId, plan },
+    metadata: { supabase_user_id: userId, plan, billing_interval: billingInterval },
     subscription_data: {
-      metadata: { supabase_user_id: userId, plan },
+      metadata: { supabase_user_id: userId, plan, billing_interval: billingInterval },
     },
     success_url: `${origin}?success=1`,
     cancel_url: origin,
@@ -78,24 +82,28 @@ function checkoutSessionBase({ customerId, userId, plan }) {
   };
 }
 
-export async function createVoyagerCheckoutSession(stripe, { customerId, userId }) {
+export async function createVoyagerCheckoutSession(stripe, { customerId, userId, billingInterval = "month" }) {
   const price = requireStripePriceId(
-    getStripeVoyagerPriceId(),
-    "STRIPE_VOYAGER_PRICE_ID",
+    billingInterval === "year"
+      ? getStripeVoyagerAnnualPriceId()
+      : getStripeVoyagerPriceId(),
+    billingInterval === "year" ? "STRIPE_VOYAGER_ANNUAL_PRICE_ID" : "STRIPE_VOYAGER_PRICE_ID",
   );
   return stripe.checkout.sessions.create({
-    ...checkoutSessionBase({ customerId, userId, plan: "voyager" }),
+    ...checkoutSessionBase({ customerId, userId, plan: "voyager", billingInterval }),
     line_items: [{ price, quantity: 1 }],
   });
 }
 
-export async function createPremiumCheckoutSession(stripe, { customerId, userId }) {
+export async function createPremiumCheckoutSession(stripe, { customerId, userId, billingInterval = "month" }) {
   const price = requireStripePriceId(
-    getStripeTrailblazerPriceId(),
-    "STRIPE_TRAILBLAZER_PRICE_ID",
+    billingInterval === "year"
+      ? getStripeTrailblazerAnnualPriceId()
+      : getStripeTrailblazerPriceId(),
+    billingInterval === "year" ? "STRIPE_TRAILBLAZER_ANNUAL_PRICE_ID" : "STRIPE_TRAILBLAZER_PRICE_ID",
   );
   return stripe.checkout.sessions.create({
-    ...checkoutSessionBase({ customerId, userId, plan: "trailblazer" }),
+    ...checkoutSessionBase({ customerId, userId, plan: "trailblazer", billingInterval }),
     line_items: [{ price, quantity: 1 }],
   });
 }
@@ -136,18 +144,29 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
   }
 
   let renewalAt = null;
+  let resolvedPlan = session.metadata?.plan === "voyager" ? "voyager" : "trailblazer";
   if (subscriptionId) {
     try {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       if (sub.current_period_end) {
         renewalAt = new Date(sub.current_period_end * 1000).toISOString();
       }
+      const priceId = sub.items?.data?.[0]?.price?.id;
+      const tierFromPrice = tierFromStripePriceId(priceId);
+      if (tierFromPrice) resolvedPlan = tierFromPrice;
     } catch (err) {
       console.warn("stripe webhook: could not load subscription for renewal date", err.message);
     }
   }
 
-  const plan = session.metadata?.plan === "voyager" ? "voyager" : "trailblazer";
+  const plan = resolvedPlan;
+
+  const { data: existing, error: readErr } = await admin
+    .from("user_profiles")
+    .select("plan_preferences")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readErr) throw readErr;
 
   const patch = {
     user_id: userId,
@@ -157,9 +176,62 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
     premium_renewal_at: renewalAt,
     trailblazer_trial_ends_at: null,
     show_trial_ended_prompt: false,
+    plan_preferences: resetMonthlyGenerationAllowance(existing?.plan_preferences || {}),
   };
 
   const { error } = await admin.from("user_profiles").upsert(patch, { onConflict: "user_id" });
+  if (error) throw error;
+}
+
+/** Reset monthly allowance when a subscription enters a new billing period. */
+export async function applySubscriptionRenewal(admin, stripe, subscription) {
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id;
+
+  if (!customerId) {
+    console.warn("stripe webhook: subscription.updated missing customer id");
+    return;
+  }
+
+  if (subscription.status !== "active" && subscription.status !== "trialing") {
+    return;
+  }
+
+  const { data: profiles, error: findErr } = await admin
+    .from("user_profiles")
+    .select("user_id, plan_preferences, tier")
+    .eq("stripe_customer_id", customerId)
+    .limit(1);
+
+  if (findErr) throw findErr;
+  const profile = profiles?.[0];
+  if (!profile) {
+    console.warn("stripe webhook: no profile for customer", customerId);
+    return;
+  }
+
+  let renewalAt = null;
+  if (subscription.current_period_end) {
+    renewalAt = new Date(subscription.current_period_end * 1000).toISOString();
+  }
+
+  let resolvedPlan = profile.tier;
+  const priceId = subscription.items?.data?.[0]?.price?.id;
+  const tierFromPrice = tierFromStripePriceId(priceId);
+  if (tierFromPrice) resolvedPlan = tierFromPrice;
+
+  const { error } = await admin
+    .from("user_profiles")
+    .update({
+      tier: resolvedPlan,
+      stripe_subscription_id: subscription.id,
+      premium_renewal_at: renewalAt,
+      plan_preferences: resetMonthlyGenerationAllowance(profile.plan_preferences || {}),
+    })
+    .eq("user_id", profile.user_id);
+
   if (error) throw error;
 }
 

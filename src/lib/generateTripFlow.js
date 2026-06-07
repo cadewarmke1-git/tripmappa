@@ -26,7 +26,15 @@ export function isTripPlanComplete(parsed) {
 }
 
 export function generationFailureMessage(err) {
-  if (err?.code === "no_credits") return "No trip generations remaining.";
+  if (err?.code === "rate_limited" || err?.rateLimited) {
+    return "Please wait a moment before generating another trip.";
+  }
+  if (err?.code === "no_credits") {
+    if (err?.limitReached || err?.credits?.billingPeriod === "monthly") {
+      return "You have used all your Trip Generations this month.";
+    }
+    return "No trip generations remaining.";
+  }
   if (err?.message?.includes("incomplete")) {
     return "We couldn't build a complete trip plan. Please try again in a moment.";
   }

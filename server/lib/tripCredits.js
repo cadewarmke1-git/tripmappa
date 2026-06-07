@@ -1,5 +1,5 @@
-/** Server-side trip generation credit limits (3 lifetime for Wanderer, unlimited for paid tiers). */
-import { canUseGroceryDelivery, hasUnlimitedTripGenerations, isFounderTier } from "./tiers.js";
+/** Server-side trip generation credit limits by subscription tier. */
+import { canUseGroceryDelivery, isFounderTier, TIERS, normalizeTier } from "./tiers.js";
 import { expireFounderIfNeeded } from "./foundingMembers.js";
 import { expireTrialIfNeeded } from "./trials.js";
 import { getEffectiveTier } from "./tierEffective.js";
@@ -7,6 +7,8 @@ import { buildReferralLink } from "./referrals.js";
 import { isExemptFounderUser } from "./foundingMembers.js";
 
 export const FREE_LIFETIME_LIMIT = 3;
+export const VOYAGER_MONTHLY_LIMIT = 20;
+export const TRAILBLAZER_MONTHLY_LIMIT = 100;
 
 /** @deprecated use FREE_LIFETIME_LIMIT */
 export const FREE_MONTHLY_LIMIT = FREE_LIFETIME_LIMIT;
@@ -15,11 +17,80 @@ export function currentMonthKey(date = new Date()) {
   return date.toISOString().slice(0, 7);
 }
 
+export function firstOfNextMonthIso(date = new Date()) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+}
+
+/** Reset monthly allowance only — preserves generation_count and other plan_preferences fields. */
+export function resetMonthlyGenerationAllowance(planPrefs = {}) {
+  const prefs = planPrefs && typeof planPrefs === "object" && !Array.isArray(planPrefs)
+    ? { ...planPrefs }
+    : {};
+  prefs.monthly_generation_count = 0;
+  prefs.monthly_generation_reset_date = firstOfNextMonthIso();
+  return prefs;
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function ensureMonthlyGenerationPrefs(planPrefs = {}) {
+  const prefs = planPrefs && typeof planPrefs === "object" && !Array.isArray(planPrefs)
+    ? { ...planPrefs }
+    : {};
+  const today = todayIso();
+  const resetDate = prefs.monthly_generation_reset_date;
+  if (!resetDate || today >= resetDate) {
+    prefs.monthly_generation_count = 0;
+    prefs.monthly_generation_reset_date = firstOfNextMonthIso();
+  }
+  if (prefs.monthly_generation_count == null || Number.isNaN(Number(prefs.monthly_generation_count))) {
+    prefs.monthly_generation_count = 0;
+  }
+  return prefs;
+}
+
+function monthlyLimitForTier(effectiveTier) {
+  const normalized = normalizeTier(effectiveTier);
+  if (normalized === TIERS.VOYAGER) return VOYAGER_MONTHLY_LIMIT;
+  if (normalized === TIERS.TRAILBLAZER || isFounderTier(effectiveTier)) return TRAILBLAZER_MONTHLY_LIMIT;
+  return null;
+}
+
+function usesMonthlyLimit(effectiveTier, isAdmin) {
+  if (isAdmin) return false;
+  return monthlyLimitForTier(effectiveTier) != null;
+}
+
 async function refreshProfileLifecycle(admin, profile) {
   if (!profile) return profile;
   let next = await expireFounderIfNeeded(admin, profile);
   next = await expireTrialIfNeeded(admin, next);
   return next;
+}
+
+async function syncMonthlyPrefsIfNeeded(admin, profile) {
+  const effectiveTier = getEffectiveTier(profile);
+  const isAdmin = isExemptFounderUser(profile?.user_id);
+  if (!usesMonthlyLimit(effectiveTier, isAdmin)) return profile;
+
+  const rawPrefs = profile.plan_preferences || {};
+  const ensured = ensureMonthlyGenerationPrefs(rawPrefs);
+  const changed = ensured.monthly_generation_reset_date !== rawPrefs.monthly_generation_reset_date
+    || ensured.monthly_generation_count !== rawPrefs.monthly_generation_count;
+
+  if (!changed) {
+    return { ...profile, plan_preferences: ensured };
+  }
+
+  const { error } = await admin
+    .from("user_profiles")
+    .update({ plan_preferences: { ...rawPrefs, ...ensured } })
+    .eq("user_id", profile.user_id);
+
+  if (error) throw error;
+  return { ...profile, plan_preferences: { ...rawPrefs, ...ensured } };
 }
 
 export async function getOrCreateProfile(admin, userId) {
@@ -32,7 +103,8 @@ export async function getOrCreateProfile(admin, userId) {
   if (error) throw error;
 
   if (data) {
-    return refreshProfileLifecycle(admin, data);
+    const refreshed = await refreshProfileLifecycle(admin, data);
+    return syncMonthlyPrefsIfNeeded(admin, refreshed);
   }
 
   const month = currentMonthKey();
@@ -43,6 +115,10 @@ export async function getOrCreateProfile(admin, userId) {
       tier: "wanderer",
       generations_used: 0,
       credits_month: month,
+      plan_preferences: {
+        monthly_generation_count: 0,
+        monthly_generation_reset_date: firstOfNextMonthIso(),
+      },
     })
     .select()
     .single();
@@ -55,13 +131,13 @@ export function getCreditStatus(profile, userId = null) {
   const effectiveTier = getEffectiveTier(profile);
   const isFounder = isFounderTier(profile.tier);
   const isAdmin = isExemptFounderUser(userId || profile?.user_id);
-  const unlimited = isAdmin || hasUnlimitedTripGenerations(effectiveTier);
   const groceryDelivery = canUseGroceryDelivery(effectiveTier);
+  const planPrefs = ensureMonthlyGenerationPrefs(profile.plan_preferences || {});
 
   const base = {
     tier: effectiveTier,
     storedTier: profile.tier,
-    unlimited,
+    unlimited: isAdmin,
     used: profile.generations_used,
     groceryDelivery,
     stripeCustomerId: profile.stripe_customer_id || null,
@@ -73,13 +149,30 @@ export function getCreditStatus(profile, userId = null) {
     referralLink: buildReferralLink(profile.referral_code),
     showTrialEndedPrompt: Boolean(profile.show_trial_ended_prompt),
     isAdmin,
+    billingPeriod: usesMonthlyLimit(effectiveTier, isAdmin) ? "monthly" : "lifetime",
+    resetDate: planPrefs.monthly_generation_reset_date || null,
   };
 
-  if (unlimited) {
+  if (isAdmin) {
     return {
       ...base,
       remaining: null,
       limit: null,
+      monthlyUsed: null,
+    };
+  }
+
+  const monthlyLimit = monthlyLimitForTier(effectiveTier);
+  if (monthlyLimit != null) {
+    const monthlyUsed = Number(planPrefs.monthly_generation_count) || 0;
+    const remaining = Math.max(0, monthlyLimit - monthlyUsed);
+    return {
+      ...base,
+      used: monthlyUsed,
+      remaining,
+      limit: monthlyLimit,
+      monthlyUsed,
+      monthlyLimit,
     };
   }
 
@@ -88,6 +181,8 @@ export function getCreditStatus(profile, userId = null) {
     ...base,
     remaining,
     limit: FREE_LIFETIME_LIMIT,
+    monthlyUsed: null,
+    monthlyLimit: null,
   };
 }
 
@@ -100,19 +195,42 @@ export async function consumeCredit(admin, userId) {
   const profile = await getOrCreateProfile(admin, userId);
   const status = getCreditStatus(profile, userId);
 
-  if (!status.unlimited && status.remaining <= 0) {
-    return { ok: false, ...status };
+  if (!status.unlimited && (status.remaining ?? 0) <= 0) {
+    return { ok: false, ...status, limitReached: true };
   }
 
-  if (!status.unlimited) {
+  if (status.unlimited) {
+    return { ok: true, ...status };
+  }
+
+  const monthlyLimit = monthlyLimitForTier(status.tier);
+  if (monthlyLimit != null) {
+    const rawPrefs = profile.plan_preferences || {};
+    const planPrefs = ensureMonthlyGenerationPrefs(rawPrefs);
+    const nextCount = (Number(planPrefs.monthly_generation_count) || 0) + 1;
     const { error } = await admin
       .from("user_profiles")
-      .update({ generations_used: profile.generations_used + 1 })
+      .update({
+        plan_preferences: {
+          ...rawPrefs,
+          ...planPrefs,
+          monthly_generation_count: nextCount,
+        },
+      })
       .eq("user_id", userId);
     if (error) throw error;
-    status.remaining -= 1;
-    status.used += 1;
+    status.monthlyUsed = nextCount;
+    status.used = nextCount;
+    status.remaining = Math.max(0, monthlyLimit - nextCount);
+    return { ok: true, ...status };
   }
 
+  const { error } = await admin
+    .from("user_profiles")
+    .update({ generations_used: profile.generations_used + 1 })
+    .eq("user_id", userId);
+  if (error) throw error;
+  status.remaining -= 1;
+  status.used += 1;
   return { ok: true, ...status };
 }

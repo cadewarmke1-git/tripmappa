@@ -12,7 +12,10 @@ async function readApiJson(response) {
 
 /** Frontend API layer — always call serverless routes, never Anthropic directly. */
 export async function generateTripPlan(payload, accessToken = null, { signal } = {}) {
-  const headers = { "Content-Type": "application/json" };
+  const headers = {
+    "Content-Type": "application/json",
+    "x-tripmappa-client": "web",
+  };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   const response = await fetch("/api/plan-trip", {
@@ -26,6 +29,12 @@ export async function generateTripPlan(payload, accessToken = null, { signal } =
     const err = new Error(data.error || "Failed to generate trip");
     err.code = data.code;
     err.credits = data.credits;
+    err.limitReached = data.limitReached;
+    err.resetDate = data.resetDate;
+    err.tier = data.tier;
+    err.rateLimited = data.rateLimited;
+    err.limitType = data.limitType;
+    err.retryAfter = data.retryAfter;
     throw err;
   }
   return data;

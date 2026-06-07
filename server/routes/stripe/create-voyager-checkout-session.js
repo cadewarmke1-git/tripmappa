@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
-  const { userId, email } = req.body || {};
+  const { userId, email, billingInterval = "month" } = req.body || {};
   if (!userId || typeof userId !== "string") {
     return res.status(400).json({ error: "User id is required" });
   }
@@ -50,6 +50,7 @@ export default async function handler(req, res) {
     const session = await createVoyagerCheckoutSession(stripe, {
       customerId,
       userId,
+      billingInterval: billingInterval === "year" ? "year" : "month",
     });
 
     if (!session.url) {

@@ -22,7 +22,7 @@ const DOCUMENT = {
     {
       heading: "Subscriptions and Billing",
       paragraphs: [
-        "TripMappa offers free and paid subscription tiers. The Wanderer tier is free with limited trip generations. The Voyager tier is available at $4.99 per month. The Trailblazer tier is available at $7.99 per month. Paid subscriptions are billed monthly through Stripe. You may cancel your subscription at any time through your account settings. Cancellation takes effect at the end of your current billing period. We reserve the right to change pricing with 30 days notice to existing subscribers. The Founder tier provides one year of Trailblazer access free for the first 1,000 users who sign up and complete registration, after which standard Trailblazer pricing applies. The Founder badge remains permanently on your account regardless of your subsequent subscription status.",
+        "TripMappa offers free and paid subscription tiers. The Wanderer tier is free with limited trip generations. The Voyager tier is available at $4.99 per month or $39.99 per year. The Trailblazer tier is available at $9.99 per month or $79.99 per year. Paid subscriptions are billed monthly or annually through Stripe. You may cancel your subscription at any time through your account settings. Cancellation takes effect at the end of your current billing period. We reserve the right to change pricing with 30 days notice to existing subscribers. The Founder tier provides one year of Trailblazer access free for the first 1,000 users who sign up and complete registration, after which standard Trailblazer pricing applies. The Founder badge remains permanently on your account regardless of your subsequent subscription status.",
       ],
     },
     {

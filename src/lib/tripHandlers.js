@@ -24,7 +24,7 @@ import {
 /** Strip session-only fields before persisting or restoring saved trips. */
 export function stripSessionOnlyAnswers(answers) {
   if (!answers || typeof answers !== "object") return {};
-  const { travelers, kids_ages, ...rest } = answers;
+  const { travelers, kids_ages, inferredRestaurantHint, ...rest } = answers;
   return rest;
 }
 

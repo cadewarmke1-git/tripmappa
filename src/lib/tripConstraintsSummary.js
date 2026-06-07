@@ -2,15 +2,26 @@
 import { getEffectiveVehicle } from "./vehicles.js";
 import { isContinuousDrive } from "./driveMode.js";
 import {
+  formatFamilyContextHints,
+  formatMultiVehicleCoordinationBlock,
+  formatTripDetailsDefaultSignals,
+  formatTruckContextBlock,
+  formatTravelersContextLines,
+  formatTripNightsLine,
+  formatPetConstraintLine,
+  formatScheduleConstraintForHints,
+} from "./generationContext.js";
+import {
   asArray,
   getTripBudgetCap,
+  getStopsInterestsHintLabel,
+  formatStopsInterestsForHints,
   needsDialysisServices,
   needsRefrigeratedMedStops,
   needsVetServices,
   needsWheelchairLodgingFilter,
   isTowingSelected,
 } from "./tripAccommodations.js";
-import { getScheduleRestrictionLabels } from "./scheduleRestrictions.js";
 
 export function buildTripConstraints(answers = {}, routeInfo = null) {
   const items = [];
@@ -28,18 +39,16 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
   const accessibility = asArray(answers.accessibility).filter(a => a && a !== "No special needs");
   if (accessibility.length) items.push({ id: "accessibility", label: "Access & medical", value: accessibility.join(", ") });
 
-  const schedule = getScheduleRestrictionLabels(answers);
-  if (schedule.length) {
-    let val = schedule.join(", ");
-    if (answers.schedule_drive_hours?.trim()) val += ` (${answers.schedule_drive_hours.trim()})`;
-    items.push({ id: "schedule", label: "Schedule", value: val });
-  }
+  const scheduleVal = formatScheduleConstraintForHints(answers);
+  if (scheduleVal) items.push({ id: "schedule", label: "Schedule", value: scheduleVal });
 
   const prefs = asArray(answers.preferences);
   if (prefs.length) items.push({ id: "preferences", label: "Route prefs", value: prefs.join(", ") });
 
-  const interests = asArray(answers.stops_interests).filter(i => i !== "No specific interests");
-  if (interests.length) items.push({ id: "interests", label: "Fun stops", value: interests.join(", ") });
+  const interestsVal = formatStopsInterestsForHints(answers);
+  if (interestsVal) {
+    items.push({ id: "interests", label: getStopsInterestsHintLabel(answers), value: interestsVal });
+  }
 
   const cap = getTripBudgetCap(answers);
   if (cap != null) items.push({ id: "budget", label: "Budget cap", value: `$${cap} total` });
@@ -54,6 +63,15 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
 
   if (answers.fuel_type) items.push({ id: "fuel", label: "Fuel", value: answers.fuel_type });
 
+  const fuelBrand = answers.truck_stop_brand || answers.fuel_brand_preference;
+  if (fuelBrand && fuelBrand !== "No preference") {
+    items.push({ id: "fuel_brand", label: "Preferred fuel brand", value: fuelBrand });
+  }
+
+  if (answers.restaurant_preference && !dietary.length) {
+    items.push({ id: "restaurant_pref", label: "Learned restaurant style", value: answers.restaurant_preference });
+  }
+
   if (routeInfo?.distance) {
     items.push({ id: "route", label: "Route", value: `${routeInfo.distance} · ${routeInfo.duration || ""}`.trim() });
   }
@@ -62,11 +80,51 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
 }
 
 /** Plain-text block appended to Sonnet user prompt via generationHints. */
-export function formatGenerationHints(answers = {}, routeInfo = null) {
-  const lines = ["=== USER CONSTRAINTS (MUST shape every stop recommendation) ==="];
+export function formatGenerationHints(answers = {}, routeInfo = null, options = {}) {
+  const lines = [];
+  const { regenerateDiffBlock = "" } = options;
+
+  if (regenerateDiffBlock?.trim()) {
+    lines.push(regenerateDiffBlock.trim(), "");
+  }
+
+  const coordinationBlock = formatMultiVehicleCoordinationBlock(answers);
+  if (coordinationBlock) {
+    lines.push(coordinationBlock, "");
+  }
+
+  lines.push("=== USER CONSTRAINTS (MUST shape every stop recommendation) ===");
   buildTripConstraints(answers, routeInfo).forEach(({ label, value }) => {
     lines.push(`${label}: ${value}`);
   });
+
+  const truckBlock = formatTruckContextBlock(answers);
+  if (truckBlock) {
+    lines.push("");
+    lines.push(truckBlock);
+  }
+
+  for (const travelerLine of formatTravelersContextLines(answers)) {
+    lines.push(travelerLine);
+  }
+
+  const nightsLine = formatTripNightsLine(answers);
+  if (nightsLine) lines.push(nightsLine);
+
+  const petLine = formatPetConstraintLine(answers);
+  if (petLine) lines.push(petLine);
+
+  for (const signal of formatTripDetailsDefaultSignals(answers)) {
+    lines.push(signal);
+  }
+
+  for (const hint of formatFamilyContextHints(answers)) {
+    lines.push(hint);
+  }
+
+  if (answers.inferredRestaurantHint) {
+    lines.push(answers.inferredRestaurantHint);
+  }
 
   if (needsWheelchairLodgingFilter(answers)) {
     lines.push("MUST: Only suggest wheelchair-accessible lodging with roll-in access where possible.");
@@ -87,7 +145,7 @@ export function formatGenerationHints(answers = {}, routeInfo = null) {
     lines.push("MUST: No overnight lodging — fuel and rest stops only, spaced for the full continuous drive.");
   }
 
-  const schedule = getScheduleRestrictionLabels(answers);
+  const schedule = asArray(answers.schedule_restrictions).filter(s => s && s !== "No restrictions");
   if (schedule.some(s => /Saturday|Sabbath/i.test(s))) {
     lines.push("MUST: Do not schedule driving segments on Saturday — place overnight stop before Sabbath begins.");
   }

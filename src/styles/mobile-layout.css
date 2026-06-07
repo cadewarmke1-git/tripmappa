@@ -32,57 +32,6 @@
     min-height: 44px;
   }
 
-  html[data-layout="mobile"] .nav-sidebar {
-    left: 0;
-    right: auto;
-    border-left: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 12px 0 48px rgba(0, 0, 0, 0.45);
-    transform: translateX(-100%);
-  }
-
-  html[data-layout="mobile"] .nav-sidebar.is-open {
-    transform: translateX(0);
-  }
-
-  html[data-layout="mobile"] .nav-sidebar.is-closing {
-    transform: translateX(-100%);
-  }
-
-  html[data-layout="mobile"] .nav-sidebar-auth {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-
-  html[data-layout="mobile"] .nav-sidebar-auth-btn {
-    width: 100%;
-    min-height: 44px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  html[data-layout="mobile"] .nav-sidebar-auth-btn-ghost {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  html[data-layout="mobile"] .nav-sidebar-auth-btn-primary {
-    background: var(--color-accent-orange);
-    border: none;
-    color: var(--deep-dark);
-  }
-
-  html[data-layout="mobile"] .app-sidebar-overlay-left {
-    inset: 0;
-  }
-
   html[data-layout="mobile"] .hero {
     min-height: 100dvh;
     padding-top: var(--nav-h);

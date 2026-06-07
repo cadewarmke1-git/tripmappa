@@ -818,56 +818,7 @@ body.theme-day,
 .app-wrap.day .profile-trip-card { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.08); }
 .app-wrap.day .profile-input { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); color: var(--deep-dark); }
 .app-wrap.day .profile-btn-secondary { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
-.app-wrap.day .profile-card-dropdown {
-  background: linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(245,247,252,0.98) 100%);
-  border-color: rgba(0,0,0,0.1);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04) inset;
-  color: var(--deep-dark);
-}
-.app-wrap.day .profile-card-name { color: var(--deep-dark); }
-.app-wrap.day .profile-card-identity:hover .profile-card-name { color: #b8860b; }
-.app-wrap.day .profile-card-email { color: rgba(12,18,34,0.55); }
-.app-wrap.day .profile-card-credits { color: rgba(12,18,34,0.65); }
-.app-wrap.day .profile-card-meta { border-bottom-color: rgba(0,0,0,0.08); }
-.app-wrap.day .profile-card-signout {
-  color: var(--deep-dark);
-  border-color: rgba(0,0,0,0.18);
-}
-.app-wrap.day .profile-card-signout:hover {
-  background: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.28);
-}
-.nav.transparent .profile-card-dropdown {
-  background: linear-gradient(165deg, rgba(22,26,42,0.98) 0%, rgba(12,16,28,0.98) 100%);
-  border-color: rgba(255,255,255,0.14);
-  color: #fff;
-}
-.nav.transparent .profile-card-name { color: #fff; }
-.nav.transparent .profile-card-email { color: rgba(255,255,255,0.55); }
-.nav.transparent .profile-card-credits { color: rgba(255,255,255,0.65); }
-.nav.transparent .profile-card-signout {
-  color: #fff;
-  border-color: rgba(255,255,255,0.22);
-}
-.nav.transparent .profile-card-signout:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,210,140,0.45);
-}
-.app-wrap.day .nav.transparent .profile-card-dropdown {
-  background: linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(245,247,252,0.98) 100%);
-  border-color: rgba(0,0,0,0.1);
-  color: var(--deep-dark);
-}
-.app-wrap.day .nav.transparent .profile-card-name { color: var(--deep-dark); }
-.app-wrap.day .nav.transparent .profile-card-email { color: rgba(12,18,34,0.55); }
-.app-wrap.day .nav.transparent .profile-card-credits { color: rgba(12,18,34,0.65); }
-.app-wrap.day .nav.transparent .profile-card-signout {
-  color: var(--deep-dark);
-  border-color: rgba(0,0,0,0.18);
-}
-.app-wrap.day .nav.transparent .profile-card-trigger-avatar.user-avatar-ring {
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 0 14px rgba(255,210,140,0.4);
-}
+
 .app-wrap.day .user-nav-menu-trigger { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
 .app-wrap.day .user-nav-menu-dropdown { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
 .app-wrap.day .user-nav-menu-item:hover { background: rgba(0,0,0,0.04); }

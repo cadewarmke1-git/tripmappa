@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   FUEL_TYPE_CHOICES,
-  DIETARY_CHOICES,
+  DIETARY_PREFERENCE_CHOICES,
   ACCESSIBILITY_CHOICES,
   STOPS_INTERESTS_BASE,
   TRIP_BUDGET_CHOICES,
 } from "../lib/tripAccommodations.js";
+import { SCHEDULE_RESTRICTION_CHOICES } from "../lib/scheduleRestrictions.js";
 import { fetchPlanPreferences, savePlanPreferences } from "../lib/planPreferencesApi.js";
 
 const VEHICLE_CHOICES = [
@@ -32,10 +33,11 @@ const SECTIONS = [
   { id: "fuel_type", label: "Fuel type", key: "fuel_type", choices: FUEL_TYPE_CHOICES },
   { id: "travelers", label: "Party size", key: "travelers", choices: PARTY_CHOICES },
   { id: "lodging", label: "Lodging preference", key: "lodging", choices: LODGING_CHOICES },
-  { id: "stops_interests", label: "Interests along the route", key: "stops_interests", choices: STOPS_INTERESTS_BASE, multi: true },
-  { id: "accessibility", label: "Accessibility and medical", key: "accessibility", choices: ACCESSIBILITY_CHOICES, multi: true },
-  { id: "dietary", label: "Dietary preferences", key: "dietary", choices: DIETARY_CHOICES, multi: true },
-  { id: "trip_budget", label: "Budget range", key: "trip_budget", choices: TRIP_BUDGET_CHOICES },
+  { id: "stops_interests", label: "Fun stops", key: "stops_interests", choices: STOPS_INTERESTS_BASE, multi: true },
+  { id: "accessibility", label: "Accessibility", key: "accessibility", choices: ACCESSIBILITY_CHOICES, multi: true },
+  { id: "dietary", label: "Food", key: "dietary", choices: DIETARY_PREFERENCE_CHOICES, multi: true },
+  { id: "schedule_restrictions", label: "Schedule", key: "schedule_restrictions", choices: SCHEDULE_RESTRICTION_CHOICES, multi: true },
+  { id: "trip_budget", label: "Budget", key: "trip_budget", choices: TRIP_BUDGET_CHOICES },
 ];
 
 function toggleInList(list, value) {
@@ -70,6 +72,7 @@ export default function UserPreferencesPage({
     stops_interests: [],
     accessibility: [],
     dietary: [],
+    schedule_restrictions: [],
     trip_budget: "",
   });
 
@@ -89,6 +92,7 @@ export default function UserPreferencesPage({
             stops_interests: data.stops_interests || [],
             accessibility: data.accessibility || [],
             dietary: data.dietary || [],
+            schedule_restrictions: data.schedule_restrictions || [],
           }));
         }
       } catch (err) {
@@ -129,20 +133,20 @@ export default function UserPreferencesPage({
 
   return (
     <div className="user-preferences-page">
-      <header className="user-preferences-header">
-        <button type="button" className="user-preferences-close" onClick={onBack}>
-          ← Back
-        </button>
-        <h1 className="user-preferences-title">Trip preferences</h1>
-        <p className="user-preferences-lead">
-          Saved defaults pre-fill the planner so you can skip repeating the same answers.
-        </p>
-      </header>
+      <div className="user-preferences-scroll">
+        <header className="user-preferences-header">
+          <button type="button" className="user-preferences-close" onClick={onBack}>
+            ← Back
+          </button>
+          <h1 className="user-preferences-title">Trip preferences</h1>
+          <p className="user-preferences-lead">
+            Saved defaults pre-fill the planner so you can skip repeating the same answers.
+          </p>
+        </header>
 
-      {loading ? (
-        <p className="user-preferences-loading">Loading preferences…</p>
-      ) : (
-        <>
+        {loading ? (
+          <p className="user-preferences-loading">Loading preferences…</p>
+        ) : (
           <form
             className="user-preferences-form"
             onSubmit={e => {
@@ -173,32 +177,36 @@ export default function UserPreferencesPage({
                         {isOpen ? "−" : "+"}
                       </span>
                     </button>
-                    {isOpen && (
-                      <div className="user-preferences-collapsible-body">
-                        <ChoiceGrid
-                          choices={section.choices}
-                          selected={prefs[section.key]}
-                          multi={section.multi}
-                          onSelect={v => setField(section.key, v)}
-                        />
+                    <div className={`user-preferences-collapsible-panel${isOpen ? " is-open" : ""}`}>
+                      <div className="user-preferences-collapsible-inner">
+                        <div className="user-preferences-collapsible-body">
+                          <ChoiceGrid
+                            choices={section.choices}
+                            selected={prefs[section.key]}
+                            multi={section.multi}
+                            onSelect={v => setField(section.key, v)}
+                          />
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </section>
                 );
               })}
             </div>
           </form>
-          <div className="user-preferences-footer-sticky">
-            <button
-              type="button"
-              className="btn-generate user-preferences-save"
-              disabled={saving}
-              onClick={handleSave}
-            >
-              {saving ? "Saving…" : "Save preferences"}
-            </button>
-          </div>
-        </>
+        )}
+      </div>
+      {!loading && (
+        <div className="user-preferences-footer-sticky">
+          <button
+            type="button"
+            className="btn-generate user-preferences-save"
+            disabled={saving}
+            onClick={handleSave}
+          >
+            {saving ? "Saving…" : "Save preferences"}
+          </button>
+        </div>
       )}
     </div>
   );

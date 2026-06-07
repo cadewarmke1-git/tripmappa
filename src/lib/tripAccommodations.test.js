@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getDietarySearchKeywords,
   needsSafeStopsOnly,
+  needsTowingQuestion,
 } from "./tripAccommodations.js";
 
 describe("tripAccommodations preferences", () => {
@@ -20,5 +21,16 @@ describe("tripAccommodations preferences", () => {
       "kosher restaurant",
       "seafood restaurant",
     ]);
+  });
+
+  it("always asks towing for rental car regardless of distance", () => {
+    expect(needsTowingQuestion({ vehicle: "Rental Car" }, { routeDistanceMiles: 20 })).toBe(true);
+    expect(needsTowingQuestion({ vehicle: "Rental Car" }, {})).toBe(true);
+  });
+
+  it("asks motorcycle towing at 80 miles or more", () => {
+    expect(needsTowingQuestion({ vehicle: "Motorcycle" }, { routeDistanceMiles: 79 })).toBe(false);
+    expect(needsTowingQuestion({ vehicle: "Motorcycle" }, { routeDistanceMiles: 80 })).toBe(true);
+    expect(needsTowingQuestion({ vehicle: "Motorcycle" }, { routeDistanceMiles: 100 })).toBe(true);
   });
 });

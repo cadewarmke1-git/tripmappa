@@ -35,12 +35,34 @@ export function respondStripeError(res, err, logLabel = "stripe") {
 export const VOYAGER_PRODUCT_NAME = "TripMappa Voyager";
 export const PREMIUM_PRODUCT_NAME = "TripMappa Trailblazer";
 
+/** Monthly Voyager — $4.99/mo (sandbox price ID). */
 export function getStripeVoyagerPriceId() {
   return process.env.STRIPE_VOYAGER_PRICE_ID?.trim() || null;
 }
 
+/** Annual Voyager — $39.99/yr (sandbox price ID). */
+export function getStripeVoyagerAnnualPriceId() {
+  return process.env.STRIPE_VOYAGER_ANNUAL_PRICE_ID?.trim() || null;
+}
+
+/** Monthly Trailblazer — $9.99/mo (sandbox price ID). */
 export function getStripeTrailblazerPriceId() {
   return process.env.STRIPE_TRAILBLAZER_PRICE_ID?.trim() || null;
+}
+
+/** Annual Trailblazer — $79.99/yr (sandbox price ID). */
+export function getStripeTrailblazerAnnualPriceId() {
+  return process.env.STRIPE_TRAILBLAZER_ANNUAL_PRICE_ID?.trim() || null;
+}
+
+/** Resolve tier from a Stripe price ID (monthly or annual). */
+export function tierFromStripePriceId(priceId) {
+  if (!priceId) return null;
+  const voyagerIds = [getStripeVoyagerPriceId(), getStripeVoyagerAnnualPriceId()].filter(Boolean);
+  const trailblazerIds = [getStripeTrailblazerPriceId(), getStripeTrailblazerAnnualPriceId()].filter(Boolean);
+  if (voyagerIds.includes(priceId)) return "voyager";
+  if (trailblazerIds.includes(priceId)) return "trailblazer";
+  return null;
 }
 
 export function getSiteOrigin() {

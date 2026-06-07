@@ -550,15 +550,18 @@
 }
 
 .hero.night .hero-input,
-.hero.night .hero-search .hero-input {
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-}
-
+.hero.night .hero-search .hero-input,
 .hero.day .hero-input,
 .hero.day .hero-search .hero-input {
-  color: #1A0D00 !important;
-  -webkit-text-fill-color: #1A0D00 !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background: var(--surface) !important;
+}
+
+.hero.night .hero-search,
+.hero.day .hero-search {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
 }
 
 /* Milky-way band — keep stars; no upper-sky haze */

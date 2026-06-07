@@ -3,6 +3,20 @@ import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { fetchCreditStatus, consumeCredit } from "../lib/tripCredits.js";
 import { readUserTripPreferences, formatPreferencesForPrompt } from "./user-trip-preferences.js";
+import { calculateMaxTokens } from "../lib/planTripTokens.js";
+import { normalizeTripResponse } from "../lib/tripResponseNormalize.js";
+import { buildGenerationLogRow, logGenerationUsage } from "../lib/generationLogs.js";
+import {
+  buildCorridorPlacesFallback,
+  requireAuthenticatedUser,
+  requireTripMappaClient,
+  validatePlanTripPayload,
+} from "../lib/planTripGuard.js";
+import {
+  checkPlanTripRateLimit,
+  getClientIp,
+  recordPlanTripRateLimitHit,
+} from "../lib/planTripRateLimit.js";
 
 function parseJsonFromLlm(text) {
   if (!text) {
@@ -57,11 +71,18 @@ async function callAnthropic(model, systemPrompt, userPrompt, maxTokens) {
       "Content-Type": "application/json",
       "x-api-key": process.env.ANTHROPIC_KEY,
       "anthropic-version": "2023-06-01",
+      "anthropic-beta": "prompt-caching-2024-07-31",
     },
     body: JSON.stringify({
       model,
       max_tokens: maxTokens,
-      system: systemPrompt,
+      system: [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
@@ -73,7 +94,7 @@ async function callAnthropic(model, systemPrompt, userPrompt, maxTokens) {
     output_tokens: outputTokens,
     total_tokens: inputTokens + outputTokens,
   });
-  return { response, data };
+  return { response, data, inputTokens, outputTokens };
 }
 
 const TRUCK_TYPES = ["Semi Truck (18-wheeler)", "Box Truck", "Flatbed", "Tanker"];
@@ -653,29 +674,57 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (requireTripMappaClient(req, res)) return undefined;
+
   const user = await getUserFromRequest(req);
-  const admin = user ? getSupabaseAdmin() : null;
-  if (user && admin) {
-    try {
-      const status = await fetchCreditStatus(admin, user.id);
-      if (!status.unlimited && status.remaining <= 0) {
-        return res.status(402).json({
-          error: "No Trip Generations remaining",
-          code: "no_credits",
-          credits: status,
-        });
-      }
-    } catch (creditErr) {
-      console.error("Credit check failed:", creditErr);
-      return res.status(500).json({ error: "Could not verify trip credits" });
+  if (requireAuthenticatedUser(user, res)) return undefined;
+
+  const clientIp = getClientIp(req);
+  const rateCheck = checkPlanTripRateLimit({ userId: user.id, ip: clientIp });
+  if (!rateCheck.ok) {
+    console.warn("[plan-trip] rejected:", {
+      status: 429,
+      reason: "rate_limited",
+      limitType: rateCheck.limitType,
+      userId: user.id,
+      ip: clientIp,
+    });
+    return res.status(429).json({
+      error: "Rate limit exceeded",
+      code: "rate_limited",
+      rateLimited: true,
+      limitType: rateCheck.limitType,
+      retryAfter: rateCheck.retryAfter,
+    });
+  }
+
+  if (validatePlanTripPayload(req.body, res)) return undefined;
+
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    return res.status(503).json({ error: "Database not configured" });
+  }
+
+  try {
+    const status = await fetchCreditStatus(admin, user.id);
+    if (!status.unlimited && status.remaining <= 0) {
+      return res.status(402).json({
+        error: "No Trip Generations remaining",
+        code: "no_credits",
+        limitReached: true,
+        tier: status.tier,
+        resetDate: status.resetDate || null,
+        credits: status,
+      });
     }
+  } catch (creditErr) {
+    console.error("Credit check failed:", creditErr);
+    return res.status(500).json({ error: "Could not verify trip credits" });
   }
 
-  const { origin, destination, answers, model = "claude-sonnet-4-6", placesContextPrompt = "", generationHints = "", preferenceContext = "", recentTripsContext = "", answerConfidenceNotes = "", gracefulDegradationNotes = "", fallbackPreferences = null } = req.body;
+  recordPlanTripRateLimitHit({ userId: user.id, ip: clientIp });
 
-  if (!origin || !destination) {
-    return res.status(400).json({ error: "Missing origin or destination" });
-  }
+  const { origin, destination, answers, model = "claude-sonnet-4-6", routeInfo = {}, placesContextPrompt = "", generationHints = "", preferenceContext = "", recentTripsContext = "", recentTripsPreferencesRollup = "", userTravelPatterns = "", answerConfidenceNotes = "", gracefulDegradationNotes = "", fallbackPreferences = null } = req.body;
 
   const mergedAnswers = fallbackPreferences
     ? { ...fallbackPreferences, ...(answers || {}) }
@@ -683,13 +732,20 @@ export default async function handler(req, res) {
 
   const ctx = buildTripContext({ ...req.body, answers: mergedAnswers });
 
+  const effectivePlacesPrompt = buildCorridorPlacesFallback(routeInfo, placesContextPrompt);
+  const corridorDegradationNote = !placesContextPrompt?.trim() && effectivePlacesPrompt
+    ? "=== GRACEFUL DEGRADATION (proceed with corridor geography only) ===\nNo verified placesContext was available for this request — anchor all named stops to cities along the route corridor."
+    : "";
+
   let prefsBlock = preferenceContext;
-  if (!prefsBlock && user && admin) {
+  if (!prefsBlock) {
     const prefs = await readUserTripPreferences(admin, user.id);
-    prefsBlock = formatPreferencesForPrompt(prefs);
+    prefsBlock = formatPreferencesForPrompt(prefs, recentTripsPreferencesRollup);
+  } else if (recentTripsPreferencesRollup?.trim()) {
+    prefsBlock = [prefsBlock, recentTripsPreferencesRollup.trim()].filter(Boolean).join("\n\n");
   }
 
-  const extraContext = [prefsBlock, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes]
+  const extraContext = [prefsBlock, userTravelPatterns, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes, corridorDegradationNote]
     .filter(Boolean)
     .join("\n\n");
 
@@ -709,14 +765,20 @@ export default async function handler(req, res) {
     ctx.tripCategory === "water" ||
     ctx.tripCategory === "plane";
 
-  const userPrompt = buildUserPrompt(ctx, placesContextPrompt, isSimplifiedFormat, generationHints, extraContext);
-  const maxTokens =
-    ctx.tripCategory === "commercial" || ctx.tripCategory === "rv" ? 4096 : isSimplifiedFormat ? 1800 : 3200;
+  const userPrompt = buildUserPrompt(ctx, effectivePlacesPrompt, isSimplifiedFormat, generationHints, extraContext);
+  const { maxTokens, tier: maxTokensTier } = calculateMaxTokens(ctx, mergedAnswers, routeInfo, isSimplifiedFormat);
+  if (process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "development") {
+    console.log("[plan-trip] max_tokens tier:", { maxTokens, tier: maxTokensTier });
+  }
 
   try {
     let parsed = null;
+    let lastInputTokens = 0;
+    let lastOutputTokens = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const { response, data } = await callAnthropic(model, SYSTEM_PROMPT, userPrompt, maxTokens);
+      const { response, data, inputTokens, outputTokens } = await callAnthropic(model, SYSTEM_PROMPT, userPrompt, maxTokens);
+      lastInputTokens = inputTokens;
+      lastOutputTokens = outputTokens;
       if (!response.ok) {
         const retryable = response.status === 429 || response.status >= 529;
         if (retryable && attempt === 0) {
@@ -728,7 +790,7 @@ export default async function handler(req, res) {
 
       const text = data?.content?.[0]?.text;
       try {
-        parsed = parseJsonFromLlm(text);
+        parsed = normalizeTripResponse(parseJsonFromLlm(text));
       } catch {
         if (attempt === 0) {
           await new Promise(r => setTimeout(r, 1500));
@@ -757,6 +819,16 @@ export default async function handler(req, res) {
         } catch (creditErr) {
           console.error("Credit consumption after success failed:", creditErr);
         }
+        logGenerationUsage(admin, buildGenerationLogRow({
+          userId: user.id,
+          inputTokens: lastInputTokens,
+          outputTokens: lastOutputTokens,
+          ctx,
+          answers: mergedAnswers,
+          routeInfo,
+          isSimplifiedFormat,
+          maxTokensTier,
+        }));
       }
     }
 

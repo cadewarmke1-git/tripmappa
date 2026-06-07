@@ -375,57 +375,9 @@ body {
 .app-wrap.night .auth-modal,
 .app-wrap.night .upgrade-modal,
 .app-wrap.night .grocery-modal {
-  background: var(--color-surface) !important;
-  border-color: rgba(255, 210, 140, 0.2) !important;
-}
-
-.app-wrap.night .account-sidebar,
-.nav-sidebar.night {
-  background: #1A1035 !important;
-  border-left-color: rgba(255, 210, 140, 0.1) !important;
-  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.55) !important;
-}
-
-.nav-sidebar.night .nav-sidebar-title {
-  color: #FFD28C !important;
-}
-
-.nav-sidebar.night .nav-sidebar-nav-item {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 210, 140, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-.nav-sidebar.night .nav-sidebar-nav-item:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 210, 140, 0.25) !important;
-  color: #FFFFFF !important;
-}
-
-.nav-sidebar.night .nav-sidebar-nav-item.is-active {
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
-  border-color: transparent !important;
-  color: #1A0D00 !important;
-  box-shadow: none !important;
-}
-
-.nav-sidebar.night .app-sidebar-close {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #FFFFFF !important;
-}
-
-.nav-sidebar.night .nav-sidebar-theme-label {
-  color: #A89BCF !important;
-}
-
-.nav-sidebar.night .nav-sidebar-footer {
-  border-top-color: rgba(255, 210, 140, 0.1) !important;
-}
-
-html[data-layout="mobile"] .nav-sidebar.night {
-  border-left: none !important;
-  border-right: 1px solid rgba(255, 210, 140, 0.1) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
 .app-wrap.night .section-label,
@@ -498,76 +450,39 @@ html[data-layout="mobile"] .nav-sidebar.night {
 .app-wrap.day .auth-modal,
 .app-wrap.day .upgrade-modal,
 .app-wrap.day .grocery-modal {
-  background: var(--color-surface) !important;
-  border-color: rgba(224, 104, 32, 0.25) !important;
-  color: var(--deep-dark) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
-.app-wrap.day .auth-modal-headline,
+.app-wrap.day .auth-modal-headline {
+  color: var(--accent) !important;
+}
+
 .app-wrap.day .auth-modal-sub,
 .app-wrap.day .auth-field-label {
-  color: var(--deep-dark) !important;
+  color: var(--text-secondary) !important;
 }
 
 .app-wrap.day .auth-field-input {
-  background: var(--color-map-surface) !important;
-  border-color: rgba(224, 104, 32, 0.25) !important;
-  color: var(--deep-dark) !important;
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
-.app-wrap.day .auth-social-btn {
-  background: var(--color-map-surface) !important;
-  border-color: rgba(224, 104, 32, 0.25) !important;
-  color: var(--deep-dark) !important;
+.app-wrap.day .auth-social-btn,
+.app-wrap.day .auth-modal-alt-btn {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
-.app-wrap.day .account-sidebar,
-.nav-sidebar.day {
-  background: #1A0D00 !important;
-  border-left-color: rgba(255, 210, 140, 0.15) !important;
-  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.45) !important;
-}
-
-.nav-sidebar.day .nav-sidebar-title {
-  color: #FFD28C !important;
-}
-
-.nav-sidebar.day .nav-sidebar-nav-item {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 210, 140, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-.nav-sidebar.day .nav-sidebar-nav-item:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 210, 140, 0.25) !important;
-  color: #FFFFFF !important;
-}
-
-.nav-sidebar.day .nav-sidebar-nav-item.is-active {
-  background: linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%) !important;
-  border-color: transparent !important;
-  color: #1A0D00 !important;
-  box-shadow: none !important;
-}
-
-.nav-sidebar.day .app-sidebar-close {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #FFFFFF !important;
-}
-
-.nav-sidebar.day .nav-sidebar-theme-label {
-  color: rgba(255, 210, 140, 0.6) !important;
-}
-
-.nav-sidebar.day .nav-sidebar-footer {
-  border-top-color: rgba(255, 210, 140, 0.12) !important;
-}
-
-html[data-layout="mobile"] .nav-sidebar.day {
-  border-left: none !important;
-  border-right: 1px solid rgba(255, 210, 140, 0.15) !important;
+.app-wrap.night .auth-modal,
+.app-wrap.night .upgrade-modal,
+.app-wrap.night .grocery-modal {
+  background: var(--elevated) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
 .app-wrap.day .section-label,
@@ -664,8 +579,6 @@ html[data-layout="mobile"] .nav-sidebar.day {
 .app-wrap.night .convo-nav-btn:hover,
 .app-wrap.night .action-btn:hover,
 .app-wrap.night .lodging-btn-save:hover,
-.app-wrap.night .nav-sidebar-link:hover,
-.app-wrap.night .account-sidebar-link:hover,
 .app-wrap.night .item-row:hover,
 .app-wrap.night .trips-saved-btn:hover:not(.trips-saved-btn-danger) {
   background: rgba(42, 26, 74, 0.95) !important;
@@ -675,8 +588,6 @@ html[data-layout="mobile"] .nav-sidebar.day {
 .app-wrap.day .convo-nav-btn:hover,
 .app-wrap.day .action-btn:hover,
 .app-wrap.day .lodging-btn-save:hover,
-.app-wrap.day .nav-sidebar-link:hover,
-.app-wrap.day .account-sidebar-link:hover,
 .app-wrap.day .item-row:hover,
 .app-wrap.day .trips-saved-btn:hover:not(.trips-saved-btn-danger) {
   background: rgba(238, 216, 168, 0.95) !important;

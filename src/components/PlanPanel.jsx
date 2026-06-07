@@ -41,6 +41,7 @@ export default function PlanPanel({
   convoEndRef,
   convoScrollRef,
   creditsLabel,
+  creditsNudge = null,
   creditsExhausted = false,
   onUpgrade,
   onGenerateTrip,
@@ -49,12 +50,19 @@ export default function PlanPanel({
   onGoBack,
   onPickAnswer,
   onSetPrefDraft,
+  onSkipRoutePending,
+  onRoutePendingTimeout,
+  continuousDriveConfirm = null,
+  onConfirmContinuousDrive,
+  onCancelContinuousDrive,
+  onEditQuestion,
   getStepMessage,
 }) {
   const stepMessage = getStepMessage?.() ?? "";
   const frozen = !!stepAnim;
   const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
   const routePending = Boolean(currentQuestion?.pendingRoute);
+  const showContinuousConfirm = Boolean(continuousDriveConfirm);
 
   return (
     <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
@@ -72,7 +80,10 @@ export default function PlanPanel({
             </div>
             {creditsLabel && (
               <div className="plan-flow-toolbar-center">
-                <span className="plan-flow-credits">{creditsLabel}</span>
+                <span className="plan-flow-credits" style={{ color: "var(--text-secondary)" }}>{creditsLabel}</span>
+                {creditsNudge && (
+                  <span className="plan-flow-credits-nudge" style={{ color: "var(--accent)" }}>{creditsNudge}</span>
+                )}
               </div>
             )}
             <div className="plan-flow-toolbar-right">
@@ -127,9 +138,12 @@ export default function PlanPanel({
                 <div
                   className={`ai-msg plan-flow-current${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                 >
-                  {stepMessage && (
+                  {stepMessage && !showContinuousConfirm && (
                     <div className="ai-bubble">
                       {stepMessage}
+                      {currentQuestion?.mediumTripHint && (
+                        <div className="question-hint">{currentQuestion.mediumTripHint}</div>
+                      )}
                       {currentQuestion?.hint && (
                         <div className="question-hint">{currentQuestion.hint}</div>
                       )}
@@ -140,7 +154,33 @@ export default function PlanPanel({
                       )}
                     </div>
                   )}
-                  {currentQuestion && (
+                  {showContinuousConfirm && (
+                    <div className="ai-bubble">
+                      <p className="continuous-drive-confirm-msg">{continuousDriveConfirm.warn}</p>
+                      <p className="question-hint">
+                        Confirm you intend to drive straight through without an overnight stop.
+                      </p>
+                      <div className="pref-actions-row">
+                        <button
+                          type="button"
+                          className="btn-generate btn-generate-inline"
+                          disabled={frozen}
+                          onClick={() => { triggerPrimaryHaptic(); onConfirmContinuousDrive?.(); }}
+                        >
+                          Yes, drive straight through
+                        </button>
+                        <button
+                          type="button"
+                          className="convo-nav-btn"
+                          disabled={frozen}
+                          onClick={onCancelContinuousDrive}
+                        >
+                          Go back
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {currentQuestion && !showContinuousConfirm && (
                     <ErrorBoundary label="question-choices" title="Could not show choices">
                       <QuestionChoices
                         currentQ={currentQuestion}
@@ -154,12 +194,20 @@ export default function PlanPanel({
                         onGoBack={onGoBack}
                         onPickAnswer={onPickAnswer}
                         onSetPrefDraft={onSetPrefDraft}
+                        onSkipRoutePending={onSkipRoutePending}
+                        onRoutePendingTimeout={onRoutePendingTimeout}
                       />
                     </ErrorBoundary>
                   )}
                   {qIndex === -2 && convoComplete && (
                     <div className="payoff-summary-wrap">
-                      <SummaryCard answers={answers} routeInfo={routeInfo} compactGrid />
+                      <SummaryCard
+                        answers={answers}
+                        compactGrid
+                        editable={returnedFromResults || convoComplete}
+                        questionHistory={questionHistory}
+                        onEditQuestion={onEditQuestion}
+                      />
                     </div>
                   )}
                 </div>
@@ -181,7 +229,7 @@ export default function PlanPanel({
             <div ref={convoEndRef}/>
           </div>
         </div>
-        {inQuestionFlow && convoComplete && (
+        {(inQuestionFlow || returnedFromResults) && convoComplete && (
           <div className="plan-generate-sticky">
             {creditsExhausted && onUpgrade ? (
               <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
@@ -199,10 +247,19 @@ export default function PlanPanel({
                 ) : (
                   <>
                     Generate My Trip →
-                    {creditsLabel && <span className="generate-credits-badge">{creditsLabel}</span>}
+                    {creditsLabel && (
+                      <span className="generate-credits-badge" style={{ color: "var(--text-secondary)" }}>
+                        {creditsLabel}
+                      </span>
+                    )}
                   </>
                 )}
               </button>
+            )}
+            {creditsNudge && convoComplete && !creditsExhausted && (
+              <p className="plan-credits-nudge" style={{ color: "var(--accent)", margin: "8px 0 0", fontSize: "0.875rem" }}>
+                {creditsNudge}
+              </p>
             )}
             {loading && onCancelGenerate && (
               <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>

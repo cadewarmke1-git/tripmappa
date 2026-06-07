@@ -6,6 +6,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { initViewportLayout } from "./lib/viewportLayout.js";
+import { initPwaInstall } from "./lib/pwaInstall.js";
 import "./index.css";
 import "./styles/tripmappa.css";
 import "./styles/tripmappa-themes.css";
@@ -22,6 +23,13 @@ import "./styles/hero-surface.css";
 import "./styles/plan-flow-theme.css";
 
 initViewportLayout();
+initPwaInstall();
+
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  });
+}
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
