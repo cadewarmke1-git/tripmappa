@@ -54,10 +54,23 @@
   box-shadow: none !important;
 }
 
+.hero-search .hero-input-box,
+.hero-search .hero-input-box > div,
+.hero-search .hero-route-cell,
+.hero-search .hero-route-from,
+.hero-search .hero-route-to {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
 .hero-search .hero-input-box:focus-within,
 .hero-search .hero-route-cell:focus-within {
   outline: none !important;
   box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 .hero.night .hero-auth-btn,

@@ -397,6 +397,12 @@ body {
   border-color: transparent !important;
 }
 
+.app-wrap.night .qr-btn.qr-selected:hover:not(:disabled):not(.qr-dimmed) {
+  background: linear-gradient(135deg, var(--gold-primary), var(--orange-primary)) !important;
+  color: var(--deep-dark) !important;
+  border-color: transparent !important;
+}
+
 .app-wrap.night .question-choices {
   border-top-color: rgba(168, 155, 207, 0.15) !important;
 }
@@ -475,6 +481,12 @@ body {
 }
 
 .app-wrap.day .qr-btn.qr-selected {
+  background: var(--color-answer-selected-bg) !important;
+  border-color: var(--color-answer-selected-bg) !important;
+  color: var(--color-answer-selected-text) !important;
+}
+
+.app-wrap.day .qr-btn.qr-selected:hover:not(:disabled):not(.qr-dimmed) {
   background: var(--color-answer-selected-bg) !important;
   border-color: var(--color-answer-selected-bg) !important;
   color: var(--color-answer-selected-text) !important;

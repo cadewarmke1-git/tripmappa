@@ -236,7 +236,11 @@ export default function QuestionChoices({
     });
   }
 
-  const scrollOptions = compact && currentQ.type !== "loading" && currentQ.type !== "text";
+  const scrollOptions = compact
+    && currentQ.type !== "loading"
+    && currentQ.type !== "text"
+    && currentQ.type !== "trip_details"
+    && currentQ.type !== "party_composition";
 
   function wrapScrollable(content) {
     if (!scrollOptions) return content;
@@ -433,7 +437,7 @@ export default function QuestionChoices({
                   <div className="party-composition-stepper">
                     <button
                       type="button"
-                      className="party-composition-btn"
+                      className="party-composition-stepper-btn"
                       disabled={frozen || value <= range[0]}
                       onClick={() => adjustPartyCount(field, -1)}
                       aria-label={`Fewer ${label.toLowerCase()}`}
