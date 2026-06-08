@@ -149,7 +149,7 @@
 
 
 .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
   opacity: 1 !important;
   font-style: italic;
   font-weight: 400 !important;
@@ -252,9 +252,9 @@
 
   html[data-layout="mobile"] .hero.night .hero-input,
   html[data-layout="mobile"] .hero.day .hero-input {
-    color: var(--text-primary) !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
-    background: rgba(0, 0, 0, 0.3) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
   }
 
@@ -547,10 +547,17 @@
 .hero.night .hero-search .hero-input,
 .hero.day .hero-input,
 .hero.day .hero-search .hero-input {
-  color: var(--text-primary) !important;
-  -webkit-text-fill-color: var(--text-primary) !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.hero.night .hero-search .hero-input::placeholder,
+.hero.day .hero-search .hero-input::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
 }
 
 .hero.night .hero-search,
@@ -689,10 +696,7 @@ html body .hero .hero-search .hero-input::placeholder {
   font-weight: 400 !important;
 }
 
-html body .hero.night .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
-}
-
+html body .hero.night .hero-search .hero-input::placeholder,
 html body .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
 }

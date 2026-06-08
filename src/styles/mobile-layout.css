@@ -92,20 +92,18 @@
 
   html[data-layout="mobile"] .hero.night .hero-input,
   html[data-layout="mobile"] .hero.day .hero-input {
-    color: var(--text-primary) !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
-    background: rgba(0, 0, 0, 0.3) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
   }
 
-  html[data-layout="mobile"] .hero.night .hero-search .hero-input::placeholder {
+  html[data-layout="mobile"] .hero.night .hero-search .hero-input::placeholder,
+  html[data-layout="mobile"] .hero.day .hero-search .hero-input::placeholder {
     color: rgba(255, 255, 255, 0.35) !important;
     font-style: italic;
-  }
-
-  html[data-layout="mobile"] .hero.day .hero-search .hero-input::placeholder {
-    color: rgba(255, 255, 255, 0.4) !important;
-    font-style: italic;
+    font-weight: 400 !important;
+    opacity: 1 !important;
   }
 
   html[data-layout="mobile"] .hero.night .hero-route-cell .hero-input-label {

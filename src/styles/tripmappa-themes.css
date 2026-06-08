@@ -433,7 +433,7 @@ body.theme-day,
   animation: budgetShimmer 1.2s ease infinite !important;
 }
 .app-wrap.day .vehicle-group-label { color: rgba(26,26,46,0.45) !important; }
-.app-wrap.day .summary-kids-note { color: var(--gold-primary) !important; border-top-color: rgba(26,26,46,0.08) !important; }
+.app-wrap.day .summary-kids-note { color: var(--text-secondary) !important; border-top-color: var(--border) !important; }
 .app-wrap.day .scenic-route-note { color: var(--gold-primary) !important; }
 .app-wrap.day .route-info-chip {
   background: rgba(26,26,46,0.05) !important;

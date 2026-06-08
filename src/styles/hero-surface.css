@@ -106,9 +106,9 @@ html body .hero.day .hero-title-accent {
 }
 
 .hero[data-surface-theme="day"] .hero-input {
-  color: var(--text-primary) !important;
-  -webkit-text-fill-color: var(--text-primary) !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -159,9 +159,9 @@ html body .hero.day .hero-title-accent {
 }
 
 .hero[data-surface-theme="night"] .hero-input {
-  color: var(--text-primary) !important;
-  -webkit-text-fill-color: var(--text-primary) !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -209,7 +209,7 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 }
 
 .hero[data-surface-theme="day"] .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
   font-style: italic !important;
   font-weight: 400 !important;
   opacity: 1 !important;
