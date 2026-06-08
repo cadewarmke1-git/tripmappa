@@ -455,12 +455,14 @@
     display: flex;
     align-items: center;
     min-height: 44px;
+    background: transparent;
   }
   .hero-route-cell .hero-input-box > div {
     width: 100%;
     min-width: 0;
     display: flex;
     align-items: center;
+    background: transparent;
   }
   .hero-route-bar .hero-input {
     width: 100%;
@@ -504,8 +506,8 @@
     flex-shrink: 0;
     pointer-events: none;
   }
-  .hero-input-box { flex: 1; min-width: 0; }
-  .hero-input-box > div { width: 100%; min-width: 0; }
+  .hero-input-box { flex: 1; min-width: 0; background: transparent; }
+  .hero-input-box > div { width: 100%; min-width: 0; background: transparent; }
   .hero-go-btn { align-self: center; }
   .route-timing-wrap { position: relative; margin-top: 8px; }
   .timing-menu-fixed {

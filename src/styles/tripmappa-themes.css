@@ -725,7 +725,6 @@ body.theme-day,
 .app-wrap .ai-bubble,
 .app-wrap .user-bubble,
 .app-wrap .route-input,
-.app-wrap .qr-btn,
 .app-wrap .answer-input,
 .app-wrap .answer-send,
 .app-wrap .btn-generate,
@@ -762,6 +761,10 @@ body.theme-day,
   transition: background 1.8s ease, background-color 1.8s ease, color 1.8s ease, border-color 1.8s ease !important;
 }
 
+.app-wrap .qr-btn {
+  transition: background 0.12s ease, background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease !important;
+}
+
 .app-wrap .trip-results-panel,
 .app-wrap .trip-results-topbar,
 .app-wrap .trip-overview-hero,
@@ -776,7 +779,7 @@ body.theme-day,
 
 /* All non-interactive elements transition at 1.8s */
 .app-wrap .ai-bubble, .app-wrap .user-bubble, .app-wrap .route-input,
-.app-wrap .qr-btn, .app-wrap .answer-input, .app-wrap .answer-send,
+.app-wrap .answer-input, .app-wrap .answer-send,
 .app-wrap .btn-generate, .app-wrap .chat-title, .app-wrap .chat-sub,
 .app-wrap .ai-name, .app-wrap .stop-card, .app-wrap .stop-card-head,
 .app-wrap .stop-city, .app-wrap .stop-meta, .app-wrap .stop-num,
