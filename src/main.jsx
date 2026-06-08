@@ -24,6 +24,7 @@ import "./styles/plan-flow-theme.css";
 
 initViewportLayout();
 initPwaInstall();
+sessionStorage.removeItem("tm-chunk-reload");
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {

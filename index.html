@@ -52,6 +52,18 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        window.addEventListener("error", function (event) {
+          var target = event.target;
+          if (!target || target.tagName !== "SCRIPT" || !target.src) return;
+          if (target.src.indexOf("/assets/") === -1) return;
+          if (sessionStorage.getItem("tm-chunk-reload")) return;
+          sessionStorage.setItem("tm-chunk-reload", "1");
+          window.location.reload();
+        }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
