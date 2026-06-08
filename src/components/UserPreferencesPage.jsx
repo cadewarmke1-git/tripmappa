@@ -28,16 +28,22 @@ const LODGING_CHOICES = [
 
 const PARTY_CHOICES = ["1", "2", "3 to 5", "6 or more"];
 
-const SECTIONS = [
+const SETUP_SECTIONS = [
   { id: "vehicle", label: "Vehicle type", key: "vehicle", choices: VEHICLE_CHOICES },
   { id: "fuel_type", label: "Fuel type", key: "fuel_type", choices: FUEL_TYPE_CHOICES },
   { id: "travelers", label: "Party size", key: "travelers", choices: PARTY_CHOICES },
   { id: "lodging", label: "Lodging preference", key: "lodging", choices: LODGING_CHOICES },
+];
+
+const PRIMARY_SECTIONS = [
+  { id: "dietary", label: "Food", key: "dietary", choices: DIETARY_PREFERENCE_CHOICES, multi: true },
+  { id: "trip_budget", label: "Budget", key: "trip_budget", choices: TRIP_BUDGET_CHOICES },
+];
+
+const MORE_OPTION_SECTIONS = [
   { id: "stops_interests", label: "Fun stops", key: "stops_interests", choices: STOPS_INTERESTS_BASE, multi: true },
   { id: "accessibility", label: "Accessibility", key: "accessibility", choices: ACCESSIBILITY_CHOICES, multi: true },
-  { id: "dietary", label: "Food", key: "dietary", choices: DIETARY_PREFERENCE_CHOICES, multi: true },
   { id: "schedule_restrictions", label: "Schedule", key: "schedule_restrictions", choices: SCHEDULE_RESTRICTION_CHOICES, multi: true },
-  { id: "trip_budget", label: "Budget", key: "trip_budget", choices: TRIP_BUDGET_CHOICES },
 ];
 
 function toggleInList(list, value) {
@@ -55,6 +61,13 @@ function summarizeValue(section, prefs) {
   return value || "Not set";
 }
 
+function summarizeMoreOptions(prefs) {
+  const parts = MORE_OPTION_SECTIONS
+    .map(section => summarizeValue(section, prefs))
+    .filter(summary => summary !== "None selected" && summary !== "Not set");
+  return parts.length ? parts.join(" · ") : "None selected";
+}
+
 export default function UserPreferencesPage({
   accessToken,
   onBack,
@@ -64,6 +77,7 @@ export default function UserPreferencesPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(() => new Set(["vehicle"]));
+  const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
   const [prefs, setPrefs] = useState({
     vehicle: "",
     fuel_type: "",
@@ -131,6 +145,44 @@ export default function UserPreferencesPage({
     });
   }
 
+  function renderCollapsibleSection(section) {
+    const isOpen = expanded.has(section.id);
+    return (
+      <section key={section.id} className="user-preferences-collapsible">
+        <button
+          type="button"
+          className="user-preferences-collapsible-toggle"
+          aria-expanded={isOpen}
+          onClick={() => toggleSection(section.id)}
+        >
+          <span className="user-preferences-collapsible-heading">
+            <span className="user-preferences-section-title">{section.label}</span>
+            {!isOpen && (
+              <span className="user-preferences-collapsible-summary">
+                {summarizeValue(section, prefs)}
+              </span>
+            )}
+          </span>
+          <span className="user-preferences-collapsible-chevron" aria-hidden="true">
+            {isOpen ? "−" : "+"}
+          </span>
+        </button>
+        <div className={`user-preferences-collapsible-panel${isOpen ? " is-open" : ""}`}>
+          <div className="user-preferences-collapsible-inner">
+            <div className="user-preferences-collapsible-body">
+              <ChoiceGrid
+                choices={section.choices}
+                selected={prefs[section.key]}
+                multi={section.multi}
+                onSelect={v => setField(section.key, v)}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className="user-preferences-page">
       <div className="user-preferences-scroll">
@@ -155,31 +207,45 @@ export default function UserPreferencesPage({
             }}
           >
             <div className="user-preferences-sections">
-              {SECTIONS.map(section => {
-                const isOpen = expanded.has(section.id);
-                return (
-                  <section key={section.id} className="user-preferences-collapsible">
-                    <button
-                      type="button"
-                      className="user-preferences-collapsible-toggle"
-                      aria-expanded={isOpen}
-                      onClick={() => toggleSection(section.id)}
-                    >
-                      <span className="user-preferences-collapsible-heading">
-                        <span className="user-preferences-section-title">{section.label}</span>
-                        {!isOpen && (
-                          <span className="user-preferences-collapsible-summary">
-                            {summarizeValue(section, prefs)}
-                          </span>
-                        )}
+              {SETUP_SECTIONS.map(renderCollapsibleSection)}
+
+              {PRIMARY_SECTIONS.map(section => (
+                <section key={section.id} className="user-preferences-primary">
+                  <h2 className="user-preferences-section-title">{section.label}</h2>
+                  <ChoiceGrid
+                    choices={section.choices}
+                    selected={prefs[section.key]}
+                    multi={section.multi}
+                    onSelect={v => setField(section.key, v)}
+                  />
+                </section>
+              ))}
+
+              <section className="user-preferences-collapsible user-preferences-more-options">
+                <button
+                  type="button"
+                  className="user-preferences-collapsible-toggle user-preferences-more-options-toggle"
+                  aria-expanded={moreOptionsExpanded}
+                  onClick={() => setMoreOptionsExpanded(prev => !prev)}
+                >
+                  <span className="user-preferences-collapsible-heading">
+                    <span className="user-preferences-section-title">More options</span>
+                    {!moreOptionsExpanded && (
+                      <span className="user-preferences-collapsible-summary">
+                        {summarizeMoreOptions(prefs)}
                       </span>
-                      <span className="user-preferences-collapsible-chevron" aria-hidden="true">
-                        {isOpen ? "−" : "+"}
-                      </span>
-                    </button>
-                    <div className={`user-preferences-collapsible-panel${isOpen ? " is-open" : ""}`}>
-                      <div className="user-preferences-collapsible-inner">
-                        <div className="user-preferences-collapsible-body">
+                    )}
+                  </span>
+                  <span className="user-preferences-collapsible-chevron" aria-hidden="true">
+                    {moreOptionsExpanded ? "−" : "+"}
+                  </span>
+                </button>
+                <div className={`user-preferences-collapsible-panel${moreOptionsExpanded ? " is-open" : ""}`}>
+                  <div className="user-preferences-collapsible-inner">
+                    <div className="user-preferences-collapsible-body user-preferences-more-options-body">
+                      {MORE_OPTION_SECTIONS.map(section => (
+                        <div className="user-preferences-more-options-group" key={section.id}>
+                          <h3 className="user-preferences-more-options-group-title">{section.label}</h3>
                           <ChoiceGrid
                             choices={section.choices}
                             selected={prefs[section.key]}
@@ -187,11 +253,11 @@ export default function UserPreferencesPage({
                             onSelect={v => setField(section.key, v)}
                           />
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  </section>
-                );
-              })}
+                  </div>
+                </div>
+              </section>
             </div>
           </form>
         )}

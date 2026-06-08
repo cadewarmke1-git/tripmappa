@@ -122,12 +122,12 @@
   border-color: var(--color-input-border) !important;
 }
 
-.hero.day .hero-input {
-  color: var(--color-text-primary) !important;
-}
-
-.hero.day .hero-input::placeholder {
-  color: var(--color-input-placeholder) !important;
+.hero.day .hero-input,
+.hero.night .hero-input {
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .hero.day .hero-route-labels .hero-input-label,

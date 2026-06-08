@@ -3,6 +3,12 @@ import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { ROUTE_PENDING_UNLOCK_MS } from "../lib/tripFlow.js";
 
+const TRIP_DETAILS_MORE_SECTION_IDS = new Set([
+  "stops_interests",
+  "accessibility",
+  "schedule_restrictions",
+]);
+
 function normalizeChoice(choice) {
   if (choice && typeof choice === "object" && choice.value != null) {
     return {
@@ -53,7 +59,7 @@ export default function QuestionChoices({
   const [multiDraft, setMultiDraft] = useState([]);
   const [partyAdults, setPartyAdults] = useState(2);
   const [partyChildren, setPartyChildren] = useState(0);
-  const [expandedDetailSections, setExpandedDetailSections] = useState(() => new Set());
+  const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
   const [routePendingExpired, setRoutePendingExpired] = useState(false);
 
   useEffect(() => {
@@ -76,8 +82,7 @@ export default function QuestionChoices({
     if (currentQ?.type === "trip_details" || currentQ?.type === "multiselect_group") {
       setGroupDraft(buildGroupDraft(currentQ, prefDraft, answers));
       if (currentQ?.type === "trip_details") {
-        const firstId = currentQ.sections?.[0]?.id;
-        setExpandedDetailSections(firstId ? new Set([firstId]) : new Set());
+        setMoreOptionsExpanded(false);
       }
       return;
     }
@@ -453,49 +458,29 @@ export default function QuestionChoices({
 
           {isTripDetails && (
             <>
-              {(currentQ.sections || []).map(section => {
-                const expanded = expandedDetailSections.has(section.id);
-                return (
-                  <div className="question-group-section question-group-collapsible" key={section.id}>
-                    <button
-                      type="button"
-                      className="question-section-toggle"
-                      onClick={() => {
-                        setExpandedDetailSections(prev => {
-                          const next = new Set(prev);
-                          if (next.has(section.id)) next.delete(section.id);
-                          else next.add(section.id);
-                          return next;
-                        });
-                      }}
-                      aria-expanded={expanded}
-                    >
-                      <span className="question-section-label">{section.label}</span>
-                      <span className="question-section-chevron" aria-hidden="true">{expanded ? "−" : "+"}</span>
-                    </button>
-                    <div className={`question-collapsible-panel${expanded ? " is-open" : ""}`}>
-                      <div className="question-collapsible-inner">
-                        <div className="quick-replies question-choices-scroll">
-                          {(section.choices || []).map(raw => {
-                            const { value, label } = normalizeChoice(raw);
-                            return (
-                              <button
-                                key={value}
-                                type="button"
-                                className={mkGroupClass(section.id, value)}
-                                disabled={frozen}
-                                onClick={() => toggleGroupSection(section.id, value)}
-                              >
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+              {(currentQ.sections || [])
+                .filter(section => section.id === "dietary")
+                .map(section => (
+                  <div className="question-group-section" key={section.id}>
+                    <div className="question-section-label">{section.label}</div>
+                    <div className="quick-replies question-choices-scroll">
+                      {(section.choices || []).map(raw => {
+                        const { value, label } = normalizeChoice(raw);
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            className={mkGroupClass(section.id, value)}
+                            disabled={frozen}
+                            onClick={() => toggleGroupSection(section.id, value)}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                );
-              })}
+                ))}
               {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
                 <div className="question-group-section">
                   <div className="question-section-label">Budget</div>
@@ -514,6 +499,46 @@ export default function QuestionChoices({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+              {(currentQ.sections || []).some(section => TRIP_DETAILS_MORE_SECTION_IDS.has(section.id)) && (
+                <div className="question-group-section question-group-collapsible question-more-options">
+                  <button
+                    type="button"
+                    className="question-section-toggle question-more-options-toggle"
+                    onClick={() => setMoreOptionsExpanded(prev => !prev)}
+                    aria-expanded={moreOptionsExpanded}
+                  >
+                    <span className="question-section-label question-more-options-label">More options</span>
+                    <span className="question-section-chevron" aria-hidden="true">{moreOptionsExpanded ? "−" : "+"}</span>
+                  </button>
+                  <div className={`question-collapsible-panel${moreOptionsExpanded ? " is-open" : ""}`}>
+                    <div className="question-collapsible-inner">
+                      {(currentQ.sections || [])
+                        .filter(section => TRIP_DETAILS_MORE_SECTION_IDS.has(section.id))
+                        .map(section => (
+                          <div className="question-more-options-group" key={section.id}>
+                            <div className="question-section-label">{section.label}</div>
+                            <div className="quick-replies question-choices-scroll">
+                              {(section.choices || []).map(raw => {
+                                const { value, label } = normalizeChoice(raw);
+                                return (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    className={mkGroupClass(section.id, value)}
+                                    disabled={frozen}
+                                    onClick={() => toggleGroupSection(section.id, value)}
+                                  >
+                                    {label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 </div>
               )}

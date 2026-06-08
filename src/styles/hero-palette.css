@@ -116,9 +116,6 @@
   color: #FFD28C !important;
 }
 
-.hero.night .hero-input {
-  color: #FFFFFF !important;
-}
 
 .hero.night .hero-search .hero-input::placeholder {
   color: rgba(255, 255, 255, 0.35) !important;
@@ -150,9 +147,6 @@
   color: #A04010 !important;
 }
 
-.hero.day .hero-input {
-  color: #1A0D00 !important;
-}
 
 .hero.day .hero-search .hero-input::placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
@@ -256,12 +250,12 @@
     -webkit-backdrop-filter: blur(12px) !important;
   }
 
-  html[data-layout="mobile"] .hero.night .hero-input {
-    color: #FFFFFF !important;
-  }
-
+  html[data-layout="mobile"] .hero.night .hero-input,
   html[data-layout="mobile"] .hero.day .hero-input {
-    color: #1A0D00 !important;
+    color: var(--text-primary) !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
   }
 
   html[data-layout="mobile"] .hero.night .hero-route-cell .hero-input-label {
@@ -555,7 +549,8 @@
 .hero.day .hero-search .hero-input {
   color: var(--text-primary) !important;
   -webkit-text-fill-color: var(--text-primary) !important;
-  background: var(--surface) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .hero.night .hero-search,

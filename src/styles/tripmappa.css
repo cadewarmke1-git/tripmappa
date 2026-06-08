@@ -466,7 +466,7 @@
     width: 100%;
     min-height: 44px;
     line-height: 44px;
-    padding: 0;
+    padding: 0 12px;
   }
   .hero-input-error {
     font-size: 11px;
@@ -681,15 +681,16 @@
     white-space: nowrap;
   }
   .hero-input {
-    border: none;
     outline: none;
     font-family: 'Inter', sans-serif;
     font-size: 15px;
     font-weight: 400;
     color: var(--text-primary);
-    background: var(--surface);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
     width: 100%;
-    padding: 0;
+    padding: 0 12px;
     line-height: 1.4;
     box-sizing: border-box;
     -webkit-text-fill-color: var(--text-primary);
@@ -5808,6 +5809,40 @@
     overflow: hidden;
     min-height: 0;
   }
+  .user-preferences-primary {
+    border: 1px solid var(--color-card-border);
+    border-radius: 12px;
+    background: var(--color-card-bg);
+    padding: 12px 14px 14px;
+  }
+  .user-preferences-primary .user-preferences-section-title {
+    margin: 0 0 10px;
+  }
+  .user-preferences-more-options-toggle {
+    border-style: dashed;
+    opacity: 0.92;
+  }
+  .user-preferences-more-options-toggle:hover {
+    background: color-mix(in srgb, var(--color-card-bg) 88%, var(--color-accent-gold));
+    opacity: 1;
+  }
+  .user-preferences-more-options-body {
+    border-top: none;
+    padding-top: 4px;
+  }
+  .user-preferences-more-options-group + .user-preferences-more-options-group {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .user-preferences-more-options-group-title {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
   .user-preferences-footer-sticky {
     position: sticky;
     bottom: 0;
@@ -5918,6 +5953,30 @@
     font-size: 18px;
     font-weight: 700;
     color: var(--color-accent-gold);
+  }
+  .question-more-options-toggle {
+    margin-top: 4px;
+    background: transparent;
+    border-style: dashed;
+    opacity: 0.92;
+  }
+  .question-more-options-toggle:hover {
+    background: var(--color-card-bg);
+    opacity: 1;
+  }
+  .question-more-options-label {
+    margin: 0;
+    opacity: 0.8;
+    text-transform: none;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .question-more-options-group + .question-more-options-group {
+    margin-top: 12px;
+  }
+  .question-more-options-group .question-section-label {
+    margin-top: 0;
   }
 
   .plan-generate-sticky {
