@@ -5,6 +5,7 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
+import GenerationStreamOverlay from "./components/GenerationStreamOverlay.jsx";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
 import { applyMapThemeStyles } from "./lib/mapStyles.js";
@@ -21,6 +22,7 @@ import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./l
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { buildContinuousDriveTip, isContinuousDrive, OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { generateTripPlan } from "./lib/apiClient.js";
+import { buildClientCreditSnapshot, decrementCachedCreditStatus } from "./lib/planTripStream.js";
 import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } from "./lib/generateTripFlow.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } from "./lib/postGenerationPersistence.js";
@@ -39,6 +41,7 @@ import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
 import { describePlanChanges, formatRegenerateDiffBlock } from "./lib/planSnapshotDiff.js";
 import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
 import { fetchTruckRoute, shouldUseTruckRouting, truckRestrictionsToTips, weighStationsToRoadStops } from "./lib/truckRoutingApi.js";
+import { deriveCitiesAlongRoute, parseCityStateFromFormattedAddress } from "./lib/routeCities.js";
 import { createAnswerChangeTracker, recordAnswerChange, formatAnswerConfidenceNotes, buildQuestionLabelMap } from "./lib/answerIntent.js";
 import {
   buildRecentTripsContext,
@@ -177,7 +180,9 @@ export default function App() {
   const savedTripsRef = useRef(savedTrips);
   const [planGenerationCount, setPlanGenerationCount] = useState(0);
   const [creditStatus, setCreditStatus] = useState(null);
+  const creditStatusRef = useRef(null);
   const [creditsNeedRefresh, setCreditsNeedRefresh] = useState(0);
+  const [generationStream, setGenerationStream] = useState(null);
   const foundingClaimAttemptedRef = useRef(false);
   const trialPromptShownRef = useRef(false);
   const [userProfile, setUserProfile] = useState(null);
@@ -208,6 +213,11 @@ export default function App() {
   const [founderWelcomeName, setFounderWelcomeName] = useState(null);
   const planPreferencesRef = useRef({});
   const highlightTimerRef = useRef(null);
+
+  function applyCreditStatus(next) {
+    creditStatusRef.current = next;
+    setCreditStatus(next);
+  }
 
   function applySavedTrips(next) {
     savedTripsRef.current = next;
@@ -533,8 +543,8 @@ export default function App() {
     if (authLoading) return;
     if (user?.id && session?.access_token) {
       fetchTripCredits(session.access_token)
-        .then(setCreditStatus)
-        .catch(() => setCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 }));
+        .then(applyCreditStatus)
+        .catch(() => applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 }));
       fetchUserProfile(user.id)
         .then(profile => {
           if (profile?.home_address) setHomeAddress(profile.home_address);
@@ -542,7 +552,7 @@ export default function App() {
         })
         .catch(() => {});
     } else {
-      setCreditStatus(getGuestCreditStatus());
+      applyCreditStatus(getGuestCreditStatus());
       setUserProfile(null);
       const guestHome = getGuestHomeAddress();
       if (guestHome) setHomeAddress(guestHome);
@@ -609,7 +619,7 @@ export default function App() {
         const refCode = getStoredReferralCode();
         const result = await runAccountOnboarding(session.access_token, { refCode });
         if (cancelled) return;
-        if (result.credits) setCreditStatus(result.credits);
+        if (result.credits) applyCreditStatus(result.credits);
         const profile = await fetchUserProfile(user.id);
         if (!cancelled && profile) setUserProfile(profile);
 
@@ -676,7 +686,7 @@ export default function App() {
     if (user?.id && session?.access_token) {
       fetchTripCredits(session.access_token)
         .then(credits => {
-          setCreditStatus(credits);
+          applyCreditStatus(credits);
           const paidTier = normalizeTier(credits?.storedTier ?? credits?.tier);
           if (paidTier === TIERS.VOYAGER) {
             toast_("Welcome to TripMappa Voyager.", true);
@@ -747,7 +757,7 @@ export default function App() {
       }
 
       const promise = fetchTruckRoute(originVal, destVal, { ...answers, vehicle })
-        .then((data) => {
+        .then(async (data) => {
           setRouteLoading(false);
           setRouteError(null);
           const restrictions = data.restrictions || [];
@@ -756,6 +766,11 @@ export default function App() {
           }
 
           const routePoints = data.routePoints || [];
+          const citiesAlongRoute = await deriveCitiesAlongRoute(routePoints, {
+            origin: originVal,
+            destination: destVal,
+            distance: data.distance,
+          });
           const nextRouteInfo = {
             distance: data.distance,
             duration: data.duration,
@@ -767,7 +782,7 @@ export default function App() {
             originLng: routePoints[0]?.lng,
             destLat: routePoints[routePoints.length - 1]?.lat,
             destLng: routePoints[routePoints.length - 1]?.lng,
-            citiesAlongRoute: [],
+            citiesAlongRoute,
             routePoints,
             vehicleType: vehicle,
             timingMode,
@@ -880,11 +895,8 @@ export default function App() {
           const citiesAlongRoute = [];
           route.legs[0].steps.forEach(step => {
             if (!step.end_address) return;
-            const parts = step.end_address.split(",").map(s => s.trim());
-            if (parts.length >= 2) {
-              const cityState = `${parts[parts.length - 2]}, ${parts[parts.length - 1].replace(/\s+\d{5}(-\d{4})?.*$/, "").trim()}`;
-              if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
-            }
+            const cityState = parseCityStateFromFormattedAddress(step.end_address);
+            if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
           });
 
           const nextRouteInfo = {
@@ -1098,9 +1110,9 @@ export default function App() {
 
   function refreshCredits() {
     if (user && session?.access_token) {
-      fetchTripCredits(session.access_token).then(setCreditStatus).catch(() => {});
+      fetchTripCredits(session.access_token).then(applyCreditStatus).catch(() => {});
     } else {
-      setCreditStatus(getGuestCreditStatus());
+      applyCreditStatus(getGuestCreditStatus());
     }
   }
 
@@ -2366,17 +2378,11 @@ export default function App() {
     const tripOrigin = originRef.current?.value?.trim() || origin;
     const tripDest = destRef.current?.value?.trim() || dest;
 
-    let status = creditStatus;
-    if (user && session?.access_token) {
-      try {
-        status = await fetchTripCredits(session.access_token);
-        setCreditStatus(status);
-      } catch {
-        status = creditStatus;
-      }
-    } else {
-      status = getGuestCreditStatus();
-      setCreditStatus(status);
+    let status = user
+      ? (creditStatusRef.current || creditStatus)
+      : getGuestCreditStatus();
+    if (!user) {
+      applyCreditStatus(status);
     }
 
     const guard = canStartTripGeneration({
@@ -2406,6 +2412,7 @@ export default function App() {
 
     setOrigin(tripOrigin);
     setDest(tripDest);
+    setGenerationStream(null);
     setLoading(true);
     setEnrichmentLimited(false);
     setEnrichmentNoticeDismissed(false);
@@ -2486,7 +2493,7 @@ export default function App() {
 
       if (!user) {
         if (!consumeGuestCredit()) {
-          setCreditStatus(getGuestCreditStatus());
+          applyCreditStatus(getGuestCreditStatus());
           const msg = generationFailureMessage({ code: "no_credits" });
           setGenerationError(msg);
           toast_(msg, { isError: true });
@@ -2494,7 +2501,7 @@ export default function App() {
           openTripsUpgrade({ limitReached: false });
           return;
         }
-        setCreditStatus(getGuestCreditStatus());
+        applyCreditStatus(getGuestCreditStatus());
       }
 
       let placesContext = null;
@@ -2533,6 +2540,7 @@ export default function App() {
           : undefined,
         legs: tripLegs.length > 0 ? tripLegs : undefined,
         model: "claude-sonnet-4-6",
+        clientCreditStatus: user ? buildClientCreditSnapshot(creditStatusRef.current || creditStatus) : null,
       };
 
       let lastErr = null;
@@ -2541,7 +2549,12 @@ export default function App() {
           const data = await generateTripPlan(
             planPayload,
             session?.access_token || null,
-            { signal: generateController.signal },
+            {
+              signal: generateController.signal,
+              onStreamProgress: (progress) => {
+                setGenerationStream(progress);
+              },
+            },
           );
 
           if (generateController.signal.aborted) {
@@ -2572,6 +2585,7 @@ export default function App() {
           applyGeneratedTrip(parsed, activeRouteInfo, { tips, mergedRoadStops });
 
           if (user && session?.access_token) {
+            applyCreditStatus(decrementCachedCreditStatus(creditStatusRef.current || creditStatus));
             setCreditsNeedRefresh(n => n + 1);
             void persistAfterSuccessfulGeneration({
               userId: user.id,
@@ -2594,7 +2608,7 @@ export default function App() {
           } else {
             setGuestTripPendingSave(true);
             const guestStatus = getGuestCreditStatus();
-            setCreditStatus(guestStatus);
+            applyCreditStatus(guestStatus);
             if (guestStatus.remaining <= 0) {
               setTimeout(() => openTripsUpgrade({ limitReached: false }), 1200);
             }
@@ -2638,13 +2652,13 @@ export default function App() {
           limitReached: Boolean(err.limitReached) || err.credits?.billingPeriod === "monthly",
           resetDate: err.resetDate || err.credits?.resetDate,
         });
-        if (err.credits) setCreditStatus(err.credits);
+        if (err.credits) applyCreditStatus(err.credits);
         if (!user) refundGuestCredit();
         ensurePayoffScreen();
         return;
       }
       if (!user) refundGuestCredit();
-      setCreditStatus(getGuestCreditStatus());
+      applyCreditStatus(getGuestCreditStatus());
       const msg = generationFailureMessage(err);
       setGenerationError(msg);
       ensurePayoffScreen();
@@ -2654,6 +2668,7 @@ export default function App() {
       if (generateAbortRef.current === generateController) {
         generateAbortRef.current = null;
       }
+      setGenerationStream(null);
       setLoading(false);
     }
   }
@@ -3218,7 +3233,11 @@ export default function App() {
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
-        {loading && <RouteDrawingLoader theme={theme} variant="fullscreen" />}
+        {loading && (
+          generationStream
+            ? <GenerationStreamOverlay progress={generationStream} theme={theme} />
+            : <RouteDrawingLoader theme={theme} variant="fullscreen" />
+        )}
         {renderAppNavBar("app")}
         <ConfigWarningBanner missing={configMissing} />
 

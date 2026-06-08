@@ -1,7 +1,23 @@
 /** Active trip-generation endpoint (Anthropic Sonnet). Called via src/lib/apiClient.js only. */
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
-import { fetchCreditStatus, consumeCredit } from "../lib/tripCredits.js";
+import {
+  fetchCreditStatus,
+  consumeCredit,
+  preflightCreditFromClient,
+  validateCreditsBeforeConsume,
+} from "../lib/tripCredits.js";
+import {
+  initPlanTripSse,
+  writePlanTripSse,
+  streamAnthropicMessages,
+  createPlanTripSseWriter,
+} from "../lib/planTripStream.js";
+import {
+  buildTripSegments,
+  stitchTripSegments,
+  shouldUseParallelTripSegments,
+} from "../lib/planTripSegments.js";
 import { readUserTripPreferences, formatPreferencesForPrompt } from "./user-trip-preferences.js";
 import { calculateMaxTokens } from "../lib/planTripTokens.js";
 import { normalizeTripResponse } from "../lib/tripResponseNormalize.js";
@@ -62,39 +78,6 @@ function tripResponseHasContent(parsed) {
     ? parsed.road_stops.filter(s => s && (s.name || s.city))
     : [];
   return stops.length > 0 || roadStops.length > 0;
-}
-
-async function callAnthropic(model, systemPrompt, userPrompt, maxTokens) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-beta": "prompt-caching-2024-07-31",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      system: [
-        {
-          type: "text",
-          text: systemPrompt,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [{ role: "user", content: userPrompt }],
-    }),
-  });
-  const data = await response.json();
-  const inputTokens = data?.usage?.input_tokens ?? 0;
-  const outputTokens = data?.usage?.output_tokens ?? 0;
-  console.log("[plan-trip] Anthropic usage:", {
-    input_tokens: inputTokens,
-    output_tokens: outputTokens,
-    total_tokens: inputTokens + outputTokens,
-  });
-  return { response, data, inputTokens, outputTokens };
 }
 
 const TRUCK_TYPES = ["Semi Truck (18-wheeler)", "Box Truck", "Flatbed", "Tanker"];
@@ -293,7 +276,7 @@ function buildContextBlock(ctx) {
       lines.push(`HERE truck route restrictions along corridor: ${ctx.truckRestrictions.map(r => `${r.roadName ? r.roadName + ": " : ""}${r.message}`).join("; ")}`);
     }
     if (ctx.weighStationCount > 0) {
-      lines.push(`HERE weigh stations identified along route: ${ctx.weighStationCount} — include these in road_stops where appropriate`);
+      lines.push(`HERE weigh stations along route: ${ctx.weighStationCount} identified — cite at most 3 most relevant per leg in output`);
     }
   }
   if (RV_TYPES.includes(ctx.vehicle)) {
@@ -384,21 +367,21 @@ function buildCommercialBlock(ctx) {
 
   return `
 === VEHICLE INSTRUCTIONS: COMMERCIAL (${ctx.vehicle}) ===
-Treat this as a professional commercial driving route with full FMCSA HOS compliance on every stop.
+Treat this as a professional commercial driving route with FMCSA HOS compliance on every stop.
 Driver limits: 11 hours driving per day; mandatory 30-minute break after 8 consecutive hours driving; minimum 10-hour rest at each overnight stop before driving resumes.
-Using total distance ${ctx.routeDistance} and drive time ${ctx.routeDuration}, calculate exact driving segments and flag precisely where the mandatory 30-minute break must occur and where each overnight stop must occur to remain HOS compliant.
-Never recommend a stop that would put the driver over hours-of-service limits.
-Always recommend truck stops as primary overnight stops${noSleeper ? " — include motel rooms near truck stops because driver has no sleeper cab" : " — do not default to hotels when sleeper cab is available"}.
-At every truck stop: include brand (prioritize preferred brand "${ctx.truckStopBrand}" when set), estimated truck parking spaces, showers (and approximate shower cost), laundry availability, diesel price per gallon when known, on-site food options, and whether a CAT scale is on site (required — drivers verify weight before weigh stations).
-Flag every weigh station along this route by state and approximate mile marker.
-Flag every low bridge below 14 feet clearance.
-Flag weight-restricted roads or bridges on this route.
-Include rest areas with truck parking as supplemental stops between main truck stops (note approximate truck spaces).
-Include a full hos_compliance summary in JSON showing total drive time, mandatory break time and location, overnight stop time and location, and total trip completion time across multiple days if needed.
+Using total distance ${ctx.routeDistance} and drive time ${ctx.routeDuration}, place the mandatory 30-minute break and each overnight stop to remain HOS compliant. Never recommend a stop that would put the driver over hours-of-service limits.
+${noSleeper ? "No sleeper cab — include up to 2 motels near the overnight truck stop (override universal 3-hotel minimum)." : "Sleeper cab available — truck stop parking for overnight; do not default to hotels."}
+TRUCK STOPS: At most 3 fuel/rest road_stops per leg. Prioritize preferred brand "${ctx.truckStopBrand}" when set. Per stop: brand, location, CAT scale yes/no, diesel price if known, and one short amenities line (showers/laundry/food). Do not add supplemental rest-area stops unless one is required for the HOS break.
+WEIGH STATIONS: At most 3 per leg in safety.weighStations — only the most relevant on this segment (state + highway + approximate mile marker, one line each). Do not list every weigh station on the corridor.
+HOS: One concise hos_compliance string per leg (3–5 sentences) covering drive time, mandatory break location, overnight location, and rest requirements. No nested HOS objects or per-stop compliance breakdowns.
+MOTELS: At most 2 motel options per overnight city when motels are needed — name, price, and one-line parking note each.
+SAFETY: Include all relevant low-bridge, weight-restriction, and load-specific warnings; each entry is one line only — no multi-line notes.
+Do not repeat truck height, weight, hazmat status, or other vehicle specs in JSON output — they are already in trip context above.
 Set truck_safe_route: true in the JSON response.
-${isTanker || ctx.truckHazmat === "Yes" ? "Hazmat/tanker load: flag hazmat route restrictions and inspection requirements along this corridor." : ""}
-${isReefer ? "Refrigerated load: flag stops where driver should check refrigeration unit fuel levels." : ""}
-${isFlatbed ? "Flatbed load: flag high wind advisory areas that could affect load securement." : ""}`;
+Keep this leg's JSON under 3500 tokens — concise values, no redundant prose.
+${isTanker || ctx.truckHazmat === "Yes" ? "Hazmat/tanker: one-line hazmat route or inspection warnings only where applicable." : ""}
+${isReefer ? "Reefer load: one-line reminder to check reefer unit fuel at fuel stops." : ""}
+${isFlatbed ? "Flatbed load: one-line high-wind advisory where applicable." : ""}`;
 }
 
 function buildWaterBlock() {
@@ -511,33 +494,23 @@ function buildJsonSchema(ctx, isSimplified) {
 {
   "trip_format": "multi_day",
   "truck_safe_route": true,
-  "hos_compliance": {
-    "totalDriveTime": "${ctx.routeDuration}",
-    "mandatoryBreakTime": "30 min",
-    "mandatoryBreakLocation": "City, ST",
-    "overnightStopTime": "10 hours minimum",
-    "overnightStopLocation": "City, ST",
-    "totalTripCompletionTime": "e.g. 2 days 6 hours",
-    "drivingDays": 1,
-    "overnightStopsRequired": 0
-  },
+  "hos_compliance": "One concise paragraph (3-5 sentences): drive time, mandatory 30-min break location, overnight location, and 10-hr rest requirement for this leg.",
   "stops": [{
-    "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "HOS or route reason", "type": "overnight|break",
-    "truckStop": { "name": "From placesContext", "spaces": 120, "showers": true, "showerCost": "$12", "laundry": true, "restaurant": true, "diesel": "$3.89/gal", "hours": "24/7", "catScale": true },
-    "motel": { "name": "Only if no sleeper", "price": "$69/night", "distance": "0.5 mi", "parking": "Rig parking" },
-    "restArea": { "name": "Rest area", "spaces": 24, "distance": "10 mi", "amenities": "Truck parking · restrooms" },
-    "fuelStops": [{ "name": "From placesContext", "location": "City, ST", "distance": "XXX mi", "diesel": "$3.89/gal", "amenities": "Showers · CAT scales · DEF" }]
+    "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "HOS reason — few words", "type": "overnight|break",
+    "truckStop": { "name": "From placesContext", "catScale": true, "diesel": "$3.89/gal", "amenities": "Showers · laundry · food" },
+    "motels": [{ "name": "From placesContext", "price": "$99/night", "note": "One-line parking/shuttle note" }],
+    "restaurants": [{ "name": "From placesContext", "cuisine": "Type", "note": "One line" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "note": "Short note" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "note": "One line — max 3 road_stops per leg" }],
   "safety": {
-    "weighStations": [{ "state": "TX", "location": "I-40 mile marker", "hours": "24/7" }],
-    "lowBridges": [{ "name": "Bridge", "clearance": "13'6\\"", "location": "City, ST" }],
-    "steepGrades": [{ "location": "Pass name", "grade": "7%", "note": "Reduce speed" }],
-    "hazmatRestrictions": [],
-    "weightRestrictions": []
+    "weighStations": [{ "state": "TX", "location": "I-40 MM 120", "note": "One line — max 3 per leg" }],
+    "lowBridges": [{ "location": "City, ST", "clearance": "13'6\\"", "note": "One line" }],
+    "steepGrades": [{ "location": "Pass name", "grade": "7%", "note": "One line" }],
+    "hazmatRestrictions": [{ "location": "Highway", "note": "One line" }],
+    "weightRestrictions": [{ "location": "Road", "note": "One line" }]
   },
-  "tips": ["5-8 commercial route-specific tips"],
-  "road_condition_warnings": []
+  "tips": ["3-5 concise commercial tips for this route"],
+  "road_condition_warnings": ["One line each"]
 }`;
   }
 
@@ -620,7 +593,79 @@ function buildJsonSchema(ctx, isSimplified) {
 }`;
 }
 
-function buildUserPrompt(ctx, placesContextPrompt, isSimplified, generationHints = "", extraContext = "") {
+function buildSegmentInstructionBlock(segment, ctx) {
+  return `
+=== MULTI-DAY TRIP SEGMENT (${segment.segmentIndex + 1} of ${segment.totalSegments}) ===
+You are planning LEG ${segment.segmentIndex + 1} of a ${segment.totalSegments}-leg multi-day journey.
+Segment identifier: leg_${segment.segmentIndex + 1}_of_${segment.totalSegments}
+Segment origin: ${segment.origin}
+Segment destination: ${segment.destination}
+Overnight stops to generate on THIS leg only: ${segment.overnightCount}
+Corridor cities for this leg: ${segment.citiesAlongRoute.join(" → ")}
+${segment.isFirstSegment ? "This is the FIRST leg — include departure context from the trip origin." : ""}
+${segment.isLastSegment ? "This is the FINAL leg — the segment destination is the trip's final destination." : "Include exactly one overnight stop at the end of this leg."}
+${ctx.tripCategory === "commercial" ? "Generate ONLY truck stops, motels (if no sleeper), road_stops, safety warnings, and HOS summary for THIS leg. Max 3 road_stops, max 3 weigh stations, max 2 motels per overnight city." : "Generate ONLY stops, hotels, restaurants, and road_stops for THIS leg."} Do NOT plan other legs of the journey.`;
+}
+
+function buildCommercialSegmentJsonSchema(ctx, segment) {
+  const noSleeper = /no|without|motel/i.test(String(ctx.sleeperCab));
+  return `Return JSON with trip_format "multi_day" for THIS COMMERCIAL TRUCK LEG ONLY (leg ${segment.segmentIndex + 1} of ${segment.totalSegments}):
+{
+  "trip_format": "multi_day",
+  "truck_safe_route": true,
+  "route_summary": "One sentence for THIS leg only (${segment.origin} → ${segment.destination})",
+  "hos_compliance": "One concise paragraph (3-5 sentences) for THIS leg: drive time, mandatory 30-min break location, overnight location if applicable, and 10-hr rest requirement.",
+  "stops": [{
+    "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "HOS reason — few words", "type": "overnight|break",
+    "truckStop": { "name": "From placesContext", "catScale": true, "diesel": "$3.89/gal", "amenities": "One line" },
+    ${noSleeper ? '"motels": [{ "name": "From placesContext", "price": "$99/night", "note": "One line" }, { "name": "Second option", "price": "$109/night", "note": "One line" }],' : ""}
+    "restaurants": [{ "name": "From placesContext", "cuisine": "Type", "note": "One line" }]
+  }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "note": "One line — MAX 3 road_stops total on this leg" }],
+  "safety": {
+    "weighStations": [{ "state": "TX", "location": "Highway MM", "note": "One line — MAX 3 per leg" }],
+    "lowBridges": [{ "location": "City, ST", "clearance": "13'6\\"", "note": "One line" }],
+    "steepGrades": [],
+    "hazmatRestrictions": [],
+    "weightRestrictions": [{ "location": "Road", "note": "One line" }]
+  },
+  "tips": ["3-5 concise tips for THIS leg only"],
+  "road_condition_warnings": ["One line each if relevant to this leg"]
+}
+Do not repeat truck dimensions, weight, or hazmat status in output. Keep total JSON under 3500 tokens.`;
+}
+
+function buildSegmentJsonSchema(ctx, segment) {
+  if (ctx.tripCategory === "commercial") {
+    return buildCommercialSegmentJsonSchema(ctx, segment);
+  }
+
+  const restaurantShape =
+    ctx.preferences.includes("Fast food only") || ctx.preferences.includes("Sit down restaurants only")
+      ? `[{ "name": "Restaurant in stop city", "cuisine": "Type", "rating": "4.5", "time": "7 PM", "kidFriendly": true }]`
+      : `[{ "name": "Sit-down in stop city", "cuisine": "Type", "rating": "4.5", "time": "7 PM" }, { "name": "Quick option", "cuisine": "Fast casual", "rating": "4.2", "time": "flexible" }]`;
+
+  return `Return JSON with trip_format "multi_day" for THIS SEGMENT ONLY (leg ${segment.segmentIndex + 1} of ${segment.totalSegments}):
+{
+  "trip_format": "multi_day",
+  "route_summary": "One sentence describing THIS leg only (${segment.origin} to ${segment.destination})",
+  "stops": [{
+    "city": "${segment.destination.includes(",") ? segment.destination : "City, ST"}", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
+    "hotels": [
+      { "name": "From placesContext or tier-appropriate", "stars": 3, "price": "$99/night", "pet": false, "kidFriendly": ${ctx.youngKids} },
+      { "name": "Second option", "stars": 3, "price": "$109/night" },
+      { "name": "Third option", "stars": 4, "price": "$149/night" }
+    ],
+    "restaurants": ${restaurantShape},
+    "scenicView": ${ctx.isScenic ? '"Specific overlook on this leg"' : "null"}
+  }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "note": "Route-specific note for this leg" }],
+  "tips": ["2-4 tips specific to THIS leg only"],
+  "road_condition_warnings": []
+}`;
+}
+
+function buildUserPrompt(ctx, placesContextPrompt, isSimplified, generationHints = "", extraContext = "", segment = null) {
   let vehicleBlock;
   switch (ctx.tripCategory) {
     case "commercial":
@@ -649,6 +694,12 @@ function buildUserPrompt(ctx, placesContextPrompt, isSimplified, generationHints
   if (ctx.preferences.includes("Avoid tolls") || ctx.routeRestrictions.includes("Avoid tolls")) extras.push("Avoid toll roads where alternatives exist.");
   if (ctx.preferences.includes("Avoid highways")) extras.push("Favor non-interstate highways when practical.");
 
+  const segmentBlock = segment ? buildSegmentInstructionBlock(segment, ctx) : "";
+  const jsonSchema = segment ? buildSegmentJsonSchema(ctx, segment) : buildJsonSchema(ctx, isSimplified);
+  const planLine = segment
+    ? `Plan THIS LEG ONLY (segment ${segment.segmentIndex + 1} of ${segment.totalSegments}). Reference segment origin (${segment.origin}), segment destination (${segment.destination}), vehicle (${ctx.vehicle}), fuel (${ctx.fuel}), and traveler profile (${ctx.travelerType}) in your route_summary, stops, and tips.`
+    : `Plan this trip now. Reference the origin, destination, distance (${ctx.routeDistance}), drive time (${ctx.routeDuration}), vehicle (${ctx.vehicle}), fuel (${ctx.fuel}), and traveler profile (${ctx.travelerType}) in your route_summary, stops, and tips.`;
+
   return `${buildContextBlock(ctx)}
 
 ${vehicleBlock}
@@ -656,17 +707,138 @@ ${vehicleBlock}
 ${buildUniversalRules(ctx, placesContextPrompt)}
 ${generationHints ? `\n${generationHints}\n` : ""}
 ${extraContext ? `\n${extraContext}\n` : ""}
+${segmentBlock}
 
 Lodging tier for this trip: ${ctx.continuousDrive ? "No overnight stay — continuous drive mode" : buildLodgingRules(ctx.lodging)}
 ${extras.length ? `Additional preference notes:\n${extras.map(e => `- ${e}`).join("\n")}` : ""}
 ${ctx.continuousDrive ? `\nCONTINUOUS DRIVE MODE: User chose to drive straight through (${ctx.routeDuration} total). No hotels, motels, or overnight city stops. Focus road_stops on fuel stations and rest areas for long-haul driving.` : ""}
-${isSimplified ? `\nSHORT TRIP: Distance ${ctx.routeDistance} — use simplified single-page format; no overnight hotel stops unless essential.` : ""}
+${isSimplified && !segment ? `\nSHORT TRIP: Distance ${ctx.routeDistance} — use simplified single-page format; no overnight hotel stops unless essential.` : ""}
 
-Plan this trip now. Reference the origin, destination, distance (${ctx.routeDistance}), drive time (${ctx.routeDuration}), vehicle (${ctx.vehicle}), fuel (${ctx.fuel}), and traveler profile (${ctx.travelerType}) in your route_summary, stops, and tips.
+${planLine}
 
-${buildJsonSchema(ctx, isSimplified)}
+${jsonSchema}
 
 Remember — you are not a generic trip planner. You are a specialized expert for this exact vehicle type on this exact route. Every recommendation must prove that you understand the difference between planning a trip for an 18-wheeler versus a family minivan versus a motorcycle versus an RV. Generic suggestions are unacceptable. If you are uncertain about a specific real business at a stop location, recommend the stop city and category instead of inventing a business name.`;
+}
+
+function buildSegmentTripContext(reqBody, segment) {
+  const routeInfo = {
+    ...(reqBody.routeInfo || {}),
+    origin: segment.origin,
+    destination: segment.destination,
+    citiesAlongRoute: segment.citiesAlongRoute,
+  };
+  return buildTripContext({
+    ...reqBody,
+    origin: segment.origin,
+    destination: segment.destination,
+    routeInfo,
+  });
+}
+
+async function streamSegmentWithRetry({
+  model,
+  systemPrompt,
+  userPrompt,
+  maxTokens,
+  sseWriter,
+  segmentIndex,
+  totalSegments,
+}) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) {
+      await sseWriter.write("retry", { segmentIndex, attempt: attempt + 1, totalSegments });
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
+    const streamResult = await streamAnthropicMessages({
+      model,
+      systemPrompt,
+      userPrompt,
+      maxTokens,
+      onChunk: (piece) => {
+        void sseWriter.write("chunk", { text: piece, segmentIndex, totalSegments });
+      },
+      onProgress: (progress) => {
+        void sseWriter.write("progress", { ...progress, segmentIndex, totalSegments });
+      },
+    });
+
+    if (streamResult.apiError || !streamResult.response.ok) {
+      const retryable = streamResult.response?.status === 429 || (streamResult.response?.status ?? 0) >= 529;
+      if (retryable && attempt === 0) continue;
+      throw new Error(streamResult.apiError || "API error");
+    }
+
+    try {
+      const parsed = normalizeTripResponse(parseJsonFromLlm(streamResult.fullText));
+      parsed.trip_format = "multi_day";
+      if (!tripResponseHasContent(parsed) && attempt === 0) continue;
+      if (!tripResponseHasContent(parsed)) {
+        throw new Error("Segment returned incomplete results");
+      }
+      return {
+        parsed,
+        inputTokens: streamResult.inputTokens,
+        outputTokens: streamResult.outputTokens,
+      };
+    } catch (parseErr) {
+      if (attempt === 0) continue;
+      throw parseErr;
+    }
+  }
+  throw new Error("Segment generation failed after retries");
+}
+
+function finalizeSuccessfulGeneration({
+  res,
+  user,
+  admin,
+  parsed,
+  lastInputTokens,
+  lastOutputTokens,
+  ctx,
+  mergedAnswers,
+  routeInfo,
+  isSimplifiedFormat,
+  maxTokensTier,
+}) {
+  return (async () => {
+    if (user && admin && tripResponseHasContent(parsed)) {
+      try {
+        const validation = await validateCreditsBeforeConsume(admin, user.id);
+        if (!validation.ok) {
+          writePlanTripSse(res, "error", {
+            error: "No Trip Generations remaining",
+            code: "no_credits",
+            limitReached: true,
+            tier: validation.tier,
+            resetDate: validation.resetDate || null,
+            credits: validation,
+          });
+          res.end();
+          return undefined;
+        }
+        await consumeCredit(admin, user.id);
+      } catch (creditErr) {
+        console.error("Credit consumption after success failed:", creditErr);
+      }
+      logGenerationUsage(admin, buildGenerationLogRow({
+        userId: user.id,
+        inputTokens: lastInputTokens,
+        outputTokens: lastOutputTokens,
+        ctx,
+        answers: mergedAnswers,
+        routeInfo,
+        isSimplifiedFormat,
+        maxTokensTier,
+      }));
+    }
+
+    writePlanTripSse(res, "complete", parsed);
+    res.end();
+    return undefined;
+  })();
 }
 
 export default async function handler(req, res) {
@@ -706,15 +878,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const status = await fetchCreditStatus(admin, user.id);
-    if (!status.unlimited && status.remaining <= 0) {
+    const preflight = preflightCreditFromClient(req.body.clientCreditStatus, user.id);
+    if (preflight === null) {
+      const status = await fetchCreditStatus(admin, user.id);
+      if (!status.unlimited && status.remaining <= 0) {
+        return res.status(402).json({
+          error: "No Trip Generations remaining",
+          code: "no_credits",
+          limitReached: true,
+          tier: status.tier,
+          resetDate: status.resetDate || null,
+          credits: status,
+        });
+      }
+    } else if (!preflight.ok) {
       return res.status(402).json({
         error: "No Trip Generations remaining",
         code: "no_credits",
         limitReached: true,
-        tier: status.tier,
-        resetDate: status.resetDate || null,
-        credits: status,
+        tier: preflight.tier || preflight.status?.tier,
+        resetDate: preflight.resetDate || preflight.status?.resetDate || null,
+        credits: preflight.status,
       });
     }
   } catch (creditErr) {
@@ -765,76 +949,227 @@ export default async function handler(req, res) {
     ctx.tripCategory === "water" ||
     ctx.tripCategory === "plane";
 
+  const useParallel = shouldUseParallelTripSegments({
+    answers: mergedAnswers,
+    routeInfo,
+    isSimplifiedFormat,
+    continuousDrive,
+  });
+  const tripSegments = useParallel
+    ? buildTripSegments(routeInfo, mergedAnswers, origin, destination)
+    : [];
+
+  const segmentTokenBudget = calculateMaxTokens(
+    { ...ctx, isSegment: true },
+    mergedAnswers,
+    routeInfo,
+    false,
+  );
+
+  initPlanTripSse(res);
+
+  if (tripSegments.length >= 2) {
+    writePlanTripSse(res, "start", {
+      parallel: true,
+      segmentCount: tripSegments.length,
+      maxTokens: segmentTokenBudget.maxTokens,
+      tier: segmentTokenBudget.tier,
+    });
+
+    const sseWriter = createPlanTripSseWriter(res);
+    await sseWriter.write("progress", {
+      phase: "parallel_start",
+      totalSegments: tripSegments.length,
+      completedSegments: 0,
+      segmentIndex: 0,
+      message: `Planning leg 1 of ${tripSegments.length}…`,
+    });
+
+    try {
+      const segmentPromises = tripSegments.map((segment) => {
+        const segmentCtx = buildSegmentTripContext({ ...req.body, answers: mergedAnswers }, segment);
+        const segmentPrompt = buildUserPrompt(
+          segmentCtx,
+          effectivePlacesPrompt,
+          false,
+          generationHints,
+          extraContext,
+          segment,
+        );
+
+        return streamSegmentWithRetry({
+          model,
+          systemPrompt: SYSTEM_PROMPT,
+          userPrompt: segmentPrompt,
+          maxTokens: segmentTokenBudget.maxTokens,
+          sseWriter,
+          segmentIndex: segment.segmentIndex,
+          totalSegments: segment.totalSegments,
+        }).then(async (result) => {
+          await sseWriter.write("segment_complete", {
+            segmentIndex: segment.segmentIndex,
+            totalSegments: segment.totalSegments,
+            origin: segment.origin,
+            destination: segment.destination,
+            stops: result.parsed.stops || [],
+            road_stops: result.parsed.road_stops || [],
+          });
+          return result;
+        });
+      });
+
+      const segmentResults = await Promise.all(segmentPromises);
+      await sseWriter.wait();
+
+      const stitched = stitchTripSegments(segmentResults.map(r => r.parsed));
+      let parsed;
+      try {
+        parsed = normalizeTripResponse(stitched);
+      } catch (stitchErr) {
+        writePlanTripSse(res, "error", {
+          error: "Trip planner returned invalid data",
+          code: "parse_failed",
+          reason: stitchErr?.message || "stitch_failed",
+        });
+        res.end();
+        return undefined;
+      }
+
+      if (!tripResponseHasContent(parsed)) {
+        writePlanTripSse(res, "error", {
+          error: "Trip planner returned incomplete results",
+          code: "incomplete_response",
+        });
+        res.end();
+        return undefined;
+      }
+
+      const lastInputTokens = segmentResults.reduce((sum, r) => sum + (r.inputTokens || 0), 0);
+      const lastOutputTokens = segmentResults.reduce((sum, r) => sum + (r.outputTokens || 0), 0);
+
+      return finalizeSuccessfulGeneration({
+        res,
+        user,
+        admin,
+        parsed,
+        lastInputTokens,
+        lastOutputTokens,
+        ctx,
+        mergedAnswers,
+        routeInfo,
+        isSimplifiedFormat: false,
+        maxTokensTier: segmentTokenBudget.tier,
+      });
+    } catch (err) {
+      console.error("Parallel plan trip error:", err);
+      await sseWriter.wait();
+      writePlanTripSse(res, "error", {
+        error: err?.message || "Failed to generate trip plan",
+        code: "api_error",
+      });
+      res.end();
+      return undefined;
+    }
+  }
+
   const userPrompt = buildUserPrompt(ctx, effectivePlacesPrompt, isSimplifiedFormat, generationHints, extraContext);
   const { maxTokens, tier: maxTokensTier } = calculateMaxTokens(ctx, mergedAnswers, routeInfo, isSimplifiedFormat);
   if (process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "development") {
     console.log("[plan-trip] max_tokens tier:", { maxTokens, tier: maxTokensTier });
   }
 
+  writePlanTripSse(res, "start", { maxTokens, tier: maxTokensTier });
+
   try {
     let parsed = null;
     let lastInputTokens = 0;
     let lastOutputTokens = 0;
+
     for (let attempt = 0; attempt < 2; attempt++) {
-      const { response, data, inputTokens, outputTokens } = await callAnthropic(model, SYSTEM_PROMPT, userPrompt, maxTokens);
-      lastInputTokens = inputTokens;
-      lastOutputTokens = outputTokens;
-      if (!response.ok) {
-        const retryable = response.status === 429 || response.status >= 529;
-        if (retryable && attempt === 0) {
-          await new Promise(r => setTimeout(r, 1500));
-          continue;
-        }
-        return res.status(500).json({ error: data.error?.message || "API error" });
+      if (attempt > 0) {
+        writePlanTripSse(res, "retry", { attempt: attempt + 1 });
+        await new Promise(r => setTimeout(r, 1500));
       }
 
-      const text = data?.content?.[0]?.text;
+      const streamResult = await streamAnthropicMessages({
+        model,
+        systemPrompt: SYSTEM_PROMPT,
+        userPrompt,
+        maxTokens,
+        onChunk: (piece) => {
+          writePlanTripSse(res, "chunk", { text: piece });
+        },
+        onProgress: (progress) => {
+          writePlanTripSse(res, "progress", progress);
+        },
+      });
+
+      lastInputTokens = streamResult.inputTokens;
+      lastOutputTokens = streamResult.outputTokens;
+
+      if (streamResult.apiError || !streamResult.response.ok) {
+        const retryable = streamResult.response?.status === 429 || (streamResult.response?.status ?? 0) >= 529;
+        if (retryable && attempt === 0) continue;
+        writePlanTripSse(res, "error", {
+          error: streamResult.apiError || "API error",
+          code: "api_error",
+        });
+        res.end();
+        return undefined;
+      }
+
+      const text = streamResult.fullText;
       try {
         parsed = normalizeTripResponse(parseJsonFromLlm(text));
-      } catch {
-        if (attempt === 0) {
-          await new Promise(r => setTimeout(r, 1500));
-          continue;
-        }
-        return res.status(502).json({ error: "Trip planner returned invalid data" });
+      } catch (parseErr) {
+        if (attempt === 0) continue;
+        writePlanTripSse(res, "error", {
+          error: "Trip planner returned invalid data",
+          code: "parse_failed",
+          reason: parseErr?.message || "parse_failed",
+        });
+        res.end();
+        return undefined;
       }
 
       parsed.trip_format = isSimplifiedFormat ? "simplified" : parsed.trip_format || "multi_day";
 
-      if (!tripResponseHasContent(parsed) && attempt === 0) {
-        await new Promise(r => setTimeout(r, 1500));
-        continue;
-      }
+      if (!tripResponseHasContent(parsed) && attempt === 0) continue;
       if (!tripResponseHasContent(parsed)) {
-        return res.status(502).json({ error: "Trip planner returned incomplete results" });
+        writePlanTripSse(res, "error", {
+          error: "Trip planner returned incomplete results",
+          code: "incomplete_response",
+        });
+        res.end();
+        return undefined;
       }
       break;
     }
 
-    if (user && admin) {
-      const hasContent = tripResponseHasContent(parsed);
-      if (hasContent) {
-        try {
-          await consumeCredit(admin, user.id);
-        } catch (creditErr) {
-          console.error("Credit consumption after success failed:", creditErr);
-        }
-        logGenerationUsage(admin, buildGenerationLogRow({
-          userId: user.id,
-          inputTokens: lastInputTokens,
-          outputTokens: lastOutputTokens,
-          ctx,
-          answers: mergedAnswers,
-          routeInfo,
-          isSimplifiedFormat,
-          maxTokensTier,
-        }));
-      }
-    }
-
-    return res.status(200).json(parsed);
+    return finalizeSuccessfulGeneration({
+      res,
+      user,
+      admin,
+      parsed,
+      lastInputTokens,
+      lastOutputTokens,
+      ctx,
+      mergedAnswers,
+      routeInfo,
+      isSimplifiedFormat,
+      maxTokensTier,
+    });
   } catch (err) {
     console.error("Plan trip error:", err);
-    return res.status(500).json({ error: "Failed to generate trip plan" });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: "Failed to generate trip plan" });
+    }
+    writePlanTripSse(res, "error", {
+      error: "Failed to generate trip plan",
+      code: "server_error",
+      reason: err?.message || "unknown",
+    });
+    res.end();
+    return undefined;
   }
 }

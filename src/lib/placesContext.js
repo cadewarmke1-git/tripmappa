@@ -1,7 +1,7 @@
 /** Pre-Sonnet corridor Places prefetch — anti-hallucination context for plan-trip. */
 import { sampleRoutePointsEveryMiles, routePointAtFraction } from "./fuel.js";
 import { searchGasStations, searchEvChargingStations } from "./placesStations.js";
-import { geocodeCity, searchRestaurants, searchLodging, searchNearbyCategory, RADIUS_2MI, RADIUS_10MI } from "./placesSearch.js";
+import { searchRestaurants, searchLodging, searchNearbyCategory, RADIUS_2MI, RADIUS_10MI } from "./placesSearch.js";
 import { applyStopFilters } from "./placesFilters.js";
 import {
   asArray,
@@ -13,9 +13,13 @@ import {
 import { parseMilesFromDistance } from "./parsing.js";
 import { estimateOvernightStops } from "./budget.js";
 import { parseHoursFromDuration } from "./parsing.js";
+import { runWithConcurrency } from "./asyncPool.js";
 
 const CORRIDOR_RADIUS_M = 1609; // 1 mile
 const SAMPLE_INTERVAL_MI = 30;
+const MAX_CORRIDOR_SAMPLES = 30;
+const LONG_ROUTE_MILES = 800;
+const PLACES_FETCH_CONCURRENCY = 5;
 
 function compactPlace(p) {
   return {
@@ -34,11 +38,33 @@ function isEvTrip(answers) {
   return /electric|ev|tesla/i.test(ft);
 }
 
+function subsampleEvenly(samples, maxCount) {
+  if (!samples?.length || samples.length <= maxCount) return samples || [];
+  if (maxCount <= 1) return [samples[0]];
+  const out = [];
+  for (let i = 0; i < maxCount; i++) {
+    const idx = Math.round((i / (maxCount - 1)) * (samples.length - 1));
+    out.push(samples[idx]);
+  }
+  return out;
+}
+
 export function buildRouteBoundary(routeInfo) {
   if (!routeInfo?.routePoints?.length) return { samples: [], totalMiles: 0 };
-  const samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, SAMPLE_INTERVAL_MI);
   const totalMiles = parseMilesFromDistance(routeInfo.distance);
-  return { samples, totalMiles, intervalMiles: SAMPLE_INTERVAL_MI };
+  let intervalMiles = SAMPLE_INTERVAL_MI;
+  let samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, intervalMiles);
+
+  if (totalMiles > LONG_ROUTE_MILES && samples.length > MAX_CORRIDOR_SAMPLES) {
+    intervalMiles = Math.max(SAMPLE_INTERVAL_MI, totalMiles / MAX_CORRIDOR_SAMPLES);
+    samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, intervalMiles);
+  }
+
+  if (totalMiles > LONG_ROUTE_MILES && samples.length > MAX_CORRIDOR_SAMPLES) {
+    samples = subsampleEvenly(samples, MAX_CORRIDOR_SAMPLES);
+  }
+
+  return { samples, totalMiles, intervalMiles: intervalMiles };
 }
 
 function estimateOvernightCityCount(routeInfo, answers) {
@@ -49,20 +75,86 @@ function estimateOvernightCityCount(routeInfo, answers) {
 }
 
 async function fetchMedicalAtPoint(lat, lng, answers) {
+  const [pharmacies, dialysis, vet] = await Promise.all([
+    needsRefrigeratedMedStops(answers)
+      ? searchNearbyCategory(lat, lng, { type: "pharmacy", radius: RADIUS_10MI, maxResults: 3 })
+      : Promise.resolve([]),
+    needsDialysisServices(answers)
+      ? searchNearbyCategory(lat, lng, { keyword: "dialysis center", radius: RADIUS_10MI, maxResults: 3 })
+      : Promise.resolve([]),
+    needsVetServices(answers)
+      ? searchNearbyCategory(lat, lng, { type: "veterinary_care", radius: RADIUS_10MI, maxResults: 3 })
+      : Promise.resolve([]),
+  ]);
+
   const out = {};
-  if (needsRefrigeratedMedStops(answers)) {
-    const pharmacies = await searchNearbyCategory(lat, lng, { type: "pharmacy", radius: RADIUS_10MI, maxResults: 3 });
-    if (pharmacies.length) out.pharmacies = pharmacies.map(compactPlace);
-  }
-  if (needsDialysisServices(answers)) {
-    const dialysis = await searchNearbyCategory(lat, lng, { keyword: "dialysis center", radius: RADIUS_10MI, maxResults: 3 });
-    if (dialysis.length) out.dialysis = dialysis.map(compactPlace);
-  }
-  if (needsVetServices(answers)) {
-    const vet = await searchNearbyCategory(lat, lng, { type: "veterinary_care", radius: RADIUS_10MI, maxResults: 3 });
-    if (vet.length) out.veterinary = vet.map(compactPlace);
-  }
+  if (pharmacies.length) out.pharmacies = pharmacies.map(compactPlace);
+  if (dialysis.length) out.dialysis = dialysis.map(compactPlace);
+  if (vet.length) out.veterinary = vet.map(compactPlace);
   return out;
+}
+
+async function fetchCorridorSample(pt, answers, evTrip, teslaOnly) {
+  const [gasRaw, evRaw, restaurantsRaw] = await Promise.all([
+    searchGasStations(pt.lat, pt.lng, 8, CORRIDOR_RADIUS_M),
+    evTrip
+      ? searchEvChargingStations(pt.lat, pt.lng, 8, CORRIDOR_RADIUS_M)
+      : Promise.resolve([]),
+    searchRestaurants(pt.lat, pt.lng, answers),
+  ]);
+
+  let gas = applyStopFilters(gasRaw.map(g => ({ ...g, distanceMiles: g.distanceMiles })), answers);
+  gas = gas.filter(g => (g.distanceMiles ?? 99) <= 1).slice(0, 3);
+
+  let evStations = evRaw;
+  if (teslaOnly) {
+    evStations = evStations.filter(s => /tesla|supercharger/i.test(`${s.name || ""} ${s.address || ""}`));
+  }
+  evStations = evStations.filter(s => (s.distanceMiles ?? 99) <= 1).slice(0, 3);
+
+  let restaurants = applyStopFilters(restaurantsRaw, answers)
+    .filter(r => (r.distanceMiles ?? 99) <= 1)
+    .slice(0, 4);
+
+  return {
+    lat: pt.lat,
+    lng: pt.lng,
+    gasStations: gas.map(compactPlace),
+    evStations: evStations.map(compactPlace),
+    restaurants: restaurants.map(r => ({
+      ...compactPlace(r),
+      isDetour: r.isDetour || false,
+    })),
+  };
+}
+
+async function fetchOvernightCity({
+  routeInfo,
+  boundary,
+  answers,
+  index,
+  overnightCount,
+}) {
+  const frac = (index + 1) / (overnightCount + 1);
+  const pt = routePointAtFraction(routeInfo.routePoints, frac);
+  if (!pt?.lat) return null;
+
+  const [lodgingRaw, medical] = await Promise.all([
+    searchLodging(pt.lat, pt.lng, answers, routeInfo),
+    fetchMedicalAtPoint(pt.lat, pt.lng, answers),
+  ]);
+
+  const lodging = lodgingRaw.filter(h => (h.distanceMiles ?? 99) <= 1).slice(0, 4);
+  const cityName = routeInfo.citiesAlongRoute?.[Math.min(index, (routeInfo.citiesAlongRoute.length - 1))]
+    || `Route mile ~${Math.round(frac * (boundary.totalMiles || 0))}`;
+
+  return {
+    city: cityName,
+    lat: pt.lat,
+    lng: pt.lng,
+    hotels: lodging.map(compactPlace),
+    medical,
+  };
 }
 
 export async function buildPlacesContext(answers, routeInfo) {
@@ -71,85 +163,70 @@ export async function buildPlacesContext(answers, routeInfo) {
   }
 
   const boundary = buildRouteBoundary(routeInfo);
-  const points = boundary.samples;
-  const corridor = [];
+  const points = boundary.samples.filter(pt => pt.lat != null);
   const evTrip = isEvTrip(answers);
   const teslaOnly = isTeslaSuperchargerOnly(answers);
 
-  for (const pt of points) {
-    if (pt.lat == null) continue;
-    let gas = await searchGasStations(pt.lat, pt.lng, 8, CORRIDOR_RADIUS_M);
-    gas = applyStopFilters(gas.map(g => ({ ...g, distanceMiles: g.distanceMiles })), answers);
-    gas = gas.filter(g => (g.distanceMiles ?? 99) <= 1).slice(0, 3);
+  const corridor = await runWithConcurrency(
+    points,
+    PLACES_FETCH_CONCURRENCY,
+    (pt) => fetchCorridorSample(pt, answers, evTrip, teslaOnly),
+  );
 
-    let evStations = [];
-    if (evTrip) {
-      evStations = await searchEvChargingStations(pt.lat, pt.lng, 8, CORRIDOR_RADIUS_M);
-      if (teslaOnly) {
-        evStations = evStations.filter(s => /tesla|supercharger/i.test(`${s.name || ""} ${s.address || ""}`));
-      }
-      evStations = evStations.filter(s => (s.distanceMiles ?? 99) <= 1).slice(0, 3);
-    }
-
-    let restaurants = await searchRestaurants(pt.lat, pt.lng, answers);
-    restaurants = applyStopFilters(restaurants, answers)
-      .filter(r => (r.distanceMiles ?? 99) <= 1)
-      .slice(0, 4);
-
-    corridor.push({
-      lat: pt.lat,
-      lng: pt.lng,
-      gasStations: gas.map(compactPlace),
-      evStations: evStations.map(compactPlace),
-      restaurants: restaurants.map(r => ({
-        ...compactPlace(r),
-        isDetour: r.isDetour || false,
-      })),
-    });
-  }
-
-  const cities = [];
   const overnightCount = estimateOvernightCityCount(routeInfo, answers);
-  for (let i = 0; i < overnightCount; i++) {
-    const frac = (i + 1) / (overnightCount + 1);
-    const pt = routePointAtFraction(routeInfo.routePoints, frac);
-    if (!pt?.lat) continue;
-    let lodging = await searchLodging(pt.lat, pt.lng, answers, routeInfo);
-    lodging = lodging.filter(h => (h.distanceMiles ?? 99) <= 1).slice(0, 4);
-    const cityName = routeInfo.citiesAlongRoute?.[Math.min(i, (routeInfo.citiesAlongRoute.length - 1))] || `Route mile ~${Math.round(frac * (boundary.totalMiles || 0))}`;
-    const medical = await fetchMedicalAtPoint(pt.lat, pt.lng, answers);
-    cities.push({
-      city: cityName,
-      lat: pt.lat,
-      lng: pt.lng,
-      hotels: lodging.map(compactPlace),
-      medical,
-    });
-  }
+  const overnightIndexes = Array.from({ length: overnightCount }, (_, index) => index);
+  const cities = (await runWithConcurrency(
+    overnightIndexes,
+    PLACES_FETCH_CONCURRENCY,
+    (index) => fetchOvernightCity({
+      routeInfo,
+      boundary,
+      answers,
+      index,
+      overnightCount,
+    }),
+  )).filter(Boolean);
 
   const interests = asArray(answers?.stops_interests);
   if (interests.some(i => /playground|park/i.test(i))) {
-    for (const pt of points.slice(0, Math.min(6, points.length))) {
-      const parks = await searchNearbyCategory(pt.lat, pt.lng, {
+    const playgroundPoints = points.slice(0, Math.min(6, points.length));
+    const playgroundResults = await runWithConcurrency(
+      playgroundPoints,
+      PLACES_FETCH_CONCURRENCY,
+      (pt) => searchNearbyCategory(pt.lat, pt.lng, {
         keyword: "playground park",
         radius: RADIUS_2MI,
         maxResults: 3,
-      });
-      const filtered = parks.filter(p => (p.distanceMiles ?? 99) <= 2);
-      const last = corridor.find(c => c.lat === pt.lat && c.lng === pt.lng);
-      if (last) last.playgrounds = filtered.map(compactPlace);
+      }).then(parks => ({
+        lat: pt.lat,
+        lng: pt.lng,
+        playgrounds: parks.filter(p => (p.distanceMiles ?? 99) <= 2).map(compactPlace),
+      })),
+    );
+    for (const result of playgroundResults) {
+      const last = corridor.find(c => c.lat === result.lat && c.lng === result.lng);
+      if (last && result.playgrounds.length) last.playgrounds = result.playgrounds;
     }
   }
 
   if (interests.some(i => /prayer/i.test(i))) {
-    for (const pt of points.slice(0, Math.min(4, points.length))) {
-      const prayer = await searchNearbyCategory(pt.lat, pt.lng, {
+    const prayerPoints = points.slice(0, Math.min(4, points.length));
+    const prayerResults = await runWithConcurrency(
+      prayerPoints,
+      PLACES_FETCH_CONCURRENCY,
+      (pt) => searchNearbyCategory(pt.lat, pt.lng, {
         keyword: "mosque church temple synagogue",
         radius: RADIUS_2MI,
         maxResults: 2,
-      });
-      const last = corridor.find(c => c.lat === pt.lat && c.lng === pt.lng);
-      if (last) last.prayerFacilities = prayer.map(compactPlace);
+      }).then(prayer => ({
+        lat: pt.lat,
+        lng: pt.lng,
+        prayerFacilities: prayer.map(compactPlace),
+      })),
+    );
+    for (const result of prayerResults) {
+      const last = corridor.find(c => c.lat === result.lat && c.lng === result.lng);
+      if (last && result.prayerFacilities.length) last.prayerFacilities = result.prayerFacilities;
     }
   }
 

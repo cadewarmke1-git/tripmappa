@@ -1,6 +1,7 @@
 /** POST /api/truck-routing — HERE truck routes with weigh stations along corridor. */
 import { geocodeAddress } from "../lib/geocode.js";
-import { getHereApiKey } from "../lib/hereApiKey.js";
+import { getHereAccessToken } from "../lib/hereAuth.js";
+import { hasHereCredentials } from "../lib/hereApiKey.js";
 import { decodeFlexiblePolyline } from "../lib/hereFlexiblePolyline.js";
 import { resolveTruckRequestSpecs } from "../lib/truckSpecs.js";
 
@@ -93,20 +94,21 @@ function parseOpeningHours(item) {
   return texts.length ? texts.join("; ") : null;
 }
 
-async function searchWeighStations(apiKey, routePoints) {
+async function searchWeighStations(accessToken, routePoints) {
   const samples = sampleRoutePoints(routePoints, 6);
   const found = new Map();
 
   await Promise.all(samples.map(async (pt) => {
     try {
       const params = new URLSearchParams({
-        apiKey,
         q: "weigh station",
         at: `${pt.lat},${pt.lng}`,
         limit: "5",
         lang: "en-US",
       });
-      const res = await fetch(`${DISCOVER_URL}?${params}`);
+      const res = await fetch(`${DISCOVER_URL}?${params}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (!res.ok) return;
       const data = await res.json();
       for (const item of data.items || []) {
@@ -149,9 +151,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = getHereApiKey();
-  if (!apiKey) {
-    return res.status(503).json({ error: "HERE API key not configured" });
+  if (!hasHereCredentials()) {
+    return res.status(503).json({ error: "HERE API credentials not configured" });
   }
 
   const { origin, destination } = req.body || {};
@@ -167,8 +168,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "Could not geocode origin or destination" });
     }
 
+    const accessToken = await getHereAccessToken();
+
     const params = new URLSearchParams({
-      apiKey,
       transportMode: "truck",
       routingMode: "fast",
       origin: `${coords.origin.lat},${coords.origin.lng}`,
@@ -182,7 +184,9 @@ export default async function handler(req, res) {
       params.set("vehicle[shippedHazardousGoods]", "flammable,gas,combustible,corrosive,toxic");
     }
 
-    const routeRes = await fetch(`${ROUTES_URL}?${params}`);
+    const routeRes = await fetch(`${ROUTES_URL}?${params}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     const routeData = await routeRes.json();
 
     if (!routeRes.ok) {
@@ -207,7 +211,7 @@ export default async function handler(req, res) {
 
     let weighStations = [];
     if (routePoints.length > 1) {
-      weighStations = await searchWeighStations(apiKey, routePoints);
+      weighStations = await searchWeighStations(accessToken, routePoints);
     }
 
     return res.status(200).json({

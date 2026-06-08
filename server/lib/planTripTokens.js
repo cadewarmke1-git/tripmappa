@@ -12,6 +12,20 @@ function countActiveDietary(dietary) {
   return (Array.isArray(dietary) ? dietary : []).filter(d => d && d !== "No restrictions").length;
 }
 
+/** Kids + pet + dietary restrictions all present — segment output runs long. */
+export function hasStackedSegmentComplexity(answers = {}) {
+  const childCount = Number(answers?.child_count) || 0;
+  const prefs = Array.isArray(answers?.preferences) ? answers.preferences : [];
+  return childCount > 0
+    && prefs.includes("Pet friendly")
+    && countActiveDietary(answers?.dietary) >= 1;
+}
+
+/** Commercial truck parallel segments need extra headroom for HOS, weigh stations, and truck stops. */
+export function isTruckSegment(ctx = {}) {
+  return ctx.tripCategory === "commercial";
+}
+
 function hasComplexityStacking(ctx, answers) {
   const childCount = Number(answers?.child_count) || 0;
   const prefs = Array.isArray(answers?.preferences) ? answers.preferences : [];
@@ -45,6 +59,16 @@ function resolveRouteMiles(ctx, routeInfo) {
  * @returns {{ maxTokens: number, tier: string }}
  */
 export function calculateMaxTokens(ctx, answers = {}, routeInfo = {}, isSimplifiedFormat = false) {
+  if (ctx?.isSegment) {
+    if (isTruckSegment(ctx)) {
+      return { maxTokens: 4096, tier: "segment_commercial_truck" };
+    }
+    if (hasStackedSegmentComplexity(answers)) {
+      return { maxTokens: 4096, tier: "segment_stacked_complexity" };
+    }
+    return { maxTokens: 3072, tier: "medium_1_overnight" };
+  }
+
   const miles = resolveRouteMiles(ctx, routeInfo);
   const tripType = answers?.trip_type || ctx?.tripType || "Road trip";
 

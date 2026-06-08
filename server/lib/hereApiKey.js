@@ -1,3 +1,11 @@
-export function getHereApiKey() {
-  return process.env.HERE_API_KEY || process.env.VITE_HERE_API_KEY || "";
+export function getHereAccessKeyId() {
+  return process.env.HERE_ACCESS_KEY_ID || "";
+}
+
+export function getHereAccessKeySecret() {
+  return process.env.HERE_ACCESS_KEY_SECRET || "";
+}
+
+export function hasHereCredentials() {
+  return Boolean(getHereAccessKeyId() && getHereAccessKeySecret());
 }

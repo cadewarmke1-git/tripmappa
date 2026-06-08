@@ -78,4 +78,53 @@ describe("calculateMaxTokens", () => {
     );
     expect(result).toEqual({ maxTokens: 4096, tier: "very_long_800plus_baseline" });
   });
+
+  it("returns 3072 for standard parallel segment calls", () => {
+    const result = calculateMaxTokens(
+      ctx({ isSegment: true, routeMiles: 664 }),
+      { trip_nights: "1 night", travelers: "2" },
+      { routeDistanceMiles: 664 },
+      false,
+    );
+    expect(result).toEqual({ maxTokens: 3072, tier: "medium_1_overnight" });
+  });
+
+  it("returns 4096 for parallel segments with stacked family complexity", () => {
+    const result = calculateMaxTokens(
+      ctx({ isSegment: true, routeMiles: 957 }),
+      {
+        trip_nights: "2 nights",
+        child_count: 2,
+        preferences: ["Pet friendly", "Kid friendly stops"],
+        dietary: ["Gluten Free"],
+      },
+      { routeDistanceMiles: 957 },
+      false,
+    );
+    expect(result).toEqual({ maxTokens: 4096, tier: "segment_stacked_complexity" });
+  });
+
+  it("returns 4096 for parallel commercial truck segments", () => {
+    const result = calculateMaxTokens(
+      ctx({ isSegment: true, tripCategory: "commercial", routeMiles: 928 }),
+      {
+        vehicle: "Semi Truck (18-wheeler)",
+        trip_nights: "2 nights",
+        truck_stop_brand: "Love's",
+      },
+      { routeDistanceMiles: 928 },
+      false,
+    );
+    expect(result).toEqual({ maxTokens: 4096, tier: "segment_commercial_truck" });
+  });
+
+  it("keeps 3072 for parallel personal vehicle segments without stacked complexity", () => {
+    const result = calculateMaxTokens(
+      ctx({ isSegment: true, tripCategory: "personal", routeMiles: 664 }),
+      { trip_nights: "1 night", travelers: "2" },
+      { routeDistanceMiles: 664 },
+      false,
+    );
+    expect(result).toEqual({ maxTokens: 3072, tier: "medium_1_overnight" });
+  });
 });

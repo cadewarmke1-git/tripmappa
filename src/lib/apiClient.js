@@ -1,4 +1,5 @@
 import { searchGasStations, searchDieselStations, searchEvChargingStations, searchPropaneStations } from "./placesStations.js";
+import { readPlanTripSseStream } from "./planTripStream.js";
 
 async function readApiJson(response) {
   const text = await response.text();
@@ -10,8 +11,21 @@ async function readApiJson(response) {
   }
 }
 
+function throwPlanTripError(response, data) {
+  const err = new Error(data.error || "Failed to generate trip");
+  err.code = data.code;
+  err.credits = data.credits;
+  err.limitReached = data.limitReached;
+  err.resetDate = data.resetDate;
+  err.tier = data.tier;
+  err.rateLimited = data.rateLimited;
+  err.limitType = data.limitType;
+  err.retryAfter = data.retryAfter;
+  throw err;
+}
+
 /** Frontend API layer — always call serverless routes, never Anthropic directly. */
-export async function generateTripPlan(payload, accessToken = null, { signal } = {}) {
+export async function generateTripPlan(payload, accessToken = null, { signal, onStreamProgress } = {}) {
   const headers = {
     "Content-Type": "application/json",
     "x-tripmappa-client": "web",
@@ -24,19 +38,18 @@ export async function generateTripPlan(payload, accessToken = null, { signal } =
     body: JSON.stringify(payload),
     signal,
   });
-  const data = await readApiJson(response);
-  if (!response.ok) {
-    const err = new Error(data.error || "Failed to generate trip");
-    err.code = data.code;
-    err.credits = data.credits;
-    err.limitReached = data.limitReached;
-    err.resetDate = data.resetDate;
-    err.tier = data.tier;
-    err.rateLimited = data.rateLimited;
-    err.limitType = data.limitType;
-    err.retryAfter = data.retryAfter;
-    throw err;
+
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("text/event-stream")) {
+    if (!response.ok) {
+      const data = await readApiJson(response);
+      throwPlanTripError(response, data);
+    }
+    return readPlanTripSseStream(response, signal, onStreamProgress);
   }
+
+  const data = await readApiJson(response);
+  if (!response.ok) throwPlanTripError(response, data);
   return data;
 }
 

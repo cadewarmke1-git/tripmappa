@@ -1,5 +1,6 @@
 /** POST /api/isoline — HERE drive-time reach polygon from an origin. */
-import { getHereApiKey } from "../lib/hereApiKey.js";
+import { getHereAccessToken } from "../lib/hereAuth.js";
+import { hasHereCredentials } from "../lib/hereApiKey.js";
 import { decodeFlexiblePolyline } from "../lib/hereFlexiblePolyline.js";
 
 const ISOLINE_URL = "https://isoline.router.hereapi.com/v8/isolines";
@@ -39,9 +40,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = getHereApiKey();
-  if (!apiKey) {
-    return res.status(503).json({ error: "HERE API key not configured" });
+  if (!hasHereCredentials()) {
+    return res.status(503).json({ error: "HERE API credentials not configured" });
   }
 
   const {
@@ -65,15 +65,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    const accessToken = await getHereAccessToken();
+
     const params = new URLSearchParams({
-      apiKey,
       transportMode: "car",
       origin: `${lat},${lng}`,
       "range[type]": "time",
       "range[values]": String(seconds),
     });
 
-    const isolineRes = await fetch(`${ISOLINE_URL}?${params}`);
+    const isolineRes = await fetch(`${ISOLINE_URL}?${params}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     const data = await isolineRes.json();
 
     if (!isolineRes.ok) {

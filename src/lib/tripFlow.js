@@ -614,6 +614,52 @@ function needsLodgingQuestion(answers, context) {
   return false;
 }
 
+/** No-sleeper commercial trucks — same route gate as personal overnight preference. */
+function needsTruckOvernightPreferenceQuestion(answers, context) {
+  if (!needsTruckExternalLodging(answers)) return false;
+  if (isDayTripByDistance(context)) return false;
+  if (!isRouteContextReady(context) && !isDayTripByDistance(context)) return true;
+  return requiresMultipleDays(context);
+}
+
+function needsTruckLodgingQuestion(answers, context) {
+  if (!needsTruckExternalLodging(answers)) return false;
+  if (isContinuousDrive(answers)) return false;
+  if (answers.overnight_preference !== OVERNIGHT_PREFERENCE_OVERNIGHT) return false;
+  if (isDayTripByDistance(context)) return false;
+  return true;
+}
+
+function getNextTruckOvernightQuestion(answers, context) {
+  if (!needsTruckOvernightPreferenceQuestion(answers, context)) return null;
+  if (isAnswered("overnight_preference", answers)) return null;
+  const overnightQ = buildOvernightPreferenceQuestion(context);
+  if (shouldPendingOvernightRoute(answers, context)) {
+    return { done: false, ...overnightQ, pendingRoute: true };
+  }
+  if (requiresMultipleDays(context) || context.routeFailed || answers.route_context_unavailable) {
+    return {
+      done: false,
+      ...overnightQ,
+      hint: answers.route_context_unavailable
+        ? "Route details are still loading — your answer will be used as-is."
+        : context.routeFailed
+          ? "We couldn't calculate drive time — choose what fits your plan."
+          : overnightQ.hint,
+    };
+  }
+  return null;
+}
+
+function getNextTruckBranchAfterCommercial(answers, context) {
+  const truckOvernight = getNextTruckOvernightQuestion(answers, context);
+  if (truckOvernight) return truckOvernight;
+  if (needsTruckLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
+    return { done: false, ...buildTruckLodgingQuestion() };
+  }
+  return getNextTailQuestions(answers);
+}
+
 function buildVehicleQuestion() {
   return { done: false, id: "vehicle", ask: "How are you traveling?", type: "vehicle", groups: VEHICLE_GROUPS, choices: VEHICLE_CHOICES };
 }
@@ -718,10 +764,7 @@ function guardMultiVehicleBranchNext(effective, branchNext, answers, context) {
       if (isTruckVehicle(effective)) {
         const truckNext = getNextCommercialQuestion(answers);
         if (truckNext) return truckNext;
-        if (needsTruckExternalLodging(answers) && !isAnswered("lodging", answers)) {
-          return { done: false, ...buildTruckLodgingQuestion() };
-        }
-        return getNextTailQuestions(answers);
+        return getNextTruckBranchAfterCommercial(answers, context);
       }
       return getNextRvBranchQuestion(answers, context);
     }
@@ -736,10 +779,7 @@ function getNextBranchQuestion(effective, answers, context) {
   if (isTruckVehicle(effective)) {
     const truckNext = getNextCommercialQuestion(answers);
     if (truckNext) return truckNext;
-    if (needsTruckExternalLodging(answers) && !isAnswered("lodging", answers)) {
-      return { done: false, ...buildTruckLodgingQuestion() };
-    }
-    return getNextTailQuestions(answers);
+    return getNextTruckBranchAfterCommercial(answers, context);
   }
   if (isRvVehicle(effective)) return getNextRvBranchQuestion(answers, context);
   if (isPersonalVehicle(effective)) return getNextPersonalBranchQuestion(answers, context);
@@ -774,7 +814,13 @@ function mapFuelTypeToFuel(fuelType) {
 function mapTruckerAnswers(answers) {
   const out = { ...answers };
   if (out.sleeper_cab?.startsWith("Yes")) out.lodging = "Sleeper cab — no hotel needed";
-  else if (out.sleeper_cab?.startsWith("No") && !out.lodging) out.lodging = "Mid-Range";
+  else if (
+    out.sleeper_cab?.startsWith("No")
+    && !out.lodging
+    && out.overnight_preference === OVERNIGHT_PREFERENCE_OVERNIGHT
+  ) {
+    out.lodging = "Mid-Range";
+  }
   if (out.truck_stop_brand && out.truck_stop_brand !== "No preference") out.truck_stop_preference = out.truck_stop_brand;
   return out;
 }
@@ -967,10 +1013,20 @@ export function pruneStaleBranchAnswers(answers, context = {}) {
   if (!isPersonalVehicle(effective)) {
     ["towing"].forEach(k => delete out[k]);
   }
-  if (isTruckVehicle(effective) || isRvVehicle(effective)) {
+  if (isRvVehicle(effective)) {
     delete out.overnight_preference;
     delete out.lodging;
     delete out.loyalty_program;
+  }
+  if (isTruckVehicle(effective)) {
+    if (!needsTruckExternalLodging(out)) {
+      delete out.overnight_preference;
+      delete out.lodging;
+      delete out.loyalty_program;
+    } else if (isContinuousDrive(out)) {
+      delete out.lodging;
+      delete out.loyalty_program;
+    }
   }
   if (answers.vehicle !== MULTI_VEHICLE_TRIP) {
     delete out.multi_vehicles;

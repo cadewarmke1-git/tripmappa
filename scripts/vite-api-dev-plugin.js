@@ -15,6 +15,17 @@ function readRawRequestBody(req) {
 function createVercelLikeResponse(res) {
   let statusCode = 200;
   const headers = {};
+  let headersWritten = false;
+
+  const applyHeaders = () => {
+    if (headersWritten) return;
+    res.statusCode = statusCode;
+    for (const [name, value] of Object.entries(headers)) {
+      res.setHeader(name, value);
+    }
+    headersWritten = true;
+  };
+
   return {
     status(code) {
       statusCode = code;
@@ -24,12 +35,20 @@ function createVercelLikeResponse(res) {
       headers[name] = value;
       return this;
     },
+    write(chunk) {
+      applyHeaders();
+      return res.write(chunk);
+    },
+    flushHeaders() {
+      applyHeaders();
+      if (typeof res.flushHeaders === "function") {
+        res.flushHeaders();
+      }
+      return this;
+    },
     json(payload) {
       if (res.writableEnded) return undefined;
-      res.statusCode = statusCode;
-      for (const [name, value] of Object.entries(headers)) {
-        res.setHeader(name, value);
-      }
+      applyHeaders();
       if (!res.getHeader("Content-Type")) {
         res.setHeader("Content-Type", "application/json; charset=utf-8");
       }
@@ -38,15 +57,12 @@ function createVercelLikeResponse(res) {
     },
     end(body) {
       if (res.writableEnded) return undefined;
-      res.statusCode = statusCode;
-      for (const [name, value] of Object.entries(headers)) {
-        res.setHeader(name, value);
-      }
+      applyHeaders();
       res.end(body);
       return undefined;
     },
     get headersSent() {
-      return res.writableEnded;
+      return headersWritten;
     },
   };
 }
