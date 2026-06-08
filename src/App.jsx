@@ -3235,7 +3235,7 @@ export default function App() {
       }}>
         {loading && (
           generationStream
-            ? <GenerationStreamOverlay progress={generationStream} theme={theme} />
+            ? <GenerationStreamOverlay progress={generationStream} origin={origin} dest={dest} />
             : <RouteDrawingLoader theme={theme} variant="fullscreen" />
         )}
         {renderAppNavBar("app")}

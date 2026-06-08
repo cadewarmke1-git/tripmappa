@@ -879,19 +879,7 @@ export default async function handler(req, res) {
 
   try {
     const preflight = preflightCreditFromClient(req.body.clientCreditStatus, user.id);
-    if (preflight === null) {
-      const status = await fetchCreditStatus(admin, user.id);
-      if (!status.unlimited && status.remaining <= 0) {
-        return res.status(402).json({
-          error: "No Trip Generations remaining",
-          code: "no_credits",
-          limitReached: true,
-          tier: status.tier,
-          resetDate: status.resetDate || null,
-          credits: status,
-        });
-      }
-    } else if (!preflight.ok) {
+    if (preflight !== null && !preflight.ok) {
       return res.status(402).json({
         error: "No Trip Generations remaining",
         code: "no_credits",
@@ -899,6 +887,18 @@ export default async function handler(req, res) {
         tier: preflight.tier || preflight.status?.tier,
         resetDate: preflight.resetDate || preflight.status?.resetDate || null,
         credits: preflight.status,
+      });
+    }
+
+    const status = await fetchCreditStatus(admin, user.id);
+    if (!status.unlimited && status.remaining <= 0) {
+      return res.status(402).json({
+        error: "No Trip Generations remaining",
+        code: "no_credits",
+        limitReached: true,
+        tier: status.tier,
+        resetDate: status.resetDate || null,
+        credits: status,
       });
     }
   } catch (creditErr) {

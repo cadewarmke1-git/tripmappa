@@ -234,58 +234,86 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 24px 20px;
+  gap: 0;
+  padding: 24px 20px 32px;
   background: var(--tm-loader-bg, var(--color-base));
   transition: background 1.8s ease;
   text-align: center;
 }
 
+.generation-stream-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex: 1;
+  width: 100%;
+  max-width: 420px;
+}
+
+.generation-stream-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.generation-stream-glow {
+  position: absolute;
+  inset: -28px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent, var(--gold-primary)) 32%, transparent) 0%,
+    transparent 72%
+  );
+  animation: generationStreamPulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.generation-stream-wordmark.brand-wordmark {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+  -webkit-text-fill-color: var(--accent, var(--gold-primary)) !important;
+  color: var(--accent, var(--gold-primary)) !important;
+}
+
 .generation-stream-message {
   margin: 0;
+  min-height: 1.4em;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary, var(--color-text-primary));
+  transition: opacity 0.25s ease;
 }
 
-.generation-stream-leg {
+.generation-stream-route {
   margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent, var(--gold-primary));
-}
-
-.generation-stream-summary {
-  margin: 0;
+  flex-shrink: 0;
   max-width: 520px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-secondary, var(--color-text-secondary));
 }
 
-.generation-stream-stops {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  max-width: 420px;
-  max-height: 180px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.generation-stream-stops li {
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent, var(--gold-primary)) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent, var(--gold-primary)) 24%, transparent);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary, var(--color-text-primary));
-  animation: fadeUp 0.25s ease both;
+@keyframes generationStreamPulse {
+  0%, 100% {
+    opacity: 0.42;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
 }
 
 .route-drawing-loader--inline {

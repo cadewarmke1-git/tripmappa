@@ -720,8 +720,9 @@
     font-weight: 400;
     color: #ffffff;
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     width: 100%;
     padding: 0 12px;
     line-height: 1.4;

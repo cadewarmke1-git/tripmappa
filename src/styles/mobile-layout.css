@@ -95,7 +95,6 @@
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
     background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
   }
 
   html[data-layout="mobile"] .hero.night .hero-search .hero-input::placeholder,
