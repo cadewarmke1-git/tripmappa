@@ -502,7 +502,7 @@
     width: 100%;
     min-height: 0;
     line-height: 1.4;
-    padding: 10px 12px;
+    padding: 0;
   }
   .hero-input-error {
     font-size: 11px;
@@ -742,12 +742,14 @@
     font-size: 15px;
     font-weight: 400;
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent;
     border: none;
     border-radius: 0;
     box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
     width: 100%;
-    padding: 0 12px;
+    padding: 0;
     line-height: 1.4;
     box-sizing: border-box;
     -webkit-text-fill-color: #ffffff;

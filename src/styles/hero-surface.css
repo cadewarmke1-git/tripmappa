@@ -108,7 +108,7 @@ html body .hero.day .hero-title-accent {
 .hero[data-surface-theme="day"] .hero-input {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
 }
 
 .hero[data-surface-theme="day"] .hero-swap-btn {
@@ -160,7 +160,7 @@ html body .hero.day .hero-title-accent {
 .hero[data-surface-theme="night"] .hero-input {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
 }
 
 .hero[data-surface-theme="night"] .hero-go-btn:not(:disabled) {
@@ -229,6 +229,19 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 .hero[data-surface-theme] .hero-search .hero-route-cell .hero-input-box,
 .hero[data-surface-theme] .hero-search .hero-input-box {
   min-height: 0 !important;
+  padding: 0 !important;
+}
+
+/* City inputs — no grey fill boxes in day or night */
+html body .hero[data-surface-theme] .hero-search .hero-input,
+html body .hero[data-surface-theme] .hero-search .hero-input:focus,
+html body .hero[data-surface-theme] .hero-search .hero-input:focus-visible,
+html body .hero[data-surface-theme] .hero-search .hero-input:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   padding: 0 !important;
 }
 

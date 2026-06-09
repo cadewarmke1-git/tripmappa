@@ -47,9 +47,13 @@
   box-shadow: 0 20px 56px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* No focus ring boxes on city inputs — outer panel handles focus state */
+/* No visible input boxes — text sits flush on the search panel */
+.hero-search .hero-input,
 .hero-search .hero-input:focus,
-.hero-search .hero-input:focus-visible {
+.hero-search .hero-input:focus-visible,
+.hero-search .hero-input:hover {
+  background: transparent !important;
+  border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
@@ -159,7 +163,7 @@
 .hero.night .hero-input {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
 }
 
 .hero-search .hero-input::placeholder {
