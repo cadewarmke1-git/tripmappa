@@ -54,6 +54,9 @@
   box-shadow: none !important;
 }
 
+.hero-search .hero-search-main,
+.hero-search .hero-route-bar,
+.hero-search .hero-route-grid,
 .hero-search .hero-input-box,
 .hero-search .hero-input-box > div,
 .hero-search .hero-route-cell,
@@ -65,12 +68,29 @@
   background: transparent !important;
 }
 
+.hero-search .hero-search-main:focus-within,
+.hero-search .hero-route-bar:focus-within,
+.hero-search .hero-route-grid:focus-within,
 .hero-search .hero-input-box:focus-within,
 .hero-search .hero-route-cell:focus-within {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;
   background: transparent !important;
+}
+
+.hero-search .hero-route-cell .hero-input-box,
+.hero-search .hero-input-box {
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.hero-search .hero-route-cell .hero-input-box > div,
+.hero-search .hero-input-box > div {
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .hero.night .hero-auth-btn,

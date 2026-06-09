@@ -214,6 +214,24 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 }
 
 
+/* Route structure — no inner panel boxes around From/To */
+.hero[data-surface-theme] .hero-search .hero-search-main,
+.hero[data-surface-theme] .hero-search .hero-route-bar,
+.hero[data-surface-theme] .hero-search .hero-route-grid,
+.hero[data-surface-theme] .hero-search .hero-input-box,
+.hero[data-surface-theme] .hero-search .hero-input-box > div {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.hero[data-surface-theme] .hero-search .hero-route-cell .hero-input-box,
+.hero[data-surface-theme] .hero-search .hero-input-box {
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
 /* Keep hero UI above scene haze */
 .hero[data-surface-theme] .hero-content {
   position: relative;

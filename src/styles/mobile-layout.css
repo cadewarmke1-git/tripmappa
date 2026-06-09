@@ -113,6 +113,17 @@
     color: #A04010 !important;
   }
 
+  html[data-layout="mobile"] .hero-search-main,
+  html[data-layout="mobile"] .hero-route-bar,
+  html[data-layout="mobile"] .hero-route-grid,
+  html[data-layout="mobile"] .hero-search .hero-input-box,
+  html[data-layout="mobile"] .hero-search .hero-input-box > div {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
   html[data-layout="mobile"] .hero-route-grid {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto auto auto auto !important;

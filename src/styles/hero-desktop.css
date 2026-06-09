@@ -52,6 +52,15 @@ html[data-layout="web"] .hero-search {
   gap: 16px;
 }
 
+html[data-layout="web"] .hero-search-main,
+html[data-layout="web"] .hero-route-bar,
+html[data-layout="web"] .hero-route-grid {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
 html[data-layout="web"] .hero-route-bar {
   flex: 1;
   min-width: 0;
