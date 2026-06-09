@@ -91,7 +91,7 @@ export default async function handler(req, res) {
 
   try {
     await ensureRequestBody(req, route);
-  } catch (err) {
+  } catch {
     logApiRequest(route || "unknown", { method: req.method, status: 400, ms: Date.now() - started });
     if (!res.headersSent) {
       return res.status(400).json({ error: "Invalid request body" });

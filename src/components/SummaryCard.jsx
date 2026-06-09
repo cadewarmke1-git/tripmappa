@@ -17,6 +17,27 @@ import { SUMMARY_EDIT_QUESTION_BY_ROW } from "../lib/tripFlow.js";
 
 const PAYOFF_KEYS = ["Trip", "Vehicle", "Fuel", "Party size"];
 
+const SUMMARY_SECTIONS = [
+  {
+    id: "trip",
+    title: "Trip & vehicle",
+    keys: new Set([
+      "Trip", "Vehicle", "Primary vehicle", "Vehicles on trip", "Fuel", "Fuel type",
+      "Hauling", "Sleeper cab", "Truck stops", "Assumed specs", "Assumed RV specs",
+    ]),
+  },
+  {
+    id: "route",
+    title: "Route & party",
+    keys: new Set(["Party size", "Drive mode", "Lodging", "Route restrictions", "Coordination"]),
+  },
+  {
+    id: "prefs",
+    title: "Preferences",
+    keys: new Set(["Preferences", "Dietary", "Kids ages", "Schedule"]),
+  },
+];
+
 function buildAllAnswerEditRows(historyIds, hasTripDetails) {
   const rows = [];
   if (historyIds.has("lodging")) {
@@ -49,6 +70,7 @@ export default function SummaryCard({
   onEditQuestion,
 }) {
   const [allAnswersOpen, setAllAnswersOpen] = useState(false);
+  const [openSections, setOpenSections] = useState(() => new Set(["trip", "route"]));
   const effective = getEffectiveVehicle(answers);
   const fuel = inferFuelType(effective, answers.preferences || [], answers);
   const rows = [
@@ -103,6 +125,35 @@ export default function SummaryCard({
     );
   }
 
+  const useGroupedSections = !showPayoffGrid && rows.length > 5;
+  const groupedRows = useGroupedSections
+    ? SUMMARY_SECTIONS.map(section => ({
+        ...section,
+        items: rows.filter(([k]) => section.keys.has(k)),
+      })).filter(section => section.items.length > 0)
+    : [];
+
+  function toggleSection(id) {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function renderRow([k, v]) {
+    return (
+      <div className="summary-row" key={k}>
+        <div className="summary-key">
+          {k}
+          {renderEditLink(k)}
+        </div>
+        <div className="summary-val">{v}</div>
+      </div>
+    );
+  }
+
   function renderQuestionEditLink(label, qId) {
     if (!editable || !onEditQuestion || !historyIds.has(qId)) return null;
     return (
@@ -129,16 +180,29 @@ export default function SummaryCard({
             </div>
           ))}
         </div>
-      ) : (
-        rows.map(([k, v]) => (
-          <div className="summary-row" key={k}>
-            <div className="summary-key">
-              {k}
-              {renderEditLink(k)}
+      ) : useGroupedSections ? (
+        <div className="summary-sections">
+          {groupedRows.map(section => (
+            <div className="summary-section" key={section.id}>
+              <button
+                type="button"
+                className="summary-section-toggle"
+                onClick={() => toggleSection(section.id)}
+                aria-expanded={openSections.has(section.id)}
+              >
+                {section.title}
+                <span className="summary-section-count">{section.items.length}</span>
+              </button>
+              {openSections.has(section.id) && (
+                <div className="summary-section-panel">
+                  {section.items.map(renderRow)}
+                </div>
+              )}
             </div>
-            <div>{v}</div>
-          </div>
-        ))
+          ))}
+        </div>
+      ) : (
+        rows.map(renderRow)
       )}
       {editable && allAnswerEditRows.length > 0 && onEditQuestion && (
         <div className="summary-all-answers">

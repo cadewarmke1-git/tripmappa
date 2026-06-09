@@ -44,6 +44,8 @@ export default function PlanPanel({
   creditsLabel,
   creditsNudge = null,
   creditsExhausted = false,
+  showGuestSaveHint = false,
+  onGuestSignIn,
   onUpgrade,
   onGenerateTrip,
   onCancelGenerate,
@@ -114,6 +116,13 @@ export default function PlanPanel({
             routeError={routeError}
             onRetryRoute={onRetryRoute}
           />
+        )}
+
+        {inQuestionFlow && showGuestSaveHint && onGuestSignIn && (
+          <div className="plan-flow-guest-hint">
+            <span className="plan-flow-guest-hint-text">Sign in to save your answers and pick up later.</span>
+            <button type="button" className="plan-flow-guest-hint-btn" onClick={onGuestSignIn}>Sign in</button>
+          </div>
         )}
 
         {!inQuestionFlow && showProgress && (

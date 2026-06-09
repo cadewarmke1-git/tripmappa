@@ -202,9 +202,12 @@
     right: auto !important;
     bottom: auto !important;
     transform: translateY(-50%) !important;
-    width: 44px !important;
-    max-width: 44px !important;
+    width: auto !important;
+    min-width: 120px !important;
+    max-width: 148px !important;
     border-radius: 0 14px 14px 0 !important;
+    overflow: visible !important;
+    z-index: 220 !important;
   }
 
   html[data-layout="mobile"] .float-card--plan-flow .float-card-body,
@@ -251,7 +254,7 @@
   }
 
   html[data-layout="mobile"] .trip-overview-hero-label {
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.04em;
   }
 
@@ -282,13 +285,15 @@
   }
 
   html[data-layout="mobile"] .road-stop-card-meta {
-    font-size: 10px;
+    font-size: 12px;
     margin-bottom: 6px;
   }
 
   html[data-layout="mobile"] .road-stop-add-btn {
-    padding: 6px;
-    font-size: 10px;
+    padding: 10px 12px;
+    min-height: 44px;
+    font-size: 12px;
+    box-sizing: border-box;
   }
 
   html[data-layout="mobile"] .trip-tips-section {
@@ -323,8 +328,8 @@
     backdrop-filter: none;
     padding: 0;
     color: var(--color-accent-orange) !important;
-    font-size: 11px;
-    letter-spacing: 0.12em;
+    font-size: 12px;
+    letter-spacing: 0.1em;
     margin-bottom: 10px;
   }
 

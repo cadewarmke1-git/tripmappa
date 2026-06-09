@@ -22,6 +22,7 @@ import { readUserTripPreferences, formatPreferencesForPrompt } from "./user-trip
 import { calculateMaxTokens } from "../lib/planTripTokens.js";
 import { normalizeTripResponse } from "../lib/tripResponseNormalize.js";
 import { buildGenerationLogRow, logGenerationUsage } from "../lib/generationLogs.js";
+import { logPlanTripDev } from "../lib/apiLog.js";
 import {
   buildCorridorPlacesFallback,
   requireAuthenticatedUser,
@@ -1074,9 +1075,7 @@ export default async function handler(req, res) {
 
   const userPrompt = buildUserPrompt(ctx, effectivePlacesPrompt, isSimplifiedFormat, generationHints, extraContext);
   const { maxTokens, tier: maxTokensTier } = calculateMaxTokens(ctx, mergedAnswers, routeInfo, isSimplifiedFormat);
-  if (process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "development") {
-    console.log("[plan-trip] max_tokens tier:", { maxTokens, tier: maxTokensTier });
-  }
+  logPlanTripDev({ event: "max_tokens_tier", maxTokens, tier: maxTokensTier });
 
   writePlanTripSse(res, "start", { maxTokens, tier: maxTokensTier });
 

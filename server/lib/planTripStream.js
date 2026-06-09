@@ -1,4 +1,5 @@
 /** SSE helpers and Anthropic streaming for /api/plan-trip. */
+import { logPlanTripDev } from "./apiLog.js";
 
 export function initPlanTripSse(res) {
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
@@ -160,7 +161,8 @@ export async function streamAnthropicMessages({
 
   onProgress?.(buildStreamProgress(fullText));
 
-  console.log("[plan-trip] Anthropic usage:", {
+  logPlanTripDev({
+    event: "anthropic_usage",
     input_tokens: inputTokens,
     output_tokens: outputTokens,
     total_tokens: inputTokens + outputTokens,

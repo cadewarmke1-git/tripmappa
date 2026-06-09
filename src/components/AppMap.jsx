@@ -66,6 +66,7 @@ export default function AppMap({
     streetViewControl: false,
     mapTypeControl: false,
     fullscreenControl: false,
+    keyboardShortcuts: false,
     mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
     styles: mapStyles,
   }), [mapStyle, mapStyles]);

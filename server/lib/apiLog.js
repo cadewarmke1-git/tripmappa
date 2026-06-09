@@ -16,6 +16,12 @@ export function logApiRequest(route, { method, status, ms, error, cached } = {})
   }
 }
 
+/** Dev-only structured logs for plan-trip diagnostics (never logs secrets). */
+export function logPlanTripDev(meta = {}) {
+  if (process.env.NODE_ENV !== "development" && process.env.VERCEL_ENV !== "development") return;
+  console.info("[plan-trip]", JSON.stringify({ ...meta, ts: new Date().toISOString() }));
+}
+
 export function logClientError(body = {}) {
   console.error("[client-error]", JSON.stringify({
     label: body.label || "unknown",

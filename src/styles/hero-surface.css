@@ -85,7 +85,7 @@ html body .hero.day .hero-title-accent {
 }
 
 .hero[data-surface-theme="night"] .hero-sub {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
 .hero[data-surface-theme="day"] .hero-sub {
@@ -200,7 +200,7 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 
 /* ── City placeholders — dim but readable, no "e.g." prefix ── */
 .hero[data-surface-theme="night"] .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(255, 255, 255, 0.52) !important;
   font-style: italic !important;
   font-weight: 400 !important;
   opacity: 1 !important;
@@ -251,4 +251,53 @@ html body .hero[data-surface-theme] .hero-search .hero-input:hover {
   z-index: 15;
   isolation: isolate;
   overflow: visible;
+}
+
+/* Google Places — appended to <body>; beat injected stylesheet with explicit surface tokens */
+html[data-surface-theme="night"] .pac-container {
+  background-color: #1A1035 !important;
+  background-image: none !important;
+  border-color: rgba(255, 210, 140, 0.15) !important;
+}
+html[data-surface-theme="night"] .pac-item {
+  background-color: #1A1035 !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border-top-color: rgba(255, 210, 140, 0.08) !important;
+}
+html[data-surface-theme="night"] .pac-item-query,
+html[data-surface-theme="night"] .pac-item > span:not(.pac-icon) {
+  color: #FFFFFF !important;
+}
+html[data-surface-theme="night"] .pac-matched {
+  color: #FFD28C !important;
+}
+html[data-surface-theme="night"] .pac-item:hover,
+html[data-surface-theme="night"] .pac-item-selected,
+html[data-surface-theme="night"] .pac-item.pac-item-selected {
+  background-color: rgba(255, 210, 140, 0.1) !important;
+}
+
+html[data-surface-theme="day"] .pac-container {
+  background-color: #FDF3E0 !important;
+  background-image: none !important;
+  border-color: rgba(160, 64, 16, 0.2) !important;
+}
+html[data-surface-theme="day"] .pac-item {
+  background-color: #FDF3E0 !important;
+  background-image: none !important;
+  color: #1A0D00 !important;
+  border-top-color: rgba(160, 64, 16, 0.1) !important;
+}
+html[data-surface-theme="day"] .pac-item-query,
+html[data-surface-theme="day"] .pac-item > span:not(.pac-icon) {
+  color: #1A0D00 !important;
+}
+html[data-surface-theme="day"] .pac-matched {
+  color: #E06820 !important;
+}
+html[data-surface-theme="day"] .pac-item:hover,
+html[data-surface-theme="day"] .pac-item-selected,
+html[data-surface-theme="day"] .pac-item.pac-item-selected {
+  background-color: rgba(160, 64, 16, 0.08) !important;
 }

@@ -5,7 +5,7 @@ import { TIERS } from "./tiers.js";
 describe("formatCreditsDisplay", () => {
   it("shows wanderer lifetime remaining", () => {
     expect(formatCreditsDisplay({ tier: TIERS.WANDERER, remaining: 2, billingPeriod: "lifetime" }).label)
-      .toBe("2 free generations remaining");
+      .toBe("2 trips left on your plan");
   });
 
   it("shows voyager monthly counter", () => {
@@ -18,6 +18,11 @@ describe("formatCreditsDisplay", () => {
     });
     expect(label).toBe("5 of 20 remaining this month");
     expect(nudge).toMatch(/Running low/);
+  });
+
+  it("shows guest sign-in nudge", () => {
+    expect(formatCreditsDisplay({ tier: "guest" }).label)
+      .toBe("1 free trip — sign in to save your plan");
   });
 
   it("shows trailblazer monthly counter without marketing copy", () => {

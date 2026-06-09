@@ -3,6 +3,7 @@ export default function PlanPanelHelpButton({
   onToggle,
   onHelpCenter,
   onReportIssue,
+  onMapTips,
   wrapRef,
 }) {
   return (
@@ -19,6 +20,11 @@ export default function PlanPanelHelpButton({
       </button>
       {open && (
         <div className="help-menu" role="menu">
+          {onMapTips && (
+            <button type="button" className="help-menu-item" role="menuitem" onClick={onMapTips}>
+              Map tips
+            </button>
+          )}
           <button type="button" className="help-menu-item" role="menuitem" onClick={onHelpCenter}>
             Help center
           </button>

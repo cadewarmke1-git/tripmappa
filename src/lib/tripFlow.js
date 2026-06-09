@@ -125,6 +125,13 @@ export const KIDS_AGE_CHOICES = [
 
 const DAY_TRIP_MILES = 150;
 
+const ROUTE_CONTEXT_PENDING_QUESTION = {
+  id: "route_context_pending",
+  type: "loading",
+  ask: "Calculating drive time for your route…",
+  pendingRoute: true,
+};
+
 export function isRouteContextReady(context) {
   if (context?.routeDistanceMiles != null && context.routeDistanceMiles > 0) return true;
   if (context?.routeDurationHours != null && context.routeDurationHours > 0) return true;
@@ -597,8 +604,22 @@ function needsOvernightPreferenceQuestion(answers, context) {
     const primary = getEffectiveVehicle(answers);
     if (isRvVehicle(primary) || isTruckVehicle(primary)) return false;
   }
-  if (!isRouteContextReady(context) && !isDayTripByDistance(context)) return true;
+  if (!isRouteContextReady(context) && !context.routeFailed && !answers.route_context_unavailable) {
+    return false;
+  }
+  if (answers.route_context_unavailable) return true;
+  if (isDayTripByDistance(context)) return false;
   return requiresMultipleDays(context);
+}
+
+function needsPersonalOvernightBranch(answers) {
+  const effective = getEffectiveVehicle(answers);
+  if (isRvVehicle(effective) || isTruckVehicle(effective)) return false;
+  if (answers.vehicle === MULTI_VEHICLE_TRIP && answers.primary_vehicle) {
+    const primary = getEffectiveVehicle(answers);
+    if (isRvVehicle(primary) || isTruckVehicle(primary)) return false;
+  }
+  return isPersonalVehicle(effective);
 }
 
 function needsLodgingQuestion(answers, context) {
@@ -703,12 +724,12 @@ function getNextPersonalBranchQuestion(answers, context) {
   if (needsPartyCompositionQuestion(answers)) return { done: false, ...PARTY_COMPOSITION_QUESTION };
   if (!isAnswered("preferences", answers)) return { done: false, ...buildPersonalPreferencesQuestion(context) };
 
-  if (needsOvernightPreferenceQuestion(answers, context) && !isAnswered("overnight_preference", answers)) {
-    const overnightQ = buildOvernightPreferenceQuestion(context);
+  if (!isAnswered("overnight_preference", answers) && needsPersonalOvernightBranch(answers)) {
     if (shouldPendingOvernightRoute(answers, context)) {
-      return { done: false, ...overnightQ, pendingRoute: true };
+      return { done: false, ...ROUTE_CONTEXT_PENDING_QUESTION };
     }
-    if (requiresMultipleDays(context) || context.routeFailed || answers.route_context_unavailable) {
+    if (needsOvernightPreferenceQuestion(answers, context)) {
+      const overnightQ = buildOvernightPreferenceQuestion(context);
       return {
         done: false,
         ...overnightQ,
@@ -987,11 +1008,14 @@ export function getFlowProgress(answers, context = {}, options = {}) {
     ? 100
     : ((Math.max(0, phaseIndex) + 0.35) / Math.max(1, FLOW_PHASES.length - 1)) * 100;
 
+  const safeIndex = Math.max(0, phaseIndex);
   return {
     phases: FLOW_PHASES,
     currentPhaseId: phaseId,
     progressPercent,
-    phaseLabel: FLOW_PHASES[phaseIndex]?.label || FLOW_PHASES[0].label,
+    phaseLabel: FLOW_PHASES[safeIndex]?.label || FLOW_PHASES[0].label,
+    stepIndex: safeIndex + 1,
+    stepTotal: FLOW_PHASES.length,
   };
 }
 

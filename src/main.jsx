@@ -1,10 +1,12 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
-import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
+
+const App = lazy(() => import("./App.jsx"));
 import { initViewportLayout } from "./lib/viewportLayout.js";
 import { initPwaInstall } from "./lib/pwaInstall.js";
 import "./index.css";
@@ -37,7 +39,9 @@ createRoot(document.getElementById("root")).render(
     <ErrorBoundary label="app-root" title="TripMappa ran into a problem">
       <AuthProvider>
         <ThemeProvider>
-          <App />
+          <Suspense fallback={<RouteDrawingLoader theme="night" variant="inline" />}>
+            <App />
+          </Suspense>
           <Analytics />
         </ThemeProvider>
       </AuthProvider>

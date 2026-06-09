@@ -26,6 +26,7 @@ export default function HeroExploreMap({
     streetViewControl: false,
     mapTypeControl: false,
     fullscreenControl: false,
+    keyboardShortcuts: false,
     gestureHandling: "greedy",
     clickableIcons: false,
     styles: mapStyles,

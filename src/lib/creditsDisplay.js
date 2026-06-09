@@ -7,7 +7,7 @@ export function formatCreditsDisplay(status) {
   }
 
   if (status.tier === "guest") {
-    return { label: "1 free generation", nudge: null };
+    return { label: "1 free trip — sign in to save your plan", nudge: null };
   }
 
   if (status.unlimited) {
@@ -27,9 +27,9 @@ export function formatCreditsDisplay(status) {
 
   const remaining = status.remaining ?? 0;
   if (remaining === 1) {
-    return { label: "1 free generation remaining", nudge: null };
+    return { label: "1 trip left on your plan", nudge: null };
   }
-  return { label: `${remaining} free generations remaining`, nudge: null };
+  return { label: `${remaining} trips left on your plan`, nudge: null };
 }
 
 export function formatResetDate(resetDate) {

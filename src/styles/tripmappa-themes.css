@@ -13,6 +13,39 @@
   --polyline-color: #FFD28C;
 }
 
+/* Body-level Google Places dropdown — pac-container is appended to <body>, not .hero / .app-wrap */
+html[data-surface-theme="night"] {
+  --color-autocomplete-bg: #1A1035;
+  --color-autocomplete-border: rgba(255, 210, 140, 0.15);
+  --color-autocomplete-match: #FFD28C;
+  --color-autocomplete-text-top: #FFFFFF;
+  --color-autocomplete-text-rest: #A89BCF;
+  --color-autocomplete-pin-bg: rgba(255, 210, 140, 0.1);
+  --color-autocomplete-pin-color: #FFD28C;
+  --color-autocomplete-top-bg: rgba(255, 210, 140, 0.06);
+  --color-autocomplete-divider: rgba(255, 210, 140, 0.08);
+  --color-autocomplete-hover-bg: rgba(255, 210, 140, 0.1);
+  --color-autocomplete-hover-text: #FFFFFF;
+  --color-autocomplete-text: #FFFFFF;
+  --text-on-accent: #1A0D00;
+}
+
+html[data-surface-theme="day"] {
+  --color-autocomplete-bg: #FDF3E0;
+  --color-autocomplete-border: rgba(160, 64, 16, 0.2);
+  --color-autocomplete-match: #E06820;
+  --color-autocomplete-text-top: #1A0D00;
+  --color-autocomplete-text-rest: #5A3A1A;
+  --color-autocomplete-pin-bg: rgba(160, 64, 16, 0.08);
+  --color-autocomplete-pin-color: #A04010;
+  --color-autocomplete-top-bg: rgba(160, 64, 16, 0.05);
+  --color-autocomplete-divider: rgba(160, 64, 16, 0.1);
+  --color-autocomplete-hover-bg: rgba(160, 64, 16, 0.08);
+  --color-autocomplete-hover-text: #1A0D00;
+  --color-autocomplete-text: #1A0D00;
+  --text-on-accent: #1A0D00;
+}
+
 /* Night mode palette */
 :root,
 body.theme-night,

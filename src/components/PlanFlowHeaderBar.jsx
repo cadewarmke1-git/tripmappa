@@ -37,7 +37,7 @@ export default function PlanFlowHeaderBar({
       <div className="plan-flow-header-bar-main">
         {showProgress && (
           <div className="plan-flow-header-bar-progress">
-            <QuestionProgress {...flowProgress} compact />
+            <QuestionProgress {...flowProgress} compact showStepSubtitle />
           </div>
         )}
         {creditsLabel && !collapsed && (

@@ -35,10 +35,11 @@ describe("tripFlow UX", () => {
     expect(getFlowPhaseId(next.id)).toBe("route");
   });
 
-  it("shows pending overnight when route context is missing", () => {
+  it("shows route loading when route context is missing", () => {
     const answers = { ...basePersonal, preferences: [] };
     const next = getNextFlowQuestion(answers, {});
-    expect(next.id).toBe("overnight_preference");
+    expect(next.id).toBe("route_context_pending");
+    expect(next.type).toBe("loading");
     expect(next.pendingRoute).toBe(true);
   });
 
@@ -117,6 +118,16 @@ describe("tripFlow UX", () => {
     expect(progress.phases).toHaveLength(4);
     expect(progress.currentPhaseId).toBe("about");
     expect(progress.phaseLabel).toBe("Your trip");
+    expect(progress.stepIndex).toBe(1);
+    expect(progress.stepTotal).toBe(4);
+  });
+
+  it("shows route loading instead of overnight before drive time is known", () => {
+    const answers = { ...basePersonal, preferences: [] };
+    const ctx = { origin: "A", destination: "B" };
+    const next = getNextFlowQuestion(answers, ctx);
+    expect(next.id).toBe("route_context_pending");
+    expect(next.type).toBe("loading");
   });
 
   it("plane path collects travelers before completing", () => {

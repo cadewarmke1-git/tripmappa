@@ -5,7 +5,6 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
-import GenerationStreamOverlay from "./components/GenerationStreamOverlay.jsx";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
 import { applyMapThemeStyles } from "./lib/mapStyles.js";
@@ -62,7 +61,6 @@ import {
 import {
   fetchIsoline,
   pointInPolygon,
-  searchPlacesInPolygon,
   reverseGeocodeLatLng,
   resolveHeroOriginCoords,
 } from "./lib/heroExplore.js";
@@ -78,8 +76,18 @@ import { captureReferralFromUrl, getStoredReferralCode, clearStoredReferralCode 
 import { dismissTrialEndedPrompt } from "./lib/trialApi.js";
 import { createPortalSession } from "./lib/stripeApi.js";
 import { fetchPlanPreferencesFull } from "./lib/planPreferencesApi.js";
-import FounderWelcomeOverlay from "./components/FounderWelcomeOverlay.jsx";
-import UserPreferencesPage from "./components/UserPreferencesPage.jsx";
+import {
+  LazyEmailModal,
+  LazyFounderWelcomeOverlay,
+  LazyGenerationStreamOverlay,
+  LazyHomeAddressModal,
+  LazyOAuthComingSoonModal,
+  LazyPhoneModal,
+  LazyReportIssueModal,
+  LazySignInModal,
+  LazyUpgradeModal,
+  LazyUserPreferencesPage,
+} from "./components/LazyModals.jsx";
 import { getDisplayName } from "./lib/avatarUtils.js";
 import { useTheme } from "./context/ThemeContext.jsx";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
@@ -95,14 +103,7 @@ import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { parseLiveShareToken } from "./lib/liveShareApi.js";
 import { resolveAppRoute } from "./lib/appRouter.js";
-import EmailModal from "./components/EmailModal.jsx";
-import SignInModal from "./components/auth/SignInModal.jsx";
-import PhoneModal from "./components/auth/PhoneModal.jsx";
-import OAuthComingSoonModal from "./components/auth/OAuthComingSoonModal.jsx";
-import UpgradeModal from "./components/UpgradeModal.jsx";
-import HomeAddressModal from "./components/HomeAddressModal.jsx";
 import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
-import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import Toast from "./components/Toast.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -122,10 +123,9 @@ export default function App() {
   const [heroExploreEnabled, setHeroExploreEnabled] = useState(false);
   const [heroExploreDriveSeconds, setHeroExploreDriveSeconds] = useState(7200);
   const [heroExplorePolygon, setHeroExplorePolygon] = useState([]);
-  const [heroExplorePlaces, setHeroExplorePlaces] = useState([]);
-  const [heroOriginCoords, setHeroOriginCoords] = useState(null);
   const [heroExploreLoading, setHeroExploreLoading] = useState(false);
   const [heroExploreError, setHeroExploreError] = useState(null);
+  const [heroOriginCoords, setHeroOriginCoords] = useState(null);
   const heroExploreAbortRef = useRef(null);
   const [heroEmail, setHeroEmail] = useState("");
   const [authModal, setAuthModal] = useState(null); // signin | signup | phone | oauth-*
@@ -369,7 +369,7 @@ export default function App() {
     return handlePhoneSendCode(phone);
   }
 
-  function openPhoneModal() {
+  function openLazyPhoneModal() {
     setAuthError("");
     setAuthPhone("");
     setAuthModal("phone");
@@ -590,10 +590,6 @@ export default function App() {
       });
     return () => { cancelled = true; };
   }, [user?.id, session?.access_token]);
-
-  function withPlanPreferenceDefaults(base = {}) {
-    return { ...base };
-  }
 
   async function buildFlowPrefillForUser() {
     let tripPrefs = null;
@@ -1660,8 +1656,8 @@ export default function App() {
   }
 
   const handleMapBackgroundClick = useCallback(() => {
-    if (inQuestionFlow && !cardCollapsed) setCardCollapsed(true);
-  }, [inQuestionFlow, cardCollapsed]);
+    /* Panel collapse is intentional-only via header chevron — never on map tap */
+  }, []);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -1703,7 +1699,6 @@ export default function App() {
     heroExploreAbortRef.current?.abort();
     heroExploreAbortRef.current = null;
     setHeroExplorePolygon([]);
-    setHeroExplorePlaces([]);
     setHeroExploreLoading(false);
     setHeroExploreError(null);
   }
@@ -1721,16 +1716,12 @@ export default function App() {
       const polygon = data.polygon || [];
       setHeroExplorePolygon(polygon);
       setHeroOriginCoords({ lat: coords.lat, lng: coords.lng });
-      if (polygon.length >= 3 && isLoaded && window.google) {
-        const places = await searchPlacesInPolygon(polygon, { lat: coords.lat, lng: coords.lng });
-        if (!controller.signal.aborted) setHeroExplorePlaces(places);
-      } else {
-        setHeroExplorePlaces([]);
+      if (polygon.length < 3) {
+        setHeroExploreError("Could not draw a range for this origin — try another city.");
       }
     } catch (err) {
       if (err.name === "AbortError") return;
       setHeroExplorePolygon([]);
-      setHeroExplorePlaces([]);
       setHeroExploreError(err.message || "Could not load explore range");
     } finally {
       if (heroExploreAbortRef.current === controller) {
@@ -1754,9 +1745,9 @@ export default function App() {
         || await resolveHeroOriginCoords(text, heroOriginAcRef.current);
       if (cancelled) return;
       if (!coords) {
-        setHeroExploreError("Enter a valid origin to explore range");
         setHeroExplorePolygon([]);
-        setHeroExplorePlaces([]);
+        setHeroExploreError("Enter a valid origin to explore your range");
+        setHeroExploreLoading(false);
         return;
       }
       setHeroOriginCoords({ lat: coords.lat, lng: coords.lng });
@@ -2971,6 +2962,10 @@ export default function App() {
         setModal({ type: "report" });
         setHelpMenuOpen(false);
       }}
+      onMapTips={() => {
+        toast_("Map controls: use Map for style, +/− to zoom, and the target icon to recenter.", true);
+        setHelpMenuOpen(false);
+      }}
       wrapRef={helpWrapRef}
     />
   );
@@ -3026,7 +3021,7 @@ export default function App() {
         <div className={`app-wrap ${theme} profile-view-wrap`}>
           {renderAppNavBar("app")}
           <ErrorBoundary label="preferences" title="Could not show preferences">
-            <UserPreferencesPage
+            <LazyUserPreferencesPage
               accessToken={session?.access_token}
               onBack={() => setView("profile")}
               onToast={toast_}
@@ -3089,7 +3084,7 @@ export default function App() {
           </ErrorBoundary>
         </div>
         {showUpgradeModal && (
-          <UpgradeModal
+          <LazyUpgradeModal
             onClose={() => setShowUpgradeModal(false)}
             onOpenPricing={openPricingPage}
             user={user}
@@ -3158,21 +3153,32 @@ export default function App() {
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
+        heroExploreEnabled={heroExploreEnabled}
+        heroExploreDriveSeconds={heroExploreDriveSeconds}
+        heroExploreLoading={heroExploreLoading}
+        heroExploreError={heroExploreError}
+        heroExplorePolygon={heroExplorePolygon}
+        heroExploreCenter={heroOriginCoords}
+        heroTheme={theme}
+        onHeroExploreToggle={handleHeroExploreToggle}
+        onHeroExploreDriveTimeChange={handleHeroExploreDriveTimeChange}
+        onHeroExploreMapClick={handleHeroExploreMapClick}
+        onHeroExplorePlaceSelect={handleHeroExplorePlaceSelect}
       />
       {founderWelcomeName && (
-        <FounderWelcomeOverlay
+        <LazyFounderWelcomeOverlay
           firstName={founderWelcomeName}
           onDismiss={() => setFounderWelcomeName(null)}
         />
       )}
       {authModal === "signup" && (
-        <EmailModal
+        <LazyEmailModal
           email={heroEmail}
           onEmailChange={setHeroEmail}
           onClose={() => setAuthModal(null)}
           onSignUp={handleEmailSignUp}
           onSwitchToSignIn={() => openAuthModal("signin")}
-          onContinueWithPhone={() => { setAuthModal(null); openPhoneModal(); }}
+          onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
           onGoogle={() => handleOAuth("google")}
           onFacebook={() => handleOAuth("facebook")}
           onApple={() => handleOAuth("apple")}
@@ -3182,7 +3188,7 @@ export default function App() {
         />
       )}
       {authModal === "phone" && (
-        <PhoneModal
+        <LazyPhoneModal
           onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
           onSendCode={handlePhoneSendCode}
           onVerifyCode={handlePhoneVerify}
@@ -3194,7 +3200,7 @@ export default function App() {
         />
       )}
       {authModal === "signin" && (
-        <SignInModal
+        <LazySignInModal
           onClose={() => setAuthModal(null)}
           onSignIn={handleSignInSubmit}
           onForgotPassword={handleForgotPassword}
@@ -3208,7 +3214,7 @@ export default function App() {
         />
       )}
       {!isAuthConfigured && authModal?.startsWith("oauth-") && (
-        <OAuthComingSoonModal
+        <LazyOAuthComingSoonModal
           provider={authModal.replace("oauth-", "")}
           onClose={() => setAuthModal(null)}
           onUseEmail={() => openAuthModal("signup")}
@@ -3223,7 +3229,7 @@ export default function App() {
         onAction={toastAction?.onClick}
       />
       {founderWelcomeName && (
-        <FounderWelcomeOverlay
+        <LazyFounderWelcomeOverlay
           firstName={founderWelcomeName}
           onDismiss={() => setFounderWelcomeName(null)}
         />
@@ -3239,7 +3245,7 @@ export default function App() {
       }}>
         {loading && (
           generationStream
-            ? <GenerationStreamOverlay progress={generationStream} origin={origin} dest={dest} />
+            ? <LazyGenerationStreamOverlay progress={generationStream} origin={origin} dest={dest} />
             : <RouteDrawingLoader theme={theme} variant="fullscreen" />
         )}
         {renderAppNavBar("app")}
@@ -3430,7 +3436,11 @@ export default function App() {
           />
           </ErrorBoundary>
 
-          <div className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}${inQuestionFlow ? " float-card--plan-flow" : ""}${inQuestionFlow && cardCollapsed ? " float-card--plan-flow-collapsed" : ""}`}>
+          <div
+            className={`float-card ${theme} ${cardCollapsed ? "collapsed" : ""}${helpMenuOpen ? " help-open" : ""}${inQuestionFlow ? " float-card--plan-flow" : ""}${inQuestionFlow && cardCollapsed ? " float-card--plan-flow-collapsed" : ""}`}
+            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+          >
             <div
               className={`float-card-header${inQuestionFlow ? " float-card-header--plan-flow" : ""}`}
               role={inQuestionFlow ? undefined : "button"}
@@ -3510,6 +3520,8 @@ export default function App() {
                       creditsLabel={formatCreditsLabel(creditStatus)}
                       creditsNudge={creditsNudge}
                       creditsExhausted={creditsExhausted}
+                      showGuestSaveHint={!user && !!answers.vehicle && !convoComplete}
+                      onGuestSignIn={() => openAuthModal("signin")}
                       onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}
                       returnedFromResults={returnedFromResults}
@@ -3588,7 +3600,7 @@ export default function App() {
       </div>
 
       {modal?.type === "report" && (
-        <ReportIssueModal
+        <LazyReportIssueModal
           reportText={reportText}
           onTextChange={setReportText}
           onClose={() => { setModal(null); setReportText(""); }}
@@ -3600,13 +3612,13 @@ export default function App() {
         />
       )}
       {authModal === "signup" && (
-        <EmailModal
+        <LazyEmailModal
           email={heroEmail}
           onEmailChange={setHeroEmail}
           onClose={() => setAuthModal(null)}
           onSignUp={handleEmailSignUp}
           onSwitchToSignIn={() => openAuthModal("signin")}
-          onContinueWithPhone={() => { setAuthModal(null); openPhoneModal(); }}
+          onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
           onGoogle={() => handleOAuth("google")}
           onFacebook={() => handleOAuth("facebook")}
           onApple={() => handleOAuth("apple")}
@@ -3616,7 +3628,7 @@ export default function App() {
         />
       )}
       {authModal === "phone" && (
-        <PhoneModal
+        <LazyPhoneModal
           onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
           onSendCode={handlePhoneSendCode}
           onVerifyCode={handlePhoneVerify}
@@ -3628,7 +3640,7 @@ export default function App() {
         />
       )}
       {authModal === "signin" && (
-        <SignInModal
+        <LazySignInModal
           onClose={() => setAuthModal(null)}
           onSignIn={handleSignInSubmit}
           onForgotPassword={handleForgotPassword}
@@ -3642,7 +3654,7 @@ export default function App() {
         />
       )}
       {!isAuthConfigured && authModal?.startsWith("oauth-") && (
-        <OAuthComingSoonModal
+        <LazyOAuthComingSoonModal
           provider={authModal.replace("oauth-", "")}
           onClose={() => setAuthModal(null)}
           onUseEmail={() => openAuthModal("signup")}
@@ -3650,7 +3662,7 @@ export default function App() {
         />
       )}
       {showUpgradeModal && (
-        <UpgradeModal
+        <LazyUpgradeModal
           creditStatus={creditStatus || getGuestCreditStatus()}
           user={user}
           accessToken={session?.access_token}
@@ -3665,7 +3677,7 @@ export default function App() {
         />
       )}
       {showHomeAddressModal && (
-        <HomeAddressModal
+        <LazyHomeAddressModal
           isLoaded={isLoaded}
           initialAddress={homeAddress || getGuestHomeAddress()}
           onSave={handleSaveHomeAddress}

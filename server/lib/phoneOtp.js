@@ -9,7 +9,10 @@ export function generateOtp() {
 }
 
 export function hashOtp(code, phone) {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || "tripmappa-otp";
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for OTP hashing");
+  }
   return crypto.createHash("sha256").update(`${phone}:${code}:${secret}`).digest("hex");
 }
 

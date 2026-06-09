@@ -50,7 +50,7 @@ export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPla
         <div className="trips-empty-state">
           <div className="trips-empty-mark" aria-hidden="true">TM</div>
           <div className="trips-empty-title">No saved trips yet</div>
-          <p className="trips-empty-sub">Plan a trip and sign in to save it here for later.</p>
+          <p className="trips-empty-sub">Plan a trip from the home screen — saved routes will show up here.</p>
           <button type="button" className="trips-empty-cta" onClick={onPlanTrip}>Plan a trip</button>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeAutoTheme, SKY_CHECK_MS } from "../lib/theme.js";
+import { isHeroSurfaceThemeLocked, syncSurfaceTheme } from "../lib/surfaceTheme.js";
 
 const ThemeContext = createContext(null);
 
@@ -9,6 +10,7 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     document.body.classList.remove("theme-day", "theme-night");
     document.body.classList.add(`theme-${theme}`);
+    if (!isHeroSurfaceThemeLocked()) syncSurfaceTheme(theme);
     return () => {
       document.body.classList.remove("theme-day", "theme-night");
     };

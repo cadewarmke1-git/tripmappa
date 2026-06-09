@@ -104,7 +104,7 @@ export function viteApiDevPlugin(mode = "development") {
           } else if (rawBody.length) {
             try {
               mockReq.body = JSON.parse(rawBody.toString("utf8"));
-            } catch (parseErr) {
+            } catch {
               res.statusCode = 400;
               res.setHeader("Content-Type", "application/json; charset=utf-8");
               res.end(JSON.stringify({ error: "Invalid JSON body" }));
