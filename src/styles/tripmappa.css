@@ -2890,8 +2890,21 @@
     color: var(--deep-dark) !important;
     border: none !important;
   }
-  .auth-social-btns { display: flex; gap: 8px; }
-  .auth-social-btns-compact .auth-social-btn { flex: 1; justify-content: center; padding: 10px 8px; font-size: 12px; }
+  .auth-social-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .auth-social-btns-row {
+    display: flex;
+    gap: 8px;
+  }
+  .auth-social-btns-compact .auth-social-btns-row .auth-social-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
   .auth-social-btn {
     display: inline-flex;
     align-items: center;
@@ -2909,6 +2922,28 @@
   .auth-social-btn:hover {
     background: var(--elevated);
     border-color: var(--accent);
+  }
+  /* Sign in with Apple — approved black button style (day and night) */
+  .auth-social-btn--apple {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    background: #000000;
+    border: 1px solid #000000;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .auth-social-btn--apple:hover {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #ffffff;
+  }
+  .auth-social-btn--apple:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
   .auth-modal-footer {
     text-align: center;

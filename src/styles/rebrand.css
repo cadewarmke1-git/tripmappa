@@ -579,6 +579,22 @@ body {
   color: var(--text-primary) !important;
 }
 
+.app-wrap.day .auth-social-btn--apple,
+.app-wrap.night .auth-social-btn--apple,
+.auth-modal-overlay .auth-social-btn--apple {
+  background: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.app-wrap.day .auth-social-btn--apple:hover,
+.app-wrap.night .auth-social-btn--apple:hover,
+.auth-modal-overlay .auth-social-btn--apple:hover {
+  background: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
 .app-wrap.night .auth-modal,
 .app-wrap.night .upgrade-modal,
 .app-wrap.night .grocery-modal {
@@ -810,7 +826,7 @@ body {
   color: #fff !important;
 }
 
-.app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-social-btn {
+.app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-social-btn:not(.auth-social-btn--apple) {
   background: var(--color-surface-elevated) !important;
   border-color: rgba(168, 155, 207, 0.25) !important;
   color: #fff !important;
