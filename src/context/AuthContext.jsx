@@ -90,8 +90,13 @@ export function AuthProvider({ children }) {
     },
     async signOut() {
       if (!supabase) throw new Error("Supabase is not configured");
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      const { error: globalError } = await supabase.auth.signOut({ scope: "global" });
+      if (globalError) {
+        const { error: localError } = await supabase.auth.signOut({ scope: "local" });
+        if (localError) throw localError;
+      }
+      setSession(null);
+      setUser(null);
     },
     async resetPassword(email) {
       if (!supabase) throw new Error("Supabase is not configured");

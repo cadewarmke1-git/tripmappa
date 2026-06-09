@@ -1430,11 +1430,16 @@
     min-height: 0;
   }
   .float-card-body--plan-flow .float-card-scroll {
-    flex: 1;
+    flex: 0 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+  .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .float-card-body--plan-flow .float-card-scroll,
+  .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) .float-card-body--plan-flow .float-card-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
   }
   .float-card-header--plan-flow {
     padding: 10px 14px !important;
@@ -1558,8 +1563,16 @@
     margin-bottom: 4px;
   }
   .float-card--plan-flow:not(.collapsed) {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: calc(100dvh - var(--nav-h) - 16px);
+  }
+  .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
+  .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) {
     height: calc(100dvh - var(--nav-h) - 16px);
     max-height: calc(100dvh - var(--nav-h) - 16px);
+    overflow: hidden;
   }
   .float-card--plan-flow .float-card-chevron-btn {
     width: 28px;
@@ -1581,9 +1594,11 @@
     overflow: hidden;
   }
   .chat-wrap-plan-flow .convo-scroll {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
   /* Compact question flow — keep choices above the fold */
   .chat-wrap-plan-flow .convo-stage {
@@ -1591,8 +1606,13 @@
   }
   .chat-wrap-plan-flow .convo-scroll {
     padding: 0 2px;
-    overflow-y: auto;
+    overflow: hidden;
     -webkit-overflow-scrolling: touch;
+  }
+  .chat-wrap-plan-flow .convo-scroll:has(.plan-flow-stack--sparse),
+  .chat-wrap-plan-flow .convo-scroll:has(.plan-flow-stack-payoff) {
+    flex: 0 0 auto;
+    overflow: visible;
   }
   .plan-flow-toolbar {
     display: grid;
@@ -1704,15 +1724,145 @@
   .chat-wrap-plan-flow .question-options-scroll::-webkit-scrollbar-track {
     background: transparent;
   }
-  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row {
-    position: sticky;
-    bottom: 0;
-    z-index: 6;
+  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row,
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions {
     flex-shrink: 0;
     margin-top: auto;
     padding: 10px 0 6px;
-    background: linear-gradient(180deg, transparent 0%, var(--color-surface) 22%);
+    background: var(--color-surface, var(--surface));
     border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions {
+    margin-top: 0;
+    box-shadow: 0 -10px 20px color-mix(in srgb, var(--color-surface, var(--surface)) 88%, transparent);
+  }
+  .chat-wrap-plan-flow .question-choices-shell-compact .question-options-scroll {
+    overscroll-behavior: contain;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row .btn-generate-inline,
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions .btn-generate-inline {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row .convo-nav-btn,
+  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row .convo-nav-btn-defaults,
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn,
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn-defaults {
+    flex: 0 0 auto;
+    min-width: 96px;
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-width: 1.5px;
+    text-decoration: none;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .pref-actions-row .convo-nav-btn-skip,
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn-skip {
+    border-color: rgba(255, 210, 140, 0.45);
+    background: rgba(255, 210, 140, 0.1);
+    color: var(--gold-primary, #ffd28c);
+    font-weight: 700;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--sparse.plan-flow-current {
+    flex: 0 0 auto;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--sparse .question-choices-compact {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--tall.plan-flow-current,
+  .chat-wrap-plan-flow .plan-flow-layout--standard.plan-flow-current {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--tall.plan-flow-current > .ai-bubble,
+  .chat-wrap-plan-flow .plan-flow-layout--standard.plan-flow-current > .ai-bubble {
+    flex: 0 0 auto;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--tall.plan-flow-current > *,
+  .chat-wrap-plan-flow .plan-flow-layout--standard.plan-flow-current > * {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact,
+  .chat-wrap-plan-flow .plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-wrap-plan-flow .question-choices-shell-compact .question-choices-compact {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .chat-wrap-plan-flow .question-choices-shell-compact .plan-flow-actions {
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    margin-top: 0;
+    z-index: 8;
+    position: relative;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--tall .question-choices-compact .question-options-scroll,
+  .chat-wrap-plan-flow .plan-flow-layout--standard .question-choices-compact .question-options-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--tall .question-choices-compact > :not(.question-options-scroll),
+  .chat-wrap-plan-flow .plan-flow-layout--standard .question-choices-compact > :not(.question-options-scroll) {
+    flex-shrink: 0;
+  }
+  .chat-wrap-plan-flow .question-lodging-ask {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--gold-primary, #ffd28c);
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--standard .question-choices-compact .question-options-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: visible;
+  }
+  .chat-wrap-plan-flow:has(.plan-flow-stack--sparse) .plan-route-card {
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+  .chat-wrap-plan-flow:has(.plan-flow-stack--sparse) .ai-bubble {
+    margin-bottom: 8px;
+    padding: 12px 14px;
+  }
+  .chat-wrap-plan-flow:has(.plan-flow-stack--sparse) .question-thread {
+    max-height: 72px;
+  }
+  .chat-wrap-plan-flow .plan-flow-stack--sparse {
+    flex: 0 0 auto;
+  }
+  .chat-wrap-plan-flow .plan-flow-stack-payoff {
+    flex: 0 0 auto;
+  }
+  .chat-wrap-plan-flow .convo-scroll:not(:has(.plan-flow-stack--sparse)):not(:has(.plan-flow-stack-payoff)) .plan-flow-stack {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
   }
   .question-page-header {
     flex-shrink: 0;
@@ -1817,10 +1967,42 @@
     box-shadow: 0 6px 18px rgba(255,210,140,0.18);
   }
   .chat-wrap-plan-flow .question-choices-compact .qr-btn {
-    padding: 11px 16px;
+    height: 44px;
+    position: relative;
+    z-index: 1;
+    padding: 10px 14px;
     font-size: 13px;
-    min-height: 42px;
+    min-height: 44px;
+    max-height: 44px;
+    line-height: 1.25;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     transition: transform 0.12s var(--ease), box-shadow 0.12s var(--ease), background 0.12s var(--ease), border-color 0.12s var(--ease), color 0.12s var(--ease);
+  }
+  .chat-wrap-plan-flow .question-choices-compact .qr-btn-described {
+    min-height: 56px;
+    max-height: 56px;
+    height: 56px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: unset;
+    padding: 10px 14px;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .qr-btn-described .qr-btn-label,
+  .chat-wrap-plan-flow .question-choices-compact .qr-btn-described .qr-btn-desc {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .qr-btn.qr-selected {
+    background: var(--gold-primary) !important;
+    border-color: var(--gold-primary) !important;
+    color: var(--deep-dark, #1a0d00) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   }
   .chat-wrap-plan-flow .question-choices-compact .qr-btn:hover:not(:disabled):not(.qr-dimmed) {
     transform: translateY(-2px);
@@ -1836,6 +2018,9 @@
   .chat-wrap-plan-flow .question-choices-compact .qr-btn-lodging {
     padding: 8px 12px;
     font-size: 12px;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
   }
   .chat-wrap-plan-flow .plan-saved-note {
     margin: 0 0 4px;
@@ -1987,23 +2172,33 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
   }
+  .plan-flow-stack--sparse,
+  .plan-flow-stack-payoff {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
   .chat-wrap-plan-flow .plan-flow-current {
-    flex: 1;
-    min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
   .chat-wrap-plan-flow .plan-view {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+  .chat-wrap-plan-flow .convo-scroll:not(:has(.plan-flow-stack--sparse)) .plan-view {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .chat-wrap-plan-flow .convo-scroll:has(.plan-flow-stack--sparse) .plan-view {
+    flex: 0 0 auto;
   }
   .plan-flow-current { margin-top: 0; }
 
@@ -2100,7 +2295,19 @@
   }
 
   .chat-wrap-plan-flow .plan-route-card { margin-top: 8px; }
-  .chat-wrap-plan-flow .question-thread { max-height: 120px; }
+  .chat-wrap-plan-flow .question-thread {
+    max-height: 88px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex-shrink: 0;
+    mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
+  }
+  .chat-wrap-plan-flow .question-thread::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
   @keyframes stepExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
   @keyframes stepEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes answerSlideIn { from { opacity: 0; transform: translateY(12px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -2120,19 +2327,38 @@
   .convo-nav-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); }
   .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
   .quick-replies-lodging { flex-direction: column; gap: 8px; }
+  .chat-wrap-plan-flow .question-choices-compact .quick-replies-lodging {
+    gap: 6px;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .lodging-loyalty-section {
+    margin-top: 8px;
+  }
+  .chat-wrap-plan-flow .question-choices-compact .lodging-loyalty-section .question-section-label {
+    margin-top: 4px;
+  }
   .quick-replies-described { flex-direction: column; gap: 8px; align-items: stretch; }
   .qr-btn-described {
     width: 100%; text-align: left; line-height: 1.45; padding: 12px 16px;
     white-space: normal; border-radius: 14px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
+    min-height: 56px;
+    box-sizing: border-box;
+    justify-content: center;
   }
   .qr-btn-label { font-weight: 500; }
-  .qr-btn-desc { font-size: 12px; opacity: 0.75; font-weight: 400; line-height: 1.4; }
+  .qr-btn-desc { font-size: 12px; opacity: 0.88; font-weight: 400; line-height: 1.45; }
+  .chat-wrap-plan-flow .qr-btn-described .qr-btn-desc {
+    opacity: 0.9;
+    color: rgba(255, 255, 255, 0.88);
+  }
+  .app-wrap.day .chat-wrap-plan-flow .qr-btn-described .qr-btn-desc {
+    color: rgba(26, 13, 0, 0.78);
+  }
   .question-hint {
     margin-top: 10px; font-size: 13px; line-height: 1.5; opacity: 0.72; font-weight: 400;
   }
   .question-section-label {
     font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
-    opacity: 0.65; margin: 12px 0 8px;
+    opacity: 0.82; margin: 12px 0 8px;
   }
   .question-group-section + .question-group-section { margin-top: 4px; }
   .lodging-loyalty-section { margin-top: 12px; }
@@ -4467,8 +4693,13 @@
   .app-nav-bar .hamburger-menu-btn,
   .app-nav-bar .nav-btn,
   .app-nav-bar .profile-card-menu,
-  .app-nav-bar .profile-card-trigger {
+  .app-nav-bar .profile-card-trigger,
+  .app-nav-bar .profile-card-dropdown.is-open {
     pointer-events: auto;
+  }
+  .app-nav-bar:has(.profile-card-dropdown.is-open),
+  .app-nav-bar:has(.profile-card-dropdown.is-closing) {
+    z-index: 420;
   }
   .app-nav-bar.transparent {
     background: transparent !important;
@@ -6172,12 +6403,6 @@
   .chat-wrap-plan-flow .question-choices-compact:has(.question-more-options) .question-group-section:first-of-type .question-choices-scroll {
     max-height: min(16dvh, 112px);
   }
-  .chat-wrap-plan-flow .ai-msg:has(.question-more-options) .question-choices-compact {
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
   .chat-wrap-plan-flow .question-choices-compact .question-more-options {
     flex-shrink: 0;
     margin-top: 12px;
@@ -6213,6 +6438,10 @@
     font-weight: 600;
     color: var(--text-primary);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    line-height: 1.2;
   }
   .party-composition-stepper {
     display: flex;

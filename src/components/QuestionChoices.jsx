@@ -61,6 +61,7 @@ export default function QuestionChoices({
   const [partyChildren, setPartyChildren] = useState(0);
   const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
   const [routePendingExpired, setRoutePendingExpired] = useState(false);
+  const [budgetTouched, setBudgetTouched] = useState(false);
 
   useEffect(() => {
     setRoutePendingExpired(false);
@@ -76,6 +77,7 @@ export default function QuestionChoices({
     setVehicleTab(0);
     setLodgingDraft(null);
     setLoyaltyDraft(answers.loyalty_program || null);
+    setBudgetTouched(false);
   }, [currentQ?.id, answers.loyalty_program]);
 
   useEffect(() => {
@@ -199,6 +201,7 @@ export default function QuestionChoices({
   }
 
   function setBudgetDraft(value) {
+    setBudgetTouched(true);
     setGroupDraft(prev => {
       const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, answers);
       const current = base.trip_budget || "No budget limit";
@@ -206,6 +209,12 @@ export default function QuestionChoices({
       onSetPrefDraft(next);
       return next;
     });
+  }
+
+  function isBudgetSelected(value) {
+    if (budgetDraft !== value) return false;
+    if (value === "No budget limit") return budgetTouched;
+    return true;
   }
 
   function toggleMultiDraft(value) {
@@ -239,7 +248,6 @@ export default function QuestionChoices({
   const scrollOptions = compact
     && currentQ.type !== "loading"
     && currentQ.type !== "text"
-    && currentQ.type !== "trip_details"
     && currentQ.type !== "party_composition";
 
   function wrapScrollable(content) {
@@ -247,7 +255,10 @@ export default function QuestionChoices({
     return <div className="question-options-scroll">{content}</div>;
   }
 
+  const actionRowClass = "pref-actions-row plan-flow-actions";
+
   return (
+    <div className={`question-choices-shell${compact ? " question-choices-shell-compact" : ""}`}>
     <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}`}>
       {showNavRow && (
         <div className="convo-nav-row">
@@ -370,6 +381,9 @@ export default function QuestionChoices({
 
           {isLodgingStay && (
             <>
+              {currentQ.ask && (
+                <p className="question-lodging-ask">{currentQ.ask}</p>
+              )}
               <div className="quick-replies quick-replies-lodging">
                 {choices.map(raw => {
                   const { value, label } = normalizeChoice(raw);
@@ -495,7 +509,7 @@ export default function QuestionChoices({
                         <button
                           key={value}
                           type="button"
-                          className={`qr-btn${budgetDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          className={`qr-btn${isBudgetSelected(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
                           disabled={frozen}
                           onClick={() => setBudgetDraft(value)}
                         >
@@ -574,88 +588,6 @@ export default function QuestionChoices({
         </>,
       )}
 
-      {isLodgingStay && (
-        <div className="pref-actions-row">
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen || !lodgingDraft}
-            onClick={continueWithHaptic(submitLodgingStay)}
-          >
-            Continue
-          </button>
-        </div>
-      )}
-
-      {currentQ.type === "party_composition" && (
-        <div className="pref-actions-row">
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen}
-            onClick={continueWithHaptic(submitPartyComposition)}
-          >
-            Continue
-          </button>
-        </div>
-      )}
-
-      {currentQ.type === "multiselect" && (
-        <div className="pref-actions-row">
-          {currentQ.id === "multi_vehicles" && multiDraft.length === 0 && (
-            <p className="question-inline-hint">Select at least one vehicle, or tap Back to choose a different trip type.</p>
-          )}
-          {currentQ.id === "kids_ages" && multiDraft.length === 0 && (
-            <p className="question-inline-hint">Select at least one age band, or choose &ldquo;Not sure / prefer not to say&rdquo;.</p>
-          )}
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={
-              frozen
-              || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)
-              || (currentQ.id === "kids_ages" && multiDraft.length === 0)
-            }
-            onClick={continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]))}
-          >
-            Continue
-          </button>
-          {currentQ.id !== "multi_vehicles" && currentQ.id !== "kids_ages" && (
-            <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
-          )}
-        </div>
-      )}
-
-      {isTripDetails && (
-        <div className="pref-actions-row">
-          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={continueWithHaptic(submitTripDetails)}>
-            Continue
-          </button>
-          <button type="button" className="convo-nav-btn convo-nav-btn-defaults" disabled={frozen} onClick={skipTripDetails}>
-            Defaults are fine
-          </button>
-        </div>
-      )}
-
-      {currentQ.type === "multiselect_group" && (
-        <div className="pref-actions-row">
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen}
-            onClick={continueWithHaptic(() => pickInstant({
-              dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
-              stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
-            }))}
-          >
-            Continue
-          </button>
-          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant({ dietary: [], stops_interests: [] })}>
-            Nothing special
-          </button>
-        </div>
-      )}
-
       {currentQ.type === "text" && (
         <div className="question-text-wrap">
           <input
@@ -671,7 +603,7 @@ export default function QuestionChoices({
               }
             }}
           />
-          <div className="pref-actions-row">
+          <div className={actionRowClass}>
             <button
               type="button"
               className="btn-generate btn-generate-inline"
@@ -706,6 +638,90 @@ export default function QuestionChoices({
           </div>
         </div>
       )}
+    </div>
+
+      {isLodgingStay && (
+        <div className={actionRowClass}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen || !lodgingDraft}
+            onClick={continueWithHaptic(submitLodgingStay)}
+          >
+            Continue
+          </button>
+        </div>
+      )}
+
+      {currentQ.type === "party_composition" && (
+        <div className={actionRowClass}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={continueWithHaptic(submitPartyComposition)}
+          >
+            Continue
+          </button>
+        </div>
+      )}
+
+      {currentQ.type === "multiselect" && (
+        <div className={actionRowClass}>
+          {currentQ.id === "multi_vehicles" && multiDraft.length === 0 && (
+            <p className="question-inline-hint">Select at least one vehicle, or tap Back to choose a different trip type.</p>
+          )}
+          {currentQ.id === "kids_ages" && multiDraft.length === 0 && (
+            <p className="question-inline-hint">Select at least one age band, or choose &ldquo;Not sure / prefer not to say&rdquo;.</p>
+          )}
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={
+              frozen
+              || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)
+              || (currentQ.id === "kids_ages" && multiDraft.length === 0)
+            }
+            onClick={continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]))}
+          >
+            Continue
+          </button>
+          {currentQ.id !== "multi_vehicles" && currentQ.id !== "kids_ages" && (
+            <button type="button" className="convo-nav-btn convo-nav-btn-skip" disabled={frozen} onClick={() => pickInstant([])}>Skip</button>
+          )}
+        </div>
+      )}
+
+      {isTripDetails && (
+        <div className={actionRowClass}>
+          <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={continueWithHaptic(submitTripDetails)}>
+            Continue
+          </button>
+          <button type="button" className="convo-nav-btn convo-nav-btn-defaults" disabled={frozen} onClick={skipTripDetails}>
+            Defaults are fine
+          </button>
+        </div>
+      )}
+
+      {currentQ.type === "multiselect_group" && (
+        <div className={actionRowClass}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={continueWithHaptic(() => pickInstant({
+              dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
+              stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
+            }))}
+          >
+            Continue
+          </button>
+          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant({ dietary: [], stops_interests: [] })}>
+            Nothing special
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

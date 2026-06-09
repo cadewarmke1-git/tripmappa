@@ -379,6 +379,9 @@ export default function App() {
     intentionalSignOutRef.current = true;
     try {
       await signOut();
+      setView("hero");
+      setUserProfile(null);
+      applyCreditStatus(getGuestCreditStatus());
       toast_("Signed out");
     } catch (err) {
       intentionalSignOutRef.current = false;
@@ -3149,6 +3152,7 @@ export default function App() {
         onUploadAvatar={handleProfileUploadAvatar}
         onGetStarted={() => openAuthModal("signup")}
         onSignIn={() => openAuthModal("signin")}
+        onSignOut={handleSignOut}
         userProfile={userProfile}
         creditStatus={creditStatus}
         planDraft={planDraft}

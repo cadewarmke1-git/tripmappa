@@ -67,9 +67,18 @@ export default function NavProfileMenu({
   }, []);
 
   const run = useCallback((action) => {
-    action?.();
     closeMenu();
+    action?.();
   }, [closeMenu]);
+
+  const handleSignOutClick = useCallback(async () => {
+    closeMenu();
+    try {
+      await onSignOut?.();
+    } catch {
+      // Parent handleSignOut surfaces errors via toast
+    }
+  }, [closeMenu, onSignOut]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -213,7 +222,7 @@ export default function NavProfileMenu({
           <button
             type="button"
             className="profile-card-signout"
-            onClick={() => run(onSignOut)}
+            onClick={() => void handleSignOutClick()}
           >
             Sign Out
           </button>

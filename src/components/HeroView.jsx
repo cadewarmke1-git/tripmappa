@@ -39,6 +39,7 @@ export default function HeroView({
   onUploadAvatar,
   onGetStarted,
   onSignIn,
+  onSignOut,
   userProfile,
   creditStatus = null,
   planDraft = null,
@@ -81,6 +82,7 @@ export default function HeroView({
         onUploadAvatar={onUploadAvatar}
         onGetStarted={onGetStarted}
         onSignIn={onSignIn}
+        onSignOut={onSignOut}
       />
 
       <div

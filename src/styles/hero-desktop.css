@@ -153,9 +153,14 @@ html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
   bottom: auto !important;
   width: 390px !important;
   max-width: 390px !important;
-  height: calc(100dvh - var(--nav-h) - 32px) !important;
+  height: auto !important;
   max-height: calc(100dvh - var(--nav-h) - 32px) !important;
   border-radius: 22px !important;
+}
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) {
+  height: calc(100dvh - var(--nav-h) - 32px) !important;
+  max-height: calc(100dvh - var(--nav-h) - 32px) !important;
 }
 
 html[data-layout="web"] .float-card--plan-flow-collapsed.collapsed {

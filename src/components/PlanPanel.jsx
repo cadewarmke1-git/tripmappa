@@ -10,6 +10,7 @@ import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
+import { getPlanFlowLayoutClass } from "../lib/tripFlow.js";
 
 export default function PlanPanel({
   qIndex,
@@ -60,9 +61,15 @@ export default function PlanPanel({
 }) {
   const stepMessage = getStepMessage?.() ?? "";
   const frozen = !!stepAnim;
+  const planFlowLayout = getPlanFlowLayoutClass(currentQuestion, convoComplete);
   const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
+  const hideStepBubble = inQuestionFlow && (
+    currentQuestion?.type === "lodging_stay"
+    || currentQuestion?.type === "trip_details"
+    || (currentQuestion?.type === "multiselect" && planFlowLayout === "tall")
+  );
 
   return (
     <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
@@ -132,13 +139,13 @@ export default function PlanPanel({
         <div className="convo-scroll" ref={convoScrollRef}>
           <div className="plan-view">
             {(currentQuestion || qIndex === -2) && (
-              <div className={`plan-flow-stack${convoComplete ? " plan-flow-stack-payoff" : ""}`}>
+              <div className={`plan-flow-stack${convoComplete ? " plan-flow-stack-payoff" : ""}${planFlowLayout === "sparse" ? " plan-flow-stack--sparse" : ""}`}>
                 <QuestionThread history={questionHistory} />
 
                 <div
-                  className={`ai-msg plan-flow-current${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
+                  className={`ai-msg plan-flow-current plan-flow-layout--${planFlowLayout}${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                 >
-                  {stepMessage && !showContinuousConfirm && (
+                  {stepMessage && !showContinuousConfirm && !hideStepBubble && (
                     <div className="ai-bubble">
                       {stepMessage}
                       {currentQuestion?.mediumTripHint && (

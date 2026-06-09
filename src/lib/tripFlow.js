@@ -1096,3 +1096,18 @@ export function buildFlowQuestion(id, answers, context = {}) {
   if (id === "vehicle") return buildVehicleQuestion();
   return getNextFlowQuestion(answers, context);
 }
+
+/** sparse = shrink panel to content; tall = scroll options, pin actions at bottom */
+export function getPlanFlowLayoutClass(question, convoComplete = false) {
+  if (convoComplete) return "sparse";
+  if (!question) return "standard";
+  const sparseIds = new Set(["party_composition", "sleeper_cab", "overnight_preference"]);
+  if (sparseIds.has(question.id)) return "sparse";
+  if (question.type === "party_composition") return "sparse";
+  const tallTypes = new Set(["trip_details", "lodging_stay", "multiselect", "multiselect_group"]);
+  if (tallTypes.has(question.type)) return "tall";
+  if (question.type === "choice" && Array.isArray(question.choices) && question.choices.length <= 2 && !question.pendingRoute) {
+    return "sparse";
+  }
+  return "standard";
+}

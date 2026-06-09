@@ -707,7 +707,11 @@ export default function ProfilePage({
             </div>
           </div>
 
-          <button type="button" className="profile-btn profile-btn-signout" onClick={onSignOut}>
+          <button
+            type="button"
+            className="profile-btn profile-btn-signout"
+            onClick={() => void onSignOut?.()}
+          >
             Sign Out
           </button>
         </section>

@@ -245,6 +245,12 @@ html body .app-wrap.night .qr-btn.qr-selected {
   box-shadow: none !important;
 }
 
+html body .app-wrap.night .chat-wrap-plan-flow .question-choices-compact .qr-btn.qr-selected {
+  background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
+  border-color: transparent !important;
+  color: #1A0D00 !important;
+}
+
 html body .app-wrap.night .qr-btn.qr-selected:hover:not(:disabled):not(.qr-dimmed) {
   background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
   border-color: transparent !important;
