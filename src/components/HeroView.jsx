@@ -232,7 +232,8 @@ export default function HeroView({
         </div>
 
         <footer className="hero-footer">
-          <nav className="hero-footer-nav" aria-label="Legal">
+          <nav className="hero-footer-nav" aria-label="Legal and pricing">
+            <a href="/pricing">Plans & pricing</a>
             <a href="/privacy">Privacy Policy</a>
             <a href="/terms">Terms of Service</a>
           </nav>

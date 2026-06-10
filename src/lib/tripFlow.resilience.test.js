@@ -16,7 +16,7 @@ describe("tripFlow resilience", () => {
     const answers = {
       vehicle: "Semi Truck (18-wheeler)",
       hauling_type: "General freight",
-      sleeper_cab: "Yes I have a sleeper cab",
+      sleeper_cab: "Yes — I sleep in the cab",
       truck_stop_brand: "Love's",
       route_restrictions: ["No restrictions"],
     };

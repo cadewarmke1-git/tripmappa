@@ -1,3 +1,5 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+
 /** Client fetch for /api/restaurants */
 export async function fetchRestaurantsForStop({ lat, lng, city, answers, roadStop = false, limit = 6 }) {
   if (lat == null || lng == null || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
@@ -7,7 +9,7 @@ export async function fetchRestaurantsForStop({ lat, lng, city, answers, roadSto
   try {
     const res = await fetch("/api/restaurants", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ lat, lng, city, answers, roadStop, limit }),
     });
     if (!res.ok) {

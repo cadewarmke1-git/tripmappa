@@ -23,8 +23,9 @@ describe("tripAccommodations preferences", () => {
     ]);
   });
 
-  it("always asks towing for rental car regardless of distance", () => {
-    expect(needsTowingQuestion({ vehicle: "Rental Car" }, { routeDistanceMiles: 20 })).toBe(true);
+  it("skips towing on short day trips but asks on longer routes", () => {
+    expect(needsTowingQuestion({ vehicle: "Rental Car" }, { routeDistanceMiles: 80 })).toBe(false);
+    expect(needsTowingQuestion({ vehicle: "Rental Car" }, { routeDistanceMiles: 200 })).toBe(true);
     expect(needsTowingQuestion({ vehicle: "Rental Car" }, {})).toBe(true);
   });
 

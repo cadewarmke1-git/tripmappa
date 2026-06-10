@@ -384,7 +384,23 @@
   }
 
   html[data-layout="mobile"] .hero-sky-test-dial {
-    bottom: 12px;
-    width: min(480px, calc(100vw - 24px));
+    top: calc(var(--nav-h, 64px) + 8px);
+    bottom: auto;
+    width: min(360px, calc(100vw - 24px));
+    padding: 10px 12px 8px;
+    z-index: 12;
+  }
+
+  html[data-layout="mobile"] .hero-sky-test-dial-label,
+  html[data-layout="mobile"] .hero-sky-test-dial-meta,
+  html[data-layout="mobile"] .hero-sky-test-dial-ticks {
+    font-size: 12px;
+  }
+
+  html[data-layout="mobile"] .hero-sky-test-dial-live-btn,
+  html[data-layout="mobile"] .hero-sky-test-dial-locked {
+    font-size: 12px;
+    min-height: 32px;
+    padding: 6px 10px;
   }
 }

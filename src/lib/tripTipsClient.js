@@ -1,3 +1,5 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+
 /** Client fetch for /api/trip-tips */
 export async function fetchLiveTripTips({ origin, destination, routePoints = [], waypoints = [] }) {
   if (!origin || !destination) {
@@ -6,7 +8,7 @@ export async function fetchLiveTripTips({ origin, destination, routePoints = [],
 
   const res = await fetch("/api/trip-tips", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ origin, destination, routePoints, waypoints }),
   });
 

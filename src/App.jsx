@@ -39,6 +39,8 @@ import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
 import { describePlanChanges, formatRegenerateDiffBlock } from "./lib/planSnapshotDiff.js";
 import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
+import { formatCollaborationHints } from "./lib/collaborationHints.js";
+import CollaborationPanel from "./components/CollaborationPanel.jsx";
 import { fetchTruckRoute, shouldUseTruckRouting, truckRestrictionsToTips, weighStationsToRoadStops } from "./lib/truckRoutingApi.js";
 import { deriveCitiesAlongRoute, parseCityStateFromFormattedAddress } from "./lib/routeCities.js";
 import { createAnswerChangeTracker, recordAnswerChange, formatAnswerConfidenceNotes, buildQuestionLabelMap } from "./lib/answerIntent.js";
@@ -207,6 +209,10 @@ export default function App() {
   const [planBoundaryKey, setPlanBoundaryKey] = useState(0);
   const [mapBoundaryKey, setMapBoundaryKey] = useState(0);
   const [savedPlanSnapshot, setSavedPlanSnapshot] = useState(null);
+  const [showCollabPanel, setShowCollabPanel] = useState(false);
+  const [activeCollaboration, setActiveCollaboration] = useState(null);
+  const [activeTripId, setActiveTripId] = useState(null);
+  const collaborationHintsRef = useRef("");
   const AppRoutePage = useMemo(() => resolveAppRoute(), []);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
@@ -225,6 +231,7 @@ export default function App() {
   }
 
   function prependSavedTrip(saved) {
+    if (saved?.id) setActiveTripId(saved.id);
     applySavedTrips([saved, ...savedTripsRef.current.filter(t => t.id !== saved.id)]);
   }
 
@@ -1229,9 +1236,7 @@ export default function App() {
 
   function openPricingPage() {
     setShowUpgradeModal(false);
-    setProfileScrollTo("plans");
-    setView("profile");
-    window.scrollTo(0, 0);
+    window.location.assign("/pricing");
   }
 
   function openTripsUpgrade(options = {}) {
@@ -2522,6 +2527,7 @@ export default function App() {
             regenerateDiffBlock: savedPlanSnapshot
               ? formatRegenerateDiffBlock(savedPlanSnapshot, currentPlanSnapshot)
               : "",
+            collaborationHintsBlock: collaborationHintsRef.current || "",
           },
         ),
         recentTripsContext,
@@ -2714,6 +2720,35 @@ export default function App() {
     if (ok) toast_("Safety trip link copied — send to a trusted contact", true);
     else toast_("Could not copy — open Share and copy the link manually.", { isError: true, duration: 8000 });
   }
+
+  function handleOpenCollaborate() {
+    if (!user) {
+      openAuthModal("signup");
+      return;
+    }
+    setShowCollabPanel(true);
+  }
+
+  function handleRegenerateWithGroup(collaboration) {
+    collaborationHintsRef.current = formatCollaborationHints(collaboration, stops);
+    setShowCollabPanel(false);
+    toast_("Regenerating trip with group input…");
+    void generateTrip().finally(() => {
+      collaborationHintsRef.current = "";
+    });
+  }
+
+  const tripCollabSnapshot = useMemo(() => ({
+    origin,
+    dest,
+    destination: dest,
+    stops,
+    roadStops,
+    tripTips,
+    answers,
+    routeInfo,
+    selectedLodging,
+  }), [origin, dest, stops, roadStops, tripTips, answers, routeInfo, selectedLodging]);
 
   useEffect(() => {
     const shareId = new URLSearchParams(window.location.search).get("share");
@@ -3307,6 +3342,7 @@ export default function App() {
             onLodgingSelect={addLodgingSelection}
             onDismissAlert={dismissTripAlert}
             onShare={handleShareItinerary}
+            onCollaborate={handleOpenCollaborate}
             onToast={toast_}
             onStopSelect={handleResultsStopSelect}
             onGuestSignUp={() => openAuthModal("signup")}
@@ -3571,6 +3607,9 @@ export default function App() {
                       toast={toast_}
                       onLiveSharingChange={setLiveSharingActive}
                       onShareTrip={handleShareItinerary}
+                      onOpenCollaborate={handleOpenCollaborate}
+                      hasCollaboration={Boolean(activeCollaboration)}
+                      tripId={activeTripId}
                     />
                   )}
                 </div>
@@ -3661,6 +3700,21 @@ export default function App() {
           theme={theme}
         />
       )}
+      {showCollabPanel && (
+        <CollaborationPanel
+          open={showCollabPanel}
+          onClose={() => setShowCollabPanel(false)}
+          collaboration={activeCollaboration}
+          onCollaborationChange={setActiveCollaboration}
+          accessToken={session?.access_token || null}
+          user={user}
+          tripSnapshot={tripCollabSnapshot}
+          activeTripId={activeTripId}
+          onRegenerateWithGroup={handleRegenerateWithGroup}
+          onToast={toast_}
+        />
+      )}
+
       {showUpgradeModal && (
         <LazyUpgradeModal
           creditStatus={creditStatus || getGuestCreditStatus()}

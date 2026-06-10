@@ -595,33 +595,6 @@
   box-shadow: 0 0 0 2px rgba(255, 210, 140, 0.95), 0 0 16px rgba(255, 140, 66, 0.4) !important;
 }
 
-.app-nav-bar.transparent.app-nav-bar--night .hamburger-menu-btn.is-active {
-  color: #FFD28C !important;
-  border-color: rgba(255, 210, 140, 0.5) !important;
-  background: rgba(255, 140, 66, 0.14) !important;
-}
-
-.app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn,
-.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn,
-.app-wrap.night .app-nav-bar.nav-app .hamburger-menu-btn {
-  color: #FFD28C !important;
-}
-
-.app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn .hamburger-menu-lines span {
-  background: #1A0D00 !important;
-}
-
-.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span,
-.app-wrap.night .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span {
-  background: currentColor !important;
-}
-
-.app-nav-bar.transparent.app-nav-bar--day .hamburger-menu-btn.is-active {
-  color: #FFD28C !important;
-  border-color: rgba(255, 210, 140, 0.45) !important;
-  background: rgba(255, 140, 66, 0.14) !important;
-}
-
 /* Final cascade — hero typography (nav is outside .hero) */
 html body .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
   background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;

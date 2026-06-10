@@ -3,7 +3,7 @@ import BudgetCard from "../BudgetCard.jsx";
 import { parseTravelerCount } from "../../lib/vehicles.js";
 import { computeBudgetEstimate } from "../../lib/budget.js";
 
-export default function TripSummaryFooter({ answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity = {}, onShare }) {
+export default function TripSummaryFooter({ answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity = {}, onShare, onCollaborate }) {
   const est = useMemo(
     () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
     [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
@@ -25,9 +25,16 @@ export default function TripSummaryFooter({ answers, routeInfo, tripLegs, roadSt
       {perPerson != null && partySize > 1 && (
         <p className="trip-summary-per-person">About ${perPerson.toLocaleString()} per person ({partySize} travelers)</p>
       )}
-      <button type="button" className="btn-generate trip-summary-share-btn" onClick={onShare}>
-        Share My Trip
-      </button>
+      <div className="trip-summary-action-row">
+        <button type="button" className="btn-generate trip-summary-share-btn" onClick={onShare}>
+          Share My Trip
+        </button>
+        {onCollaborate && (
+          <button type="button" className="btn-generate trip-summary-collab-btn" onClick={onCollaborate}>
+            Collaborate
+          </button>
+        )}
+      </div>
     </footer>
   );
 }

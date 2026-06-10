@@ -1,4 +1,5 @@
 /** Google Weather API — conditions for overnight stop cities. */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import {
   fetchGoogleCurrentConditions,
@@ -58,12 +59,13 @@ function mapWeather(city, lat, lng, current, forecast) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (guardProxyRoute(req, res)) return undefined;
 
   const key = getGoogleMapsKey();
   if (!key) return res.status(503).json({ error: "Google Maps API key not configured" });
 
   const { stops = [] } = req.body || {};
-  if (!Array.isArray(stops) || !stops.length) {
+  if (!Array.isArray(stops) || !stops.length || stops.length > 12) {
     return res.status(400).json({ error: "stops array is required" });
   }
 

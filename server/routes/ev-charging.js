@@ -1,4 +1,6 @@
 /** NREL API — enrich Google-found EV/propane stations with charger details only. */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
+
 const NREL_BASE = "https://developer.nrel.gov/api/alt-fuel-stations/v1/nearest.json";
 
 function parseChargerTypes(station) {
@@ -132,9 +134,10 @@ function enrichStation(googleStation, nrelMatch, fuelType) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (guardProxyRoute(req, res)) return undefined;
 
   const { stations = [], fuelType = "ELEC", teslaOnly = false } = req.body;
-  if (!Array.isArray(stations) || !stations.length) {
+  if (!Array.isArray(stations) || !stations.length || stations.length > 30) {
     return res.status(400).json({ error: "Missing stations array from Google Places" });
   }
 

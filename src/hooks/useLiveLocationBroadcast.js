@@ -6,7 +6,7 @@ const UPDATE_INTERVAL_MS = 30_000;
 /**
  * Broadcast owner GPS to api/update-location every 30s while active.
  */
-export function useLiveLocationBroadcast({ active, shareToken, stops, onLocationUpdate, onError }) {
+export function useLiveLocationBroadcast({ active, shareToken, stops, accessToken, onLocationUpdate, onError }) {
   const watchIdRef = useRef(null);
   const intervalRef = useRef(null);
   const positionRef = useRef(null);
@@ -23,6 +23,7 @@ export function useLiveLocationBroadcast({ active, shareToken, stops, onLocation
         longitude: pos.lng,
         speedMps: pos.speedMps,
         stops,
+        accessToken,
       });
       onLocationUpdate?.(result);
     } catch (err) {
@@ -30,7 +31,7 @@ export function useLiveLocationBroadcast({ active, shareToken, stops, onLocation
     } finally {
       sendingRef.current = false;
     }
-  }, [shareToken, stops, onLocationUpdate, onError]);
+  }, [shareToken, stops, accessToken, onLocationUpdate, onError]);
 
   useEffect(() => {
     if (!active || !shareToken) return undefined;

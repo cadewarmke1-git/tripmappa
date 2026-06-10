@@ -1,4 +1,5 @@
 /** POST /api/truck-routing — HERE truck routes with weigh stations along corridor. */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { geocodeAddress } from "../lib/geocode.js";
 import { getHereAccessToken } from "../lib/hereAuth.js";
 import { hasHereCredentials } from "../lib/hereApiKey.js";
@@ -150,6 +151,8 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  if (guardProxyRoute(req, res)) return undefined;
 
   if (!hasHereCredentials()) {
     return res.status(503).json({ error: "HERE API credentials not configured" });

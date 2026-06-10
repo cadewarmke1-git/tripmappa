@@ -24,6 +24,12 @@ import { normalizeTripResponse } from "../lib/tripResponseNormalize.js";
 import { buildGenerationLogRow, logGenerationUsage } from "../lib/generationLogs.js";
 import { logPlanTripDev } from "../lib/apiLog.js";
 import {
+  clampString,
+  PLAN_TRIP_MODELS,
+  PROMPT_FIELD_MAX,
+  resolveAllowedModel,
+} from "../lib/apiSecurity.js";
+import {
   buildCorridorPlacesFallback,
   requireAuthenticatedUser,
   requireTripMappaClient,
@@ -66,7 +72,7 @@ function parseJsonFromLlm(text) {
       }
     }
 
-    console.error("parseJsonFromLlm: raw Claude response:", raw);
+    console.error("parseJsonFromLlm: unparseable response length:", raw?.length ?? 0);
     throw new Error("Could not parse trip JSON from model — response was not valid JSON");
   }
 }
@@ -909,7 +915,32 @@ export default async function handler(req, res) {
 
   recordPlanTripRateLimitHit({ userId: user.id, ip: clientIp });
 
-  const { origin, destination, answers, model = "claude-sonnet-4-6", routeInfo = {}, placesContextPrompt = "", generationHints = "", preferenceContext = "", recentTripsContext = "", recentTripsPreferencesRollup = "", userTravelPatterns = "", answerConfidenceNotes = "", gracefulDegradationNotes = "", fallbackPreferences = null } = req.body;
+  const {
+    origin,
+    destination,
+    answers,
+    model: requestedModel = "claude-sonnet-4-6",
+    routeInfo = {},
+    placesContextPrompt: rawPlacesContextPrompt = "",
+    generationHints: rawGenerationHints = "",
+    preferenceContext: rawPreferenceContext = "",
+    recentTripsContext: rawRecentTripsContext = "",
+    recentTripsPreferencesRollup: rawRecentTripsPreferencesRollup = "",
+    userTravelPatterns: rawUserTravelPatterns = "",
+    answerConfidenceNotes: rawAnswerConfidenceNotes = "",
+    gracefulDegradationNotes: rawGracefulDegradationNotes = "",
+    fallbackPreferences = null,
+  } = req.body;
+
+  const model = resolveAllowedModel(requestedModel, "claude-sonnet-4-6", PLAN_TRIP_MODELS);
+  const placesContextPrompt = clampString(rawPlacesContextPrompt, PROMPT_FIELD_MAX);
+  const generationHints = clampString(rawGenerationHints, PROMPT_FIELD_MAX);
+  const preferenceContext = clampString(rawPreferenceContext, PROMPT_FIELD_MAX);
+  const recentTripsContext = clampString(rawRecentTripsContext, PROMPT_FIELD_MAX);
+  const recentTripsPreferencesRollup = clampString(rawRecentTripsPreferencesRollup, PROMPT_FIELD_MAX);
+  const userTravelPatterns = clampString(rawUserTravelPatterns, PROMPT_FIELD_MAX);
+  const answerConfidenceNotes = clampString(rawAnswerConfidenceNotes, PROMPT_FIELD_MAX);
+  const gracefulDegradationNotes = clampString(rawGracefulDegradationNotes, PROMPT_FIELD_MAX);
 
   const mergedAnswers = fallbackPreferences
     ? { ...fallbackPreferences, ...(answers || {}) }

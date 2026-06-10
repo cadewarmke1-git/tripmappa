@@ -13,7 +13,7 @@ describe("formatCreditsDisplay", () => {
       tier: TIERS.VOYAGER,
       remaining: 5,
       limit: 20,
-      monthlyUsed: 15,
+      monthlyUsed: 17,
       billingPeriod: "monthly",
     });
     expect(label).toBe("5 of 20 remaining this month");

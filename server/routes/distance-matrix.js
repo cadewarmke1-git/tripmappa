@@ -1,10 +1,13 @@
 import { getGoogleMapsKey } from "../lib/googleKey.js";
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 
 /** POST /api/distance-matrix — ETA from coordinates to one or more destinations. */
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  if (guardProxyRoute(req, res)) return undefined;
 
   const key = getGoogleMapsKey();
   if (!key) {
@@ -14,6 +17,9 @@ export default async function handler(req, res) {
   const { latitude, longitude, destinations = [] } = req.body || {};
   if (latitude == null || longitude == null || !destinations.length) {
     return res.status(400).json({ error: "Missing latitude, longitude, or destinations" });
+  }
+  if (!Array.isArray(destinations) || destinations.length > 10) {
+    return res.status(400).json({ error: "destinations must be an array of at most 10 items" });
   }
 
   const origins = `${latitude},${longitude}`;

@@ -25,7 +25,6 @@
     background: transparent !important;
   }
 
-  html[data-layout="mobile"] .hamburger-menu-btn,
   html[data-layout="mobile"] .profile-card-trigger,
   html[data-layout="mobile"] .app-nav-bar .nav-btn {
     min-width: 44px;
@@ -137,6 +136,36 @@
     justify-self: center;
   }
   html[data-layout="mobile"] .hero-route-to { grid-row: 3 !important; }
+
+  html[data-layout="mobile"] .hero-route-cell {
+    min-height: 44px;
+    gap: 4px;
+  }
+
+  html[data-layout="mobile"] .hero-route-cell .hero-input-box,
+  html[data-layout="mobile"] .hero-route-cell .hero-input-box > div {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-layout="mobile"] .hero-route-bar .hero-input,
+  html[data-layout="mobile"] .hero-search .hero-input {
+    min-height: 44px;
+    padding: 10px 0;
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  html[data-layout="mobile"] .hero-route-labels .hero-input-label,
+  html[data-layout="mobile"] .hero-input-label {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  html[data-layout="mobile"] .hero-input-error {
+    font-size: 12px;
+  }
 
   html[data-layout="mobile"] .hero-go-btn {
     width: 100%;
@@ -254,7 +283,7 @@
   }
 
   html[data-layout="mobile"] .trip-overview-hero-label {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 0.04em;
   }
 
@@ -343,17 +372,331 @@
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 430px) {
   html[data-layout="mobile"] .trip-overview-hero-stats {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 6px;
   }
 
   html[data-layout="mobile"] .trip-overview-hero-val {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   html[data-layout="mobile"] .trip-overview-hero-label {
-    font-size: 8px;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+  }
+}
+
+/* ── Mobile audit: layout, tap targets, typography (375–428px) ── */
+@media (max-width: 768px) {
+  html[data-layout="mobile"] .pac-container {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    min-width: 0 !important;
+  }
+
+  html[data-layout="mobile"] .plan-flow-header-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  html[data-layout="mobile"] .plan-flow-header-bar-main {
+    overflow: hidden;
+  }
+
+  html[data-layout="mobile"] .plan-flow-header-bar .question-progress-compact:has(.question-progress-subtitle) .question-progress-phases {
+    display: none;
+  }
+
+  html[data-layout="mobile"] .plan-flow-header-bar .question-progress-subtitle {
+    font-size: 12px;
+    margin-bottom: 4px;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .chat-wrap-plan-flow .question-progress-compact .question-progress-phases {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 4px 8px;
+  }
+
+  html[data-layout="mobile"] .chat-wrap-plan-flow .question-progress-compact .question-progress-phase,
+  html[data-layout="mobile"] .plan-flow-header-bar .question-progress-compact .question-progress-phase {
+    font-size: 12px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .plan-flow-credits,
+  html[data-layout="mobile"] .plan-flow-header-bar-credits {
+    font-size: 12px;
+    padding: 6px 10px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .chat-wrap-plan-flow .scenic-route-note,
+  html[data-layout="mobile"] .chat-wrap-plan-flow .question-choices-compact .vehicle-group-label {
+    font-size: 12px;
+  }
+
+  html[data-layout="mobile"] .summary-section-count {
+    font-size: 12px;
+  }
+
+  html[data-layout="mobile"] .plan-flow-guest-hint {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  html[data-layout="mobile"] .plan-flow-guest-hint-text {
+    flex: 1 1 100%;
+    font-size: 13px;
+  }
+
+  html[data-layout="mobile"] .plan-flow-guest-hint-btn {
+    width: 100%;
+  }
+
+  html[data-layout="mobile"] .profile-card-dropdown {
+    width: min(280px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    right: 0;
+  }
+
+  html[data-layout="mobile"] .profile-card-nav-link {
+    min-height: 44px;
+    padding: 10px 8px;
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-layout="mobile"] .profile-card-photo-btn,
+  html[data-layout="mobile"] .profile-card-signout {
+    min-height: 44px;
+  }
+
+  html[data-layout="mobile"] .modal-overlay {
+    padding: 12px;
+    align-items: center;
+  }
+
+  html[data-layout="mobile"] .auth-modal,
+  html[data-layout="mobile"] .upgrade-modal {
+    max-width: min(420px, calc(100vw - 24px));
+    width: 100%;
+    padding: 28px 20px 24px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html[data-layout="mobile"] .legal-page-header {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  html[data-layout="mobile"] .legal-page-nav {
+    width: 100%;
+    gap: 16px;
+    font-size: 13px;
+  }
+
+  html[data-layout="mobile"] .legal-page-nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  html[data-layout="mobile"] .legal-page-main {
+    padding: 24px 16px 48px;
+  }
+
+  html[data-layout="mobile"] .legal-page-title {
+    font-size: 24px;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .legal-page-body,
+  html[data-layout="mobile"] .legal-page-intro {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Legal pages — viewport-based (no data-layout gate) */
+@media (max-width: 768px) {
+  .legal-page-header {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .legal-page-home {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .legal-page-nav {
+    width: 100%;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .legal-page-nav a {
+    min-height: 44px;
+    padding: 10px 4px;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .legal-page-main {
+    padding: 24px 16px 48px;
+  }
+
+  .legal-page-title {
+    font-size: 24px;
+    overflow-wrap: anywhere;
+  }
+
+  .legal-page-body,
+  .legal-page-intro {
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .trip-results-back,
+  html[data-layout="mobile"] .trip-results-map-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  html[data-layout="mobile"] .trip-results-topbar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  html[data-layout="mobile"] .trip-results-topbar-title {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-layout="mobile"] .map-recenter-btn,
+  html[data-layout="mobile"] .map-zoom-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  html[data-layout="mobile"] .route-info-bar .rib-label {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  html[data-layout="mobile"] .route-info-bar .rib-val {
+    font-size: 13px;
+  }
+
+  html[data-layout="mobile"] .map-route-pill-label,
+  html[data-layout="mobile"] .map-route-pill-sep {
+    font-size: 12px;
+  }
+
+  html[data-layout="mobile"] .profile-stat-label {
+    font-size: 12px;
+  }
+
+  html[data-layout="mobile"] .profile-back-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  html[data-layout="mobile"] .generation-stream-overlay {
+    padding: 20px 16px 28px;
+  }
+
+  html[data-layout="mobile"] .generation-stream-route {
+    max-width: 100%;
+    padding: 0 4px;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .float-card--plan-flow .float-card-header--plan-flow {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  html[data-layout="mobile"] .plan-flow-start-over {
+    padding: 10px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  html[data-layout="mobile"] .app-nav-bar-actions {
+    gap: 6px;
+  }
+
+  html[data-layout="mobile"] .app-nav-bar .nav-btn {
+    padding: 10px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  html[data-layout="mobile"] .hero-footer {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+
+  html[data-layout="mobile"] .hero-footer-nav a {
+    min-height: 44px;
+    padding: 10px 4px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  html[data-layout="mobile"] .hero-sky-test-dial-range {
+    min-height: 44px;
+    margin: 4px 0;
+  }
+
+  html[data-layout="mobile"] .legal-page-home {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  html[data-layout="mobile"] .summary-row,
+  html[data-layout="mobile"] .summary-section-toggle {
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .upgrade-modal-price {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+    overflow-wrap: anywhere;
+  }
+
+  html[data-layout="mobile"] .auth-modal-headline {
+    font-size: clamp(1.125rem, 4.5vw, 1.375rem);
+  }
+
+  html[data-layout="mobile"] .auth-social-btn,
+  html[data-layout="mobile"] .auth-modal-submit,
+  html[data-layout="mobile"] .auth-modal-alt-btn {
+    min-height: 44px;
   }
 }

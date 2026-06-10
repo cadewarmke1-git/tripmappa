@@ -121,7 +121,9 @@ export function inferFuelType(vehicle, preferences = [], answers = null) {
   if (a?.fuel) return a.fuel;
   if (a?.fuel_type) {
     const ft = a.fuel_type;
-    if (ft === "Electric" || ft === "Electric — Tesla Superchargers only") return "Electric (EV)";
+    if (ft === "Electric" || ft === "Electric — Tesla Superchargers" || ft === "Electric — Tesla Superchargers only") {
+      return "Electric (EV)";
+    }
     if (ft === "Hybrid") return "Hybrid";
     if (ft === "Diesel") return "Diesel";
     if (ft === "Propane") return "Propane";

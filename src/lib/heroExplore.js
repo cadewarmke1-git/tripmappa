@@ -1,9 +1,11 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+
 /** Client helpers for hero explore-range isoline and place discovery. */
 
 export async function fetchIsoline(originLat, originLng, driveTimeSeconds, { signal } = {}) {
   const res = await fetch("/api/isoline", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ originLat, originLng, driveTimeSeconds }),
     signal,
   });

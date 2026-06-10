@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   TIERS,
+  TIER_FEATURE_COMPARISON,
   canUseGroceryDelivery,
+  formatTierPriceBlock,
   getAvatarTierBadge,
   getTierAnnualMonthlyEquivalent,
   getTierLabel,
@@ -48,6 +50,23 @@ describe("tiers", () => {
     expect(getTierPriceLabel(TIERS.VOYAGER, "year")).toBe("$39.99/yr");
     expect(getTierAnnualMonthlyEquivalent(TIERS.TRAILBLAZER)).toBe("6.67");
     expect(getTierLabel(TIERS.FOUNDER)).toBe("Founder");
+  });
+
+  it("formats annual prices with monthly equivalent", () => {
+    const voyagerAnnual = formatTierPriceBlock(TIERS.VOYAGER, "year");
+    expect(voyagerAnnual.primary).toBe("$3.33/mo");
+    expect(voyagerAnnual.billedAnnually).toBe("$39.99/yr");
+    expect(voyagerAnnual.showSavings).toBe(true);
+
+    const trailblazerMonthly = formatTierPriceBlock(TIERS.TRAILBLAZER, "month");
+    expect(trailblazerMonthly.primary).toBe("$9.99/mo");
+    expect(trailblazerMonthly.billedAnnually).toBeNull();
+  });
+
+  it("exposes tier feature comparison rows", () => {
+    const gens = TIER_FEATURE_COMPARISON.find(r => r.id === "generations");
+    expect(gens.voyager).toBe("20 / month");
+    expect(gens.trailblazer).toBe("100 / month");
   });
 
   it("returns avatar tier badges for paid tiers", () => {

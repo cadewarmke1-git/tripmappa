@@ -1,51 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
+import BillingToggle from "./BillingToggle.jsx";
 import {
   TRAILBLAZER_BENEFITS,
   VOYAGER_BENEFITS,
   TIERS,
-  getTierAnnualMonthlyEquivalent,
-  getTierPriceLabel,
+  TIER_FEATURE_COMPARISON,
+  formatTierPriceBlock,
   normalizeTier,
 } from "../lib/tiers.js";
 import { formatResetDate } from "../lib/creditsDisplay.js";
 import { createCheckoutSession, createVoyagerCheckoutSession } from "../lib/stripeApi.js";
-
-function BillingToggle({ value, onChange }) {
-  return (
-    <div className="billing-toggle" role="group" aria-label="Billing period">
-      <button
-        type="button"
-        className={`billing-toggle-btn${value === "month" ? " is-active" : ""}`}
-        onClick={() => onChange("month")}
-      >
-        Monthly
-      </button>
-      <button
-        type="button"
-        className={`billing-toggle-btn${value === "year" ? " is-active" : ""}`}
-        onClick={() => onChange("year")}
-      >
-        Annual
-      </button>
-    </div>
-  );
-}
-
-function planPriceDisplay(tier, billingInterval) {
-  if (billingInterval === "year") {
-    const monthlyEq = getTierAnnualMonthlyEquivalent(tier);
-    return {
-      primary: monthlyEq ? `$${monthlyEq}/mo` : getTierPriceLabel(tier, "year"),
-      secondary: getTierPriceLabel(tier, "year"),
-      showSavings: true,
-    };
-  }
-  return {
-    primary: getTierPriceLabel(tier),
-    secondary: null,
-    showSavings: false,
-  };
-}
 
 export default function UpgradeModal({
   onClose,
@@ -84,13 +48,13 @@ export default function UpgradeModal({
       id: TIERS.VOYAGER,
       label: "Voyager",
       benefits: VOYAGER_BENEFITS,
-      ...planPriceDisplay(TIERS.VOYAGER, billingInterval),
+      ...formatTierPriceBlock(TIERS.VOYAGER, billingInterval),
     },
     {
       id: TIERS.TRAILBLAZER,
       label: "Trailblazer",
       benefits: TRAILBLAZER_BENEFITS,
-      ...planPriceDisplay(TIERS.TRAILBLAZER, billingInterval),
+      ...formatTierPriceBlock(TIERS.TRAILBLAZER, billingInterval),
     },
   ], [billingInterval]);
 
@@ -112,18 +76,19 @@ export default function UpgradeModal({
   const lead = isMonthlyLimit
     ? `Your generation limit resets on ${formatResetDate(effectiveResetDate)}. Upgrade for more generations before then.`
     : isTrialEnded
-      ? "Choose a plan to keep unlimited trip generations and premium features."
+      ? "Choose a plan to keep generating trips and premium features."
       : isGrocery
         ? "Grocery delivery to your hotel is included with Trailblazer."
         : isGuest
-          ? "Create a free account for 3 Trip Generations total, or choose a paid plan below."
-          : "You've used all 3 Trip Generations. Choose Voyager or Trailblazer to keep planning.";
+          ? "Create a free Wanderer account (3 trips total), or choose a paid plan below."
+          : "You've used all 3 Wanderer generations. Upgrade to Voyager or Trailblazer to keep planning.";
 
   const monthlyLimitCta = tier === TIERS.VOYAGER
     ? "Upgrade to Trailblazer"
     : "Upgrade to Voyager or Trailblazer";
 
   const selected = upgradePlans.find(p => p.id === selectedPlan) || upgradePlans[1];
+  const selectedPrice = formatTierPriceBlock(selectedPlan, billingInterval);
 
   async function handleCheckout() {
     if (!user?.id || !accessToken) {
@@ -165,9 +130,9 @@ export default function UpgradeModal({
     void handleCheckout();
   }
 
-  const checkoutLabel = billingInterval === "year"
-    ? `${selected.primary} (${selected.secondary})`
-    : selected.primary;
+  const checkoutLabel = billingInterval === "year" && selectedPrice.billedAnnually
+    ? `${selectedPrice.primary} billed annually`
+    : selectedPrice.primary;
 
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
@@ -176,7 +141,6 @@ export default function UpgradeModal({
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-labelledby="upgrade-title"
-        style={{ maxWidth: 480 }}
       >
         <button type="button" className="modal-close" onClick={onClose} aria-label="Close">×</button>
         {!isMonthlyLimit && <div className="upgrade-modal-badge">Upgrade your plan</div>}
@@ -189,7 +153,7 @@ export default function UpgradeModal({
             <div
               role="radiogroup"
               aria-label="Choose a subscription plan"
-              style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}
+              className="upgrade-plan-cards"
             >
               {upgradePlans.map(plan => {
                 const isSelected = selectedPlan === plan.id;
@@ -208,17 +172,20 @@ export default function UpgradeModal({
                       onChange={() => {
                         if (!isDisabled) setSelectedPlan(plan.id);
                       }}
-                      style={{ marginRight: 8 }}
+                      className="upgrade-plan-radio"
                     />
-                    <span style={{ fontWeight: 700, marginRight: 8 }}>{plan.label}</span>
-                    <span className="upgrade-modal-price" style={{ display: "inline", margin: 0 }}>
-                      {plan.primary}
-                    </span>
-                    {plan.showSavings && (
-                      <span className="billing-savings-badge">2 months free</span>
-                    )}
-                    {plan.secondary && (
-                      <span className="upgrade-plan-billed">{plan.secondary} billed annually</span>
+                    <div className="upgrade-plan-card-head">
+                      <span className="upgrade-plan-card-name">{plan.label}</span>
+                      <span className="upgrade-modal-price">{plan.primary}</span>
+                      {plan.showSavings && (
+                        <span className="billing-savings-badge">2 months free</span>
+                      )}
+                    </div>
+                    {plan.billedAnnually && (
+                      <span className="upgrade-plan-billed">
+                        {plan.primary} billed annually
+                        <span className="upgrade-plan-billed-total"> ({plan.billedAnnually}/yr)</span>
+                      </span>
                     )}
                     <ul className="upgrade-modal-benefits upgrade-plan-benefits">
                       {plan.benefits.map(item => (
@@ -226,7 +193,7 @@ export default function UpgradeModal({
                       ))}
                     </ul>
                     {isDisabled && (
-                      <p className="upgrade-modal-lead" style={{ margin: "8px 0 0", fontSize: 12 }}>
+                      <p className="upgrade-plan-disabled-note">
                         Grocery delivery requires Trailblazer.
                       </p>
                     )}
@@ -234,6 +201,25 @@ export default function UpgradeModal({
                 );
               })}
             </div>
+
+            <details className="upgrade-compare-details">
+              <summary>Compare all plan features</summary>
+              <ul className="upgrade-compare-list">
+                {TIER_FEATURE_COMPARISON.slice(0, 6).map(row => (
+                  <li key={row.id}>
+                    <strong>{row.label}:</strong>{" "}
+                    Voyager {typeof row.voyager === "boolean" ? (row.voyager ? "✓" : "—") : row.voyager}
+                    {" · "}
+                    Trailblazer {typeof row.trailblazer === "boolean" ? (row.trailblazer ? "✓" : "—") : row.trailblazer}
+                  </li>
+                ))}
+              </ul>
+              {onOpenPricing && (
+                <button type="button" className="upgrade-modal-secondary" onClick={onOpenPricing}>
+                  View full pricing & Founder offer
+                </button>
+              )}
+            </details>
           </>
         )}
 
@@ -241,7 +227,7 @@ export default function UpgradeModal({
           {isMonthlyLimit ? (
             <button
               type="button"
-              className="btn-generate upgrade-modal-cta"
+              className="btn-generate upgrade-modal-cta pricing-cta pricing-cta--gold"
               onClick={handleMonthlyLimitPrimary}
               disabled={checkoutLoading}
             >
@@ -250,7 +236,7 @@ export default function UpgradeModal({
           ) : (
             <button
               type="button"
-              className="btn-generate upgrade-modal-cta"
+              className="btn-generate upgrade-modal-cta pricing-cta pricing-cta--gold"
               onClick={handleCheckout}
               disabled={checkoutLoading}
             >
@@ -264,7 +250,7 @@ export default function UpgradeModal({
           )}
           {isGuest && onSignUp && !isMonthlyLimit && (
             <button type="button" className="upgrade-modal-secondary" onClick={onSignUp}>
-              Sign up free for 3 Trip Generations
+              Sign up free — 3 Wanderer trips
             </button>
           )}
           <button type="button" className="upgrade-modal-dismiss" onClick={onClose}>

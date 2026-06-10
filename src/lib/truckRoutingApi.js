@@ -1,4 +1,5 @@
 /** Client helpers for HERE truck routing API. */
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 import { getEffectiveVehicle, isTruckVehicle } from "./vehicles.js";
 
 function parseHeightFeetFromAnswers(answers) {
@@ -41,7 +42,7 @@ export async function fetchTruckRoute(origin, destination, answers = {}, { signa
   const payload = buildTruckRoutingPayload(origin, destination, answers);
   const res = await fetch("/api/truck-routing", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
     signal,
   });

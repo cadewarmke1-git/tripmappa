@@ -1,4 +1,5 @@
 /** Optimize multi-stop route order via Google Directions API (server-side). */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import { geocodeAddress } from "../lib/geocode.js";
 
@@ -19,6 +20,7 @@ async function resolveLocation(value) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (guardProxyRoute(req, res)) return undefined;
 
   const key = getGoogleMapsKey();
   if (!key) return res.status(503).json({ error: "Google Maps API key not configured" });

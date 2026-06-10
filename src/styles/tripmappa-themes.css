@@ -200,7 +200,6 @@ body.theme-day,
   --color-tab-active-text: #FFFFFF;
   --color-tab-inactive-bg: rgba(160, 64, 16, 0.1);
   --color-tab-inactive-text: #3A1A08;
-  --color-hamburger: #FFD28C;
   --color-map-land: #F0EDE8;
   --color-map-highway: #E06820;
   --color-map-highway-stroke: #5A2A10;
@@ -378,11 +377,6 @@ body.theme-day,
   background: var(--color-tab-active-bg) !important;
   border-color: var(--color-tab-active-bg) !important;
   color: var(--color-tab-active-text) !important;
-}
-.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn,
-.app-wrap.day .app-nav-bar.nav-app .hamburger-menu-btn .hamburger-menu-lines span {
-  color: var(--color-hamburger) !important;
-  background: var(--color-hamburger) !important;
 }
 .app-wrap.day .brand-wordmark {
   background: var(--color-wordmark-gradient) !important;

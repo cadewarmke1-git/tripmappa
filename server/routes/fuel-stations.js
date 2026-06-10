@@ -1,4 +1,5 @@
 /** Fuel price enrichment for Google-found gas stations (EIA regional averages). */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 
 const EIA_DATA_URL = "https://api.eia.gov/v2/petroleum/pri/gnd/data";
 const EIA_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -142,9 +143,10 @@ function enrichStation(googleStation, mode, eia) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (guardProxyRoute(req, res)) return undefined;
 
   const { stations = [], mode = "gas" } = req.body;
-  if (!Array.isArray(stations) || !stations.length) {
+  if (!Array.isArray(stations) || !stations.length || stations.length > 30) {
     return res.status(400).json({ error: "Missing stations array from Google Places" });
   }
 

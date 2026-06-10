@@ -1,25 +1,17 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 import { supabase } from "./supabaseClient.js";
 
-/** Fetch an active live trip row by share token (anon-safe via RLS). */
-export async function fetchLiveTripByToken(shareToken) {
-  if (!supabase) throw new Error("Supabase is not configured");
-  const { data: active, error: activeErr } = await supabase
-    .from("live_trips")
-    .select("*")
-    .eq("share_token", shareToken)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (activeErr) throw activeErr;
-  if (active) return active;
+const POLL_INTERVAL_MS = 5000;
 
-  const { data: complete, error: completeErr } = await supabase
-    .from("live_trips")
-    .select("*")
-    .eq("share_token", shareToken)
-    .not("arrived_at", "is", null)
-    .maybeSingle();
-  if (completeErr) throw completeErr;
-  return complete;
+/** Fetch an active live trip row by share token via server API (no table enumeration). */
+export async function fetchLiveTripByToken(shareToken) {
+  const res = await fetch(`/api/live-trip?token=${encodeURIComponent(shareToken)}`, {
+    headers: tripMappaApiHeaders(),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Could not load live trip");
+  const data = await res.json();
+  return data.liveTrip || null;
 }
 
 /** Stop sharing — owner only (RLS). */
@@ -33,28 +25,28 @@ export async function stopLiveShare(shareToken, userId) {
   if (error) throw error;
 }
 
-/** Subscribe to live_trips postgres changes for a share token. */
+/** Poll live trip updates by share token (replaces broad anon realtime subscriptions). */
 export function subscribeLiveTrip(shareToken, onUpdate) {
-  if (!supabase) return () => {};
+  if (!shareToken) return () => {};
 
-  const channel = supabase
-    .channel(`live-trip-${shareToken}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "live_trips",
-        filter: `share_token=eq.${shareToken}`,
-      },
-      payload => {
-        if (payload.new) onUpdate(payload.new);
-      },
-    )
-    .subscribe();
+  let cancelled = false;
+
+  async function poll() {
+    if (cancelled) return;
+    try {
+      const row = await fetchLiveTripByToken(shareToken);
+      if (row && !cancelled) onUpdate(row);
+    } catch {
+      // ignore transient poll errors
+    }
+  }
+
+  poll();
+  const intervalId = window.setInterval(poll, POLL_INTERVAL_MS);
 
   return () => {
-    supabase.removeChannel(channel);
+    cancelled = true;
+    window.clearInterval(intervalId);
   };
 }
 

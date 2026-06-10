@@ -1,7 +1,9 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+
 export async function sendSmsOtp(phone) {
   const res = await fetch("/api/send-sms-otp", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ phone }),
   });
   const data = await res.json().catch(() => ({}));
@@ -12,7 +14,7 @@ export async function sendSmsOtp(phone) {
 export async function verifySmsOtp(phone, code) {
   const res = await fetch("/api/verify-sms-otp", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ phone, code }),
   });
   const data = await res.json().catch(() => ({}));

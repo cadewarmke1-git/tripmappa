@@ -12,6 +12,7 @@ import { resolveApiRoute } from "./resolveApiRoute.js";
 const ROUTES = {
   "account-onboarding": () => import("../server/routes/account-onboarding.js"),
   "client-error": () => import("../server/routes/client-error.js"),
+  "collaboration": () => import("../server/routes/collaboration.js"),
   "cron/trial-jobs": () => import("../server/routes/cron/trial-jobs.js"),
   "claude": () => import("../server/routes/claude.js"),
   "distance-matrix": () => import("../server/routes/distance-matrix.js"),
@@ -24,6 +25,7 @@ const ROUTES = {
   "health": () => import("../server/routes/health.js"),
   "isoline": () => import("../server/routes/isoline.js"),
   "join-convoy": () => import("../server/routes/join-convoy.js"),
+  "live-trip": () => import("../server/routes/live-trip.js"),
   "plan-trip": () => import("../server/routes/plan-trip.js"),
   "plan-preferences": () => import("../server/routes/plan-preferences.js"),
   "register-follower-phone": () => import("../server/routes/register-follower-phone.js"),
@@ -124,7 +126,7 @@ export default async function handler(req, res) {
     });
     console.error(`API router error (/api/${route}):`, err);
     if (!res.headersSent) {
-      return res.status(500).json({ error: err.message || "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
     return undefined;
   }

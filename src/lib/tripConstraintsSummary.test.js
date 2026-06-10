@@ -186,4 +186,14 @@ describe("tripConstraintsSummary", () => {
     });
     expect(hints).toContain("Schedule: Fully flexible — no time restrictions on driving or stops");
   });
+
+  it("includes collaboration hints block in generation hints", () => {
+    const hints = formatGenerationHints(
+      { vehicle: "Car", dietary: [] },
+      null,
+      { collaborationHintsBlock: "=== GROUP COLLABORATION INPUT ===\n- Amy: diet: Vegan" },
+    );
+    expect(hints).toContain("GROUP COLLABORATION INPUT");
+    expect(hints).toContain("Amy: diet: Vegan");
+  });
 });

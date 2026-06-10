@@ -37,9 +37,9 @@ import { SCHEDULE_CHOICES, needsScheduleHoursDetail, getScheduleChoicesForContex
 export { MULTI_VEHICLE_TRIP };
 
 export const MARINE_SKIP_MESSAGE =
-  "Marine routing is approximate — Google Maps does not support water navigation. Showing departure and arrival port recommendations only.";
+  "We can't chart water routes like a road trip — we'll focus on your departure port, arrival port, and things to do when you get there.";
 export const PLANE_SKIP_MESSAGE =
-  "Showing airport transport, layover recommendations, and destination activity suggestions only.";
+  "Your airline handles the route — we'll help with airport transfers, layovers, and ideas at your destination.";
 export const ROUTE_PENDING_UNLOCK_MS = 8000;
 
 export const SUMMARY_EDIT_QUESTION_BY_ROW = {
@@ -128,7 +128,8 @@ const DAY_TRIP_MILES = 150;
 const ROUTE_CONTEXT_PENDING_QUESTION = {
   id: "route_context_pending",
   type: "loading",
-  ask: "Calculating drive time for your route…",
+  ask: "Still calculating your drive time…",
+  hint: "This usually takes just a few seconds.",
   pendingRoute: true,
 };
 
@@ -151,8 +152,8 @@ function formatRouteSnapshot(context) {
 
 const ROUTE_LOADING_QUESTION = {
   id: "_route_loading",
-  ask: "Calculating your route…",
-  hint: "Hang tight — we'll ask about overnight stops once we know the drive time.",
+  ask: "Still calculating your drive time…",
+  hint: "Hang tight — we'll ask about overnight stops once we know how long the drive is.",
   type: "loading",
 };
 
@@ -219,16 +220,16 @@ export function formatFlowAnswer(question, answer) {
 
 const FUEL_TYPE_QUESTION = {
   id: "fuel_type",
-  ask: "What kind of fuel does your vehicle take?",
-  hint: "Used to space fuel and charging stops along your route.",
+  ask: "What does your vehicle run on?",
+  hint: "We'll place fuel and charging stops at sensible intervals.",
   type: "choice",
   choices: FUEL_TYPE_CHOICES,
 };
 
 const TOWING_QUESTION = {
   id: "towing",
-  ask: "Are you towing anything?",
-  hint: "Affects route restrictions and stop spacing.",
+  ask: "Are you towing a trailer or boat?",
+  hint: "Helps us avoid tight turns and find pull-through parking.",
   type: "choice",
   choices: TOWING_CHOICES,
 };
@@ -249,15 +250,15 @@ function buildTowingQuestion(answers) {
 const TRAVELERS_QUESTION = {
   id: "travelers",
   ask: "Who's coming along?",
-  hint: "Helps us size restaurants, lodging, and rest stops.",
+  hint: "Helps us pick the right-sized restaurants, rooms, and rest stops.",
   type: "travelers",
   choices: ["1", "2", "3 to 5", "6 or more"],
 };
 
 const PARTY_COMPOSITION_QUESTION = {
   id: "party_composition",
-  ask: "How many are adults and how many are children?",
-  hint: "Helps us size lodging and family-friendly stops.",
+  ask: "How many adults and how many kids?",
+  hint: "We'll suggest family-friendly stops and room layouts that fit.",
   type: "party_composition",
   adultRange: [1, 8],
   childRange: [0, 6],
@@ -265,10 +266,10 @@ const PARTY_COMPOSITION_QUESTION = {
 
 const TRIP_NIGHTS_QUESTION = {
   id: "trip_nights",
-  ask: "How many nights are you planning to stop?",
-  hint: "We'll spread overnight stops evenly across your route.",
+  ask: "How many nights do you want to stop along the way?",
+  hint: "We'll spread your overnight stops evenly on the route.",
   type: "choice",
-  choices: ["1 night", "2 nights", "3 nights", "4+ nights", "Not sure"],
+  choices: ["1 night", "2 nights", "3 nights", "4+ nights", "Not sure yet"],
 };
 
 function needsPartyCompositionQuestion(answers) {
@@ -284,8 +285,13 @@ function needsTripNightsQuestion(answers, context) {
   if (isDayTripByDistance(context)) return false;
   const effective = getEffectiveVehicle(answers);
   if (isRvVehicle(effective) || isTruckVehicle(effective)) return false;
-  if (!isAnswered("lodging", answers)) return false;
+  if (!needsPersonalOvernightBranch(answers)) return false;
   return !isAnswered("trip_nights", answers);
+}
+
+function needsPersonalPreferencesQuestion(answers, context) {
+  if (isDayTripByDistance(context)) return false;
+  return !isAnswered("preferences", answers);
 }
 
 function needsRvTripNightsQuestion(answers, context) {
@@ -298,13 +304,13 @@ function needsRvTripNightsQuestion(answers, context) {
 function buildOvernightPreferenceQuestion(context) {
   const snapshot = formatRouteSnapshot(context);
   const ask = snapshot
-    ? `This drive is about ${snapshot}. How do you want to handle it?`
-    : "This route is long enough for multiple days. How do you want to handle it?";
+    ? `This drive is about ${snapshot}. How do you want to tackle it?`
+    : "This looks like a multi-day drive. How do you want to tackle it?";
   return {
     id: "overnight_preference",
     ask,
     routeSnapshot: snapshot,
-    hint: "You can always edit this later before generating.",
+    hint: "You can change this anytime before generating your trip.",
     mediumTripHint: isMediumLengthTrip(context)
       ? "Most people complete this drive in one day, but stopping overnight is always an option."
       : null,
@@ -313,12 +319,12 @@ function buildOvernightPreferenceQuestion(context) {
       {
         value: OVERNIGHT_PREFERENCE_OVERNIGHT,
         label: "Stop overnight along the way",
-        description: "We'll suggest hotels and split the drive into days",
+        description: "We'll suggest places to stay and break the drive into days",
       },
       {
         value: OVERNIGHT_PREFERENCE_CONTINUOUS,
         label: "Drive straight through",
-        description: "No lodging — fuel and rest stops only",
+        description: "No hotels — just fuel and rest stops",
       },
     ],
   };
@@ -338,9 +344,9 @@ function buildLodgingQuestion(context) {
   return {
     id: "lodging",
     ask: snapshot
-      ? `Where would you like to stay along this route? (${snapshot})`
-      : "Where would you like to stay along this route?",
-    hint: "Optional: pick a hotel loyalty program below before continuing.",
+      ? `What kind of overnight stays work for you? (${snapshot})`
+      : "What kind of overnight stays work for you?",
+    hint: "Optional — add a hotel loyalty program below if you have one.",
     type: "lodging_stay",
     choices: LODGING_CHOICE_OPTIONS,
     loyaltyChoices: LOYALTY_CHOICES,
@@ -349,8 +355,8 @@ function buildLodgingQuestion(context) {
 
 const FOOD_ALLERGIES_QUESTION = {
   id: "food_allergies",
-  ask: "Which food allergies should we plan around?",
-  hint: "We'll filter restaurant suggestions on your route.",
+  ask: "Any food allergies we should watch for?",
+  hint: "We'll steer restaurant picks away from these ingredients.",
   type: "text",
   placeholder: "e.g. peanuts, shellfish, dairy…",
 };
@@ -397,8 +403,8 @@ export function buildScheduleDriveHoursQuestion(answers = {}) {
 
 const KIDS_AGES_QUESTION = {
   id: "kids_ages",
-  ask: "What ages are the children traveling with you?",
-  hint: "Helps us suggest age-appropriate stops and rest break spacing.",
+  ask: "What ages are the kids traveling with you?",
+  hint: "Helps us pick playgrounds, rest breaks, and kid-friendly stops.",
   type: "multiselect",
   choices: KIDS_AGE_CHOICES,
 };
@@ -406,8 +412,8 @@ const KIDS_AGES_QUESTION = {
 function buildTruckLodgingQuestion() {
   return {
     id: "lodging",
-    ask: "What tier of motel or hotel do you prefer for overnight stops?",
-    hint: "Truck-accessible lodging near major stops along your route.",
+    ask: "What kind of motel or hotel works for your overnight stops?",
+    hint: "We'll stick to truck-accessible spots near major stops.",
     type: "choice",
     choices: LODGING_CHOICE_OPTIONS.map(o => o.value),
   };
@@ -416,7 +422,7 @@ function buildTruckLodgingQuestion() {
 const TRIP_BUDGET_QUESTION = {
   id: "trip_budget",
   ask: "What's your overall trip budget?",
-  hint: "Helps filter restaurants and activity suggestions.",
+  hint: "Helps us keep restaurants and activities in your range.",
   type: "choice",
   choices: TRIP_BUDGET_CHOICES,
 };
@@ -426,9 +432,9 @@ function buildPersonalPreferencesQuestion(context) {
   return {
     id: "preferences",
     ask: snapshot
-      ? `Anything we should avoid or prioritize on this drive? (${snapshot})`
-      : "Anything we should avoid or prioritize on your route?",
-    hint: "Scenic roads, tolls, pet-friendly stops, and more.",
+      ? `Any route preferences for this drive? (${snapshot})`
+      : "Any route preferences for this drive?",
+    hint: "Scenic roads, tolls, pets, dining style — pick anything that matters.",
     type: "multiselect",
     choices: ["Scenic route", "Avoid tolls", "Pet friendly", "Safe, well-lit stops only", "Fast food only", "Sit down restaurants only", "Avoid highways"],
   };
@@ -439,11 +445,11 @@ function buildRvPreferencesQuestion(context) {
   return {
     id: "preferences",
     ask: snapshot
-      ? `Any RV route preferences? (${snapshot})`
-      : "Any route preferences for your RV?",
-    hint: "Hookups, grades, propane, and scenic options.",
+      ? `Any RV preferences for this route? (${snapshot})`
+      : "Any RV preferences for this route?",
+    hint: "Hookups, dump stations, steep hills, propane — pick what matters.",
     type: "multiselect",
-    choices: ["Full hookups only", "Dry camping ok", "Need dump stations", "Pet friendly", "Scenic route", "Avoid steep grades", "Propane refill stops"],
+    choices: ["Full hookups at every stop", "Dry camping is fine", "Need dump stations", "Pet friendly", "Scenic route", "Avoid steep hills", "Propane refill stops"],
   };
 }
 
@@ -452,12 +458,12 @@ function buildTripDetailsQuestion(answers) {
   const isTruck = isTruckVehicle(effective);
   return {
     id: "trip_details",
-    pageTitle: "Personalize your trip",
+    pageTitle: "A few more details",
     pageSubtitle: isTruck
-      ? "These preferences help tailor rest breaks, fuel stops, and dining along your route."
-      : "These preferences help tailor your route recommendations, stops, and dining along the drive.",
-    ask: "Anything else we should plan around?",
-    hint: "All optional — tap again to deselect, or continue with defaults.",
+      ? "All optional — tell us about food, breaks, and anything else we should plan around."
+      : "All optional — tell us about food, fun stops, and anything else we should plan around.",
+    ask: "Anything else we should know?",
+    hint: "Tap to select, tap again to deselect, or continue with defaults.",
     type: "trip_details",
     sections: [
       { id: "dietary", label: "Food", choices: DIETARY_CHOICES },
@@ -475,7 +481,7 @@ function isThinTransportVehicle(vehicle) {
 
 function needsThinTransportDestinationInterests(answers) {
   const effective = getEffectiveVehicle(answers);
-  return effective === "Plane" || effective === "Ferry";
+  return effective === "Plane" || effective === "Ferry" || effective === "Boat";
 }
 
 function isThinTransportDetailsAnswered(answers) {
@@ -495,14 +501,14 @@ function buildThinTransportDetailsQuestion(answers) {
   const isPlane = effective === "Plane";
   return {
     id: "trip_details",
-    pageTitle: "Personalize your trip",
+    pageTitle: "A few more details",
     pageSubtitle: isPlane
-      ? "Your carrier handles routing — tell us about your party and what you want at the destination."
+      ? "All optional — food preferences, accessibility, and what you want to do when you land."
       : withDest
-        ? "Tell us about your party and what you'd like to explore when you arrive."
-        : "Tell us about your party so we can tailor port and activity suggestions.",
-    ask: "Anything we should plan around for this trip?",
-    hint: "All optional — tap again to deselect, or continue with defaults.",
+        ? "All optional — food preferences, accessibility, and what you'd like to explore when you arrive."
+        : "All optional — food preferences, accessibility, and port-side activities.",
+    ask: "Anything else we should know?",
+    hint: "Tap to select, tap again to deselect, or continue with defaults.",
     type: "trip_details",
     sections: [
       { id: "dietary", label: "Food", choices: DIETARY_CHOICES },
@@ -518,39 +524,41 @@ function getNextThinTransportQuestions(answers) {
   if (!isAnswered("travelers", answers)) {
     const effective = getEffectiveVehicle(answers);
     const hint = effective === "Plane"
-      ? "Helps size airport dining, lodging, and activity suggestions."
-      : "Helps size dining, lodging, and activity suggestions along your trip.";
+      ? "Helps us suggest the right-sized airport dining and destination activities."
+      : isWaterVehicle(effective)
+        ? "Helps us tailor port stops and activities for your group."
+        : "Helps us tailor dining, lodging, and activities for your group.";
     return { done: false, ...TRAVELERS_QUESTION, hint };
   }
-  if (needsPartyCompositionQuestion(answers)) {
-    return { done: false, ...PARTY_COMPOSITION_QUESTION };
-  }
+  const partyKids = getNextPartyAndKidsFollowups(answers);
+  if (partyKids) return partyKids;
   if (!isThinTransportDetailsAnswered(answers)) {
     return { done: false, ...buildThinTransportDetailsQuestion(answers) };
   }
-  const tail = getNextTailFollowups(answers);
+  const tail = getNextDetailFollowups(answers);
   if (tail) return tail;
   return null;
 }
 
 export const TRUCKER_QUESTION_SEQUENCE = [
-  { id: "hauling_type", ask: "What are you hauling?", type: "choice", choices: ["General freight", "Refrigerated load", "Flatbed load", "Tanker load", "Empty"] },
-  { id: "sleeper_cab", ask: "Do you have a sleeper cab?", type: "choice", choices: ["Yes I have a sleeper cab", "No I need a motel or hotel"] },
-  { id: "truck_stop_brand", ask: "Preferred truck stop?", type: "choice", choices: ["Pilot Flying J", "Love's", "Petro", "TA Travel Center", "No preference"] },
-  { id: "route_restrictions", ask: "Any route restrictions?", type: "multiselect", choices: ["Avoid toll roads", "Avoid certain states", "No restrictions"] },
+  { id: "hauling_type", ask: "What are you hauling?", type: "choice", choices: ["General freight", "Refrigerated load", "Flatbed load", "Tanker load", "Empty / deadhead"] },
+  { id: "sleeper_cab", ask: "Do you have a sleeper cab?", type: "choice", choices: ["Yes — I sleep in the cab", "No — I need a motel or hotel"] },
+  { id: "truck_stop_brand", ask: "Any favorite truck stops?", type: "choice", choices: ["Pilot Flying J", "Love's", "Petro", "TA Travel Center", "No preference"] },
+  { id: "route_restrictions", ask: "Any roads or states to avoid?", type: "multiselect", choices: ["Avoid toll roads", "Avoid certain states", "No restrictions"] },
 ];
 
 const MULTI_VEHICLES_QUESTION = {
   id: "multi_vehicles",
-  ask: "Which vehicles are on this trip?",
+  ask: "Which vehicles are traveling together?",
+  hint: "Select every vehicle on this trip.",
   type: "multiselect",
   choices: MULTI_VEHICLE_CHOICES,
 };
 
 const COORDINATION_QUESTION = {
   id: "coordination_needs",
-  ask: "How should the group stay coordinated?",
-  hint: "Optional — skip if everyone is on the same page.",
+  ask: "How should everyone stay in sync?",
+  hint: "Optional — skip if you're already aligned.",
   type: "multiselect",
   choices: [
     "Stay together the whole way",
@@ -687,7 +695,14 @@ function buildVehicleQuestion() {
 
 function buildPrimaryVehicleQuestion(selectedVehicles) {
   const choices = (Array.isArray(selectedVehicles) ? selectedVehicles : []).filter(Boolean);
-  return { done: false, id: "primary_vehicle", ask: "What is the primary vehicle?", type: "choice", choices: choices.length ? choices : ["Car"] };
+  return {
+    done: false,
+    id: "primary_vehicle",
+    ask: "Which vehicle is the main one for planning?",
+    hint: "We'll plan around this vehicle first, then factor in the rest.",
+    type: "choice",
+    choices: choices.length ? choices : ["Car"],
+  };
 }
 
 function getNextCommercialQuestion(answers) {
@@ -697,10 +712,17 @@ function getNextCommercialQuestion(answers) {
   return null;
 }
 
-function getNextTailFollowups(answers) {
+function getNextPartyAndKidsFollowups(answers) {
+  if (needsPartyCompositionQuestion(answers)) {
+    return { done: false, ...PARTY_COMPOSITION_QUESTION };
+  }
   if (needsKidsAgesDetail(answers) && !isAnswered("kids_ages", answers)) {
     return { done: false, ...KIDS_AGES_QUESTION };
   }
+  return null;
+}
+
+function getNextDetailFollowups(answers) {
   if (needsFoodAllergyDetail(answers) && !isAnswered("food_allergies", answers)) {
     return { done: false, ...FOOD_ALLERGIES_QUESTION };
   }
@@ -712,7 +734,7 @@ function getNextTailFollowups(answers) {
 
 function getNextTailQuestions(answers) {
   if (!isTripDetailsAnswered(answers)) return { done: false, ...buildTripDetailsQuestion(answers) };
-  return getNextTailFollowups(answers);
+  return getNextDetailFollowups(answers);
 }
 
 function getNextPersonalBranchQuestion(answers, context) {
@@ -721,15 +743,18 @@ function getNextPersonalBranchQuestion(answers, context) {
     return { done: false, ...buildTowingQuestion(answers) };
   }
   if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
-  if (needsPartyCompositionQuestion(answers)) return { done: false, ...PARTY_COMPOSITION_QUESTION };
-  if (!isAnswered("preferences", answers)) return { done: false, ...buildPersonalPreferencesQuestion(context) };
+  const partyKids = getNextPartyAndKidsFollowups(answers);
+  if (partyKids) return partyKids;
+  if (needsPersonalPreferencesQuestion(answers, context)) {
+    return { done: false, ...buildPersonalPreferencesQuestion(context) };
+  }
 
   if (!isAnswered("overnight_preference", answers) && needsPersonalOvernightBranch(answers)) {
-    if (shouldPendingOvernightRoute(answers, context)) {
-      return { done: false, ...ROUTE_CONTEXT_PENDING_QUESTION };
-    }
-    if (needsOvernightPreferenceQuestion(answers, context)) {
+    if (shouldPendingOvernightRoute(answers, context) || needsOvernightPreferenceQuestion(answers, context)) {
       const overnightQ = buildOvernightPreferenceQuestion(context);
+      if (shouldPendingOvernightRoute(answers, context)) {
+        return { done: false, ...overnightQ, pendingRoute: true };
+      }
       return {
         done: false,
         ...overnightQ,
@@ -741,11 +766,11 @@ function getNextPersonalBranchQuestion(answers, context) {
       };
     }
   }
-  if (needsLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
-    return { done: false, ...buildLodgingQuestion(context) };
-  }
   if (needsTripNightsQuestion(answers, context)) {
     return { done: false, ...TRIP_NIGHTS_QUESTION };
+  }
+  if (needsLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
+    return { done: false, ...buildLodgingQuestion(context) };
   }
 
   const tail = getNextTailQuestions(answers);
@@ -756,7 +781,8 @@ function getNextPersonalBranchQuestion(answers, context) {
 function getNextRvBranchQuestion(answers, context) {
   if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_QUESTION };
   if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
-  if (needsPartyCompositionQuestion(answers)) return { done: false, ...PARTY_COMPOSITION_QUESTION };
+  const partyKids = getNextPartyAndKidsFollowups(answers);
+  if (partyKids) return partyKids;
   if (!isAnswered("preferences", answers)) return { done: false, ...buildRvPreferencesQuestion(context) };
   if (needsRvTripNightsQuestion(answers, context)) {
     return { done: false, ...TRIP_NIGHTS_QUESTION };
@@ -836,7 +862,7 @@ function mapTruckerAnswers(answers) {
   const out = { ...answers };
   if (out.sleeper_cab?.startsWith("Yes")) out.lodging = "Sleeper cab — no hotel needed";
   else if (
-    out.sleeper_cab?.startsWith("No")
+    out.sleeper_cab?.includes("No")
     && !out.lodging
     && out.overnight_preference === OVERNIGHT_PREFERENCE_OVERNIGHT
   ) {

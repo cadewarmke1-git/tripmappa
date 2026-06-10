@@ -42,6 +42,26 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { data: existingEvent } = await admin
+      .from("stripe_webhook_events")
+      .select("event_id")
+      .eq("event_id", event.id)
+      .maybeSingle();
+
+    if (existingEvent) {
+      return res.status(200).json({ received: true, duplicate: true });
+    }
+
+    const { error: insertErr } = await admin
+      .from("stripe_webhook_events")
+      .insert({ event_id: event.id });
+    if (insertErr) {
+      if (insertErr.code === "23505") {
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+      throw insertErr;
+    }
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;

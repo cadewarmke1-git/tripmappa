@@ -6,7 +6,7 @@ export const FUEL_TYPE_CHOICES = [
   "Gasoline",
   "Diesel",
   "Electric",
-  "Electric — Tesla Superchargers only",
+  "Electric — Tesla Superchargers",
   "Hybrid",
   "Propane",
 ];
@@ -57,8 +57,7 @@ export const STOPS_INTERESTS_BASE = [
   "Sports Venues",
   "Music Venues",
   "Remote work — WiFi cafés",
-  "Live Music Venues",
-  "Comedy Clubs or Sports Bars",
+  "Comedy clubs or sports bars",
   "Drive-In Movie Theaters",
   "Antique Shops or Flea Markets",
   "Prayer facilities",
@@ -151,10 +150,11 @@ const MOTORCYCLE_TOWING_MILES = 80;
 
 export function needsTowingQuestion(answers, context = {}) {
   const v = getEffectiveVehicle(answers);
-  if (v === "Rental Car") return true;
-  if (v === "Car" || v === "SUV or Van") return true;
+  const miles = context.routeDistanceMiles ?? parseMilesFromDistance(context?.routeDistance);
+  const dayTrip = miles != null && miles < 150;
+  if (v === "Rental Car") return !dayTrip;
+  if (v === "Car" || v === "SUV or Van") return !dayTrip;
   if (v === "Motorcycle") {
-    const miles = context.routeDistanceMiles ?? parseMilesFromDistance(context?.routeDistance);
     return miles == null || miles >= MOTORCYCLE_TOWING_MILES;
   }
   return false;
@@ -178,7 +178,8 @@ export function needsKidsAgesDetail(answers) {
 
 export function needsTruckExternalLodging(answers) {
   const v = getEffectiveVehicle(answers);
-  return isTruckVehicle(v) && answers.sleeper_cab?.startsWith("No");
+  const sleeper = String(answers.sleeper_cab || "");
+  return isTruckVehicle(v) && (sleeper.startsWith("No") || sleeper.includes("No —"));
 }
 
 export function isTowingSelected(answers) {
@@ -266,7 +267,8 @@ export function needsFoodAllergyDetail(answers) {
 }
 
 export function isTeslaSuperchargerOnly(answers) {
-  return answers?.fuel_type === "Electric — Tesla Superchargers only";
+  const ft = answers?.fuel_type || "";
+  return ft === "Electric — Tesla Superchargers" || ft === "Electric — Tesla Superchargers only";
 }
 
 export function isNightDrivingOnly() {

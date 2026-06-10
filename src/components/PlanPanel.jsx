@@ -249,7 +249,7 @@ export default function PlanPanel({
           <div className="plan-generate-sticky">
             {creditsExhausted && onUpgrade ? (
               <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
-                Upgrade to Trailblazer — unlock unlimited trips
+                Upgrade for more generations — Trailblazer includes 100/mo
               </button>
             ) : (
               <button

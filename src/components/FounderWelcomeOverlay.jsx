@@ -33,7 +33,8 @@ export default function FounderWelcomeOverlay({ firstName, onDismiss }) {
           Welcome, {displayName}
         </h1>
         <p className="founder-welcome-sub">
-          Thank you for being one of TripMappa&apos;s Founding Members.
+          You&apos;re one of the first 1,000 members — enjoy one year of Trailblazer free.
+          Your Founder badge is yours permanently.
         </p>
         <p className="founder-welcome-hint">Tap anywhere to continue</p>
       </div>

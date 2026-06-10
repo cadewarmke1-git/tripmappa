@@ -1,5 +1,6 @@
 import { searchGasStations, searchDieselStations, searchEvChargingStations, searchPropaneStations } from "./placesStations.js";
 import { readPlanTripSseStream } from "./planTripStream.js";
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 
 async function readApiJson(response) {
   const text = await response.text();
@@ -26,10 +27,7 @@ function throwPlanTripError(response, data) {
 
 /** Frontend API layer — always call serverless routes, never Anthropic directly. */
 export async function generateTripPlan(payload, accessToken = null, { signal, onStreamProgress } = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-    "x-tripmappa-client": "web",
-  };
+  const headers = tripMappaApiHeaders({ "Content-Type": "application/json" });
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   const response = await fetch("/api/plan-trip", {
@@ -56,7 +54,7 @@ export async function generateTripPlan(payload, accessToken = null, { signal, on
 export async function enrichFuelStations(stations, mode = "gas") {
   const response = await fetch("/api/fuel-stations", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ stations, mode }),
   });
   const data = await readApiJson(response);
@@ -68,7 +66,7 @@ export async function enrichEvCharging(stations, fuelType = "ELEC", options = {}
   const { teslaOnly = false } = options;
   const response = await fetch("/api/ev-charging", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ stations, fuelType, teslaOnly }),
   });
   const data = await readApiJson(response);

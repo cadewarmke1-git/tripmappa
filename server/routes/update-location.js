@@ -1,5 +1,7 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
+import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
 import {
   appendBreadcrumb,
   checkArrival,
@@ -58,6 +60,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (guardTokenWriteRoute(req, res)) return undefined;
+
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   const admin = getSupabaseAdmin();
   if (!admin) {
     return res.status(503).json({ error: "Database not configured" });
@@ -71,7 +80,7 @@ export default async function handler(req, res) {
     stops: bodyStops,
   } = req.body || {};
 
-  if (!shareToken || latitude == null || longitude == null) {
+  if (!isValidShareToken(shareToken) || latitude == null || longitude == null) {
     return res.status(400).json({ error: "Missing shareToken, latitude, or longitude" });
   }
 
@@ -92,6 +101,9 @@ export default async function handler(req, res) {
     if (fetchErr) throw fetchErr;
     if (!existing) {
       return res.status(404).json({ error: "Live trip not found or inactive" });
+    }
+    if (existing.user_id !== user.id) {
+      return res.status(403).json({ error: "Not authorized" });
     }
 
     const stops = bodyStops || existing.stops || [];

@@ -67,9 +67,9 @@ function applyAnswer(q, answers, options) {
     };
   }
   if (q.id === "sleeper_cab" && variant === "noSleeper") {
-    return { ...answers, sleeper_cab: "No I need a motel or hotel" };
+    return { ...answers, sleeper_cab: "No — I need a motel or hotel" };
   }
-  if (q.id === "fuel_type" && variant === "tesla") return { ...answers, fuel_type: "Electric — Tesla Superchargers only" };
+  if (q.id === "fuel_type" && variant === "tesla") return { ...answers, fuel_type: "Electric — Tesla Superchargers" };
   if (q.id === "towing" && variant === "towing") return { ...answers, towing: "Yes — large trailer" };
   if (q.id === "multi_vehicles") {
     if (multiPrimary === "RV") return { ...answers, multi_vehicles: ["Car", "RV"] };
@@ -219,7 +219,7 @@ function simulateFlow(vehicle, context, options = {}) {
 
   if (vehicle === MULTI_VEHICLE_TRIP && multiPrimary === "RV") {
     const ids = path.filter((p) => !p.done).map((p) => p.id);
-    const expectedPrefix = ["multi_vehicles", "primary_vehicle", "fuel_type", "travelers", "party_composition", "preferences"];
+    const expectedPrefix = ["multi_vehicles", "primary_vehicle", "fuel_type", "travelers", "party_composition", "kids_ages", "preferences"];
     if (requiresMultipleDays(context)) expectedPrefix.push("trip_nights");
     expectedPrefix.push("trip_details");
     for (let i = 0; i < expectedPrefix.length; i += 1) {
@@ -326,8 +326,8 @@ if (mediumNext.id !== "overnight_preference") {
   });
 }
 
-// Lodging only after stop overnight
-const mediumLodging = getNextFlowQuestion(
+// Trip nights before lodging after stop overnight
+const mediumNights = getNextFlowQuestion(
   {
     vehicle: "Car",
     fuel_type: "Gasoline",
@@ -338,12 +338,32 @@ const mediumLodging = getNextFlowQuestion(
   },
   ROUTE_CONTEXTS.medium,
 );
+if (mediumNights.id !== "trip_nights") {
+  allIssues.push({
+    severity: "critical",
+    code: "NIGHTS_NOT_AFTER_OVERNIGHT",
+    vehicle: "Car",
+    message: `Expected trip_nights after overnight — got "${mediumNights.id}"`,
+  });
+}
+const mediumLodging = getNextFlowQuestion(
+  {
+    vehicle: "Car",
+    fuel_type: "Gasoline",
+    towing: "No",
+    travelers: "2",
+    preferences: [],
+    overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
+    trip_nights: "2 nights",
+  },
+  ROUTE_CONTEXTS.medium,
+);
 if (mediumLodging.id !== "lodging" && mediumLodging.type !== "lodging_stay") {
   allIssues.push({
     severity: "critical",
-    code: "LODGING_NOT_AFTER_OVERNIGHT",
+    code: "LODGING_NOT_AFTER_NIGHTS",
     vehicle: "Car",
-    message: `Expected lodging after overnight — got "${mediumLodging.id}"`,
+    message: `Expected lodging after trip_nights — got "${mediumLodging.id}"`,
   });
 }
 

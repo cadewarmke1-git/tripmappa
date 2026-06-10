@@ -3,6 +3,7 @@ import crypto from "crypto";
 const OTP_TTL_MS = 10 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 3;
+const VERIFY_ATTEMPT_MAX = 6;
 
 export function generateOtp() {
   return String(crypto.randomInt(100000, 999999));
@@ -65,7 +66,7 @@ export async function verifyStoredOtp(admin, phone, code) {
   const now = new Date().toISOString();
   const { data, error } = await admin
     .from("sms_otp_codes")
-    .select("id, code_hash, expires_at, verified_at")
+    .select("id, code_hash, expires_at, verified_at, failed_attempts")
     .eq("phone", phone)
     .is("verified_at", null)
     .gt("expires_at", now)
@@ -76,6 +77,11 @@ export async function verifyStoredOtp(admin, phone, code) {
   if (error) throw error;
   if (!data) return { ok: false, error: "expired", message: "Code expired. Tap Resend Code." };
   if (hashOtp(code, phone) !== data.code_hash) {
+    const nextAttempts = (data.failed_attempts || 0) + 1;
+    await admin.from("sms_otp_codes").update({ failed_attempts: nextAttempts }).eq("id", data.id);
+    if (nextAttempts >= VERIFY_ATTEMPT_MAX) {
+      return { ok: false, error: "locked", message: "Too many attempts. Request a new code." };
+    }
     return { ok: false, error: "invalid", message: "Incorrect code. Try again." };
   }
 

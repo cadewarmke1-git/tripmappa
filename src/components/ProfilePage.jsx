@@ -5,18 +5,17 @@ import { getDisplayName } from "../lib/avatarUtils.js";
 import { computeTripStats, getTripVehicle } from "../lib/tripStats.js";
 import DecorMark from "./icons/DecorMark.jsx";
 import {
-  WANDERER_BENEFITS,
-  VOYAGER_BENEFITS,
   TRAILBLAZER_BENEFITS,
+  VOYAGER_BENEFITS,
   TIERS,
   getTierLabel,
   getTierPriceLabel,
-  getTierAnnualMonthlyEquivalent,
   isFounderTier,
   normalizeTier,
   getTierCssClass,
   getAvatarTierBadge,
 } from "../lib/tiers.js";
+import PricingPlans from "./PricingPlans.jsx";
 
 function formatMemberSince(dateStr) {
   if (!dateStr) return "Recently joined";
@@ -69,41 +68,6 @@ function StatCard({ value, label }) {
       <div className="profile-stat-label">{label}</div>
     </div>
   );
-}
-
-function BillingToggle({ value, onChange }) {
-  return (
-    <div className="billing-toggle" role="group" aria-label="Billing period">
-      <button
-        type="button"
-        className={`billing-toggle-btn${value === "month" ? " is-active" : ""}`}
-        onClick={() => onChange("month")}
-      >
-        Monthly
-      </button>
-      <button
-        type="button"
-        className={`billing-toggle-btn${value === "year" ? " is-active" : ""}`}
-        onClick={() => onChange("year")}
-      >
-        Annual
-      </button>
-    </div>
-  );
-}
-
-function PlanColumnPrice({ tier, billingPeriod }) {
-  if (billingPeriod === "year") {
-    const monthlyEq = getTierAnnualMonthlyEquivalent(tier);
-    return (
-      <p className="profile-plan-col-price">
-        {monthlyEq ? `$${monthlyEq}/mo` : getTierPriceLabel(tier, "year")}
-        <span className="billing-savings-badge">2 months free</span>
-        <span className="profile-plan-col-billed">{getTierPriceLabel(tier, "year")} billed annually</span>
-      </p>
-    );
-  }
-  return <p className="profile-plan-col-price">{getTierPriceLabel(tier)}</p>;
 }
 
 function SavedTripCard({ trip, onLoad, onDelete }) {
@@ -400,12 +364,15 @@ export default function ProfilePage({
               <div className="profile-plan-header">
                 <TierBadge tier={TIERS.FOUNDER} />
                 <span className="profile-plan-renewal profile-plan-founder-tag">
-                  Founder Member — Founding 1,000
+                  Founder Member — 1 of 1,000 limited spots
                   {creditStatus?.founderExpiresAt && (
                     <> · Trailblazer access until {formatRenewalDate(creditStatus.founderExpiresAt)}</>
                   )}
                 </span>
               </div>
+              <p className="profile-plan-founder-explainer">
+                You received one year of Trailblazer free as an early member. Your Founder badge stays on your profile permanently.
+              </p>
               <ul className="profile-benefits-list">
                 {TRAILBLAZER_BENEFITS.map(b => <li key={b}>{b}</li>)}
               </ul>
@@ -442,7 +409,7 @@ export default function ProfilePage({
               <ul className="profile-benefits-list">
                 {VOYAGER_BENEFITS.map(b => <li key={b}>{b}</li>)}
               </ul>
-              <button type="button" className="profile-btn profile-btn-gold" onClick={onUpgrade}>
+              <button type="button" className="profile-btn profile-btn-gold pricing-cta pricing-cta--gold" onClick={onUpgrade}>
                 Upgrade to Trailblazer — {getTierPriceLabel(TIERS.TRAILBLAZER)}
               </button>
               <button type="button" className="profile-btn profile-btn-secondary" onClick={onManageSubscription}>
@@ -462,46 +429,19 @@ export default function ProfilePage({
                   <div className="profile-progress-bar" style={{ width: `${progressPct}%` }} />
                 </div>
               )}
-              <BillingToggle value={billingPeriod} onChange={setBillingPeriod} />
-              <div className="profile-plan-columns profile-plan-columns-three">
-                <div>
-                  <h3 className="profile-plan-col-title">Wanderer</h3>
-                  <ul className="profile-benefits-list">
-                    {WANDERER_BENEFITS.map(b => <li key={b}>{b}</li>)}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="profile-plan-col-title profile-plan-col-title-voyager">Voyager</h3>
-                  <PlanColumnPrice tier={TIERS.VOYAGER} billingPeriod={billingPeriod} />
-                  <ul className="profile-benefits-list">
-                    {VOYAGER_BENEFITS.map(b => <li key={b}>{b}</li>)}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="profile-plan-col-title profile-plan-col-title-trailblazer">Trailblazer</h3>
-                  <PlanColumnPrice tier={TIERS.TRAILBLAZER} billingPeriod={billingPeriod} />
-                  <ul className="profile-benefits-list">
-                    {TRAILBLAZER_BENEFITS.map(b => <li key={b}>{b}</li>)}
-                  </ul>
-                </div>
-              </div>
-              <p className="profile-plan-founder-note">
-                Founder tier: 1 year free Trailblazer for the first 1,000 users.
+              <PricingPlans
+                billingInterval={billingPeriod}
+                onBillingChange={setBillingPeriod}
+                currentTier={TIERS.WANDERER}
+                compact
+                showComparison
+                showFounder
+                onUpgradeVoyager={onUpgradeVoyager}
+                onUpgradeTrailblazer={onUpgrade}
+              />
+              <p className="profile-plan-pricing-link">
+                <a href="/pricing">View full pricing page</a>
               </p>
-              <div className="profile-plan-upgrade-row">
-                {onUpgradeVoyager && (
-                  <button type="button" className="profile-btn profile-btn-secondary" onClick={() => onUpgradeVoyager({ billingPeriod })}>
-                    Upgrade to Voyager — {billingPeriod === "year"
-                      ? `$${getTierAnnualMonthlyEquivalent(TIERS.VOYAGER)}/mo`
-                      : getTierPriceLabel(TIERS.VOYAGER)}
-                  </button>
-                )}
-                <button type="button" className="profile-btn profile-btn-gold" onClick={() => onUpgrade({ billingPeriod })}>
-                  Upgrade to Trailblazer — {billingPeriod === "year"
-                    ? `$${getTierAnnualMonthlyEquivalent(TIERS.TRAILBLAZER)}/mo`
-                    : getTierPriceLabel(TIERS.TRAILBLAZER)}
-                </button>
-              </div>
             </>
           )}
         </section>

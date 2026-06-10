@@ -19,8 +19,8 @@ export function formatCreditsDisplay(status) {
     const limit = status.limit ?? 0;
     const label = `${remaining} of ${limit} remaining this month`;
     const usedThisMonth = status.monthlyUsed ?? status.used ?? 0;
-    const nudge = normalizeTier(status.tier) === TIERS.VOYAGER && usedThisMonth >= 15
-      ? "Running low — Trailblazer includes 100 generations per month."
+    const nudge = normalizeTier(status.tier) === TIERS.VOYAGER && usedThisMonth >= 16
+      ? "Running low — Trailblazer includes 100 Trip Generations per month."
       : null;
     return { label, nudge };
   }

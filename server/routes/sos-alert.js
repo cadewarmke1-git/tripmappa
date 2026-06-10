@@ -1,11 +1,19 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { googleMapsLink } from "../lib/liveTripHelpers.js";
+import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
 
-/** POST /api/sos-alert — emergency SMS to owner's emergency contact (placeholder until Twilio verified). */
+/** POST /api/sos-alert — emergency SMS to owner's emergency contact (owner session required). */
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  if (guardTokenWriteRoute(req, res)) return undefined;
+
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return res.status(401).json({ error: "Authentication required" });
   }
 
   const admin = getSupabaseAdmin();
@@ -14,8 +22,8 @@ export default async function handler(req, res) {
   }
 
   const { shareToken, latitude, longitude } = req.body || {};
-  if (!shareToken) {
-    return res.status(400).json({ error: "Missing shareToken" });
+  if (!isValidShareToken(shareToken)) {
+    return res.status(400).json({ error: "Invalid shareToken" });
   }
 
   try {
@@ -40,8 +48,7 @@ export default async function handler(req, res) {
       .eq("user_id", trip.user_id)
       .maybeSingle();
 
-    const user = await getUserFromRequest(req);
-    if (user && user.id !== trip.user_id) {
+    if (user.id !== trip.user_id) {
       return res.status(403).json({ error: "Not authorized" });
     }
 

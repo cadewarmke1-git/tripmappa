@@ -60,6 +60,17 @@ export default async function handler(req, res) {
       .eq("is_active", true)
       .neq("share_token", existingShareToken || "");
 
+    if (existingShareToken) {
+      const { data: existingRow } = await admin
+        .from("live_trips")
+        .select("user_id")
+        .eq("share_token", existingShareToken)
+        .maybeSingle();
+      if (existingRow && existingRow.user_id !== user.id) {
+        return res.status(403).json({ error: "Not authorized for this share token" });
+      }
+    }
+
     const shareToken = existingShareToken || generateShareToken();
     const now = new Date().toISOString();
 

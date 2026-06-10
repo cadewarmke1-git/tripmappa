@@ -1,15 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { subscribePwaInstall, promptPwaInstall } from "../lib/pwaInstall.js";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
-import {
-  getTierLabel,
-  getTierCssClass,
-  getAvatarTierBadge,
-  normalizeTier,
-  TIERS,
-} from "../lib/tiers.js";
+import { getAvatarTierBadge } from "../lib/tiers.js";
 
 export default function NavProfileMenu({
   user,
@@ -23,33 +16,21 @@ export default function NavProfileMenu({
   onOpenProfile,
   onRefreshCredits,
   onUploadAvatar,
+  onGetStarted,
+  onSignIn,
   onSignOut,
 }) {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [installAvailable, setInstallAvailable] = useState(false);
   const wrapRef = useRef(null);
   const closeTimerRef = useRef(null);
   const photoInputRef = useRef(null);
 
-  const displayName = getDisplayName(user, profile);
+  const isSignedIn = Boolean(user?.id);
+  const displayName = isSignedIn ? getDisplayName(user, profile) : "Welcome to TripMappa";
   const heroPalette = heroTheme ? HERO_SURFACE_PALETTE[heroTheme] : null;
-  const tierBadge = getAvatarTierBadge(creditStatus?.tier || profile?.tier);
-
-  const isAdmin = Boolean(creditStatus?.isAdmin);
-  const tierKey = isAdmin ? TIERS.TRAILBLAZER : normalizeTier(creditStatus?.tier);
-  const tierLabel = getTierLabel(tierKey).toUpperCase();
-  const tierClass = getTierCssClass(isAdmin ? TIERS.TRAILBLAZER : (creditStatus?.tier || profile?.tier));
-
-  const showCreditsLine = !isAdmin;
-  const creditsLine = creditStatus?.unlimited
-    ? "Unlimited Trip Generations"
-    : creditStatus?.tier === "guest"
-      ? `${creditStatus.remaining ?? 1} Trip Generation remaining`
-      : creditStatus != null
-        ? `${creditStatus.remaining ?? 0} of ${creditStatus.limit ?? 3} Trip Generations remaining`
-        : "Loading Trip Generations…";
+  const tierBadge = isSignedIn ? getAvatarTierBadge(creditStatus?.tier || profile?.tier) : null;
 
   const closeMenu = useCallback(() => {
     if (!open || closing) return;
@@ -76,31 +57,24 @@ export default function NavProfileMenu({
     try {
       await onSignOut?.();
     } catch {
-      // Parent handleSignOut surfaces errors via toast
+      // Parent surfaces errors via toast
     }
   }, [closeMenu, onSignOut]);
 
   useEffect(() => {
     if (!open) return undefined;
-    onRefreshCredits?.();
+    if (isSignedIn) onRefreshCredits?.();
     const onPointerDown = (e) => {
       if (wrapRef.current?.contains(e.target)) return;
       closeMenu();
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open, onRefreshCredits, closeMenu]);
+  }, [open, onRefreshCredits, closeMenu, isSignedIn]);
 
   useEffect(() => () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
   }, []);
-
-  useEffect(() => subscribePwaInstall(setInstallAvailable), []);
-
-  async function handleInstallApp() {
-    await promptPwaInstall();
-    closeMenu();
-  }
 
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
@@ -121,6 +95,7 @@ export default function NavProfileMenu({
   ];
 
   const showDropdown = open || closing;
+  const triggerLabel = isSignedIn ? `Profile menu for ${displayName}` : "Open menu";
 
   return (
     <div className="profile-card-menu" ref={wrapRef}>
@@ -130,7 +105,7 @@ export default function NavProfileMenu({
         onClick={() => (open ? closeMenu() : openMenu())}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={`Profile menu for ${displayName}`}
+        aria-label={triggerLabel}
       >
         <UserAvatar
           user={user}
@@ -147,9 +122,29 @@ export default function NavProfileMenu({
         <div
           className={`profile-card-dropdown${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
           role="dialog"
-          aria-label="Account menu"
+          aria-label="Navigation menu"
         >
           <div className="profile-card-dropdown-glow" aria-hidden="true" />
+
+          <div className="profile-card-identity profile-card-identity--static">
+            <UserAvatar
+              user={user}
+              profile={profile}
+              size={72}
+              showRing
+              tierBadge={tierBadge}
+              className="profile-card-dropdown-avatar profile-card-dropdown-avatar--large"
+              heroPalette={heroPalette}
+            />
+            <div className="profile-card-name">{displayName}</div>
+            {isSignedIn ? (
+              <div className="profile-card-email">{user?.email || ""}</div>
+            ) : (
+              <div className="profile-card-email profile-card-guest-tag">Sign in to save trips & sync plans</div>
+            )}
+          </div>
+
+          <hr className="profile-card-dropdown-divider" />
 
           <nav className="profile-card-nav" aria-label="Main navigation">
             {navItems.map(item => (
@@ -164,68 +159,68 @@ export default function NavProfileMenu({
             ))}
           </nav>
 
-          <button
-            type="button"
-            className="profile-card-identity"
-            onClick={() => run(onOpenProfile)}
-          >
-            <UserAvatar
-              user={user}
-              profile={profile}
-              size={64}
-              showRing
-              tierBadge={tierBadge}
-              className="profile-card-dropdown-avatar"
-              heroPalette={heroPalette}
-            />
-            <div className="profile-card-name">{displayName}</div>
-            <div className="profile-card-email">{user?.email || ""}</div>
-          </button>
+          <hr className="profile-card-dropdown-divider" />
 
-          <div className="profile-card-meta">
-            <span className={`profile-card-tier profile-card-tier--${tierClass}`}>
-              {tierLabel}
-            </span>
-            {showCreditsLine && (
-              <p className="profile-card-credits">{creditsLine}</p>
+          <div className="profile-card-account-actions">
+            {isSignedIn ? (
+              <>
+                <button
+                  type="button"
+                  className="profile-card-nav-link profile-card-nav-link--account"
+                  onClick={() => run(onOpenProfile)}
+                >
+                  View profile
+                </button>
+                <button
+                  type="button"
+                  className="profile-card-signout"
+                  onClick={() => void handleSignOutClick()}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="profile-card-nav-link profile-card-nav-link--cta"
+                  onClick={() => run(onGetStarted)}
+                >
+                  Get Started
+                </button>
+                <button
+                  type="button"
+                  className="profile-card-nav-link profile-card-nav-link--account"
+                  onClick={() => run(onSignIn)}
+                >
+                  Sign In
+                </button>
+              </>
             )}
           </div>
 
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="profile-card-photo-input"
-            aria-hidden="true"
-            tabIndex={-1}
-            onChange={handlePhotoChange}
-          />
-          <button
-            type="button"
-            className="profile-card-photo-btn"
-            disabled={uploadingPhoto}
-            onClick={() => photoInputRef.current?.click()}
-          >
-            {uploadingPhoto ? "Uploading…" : "Change Profile Photo"}
-          </button>
-
-          {installAvailable && (
-            <button
-              type="button"
-              className="profile-card-photo-btn"
-              onClick={() => void handleInstallApp()}
-            >
-              Install App
-            </button>
+          {isSignedIn && (
+            <>
+              <hr className="profile-card-dropdown-divider" />
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="profile-card-photo-input"
+                aria-hidden="true"
+                tabIndex={-1}
+                onChange={handlePhotoChange}
+              />
+              <button
+                type="button"
+                className="profile-card-photo-btn"
+                disabled={uploadingPhoto}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                {uploadingPhoto ? "Uploading…" : "Change Profile Photo"}
+              </button>
+            </>
           )}
-
-          <button
-            type="button"
-            className="profile-card-signout"
-            onClick={() => void handleSignOutClick()}
-          >
-            Sign Out
-          </button>
 
           <hr className="profile-card-dropdown-divider" />
 

@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { validateUsPhone } from "../lib/phoneOtp.js";
+import { guardTokenWriteRoute, isValidShareToken, MAX_FOLLOWER_PHONES } from "../lib/apiSecurity.js";
 
 /** POST /api/register-follower-phone — follower opts in to ETA SMS alerts. */
 export default async function handler(req, res) {
@@ -7,13 +8,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (guardTokenWriteRoute(req, res)) return undefined;
+
   const admin = getSupabaseAdmin();
   if (!admin) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
   const { shareToken, phone: rawPhone } = req.body || {};
-  if (!shareToken || !rawPhone) {
+  if (!isValidShareToken(shareToken) || !rawPhone) {
     return res.status(400).json({ error: "Missing shareToken or phone" });
   }
 
@@ -35,6 +38,9 @@ export default async function handler(req, res) {
 
     const phones = Array.isArray(trip.follower_phones) ? [...trip.follower_phones] : [];
     if (!phones.includes(validation.phone)) {
+      if (phones.length >= MAX_FOLLOWER_PHONES) {
+        return res.status(409).json({ error: "Follower phone list is full" });
+      }
       phones.push(validation.phone);
     }
 

@@ -51,24 +51,77 @@ export const TIER_PRICING = {
   },
 };
 
+export const FOUNDER_MEMBER_LIMIT = 1000;
+
 export const WANDERER_BENEFITS = [
-  "3 Trip Generations total",
-  "Saved trips and Navigate Home",
-  "Maps, routing, and budget estimates",
+  "3 Trip Generations total (lifetime)",
+  "Saved trips & Navigate Home",
+  "Full maps, routing & budget estimates",
 ];
 
 export const VOYAGER_BENEFITS = [
-  "Unlimited Trip Generations",
+  "20 Trip Generations per month",
   "Live location sharing",
   "Offline maps",
 ];
 
 export const TRAILBLAZER_BENEFITS = [
+  "100 Trip Generations per month",
   "Everything in Voyager",
   "Grocery delivery to your hotel",
   "Priority generation queue",
   "Voice-to-list grocery ordering",
 ];
+
+export const FOUNDER_BENEFITS = [
+  "1 year of Trailblazer — free",
+  "Limited to the first 1,000 members",
+  "Permanent Founder badge on your profile",
+  "All Trailblazer features while active",
+];
+
+/** Rows for the tier comparison table — single source for pricing UI. */
+export const TIER_FEATURE_COMPARISON = [
+  { id: "generations", label: "Trip generations", wanderer: "3 total", voyager: "20 / month", trailblazer: "100 / month", founder: "100 / month (1 yr)" },
+  { id: "saved_trips", label: "Saved trips", wanderer: true, voyager: true, trailblazer: true, founder: true },
+  { id: "live_share", label: "Live location sharing", wanderer: false, voyager: true, trailblazer: true, founder: true },
+  { id: "offline_maps", label: "Offline maps", wanderer: false, voyager: true, trailblazer: true, founder: true },
+  { id: "grocery", label: "Grocery delivery to hotel", wanderer: false, voyager: false, trailblazer: true, founder: true },
+  { id: "priority", label: "Priority generation queue", wanderer: false, voyager: false, trailblazer: true, founder: true },
+  { id: "voice_grocery", label: "Voice grocery ordering", wanderer: false, voyager: false, trailblazer: true, founder: true },
+  { id: "founder_badge", label: "Founder badge", wanderer: false, voyager: false, trailblazer: false, founder: true },
+];
+
+export function formatTierPriceBlock(tier, billingInterval = "month") {
+  const key = normalizeTier(tier);
+  if (isFounderTier(tier)) {
+    return {
+      primary: "Free for 1 year",
+      secondary: "Trailblazer access · limited offer",
+      showSavings: false,
+      billedAnnually: null,
+    };
+  }
+  const pricing = TIER_PRICING[key];
+  if (!pricing || pricing.priceMonthly === 0) {
+    return { primary: "Free", secondary: null, showSavings: false, billedAnnually: null };
+  }
+  if (billingInterval === "year") {
+    const monthlyEq = getTierAnnualMonthlyEquivalent(tier);
+    return {
+      primary: monthlyEq ? `$${monthlyEq}/mo` : getTierPriceLabel(tier, "year"),
+      secondary: getTierPriceLabel(tier, "year"),
+      showSavings: true,
+      billedAnnually: getTierPriceLabel(tier, "year"),
+    };
+  }
+  return {
+    primary: getTierPriceLabel(tier),
+    secondary: null,
+    showSavings: false,
+    billedAnnually: null,
+  };
+}
 
 /** @deprecated use WANDERER_BENEFITS */
 export const FREE_BENEFITS = WANDERER_BENEFITS;

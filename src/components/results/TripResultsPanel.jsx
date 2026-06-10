@@ -61,6 +61,7 @@ export default function TripResultsPanel({
   onLodgingSelect,
   onDismissAlert,
   onShare,
+  onCollaborate,
   onToast,
   onStopSelect,
   onGuestSignUp,
@@ -265,6 +266,7 @@ export default function TripResultsPanel({
           selectedLodging={selectedLodging}
           restaurantsByCity={restaurantsByCity}
           onShare={onShare}
+          onCollaborate={onCollaborate}
         />
       </div>
     </div>

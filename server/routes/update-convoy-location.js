@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import { mphFromSpeedMps } from "../lib/liveTripHelpers.js";
+import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
 
 async function fetchMatrixEta(originLat, originLng, destination) {
   const key = getGoogleMapsKey();
@@ -25,13 +26,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (guardTokenWriteRoute(req, res)) return undefined;
+
   const admin = getSupabaseAdmin();
   if (!admin) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
   const { shareToken, memberId, latitude, longitude, speedMps = null } = req.body || {};
-  if (!shareToken || !memberId || latitude == null || longitude == null) {
+  if (!isValidShareToken(shareToken) || !memberId || latitude == null || longitude == null) {
     return res.status(400).json({ error: "Missing shareToken, memberId, latitude, or longitude" });
   }
 

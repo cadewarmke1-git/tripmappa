@@ -1,4 +1,5 @@
 /** POST /api/isoline — HERE drive-time reach polygon from an origin. */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { getHereAccessToken } from "../lib/hereAuth.js";
 import { hasHereCredentials } from "../lib/hereApiKey.js";
 import { decodeFlexiblePolyline } from "../lib/hereFlexiblePolyline.js";
@@ -39,6 +40,8 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  if (guardProxyRoute(req, res)) return undefined;
 
   if (!hasHereCredentials()) {
     return res.status(503).json({ error: "HERE API credentials not configured" });

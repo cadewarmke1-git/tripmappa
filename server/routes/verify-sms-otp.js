@@ -1,11 +1,14 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { validateUsPhone, verifyStoredOtp } from "../lib/phoneOtp.js";
 import { createPhoneSignInSession } from "../lib/phoneAuth.js";
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  if (guardProxyRoute(req, res, "otp_verify")) return undefined;
 
   const { phone: rawPhone, code } = req.body || {};
   const validation = validateUsPhone(rawPhone);

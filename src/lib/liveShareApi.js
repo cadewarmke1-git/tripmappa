@@ -1,12 +1,14 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+
 /** Client API for live location sharing. */
 
 export async function createLiveShare(accessToken, payload) {
   const res = await fetch("/api/share-trip", {
     method: "POST",
-    headers: {
+    headers: tripMappaApiHeaders({
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
-    },
+    }),
     body: JSON.stringify(payload),
   });
   const data = await res.json();
@@ -14,10 +16,12 @@ export async function createLiveShare(accessToken, payload) {
   return data;
 }
 
-export async function updateLiveLocation({ shareToken, latitude, longitude, stops, speedMps }) {
+export async function updateLiveLocation({ shareToken, latitude, longitude, stops, speedMps, accessToken }) {
+  const headers = tripMappaApiHeaders({ "Content-Type": "application/json" });
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   const res = await fetch("/api/update-location", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ shareToken, latitude, longitude, stops, speedMps }),
   });
   const data = await res.json();
@@ -28,7 +32,7 @@ export async function updateLiveLocation({ shareToken, latitude, longitude, stop
 export async function joinConvoy({ shareToken, displayName, memberId }) {
   const res = await fetch("/api/join-convoy", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ shareToken, displayName, memberId }),
   });
   const data = await res.json();
@@ -39,7 +43,7 @@ export async function joinConvoy({ shareToken, displayName, memberId }) {
 export async function updateConvoyLocation({ shareToken, memberId, latitude, longitude, speedMps }) {
   const res = await fetch("/api/update-convoy-location", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ shareToken, memberId, latitude, longitude, speedMps }),
   });
   const data = await res.json();
@@ -50,7 +54,7 @@ export async function updateConvoyLocation({ shareToken, memberId, latitude, lon
 export async function registerFollowerPhone({ shareToken, phone }) {
   const res = await fetch("/api/register-follower-phone", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ shareToken, phone }),
   });
   const data = await res.json();
@@ -59,7 +63,7 @@ export async function registerFollowerPhone({ shareToken, phone }) {
 }
 
 export async function sendSosAlert({ shareToken, latitude, longitude, accessToken }) {
-  const headers = { "Content-Type": "application/json" };
+  const headers = tripMappaApiHeaders({ "Content-Type": "application/json" });
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   const res = await fetch("/api/sos-alert", {
     method: "POST",

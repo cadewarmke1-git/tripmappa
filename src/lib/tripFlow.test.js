@@ -35,11 +35,34 @@ describe("tripFlow UX", () => {
     expect(getFlowPhaseId(next.id)).toBe("route");
   });
 
-  it("shows route loading when route context is missing", () => {
+  it("skips towing and route preferences on day trips", () => {
+    const dayContext = {
+      routeDistance: "80 mi",
+      routeDuration: "1 hour 30 mins",
+      routeDistanceMiles: 80,
+      routeDurationHours: 1.5,
+    };
+    expect(getNextFlowQuestion({ vehicle: "Car", fuel_type: "Gasoline" }, dayContext).id).toBe("travelers");
+    const withTravelers = {
+      vehicle: "Car",
+      fuel_type: "Gasoline",
+      travelers: "2",
+    };
+    expect(getNextFlowQuestion(withTravelers, dayContext).id).toBe("trip_details");
+  });
+
+  it("asks kids ages right after party composition", () => {
+    const next = getNextFlowQuestion(
+      { ...basePersonal, travelers: "3 to 5", adult_count: 2, child_count: 1 },
+      longTripContext,
+    );
+    expect(next.id).toBe("kids_ages");
+  });
+
+  it("shows overnight with pending route when drive time is unknown", () => {
     const answers = { ...basePersonal, preferences: [] };
     const next = getNextFlowQuestion(answers, {});
-    expect(next.id).toBe("route_context_pending");
-    expect(next.type).toBe("loading");
+    expect(next.id).toBe("overnight_preference");
     expect(next.pendingRoute).toBe(true);
   });
 
@@ -56,14 +79,18 @@ describe("tripFlow UX", () => {
       ...basePersonal,
       preferences: [],
       overnight_preference: "Stop overnight along the way",
-      lodging: "Mid-Range",
-      loyalty_program: "No preference",
     };
     const next = getNextFlowQuestion(answers, longTripContext);
     expect(next.id).toBe("trip_nights");
     const afterNights = { ...answers, trip_nights: "2 nights" };
-    expect(getNextFlowQuestion(afterNights, longTripContext).id).toBe("trip_details");
-    expect(getNextFlowQuestion(afterNights, longTripContext).type).toBe("trip_details");
+    expect(getNextFlowQuestion(afterNights, longTripContext).id).toBe("lodging");
+    const afterLodging = {
+      ...afterNights,
+      lodging: "Mid-Range",
+      loyalty_program: "No preference",
+    };
+    expect(getNextFlowQuestion(afterLodging, longTripContext).id).toBe("trip_details");
+    expect(getNextFlowQuestion(afterLodging, longTripContext).type).toBe("trip_details");
   });
 
   it("skips lodging when driving straight through", () => {
@@ -96,7 +123,7 @@ describe("tripFlow UX", () => {
       ...answers,
       overnight_preference: "Stop overnight along the way",
     };
-    expect(getNextFlowQuestion(afterOvernight, mediumContext).id).toBe("lodging");
+    expect(getNextFlowQuestion(afterOvernight, mediumContext).id).toBe("trip_nights");
   });
 
   it("skips lodging when overnight preference was not selected", () => {
@@ -122,12 +149,12 @@ describe("tripFlow UX", () => {
     expect(progress.stepTotal).toBe(4);
   });
 
-  it("shows route loading instead of overnight before drive time is known", () => {
+  it("shows pending overnight instead of skipping before drive time is known", () => {
     const answers = { ...basePersonal, preferences: [] };
     const ctx = { origin: "A", destination: "B" };
     const next = getNextFlowQuestion(answers, ctx);
-    expect(next.id).toBe("route_context_pending");
-    expect(next.type).toBe("loading");
+    expect(next.id).toBe("overnight_preference");
+    expect(next.pendingRoute).toBe(true);
   });
 
   it("plane path collects travelers before completing", () => {
@@ -151,10 +178,10 @@ describe("tripFlow UX", () => {
     expect(next.skipMessage).toMatch(/airport/i);
   });
 
-  it("boat path omits destination interests from trip details", () => {
+  it("boat path includes destination interests in trip details", () => {
     const next = getNextFlowQuestion({ vehicle: "Boat", travelers: "2" }, longTripContext);
     expect(next.id).toBe("trip_details");
-    expect(next.sections.some((s) => s.id === "stops_interests")).toBe(false);
+    expect(next.sections.some((s) => s.id === "stops_interests")).toBe(true);
   });
 
   it("shows unlocked overnight when route context was skipped", () => {
@@ -221,7 +248,7 @@ describe("tripFlow UX", () => {
     const afterTruck = {
       ...answers,
       hauling_type: "General freight",
-      sleeper_cab: "Yes I have a sleeper cab",
+      sleeper_cab: "Yes — I sleep in the cab",
       truck_stop_brand: "No preference",
       route_restrictions: ["No restrictions"],
       dietary: [],
@@ -285,6 +312,12 @@ describe("tripFlow UX", () => {
     const destSection = next.sections?.find(s => s.id === "stops_interests");
     const musicChoice = destSection?.choices?.find(c => c?.value === "music_nightlife");
     expect(musicChoice?.label).toBe("Music and nightlife");
+  });
+
+  it("includes destination interests for boat trips", () => {
+    const next = getNextFlowQuestion({ vehicle: "Boat", travelers: "2" }, longTripContext);
+    const destSection = next.sections?.find(s => s.id === "stops_interests");
+    expect(destSection?.label).toBe("Destination interests");
   });
 
   it("normalizes plane schedule restrictions to travel wording", () => {

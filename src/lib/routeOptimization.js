@@ -1,4 +1,5 @@
 /** Optimize multi-stop route order via serverless Directions API. */
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 import { MULTI_VEHICLE_TRIP } from "./vehicles.js";
 
 export function shouldOptimizeRoute(answers, stops = []) {
@@ -16,7 +17,7 @@ export async function optimizeStopOrder(origin, destination, stops) {
   try {
     const res = await fetch("/api/route-optimize", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ origin, destination, stops }),
     });
     if (!res.ok) return { stops, optimized: false };

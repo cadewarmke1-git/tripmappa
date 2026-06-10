@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { assignConvoyColor } from "../lib/liveTripHelpers.js";
+import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
 
 /** POST /api/join-convoy — register a convoy member on an active live trip. */
 export default async function handler(req, res) {
@@ -8,13 +9,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (guardTokenWriteRoute(req, res)) return undefined;
+
   const admin = getSupabaseAdmin();
   if (!admin) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
   const { shareToken, displayName, memberId: existingMemberId } = req.body || {};
-  if (!shareToken) {
+  if (!isValidShareToken(shareToken)) {
     return res.status(400).json({ error: "Missing shareToken" });
   }
 

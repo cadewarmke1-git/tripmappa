@@ -7,11 +7,14 @@ import {
   storeOtp,
   RATE_LIMIT_MAX,
 } from "../lib/phoneOtp.js";
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  if (guardProxyRoute(req, res, "otp_send")) return undefined;
 
   const { phone: rawPhone } = req.body || {};
   const validation = validateUsPhone(rawPhone);

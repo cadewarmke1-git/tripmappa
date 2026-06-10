@@ -38,6 +38,8 @@ export default function SharePanel({
   toast,
   onLiveSharingChange,
   onShareTrip: onShareSafetyTrip,
+  onOpenCollaborate,
+  hasCollaboration = false,
 }) {
   const [shareUrl, setShareUrl] = useState("");
   const [shareToken, setShareToken] = useState("");
@@ -88,6 +90,7 @@ export default function SharePanel({
     active: sharing && Boolean(shareToken) && !liveTrip?.arrivedAt,
     shareToken,
     stops,
+    accessToken: session?.access_token,
     onLocationUpdate: handleLocationUpdate,
     onError: handleLocationError,
   });
@@ -284,6 +287,20 @@ export default function SharePanel({
         <div className="share-mode-card share-mode-card-muted">
           <div className="share-mode-title">Static safety link</div>
           <p className="share-mode-desc">A read-only itinerary snapshot — no live tracking. Copy it below after you plan.</p>
+        </div>
+        <div className="share-mode-card share-mode-card-collab">
+          <div className="share-mode-title">Group collaboration</div>
+          <p className="share-mode-desc">Invite others to vote on stops, suggest alternatives, and share dietary or travel preferences.</p>
+          {onOpenCollaborate && (
+            <button
+              type="button"
+              className="share-collab-btn"
+              onClick={onOpenCollaborate}
+              disabled={!hasTrip || !user}
+            >
+              {hasCollaboration ? "Open collaboration" : "Start collaborating"}
+            </button>
+          )}
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+
 /** Client fetch for /api/weather */
 export async function fetchWeatherForStops(stops) {
   const payload = stops
@@ -8,7 +10,7 @@ export async function fetchWeatherForStops(stops) {
 
   const res = await fetch("/api/weather", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ stops: payload }),
   });
 

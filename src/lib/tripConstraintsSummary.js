@@ -82,10 +82,14 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
 /** Plain-text block appended to Sonnet user prompt via generationHints. */
 export function formatGenerationHints(answers = {}, routeInfo = null, options = {}) {
   const lines = [];
-  const { regenerateDiffBlock = "" } = options;
+  const { regenerateDiffBlock = "", collaborationHintsBlock = "" } = options;
 
   if (regenerateDiffBlock?.trim()) {
     lines.push(regenerateDiffBlock.trim(), "");
+  }
+
+  if (collaborationHintsBlock?.trim()) {
+    lines.push(collaborationHintsBlock.trim(), "");
   }
 
   const coordinationBlock = formatMultiVehicleCoordinationBlock(answers);

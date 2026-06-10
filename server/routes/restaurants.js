@@ -1,4 +1,5 @@
 /** Google Places — restaurant search near a route stop with preference filtering. */
+import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { getGoogleMapsKey, photoUrl } from "../lib/googleKey.js";
 import { cacheGet, cacheSet, roundCoord } from "../lib/apiCache.js";
 import { getDietarySearchKeywords } from "../lib/dietaryKeywords.js";
@@ -100,6 +101,7 @@ function mapRestaurant(place, details, originLat, originLng, city) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (guardProxyRoute(req, res)) return undefined;
 
   const key = getGoogleMapsKey();
   if (!key) return res.status(503).json({ error: "Google Maps API key not configured" });

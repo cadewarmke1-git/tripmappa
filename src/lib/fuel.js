@@ -44,7 +44,7 @@ export function getFuelStopMode(answers) {
   const personal = ["Car", "Motorcycle", "SUV or Van", "Rental Car"].includes(vehicle);
   const fuelType = answers?.fuel_type || answers?.fuel;
   if (personal && fuelType === "Hybrid") return "hybrid";
-  if (personal && (fuelType === "Electric" || fuelType === "Electric (EV)" || fuelType === "Electric — Tesla Superchargers only")) return "ev";
+  if (personal && (fuelType === "Electric" || fuelType === "Electric (EV)" || fuelType === "Electric — Tesla Superchargers" || fuelType === "Electric — Tesla Superchargers only")) return "ev";
   if (personal && fuelType === "Diesel") return "diesel";
   return "gas";
 }
@@ -55,7 +55,7 @@ export function estimateTripFuelCost(miles, answers) {
   const fuelType = answers?.fuel_type || answers?.fuel;
   if (isWaterVehicle(vehicle) || vehicle === "Plane") return 0;
 
-  if (fuelType === "Electric" || fuelType === "Electric (EV)" || fuelType === "Electric — Tesla Superchargers only") {
+  if (fuelType === "Electric" || fuelType === "Electric (EV)" || fuelType === "Electric — Tesla Superchargers" || fuelType === "Electric — Tesla Superchargers only") {
     return Math.round(miles * FUEL_PRICES.evPerMile);
   }
   if (fuelType === "Hybrid") {
