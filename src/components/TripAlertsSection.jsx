@@ -1,3 +1,34 @@
+export function PersonalTouchesSection({ touches = [], changesMade = [] }) {
+  const visibleTouches = touches.filter(Boolean).slice(0, 4);
+  const visibleChanges = changesMade.filter(Boolean).slice(0, 4);
+  if (!visibleTouches.length && !visibleChanges.length) return null;
+
+  return (
+    <section className="trip-tips-section trip-personal-section" aria-label="Personalized for you">
+      <div className="trip-tips-header">
+        <h3 className="trip-tips-title">Personalized for you</h3>
+      </div>
+      {visibleTouches.length > 0 && (
+        <ul className="trip-tips-list">
+          {visibleTouches.map((line, i) => (
+            <li key={`touch-${i}-${line.slice(0, 24)}`} className="trip-tips-line">{line}</li>
+          ))}
+        </ul>
+      )}
+      {visibleChanges.length > 0 && (
+        <div className="trip-changes-made">
+          <p className="trip-changes-made-label">Updated for your edits</p>
+          <ul className="trip-tips-list">
+            {visibleChanges.map((line, i) => (
+              <li key={`change-${i}-${line.slice(0, 24)}`} className="trip-tips-line trip-changes-made-line">{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function TripTipsSection({ tips = [], updatedAt = null, refreshing = false }) {
   const visible = tips.filter(Boolean).slice(0, 5);
   if (!visible.length) return null;

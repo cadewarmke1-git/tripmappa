@@ -54,9 +54,9 @@ describe("tripConstraintsSummary", () => {
     const hints = formatGenerationHints(
       { vehicle: "RV", dietary: ["Halal"] },
       null,
-      { regenerateDiffBlock: "USER EDITED SINCE LAST GENERATION:\n- Vehicle changed from Car to RV\n- Halal dietary restriction added" },
+      { regenerateDiffBlock: "REGENERATION DIRECTIVES (YOU MUST address every item — override the previous plan):\n- YOU MUST: Rebuild affected stops and lodging for this change: Vehicle changed from Car to RV\n- YOU MUST: Add or emphasize recommendations that reflect: Halal dietary restriction added" },
     );
-    expect(hints.indexOf("USER EDITED SINCE LAST GENERATION")).toBeLessThan(hints.indexOf("USER CONSTRAINTS"));
+    expect(hints.indexOf("REGENERATION DIRECTIVES")).toBeLessThan(hints.indexOf("USER CONSTRAINTS"));
     expect(hints).toContain("Halal dietary restriction added");
   });
 

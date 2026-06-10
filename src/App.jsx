@@ -154,6 +154,8 @@ export default function App() {
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
+  const [personalTouches, setPersonalTouches] = useState([]);
+  const [changesMade, setChangesMade] = useState([]);
   const [enrichingTrip, setEnrichingTrip] = useState(false);
   const [enrichmentLimited, setEnrichmentLimited] = useState(false);
   const [enrichmentNoticeDismissed, setEnrichmentNoticeDismissed] = useState(false);
@@ -404,6 +406,8 @@ export default function App() {
       stops,
       roadStops,
       tripTips,
+      personalTouches,
+      changesMade,
       answers: stripSessionOnlyAnswers(answers),
       routeInfo,
       selectedLodging,
@@ -1289,6 +1293,8 @@ export default function App() {
     setResultsView("planning");
     setStops([]);
     setTripTips([]);
+    setPersonalTouches([]);
+    setChangesMade([]);
     setRoadStops([]);
     setTripFormat(null);
     setRecommendations([]);
@@ -2431,6 +2437,8 @@ export default function App() {
       setStops(parsed.stops);
       setRoadStops(mergedRoadStops);
       setTripTips(tips);
+      setPersonalTouches(parsed.personalTouches || []);
+      setChangesMade(parsed.changesMade || []);
       setTripFormat(parsed.tripFormat || null);
       setRecommendations(parsed.recommendations || []);
       setGenerated(true);
@@ -2597,6 +2605,8 @@ export default function App() {
                 stops: parsed.stops,
                 roadStops: mergedRoadStops,
                 tripTips: tips,
+                personalTouches: parsed.personalTouches || [],
+                changesMade: parsed.changesMade || [],
                 answers: stripSessionOnlyAnswers(normalizedAnswers),
                 routeInfo: activeRouteInfo,
                 selectedLodging,
@@ -2688,7 +2698,7 @@ export default function App() {
     buildFlowPrefillForUser().then(setFlowPrefill);
     setQIndex(-1);
     setCurrentQuestion(null); setQuestionHistory([]);
-    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]);
+    setConvoComplete(false); setGenerated(false); setStops([]); setTripTips([]); setPersonalTouches([]); setChangesMade([]); setEnrichingTrip(false); setEnrichmentLimited(false); setEnrichmentNoticeDismissed(false); setRoadStops([]); setTripFormat(null); setRecommendations([]); setSelectedLodging([]);
     setTripLegs([]); setPrefDraft([]);
     setTripAlerts([]); setDismissedAlerts([]); setMapMarkers([]); setCustomStops([]);
     setActivitiesByCity({}); setOptionalStopCards([]);
@@ -2767,6 +2777,8 @@ export default function App() {
     setStops(shared.stops || []);
     setRoadStops(shared.roadStops || []);
     setTripTips(shared.tripTips || []);
+    setPersonalTouches(shared.personalTouches || []);
+    setChangesMade(shared.changesMade || []);
     setAnswers(stripSessionOnlyAnswers(shared.answers || {}));
     setSelectedLodging(shared.selectedLodging || []);
     setGenerated(true);
@@ -3012,6 +3024,8 @@ export default function App() {
     setStops(trip.stops || []);
     setRoadStops(trip.roadStops || []);
     setTripTips(trip.tripTips || []);
+    setPersonalTouches(trip.personalTouches || []);
+    setChangesMade(trip.changesMade || []);
     setAnswers(tripAnswers);
     setRouteInfo(trip.routeInfo || null);
     setSelectedLodging(trip.selectedLodging || []);
@@ -3308,6 +3322,8 @@ export default function App() {
             tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
             liveTripTips={displayLiveTips}
             tripTips={tripTips}
+            personalTouches={personalTouches}
+            changesMade={changesMade}
             liveTipsUpdatedAt={liveTipsUpdatedAt}
             liveTipsRefreshing={liveTipsRefreshing}
             enrichingTrip={enrichingTrip}

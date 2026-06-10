@@ -6,7 +6,7 @@ import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import TripSummaryFooter from "./TripSummaryFooter.jsx";
-import { TripTipsSection } from "../TripAlertsSection.jsx";
+import { TripTipsSection, PersonalTouchesSection } from "../TripAlertsSection.jsx";
 import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
@@ -30,6 +30,8 @@ export default function TripResultsPanel({
   tripAlerts = [],
   liveTripTips = [],
   tripTips = [],
+  personalTouches = [],
+  changesMade = [],
   liveTipsUpdatedAt = null,
   liveTipsRefreshing = false,
   enrichingTrip = false,
@@ -162,6 +164,8 @@ export default function TripResultsPanel({
         )}
 
         <TripConstraintsBar answers={answers} routeInfo={routeInfo} />
+
+        <PersonalTouchesSection touches={personalTouches} changesMade={changesMade} />
 
         <EnrichmentNotice
           limited={enrichmentLimited}

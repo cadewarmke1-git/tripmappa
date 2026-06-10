@@ -28,7 +28,9 @@ describe("planSnapshotDiff", () => {
     expect(changes).toContain("Vehicle changed from Car to RV");
     expect(changes).toContain("Overnight preference changed to Drive straight through");
     const block = formatRegenerateDiffBlock(saved, current);
-    expect(block).toContain("USER EDITED SINCE LAST GENERATION:");
+    expect(block).toContain("REGENERATION DIRECTIVES");
+    expect(block).toContain("YOU MUST:");
+    expect(block).toContain("changes_made");
     expect(block).toContain("Vehicle changed from Car to RV");
   });
 });

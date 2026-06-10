@@ -2,7 +2,8 @@
 import { sampleRoutePointsEveryMiles, routePointAtFraction } from "./fuel.js";
 import { searchGasStations, searchEvChargingStations } from "./placesStations.js";
 import { searchRestaurants, searchLodging, searchNearbyCategory, RADIUS_2MI, RADIUS_10MI } from "./placesSearch.js";
-import { applyStopFilters } from "./placesFilters.js";
+import { applyStopFilters, filterGenericChains, filterLodgingByTier, filterRatingBand } from "./placesFilters.js";
+import { prefIncludes } from "./tripAccommodations.js";
 import {
   asArray,
   isTeslaSuperchargerOnly,
@@ -112,9 +113,12 @@ async function fetchCorridorSample(pt, answers, evTrip, teslaOnly) {
   }
   evStations = evStations.filter(s => (s.distanceMiles ?? 99) <= 1).slice(0, 3);
 
+  const allowChains = prefIncludes(answers, "Fast food only");
   let restaurants = applyStopFilters(restaurantsRaw, answers)
-    .filter(r => (r.distanceMiles ?? 99) <= 1)
-    .slice(0, 4);
+    .filter(r => (r.distanceMiles ?? 99) <= 1);
+  restaurants = filterRatingBand(restaurants);
+  restaurants = filterGenericChains(restaurants, { allowChains });
+  restaurants = restaurants.slice(0, 4);
 
   return {
     lat: pt.lat,
@@ -144,7 +148,10 @@ async function fetchOvernightCity({
     fetchMedicalAtPoint(pt.lat, pt.lng, answers),
   ]);
 
-  const lodging = lodgingRaw.filter(h => (h.distanceMiles ?? 99) <= 1).slice(0, 4);
+  let lodging = lodgingRaw.filter(h => (h.distanceMiles ?? 99) <= 1);
+  lodging = filterLodgingByTier(lodging, answers);
+  lodging = filterRatingBand(lodging, { minRating: 3.5, minReviews: 8 });
+  lodging = lodging.slice(0, 4);
   const cityName = routeInfo.citiesAlongRoute?.[Math.min(index, (routeInfo.citiesAlongRoute.length - 1))]
     || `Route mile ~${Math.round(frac * (boundary.totalMiles || 0))}`;
 

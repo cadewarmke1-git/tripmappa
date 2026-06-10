@@ -135,6 +135,8 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
     rvSafety: data.safety?.rv || data.rv_safety || null,
     routeSummary: data.route_summary || null,
     roadConditionWarnings: data.road_condition_warnings || [],
+    personalTouches: Array.isArray(data.personal_touches) ? data.personal_touches.filter(Boolean) : [],
+    changesMade: Array.isArray(data.changes_made) ? data.changes_made.filter(Boolean) : [],
   };
 
   if (apiStops.length > 0) {

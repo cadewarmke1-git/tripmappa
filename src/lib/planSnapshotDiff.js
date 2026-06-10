@@ -163,12 +163,31 @@ export function describeRegenerateChanges(savedSnapshot, currentSnapshot, max = 
   return changes.filter(Boolean).slice(0, max);
 }
 
+function changeToDirective(change) {
+  if (!change) return "";
+  if (/added$/i.test(change) || /added to/i.test(change)) {
+    return `Add or emphasize recommendations that reflect: ${change}`;
+  }
+  if (/removed from/i.test(change)) {
+    return `Remove or de-emphasize stops tied to: ${change}`;
+  }
+  if (/changed from/i.test(change) || /changed to/i.test(change) || /set to/i.test(change)) {
+    return `Rebuild affected stops and lodging for this change: ${change}`;
+  }
+  if (/cleared/i.test(change)) {
+    return `Drop prior assumptions and replan without: ${change}`;
+  }
+  return `Adjust the plan for: ${change}`;
+}
+
 /** Block injected near top of generation hints on regenerate only. */
 export function formatRegenerateDiffBlock(savedSnapshot, currentSnapshot, max = 8) {
   const changes = describeRegenerateChanges(savedSnapshot, currentSnapshot, max);
   if (!changes.length) return "";
   return [
-    "USER EDITED SINCE LAST GENERATION:",
-    ...changes.map(c => `- ${c}`),
+    "REGENERATION DIRECTIVES (YOU MUST address every item — override the previous plan):",
+    ...changes.map(c => `- YOU MUST: ${changeToDirective(c)}`),
+    "",
+    "Populate changes_made in your JSON with one bullet per directive above.",
   ].join("\n");
 }

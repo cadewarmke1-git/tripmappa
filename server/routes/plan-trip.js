@@ -414,14 +414,29 @@ Recommend meeting-point stops where the group can reconvene if routes diverge.
 Note coordination logistics (e.g. RV must take longer route to avoid restricted road while cars use direct highway).`;
 }
 
+const SCHEMA_PERSONAL_TOUCHES = `"personal_touches": ["2-4 short bullets proving you read THIS user's profile — cite their vehicle, party, dietary needs, budget tier, and stop interests specifically"]`;
+
+function buildVerificationChecklist(ctx) {
+  const lodgingBand = buildLodgingRules(ctx.lodging);
+  return `
+=== PRE-OUTPUT VERIFICATION CHECKLIST ===
+Before returning JSON, confirm every item:
+1. Named businesses: use placesContext names exactly OR omit the name (city + category only) — never invent brands.
+2. Set verified:true only when the business name matches placesContext; verified:false when generic or uncertain.
+3. Hotel price_band (budget|mid|luxury) and nightly price align with lodging tier: ${lodgingBand}
+4. Stops progress geographically from ${ctx.routeOrigin} toward ${ctx.routeDestination}; distance and eta increase logically.
+5. ${SCHEMA_PERSONAL_TOUCHES.replace(/"/g, "")} — not generic filler.
+6. Tips name specific corridor landmarks, not generic road-trip advice.`;
+}
+
 function buildUniversalRules(ctx, placesContextPrompt) {
   const maxDayPersonal = ctx.youngKids ? "6 hours for families with young children" : "8 hours for personal vehicles";
   const maxDay = ctx.tripCategory === "commercial" ? "11 hours for commercial vehicles" : maxDayPersonal;
 
   const lodgingRules = ctx.continuousDrive
     ? "NO OVERNIGHT STOPS: User chose continuous drive — return an empty stops array. Do not recommend hotels or lodging. Space fuel and rest road_stops across the full drive."
-    : `HOTELS: Every hotel must be in the correct overnight stop city on this route — never a city off the corridor. At each overnight stop provide at least 3 lodging options sorted by lodging preference (${ctx.lodging}): budget / mid-range / luxury as applicable.
-RESTAURANTS: At each overnight stop include at least 2 restaurants — one sit-down and one fast food or quick option — in that same stop city.
+    : `HOTELS: Every hotel must be in the correct overnight stop city on this route — never a city off the corridor. At each overnight stop provide at least 3 lodging options matching lodging tier (${ctx.lodging}): ${buildLodgingRules(ctx.lodging)} Include price_band (budget|mid|luxury) and verified on each hotel.
+RESTAURANTS: At each overnight stop include at least 2 restaurants — one sit-down and one fast food or quick option — in that same stop city. Include verified on each.
 SPACING: Space overnight stops evenly; no single driving day exceeds ${maxDay}.`;
 
   let scheduleRules = "";
@@ -464,7 +479,15 @@ BUDGET: ${ctx.tripBudget && ctx.tripBudget !== "No budget limit" ? `Keep total e
 TIPS: Include tips array with 5–8 genuinely useful tips specific to THIS route and vehicle — not generic advice (e.g. name a specific weigh station mile marker on I-40, not "check tire pressure"). Include one regional food culture tip unique to this corridor. End tips with one vehicle-specific preparation tip (DOT inspection for truckers, tire/propane for RV, tire/chain/weather for motorcycle, road-trip kit for families).
 ROAD CONDITIONS: Include road_condition_warnings array for mountain passes, desert heat, winter weather, or construction zones actually relevant to this specific route.
 ORDER: Stops must progress geographically from origin toward destination; distance and eta fields must increase logically.
-ANTI-HALLUCINATION: If uncertain whether a business exists, output the city and category without a business name.`;
+ANTI-HALLUCINATION: If uncertain whether a business exists, output the city and category without a business name.
+${buildVerificationChecklist(ctx)}`;
+}
+
+function restaurantSchemaShape(ctx) {
+  if (ctx.preferences.includes("Fast food only") || ctx.preferences.includes("Sit down restaurants only")) {
+    return `[{ "name": "Restaurant in stop city", "verified": true, "cuisine": "Type", "rating": "4.5", "time": "7 PM", "kidFriendly": true }]`;
+  }
+  return `[{ "name": "Sit-down in stop city", "verified": true, "cuisine": "Type", "rating": "4.5", "time": "7 PM" }, { "name": "Quick option", "verified": true, "cuisine": "Fast casual", "rating": "4.2", "time": "flexible" }]`;
 }
 
 function buildLodgingRules(lodging) {
@@ -489,8 +512,9 @@ function buildJsonSchema(ctx, isSimplified) {
 {
   "trip_format": "simplified",
   "route_summary": "One sentence specific to this route and vehicle",
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext or category", "note": "Route-specific short note" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext or category", "verified": true, "note": "Route-specific short note" }],
   "recommendations": [{ "name": "From placesContext", "category": "Activity|Dining|Viewpoint", "rating": "4.5", "note": "Why stop here on THIS route" }],
+  ${SCHEMA_PERSONAL_TOUCHES},
   "tips": ["5-8 route-specific tips"],
   "road_condition_warnings": ["Warning specific to this route"]
 }${continuousNote}`;
@@ -505,10 +529,10 @@ function buildJsonSchema(ctx, isSimplified) {
   "stops": [{
     "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "HOS reason — few words", "type": "overnight|break",
     "truckStop": { "name": "From placesContext", "catScale": true, "diesel": "$3.89/gal", "amenities": "Showers · laundry · food" },
-    "motels": [{ "name": "From placesContext", "price": "$99/night", "note": "One-line parking/shuttle note" }],
-    "restaurants": [{ "name": "From placesContext", "cuisine": "Type", "note": "One line" }]
+    "motels": [{ "name": "From placesContext", "price": "$99/night", "price_band": "budget|mid|luxury", "verified": true, "note": "One-line parking/shuttle note" }],
+    "restaurants": [{ "name": "From placesContext", "cuisine": "Type", "verified": true, "note": "One line" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "note": "One line — max 3 road_stops per leg" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "verified": true, "note": "One line — max 3 road_stops per leg" }],
   "safety": {
     "weighStations": [{ "state": "TX", "location": "I-40 MM 120", "note": "One line — max 3 per leg" }],
     "lowBridges": [{ "location": "City, ST", "clearance": "13'6\\"", "note": "One line" }],
@@ -516,6 +540,7 @@ function buildJsonSchema(ctx, isSimplified) {
     "hazmatRestrictions": [{ "location": "Highway", "note": "One line" }],
     "weightRestrictions": [{ "location": "Road", "note": "One line" }]
   },
+  ${SCHEMA_PERSONAL_TOUCHES},
   "tips": ["3-5 concise commercial tips for this route"],
   "road_condition_warnings": ["One line each"]
 }`;
@@ -532,8 +557,9 @@ function buildJsonSchema(ctx, isSimplified) {
     "freeParking": { "name": "Last resort only", "type": "Walmart", "note": "Confirm before arrival", "distance": "2 mi" },
     "fuelStops": [{ "name": "From placesContext", "location": "City, ST", "distance": "XXX mi", "fuel": "Gas/diesel", "highClearance": true, "def": true, "rvFriendly": true, "amenities": "High clearance · DEF" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "From placesContext", "note": "Short note" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "From placesContext", "verified": true, "note": "Short note" }],
   "safety": { "lowBridges": [], "steepGrades": [], "sharpCurves": [], "propaneLocations": [], "dumpStations": [], "rvParkingRestrictions": [] },
+  ${SCHEMA_PERSONAL_TOUCHES},
   "tips": ["5-8 RV route-specific tips"],
   "road_condition_warnings": []
 }`;
@@ -576,10 +602,7 @@ function buildJsonSchema(ctx, isSimplified) {
 }`;
   }
 
-  const restaurantShape =
-    ctx.preferences.includes("Fast food only") || ctx.preferences.includes("Sit down restaurants only")
-      ? `[{ "name": "Restaurant in stop city", "cuisine": "Type", "rating": "4.5", "time": "7 PM", "kidFriendly": true }]`
-      : `[{ "name": "Sit-down in stop city", "cuisine": "Type", "rating": "4.5", "time": "7 PM" }, { "name": "Quick option", "cuisine": "Fast casual", "rating": "4.2", "time": "flexible" }]`;
+  const restaurantShape = restaurantSchemaShape(ctx);
 
   return `Return JSON with trip_format "multi_day":
 {
@@ -587,14 +610,15 @@ function buildJsonSchema(ctx, isSimplified) {
   "stops": [{
     "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
     "hotels": [
-      { "name": "From placesContext or tier-appropriate", "stars": 3, "price": "$99/night", "pet": false, "kidFriendly": ${ctx.youngKids} },
-      { "name": "Second option", "stars": 3, "price": "$109/night" },
-      { "name": "Third option", "stars": 4, "price": "$149/night" }
+      { "name": "From placesContext or tier-appropriate", "stars": 3, "price": "$99/night", "price_band": "budget|mid|luxury", "verified": true, "pet": false, "kidFriendly": ${ctx.youngKids} },
+      { "name": "Second option", "stars": 3, "price": "$109/night", "price_band": "mid", "verified": true },
+      { "name": "Third option", "stars": 4, "price": "$149/night", "price_band": "luxury", "verified": true }
     ],
     "restaurants": ${restaurantShape},
     "scenicView": ${ctx.isScenic ? '"Specific overlook on this route"' : "null"}
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "note": "Route-specific note" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "verified": true, "note": "Route-specific note" }],
+  ${SCHEMA_PERSONAL_TOUCHES},
   "tips": ["5-8 route- and vehicle-specific tips"],
   "road_condition_warnings": []
 }`;
@@ -647,10 +671,7 @@ function buildSegmentJsonSchema(ctx, segment) {
     return buildCommercialSegmentJsonSchema(ctx, segment);
   }
 
-  const restaurantShape =
-    ctx.preferences.includes("Fast food only") || ctx.preferences.includes("Sit down restaurants only")
-      ? `[{ "name": "Restaurant in stop city", "cuisine": "Type", "rating": "4.5", "time": "7 PM", "kidFriendly": true }]`
-      : `[{ "name": "Sit-down in stop city", "cuisine": "Type", "rating": "4.5", "time": "7 PM" }, { "name": "Quick option", "cuisine": "Fast casual", "rating": "4.2", "time": "flexible" }]`;
+  const restaurantShape = restaurantSchemaShape(ctx);
 
   return `Return JSON with trip_format "multi_day" for THIS SEGMENT ONLY (leg ${segment.segmentIndex + 1} of ${segment.totalSegments}):
 {
@@ -659,14 +680,15 @@ function buildSegmentJsonSchema(ctx, segment) {
   "stops": [{
     "city": "${segment.destination.includes(",") ? segment.destination : "City, ST"}", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
     "hotels": [
-      { "name": "From placesContext or tier-appropriate", "stars": 3, "price": "$99/night", "pet": false, "kidFriendly": ${ctx.youngKids} },
-      { "name": "Second option", "stars": 3, "price": "$109/night" },
-      { "name": "Third option", "stars": 4, "price": "$149/night" }
+      { "name": "From placesContext or tier-appropriate", "stars": 3, "price": "$99/night", "price_band": "mid", "verified": true, "pet": false, "kidFriendly": ${ctx.youngKids} },
+      { "name": "Second option", "stars": 3, "price": "$109/night", "price_band": "mid", "verified": true },
+      { "name": "Third option", "stars": 4, "price": "$149/night", "price_band": "luxury", "verified": true }
     ],
     "restaurants": ${restaurantShape},
     "scenicView": ${ctx.isScenic ? '"Specific overlook on this leg"' : "null"}
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "note": "Route-specific note for this leg" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "verified": true, "note": "Route-specific note for this leg" }],
+  ${SCHEMA_PERSONAL_TOUCHES},
   "tips": ["2-4 tips specific to THIS leg only"],
   "road_condition_warnings": []
 }`;
@@ -724,6 +746,7 @@ ${isSimplified && !segment ? `\nSHORT TRIP: Distance ${ctx.routeDistance} — us
 ${planLine}
 
 ${jsonSchema}
+${/REGENERATION DIRECTIVES/i.test(generationHints) ? '\n"changes_made": ["Bullet list of concrete changes from the previous plan — one entry per regeneration directive"]' : ""}
 
 Remember — you are not a generic trip planner. You are a specialized expert for this exact vehicle type on this exact route. Every recommendation must prove that you understand the difference between planning a trip for an 18-wheeler versus a family minivan versus a motorcycle versus an RV. Generic suggestions are unacceptable. If you are uncertain about a specific real business at a stop location, recommend the stop city and category instead of inventing a business name.`;
 }
@@ -751,6 +774,7 @@ async function streamSegmentWithRetry({
   sseWriter,
   segmentIndex,
   totalSegments,
+  placesContext = null,
 }) {
   for (let attempt = 0; attempt < 2; attempt++) {
     if (attempt > 0) {
@@ -778,7 +802,7 @@ async function streamSegmentWithRetry({
     }
 
     try {
-      const parsed = normalizeTripResponse(parseJsonFromLlm(streamResult.fullText));
+      const parsed = normalizeTripResponse(parseJsonFromLlm(streamResult.fullText), { placesContext });
       parsed.trip_format = "multi_day";
       if (!tripResponseHasContent(parsed) && attempt === 0) continue;
       if (!tripResponseHasContent(parsed)) {
@@ -921,6 +945,7 @@ export default async function handler(req, res) {
     answers,
     model: requestedModel = "claude-sonnet-4-6",
     routeInfo = {},
+    placesContext: rawPlacesContext = null,
     placesContextPrompt: rawPlacesContextPrompt = "",
     generationHints: rawGenerationHints = "",
     preferenceContext: rawPreferenceContext = "",
@@ -1037,6 +1062,7 @@ export default async function handler(req, res) {
           sseWriter,
           segmentIndex: segment.segmentIndex,
           totalSegments: segment.totalSegments,
+          placesContext: rawPlacesContext,
         }).then(async (result) => {
           await sseWriter.write("segment_complete", {
             segmentIndex: segment.segmentIndex,
@@ -1056,7 +1082,7 @@ export default async function handler(req, res) {
       const stitched = stitchTripSegments(segmentResults.map(r => r.parsed));
       let parsed;
       try {
-        parsed = normalizeTripResponse(stitched);
+        parsed = normalizeTripResponse(stitched, { placesContext: rawPlacesContext });
       } catch (stitchErr) {
         writePlanTripSse(res, "error", {
           error: "Trip planner returned invalid data",
@@ -1150,7 +1176,7 @@ export default async function handler(req, res) {
 
       const text = streamResult.fullText;
       try {
-        parsed = normalizeTripResponse(parseJsonFromLlm(text));
+        parsed = normalizeTripResponse(parseJsonFromLlm(text), { placesContext: rawPlacesContext });
       } catch (parseErr) {
         if (attempt === 0) continue;
         writePlanTripSse(res, "error", {

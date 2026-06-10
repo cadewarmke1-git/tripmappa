@@ -5,6 +5,8 @@ import { parseHoursFromDuration } from "./parsing.js";
 
 const PRICE_LEVEL_NIGHTLY = [55, 75, 110, 165, 280];
 
+const GENERIC_CHAIN_RE = /\b(mcdonald|burger king|wendy|taco bell|kfc|subway|chipotle|panda express|arby|sonic|jack in the box|dairy queen|popeyes|chick-fil-a|five guys|starbucks|dunkin|domino|pizza hut|little caesar|papa john|panera|jamba|qdoba|moe's|jersey mike|firehouse subs|jimmy john|potbelly|noodles|hardee|carl's jr|del taco|white castle|checkers|rally|steak 'n shake|bojangles|raising cane|culver|zaxby|in-n-out|whataburger)\b/i;
+
 export function estimateNightlyFromPlace(place) {
   if (place.pricePerNight != null) return place.pricePerNight;
   const level = place.priceLevel ?? 2;
@@ -13,6 +15,24 @@ export function estimateNightlyFromPlace(place) {
 
 export function filterSafeStopsOnly(places) {
   return places.filter(p => (p.rating ?? 0) >= 4 && (p.userRatingsTotal ?? 0) >= 20);
+}
+
+export function isGenericChainPlace(place) {
+  return GENERIC_CHAIN_RE.test(`${place?.name || ""} ${place?.address || ""}`);
+}
+
+/** Prefer independent/local venues unless the list would be empty. */
+export function filterGenericChains(places, { allowChains = false } = {}) {
+  if (allowChains || !places?.length) return places || [];
+  const independent = places.filter(p => !isGenericChainPlace(p));
+  return independent.length ? independent : places;
+}
+
+/** Keep well-rated places when enough exist; otherwise return the original list. */
+export function filterRatingBand(places, { minRating = 3.8, minReviews = 12 } = {}) {
+  if (!places?.length) return places || [];
+  const rated = places.filter(p => (p.rating ?? 0) >= minRating && (p.userRatingsTotal ?? 0) >= minReviews);
+  return rated.length >= Math.min(2, places.length) ? rated : places;
 }
 
 export function filterOpen24Hour(places) {
