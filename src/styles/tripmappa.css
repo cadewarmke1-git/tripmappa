@@ -4288,9 +4288,47 @@
   }
   .trip-results-fixed-top {
     flex-shrink: 0;
-    padding: 10px 16px 8px;
+    max-height: min(36vh, 300px);
+    overflow-y: auto;
+    padding: 8px 16px 6px;
     border-bottom: 1px solid var(--border);
     background: var(--results-topbar-bg, rgba(15,15,26,0.88));
+    -webkit-overflow-scrolling: touch;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact {
+    margin-bottom: 6px;
+    padding: 10px 12px 8px;
+    border-radius: 12px;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact .trip-overview-hero-title {
+    font-size: clamp(18px, 3.2vw, 24px);
+    margin-bottom: 4px;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact .trip-overview-hero-eyebrow {
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact .trip-overview-hero-stats {
+    gap: 6px;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact .trip-overview-hero-stat {
+    padding: 6px 4px;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact .trip-overview-hero-val {
+    font-size: 14px;
+  }
+  .trip-results-fixed-top .trip-overview-hero-compact .trip-overview-hero-label {
+    font-size: 10px;
+  }
+  .trip-results-fixed-top .route-progress-bar {
+    margin: 4px 0 6px;
+  }
+  .results-truck-hos-line {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--accent, var(--gold-primary));
   }
   .trip-results-timeline-scroll {
     flex: 1;
@@ -4456,9 +4494,26 @@
     gap: 6px;
     max-width: min(280px, 72vw);
     padding: 6px 10px;
-    border-radius: 999px;
+    border-radius: 12px;
     border: 1px solid rgba(255,210,140,0.18);
     background: rgba(255,255,255,0.05);
+  }
+  .app-wrap.day .trip-results-fixed-top .trip-overview-hero-compact {
+    background: var(--color-surface, #fff);
+    border: 1px solid rgba(224, 104, 32, 0.14);
+  }
+  .app-wrap.day .trip-results-fixed-top .trip-overview-hero-val {
+    color: var(--color-text-primary, #1a1a1a) !important;
+  }
+  .app-wrap.day .trip-results-fixed-top .trip-overview-hero-label {
+    color: var(--color-text-secondary, #5c5348);
+  }
+  .app-wrap.day .personal-touches-strip-pill {
+    background: var(--color-surface, #fff);
+    border-color: rgba(224, 104, 32, 0.2);
+  }
+  .app-wrap.day .personal-touches-strip-text {
+    color: var(--color-text-primary, #1a1a1a);
   }
   .personal-touches-strip-pill-muted { opacity: 0.85; }
   .personal-touches-gold-dot {

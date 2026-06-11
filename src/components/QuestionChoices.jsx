@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
+import { isQuestionConfirmedInHistory } from "../lib/generationContext.js";
 import { ROUTE_PENDING_UNLOCK_MS } from "../lib/tripFlow.js";
 
 const TRIP_DETAILS_MORE_SECTION_IDS = new Set([
@@ -24,8 +25,8 @@ function isGroupDraft(prefDraft) {
   return prefDraft && typeof prefDraft === "object" && !Array.isArray(prefDraft);
 }
 
-function buildGroupDraft(currentQ, prefDraft, answers) {
-  const draft = isGroupDraft(prefDraft) ? { ...prefDraft } : {};
+function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false } = {}) {
+  const draft = includePrefill && isGroupDraft(prefDraft) ? { ...prefDraft } : {};
   for (const sec of currentQ?.sections || []) {
     if (!Array.isArray(draft[sec.id])) {
       draft[sec.id] = Array.isArray(answers?.[sec.id]) ? [...answers[sec.id]] : [];
@@ -43,6 +44,7 @@ export default function QuestionChoices({
   answers,
   committedAnswers,
   prefDraft,
+  questionHistory = [],
   questionHistoryLength,
   compact = false,
   showNavRow = true,
@@ -74,16 +76,26 @@ export default function QuestionChoices({
     return () => clearTimeout(timer);
   }, [currentQ?.id, currentQ?.pendingRoute, onRoutePendingTimeout]);
 
+  const committed = committedAnswers ?? answers;
+  const questionConfirmed = useMemo(
+    () => isQuestionConfirmedInHistory(currentQ?.id, questionHistory),
+    [currentQ?.id, questionHistory],
+  );
+
   useEffect(() => {
     setVehicleTab(0);
     setLodgingDraft(null);
-    setLoyaltyDraft(answers.loyalty_program || null);
+    setLoyaltyDraft(
+      questionConfirmed && currentQ?.type === "lodging_stay"
+        ? (committed.loyalty_program || null)
+        : null,
+    );
     setBudgetTouched(false);
-  }, [currentQ?.id, answers.loyalty_program]);
+  }, [currentQ?.id, currentQ?.type, committed.loyalty_program, questionConfirmed]);
 
   useEffect(() => {
     if (currentQ?.type === "trip_details" || currentQ?.type === "multiselect_group") {
-      setGroupDraft(buildGroupDraft(currentQ, prefDraft, answers));
+      setGroupDraft(buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed }));
       if (currentQ?.type === "trip_details") {
         setMoreOptionsExpanded(false);
       }
@@ -91,31 +103,33 @@ export default function QuestionChoices({
     }
     setGroupDraft(null);
     if (currentQ?.type === "multiselect") {
-      setMultiDraft(Array.isArray(prefDraft) ? [...prefDraft] : []);
+      const fromAnswers = Array.isArray(committed[currentQ.id]) ? committed[currentQ.id] : [];
+      setMultiDraft(questionConfirmed ? [...fromAnswers] : []);
       return;
     }
     if (currentQ?.type === "party_composition") {
-      const draft = isGroupDraft(prefDraft) ? prefDraft : {};
-      setPartyAdults(draft.adults ?? answers.adult_count ?? 2);
-      setPartyChildren(draft.children ?? answers.child_count ?? 0);
+      const draft = questionConfirmed && isGroupDraft(prefDraft) ? prefDraft : {};
+      setPartyAdults(draft.adults ?? (questionConfirmed ? committed.adult_count : null) ?? 2);
+      setPartyChildren(draft.children ?? (questionConfirmed ? committed.child_count : null) ?? 0);
       return;
     }
     setMultiDraft([]);
-  }, [currentQ?.id, currentQ?.type, prefDraft, answers]);
+  }, [currentQ?.id, currentQ?.type, prefDraft, committed, questionConfirmed]);
 
   if (!currentQ?.id || !currentQ?.type) return null;
 
   const frozen = !!stepAnim;
   const selected = stepAnim?.answer;
-  const selectionAnswers = committedAnswers ?? answers;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];
   const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) ? currentQ.groups : null;
   const useVehicleTabs = compact && vehicleGroups;
 
+  const committedChoiceValue = questionConfirmed ? committed[currentQ.id] : undefined;
+
   const mkClass = (val, extra = "") => {
     const sel = selected === val ? " qr-selected" : "";
-    const active = selectionAnswers[currentQ.id] === val || lodgingDraft === val ? " qr-selected" : "";
-    return `qr-btn${extra}${sel || active}${frozen && selected !== val && selectionAnswers[currentQ.id] !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
+    const active = committedChoiceValue === val || lodgingDraft === val ? " qr-selected" : "";
+    return `qr-btn${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
   };
   const mkPrefClass = (p) => {
     const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
@@ -153,7 +167,7 @@ export default function QuestionChoices({
 
   function toggleGroupSection(sectionId, value) {
     setGroupDraft(prev => {
-      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, answers);
+      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, committed);
       const section = Array.isArray(base[sectionId]) ? base[sectionId] : [];
       const next = {
         ...base,
@@ -181,7 +195,7 @@ export default function QuestionChoices({
   }
 
   function submitTripDetails() {
-    const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, answers);
+    const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
     const empty = isTripDetailsDraftEmpty(draft);
     pickInstant({
       dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
@@ -205,7 +219,7 @@ export default function QuestionChoices({
   function setBudgetDraft(value) {
     setBudgetTouched(true);
     setGroupDraft(prev => {
-      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, answers);
+      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, committed);
       const current = base.trip_budget || "No budget limit";
       const next = { ...base, trip_budget: current === value ? "No budget limit" : value };
       onSetPrefDraft(next);
@@ -602,7 +616,7 @@ export default function QuestionChoices({
             type="text"
             className="question-text-input"
             placeholder={currentQ.placeholder || "Type your answer…"}
-            defaultValue={answers[currentQ.id] || ""}
+            defaultValue={questionConfirmed ? (committed[currentQ.id] || "") : ""}
             disabled={frozen}
             onKeyDown={e => {
               if (e.key === "Enter" && e.currentTarget.value.trim()) {

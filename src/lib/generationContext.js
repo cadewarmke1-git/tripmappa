@@ -338,6 +338,52 @@ const TRIP_DETAILS_PREFILL_KEYS = [
   "dietary", "accessibility", "schedule_restrictions", "stops_interests", "trip_budget",
 ];
 
+/** True when the user has confirmed an answer for this question in the current flow. */
+export function isQuestionConfirmedInHistory(questionId, questionHistory = []) {
+  if (!questionId) return false;
+  return questionHistory.some(entry => entry.question?.id === questionId);
+}
+
+function prefillValuesMatch(answerVal, prefillVal) {
+  if (Array.isArray(answerVal) && Array.isArray(prefillVal)) {
+    return answerVal.length === prefillVal.length
+      && answerVal.every((value, index) => value === prefillVal[index]);
+  }
+  return answerVal === prefillVal;
+}
+
+/** Remove answer fields that only mirror unconfirmed preference prefill (stale draft / leaked state). */
+export function stripUnconfirmedPrefillFromAnswers(answers = {}, flowPrefill = {}, questionHistory = []) {
+  const confirmed = new Set(questionHistory.map(h => h.question?.id).filter(Boolean));
+  let changed = false;
+  const out = { ...answers };
+
+  for (const [key, prefillVal] of Object.entries(flowPrefill || {})) {
+    if (confirmed.has(key)) continue;
+    const answerVal = out[key];
+    if (answerVal == null || answerVal === "" || (Array.isArray(answerVal) && !answerVal.length)) continue;
+    if (prefillValuesMatch(answerVal, prefillVal)) {
+      delete out[key];
+      changed = true;
+    }
+  }
+
+  if (!confirmed.has("trip_details")) {
+    for (const key of TRIP_DETAILS_PREFILL_KEYS) {
+      const prefillVal = flowPrefill?.[key];
+      const answerVal = out[key];
+      if (answerVal == null || answerVal === "" || (Array.isArray(answerVal) && !answerVal.length)) continue;
+      if (prefillVal == null || prefillVal === "" || (Array.isArray(prefillVal) && !prefillVal.length)) continue;
+      if (prefillValuesMatch(answerVal, prefillVal)) {
+        delete out[key];
+        changed = true;
+      }
+    }
+  }
+
+  return changed ? out : answers;
+}
+
 /** Merge saved prefill into display state for questions not yet confirmed in history. */
 export function mergeDisplayAnswers(answers = {}, flowPrefill = {}, questionHistory = []) {
   const confirmed = new Set(questionHistory.map(h => h.question?.id).filter(Boolean));

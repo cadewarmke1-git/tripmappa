@@ -211,6 +211,7 @@ export default function PlanPanel({
                         answers={answers}
                         committedAnswers={committedAnswers}
                         prefDraft={prefDraft}
+                        questionHistory={questionHistory}
                         questionHistoryLength={questionHistoryLength}
                         compact={inQuestionFlow}
                         showNavRow={!inQuestionFlow}

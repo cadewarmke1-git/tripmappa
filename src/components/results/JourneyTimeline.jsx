@@ -27,32 +27,6 @@ function formatMetaLine(stop) {
   return parts.filter(Boolean).join(" · ");
 }
 
-function NestedChips({ stop, restaurantsByCity = {} }) {
-  const chips = [];
-  const city = stop.city || stop.stopData?.city;
-  const cityRestaurants = city ? (restaurantsByCity[city] || restaurantsByCity[city?.split(",")[0]?.trim()] || []) : [];
-  const hotels = stop.stopData?.hotels || (stop.stopData?.motel ? [stop.stopData.motel] : []);
-  const fuelStops = stop.stopData?.fuelStops || [];
-
-  cityRestaurants.slice(0, 2).forEach((r) => chips.push({ key: `r-${r.id || r.name}`, label: r.name, type: "restaurant" }));
-  fuelStops.slice(0, 2).forEach((f) => chips.push({ key: `f-${f.name}`, label: f.name, type: "fuel" }));
-  hotels.slice(0, 2).forEach((h) => chips.push({ key: `h-${h.name}`, label: h.name, type: "hotel" }));
-  stop.nearbyRestaurants?.slice(0, 2).forEach((r) => {
-    chips.push({ key: `nr-${r.name}`, label: r.name, type: "restaurant" });
-  });
-
-  if (!chips.length) return null;
-  return (
-    <div className="journey-timeline-nested-chips">
-      {chips.map((c) => (
-        <span key={c.key} className={`journey-timeline-nested-chip journey-timeline-nested-chip-${c.type}`}>
-          {c.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 function StopActions({
   stop,
   isStopAdded,
@@ -134,7 +108,6 @@ function SortableTimelineRow(props) {
 function TimelineRowInner({
   row,
   rowIndex,
-  reveal,
   expandedId,
   onToggle,
   stopRefs,
@@ -165,8 +138,7 @@ function TimelineRowInner({
     const expanded = expandedId === row.id;
     return (
       <div
-        className={`journey-timeline-row journey-timeline-row-destination${reveal ? " journey-timeline-row-reveal" : ""}`}
-        style={reveal ? { "--reveal-index": rowIndex } : undefined}
+        className="journey-timeline-row journey-timeline-row-destination"
         data-testid="journey-timeline-destination"
       >
         <div className="journey-timeline-node journey-timeline-node-destination" aria-hidden="true" />
@@ -201,8 +173,7 @@ function TimelineRowInner({
   return (
     <div
       ref={el => { if (stopRefs && stop.id) stopRefs.current[stop.id] = el; }}
-      className={`journey-timeline-row journey-timeline-row-sortable${row.isOvernight ? " journey-timeline-row-overnight" : ""}${highlighted ? " journey-timeline-row-highlighted" : ""}${reveal ? " journey-timeline-row-reveal" : ""}`}
-      style={reveal ? { "--reveal-index": rowIndex } : undefined}
+      className={`journey-timeline-row journey-timeline-row-sortable${row.isOvernight ? " journey-timeline-row-overnight" : ""}${highlighted ? " journey-timeline-row-highlighted" : ""}`}
       data-stop-id={stop.id}
     >
       <div className={`journey-timeline-node${row.isOvernight ? " journey-timeline-node-overnight" : ""}`} aria-hidden="true" />
@@ -247,7 +218,6 @@ function TimelineRowInner({
       {expanded && (
         <div className="journey-timeline-expanded">
           <p className="journey-timeline-desc">{stop.description}</p>
-          <NestedChips stop={stop} restaurantsByCity={restaurantsByCity} />
           <StopActions
             stop={stop}
             isStopAdded={isStopAdded}
@@ -266,7 +236,6 @@ function TimelineRowInner({
 export default function JourneyTimeline({
   waypoints = [],
   routeLegs = [],
-  reveal = false,
   stopRefs,
   highlightedStopId,
   expandedStopId = null,
@@ -312,7 +281,6 @@ export default function JourneyTimeline({
         row={row}
         sortable
         rowIndex={rowIndex ?? 0}
-        reveal={reveal && rowIndex != null}
         expandedId={expandedId}
         onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
         stopRefs={stopRefs}
@@ -331,7 +299,6 @@ export default function JourneyTimeline({
         key={row.id}
         row={row}
         rowIndex={rowIndex ?? 0}
-        reveal={reveal && rowIndex != null}
         expandedId={expandedId}
         onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
         stopRefs={stopRefs}

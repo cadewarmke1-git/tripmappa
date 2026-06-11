@@ -60,6 +60,7 @@ import {
   recordUserStopPreferences,
   buildFlowPrefillFromPreferences,
   mergeDisplayAnswers,
+  stripUnconfirmedPrefillFromAnswers,
   stripAnswersForSonnet,
 } from "./lib/generationContext.js";
 import { formatCreditsDisplay } from "./lib/creditsDisplay.js";
@@ -1066,6 +1067,12 @@ export default function App() {
     () => mergeDisplayAnswers(answers, flowPrefill, questionHistory),
     [answers, flowPrefill, questionHistory],
   );
+
+  useEffect(() => {
+    if (convoComplete || generated) return;
+    const sanitized = stripUnconfirmedPrefillFromAnswers(answers, flowPrefill, questionHistory);
+    if (sanitized !== answers) setAnswers(sanitized);
+  }, [answers, flowPrefill, questionHistory, convoComplete, generated]);
 
   const currentPlanSnapshot = useMemo(() => buildPlanSnapshot({
     origin: originRef.current?.value?.trim() || origin,

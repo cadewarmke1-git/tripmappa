@@ -3,7 +3,19 @@ import { computeTransparentTripCostEstimate } from "../../lib/tripCostEstimate.j
 import { parseTravelerCount } from "../../lib/vehicles.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
-export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false }) {
+export default function TripOverviewHero({
+  origin,
+  dest,
+  routeInfo,
+  stops,
+  roadStops,
+  answers,
+  tripLegs,
+  selectedLodging,
+  restaurantsByCity = {},
+  routeOptimized = false,
+  compact = false,
+}) {
   const costEstimate = useMemo(
     () => computeTransparentTripCostEstimate(answers, routeInfo),
     [answers, routeInfo],
@@ -15,7 +27,7 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
   });
 
   return (
-    <header className="trip-overview-hero">
+    <header className={`trip-overview-hero${compact ? " trip-overview-hero-compact" : ""}`}>
       <div className="trip-overview-hero-accent" aria-hidden="true"/>
       {routeOptimized && (
         <div className="trip-route-optimized-notice" role="status">

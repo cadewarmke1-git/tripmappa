@@ -1,14 +1,14 @@
-import { useMemo, useRef, useEffect, useState, useCallback } from "react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
 import { buildItineraryDays } from "../../lib/itineraryDays.js";
 import { isContinuousDrive } from "../../lib/driveMode.js";
 import { parseHoursFromDuration } from "../../lib/parsing.js";
 import { computeHOSCompliance } from "../../lib/hos.js";
 import { isTruckerTrip } from "../../lib/vehicles.js";
-import { resolveHeroVariant, classifyTripCategory } from "../../lib/resolveHeroVariant.js";
+import { formatHosSummaryLine } from "../../lib/heroVariantContent.js";
 import { tipsForDisplay } from "../../lib/tripTips.js";
-import ResultsHero from "./ResultsHero.jsx";
+import TripOverviewHero from "./TripOverviewHero.jsx";
+import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import PersonalTouchesStrip from "./PersonalTouchesStrip.jsx";
-import ResultsActionTipAlert from "./ResultsActionTipAlert.jsx";
 import JourneyTimeline from "./JourneyTimeline.jsx";
 import ResultsActionBar from "./ResultsActionBar.jsx";
 import { TripTipsSection } from "../TripAlertsSection.jsx";
@@ -20,6 +20,14 @@ import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
 import TripConstraintsBar from "./TripConstraintsBar.jsx";
 
+function firstStopIdForDay(day) {
+  if (!day) return null;
+  const road = day.roadStops?.[0];
+  if (road?.id) return road.id;
+  if (day.overnight?.id) return day.overnight.id;
+  return null;
+}
+
 export default function TripResultsPanel({
   panelClassName = "",
   theme,
@@ -30,7 +38,6 @@ export default function TripResultsPanel({
   roadStops,
   routeInfo,
   tripLegs,
-  tripFormat,
   recommendations = [],
   selectedLodging = [],
   tripAlerts = [],
@@ -57,11 +64,8 @@ export default function TripResultsPanel({
   optionalStopCards = [],
   activitiesByCity = {},
   restaurantsByCity = {},
-  weatherByCity = {},
   routeOptimized = false,
   departureTime,
-  timingMode,
-  arriveByDate,
   activeDayIndex = 0,
   highlightedStopId = null,
   showGuestBanner = false,
@@ -72,18 +76,11 @@ export default function TripResultsPanel({
   onRemoveRoadStop,
   onAddFuelStop,
   onLodgingSelect,
-  onDismissAlert,
   onShare,
-  onCollaborate,
   onToast,
   onStopSelect,
   onGuestSignUp,
   onDismissGuestBanner,
-  groceryAllowed = false,
-  accessToken = null,
-  onUpgradeGrocery,
-  isGuest = false,
-  onGrocerySignIn,
   waypoints = [],
   routeLegs = [],
   onReorder,
@@ -93,11 +90,8 @@ export default function TripResultsPanel({
   onRegisterTimelineScroller,
   onStartNavigation,
 }) {
-  const dayAnchorRefs = useRef([]);
   const stopRefs = useRef({});
   const timelineScrollRef = useRef(null);
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
-  const [reveal, setReveal] = useState(true);
 
   const continuousDrive = useMemo(() => isContinuousDrive(answers), [answers]);
 
@@ -124,14 +118,16 @@ export default function TripResultsPanel({
     recommendations,
   }), [origin, dest, stops, roadStops, routeInfo, departureTime, answers, optionalStopCards, activitiesByCity, restaurantsByCity, recommendations]);
 
-  const tripCategory = useMemo(() => classifyTripCategory(answers), [answers]);
-  const heroVariant = useMemo(() => resolveHeroVariant(answers, tripCategory, stops), [answers, tripCategory, stops]);
-
   const hosCompliance = useMemo(() => {
     if (!isTruckerTrip(answers)) return null;
     const hours = parseHoursFromDuration(routeInfo?.duration);
     return hours ? computeHOSCompliance(hours) : null;
   }, [answers, routeInfo]);
+
+  const hosLine = useMemo(
+    () => (hosCompliance ? formatHosSummaryLine(hosCompliance, routeInfo) : null),
+    [hosCompliance, routeInfo],
+  );
 
   const scrollToTimelineStop = useCallback((stopId) => {
     const el = stopRefs.current[stopId];
@@ -147,34 +143,17 @@ export default function TripResultsPanel({
 
   const scrollToDay = useCallback((index) => {
     onDaySelect?.(index);
-    const el = dayAnchorRefs.current[index];
-    const container = timelineScrollRef.current;
-    if (el && container) {
-      container.scrollTo({ top: el.offsetTop - 8, behavior: "smooth" });
-    }
-  }, [onDaySelect]);
+    const stopId = firstStopIdForDay(days[index]);
+    if (stopId) scrollToTimelineStop(stopId);
+  }, [days, onDaySelect, scrollToTimelineStop]);
 
   useEffect(() => {
     if (!highlightedStopId) return;
     scrollToTimelineStop(highlightedStopId);
   }, [highlightedStopId, scrollToTimelineStop]);
 
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setReveal(false);
-      return undefined;
-    }
-    const timer = window.setTimeout(() => setReveal(false), 1400);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  function handleTimelineScroll(e) {
-    setHeroCollapsed(e.currentTarget.scrollTop > 24);
-  }
-
   return (
-    <div className={`trip-results-panel trip-results-panel-${theme || "night"} trip-results-layout${panelClassName ? ` ${panelClassName}` : ""}${reveal ? " trip-results-reveal" : ""}${planOutOfDate ? " trip-results-stale" : ""}`}>
+    <div className={`trip-results-panel trip-results-panel-${theme || "night"} trip-results-layout${panelClassName ? ` ${panelClassName}` : ""}${planOutOfDate ? " trip-results-stale" : ""}`}>
       <header className="trip-results-topbar trip-results-topbar-with-logo">
         <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit plan</button>
         <div className="trip-results-topbar-title">Your Trip</div>
@@ -189,47 +168,36 @@ export default function TripResultsPanel({
             </div>
           )}
 
-          <ResultsHero
-            variant={heroVariant}
-            collapsed={heroCollapsed}
+          <TripOverviewHero
+            compact
             origin={origin}
             dest={dest}
-            answers={answers}
+            routeInfo={routeInfo}
+            routeOptimized={routeOptimized || routeInfo?.routeOptimized}
             stops={stops}
             roadStops={roadStops}
-            routeInfo={routeInfo}
-            days={days}
-            recommendations={recommendations}
+            answers={answers}
+            tripLegs={tripLegs}
             selectedLodging={selectedLodging}
-            waypoints={waypoints}
-            tripTips={displayTips}
-            hosCompliance={hosCompliance}
-            timingMode={timingMode}
-            arriveByDate={arriveByDate}
-            departureTime={departureTime}
-            onDayChipSelect={scrollToDay}
-            reveal={reveal}
+            restaurantsByCity={restaurantsByCity}
           />
 
-          <PersonalTouchesStrip
-            touches={personalTouches}
-            changesMade={changesMade}
-            className={reveal ? "personal-touches-strip-reveal" : ""}
-          />
+          {hosLine && (
+            <p className="results-truck-hos-line" role="status">{hosLine}</p>
+          )}
 
-          <ResultsActionTipAlert
-            tips={displayTips}
-            onAcceptActionTip={onAcceptActionTip}
-            onDismissActionTip={onDismissActionTip}
-            dismissedActionIds={dismissedActionTipIds}
-          />
+          {days.length > 1 && (
+            <RouteProgressBar
+              days={days}
+              activeDayIndex={activeDayIndex}
+              onDaySelect={scrollToDay}
+            />
+          )}
+
+          <PersonalTouchesStrip touches={personalTouches} changesMade={changesMade} />
         </div>
 
-        <div
-          className="trip-results-timeline-scroll"
-          ref={timelineScrollRef}
-          onScroll={handleTimelineScroll}
-        >
+        <div className="trip-results-timeline-scroll" ref={timelineScrollRef}>
           {showGuestBanner && (
             <GuestSignupBanner onSignUp={onGuestSignUp} onDismiss={onDismissGuestBanner} />
           )}
@@ -271,7 +239,6 @@ export default function TripResultsPanel({
           <JourneyTimeline
             waypoints={waypoints}
             routeLegs={routeLegs}
-            reveal={reveal}
             stopRefs={stopRefs}
             highlightedStopId={highlightedStopId}
             expandedStopId={expandedStopId}
@@ -294,7 +261,6 @@ export default function TripResultsPanel({
             onAcceptActionTip={onAcceptActionTip}
             onDismissActionTip={onDismissActionTip}
             dismissedActionIds={dismissedActionTipIds}
-            hideActionCards
           />
 
           <p className="trip-results-places-attribution" aria-label="Google attribution">

@@ -4,6 +4,8 @@ import {
   buildFlowPrefillFromPreferences,
   formatGracefulDegradationNotes,
   mergeDisplayAnswers,
+  isQuestionConfirmedInHistory,
+  stripUnconfirmedPrefillFromAnswers,
   planPreferencesToFlowPrefill,
   resolveAnswersWithFallback,
   stripAnswersForSonnet,
@@ -42,6 +44,28 @@ describe("generationContext flow prefill", () => {
     expect(prefill.dietary).toEqual(["Halal"]);
     expect(prefill.lodging).toBeUndefined();
     expect(prefill.preferences).toEqual(["Pet friendly", "Scenic route"]);
+  });
+
+  it("isQuestionConfirmedInHistory tracks confirmed question ids", () => {
+    expect(isQuestionConfirmedInHistory("fuel_type", [])).toBe(false);
+    expect(isQuestionConfirmedInHistory("fuel_type", [{ question: { id: "vehicle" } }])).toBe(false);
+    expect(isQuestionConfirmedInHistory("fuel_type", [{ question: { id: "fuel_type" } }])).toBe(true);
+  });
+
+  it("stripUnconfirmedPrefillFromAnswers removes leaked prefill-only answer fields", () => {
+    const prefill = { fuel_type: "Electric — Tesla Superchargers", dietary: ["Vegan"] };
+    const stripped = stripUnconfirmedPrefillFromAnswers(
+      { vehicle: "Car", fuel_type: "Electric — Tesla Superchargers", dietary: ["Vegan"] },
+      prefill,
+      [{ question: { id: "vehicle" }, answer: "Car" }],
+    );
+    expect(stripped).toEqual({ vehicle: "Car" });
+    const kept = stripUnconfirmedPrefillFromAnswers(
+      { vehicle: "Car", fuel_type: "Gasoline" },
+      prefill,
+      [{ question: { id: "vehicle" }, answer: "Car" }],
+    );
+    expect(kept.fuel_type).toBe("Gasoline");
   });
 
   it("mergeDisplayAnswers applies prefill until question is confirmed in history", () => {
