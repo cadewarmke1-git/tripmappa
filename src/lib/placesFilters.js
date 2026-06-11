@@ -1,11 +1,22 @@
 /** Shared Google Places result filters for trip accommodations. */
-import { getTripBudgetCap, needsSafeStopsOnly, getLoyaltyKeyword } from "./tripAccommodations.js";
+import { getTripBudgetCap, needsSafeStopsOnly, getLoyaltyKeyword, asArray, prefIncludes } from "./tripAccommodations.js";
 import { estimateOvernightStops } from "./budget.js";
 import { parseHoursFromDuration } from "./parsing.js";
+import { isNationalChainPlace } from "./nationalRestaurantChains.js";
 
 const PRICE_LEVEL_NIGHTLY = [55, 75, 110, 165, 280];
 
-const GENERIC_CHAIN_RE = /\b(mcdonald|burger king|wendy|taco bell|kfc|subway|chipotle|panda express|arby|sonic|jack in the box|dairy queen|popeyes|chick-fil-a|five guys|starbucks|dunkin|domino|pizza hut|little caesar|papa john|panera|jamba|qdoba|moe's|jersey mike|firehouse subs|jimmy john|potbelly|noodles|hardee|carl's jr|del taco|white castle|checkers|rally|steak 'n shake|bojangles|raising cane|culver|zaxby|in-n-out|whataburger)\b/i;
+export const PRICE_BAND_PROMPT = {
+  budget: "under $80/night",
+  mid: "$90–$160/night",
+  luxury: "$200+/night",
+};
+
+export function allowsNationalChains(answers) {
+  const dietary = asArray(answers?.dietary);
+  if (dietary.includes("Drive-Through Only")) return true;
+  return prefIncludes(answers, "Fast food only");
+}
 
 export function estimateNightlyFromPlace(place) {
   if (place.pricePerNight != null) return place.pricePerNight;
@@ -18,21 +29,31 @@ export function filterSafeStopsOnly(places) {
 }
 
 export function isGenericChainPlace(place) {
-  return GENERIC_CHAIN_RE.test(`${place?.name || ""} ${place?.address || ""}`);
+  return isNationalChainPlace(place);
 }
 
 /** Prefer independent/local venues unless the list would be empty. */
 export function filterGenericChains(places, { allowChains = false } = {}) {
   if (allowChains || !places?.length) return places || [];
-  const independent = places.filter(p => !isGenericChainPlace(p));
+  const independent = places.filter(p => !isNationalChainPlace(p));
   return independent.length ? independent : places;
 }
 
-/** Keep well-rated places when enough exist; otherwise return the original list. */
-export function filterRatingBand(places, { minRating = 3.8, minReviews = 12 } = {}) {
+/** Prefer beloved local spots: rating ≥4.2, reviews 50–5000. */
+export function filterRatingBand(places, { minRating = 4.2, minReviews = 50, maxReviews = 5000 } = {}) {
   if (!places?.length) return places || [];
-  const rated = places.filter(p => (p.rating ?? 0) >= minRating && (p.userRatingsTotal ?? 0) >= minReviews);
-  return rated.length >= Math.min(2, places.length) ? rated : places;
+  const rated = places.filter((p) => {
+    const reviews = p.userRatingsTotal ?? 0;
+    return (p.rating ?? 0) >= minRating && reviews >= minReviews && reviews <= maxReviews;
+  });
+  return rated.length ? rated : places;
+}
+
+export function lodgingTierToPriceBand(lodging) {
+  if (lodging === "Budget") return "budget";
+  if (lodging === "Luxury") return "luxury";
+  if (lodging === "Mid-Range") return "mid";
+  return null;
 }
 
 export function filterOpen24Hour(places) {
@@ -65,18 +86,18 @@ export function filterLodgingByTier(places, answers) {
   }
   const nightly = p => estimateNightlyFromPlace(p);
   if (tier === "Budget") {
-    const filtered = places.filter(p => nightly(p) <= 85 || (p.priceLevel ?? 2) <= 1);
+    const filtered = places.filter(p => nightly(p) < 80 || (p.priceLevel ?? 2) <= 1);
     return filtered.length ? filtered : places;
   }
   if (tier === "Mid-Range") {
     const filtered = places.filter(p => {
       const n = nightly(p);
-      return n >= 65 && n <= 165;
+      return n >= 90 && n <= 160;
     });
     return filtered.length ? filtered : places;
   }
   if (tier === "Luxury") {
-    const filtered = places.filter(p => nightly(p) >= 120 || (p.rating ?? 0) >= 4.3);
+    const filtered = places.filter(p => nightly(p) >= 200 || (p.rating ?? 0) >= 4.4);
     return filtered.length ? filtered : places;
   }
   return places;

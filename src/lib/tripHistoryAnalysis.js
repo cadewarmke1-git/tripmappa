@@ -186,3 +186,86 @@ export function buildUserPatternSummary(tripsOrRef = []) {
     "Current trip answers take priority over these patterns where they differ.",
   ].join("\n");
 }
+
+function formatKidsDescription(currentAnswers = {}) {
+  const kidsAges = asArray(currentAnswers.kids_ages).filter(a => a && !/not sure|prefer not/i.test(a));
+  const hasYoungKids = asArray(currentAnswers.accessibility).includes("Traveling with young children");
+  if (!kidsAges.length && !hasYoungKids) return "";
+
+  if (kidsAges.length === 1) return `a child aged ${kidsAges[0]}`;
+  if (kidsAges.length === 2) return `two kids aged ${kidsAges[0]} and ${kidsAges[1]}`;
+  if (kidsAges.length > 2) return `${kidsAges.length} kids aged ${kidsAges.slice(0, -1).join(", ")} and ${kidsAges[kidsAges.length - 1]}`;
+  return "young children";
+}
+
+function historyAvoidsSeafood(trips = []) {
+  if (trips.length < 3) return false;
+  const seafoodInterest = /seafood|fish|sushi|pescatarian/i;
+  return trips.every((t) => {
+    const interests = asArray(t.answers?.stops_interests).join(" ");
+    const dietary = asArray(t.answers?.dietary).join(" ");
+    return !seafoodInterest.test(`${interests} ${dietary}`);
+  });
+}
+
+/** 2–3 sentence narrative profile for Sonnet — warmer than key-value rollups. */
+export function buildTravelerDossier(tripsOrRef = [], currentAnswers = {}) {
+  const recent = resolveTripsForContext(tripsOrRef).slice(0, PATTERN_WINDOW);
+  const sentences = [];
+
+  const kids = formatKidsDescription(currentAnswers);
+  const petNow = tripHasPetFriendly(currentAnswers);
+  const partyBits = [];
+
+  if (kids) {
+    partyBits.push(petNow ? `a family with ${kids} and a pet` : `a family with ${kids}`);
+  } else if (petNow) {
+    partyBits.push("a pet owner");
+  }
+
+  if (partyBits.length) {
+    sentences.push(`This traveler is ${partyBits[0]}.`);
+  }
+
+  const scenicNow = asArray(currentAnswers.preferences).includes("Scenic route");
+  const scenicHistory = recent.filter(t => asArray(t.answers?.preferences).includes("Scenic route")).length;
+  const lodgingNow = currentAnswers.lodging;
+  const topLodging = mostCommon(recent.map(t => t.answers?.lodging).filter(Boolean));
+
+  const habitParts = [];
+  if (scenicNow || scenicHistory >= 2) {
+    habitParts.push("scenic routes");
+  }
+  if (lodgingNow && lodgingNow !== "Doesn't Matter") {
+    habitParts.push(`${lodgingNow.toLowerCase()} lodging`);
+  } else if (topLodging && topLodging.count >= 2) {
+    habitParts.push(`${topLodging.value.toLowerCase()} lodging`);
+  }
+
+  if (habitParts.length) {
+    const prefix = scenicHistory >= 2 && recent.length >= 3
+      ? "They consistently choose"
+      : "They prefer";
+    sentences.push(`${prefix} ${habitParts.join(" and ")}${recent.length >= 3 ? ` (${recent.length} recent trips on file)` : " for this trip"}.`);
+  }
+
+  const currentDiet = summarizeDietary(currentAnswers);
+  if (currentDiet.length) {
+    sentences.push(`This trip requires ${currentDiet.join(" and ")} dining at every meal stop.`);
+  } else if (historyAvoidsSeafood(recent)) {
+    sentences.push(`They have not selected seafood on any of their last ${recent.length} trips.`);
+  }
+
+  const diets = recent.map(t => dietarySignature(t.answers || {})).filter(Boolean);
+  const topDiet = mostCommon(diets);
+  if (!currentDiet.length && topDiet && topDiet.count >= 2) {
+    sentences.push(`Past trips show a ${topDiet.value.split("|").join(" and ")} pattern (${topDiet.count} of ${recent.length} trips).`);
+  }
+
+  if (!sentences.length) return "";
+
+  return [
+    "=== TRAVELER DOSSIER (narrative profile — use for warm personal_touches; reference real constraints below) ===",
+    sentences.slice(0, 3).join(" "),
+  ].join("\n");
+}

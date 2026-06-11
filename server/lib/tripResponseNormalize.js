@@ -96,6 +96,7 @@ export function collectVerifiedPlaceNames(placesContext) {
   });
   placesContext.cities?.forEach((city) => {
     city.hotels?.forEach(add);
+    city.dietaryRestaurants?.forEach(add);
     const medical = city.medical || {};
     Object.values(medical).flat().forEach(add);
   });
@@ -117,25 +118,38 @@ function inferPriceBandFromPrice(priceStr) {
   if (!m) return null;
   const nightly = parseInt(m[1], 10);
   if (nightly < 80) return "budget";
-  if (nightly <= 150) return "mid";
+  if (nightly < 200) return "mid";
   return "luxury";
 }
 
-function verifyNamedItem(item, verifiedNames) {
+function verifyNamedItem(item, verifiedNames, { isRestaurant = false } = {}) {
   if (!item || typeof item !== "object") return item;
   const out = { ...item };
   const name = out.name;
   if (!name || GENERIC_NAME_RE.test(String(name).trim())) {
     out.verified = false;
+    if (isRestaurant && !out.verification_note) {
+      out.verification_note = "No verified name in placesContext";
+    }
     return out;
   }
+  const matches = nameMatchesVerifiedPlace(name, verifiedNames);
   if (out.verified === undefined) {
-    out.verified = nameMatchesVerifiedPlace(name, verifiedNames);
+    out.verified = matches;
   } else {
-    out.verified = toBooleanValue(out.verified) && nameMatchesVerifiedPlace(name, verifiedNames);
+    out.verified = toBooleanValue(out.verified) && matches;
+  }
+  if (isRestaurant && !out.verified && !out.verification_note) {
+    out.verification_note = "Not in VERIFIED PLACES list";
+  }
+  if (out.verified && out.verification_note) {
+    delete out.verification_note;
   }
   if (!out.price_band && out.price) {
     out.price_band = inferPriceBandFromPrice(out.price);
+  }
+  if (out.truck_parking !== undefined) {
+    out.truck_parking = toBooleanValue(out.truck_parking);
   }
   return out;
 }
@@ -160,7 +174,7 @@ function normalizeStopItem(stop, verifiedNames) {
     out.motels = out.motels.map(m => verifyNamedItem(m, verifiedNames));
   }
   if (Array.isArray(out.restaurants)) {
-    out.restaurants = out.restaurants.map(r => verifyNamedItem(r, verifiedNames));
+    out.restaurants = out.restaurants.map(r => verifyNamedItem(r, verifiedNames, { isRestaurant: true }));
   }
   if (out.truckStop) out.truckStop = verifyNamedItem(out.truckStop, verifiedNames);
   if (out.rvPark) out.rvPark = verifyNamedItem(out.rvPark, verifiedNames);
@@ -175,6 +189,9 @@ function normalizeRoadStopItem(stop, verifiedNames) {
     out.verified = nameMatchesVerifiedPlace(out.name, verifiedNames);
   } else {
     out.verified = false;
+  }
+  if (out.truck_parking !== undefined) {
+    out.truck_parking = toBooleanValue(out.truck_parking);
   }
   return out;
 }

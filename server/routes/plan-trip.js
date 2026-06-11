@@ -257,6 +257,45 @@ For commercial vehicles, always flag load-specific warnings when applicable: win
 
 If you find yourself writing a generic suggestion that could apply to any route or any vehicle — stop and rewrite it to be specific to this exact trip. A suggestion that would be equally valid for a family driving from Dallas to Los Angeles and a trucker driving from Miami to Seattle is not acceptable. Every line of your response must prove you know exactly who is driving, what they are driving, and where they are going.`;
 
+const TRUCK_PARKING_RULES = `TRUCK PARKING (commercial routes):
+- Add truck_parking:true/false on every restaurant and food road_stop.
+- truck_parking:true ONLY if the restaurant is at a truck stop, shares a lot with truck parking, or is within 0.3 miles walking of verified truck parking.
+- When unsure, default truck_parking:false and recommend the truck stop's own food instead.`;
+
+function buildSystemPrompt(ctx) {
+  const maxDayPersonal = ctx.youngKids ? "6 hours" : "8 hours";
+  const driveCap = ctx.tripCategory === "commercial" ? "11 hours" : maxDayPersonal;
+  const requiredBand = lodgingTierToPriceBand(ctx.lodging) || "matching user lodging tier";
+  const truckChecklist = ctx.tripCategory === "commercial"
+    ? ", (5) every truck restaurant and road_stop food recommendation has truck_parking:true when at or adjacent to verified truck parking (default false when unsure)"
+    : "";
+
+  return `${SYSTEM_PROMPT}
+
+PRICE_BAND DEFINITIONS (every hotel MUST match user lodging tier "${ctx.lodging}"):
+- budget: under $80/night
+- mid: $90–$160/night
+- luxury: $200+/night
+Required price_band for this trip: ${requiredBand}. ${buildLodgingRules(ctx.lodging)}
+
+RESTAURANT VERIFICATION (every restaurant object):
+- verified:true ONLY when the name exists in VERIFIED PLACES from placesContext.
+- verified:false when no verified option fits — include verification_note (one phrase) explaining why.
+- Never invent a brand name; use city + cuisine when unverified.
+
+${ctx.tripCategory === "commercial" ? `${TRUCK_PARKING_RULES}\n` : ""}
+${PERSONAL_TOUCHES_PROMPT}
+
+Before responding verify: (1) every restaurant is from VERIFIED PLACES or flagged with verified:false and verification_note, (2) every hotel price_band matches the requested lodging tier, (3) no segment exceeds the ${driveCap} drive-time cap for this trip type, (4) no national chain appears unless drive-through was requested${truckChecklist}, (6) personal_touches has 2-4 specific warm sentences tied to this traveler.`;
+}
+
+function lodgingTierToPriceBand(lodging) {
+  if (lodging === "Budget") return "budget";
+  if (lodging === "Mid-Range") return "mid";
+  if (lodging === "Luxury") return "luxury";
+  return "tier-appropriate (budget, mid, or luxury)";
+}
+
 function buildContextBlock(ctx) {
   const lines = [
     "=== TRIP CONTEXT (reference explicitly throughout your plan) ===",
@@ -414,19 +453,24 @@ Recommend meeting-point stops where the group can reconvene if routes diverge.
 Note coordination logistics (e.g. RV must take longer route to avoid restricted road while cars use direct highway).`;
 }
 
-const SCHEMA_PERSONAL_TOUCHES = `"personal_touches": ["2-4 short bullets proving you read THIS user's profile — cite their vehicle, party, dietary needs, budget tier, and stop interests specifically"]`;
+const PERSONAL_TOUCHES_PROMPT = `PERSONAL_TOUCHES (required JSON array — 2-4 warm human sentences):
+Populate personal_touches with short, friendly lines explaining specific personalization choices for THIS trip. Reference the TRAVELER DOSSIER, current answers, and trip history — never generic filler.
+Good examples:
+- "Added a dog-friendly patio at every lunch stop because you're traveling with a pet"
+- "Kept drive segments under 2 hours with playground breaks because you have young children"
+- "Chose BBQ-forward stops based on your past trips"
+- "Skipped seafood options based on your travel history"
+- "Selected pet-friendly hotels at every overnight stop"
+Bad examples: "Family friendly trip", "Good restaurants along the route"`;
+
+const SCHEMA_PERSONAL_TOUCHES = `"personal_touches": ["2-4 warm human sentences per PERSONAL_TOUCHES rules above"]`;
 
 function buildVerificationChecklist(ctx) {
-  const lodgingBand = buildLodgingRules(ctx.lodging);
   return `
-=== PRE-OUTPUT VERIFICATION CHECKLIST ===
-Before returning JSON, confirm every item:
-1. Named businesses: use placesContext names exactly OR omit the name (city + category only) — never invent brands.
-2. Set verified:true only when the business name matches placesContext; verified:false when generic or uncertain.
-3. Hotel price_band (budget|mid|luxury) and nightly price align with lodging tier: ${lodgingBand}
-4. Stops progress geographically from ${ctx.routeOrigin} toward ${ctx.routeDestination}; distance and eta increase logically.
-5. ${SCHEMA_PERSONAL_TOUCHES.replace(/"/g, "")} — not generic filler.
-6. Tips name specific corridor landmarks, not generic road-trip advice.`;
+=== USER-PROMPT REMINDERS ===
+- VERIFIED PLACES list in placesContext is authoritative for business names.
+- Stops must progress from ${ctx.routeOrigin} toward ${ctx.routeDestination}.
+- ${SCHEMA_PERSONAL_TOUCHES.replace(/"/g, "")} — not generic filler.`;
 }
 
 function buildUniversalRules(ctx, placesContextPrompt) {
@@ -483,18 +527,24 @@ ANTI-HALLUCINATION: If uncertain whether a business exists, output the city and 
 ${buildVerificationChecklist(ctx)}`;
 }
 
-function restaurantSchemaShape(ctx) {
+function restaurantSchemaShape(ctx, { truck = false } = {}) {
+  const truckField = truck ? ', "truck_parking": false' : '';
+  const core = `"verified": true, "verification_note": "omit when verified is true", "cuisine": "Type", "rating": "4.5"`;
   if (ctx.preferences.includes("Fast food only") || ctx.preferences.includes("Sit down restaurants only")) {
-    return `[{ "name": "Restaurant in stop city", "verified": true, "cuisine": "Type", "rating": "4.5", "time": "7 PM", "kidFriendly": true }]`;
+    return `[{ "name": "Restaurant in stop city", ${core}, "time": "7 PM", "kidFriendly": true${truckField} }]`;
   }
-  return `[{ "name": "Sit-down in stop city", "verified": true, "cuisine": "Type", "rating": "4.5", "time": "7 PM" }, { "name": "Quick option", "verified": true, "cuisine": "Fast casual", "rating": "4.2", "time": "flexible" }]`;
+  return `[{ "name": "Sit-down in stop city", ${core}, "time": "7 PM"${truckField} }, { "name": "Quick option", ${core}, "time": "flexible"${truckField} }]`;
+}
+
+function hotelSchemaShape(ctx, band = "mid") {
+  return `{ "name": "From VERIFIED PLACES", "stars": 3, "price": "$120/night", "price_band": "${band}", "verified": true, "pet": false, "kidFriendly": ${ctx.youngKids} }`;
 }
 
 function buildLodgingRules(lodging) {
   const rules = {
-    Budget: "Budget only: 1–2 star hotels/motels under $80/night.",
-    "Mid-Range": "Mid-range only: solid 3-star hotels $80–$150/night.",
-    Luxury: "Luxury only: 4–5 star hotels over $150/night with strong ratings.",
+    Budget: "Budget only — price_band budget, under $80/night.",
+    "Mid-Range": "Mid-range only — price_band mid, $90–$160/night.",
+    Luxury: "Luxury only — price_band luxury, $200+/night.",
     "Airbnb or Vacation Rental": "Vacation rentals and whole-home stays — not standard hotels.",
     "Camping or Outdoors": "Campgrounds and outdoor stays only.",
     "Sleeper cab — no hotel needed": "No hotel stops — truck stop parking only.",
@@ -529,10 +579,10 @@ function buildJsonSchema(ctx, isSimplified) {
   "stops": [{
     "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "HOS reason — few words", "type": "overnight|break",
     "truckStop": { "name": "From placesContext", "catScale": true, "diesel": "$3.89/gal", "amenities": "Showers · laundry · food" },
-    "motels": [{ "name": "From placesContext", "price": "$99/night", "price_band": "budget|mid|luxury", "verified": true, "note": "One-line parking/shuttle note" }],
-    "restaurants": [{ "name": "From placesContext", "cuisine": "Type", "verified": true, "note": "One line" }]
+    "motels": [{ "name": "From VERIFIED PLACES", "price": "$99/night", "price_band": "mid", "verified": true, "note": "One-line parking/shuttle note" }],
+    "restaurants": [{ "name": "From VERIFIED PLACES", "cuisine": "Type", "verified": true, "verification_note": "omit when verified is true", "truck_parking": false, "note": "One line" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "verified": true, "note": "One line — max 3 road_stops per leg" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From VERIFIED PLACES", "verified": true, "truck_parking": true, "note": "One line — max 3 road_stops per leg" }],
   "safety": {
     "weighStations": [{ "state": "TX", "location": "I-40 MM 120", "note": "One line — max 3 per leg" }],
     "lowBridges": [{ "location": "City, ST", "clearance": "13'6\\"", "note": "One line" }],
@@ -610,9 +660,9 @@ function buildJsonSchema(ctx, isSimplified) {
   "stops": [{
     "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "5 words max", "type": "overnight",
     "hotels": [
-      { "name": "From placesContext or tier-appropriate", "stars": 3, "price": "$99/night", "price_band": "budget|mid|luxury", "verified": true, "pet": false, "kidFriendly": ${ctx.youngKids} },
-      { "name": "Second option", "stars": 3, "price": "$109/night", "price_band": "mid", "verified": true },
-      { "name": "Third option", "stars": 4, "price": "$149/night", "price_band": "luxury", "verified": true }
+      ${hotelSchemaShape(ctx, lodgingTierToPriceBand(ctx.lodging) || "mid")},
+      { "name": "Second VERIFIED PLACES option", "stars": 3, "price": "$109/night", "price_band": "${lodgingTierToPriceBand(ctx.lodging) || "mid"}", "verified": true },
+      { "name": "Third VERIFIED PLACES option", "stars": 4, "price": "$149/night", "price_band": "${lodgingTierToPriceBand(ctx.lodging) || "mid"}", "verified": true }
     ],
     "restaurants": ${restaurantShape},
     "scenicView": ${ctx.isScenic ? '"Specific overlook on this route"' : "null"}
@@ -650,9 +700,9 @@ function buildCommercialSegmentJsonSchema(ctx, segment) {
     "city": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "why": "HOS reason — few words", "type": "overnight|break",
     "truckStop": { "name": "From placesContext", "catScale": true, "diesel": "$3.89/gal", "amenities": "One line" },
     ${noSleeper ? '"motels": [{ "name": "From placesContext", "price": "$99/night", "note": "One line" }, { "name": "Second option", "price": "$109/night", "note": "One line" }],' : ""}
-    "restaurants": [{ "name": "From placesContext", "cuisine": "Type", "note": "One line" }]
+    "restaurants": [{ "name": "From VERIFIED PLACES", "cuisine": "Type", "verified": true, "verification_note": "omit when verified is true", "truck_parking": false, "note": "One line" }]
   }],
-  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From placesContext", "note": "One line — MAX 3 road_stops total on this leg" }],
+  "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|rest", "name": "From VERIFIED PLACES", "verified": true, "truck_parking": true, "note": "One line — MAX 3 road_stops total on this leg" }],
   "safety": {
     "weighStations": [{ "state": "TX", "location": "Highway MM", "note": "One line — MAX 3 per leg" }],
     "lowBridges": [{ "location": "City, ST", "clearance": "13'6\\"", "note": "One line" }],
@@ -671,7 +721,7 @@ function buildSegmentJsonSchema(ctx, segment) {
     return buildCommercialSegmentJsonSchema(ctx, segment);
   }
 
-  const restaurantShape = restaurantSchemaShape(ctx);
+  const restaurantShape = restaurantSchemaShape(ctx, { truck: ctx.tripCategory === "commercial" });
 
   return `Return JSON with trip_format "multi_day" for THIS SEGMENT ONLY (leg ${segment.segmentIndex + 1} of ${segment.totalSegments}):
 {
@@ -872,6 +922,13 @@ function finalizeSuccessfulGeneration({
   })();
 }
 
+export {
+  buildTripContext,
+  buildSystemPrompt,
+  buildUserPrompt,
+  buildJsonSchema,
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -952,6 +1009,7 @@ export default async function handler(req, res) {
     recentTripsContext: rawRecentTripsContext = "",
     recentTripsPreferencesRollup: rawRecentTripsPreferencesRollup = "",
     userTravelPatterns: rawUserTravelPatterns = "",
+    travelerDossier: rawTravelerDossier = "",
     answerConfidenceNotes: rawAnswerConfidenceNotes = "",
     gracefulDegradationNotes: rawGracefulDegradationNotes = "",
     fallbackPreferences = null,
@@ -964,6 +1022,7 @@ export default async function handler(req, res) {
   const recentTripsContext = clampString(rawRecentTripsContext, PROMPT_FIELD_MAX);
   const recentTripsPreferencesRollup = clampString(rawRecentTripsPreferencesRollup, PROMPT_FIELD_MAX);
   const userTravelPatterns = clampString(rawUserTravelPatterns, PROMPT_FIELD_MAX);
+  const travelerDossier = clampString(rawTravelerDossier, PROMPT_FIELD_MAX);
   const answerConfidenceNotes = clampString(rawAnswerConfidenceNotes, PROMPT_FIELD_MAX);
   const gracefulDegradationNotes = clampString(rawGracefulDegradationNotes, PROMPT_FIELD_MAX);
 
@@ -986,7 +1045,7 @@ export default async function handler(req, res) {
     prefsBlock = [prefsBlock, recentTripsPreferencesRollup.trim()].filter(Boolean).join("\n\n");
   }
 
-  const extraContext = [prefsBlock, userTravelPatterns, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes, corridorDegradationNote]
+  const extraContext = [prefsBlock, travelerDossier, userTravelPatterns, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes, corridorDegradationNote]
     .filter(Boolean)
     .join("\n\n");
 
@@ -1056,7 +1115,7 @@ export default async function handler(req, res) {
 
         return streamSegmentWithRetry({
           model,
-          systemPrompt: SYSTEM_PROMPT,
+          systemPrompt: buildSystemPrompt(segmentCtx),
           userPrompt: segmentPrompt,
           maxTokens: segmentTokenBudget.maxTokens,
           sseWriter,
@@ -1149,7 +1208,7 @@ export default async function handler(req, res) {
 
       const streamResult = await streamAnthropicMessages({
         model,
-        systemPrompt: SYSTEM_PROMPT,
+        systemPrompt: buildSystemPrompt(ctx),
         userPrompt,
         maxTokens,
         onChunk: (piece) => {

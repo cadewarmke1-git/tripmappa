@@ -6,7 +6,8 @@ import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import TripSummaryFooter from "./TripSummaryFooter.jsx";
-import { TripTipsSection, PersonalTouchesSection } from "../TripAlertsSection.jsx";
+import { TripTipsSection } from "../TripAlertsSection.jsx";
+import PlannedForYouSection from "./PlannedForYouSection.jsx";
 import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
@@ -151,6 +152,8 @@ export default function TripResultsPanel({
           restaurantsByCity={restaurantsByCity}
         />
 
+        <PlannedForYouSection touches={personalTouches} changesMade={changesMade} />
+
         <WeatherWarningBanner alerts={tripAlerts} />
 
         {tripUsedFallback && (
@@ -164,8 +167,6 @@ export default function TripResultsPanel({
         )}
 
         <TripConstraintsBar answers={answers} routeInfo={routeInfo} />
-
-        <PersonalTouchesSection touches={personalTouches} changesMade={changesMade} />
 
         <EnrichmentNotice
           limited={enrichmentLimited}

@@ -59,6 +59,7 @@ import { formatCreditsDisplay } from "./lib/creditsDisplay.js";
 import {
   buildUserPatternSummary,
   buildRecentTripsPreferencesRollup,
+  buildTravelerDossier,
 } from "./lib/tripHistoryAnalysis.js";
 import {
   fetchIsoline,
@@ -2480,6 +2481,7 @@ export default function App() {
       const recentTripsContext = buildRecentTripsContext(tripsForContext, 3);
       const userTravelPatterns = buildUserPatternSummary(tripsForContext);
       const recentTripsPreferencesRollup = buildRecentTripsPreferencesRollup(tripsForContext, 3);
+      const travelerDossier = buildTravelerDossier(tripsForContext, normalizedAnswers);
       const answerConfidenceNotes = formatAnswerConfidenceNotes(
         answerChangeCountsRef.current,
         buildQuestionLabelMap(questionHistory),
@@ -2540,6 +2542,7 @@ export default function App() {
         ),
         recentTripsContext,
         recentTripsPreferencesRollup,
+        travelerDossier,
         userTravelPatterns,
         answerConfidenceNotes,
         gracefulDegradationNotes,

@@ -337,6 +337,26 @@
     color: var(--color-accent-orange) !important;
   }
 
+  html[data-layout="mobile"] .planned-for-you {
+    margin: 0 0 12px;
+    padding: 12px 14px 10px;
+    border-radius: 12px;
+  }
+  html[data-layout="mobile"] .planned-for-you-list {
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding-bottom: 2px;
+  }
+  html[data-layout="mobile"] .planned-for-you-pill {
+    flex: 0 0 auto;
+    max-width: min(88vw, 320px);
+    border-radius: 999px;
+  }
+  html[data-layout="mobile"] .planned-for-you-text {
+    font-size: 12px;
+    white-space: normal;
+  }
+
   html[data-layout="mobile"] .trip-tips-line {
     border-left: none;
     padding-left: 0;

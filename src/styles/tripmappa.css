@@ -3825,6 +3825,100 @@
     border-left: 2px solid rgba(255,210,140,0.45);
   }
 
+  .planned-for-you {
+    position: relative;
+    margin: 0 0 16px;
+    padding: 14px 16px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 210, 140, 0.22);
+    background: linear-gradient(135deg, rgba(255, 210, 140, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    overflow: hidden;
+  }
+  .planned-for-you-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    opacity: 0.85;
+  }
+  .planned-for-you-title {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-primary);
+  }
+  .planned-for-you-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .planned-for-you-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .planned-for-you-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .planned-for-you-pill {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 210, 140, 0.18);
+    max-width: 100%;
+  }
+  .planned-for-you-pill-muted {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .planned-for-you-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent);
+    line-height: 0;
+  }
+  .planned-for-you-icon svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+  .planned-for-you-pill-muted .planned-for-you-icon {
+    color: var(--muted);
+  }
+  .planned-for-you-text {
+    font-size: 13px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .planned-for-you-changes {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .planned-for-you-changes-label {
+    margin: 0 0 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .planned-for-you-list-compact .planned-for-you-text {
+    font-size: 12px;
+  }
+
   .trip-alert-row {
     display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px;
     border-bottom: 1px solid rgba(255,255,255,0.05);

@@ -2,8 +2,14 @@
 import { sampleRoutePointsEveryMiles, routePointAtFraction } from "./fuel.js";
 import { searchGasStations, searchEvChargingStations } from "./placesStations.js";
 import { searchRestaurants, searchLodging, searchNearbyCategory, RADIUS_2MI, RADIUS_10MI } from "./placesSearch.js";
-import { applyStopFilters, filterGenericChains, filterLodgingByTier, filterRatingBand } from "./placesFilters.js";
-import { prefIncludes } from "./tripAccommodations.js";
+import {
+  applyStopFilters,
+  allowsNationalChains,
+  filterGenericChains,
+  filterLodgingByTier,
+  filterRatingBand,
+} from "./placesFilters.js";
+import { getDietarySearchKeywords } from "./dietaryKeywords.js";
 import {
   asArray,
   isTeslaSuperchargerOnly,
@@ -113,7 +119,7 @@ async function fetchCorridorSample(pt, answers, evTrip, teslaOnly) {
   }
   evStations = evStations.filter(s => (s.distanceMiles ?? 99) <= 1).slice(0, 3);
 
-  const allowChains = prefIncludes(answers, "Fast food only");
+  const allowChains = allowsNationalChains(answers);
   let restaurants = applyStopFilters(restaurantsRaw, answers)
     .filter(r => (r.distanceMiles ?? 99) <= 1);
   restaurants = filterRatingBand(restaurants);
@@ -150,18 +156,49 @@ async function fetchOvernightCity({
 
   let lodging = lodgingRaw.filter(h => (h.distanceMiles ?? 99) <= 1);
   lodging = filterLodgingByTier(lodging, answers);
-  lodging = filterRatingBand(lodging, { minRating: 3.5, minReviews: 8 });
+  lodging = filterRatingBand(lodging, { minRating: 4.0, minReviews: 30, maxReviews: 5000 });
   lodging = lodging.slice(0, 4);
   const cityName = routeInfo.citiesAlongRoute?.[Math.min(index, (routeInfo.citiesAlongRoute.length - 1))]
     || `Route mile ~${Math.round(frac * (boundary.totalMiles || 0))}`;
+
+  const dietaryRestaurants = await fetchDietaryRestaurantsForCity(cityName, pt.lat, pt.lng, answers);
 
   return {
     city: cityName,
     lat: pt.lat,
     lng: pt.lng,
     hotels: lodging.map(compactPlace),
+    dietaryRestaurants,
     medical,
   };
+}
+
+async function fetchDietaryRestaurantsForCity(cityName, lat, lng, answers) {
+  const keywords = getDietarySearchKeywords(answers).filter(k => !/drive through/i.test(k));
+  if (!keywords.length || lat == null) return [];
+
+  const cityShort = String(cityName).split(",")[0]?.trim() || cityName;
+  const allowChains = allowsNationalChains(answers);
+  const merged = new Map();
+
+  await Promise.all(keywords.slice(0, 4).map(async (baseKeyword) => {
+    const keyword = `${baseKeyword} ${cityShort}`;
+    const results = await searchNearbyCategory(lat, lng, {
+      type: "restaurant",
+      keyword,
+      radius: RADIUS_10MI,
+      maxResults: 5,
+    });
+    results.forEach((r) => {
+      if (r.placeId) merged.set(r.placeId, r);
+    });
+  }));
+
+  let out = applyStopFilters([...merged.values()], answers)
+    .filter(r => (r.distanceMiles ?? 99) <= 10);
+  out = filterRatingBand(out);
+  out = filterGenericChains(out, { allowChains });
+  return out.slice(0, 5).map(compactPlace);
 }
 
 export async function buildPlacesContext(answers, routeInfo) {
@@ -278,6 +315,9 @@ export function formatPlacesContextForPrompt(ctx) {
   });
   ctx.cities?.forEach(c => {
     if (c.hotels?.length) lines.push(`${c.city} hotels (on-route GPS): ${c.hotels.map(h => `${h.name}${h.rating ? ` (${h.rating}★)` : ""}`).join(", ")}`);
+    if (c.dietaryRestaurants?.length) {
+      lines.push(`${c.city} dietary-match restaurants (VERIFIED PLACES): ${c.dietaryRestaurants.map(r => `${r.name}${r.rating ? ` (${r.rating}★)` : ""}`).join(", ")}`);
+    }
     if (c.medical?.pharmacies?.length) lines.push(`${c.city} pharmacies: ${c.medical.pharmacies.map(p => p.name).join(", ")}`);
     if (c.medical?.dialysis?.length) lines.push(`${c.city} dialysis: ${c.medical.dialysis.map(d => d.name).join(", ")}`);
     if (c.medical?.veterinary?.length) lines.push(`${c.city} vet care: ${c.medical.veterinary.map(v => v.name).join(", ")}`);

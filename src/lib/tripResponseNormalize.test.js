@@ -51,6 +51,31 @@ describe("normalizeTripResponse", () => {
     expect(out.stops[0].hotels[1].verified).toBe(false);
   });
 
+  it("adds verification_note on unverified restaurants", () => {
+    const out = normalizeTripResponse({
+      trip_format: "multi_day",
+      stops: [{
+        city: "Amarillo, TX",
+        restaurants: [{ name: "Invented Cafe", cuisine: "American" }],
+      }],
+      road_stops: [],
+    }, { placesContext: { cities: [{ hotels: [] }] } });
+    expect(out.stops[0].restaurants[0].verified).toBe(false);
+    expect(out.stops[0].restaurants[0].verification_note).toBeTruthy();
+  });
+
+  it("infers luxury price_band at $200+", () => {
+    const out = normalizeTripResponse({
+      trip_format: "multi_day",
+      stops: [{
+        city: "Austin, TX",
+        hotels: [{ name: "Grand Hotel", price: "$225/night" }],
+      }],
+      road_stops: [],
+    });
+    expect(out.stops[0].hotels[0].price_band).toBe("luxury");
+  });
+
   it("passes through personal_touches and changes_made arrays", () => {
     const out = normalizeTripResponse({
       trip_format: "multi_day",
