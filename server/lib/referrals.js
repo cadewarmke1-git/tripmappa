@@ -1,5 +1,6 @@
 /** Referral codes, links, and Voyager bonus grants. */
 import { FOUNDING_MEMBER_MAX, countFoundingMembers } from "./foundingMembers.js";
+import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 const REFERRAL_PARAM = "ref";
 
@@ -35,7 +36,7 @@ export async function ensureReferralCode(admin, userId) {
   let code = referralCodeFromUserId(userId);
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const { error: upsertErr } = await admin.from("user_profiles").upsert(
-      { user_id: userId, referral_code: code },
+      buildUserProfileUpsertRow(userId, { referral_code: code }),
       { onConflict: "user_id" },
     );
     if (!upsertErr) return code;

@@ -9,6 +9,7 @@ import {
   getSiteOrigin,
 } from "./stripe.js";
 import { resetMonthlyGenerationAllowance } from "./tripCredits.js";
+import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 function requireStripePriceId(priceId, envName) {
   if (!priceId) {
@@ -50,11 +51,10 @@ export async function ensureStripeCustomer(stripe, admin, userId, email) {
   const { error: updateErr } = await admin
     .from("user_profiles")
     .upsert(
-      {
-        user_id: userId,
+      buildUserProfileUpsertRow(userId, {
         stripe_customer_id: customer.id,
         tier: profile?.tier || "wanderer",
-      },
+      }),
       { onConflict: "user_id" },
     );
 
@@ -168,8 +168,7 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
     .maybeSingle();
   if (readErr) throw readErr;
 
-  const patch = {
-    user_id: userId,
+  const patch = buildUserProfileUpsertRow(userId, {
     tier: plan,
     stripe_customer_id: customerId || undefined,
     stripe_subscription_id: subscriptionId || undefined,
@@ -177,7 +176,7 @@ export async function applyPremiumFromCheckout(admin, stripe, session) {
     trailblazer_trial_ends_at: null,
     show_trial_ended_prompt: false,
     plan_preferences: resetMonthlyGenerationAllowance(existing?.plan_preferences || {}),
-  };
+  });
 
   const { error } = await admin.from("user_profiles").upsert(patch, { onConflict: "user_id" });
   if (error) throw error;

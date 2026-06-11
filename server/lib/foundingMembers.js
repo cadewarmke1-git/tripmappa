@@ -1,4 +1,5 @@
 /** Founding 1,000 program — Trailblazer access free for one year. */
+import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 export const FOUNDING_MEMBER_MAX = 1000;
 
@@ -50,13 +51,12 @@ function logExemptGrant(userId) {
 
 async function grantPermanentTrailblazer(admin, userId) {
   const { error } = await admin.from("user_profiles").upsert(
-    {
-      user_id: userId,
+    buildUserProfileUpsertRow(userId, {
       tier: "trailblazer",
       founder_expires_at: null,
       trailblazer_trial_ends_at: null,
       show_trial_ended_prompt: false,
-    },
+    }),
     { onConflict: "user_id" },
   );
   if (error) throw error;
@@ -174,11 +174,10 @@ export async function tryClaimFoundingSlot(admin, userId) {
   }
 
   const { error: updateErr } = await admin.from("user_profiles").upsert(
-    {
-      user_id: userId,
+    buildUserProfileUpsertRow(userId, {
       tier: "founder",
       founder_expires_at: founderExpiresAt,
-    },
+    }),
     { onConflict: "user_id" },
   );
 

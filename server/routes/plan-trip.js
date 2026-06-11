@@ -40,42 +40,7 @@ import {
   getClientIp,
   recordPlanTripRateLimitHit,
 } from "../lib/planTripRateLimit.js";
-
-function parseJsonFromLlm(text) {
-  if (!text) {
-    console.error("parseJsonFromLlm: empty model response");
-    throw new Error("Empty model response");
-  }
-  const raw = String(text);
-
-  let stripped = raw.trim();
-  stripped = stripped.replace(/^```(?:json)?\s*/i, "");
-  stripped = stripped.replace(/\s*```\s*$/i, "");
-  stripped = stripped.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-  let clean = stripped;
-  const firstBrace = clean.indexOf("{");
-  const lastBrace = clean.lastIndexOf("}");
-  if (firstBrace >= 0 && lastBrace > firstBrace) {
-    clean = clean.slice(firstBrace, lastBrace + 1);
-  }
-
-  try {
-    return JSON.parse(clean);
-  } catch {
-    const blockMatch = stripped.match(/\{[\s\S]*\}/);
-    if (blockMatch) {
-      try {
-        return JSON.parse(blockMatch[0]);
-      } catch {
-        // fall through to error logging below
-      }
-    }
-
-    console.error("parseJsonFromLlm: unparseable response length:", raw?.length ?? 0);
-    throw new Error("Could not parse trip JSON from model — response was not valid JSON");
-  }
-}
+import { parseJsonFromLlm } from "../lib/parseJsonFromLlm.js";
 
 function tripResponseHasContent(parsed) {
   const stops = Array.isArray(parsed?.stops)

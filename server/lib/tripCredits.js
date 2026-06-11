@@ -5,6 +5,7 @@ import { expireTrialIfNeeded } from "./trials.js";
 import { getEffectiveTier } from "./tierEffective.js";
 import { buildReferralLink } from "./referrals.js";
 import { isUnlimitedUser } from "./adminAccess.js";
+import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 export const FREE_LIFETIME_LIMIT = 3;
 export const VOYAGER_MONTHLY_LIMIT = 20;
@@ -107,19 +108,9 @@ export async function getOrCreateProfile(admin, userId) {
     return syncMonthlyPrefsIfNeeded(admin, refreshed);
   }
 
-  const month = currentMonthKey();
   const { data: created, error: createErr } = await admin
     .from("user_profiles")
-    .insert({
-      user_id: userId,
-      tier: "wanderer",
-      generations_used: 0,
-      credits_month: month,
-      plan_preferences: {
-        monthly_generation_count: 0,
-        monthly_generation_reset_date: firstOfNextMonthIso(),
-      },
-    })
+    .insert(buildUserProfileUpsertRow(userId))
     .select()
     .single();
 

@@ -1,4 +1,5 @@
 /** 7-day Trailblazer trial for non-Founder signups. */
+import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 export const TRIAL_DAYS = 7;
 
@@ -17,12 +18,11 @@ export function isOnActiveTrial(profile) {
 export async function startTrailblazerTrial(admin, userId) {
   const endsAt = trialEndFromNow();
   const { error } = await admin.from("user_profiles").upsert(
-    {
-      user_id: userId,
+    buildUserProfileUpsertRow(userId, {
       tier: "trailblazer",
       trailblazer_trial_ends_at: endsAt,
       show_trial_ended_prompt: false,
-    },
+    }),
     { onConflict: "user_id" },
   );
   if (error) throw error;

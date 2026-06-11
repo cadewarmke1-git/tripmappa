@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
+import { buildUserProfileUpsertRow } from "../lib/userProfileDefaults.js";
 
 const ALLOWED_KEYS = new Set([
   "vehicle",
@@ -93,7 +94,7 @@ export default async function handler(req, res) {
     const { error } = await admin
       .from("user_profiles")
       .upsert(
-        { user_id: authUser.id, plan_preferences: stored },
+        buildUserProfileUpsertRow(authUser.id, { plan_preferences: stored }),
         { onConflict: "user_id" },
       );
     if (error) return res.status(500).json({ error: error.message });
