@@ -1,4 +1,5 @@
 /** Compact constraint list for results UI and Sonnet generation hints. */
+import { sanitizeHintText } from "./hintSanitization.js";
 import { getEffectiveVehicle } from "./vehicles.js";
 import { isContinuousDrive } from "./driveMode.js";
 import {
@@ -82,14 +83,21 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
 /** Plain-text block appended to Sonnet user prompt via generationHints. */
 export function formatGenerationHints(answers = {}, routeInfo = null, options = {}) {
   const lines = [];
-  const { regenerateDiffBlock = "", collaborationHintsBlock = "" } = options;
+  const { regenerateDiffBlock = "", collaborationHintsBlock = "", actionTipHintsBlock = "" } = options;
 
-  if (regenerateDiffBlock?.trim()) {
-    lines.push(regenerateDiffBlock.trim(), "");
+  const actionTips = sanitizeHintText(actionTipHintsBlock);
+  if (actionTips) {
+    lines.push(actionTips, "");
   }
 
-  if (collaborationHintsBlock?.trim()) {
-    lines.push(collaborationHintsBlock.trim(), "");
+  const regen = sanitizeHintText(regenerateDiffBlock);
+  if (regen) {
+    lines.push(regen, "");
+  }
+
+  const collab = sanitizeHintText(collaborationHintsBlock);
+  if (collab) {
+    lines.push(collab, "");
   }
 
   const coordinationBlock = formatMultiVehicleCoordinationBlock(answers);

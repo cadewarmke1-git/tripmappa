@@ -1,4 +1,5 @@
 /** Format group votes/suggestions for Sonnet regeneration hints. */
+import { sanitizeHintText } from "./hintSanitization.js";
 
 function voteSummary(votes, stopKey) {
   const rows = (votes || []).filter(v => v.stopKey === stopKey);
@@ -46,7 +47,7 @@ export function formatCollaborationHints(collaboration, stops = []) {
   }
 
   if (lines.length <= 1) return "";
-  return lines.join("\n");
+  return sanitizeHintText(lines.join("\n"));
 }
 
 export function listCollabResponders(collaboration) {

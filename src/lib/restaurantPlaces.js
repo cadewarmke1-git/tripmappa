@@ -1,3 +1,5 @@
+import { filterDinnerRestaurants, sortRestaurantsForDinner } from "./restaurantHours.js";
+
 /** Pick 3 display restaurants: sit-down, mid-range, quick/fast food. */
 const FAST_FOOD_RE = /\b(mcdonald|burger king|wendy|taco bell|kfc|subway|chipotle|panda express|arby|sonic|jack in the box|dairy queen|popeyes|chick-fil-a|five guys|in-n-out|whataburger|starbucks|dunkin|fast food|quick service)\b/i;
 
@@ -26,12 +28,15 @@ function isMidRange(r) {
   return pl === 2 || (!isQuick(r) && pl <= 3);
 }
 
-export function selectDisplayRestaurants(restaurants = []) {
-  if (!restaurants.length) return [];
+export function selectDisplayRestaurants(restaurants = [], { arrivalTime = null } = {}) {
+  const pool = arrivalTime
+    ? filterDinnerRestaurants(sortRestaurantsForDinner(restaurants, arrivalTime), arrivalTime)
+    : restaurants;
+  if (!pool.length) return [];
 
   const used = new Set();
   const pick = (predicate, slot) => {
-    const found = restaurants.find(r => !used.has(r.placeId) && predicate(r));
+    const found = pool.find(r => !used.has(r.placeId) && predicate(r));
     if (found) {
       used.add(found.placeId);
       return { ...found, slot };
@@ -46,7 +51,7 @@ export function selectDisplayRestaurants(restaurants = []) {
   const ordered = [sitDown, midRange, quick].filter(Boolean);
 
   if (ordered.length < 3) {
-    restaurants.forEach(r => {
+    pool.forEach(r => {
       if (ordered.length >= 3 || used.has(r.placeId)) return;
       used.add(r.placeId);
       ordered.push({ ...r, slot: "extra" });

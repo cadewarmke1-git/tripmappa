@@ -22,6 +22,7 @@ import {
 } from "./fuel.js";
 import { buildRoadStopsFromRoute } from "./roadStopsFromPlaces.js";
 import { computeBudgetEstimate } from "./budget.js";
+import { buildRatingLookup, resolveEnrichedRating } from "./placeRatings.js";
 import { parseMilesFromDistance } from "./parsing.js";
 import { fetchRestaurantsForStop } from "./restaurantsClient.js";
 import { fetchWeatherForStops } from "./weatherClient.js";
@@ -377,6 +378,16 @@ export async function enrichGeneratedTrip({
     routeInfo,
     enrichedStops.length,
   );
+
+  const ratingLookup = buildRatingLookup(restaurantsByCity);
+  for (const rs of safeRoadStops) {
+    const rating = resolveEnrichedRating(rs, ratingLookup);
+    if (rating != null) rs.rating = rating;
+  }
+  for (const stop of enrichedStops) {
+    const rating = resolveEnrichedRating(stop, ratingLookup);
+    if (rating != null) stop.rating = rating;
+  }
 
   return {
     stops: enrichedStops,

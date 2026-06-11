@@ -4,7 +4,17 @@ import { parseRating, isLocalFavorite } from "./ratings.js";
 import { skipLodgingQuestion, getEffectiveVehicle } from "./vehicles.js";
 import { isContinuousDrive } from "./driveMode.js";
 import { dedupeRoadStops } from "./placesDedup.js";
+import { buildPlacesRatingLookup, resolveEnrichedRating } from "./placeRatings.js";
 import { scheduleHintForDay } from "./scheduleRestrictions.js";
+
+export function tripIncludesOvernight(stops = [], answers = {}) {
+  if (isContinuousDrive(answers)) return false;
+  const tripType = answers?.trip_type;
+  if (tripType === "Day trip" || tripType === "Driving home") return false;
+  const lodging = answers?.lodging;
+  if (lodging === "No overnight stay" || lodging === "Sleeper cab — no hotel needed") return false;
+  return stops.some(s => s?.city);
+}
 
 export function isSimplifiedTrip({ answers, routeInfo, stops = [], tripFormat }) {
   if (isContinuousDrive(answers)) return true;
@@ -58,8 +68,23 @@ function inferCategory(rs) {
   return "Rest";
 }
 
-function mapRoadItem(rs, key) {
-  const rating = parseRating(rs.rating ?? String(rs.note || "").match(/(\d+\.?\d*)\s*star/i)?.[1]);
+function resolveRoadStopRating(rs) {
+  const fromNote = String(rs.note || "").match(/(\d+\.?\d*)\s*star/i)?.[1];
+  return parseRating(
+    rs.rating
+    ?? rs.stopData?.rating
+    ?? fromNote,
+  );
+}
+
+export function countTimelineStops({ stops = [], roadStops = [] }) {
+  const overnightCount = stops.filter(s => s?.city).length;
+  const roadCount = dedupeRoadStops(roadStops).length;
+  return roadCount + overnightCount;
+}
+
+function mapRoadItem(rs, key, ratingLookup = null) {
+  const rating = resolveEnrichedRating(rs, ratingLookup) ?? resolveRoadStopRating(rs);
   const placeId = rs.placeId || rs.place_id || rs.stopData?.placeId;
   return {
     id: placeId || rs.id || `road-${key}`,
@@ -76,6 +101,7 @@ function mapRoadItem(rs, key) {
     photoUrl: rs.photoUrl,
     lat: rs.lat,
     lng: rs.lng,
+    verified: rs.verified === true || rs.stopData?.verified === true,
     localFavorite: isLocalFavorite(rating),
     action: "add",
     stopData: rs,
@@ -114,12 +140,13 @@ export function buildItineraryDays({
   const overnightStops = stops.filter(s => s.city);
   const dayCount = Math.max(1, overnightStops.length || 1);
   const uniqueRoadStops = dedupeRoadStops(roadStops);
+  const ratingLookup = buildPlacesRatingLookup({ restaurantsByCity, stops });
   const roadByDay = distributeRoadStops(uniqueRoadStops, overnightStops.length || 1);
   const days = [];
 
   if (overnightStops.length === 0) {
     const roadItems = [
-      ...dedupeRoadStops(uniqueRoadStops).map((rs, i) => mapRoadItem(rs, i)),
+      ...dedupeRoadStops(uniqueRoadStops).map((rs, i) => mapRoadItem(rs, i, ratingLookup)),
       ...optionalStopCards.slice(0, 3).map((p, i) => mapOptionalItem(p, i)),
     ];
     days.push({
@@ -137,7 +164,7 @@ export function buildItineraryDays({
   }
 
   overnightStops.forEach((stop, dayIdx) => {
-    const roadItems = (roadByDay[dayIdx] || []).map((rs, i) => mapRoadItem(rs, `${dayIdx}-${i}`));
+    const roadItems = (roadByDay[dayIdx] || []).map((rs, i) => mapRoadItem(rs, `${dayIdx}-${i}`, ratingLookup));
     if (dayIdx === 0 && optionalStopCards.length) {
       optionalStopCards.slice(0, 2).forEach((p, i) => roadItems.push(mapOptionalItem(p, i)));
     }
@@ -157,9 +184,11 @@ export function buildItineraryDays({
         description: stop.why || "Your home base for the night — rest up for tomorrow's drive.",
         eta: stop.eta,
         distance: stop.distance,
-        rating: parseRating(stop.rating),
+        rating: resolveEnrichedRating(stop, ratingLookup)
+          ?? parseRating(stop.rating ?? stop.hotels?.[0]?.rating ?? stop.restaurants?.[0]?.rating),
         lat: stop.lat,
         lng: stop.lng,
+        verified: stop.hotels?.some(h => h.verified) || stop.restaurants?.some(r => r.verified) || false,
         stopData: stop,
         action: "book",
       },
@@ -234,7 +263,7 @@ function mapOptionalItem(p, i) {
   };
 }
 
-export function getItineraryOverview({ origin, dest, routeInfo, stops, roadStops, budgetTotal }) {
+export function getItineraryOverview({ origin, dest, routeInfo, stops, roadStops, budgetTotal, costEstimateLabel = null }) {
   const miles = parseMilesFromDistance(routeInfo?.distance);
   const hours = parseHoursFromDuration(routeInfo?.duration);
   const dayCount = Math.max(1, stops.filter(s => s.city).length || 1);
@@ -245,8 +274,9 @@ export function getItineraryOverview({ origin, dest, routeInfo, stops, roadStops
     distance: routeInfo?.distance || (miles ? `${Math.round(miles)} mi` : "—"),
     duration: routeInfo?.duration || (hours ? `${Math.floor(hours)}h ${Math.round((hours % 1) * 60)}m` : "—"),
     dayCount,
-    stopCount: (roadStops || []).filter(s => s.userAdded).length,
+    stopCount: countTimelineStops({ stops, roadStops }),
     overnightCount: stops.filter(s => s.city).length,
     estimatedCost: budgetTotal,
+    costEstimateLabel,
   };
 }

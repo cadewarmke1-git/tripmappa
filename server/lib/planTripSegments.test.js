@@ -4,6 +4,7 @@ import {
   stitchTripSegments,
   shouldUseParallelTripSegments,
   parseTripNights,
+  dedupeConsecutiveStops,
 } from "./planTripSegments.js";
 import { normalizeTripResponse } from "./tripResponseNormalize.js";
 
@@ -61,6 +62,14 @@ describe("planTripSegments", () => {
   it("caps parallel segments at 4", () => {
     const segments = buildTripSegments(routeInfo, { trip_nights: "6 nights" }, "Dallas, TX", "Los Angeles, CA");
     expect(segments).toHaveLength(4);
+  });
+
+  it("dedupeConsecutiveStops removes parallel-segment overnight duplicates", () => {
+    const deduped = dedupeConsecutiveStops([
+      { city: "Amarillo, TX", lat: 35.2, lng: -101.8 },
+      { city: "Amarillo, TX", lat: 35.201, lng: -101.801 },
+    ]);
+    expect(deduped).toHaveLength(1);
   });
 
   it("stitchTripSegments merges stops and dedupes tips", () => {

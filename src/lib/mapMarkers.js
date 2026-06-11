@@ -5,6 +5,7 @@ export const MARKER_GOLD = "#FFD28C";
 const MARKER_SIZE = 26;
 
 export const MARKER_CATEGORIES = {
+  destination: { label: "Destination", color: MARKER_GOLD, zIndex: 20 },
   hotel: { label: "Overnight stop", color: MARKER_GOLD, zIndex: 10 },
   rv: { label: "RV / campground", color: MARKER_GOLD, zIndex: 10 },
   fuel: { label: "Fuel stop", color: MARKER_GOLD, zIndex: 9 },
@@ -65,20 +66,77 @@ function mapRoadStopCategory(rs) {
   return "poi";
 }
 
-export function buildMarkerIcon(category, isDarkMode = false) {
+export function buildMarkerIcon(category, isDarkMode = false, { pinNumber = null, pinSize = "normal" } = {}) {
   const cfg = MARKER_CATEGORIES[category] || MARKER_CATEGORIES.poi;
   const stroke = isDarkMode ? "#1a1a2e" : "#ffffff";
   const inner = ICON_PATHS[category] || ICON_PATHS.default;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MARKER_SIZE}" height="${MARKER_SIZE}" viewBox="0 0 32 32">
-    <circle cx="16" cy="16" r="12" fill="${cfg.color}" stroke="${stroke}" stroke-width="1.5"/>
-    ${inner}
+  const size = pinSize === "large" ? 34 : (pinNumber != null ? 30 : MARKER_SIZE);
+  const radius = pinSize === "large" ? 14 : (pinNumber != null ? 13 : 12);
+  const numberLabel = pinNumber != null
+    ? `<text x="16" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#1a1a2e">${pinNumber}</text>`
+    : "";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="${radius}" fill="${cfg.color}" stroke="${stroke}" stroke-width="1.5"/>
+    ${pinNumber != null ? numberLabel : inner}
   </svg>`;
   if (!window.google?.maps) return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}` };
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(MARKER_SIZE, MARKER_SIZE),
-    anchor: new window.google.maps.Point(MARKER_SIZE / 2, MARKER_SIZE / 2),
+    scaledSize: new window.google.maps.Size(size, size),
+    anchor: new window.google.maps.Point(size / 2, size / 2),
   };
+}
+
+function mapWaypointCategory(w, answers) {
+  if (w.role === "overnight") {
+    return answers && isRvVehicle(getEffectiveVehicle(answers)) ? "rv" : "hotel";
+  }
+  const cat = String(w.category || "").toLowerCase();
+  if (/fuel|diesel|gas/i.test(cat)) return "fuel";
+  if (/food|rest/i.test(cat)) return "restaurant";
+  if (/scenic|discovery|park/i.test(cat)) return "park";
+  return "poi";
+}
+
+/** Numbered pins synced to itinerary waypoint order. */
+export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
+  const markers = [];
+  let num = 0;
+  for (const w of waypoints) {
+    if (w.kind === "origin") continue;
+    if (w.kind === "stop" && !w.included) continue;
+    if (w.lat == null || w.lng == null) continue;
+
+    if (w.kind === "destination") {
+      markers.push({
+        id: w.id,
+        waypointId: w.id,
+        lat: w.lat,
+        lng: w.lng,
+        category: "destination",
+        pinSize: "large",
+        title: w.title,
+        subtitle: "Destination",
+        zIndex: 20,
+      });
+      continue;
+    }
+
+    num += 1;
+    markers.push({
+      id: w.id,
+      waypointId: w.id,
+      lat: w.lat,
+      lng: w.lng,
+      category: mapWaypointCategory(w, answers),
+      pinNumber: num,
+      title: w.title,
+      subtitle: w.city || "",
+      zIndex: 10 + num,
+      action: w.action || "navigate",
+    });
+  }
+  return markers;
 }
 
 export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], extraMarkers = [], answers = null) {

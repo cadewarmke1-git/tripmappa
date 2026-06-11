@@ -6,6 +6,7 @@ import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
 import GroceryCard from "../grocery/GroceryCard.jsx";
 import WeatherIcon from "../icons/WeatherIcon.jsx";
 import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
+import { tripIncludesOvernight } from "../../lib/itineraryDays.js";
 
 function findCityData(map, city) {
   if (!city || !map) return null;
@@ -69,13 +70,10 @@ export default function SimpleTripSection({
     }))
     : (day?.activities || []);
 
-  const mealStops = day?.overnight
+  const hasOvernight = tripIncludesOvernight(stops, answers);
+  const mealStops = hasOvernight && day?.overnight
     ? [day.overnight]
-    : stops.filter(s => s.city).length
-      ? stops.filter(s => s.city)
-      : dest
-        ? [{ city: dest, lat: null, lng: null, id: "dest-meal" }]
-        : [];
+    : [];
 
   function setStopRef(id) {
     return (el) => {
@@ -119,7 +117,7 @@ export default function SimpleTripSection({
         </div>
       )}
 
-      {day?.overnight && !continuousDrive && (
+      {hasOvernight && day?.overnight && !continuousDrive && (
         <div className="results-subsection">
           <h3 className="results-subsection-label">Tonight&apos;s Stay</h3>
           <OvernightStayCard
@@ -192,7 +190,7 @@ export default function SimpleTripSection({
         </div>
       )}
 
-      {!continuousDrive && !day?.overnight && mealStops.map((stop, idx) => {
+      {!continuousDrive && hasOvernight && mealStops.map((stop, idx) => {
         const city = stop.city || dest;
         const weather = findCityData(weatherByCity, city);
         const preloaded = findCityData(restaurantsByCity, city);
@@ -227,6 +225,7 @@ export default function SimpleTripSection({
               answers={answers}
               preloaded={preloaded}
               onToast={onToast}
+              overnightMode
             />
           </div>
         );

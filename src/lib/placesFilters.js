@@ -6,6 +6,90 @@ import { isNationalChainPlace } from "./nationalRestaurantChains.js";
 
 const PRICE_LEVEL_NIGHTLY = [55, 75, 110, 165, 280];
 
+/** Google Places types that indicate food service. */
+export const FOOD_SERVING_TYPES = new Set([
+  "restaurant",
+  "cafe",
+  "bakery",
+  "bar",
+  "meal_takeaway",
+  "meal_delivery",
+  "food",
+  "fast_food_restaurant",
+]);
+
+/** Primary/non-food types that must never appear in food or road-stop restaurant lists. */
+export const NON_FOOD_PRIMARY_TYPES = new Set([
+  "car_dealer",
+  "car_repair",
+  "car_wash",
+  "lodging",
+  "hotel",
+  "motel",
+  "airport",
+  "real_estate_agency",
+  "gas_station",
+  "electric_vehicle_charging_station",
+  "store",
+  "shopping_mall",
+  "hospital",
+  "doctor",
+  "pharmacy",
+  "school",
+  "church",
+  "park",
+  "museum",
+  "gym",
+  "spa",
+  "bank",
+  "atm",
+  "parking",
+  "local_government_office",
+]);
+
+export const LODGING_TYPES = new Set([
+  "lodging",
+  "hotel",
+  "motel",
+  "campground",
+  "rv_park",
+  "bed_and_breakfast",
+]);
+
+export function placeTypes(place) {
+  const raw = place?.types || place?.placeTypes || [];
+  return Array.isArray(raw) ? raw.map(String) : [];
+}
+
+export function isFoodServingPlace(place) {
+  const types = placeTypes(place);
+  if (!types.length) return false;
+  const hasFood = types.some(t => FOOD_SERVING_TYPES.has(t));
+  if (!hasFood) return false;
+  const primary = types[0];
+  if (primary && NON_FOOD_PRIMARY_TYPES.has(primary)) return false;
+  if (primary && LODGING_TYPES.has(primary)) return false;
+  return true;
+}
+
+export function isLodgingPlace(place) {
+  const types = placeTypes(place);
+  if (!types.length) return true;
+  if (types.some(t => NON_FOOD_PRIMARY_TYPES.has(t) && !LODGING_TYPES.has(t) && t !== "point_of_interest")) {
+    const primary = types[0];
+    if (primary && NON_FOOD_PRIMARY_TYPES.has(primary) && !LODGING_TYPES.has(primary)) return false;
+  }
+  return types.some(t => LODGING_TYPES.has(t));
+}
+
+export function filterFoodCandidates(places = []) {
+  return (places || []).filter(p => isFoodServingPlace(p));
+}
+
+export function filterLodgingCandidates(places = []) {
+  return (places || []).filter(p => isLodgingPlace(p));
+}
+
 export const PRICE_BAND_PROMPT = {
   budget: "under $80/night",
   mid: "$90–$160/night",

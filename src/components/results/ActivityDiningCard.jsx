@@ -1,5 +1,5 @@
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
-import InlineStarRating from "./InlineStarRating.jsx";
+import PlaceRatingLine from "./PlaceRatingLine.jsx";
 
 export default function ActivityDiningCard({ item, onAdd, added = false }) {
   return (
@@ -17,9 +17,7 @@ export default function ActivityDiningCard({ item, onAdd, added = false }) {
       <div className="activity-dining-body">
         <h4 className="activity-dining-name">{item.name}</h4>
         <div className="activity-dining-meta">
-          {item.rating != null
-            ? <InlineStarRating rating={item.rating} className="activity-dining-rating" />
-            : <span className="activity-dining-no-reviews">No reviews yet</span>}
+          <PlaceRatingLine rating={item.rating} className="activity-dining-rating" emptyClassName="activity-dining-no-reviews" />
           {item.distanceMiles != null && <span>{item.distanceMiles} mi</span>}
         </div>
         <button

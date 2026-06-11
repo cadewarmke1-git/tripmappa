@@ -5,7 +5,9 @@ import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import WeatherIcon from "../icons/WeatherIcon.jsx";
 import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
 import AmenityBadges from "../lodging/AmenityBadges.jsx";
-import InlineStarRating from "./InlineStarRating.jsx";
+import PlaceRatingLine from "./PlaceRatingLine.jsx";
+import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
+import { formatPriceBandLabel } from "../../lib/heroVariantContent.js";
 
 export default function OvernightStayCard({
   overnight,
@@ -43,7 +45,7 @@ export default function OvernightStayCard({
 
   const featured = hotel || (selectedLodging.length ? selectedLodging[0] : null);
   const name = featured?.name || overnight?.title || overnight?.city;
-  const price = featured?.priceLabel || (featured?.pricePerNight ? `$${featured.pricePerNight}/night` : null);
+  const price = featured?.priceLabel || formatPriceBandLabel(featured);
   const desc = overnight?.description || featured?.description || "Your home base for the night.";
   const photoUrl = featured?.photo || featured?.photoUrl || null;
   const rating = featured?.rating ?? overnight?.rating;
@@ -102,9 +104,8 @@ export default function OvernightStayCard({
         <div className="overnight-card-primary">
           <h3 className="overnight-card-name">{name}</h3>
           <div className="overnight-card-stats">
-            {rating != null
-              ? <InlineStarRating rating={rating} className="overnight-rating" />
-              : <span className="overnight-no-reviews">No reviews yet</span>}
+            <PlaceRatingLine rating={rating} className="overnight-rating" emptyClassName="overnight-no-reviews" />
+            {featured?.verified === true && <TripMappaVerifiedBadge />}
             {price && <span className="overnight-price">{price}</span>}
           </div>
           {featured?.amenities?.length > 0 && (

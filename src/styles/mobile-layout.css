@@ -313,8 +313,10 @@
     scroll-snap-align: unset;
   }
 
-  html[data-layout="mobile"] .road-stop-card-photo-wrap {
-    height: 80px;
+  html[data-layout="mobile"] .road-stop-card-photo-thumb,
+  html[data-layout="mobile"] .restaurant-card-photo-thumb {
+    width: 56px;
+    height: 56px;
   }
 
   html[data-layout="mobile"] .road-stop-card-name {
@@ -390,9 +392,27 @@
     margin-bottom: 10px;
   }
 
-  html[data-layout="mobile"] .trip-results-scroll {
+  html[data-layout="mobile"] .trip-results-scroll,
+  html[data-layout="mobile"] .trip-results-timeline-scroll {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  html[data-layout="mobile"] .trip-results-panel.trip-results-layout {
+    height: calc(100dvh - var(--nav-h, 56px));
+  }
+
+  html[data-layout="mobile"] .journey-timeline-thumb {
+    width: 44px;
+    height: 44px;
+  }
+  html[data-layout="mobile"] .journey-timeline-photo {
+    width: 44px;
+    height: 44px;
+  }
+
+  html[data-layout="mobile"] .results-action-bar {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   }
 
   html[data-layout="mobile"] .scroll-indicator {

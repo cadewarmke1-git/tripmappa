@@ -15,3 +15,13 @@ export function isAdminEmail(email) {
 export function isUnlimitedUser({ userId, email } = {}) {
   return isExemptFounderUser(userId) || isAdminEmail(email);
 }
+
+/** Admin bypass uses only the authenticated Supabase session email — never client headers or body. */
+export function resolveSessionEmail(user) {
+  return user?.email || null;
+}
+
+export function isUnlimitedSessionUser(user) {
+  if (!user?.id) return false;
+  return isUnlimitedUser({ userId: user.id, email: resolveSessionEmail(user) });
+}

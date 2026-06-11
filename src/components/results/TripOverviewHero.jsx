@@ -1,16 +1,17 @@
 import { useMemo } from "react";
-import { computeBudgetEstimate } from "../../lib/budget.js";
+import { computeTransparentTripCostEstimate } from "../../lib/tripCostEstimate.js";
 import { parseTravelerCount } from "../../lib/vehicles.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
 export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false }) {
-  const budget = useMemo(
-    () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
-    [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
+  const costEstimate = useMemo(
+    () => computeTransparentTripCostEstimate(answers, routeInfo),
+    [answers, routeInfo],
   );
 
   const overview = getItineraryOverview({
-    origin, dest, routeInfo, stops, roadStops, budgetTotal: budget.total,
+    origin, dest, routeInfo, stops, roadStops, budgetTotal: costEstimate?.total ?? null,
+    costEstimateLabel: costEstimate?.label ?? null,
   });
 
   return (
@@ -44,6 +45,9 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
           <div className="trip-overview-hero-stat trip-overview-hero-stat-gold">
             <span className="trip-overview-hero-val">${Math.round(overview.estimatedCost).toLocaleString()}</span>
             <span className="trip-overview-hero-label">Est. cost</span>
+            {overview.costEstimateLabel && (
+              <span className="trip-overview-hero-sublabel">{overview.costEstimateLabel}</span>
+            )}
           </div>
         )}
       </div>

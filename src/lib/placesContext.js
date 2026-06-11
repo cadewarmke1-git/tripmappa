@@ -8,6 +8,7 @@ import {
   filterGenericChains,
   filterLodgingByTier,
   filterRatingBand,
+  filterFoodCandidates,
 } from "./placesFilters.js";
 import { getDietarySearchKeywords } from "./dietaryKeywords.js";
 import {
@@ -33,8 +34,10 @@ function compactPlace(p) {
     name: p.name,
     address: p.address || "",
     rating: p.rating,
+    userRatingsTotal: p.userRatingsTotal,
     distanceMi: p.distanceMiles,
     priceLevel: p.priceLevel,
+    types: p.types || [],
     lat: p.lat,
     lng: p.lng,
   };
@@ -122,6 +125,7 @@ async function fetchCorridorSample(pt, answers, evTrip, teslaOnly) {
   const allowChains = allowsNationalChains(answers);
   let restaurants = applyStopFilters(restaurantsRaw, answers)
     .filter(r => (r.distanceMiles ?? 99) <= 1);
+  restaurants = filterFoodCandidates(restaurants);
   restaurants = filterRatingBand(restaurants);
   restaurants = filterGenericChains(restaurants, { allowChains });
   restaurants = restaurants.slice(0, 4);
@@ -196,6 +200,7 @@ async function fetchDietaryRestaurantsForCity(cityName, lat, lng, answers) {
 
   let out = applyStopFilters([...merged.values()], answers)
     .filter(r => (r.distanceMiles ?? 99) <= 10);
+  out = filterFoodCandidates(out);
   out = filterRatingBand(out);
   out = filterGenericChains(out, { allowChains });
   return out.slice(0, 5).map(compactPlace);

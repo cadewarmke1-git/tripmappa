@@ -1,13 +1,22 @@
 import { useState } from "react";
 import CategoryIcon from "../icons/CategoryIcon.jsx";
+import { scalePlacesPhotoUrl } from "../../lib/placePhotos.js";
 
-export default function PlacePhotoOrIcon({ photoUrl, name, category, className = "", imgClassName = "" }) {
+export default function PlacePhotoOrIcon({
+  photoUrl,
+  name,
+  category,
+  className = "",
+  imgClassName = "",
+  displayPx = 64,
+}) {
   const [failed, setFailed] = useState(false);
+  const src = scalePlacesPhotoUrl(photoUrl, displayPx);
 
-  if (photoUrl && !failed) {
+  if (src && !failed) {
     return (
       <img
-        src={photoUrl}
+        src={src}
         alt=""
         className={imgClassName}
         loading="lazy"

@@ -158,17 +158,28 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "HERE API credentials not configured" });
   }
 
-  const { origin, destination } = req.body || {};
+  const { origin, destination, via: viaRaw = [] } = req.body || {};
   if (!origin || !destination) {
     return res.status(400).json({ error: "origin and destination are required" });
   }
 
   const specs = resolveTruckRequestSpecs(req.body);
+  const viaList = Array.isArray(viaRaw) ? viaRaw : [];
 
   try {
     const coords = await resolveLatLng(origin, destination);
     if (!coords.origin || !coords.destination) {
       return res.status(404).json({ error: "Could not geocode origin or destination" });
+    }
+
+    const viaCoords = [];
+    for (const point of viaList) {
+      if (point?.lat != null && point?.lng != null) {
+        viaCoords.push({ lat: point.lat, lng: point.lng });
+      } else if (typeof point === "string" && point.trim()) {
+        const g = await geocodeAddress(point.trim());
+        if (g?.lat != null) viaCoords.push(g);
+      }
     }
 
     const accessToken = await getHereAccessToken();
@@ -183,6 +194,9 @@ export default async function handler(req, res) {
       "vehicle[grossWeight]": String(specs.weightKg),
       "vehicle[axleCount]": String(specs.axleCount),
     });
+    for (const v of viaCoords) {
+      params.append("via", `${v.lat},${v.lng}!passThrough=false`);
+    }
     if (specs.hazmat) {
       params.set("vehicle[shippedHazardousGoods]", "flammable,gas,combustible,corrosive,toxic");
     }
@@ -217,12 +231,18 @@ export default async function handler(req, res) {
       weighStations = await searchWeighStations(accessToken, routePoints);
     }
 
+    const sectionSummaries = route.sections.map(section => ({
+      distance: formatDistanceMeters(section.summary?.length || 0),
+      duration: formatDurationSeconds(section.summary?.duration || 0),
+    }));
+
     return res.status(200).json({
       provider: "here",
       transportMode: "truck",
       polyline: polylines[0] || null,
       polylines,
       routePoints,
+      sectionSummaries,
       distance: formatDistanceMeters(totalMeters),
       distanceMeters: totalMeters,
       duration: formatDurationSeconds(totalSeconds),

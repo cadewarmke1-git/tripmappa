@@ -136,6 +136,57 @@ function parseDistanceMiles(value) {
   return m ? parseFloat(m[1].replace(/,/g, "")) : Number.NaN;
 }
 
+function normalizeStopNameKey(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function haversineMiles(lat1, lng1, lat2, lng2) {
+  const R = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function stopCoordinates(stop) {
+  const lat = stop?.lat ?? stop?.latitude;
+  const lng = stop?.lng ?? stop?.longitude;
+  if (lat == null || lng == null) return null;
+  return { lat: Number(lat), lng: Number(lng) };
+}
+
+function consecutiveStopsDuplicate(a, b) {
+  if (!a || !b) return false;
+  const nameA = normalizeStopNameKey(a.name || a.city || a.location);
+  const nameB = normalizeStopNameKey(b.name || b.city || b.location);
+  if (nameA && nameB && nameA === nameB && nameA.length >= 4) return true;
+  const coordsA = stopCoordinates(a);
+  const coordsB = stopCoordinates(b);
+  if (coordsA && coordsB) {
+    return haversineMiles(coordsA.lat, coordsA.lng, coordsB.lat, coordsB.lng) < 0.5;
+  }
+  return false;
+}
+
+export function dedupeConsecutiveStops(stops = []) {
+  const out = [];
+  for (const stop of stops) {
+    if (!stop) continue;
+    if (out.length && consecutiveStopsDuplicate(out[out.length - 1], stop)) continue;
+    out.push(stop);
+  }
+  return out;
+}
+
+export function assertNoConsecutiveDuplicateStops(stops = []) {
+  for (let i = 1; i < stops.length; i++) {
+    if (consecutiveStopsDuplicate(stops[i - 1], stops[i])) {
+      throw new Error(`Consecutive duplicate stops remain after stitching at index ${i}`);
+    }
+  }
+}
+
 function mergeRoadStopsInOrder(segmentResults) {
   const merged = segmentResults.flatMap((result) =>
     (Array.isArray(result?.road_stops) ? result.road_stops : []),
@@ -172,10 +223,12 @@ export function stitchTripSegments(segmentResults) {
   }
 
   const first = { ...segmentResults[0] };
-  const stops = segmentResults.flatMap((result) =>
+  const stops = dedupeConsecutiveStops(segmentResults.flatMap((result) =>
     (Array.isArray(result?.stops) ? result.stops : []),
-  );
-  const road_stops = mergeRoadStopsInOrder(segmentResults);
+  ));
+  const road_stops = dedupeConsecutiveStops(mergeRoadStopsInOrder(segmentResults));
+  assertNoConsecutiveDuplicateStops(road_stops);
+  assertNoConsecutiveDuplicateStops(stops);
   const tips = dedupeStringList(segmentResults.flatMap((result) =>
     (Array.isArray(result?.tips) ? result.tips : []),
   ));

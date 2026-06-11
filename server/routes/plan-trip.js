@@ -214,8 +214,10 @@ FAMILY TRAVEL:
 For family travelers with young children, recommend at least one unexpected fun stop per driving day — a real roadside attraction, unique local landmark, state park with an easy trail, or famous local food spot that is actually on the route and genuinely worth stopping at with kids.
 
 TIPS ARRAY REQUIREMENTS:
-Include one regional food culture tip in the tips array that is unique to the area the route passes through — a real well-known local restaurant or food tradition the traveler cannot get at home.
-End the tips array with exactly one vehicle-specific preparation tip matched to the trip: truckers — check DOT inspection requirements; RV drivers — check tire pressure and propane; motorcycle riders — check tire pressure, chain tension, and weather gear; families — pack a road trip kit with snacks, entertainment, and a first aid kit.
+Each tip is an object: { "severity": "info"|"advisory"|"action", "title": "one line", "detail": "one line", "action": { "type": "reroute"|"depart_earlier", "label": "button label" } } — include action only when severity is "action".
+Emit 5–8 tips total. At most TWO tips may use severity "action"; each action tip must have a one-line title and one-line detail.
+Never include bare temperature readings or clear-sky weather observations. Mention weather ONLY when it changes a decision (storms in a time window, heat affecting EV range while towing, snow on mountain grades, high winds for RVs).
+Include one regional food culture tip (severity "info") unique to the corridor. End with one vehicle-specific preparation tip (severity "info"): truckers — DOT inspection; RV — tire pressure and propane; motorcycle — tire, chain, weather gear; families — road trip kit.
 
 COMMERCIAL LOAD WARNINGS:
 For commercial vehicles, always flag load-specific warnings when applicable: wind advisories for flatbed loads affecting load security; refrigeration unit fuel level reminders for reefer loads; hazmat route restrictions for tanker loads.
@@ -243,10 +245,16 @@ PRICE_BAND DEFINITIONS (every hotel MUST match user lodging tier "${ctx.lodging}
 - luxury: $200+/night
 Required price_band for this trip: ${requiredBand}. ${buildLodgingRules(ctx.lodging)}
 
+STOP AND RESTAURANT NAMES (mandatory):
+- Use business names EXACTLY as they appear in the VERIFIED PLACES list — character-for-character, no paraphrasing.
+- NEVER invent, guess, or embellish stop names (no "corridor", "vicinity", or planning jargon in user-visible names).
+- When no verified place fits a slot, use a plain generic descriptor only, e.g. "EV charging near Marietta OK" or "Diesel fuel near Little Rock AR" — never a fabricated brand.
+
 RESTAURANT VERIFICATION (every restaurant object):
 - verified:true ONLY when the name exists in VERIFIED PLACES from placesContext.
 - verified:false when no verified option fits — include verification_note (one phrase) explaining why.
 - Never invent a brand name; use city + cuisine when unverified.
+- Food stops MUST be actual restaurants/cafes/bakeries/bars from VERIFIED PLACES — never car dealers, hotels, or repair shops in food slots.
 
 ${ctx.tripCategory === "commercial" ? `${TRUCK_PARKING_RULES}\n` : ""}
 ${PERSONAL_TOUCHES_PROMPT}
@@ -485,7 +493,7 @@ CORRIDOR RULE: Every stop must be a real place along the driving corridor betwee
 CITY FORMAT: Every stop city as "City, ST" (full city name and two-letter state).
 ${lodgingRules}${scheduleRules}${dietaryRules}${medicalRules}
 BUDGET: ${ctx.tripBudget && ctx.tripBudget !== "No budget limit" ? `Keep total estimated trip cost under ${ctx.tripBudget} — favor budget-appropriate stops and lodging.` : "No hard budget cap."}
-TIPS: Include tips array with 5–8 genuinely useful tips specific to THIS route and vehicle — not generic advice (e.g. name a specific weigh station mile marker on I-40, not "check tire pressure"). Include one regional food culture tip unique to this corridor. End tips with one vehicle-specific preparation tip (DOT inspection for truckers, tire/propane for RV, tire/chain/weather for motorcycle, road-trip kit for families).
+TIPS: Include tips array (structured objects per TIPS ARRAY REQUIREMENTS) with 5–8 genuinely useful tips specific to THIS route and vehicle — not generic advice. Max 2 action-severity tips. No bare weather readings.
 ROAD CONDITIONS: Include road_condition_warnings array for mountain passes, desert heat, winter weather, or construction zones actually relevant to this specific route.
 ORDER: Stops must progress geographically from origin toward destination; distance and eta fields must increase logically.
 ANTI-HALLUCINATION: If uncertain whether a business exists, output the city and category without a business name.
@@ -518,6 +526,8 @@ function buildLodgingRules(lodging) {
   return rules[lodging] || rules["Mid-Range"];
 }
 
+const TIPS_JSON_SCHEMA = `"tips": [{ "severity": "info|advisory|action", "title": "One line", "detail": "One line", "action": { "type": "reroute|depart_earlier", "label": "Short label" } }]`;
+
 function buildJsonSchema(ctx, isSimplified) {
   if (isSimplified) {
     const continuousNote = ctx.continuousDrive
@@ -530,7 +540,7 @@ function buildJsonSchema(ctx, isSimplified) {
   "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext or category", "verified": true, "note": "Route-specific short note" }],
   "recommendations": [{ "name": "From placesContext", "category": "Activity|Dining|Viewpoint", "rating": "4.5", "note": "Why stop here on THIS route" }],
   ${SCHEMA_PERSONAL_TOUCHES},
-  "tips": ["5-8 route-specific tips"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": ["Warning specific to this route"]
 }${continuousNote}`;
   }
@@ -556,7 +566,7 @@ function buildJsonSchema(ctx, isSimplified) {
     "weightRestrictions": [{ "location": "Road", "note": "One line" }]
   },
   ${SCHEMA_PERSONAL_TOUCHES},
-  "tips": ["3-5 concise commercial tips for this route"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": ["One line each"]
 }`;
   }
@@ -575,7 +585,7 @@ function buildJsonSchema(ctx, isSimplified) {
   "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel", "name": "From placesContext", "verified": true, "note": "Short note" }],
   "safety": { "lowBridges": [], "steepGrades": [], "sharpCurves": [], "propaneLocations": [], "dumpStations": [], "rvParkingRestrictions": [] },
   ${SCHEMA_PERSONAL_TOUCHES},
-  "tips": ["5-8 RV route-specific tips"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": []
 }`;
   }
@@ -586,7 +596,7 @@ function buildJsonSchema(ctx, isSimplified) {
   "trip_format": "simplified",
   "route_summary": "Marine route overview with disclaimer",
   "road_stops": [{ "location": "Port City, ST", "distance": "—", "eta": "—", "category": "rest", "name": "Port or marina", "note": "Marine-specific note" }],
-  "tips": ["Include Google Maps marine routing disclaimer", "5-8 water-specific tips"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": []
 }`;
   }
@@ -598,7 +608,7 @@ function buildJsonSchema(ctx, isSimplified) {
   "route_summary": "Flight plan overview",
   "road_stops": [{ "location": "Airport area", "distance": "—", "eta": "—", "category": "rest", "name": "Airport or transport hub", "note": "Ground transport tip" }],
   "recommendations": [{ "name": "Destination activity or restaurant", "category": "Activity|Dining", "rating": "4.5", "note": "Why at destination" }],
-  "tips": ["5-8 flight and destination tips"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": []
 }`;
   }
@@ -612,7 +622,7 @@ function buildJsonSchema(ctx, isSimplified) {
     "coordinationNote": "Which vehicles this stop serves"
   }],
   "road_stops": [],
-  "tips": ["Multi-vehicle coordination tips"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": []
 }`;
   }
@@ -634,7 +644,7 @@ function buildJsonSchema(ctx, isSimplified) {
   }],
   "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "verified": true, "note": "Route-specific note" }],
   ${SCHEMA_PERSONAL_TOUCHES},
-  "tips": ["5-8 route- and vehicle-specific tips"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": []
 }`;
 }
@@ -675,7 +685,7 @@ function buildCommercialSegmentJsonSchema(ctx, segment) {
     "hazmatRestrictions": [],
     "weightRestrictions": [{ "location": "Road", "note": "One line" }]
   },
-  "tips": ["3-5 concise tips for THIS leg only"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": ["One line each if relevant to this leg"]
 }
 Do not repeat truck dimensions, weight, or hazmat status in output. Keep total JSON under 3500 tokens.`;
@@ -704,7 +714,7 @@ function buildSegmentJsonSchema(ctx, segment) {
   }],
   "road_stops": [{ "location": "City, ST", "distance": "XXX mi", "eta": "Xh Xm", "category": "fuel|food|rest", "name": "From placesContext", "verified": true, "note": "Route-specific note for this leg" }],
   ${SCHEMA_PERSONAL_TOUCHES},
-  "tips": ["2-4 tips specific to THIS leg only"],
+  ${TIPS_JSON_SCHEMA},
   "road_condition_warnings": []
 }`;
 }

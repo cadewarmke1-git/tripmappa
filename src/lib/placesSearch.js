@@ -1,7 +1,13 @@
 /** Extended Google Places searches for trip planning and results. */
 import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, needsWheelchairLodgingFilter, asArray, needsSafeStopsOnly, prefIncludes } from "./tripAccommodations.js";
 import { dietaryMatchesRestaurant } from "./dietaryKeywords.js";
-import { applyStopFilters, filterLodgingByBudget, filterSafeStopsOnly } from "./placesFilters.js";
+import {
+  applyStopFilters,
+  filterFoodCandidates,
+  filterLodgingCandidates,
+  filterLodgingByBudget,
+  filterSafeStopsOnly,
+} from "./placesFilters.js";
 
 const RADIUS_1MI = 1609;
 const RADIUS_2MI = 3219;
@@ -57,7 +63,7 @@ function getPlaceDetails(placeId) {
     if (!service || !placeId) { resolve(null); return; }
     service.getDetails({
       placeId,
-      fields: ["name", "formatted_address", "formatted_phone_number", "website", "opening_hours", "rating", "user_ratings_total", "price_level", "photos", "url", "geometry"],
+      fields: ["name", "formatted_address", "formatted_phone_number", "website", "opening_hours", "rating", "user_ratings_total", "price_level", "photos", "url", "geometry", "types"],
     }, (place, status) => {
       if (status !== window.google.maps.places.PlacesServiceStatus.OK) { resolve(null); return; }
       resolve(place);
@@ -84,7 +90,8 @@ function mapPlace(place, originLat, originLng, category = "poi") {
     priceLevel: place.price_level,
     openNow: place.opening_hours?.open_now,
     category,
-    photoUrl: place.photos?.[0]?.getUrl?.({ maxWidth: 400 }),
+    types: place.types || [],
+    photoUrl: place.photos?.[0]?.getUrl?.({ maxWidth: 256 }),
   };
 }
 
@@ -100,7 +107,7 @@ async function enrichPlaces(places) {
       website: details.website,
       hours: details.opening_hours?.weekday_text?.join("; "),
       bookUrl: details.website || details.url,
-      photoUrl: p.photoUrl || details.photos?.[0]?.getUrl?.({ maxWidth: 400 }),
+      photoUrl: p.photoUrl || details.photos?.[0]?.getUrl?.({ maxWidth: 256 }),
     };
   }));
 }
@@ -137,6 +144,8 @@ export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5,
 
   let onRoute = applyStopFilters([...onRouteMap.values()], answers, { nightOnly });
   let detour = applyStopFilters([...detourMap.values()], answers, { nightOnly });
+  onRoute = filterFoodCandidates(onRoute);
+  detour = filterFoodCandidates(detour);
 
   onRoute = onRoute.filter(r => dietaryMatchesRestaurant(r, answers));
   detour = detour.filter(r => dietaryMatchesRestaurant(r, answers));
@@ -182,6 +191,7 @@ export async function searchLodging(lat, lng, answers, routeInfo = null) {
     maxResults: 12,
     wheelchair: needsWheelchairFilter(answers) || wheelchairLodging,
   });
+  results = filterLodgingCandidates(results);
   if (needsSafeStopsOnly(answers)) {
     const safe = filterSafeStopsOnly(results);
     if (safe.length) results = safe;

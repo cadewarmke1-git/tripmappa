@@ -11,6 +11,7 @@ import MapRecenterButton from "./map/MapRecenterButton.jsx";
 import MapZoomControls from "./map/MapZoomControls.jsx";
 import MapBackToTripButton from "./map/MapBackToTripButton.jsx";
 import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
+import HighlightRouteLeg from "./map/HighlightRouteLeg.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
 import { resolveMapStyles, applyMapThemeStyles } from "../lib/mapStyles.js";
 
@@ -50,6 +51,9 @@ export default function AppMap({
   showRoutePill = true,
   onMapBackgroundClick = null,
   truckRoutePath = null,
+  highlightedLegPath = [],
+  inAppNavigationOnly = false,
+  routeFocusMode = false,
 }) {
   const theme = themeProp ?? "night";
   const [selectedMarker, setSelectedMarker] = useState(null);
@@ -108,6 +112,7 @@ export default function AppMap({
 
   function handleInfoAction(action, marker) {
     onMarkerAction?.(action, marker);
+    if (inAppNavigationOnly) return;
     if (action === "directions" && marker.lat != null && marker.lng != null) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`, "_blank");
     }
@@ -118,7 +123,7 @@ export default function AppMap({
     : (routeInfo?.routePoints || []);
 
   return (
-    <div className="map-full">
+    <div className={`map-full${routeFocusMode ? " map-full-route-focus" : ""}`}>
       {isLoaded ? (
         <>
           <GoogleMap
@@ -144,6 +149,9 @@ export default function AppMap({
             )}
             {activeRoutePath.length > 1 && (
               <AnimatedRoutePath path={activeRoutePath} />
+            )}
+            {highlightedLegPath.length > 1 && (
+              <HighlightRouteLeg path={highlightedLegPath} />
             )}
             <MapMarkerLayer
               markers={mapMarkers}

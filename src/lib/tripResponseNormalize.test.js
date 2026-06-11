@@ -17,14 +17,14 @@ describe("normalizeTripResponse", () => {
     expect(out.route_summary).toContain("Dallas");
   });
 
-  it("wraps tips string in array", () => {
+  it("normalizes tips string into structured objects", () => {
     const out = normalizeTripResponse({
       trip_format: "simplified",
       tips: "One tip",
       road_stops: [{ location: "Austin, TX", name: "Stop" }],
     });
     expect(Array.isArray(out.tips)).toBe(true);
-    expect(out.tips[0]).toBe("One tip");
+    expect(out.tips[0]).toMatchObject({ severity: "info", title: "One tip" });
   });
 
   it("marks verified hotels against placesContext names", () => {
@@ -74,6 +74,20 @@ describe("normalizeTripResponse", () => {
       road_stops: [],
     });
     expect(out.stops[0].hotels[0].price_band).toBe("luxury");
+  });
+
+  it("strips corridor and vicinity from stop names", () => {
+    const out = normalizeTripResponse({
+      trip_format: "simplified",
+      road_stops: [{
+        name: "Spring Creek Farms LLC corridor EV charging vicinity",
+        category: "charging",
+        location: "Marietta, OK",
+      }],
+      stops: [],
+    });
+    expect(out.road_stops[0].name).not.toMatch(/corridor|vicinity/i);
+    expect(out.road_stops[0].name).toContain("EV charging");
   });
 
   it("passes through personal_touches and changes_made arrays", () => {

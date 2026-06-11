@@ -5,7 +5,24 @@ import { selectDisplayRestaurants } from "../../lib/restaurantPlaces.js";
 import RestaurantCard from "./RestaurantCard.jsx";
 import RestaurantCardSkeleton from "./RestaurantCardSkeleton.jsx";
 
-export default function RestaurantCardsSection({ city, lat, lng, answers, preloaded, onToast }) {
+function estimateArrival(estimatedArrival) {
+  if (estimatedArrival instanceof Date && !Number.isNaN(estimatedArrival.getTime())) {
+    return estimatedArrival;
+  }
+  if (estimatedArrival) {
+    const parsed = new Date(estimatedArrival);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  const dinner = new Date();
+  dinner.setHours(18, 0, 0, 0);
+  return dinner;
+}
+
+export default function RestaurantCardsSection({
+  city, lat, lng, answers, preloaded, onToast, estimatedArrival = null,
+  overnightMode = true,
+  sectionLabel,
+}) {
   const hasPreload = preloaded !== undefined && preloaded !== null;
   const [loading, setLoading] = useState(!hasPreload);
   const [restaurants, setRestaurants] = useState(() => (
@@ -25,7 +42,7 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
   useEffect(() => {
     if (preloaded !== undefined && preloaded !== null) {
       const list = Array.isArray(preloaded) ? preloaded : [];
-      setRestaurants(selectDisplayRestaurants(list));
+      setRestaurants(selectDisplayRestaurants(list, { arrivalTime: estimateArrival(estimatedArrival) }));
       setLoading(false);
       setStatus(list.length ? "ready" : "empty");
       return undefined;
@@ -64,13 +81,13 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
         setRestaurants([]);
         setStatus("empty");
       } else {
-        setRestaurants(selectDisplayRestaurants(result.restaurants));
+        setRestaurants(selectDisplayRestaurants(result.restaurants, { arrivalTime: estimateArrival(estimatedArrival) }));
         setStatus("ready");
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [city, lat, lng, answers, preloaded, preloadRevision]);
+  }, [city, lat, lng, answers, preloaded, preloadRevision, estimatedArrival]);
 
   if (!city) return null;
 
@@ -84,7 +101,9 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
 
   return (
     <div className="restaurant-section">
-      <div className="restaurant-section-label">Where to eat tonight</div>
+      <div className="restaurant-section-label">
+        {sectionLabel || (overnightMode ? "Where to eat tonight" : "Dining near your route")}
+      </div>
       {loading ? (
         <div className="restaurant-cards-scroll">
           {Array.from({ length: 3 }, (_, i) => <RestaurantCardSkeleton key={i} />)}
@@ -94,7 +113,11 @@ export default function RestaurantCardsSection({ city, lat, lng, answers, preloa
       ) : (
         <div className="restaurant-cards-scroll">
           {restaurants.map(r => (
-            <RestaurantCard key={r.placeId} restaurant={r} onToast={onToast} />
+            <RestaurantCard
+              key={r.placeId}
+              restaurant={r}
+              estimatedArrival={estimateArrival(estimatedArrival)}
+            />
           ))}
         </div>
       )}

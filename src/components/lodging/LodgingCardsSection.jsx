@@ -130,10 +130,10 @@ export default function LodgingCardsSection({
   }
 
   const sectionLabel = lodgingType === "rv"
-    ? (placesSource ? "RV parks — verified on Google Maps" : "RV parks & campgrounds")
+    ? "RV parks & campgrounds"
     : lodgingType === "truck"
-      ? (placesSource ? "Truck stops — verified on Google Maps" : "Truck stops")
-      : placesSource ? "Hotels — verified on Google Maps" : "Hotels & lodging";
+      ? "Truck stops"
+      : "Hotels & lodging";
 
   const skeletonCount = lodgingType === "truck" ? 4 : 3;
 
@@ -176,9 +176,7 @@ export default function LodgingCardsSection({
         </>
       )}
 
-      <p className="lodging-disclaimer">
-        {placesSource ? "Live Google Places data — book for final rates." : "Prices are estimates — final rates shown at booking."}
-      </p>
+      <p className="lodging-disclaimer">Prices are estimates — final rates shown at booking.</p>
     </div>
   );
 }

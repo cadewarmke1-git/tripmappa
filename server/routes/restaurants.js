@@ -56,7 +56,7 @@ async function fetchDetails(placeId) {
   const params = new URLSearchParams({
     key,
     place_id: placeId,
-    fields: "name,formatted_address,geometry,rating,user_ratings_total,price_level,types,opening_hours,photos,url,website,vicinity",
+    fields: "name,formatted_address,geometry,rating,user_ratings_total,price_level,types,opening_hours,photos,url,website,vicinity,current_opening_hours",
   });
 
   const res = await fetch(`${DETAILS_URL}?${params}`);
@@ -83,10 +83,18 @@ function mapRestaurant(place, details, originLat, originLng, city) {
     price_level: priceLevel,
     priceSigns: priceSigns(priceLevel),
     cuisineType: cuisineFromTypes(types),
-    photoUrl: photoUrl(photoRef),
-    hours: details?.opening_hours?.weekday_text?.join("; ") || null,
-    openNow: details?.opening_hours?.open_now ?? place.opening_hours?.open_now ?? null,
-    currentlyOpen: details?.opening_hours?.open_now ?? place.opening_hours?.open_now ?? null,
+    photoUrl: photoUrl(photoRef, 256),
+    hours: details?.opening_hours?.weekday_text?.join("; ")
+      || details?.current_opening_hours?.weekday_text?.join("; ")
+      || null,
+    openNow: details?.opening_hours?.open_now
+      ?? details?.current_opening_hours?.open_now
+      ?? place.opening_hours?.open_now
+      ?? null,
+    currentlyOpen: details?.opening_hours?.open_now
+      ?? details?.current_opening_hours?.open_now
+      ?? place.opening_hours?.open_now
+      ?? null,
     distanceMiles: lat != null && originLat != null
       ? Math.round(haversineMiles(originLat, originLng, lat, lng) * 10) / 10
       : null,

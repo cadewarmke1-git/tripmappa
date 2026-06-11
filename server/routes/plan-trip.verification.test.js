@@ -35,6 +35,7 @@ describe("plan-trip verification schema scenarios", () => {
     const schema = buildJsonSchema(ctx, false);
     const user = buildUserPrompt(ctx, "VERIFIED PLACES: Local Bistro", false, "Gluten Free required");
 
+    expect(system).toContain("EXACTLY as they appear");
     expect(system).toContain("verified:false");
     expect(system).toContain("verification_note");
     expect(system).toContain("$90–$160/night");

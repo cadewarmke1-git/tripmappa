@@ -1,6 +1,7 @@
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
-import InlineStarRating from "./InlineStarRating.jsx";
+import PlaceRatingLine from "./PlaceRatingLine.jsx";
+import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
 
 export default function RoadStopCard({ stop, onAdd, onRemove, onSelect, highlighted = false, cardRef, added = false }) {
   function handleClick() {
@@ -29,23 +30,23 @@ export default function RoadStopCard({ stop, onAdd, onRemove, onSelect, highligh
       role="button"
       tabIndex={0}
     >
-      <div className="road-stop-card-photo-wrap">
+      <div className="road-stop-card-photo-wrap road-stop-card-photo-thumb">
         <PlacePhotoOrIcon
           photoUrl={stop.photoUrl}
           name={stop.title}
           category={stop.category}
           imgClassName="road-stop-card-photo"
           className="road-stop-card-photo-fallback"
+          displayPx={64}
         />
+        {stop.verified === true && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
         {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
         <span className="road-stop-badge-cat">{stop.category || "Stop"}</span>
       </div>
       <div className="road-stop-card-body">
         <h4 className="road-stop-card-name">{stop.title}</h4>
         <div className="road-stop-card-meta">
-          {stop.rating != null
-            ? <InlineStarRating rating={stop.rating} className="road-stop-rating" />
-            : <span className="road-stop-no-reviews">No reviews yet</span>}
+          <PlaceRatingLine rating={stop.rating} className="road-stop-rating" emptyClassName="road-stop-no-reviews" />
           {stop.distanceFromRoute != null && (
             <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
           )}

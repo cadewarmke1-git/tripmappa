@@ -20,6 +20,7 @@ import {
   normalizeRoadStop,
   mapHotelStops,
 } from "./tripData.js";
+import { normalizeTripTips } from "./tripTips.js";
 
 /** Strip session-only fields before persisting or restoring saved trips. */
 export function stripSessionOnlyAnswers(answers) {
@@ -143,7 +144,7 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
     return {
       stops: mapHotelStops(apiStops),
       roadStops: apiRoadStops,
-      tripTips: Array.isArray(data.tips) && data.tips.length ? data.tips : [],
+      tripTips: normalizeTripTips(data.tips),
       tripFormat: data.trip_format || "multi_day",
       recommendations: data.recommendations || [],
       usedFallback: false,
@@ -154,7 +155,7 @@ export function parseTripApiResponse(data, answers, routeInfo, fallbackFn) {
     return {
       stops: [],
       roadStops: apiRoadStops,
-      tripTips: Array.isArray(data.tips) && data.tips.length ? data.tips : [],
+      tripTips: normalizeTripTips(data.tips),
       tripFormat: continuous ? "simplified" : (data.trip_format || "simplified"),
       recommendations: data.recommendations || [],
       usedFallback: false,

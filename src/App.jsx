@@ -33,12 +33,14 @@ import { buildPlacesContext, formatPlacesContextForPrompt } from "./lib/placesCo
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
 import { stopsToMapMarkers } from "./lib/mapMarkers.js";
+import { useItinerarySync } from "./hooks/useItinerarySync.js";
 import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
 import { describePlanChanges, formatRegenerateDiffBlock } from "./lib/planSnapshotDiff.js";
 import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
+import { formatActionTipsBlock } from "./lib/tripTips.js";
 import { formatCollaborationHints } from "./lib/collaborationHints.js";
 import CollaborationPanel from "./components/CollaborationPanel.jsx";
 import { fetchTruckRoute, shouldUseTruckRouting, truckRestrictionsToTips, weighStationsToRoadStops } from "./lib/truckRoutingApi.js";
@@ -216,6 +218,8 @@ export default function App() {
   const [activeCollaboration, setActiveCollaboration] = useState(null);
   const [activeTripId, setActiveTripId] = useState(null);
   const collaborationHintsRef = useRef("");
+  const actionTipHintsRef = useRef("");
+  const [dismissedActionTipIds, setDismissedActionTipIds] = useState([]);
   const AppRoutePage = useMemo(() => resolveAppRoute(), []);
   const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
@@ -751,6 +755,7 @@ export default function App() {
   const directionsFetchRef = useRef(null);
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  const toastFnRef = useRef(null);
 
   const fetchDirections = useCallback((vehicleType) => {
     const originVal = originRef.current?.value?.trim() || origin?.trim();
@@ -1331,6 +1336,7 @@ export default function App() {
   }
 
   function handleEditTrip() {
+    itinerarySync.resetItinerary();
     setResultsView("planning");
     setGenerated(false);
     setTab("plan");
@@ -1351,11 +1357,17 @@ export default function App() {
 
   function handleMapMarkerSelect(marker) {
     if (!marker?.id) return;
-    let stopId = marker.id;
-    if (stopId.startsWith("stop-")) {
-      stopId = `overnight-${stopId.replace("stop-", "")}`;
+    const stopId = marker.waypointId || marker.id;
+    if (generated && itinerarySync.itineraryWaypoints.length) {
+      itinerarySync.handleMarkerSelect(marker);
+      highlightStop(stopId);
+      return;
     }
-    highlightStop(stopId);
+    let legacyId = stopId;
+    if (legacyId.startsWith("stop-")) {
+      legacyId = `overnight-${legacyId.replace("stop-", "")}`;
+    }
+    highlightStop(legacyId);
     if (resultsView === "map" && generated) {
       setResultsView("itinerary");
     }
@@ -1620,6 +1632,29 @@ export default function App() {
       setToastIsError(false);
     }, actionLabel ? Math.max(duration, 8000) : duration);
   }
+  toastFnRef.current = toast_;
+
+  const itinerarySync = useItinerarySync({
+    origin,
+    dest,
+    routeInfo,
+    answers,
+    timingMode,
+    arriveByDate,
+    optionalStopCards,
+    activitiesByCity,
+    restaurantsByCity,
+    recommendations,
+    mapRef,
+    setRouteInfo,
+    setDirectionsResult,
+    setRoutePath,
+    setTruckRoutePath,
+    setStops,
+    setRoadStops,
+    setMapMarkers,
+    toast_: (msg, opts) => toastFnRef.current?.(msg, opts),
+  });
 
   function cancelGenerateTrip() {
     generateAbortRef.current?.abort();
@@ -2202,9 +2237,14 @@ export default function App() {
   }, []);
 
   function handleResultsStopSelect(stop) {
-    if (stop?.lat == null || stop?.lng == null) return;
+    if (!stop) return;
     const id = stop.id || `focus-${stop.lat}-${stop.lng}`;
     highlightStop(id);
+    if (generated && itinerarySync.itineraryWaypoints.length) {
+      itinerarySync.handleNavigateToStop(stop);
+      return;
+    }
+    if (stop.lat == null || stop.lng == null) return;
     focusMapOnStop({ ...stop, id });
     if (resultsView === "itinerary") {
       setResultsView("map");
@@ -2216,6 +2256,10 @@ export default function App() {
   }
 
   function isRoadStopAdded(stop) {
+    const id = stop?.id || stop?.stopData?.id;
+    if (generated && itinerarySync.itineraryWaypoints.length && id) {
+      return itinerarySync.isWaypointIncluded(id);
+    }
     const normalized = normalizeRoadStopEntry(stop?.stopData || stop);
     if (!normalized) return false;
     const key = roadStopKey(normalized);
@@ -2225,6 +2269,32 @@ export default function App() {
   function addRoadStopToTrip(stop) {
     const normalized = normalizeRoadStopEntry(stop);
     if (!normalized) return;
+    if (generated && itinerarySync.itineraryWaypoints.length) {
+      const existing = itinerarySync.itineraryWaypoints.find(w => w.id === normalized.id);
+      if (existing) {
+        itinerarySync.handleToggleIncluded(existing.id, true);
+      } else {
+        itinerarySync.handleAddStop({
+          id: normalized.id || roadStopKey(normalized),
+          title: normalized.name || normalized.location,
+          city: normalized.location || normalized.city,
+          lat: normalized.lat,
+          lng: normalized.lng,
+          category: normalized.category,
+          description: normalized.note || normalized.amenities || "A stop along your route.",
+          action: "add",
+          stopData: normalized,
+        });
+      }
+      toast_("Added to trip", {
+        actionLabel: "Undo",
+        onAction: () => removeRoadStopFromTrip({ ...normalized, stopData: normalized }),
+      });
+      if (user && session?.access_token) {
+        void recordUserStopPreferences(session.access_token, [normalized]);
+      }
+      return;
+    }
     const key = roadStopKey(normalized);
     setRoadStops(prev => {
       const existingIdx = prev.findIndex(s => s.id === normalized.id || roadStopKey(s) === key);
@@ -2266,6 +2336,11 @@ export default function App() {
   function removeRoadStopFromTrip(stop) {
     const normalized = normalizeRoadStopEntry(stop?.stopData || stop);
     if (!normalized) return;
+    const id = stop?.id || normalized.id || roadStopKey(normalized);
+    if (generated && itinerarySync.itineraryWaypoints.length) {
+      itinerarySync.handleToggleIncluded(id, false);
+      return;
+    }
     const key = roadStopKey(normalized);
     setRoadStops(prev => {
       const idx = prev.findIndex(s => s.id === normalized.id || roadStopKey(s) === key);
@@ -2340,11 +2415,27 @@ export default function App() {
       setOptionalStopCards(enriched.optionalStopCards || []);
       setTripAlerts(consolidateAndCapAlerts(enriched.tripAlerts));
       setActiveDayIndex(0);
-      setMapMarkers(
-        mapsReady
-          ? enriched.mapMarkers
-          : stopsToMapMarkers(enriched.stops, enriched.roadStops, customStops, [], answers),
-      );
+      if (generated) {
+        itinerarySync.initFromTrip({
+          origin: originRef.current?.value?.trim() || origin,
+          dest: destRef.current?.value?.trim() || dest,
+          routeInfo: activeRouteInfo,
+          stops: enriched.stops,
+          roadStops: enriched.roadStops,
+          answers: normalizedAnswers,
+          departureTime: getDepartureTime(),
+          optionalStopCards: enriched.optionalStopCards || [],
+          activitiesByCity: enriched.activitiesByCity,
+          restaurantsByCity: enriched.restaurantsByCity || {},
+          recommendations,
+        });
+      } else {
+        setMapMarkers(
+          mapsReady
+            ? enriched.mapMarkers
+            : stopsToMapMarkers(enriched.stops, enriched.roadStops, customStops, [], answers),
+        );
+      }
       setDismissedAlerts([]);
       if (!mapsReady) setEnrichmentLimited(true);
       capturePlanSnapshot();
@@ -2378,6 +2469,15 @@ export default function App() {
     });
     setSavedPlanSnapshot(snapshot);
     return snapshot;
+  }
+
+  function handleDismissActionTip(id) {
+    setDismissedActionTipIds(prev => (prev.includes(id) ? prev : [...prev, id]));
+  }
+
+  function handleAcceptActionTip(tip) {
+    actionTipHintsRef.current = formatActionTipsBlock([tip]);
+    void generateTrip();
   }
 
   async function generateTrip() {
@@ -2438,6 +2538,8 @@ export default function App() {
       setStops(parsed.stops);
       setRoadStops(mergedRoadStops);
       setTripTips(tips);
+      actionTipHintsRef.current = "";
+      setDismissedActionTipIds([]);
       setPersonalTouches(parsed.personalTouches || []);
       setChangesMade(parsed.changesMade || []);
       setTripFormat(parsed.tripFormat || null);
@@ -2446,6 +2548,19 @@ export default function App() {
       setResultsView("itinerary");
       setTab("plan");
       setCardCollapsed(false);
+      itinerarySync.initFromTrip({
+        origin: tripOrigin,
+        dest: tripDest,
+        routeInfo: activeRouteInfo,
+        stops: parsed.stops,
+        roadStops: mergedRoadStops,
+        answers: normalizedAnswers,
+        departureTime: getDepartureTime(),
+        optionalStopCards,
+        activitiesByCity,
+        restaurantsByCity,
+        recommendations: parsed.recommendations || [],
+      });
       void enrichAndSetTrip(parsed.stops, mergedRoadStops, normalizedAnswers, activeRouteInfo);
       clearSavedPlanDraft();
       toast_("Trip planned", true);
@@ -2538,6 +2653,7 @@ export default function App() {
               ? formatRegenerateDiffBlock(savedPlanSnapshot, currentPlanSnapshot)
               : "",
             collaborationHintsBlock: collaborationHintsRef.current || "",
+            actionTipHintsBlock: actionTipHintsRef.current || "",
           },
         ),
         recentTripsContext,
@@ -3291,7 +3407,7 @@ export default function App() {
 
   return (
     <>
-      <div className={`app-wrap ${theme}${generated && resultsView === "itinerary" ? " results-fullscreen" : ""}${generated && resultsView === "map" ? " map-fullscreen-mode" : ""}`} style={{
+      <div className={`app-wrap ${theme}${generated && resultsView === "itinerary" ? " results-split-mode" : ""}${generated && resultsView === "map" ? " map-fullscreen-mode" : ""}`} style={{
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
@@ -3310,8 +3426,84 @@ export default function App() {
             title="Could not show trip results"
             onRetry={() => setResultsBoundaryKey(k => k + 1)}
           >
+            <div className="trip-results-split">
+            <div className="trip-results-split-map">
+            <ErrorBoundary
+              key={`${mapBoundaryKey}-split`}
+              label="map-split"
+              title="Could not load map"
+              onRetry={() => setMapBoundaryKey(k => k + 1)}
+            >
+            <AppMap
+              isLoaded={isLoaded}
+              mapCenter={mapCenter}
+              mapStyle={mapStyle}
+              mapStyleOpen={mapStyleOpen}
+              trafficAlert={trafficAlert}
+              onDismissTrafficAlert={() => setTrafficAlert(false)}
+              routeLoading={routeLoading}
+              tripGenerating={loading}
+              isDarkMode={theme === "night" || theme === "twilight"}
+              theme={theme}
+              mapRef={mapRef}
+              directions={tripLegs.length === 0 ? directionsResult : null}
+              routeInfo={routeInfo}
+              routePoints={routeInfo?.routePoints || []}
+              answers={answers}
+              mapMarkers={mapMarkers}
+              dismissedAlertIds={dismissedAlerts}
+              dayRoutePaths={[]}
+              activeDayIndex={activeDayIndex}
+              nightSegmentPaths={nightSegmentPaths}
+              lowFuelSegmentPaths={lowFuelSegmentPaths}
+              mapFocusTarget={mapFocusTarget}
+              highlightedLegPath={itinerarySync.highlightedLegPath}
+              inAppNavigationOnly
+              onMapReady={() => setMapReady(true)}
+              onMapUnmount={() => setMapReady(false)}
+              onMapStyleOpenChange={setMapStyleOpen}
+              onMapStyleChange={setMapStyle}
+              onRecenter={recenterMap}
+              onMarkerSelect={handleMapMarkerSelect}
+              onMapBackgroundClick={handleMapBackgroundClick}
+              truckRoutePath={truckRoutePath}
+              showRoutePill={false}
+              onMarkerAction={(action, marker) => {
+                if (action === "add") {
+                  addRoadStopToTrip({
+                    id: marker.id,
+                    name: marker.title,
+                    location: marker.subtitle,
+                    lat: marker.lat,
+                    lng: marker.lng,
+                    category: marker.category || "poi",
+                  });
+                } else if (action === "navigate") {
+                  handleResultsStopSelect({
+                    id: marker.waypointId || marker.id,
+                    lat: marker.lat,
+                    lng: marker.lng,
+                    title: marker.title,
+                  });
+                }
+              }}
+            />
+            </ErrorBoundary>
+            </div>
             <LazyTripResultsPanel
+            panelClassName="trip-results-split-panel"
             theme={theme}
+            waypoints={itinerarySync.itineraryWaypoints}
+            routeLegs={itinerarySync.routeLegs}
+            onReorder={itinerarySync.handleReorder}
+            onNavigateToStop={itinerarySync.handleNavigateToStop}
+            expandedStopId={itinerarySync.expandedTimelineStopId}
+            onExpandedStopIdChange={itinerarySync.setExpandedTimelineStopId}
+            onRegisterTimelineScroller={itinerarySync.registerTimelineScroller}
+            onStartNavigation={() => {
+              itinerarySync.handleStartNavigation();
+              setResultsView("map");
+            }}
             origin={origin}
             dest={dest}
             answers={answers}
@@ -3325,6 +3517,9 @@ export default function App() {
             tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
             liveTripTips={displayLiveTips}
             tripTips={tripTips}
+            onAcceptActionTip={handleAcceptActionTip}
+            onDismissActionTip={handleDismissActionTip}
+            dismissedActionTipIds={dismissedActionTipIds}
             personalTouches={personalTouches}
             changesMade={changesMade}
             liveTipsUpdatedAt={liveTipsUpdatedAt}
@@ -3346,6 +3541,8 @@ export default function App() {
             routeOptimized={routeOptimized}
             optionalStopCards={optionalStopCards}
             departureTime={departureTime}
+            timingMode={timingMode}
+            arriveByDate={arriveByDate}
             activeDayIndex={activeDayIndex}
             highlightedStopId={highlightedStopId}
             showGuestBanner={!user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
@@ -3372,6 +3569,7 @@ export default function App() {
             isGuest={!user}
             onGrocerySignIn={() => openAuthModal("signin")}
           />
+            </div>
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen view-panel-animate">
@@ -3418,6 +3616,9 @@ export default function App() {
               onNavigateHome={handleNavigateHome}
               navigateHomePending={navigateHomePending}
               truckRoutePath={truckRoutePath}
+              highlightedLegPath={itinerarySync.highlightedLegPath}
+              inAppNavigationOnly
+              routeFocusMode={itinerarySync.routeFocusMode}
               onMarkerAction={(action, marker) => {
                 if (action === "add") {
                   addRoadStopToTrip({
@@ -3429,8 +3630,16 @@ export default function App() {
                     category: marker.category || "poi",
                   });
                   toast_("Added to trip");
+                } else if (action === "navigate") {
+                  handleResultsStopSelect({
+                    id: marker.waypointId || marker.id,
+                    lat: marker.lat,
+                    lng: marker.lng,
+                    title: marker.title,
+                  });
+                } else {
+                  focusMapOnStop(marker);
                 }
-                focusMapOnStop(marker);
               }}
             />
             </ErrorBoundary>

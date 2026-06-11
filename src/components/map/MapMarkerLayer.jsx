@@ -8,7 +8,7 @@ export default function MapMarkerLayer({ markers = [], isDarkMode, onMarkerClick
     <Marker
       key={m.id}
       position={{ lat: m.lat, lng: m.lng }}
-      icon={buildMarkerIcon(m.category, isDarkMode)}
+      icon={buildMarkerIcon(m.category, isDarkMode, { pinNumber: m.pinNumber, pinSize: m.pinSize })}
       title={m.title}
       onClick={() => onMarkerClick?.(m)}
       zIndex={m.zIndex}

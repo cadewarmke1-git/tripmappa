@@ -140,7 +140,12 @@ export function mapHotelStops(apiStops) {
     campground: stop.campground,
     freeParking: stop.freeParking || stop.free_parking,
     coordinationNote: stop.coordinationNote || stop.coordination_note,
-    hotels: (stop.hotels || []).map(h => ({ name: h.name, stars: h.stars, price: h.price, pet: h.pet })),
-    restaurants: (stop.restaurants || []).map(r => ({ name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time })),
+    hotels: (stop.hotels || []).map(h => ({
+      name: h.name, stars: h.stars, price: h.price, pet: h.pet, rating: h.rating, verified: h.verified,
+    })),
+    restaurants: (stop.restaurants || []).map(r => ({
+      name: r.name, cuisine: r.cuisine, rating: r.rating, time: r.time, verified: r.verified,
+    })),
+    rating: stop.rating ?? stop.hotels?.[0]?.rating ?? stop.restaurants?.[0]?.rating,
   }));
 }

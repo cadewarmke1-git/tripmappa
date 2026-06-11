@@ -38,8 +38,8 @@ export function buildTruckRoutingPayload(origin, destination, answers = {}) {
   };
 }
 
-export async function fetchTruckRoute(origin, destination, answers = {}, { signal } = {}) {
-  const payload = buildTruckRoutingPayload(origin, destination, answers);
+export async function fetchTruckRoute(origin, destination, answers = {}, { signal, via = [] } = {}) {
+  const payload = { ...buildTruckRoutingPayload(origin, destination, answers), via };
   const res = await fetch("/api/truck-routing", {
     method: "POST",
     headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
