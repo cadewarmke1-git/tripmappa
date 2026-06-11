@@ -23,6 +23,7 @@ export default function PlanPanel({
   convoComplete,
   loading,
   answers,
+  committedAnswers,
   origin,
   dest,
   routeInfo,
@@ -208,6 +209,7 @@ export default function PlanPanel({
                         currentQ={currentQuestion}
                         stepAnim={stepAnim}
                         answers={answers}
+                        committedAnswers={committedAnswers}
                         prefDraft={prefDraft}
                         questionHistoryLength={questionHistoryLength}
                         compact={inQuestionFlow}

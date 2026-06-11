@@ -41,6 +41,7 @@ export default function QuestionChoices({
   currentQ,
   stepAnim,
   answers,
+  committedAnswers,
   prefDraft,
   questionHistoryLength,
   compact = false,
@@ -106,14 +107,15 @@ export default function QuestionChoices({
 
   const frozen = !!stepAnim;
   const selected = stepAnim?.answer;
+  const selectionAnswers = committedAnswers ?? answers;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];
   const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) ? currentQ.groups : null;
   const useVehicleTabs = compact && vehicleGroups;
 
   const mkClass = (val, extra = "") => {
     const sel = selected === val ? " qr-selected" : "";
-    const active = answers[currentQ.id] === val || lodgingDraft === val ? " qr-selected" : "";
-    return `qr-btn${extra}${sel || active}${frozen && selected !== val && answers[currentQ.id] !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
+    const active = selectionAnswers[currentQ.id] === val || lodgingDraft === val ? " qr-selected" : "";
+    return `qr-btn${extra}${sel || active}${frozen && selected !== val && selectionAnswers[currentQ.id] !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
   };
   const mkPrefClass = (p) => {
     const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
