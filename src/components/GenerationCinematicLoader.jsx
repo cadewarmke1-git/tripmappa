@@ -38,7 +38,10 @@ function shortCity(value) {
 function resolveSkyScenePhase(phase) {
   if (!phase) return "sunset";
   const key = String(phase).toLowerCase();
-  return SKY_PHASE_MAP[key] || "sunset";
+  const mapped = SKY_PHASE_MAP[key] || "sunset";
+  // Midday app theme reads as flat cyan in WebGL — keep loader on warm dusk tones.
+  if (mapped === "day") return "sunset";
+  return mapped;
 }
 
 function resolveVehicleKind(vehicleType) {
@@ -154,10 +157,16 @@ function fallbackGradient(phase) {
   return "linear-gradient(180deg, #3b4a82 0%, #d99266 42%, #ffd29e 100%)";
 }
 
+function buildingColorForPhase(scenePhase) {
+  if (scenePhase === "night") return new THREE.Color("#1c2438");
+  if (scenePhase === "sunset") return new THREE.Color("#4a3f52");
+  return new THREE.Color("#3f4a5c");
+}
+
 function SceneFog({ color }) {
   const { scene } = useThree();
   useEffect(() => {
-    scene.fog = new THREE.Fog(color, 7, 34);
+    scene.fog = new THREE.Fog(color, 5, 28);
     return () => {
       scene.fog = null;
     };
@@ -181,16 +190,29 @@ function Lights({ palette, scenePhase, worldKind }) {
 
 function Atmosphere({ palette }) {
   return (
-    <group position={[0, 1.5, -6]}>
+    <group position={[0, 0.8, -8]}>
       <mesh>
-        <planeGeometry args={[30, 14]} />
+        <planeGeometry args={[36, 20]} />
         <meshBasicMaterial color={palette.top} fog={false} />
       </mesh>
-      <mesh position={[0, -2.5, 0.01]}>
-        <planeGeometry args={[30, 7]} />
-        <meshBasicMaterial color={palette.horizon} transparent opacity={0.95} fog={false} />
+      <mesh position={[0, -4.2, 0.02]}>
+        <planeGeometry args={[36, 12]} />
+        <meshBasicMaterial color={palette.horizon} transparent opacity={0.92} fog={false} />
+      </mesh>
+      <mesh position={[0, -6.8, 0.04]}>
+        <planeGeometry args={[36, 8]} />
+        <meshBasicMaterial color={palette.glow} transparent opacity={0.35} fog={false} />
       </mesh>
     </group>
+  );
+}
+
+function RoadGround({ palette }) {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.315, -1]}>
+      <planeGeometry args={[28, 36]} />
+      <meshStandardMaterial color={palette.road} roughness={0.98} metalness={0} />
+    </mesh>
   );
 }
 
@@ -289,13 +311,10 @@ function LaneDash({ index, color, speed }) {
   );
 }
 
-function ScrollingBuildings({ palette, speed = 2.6 }) {
+function ScrollingBuildings({ palette, scenePhase, speed = 2.6 }) {
   const meshRef = useRef(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const buildingColor = useMemo(
-    () => new THREE.Color(palette.horizon).offsetHSL(0, -0.1, -0.25),
-    [palette.horizon]
-  );
+  const buildingColor = useMemo(() => buildingColorForPhase(scenePhase), [scenePhase]);
 
   const configs = useMemo(
     () =>
@@ -328,7 +347,7 @@ function ScrollingBuildings({ palette, speed = 2.6 }) {
   return (
     <instancedMesh ref={meshRef} args={[null, null, BUILDING_COUNT]} frustumCulled={false}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={buildingColor} roughness={0.9} metalness={0.02} />
+      <meshStandardMaterial color={buildingColor} roughness={0.88} metalness={0.04} />
     </instancedMesh>
   );
 }
@@ -489,6 +508,7 @@ function VehicleMesh({ vehicleKind }) {
 function Vehicles({ vehicleKind, worldKind, scenePhase }) {
   const ref = useRef(null);
   const showHeadlights = worldKind === "road" && scenePhase === "night";
+  const vehicleScale = worldKind === "road" ? 1.45 : 1.2;
 
   useFrame(({ clock }) => {
     const g = ref.current;
@@ -508,7 +528,7 @@ function Vehicles({ vehicleKind, worldKind, scenePhase }) {
   });
 
   return (
-    <group ref={ref}>
+    <group ref={ref} scale={vehicleScale}>
       <VehicleMesh vehicleKind={vehicleKind} />
       <Headlights visible={showHeadlights} />
     </group>
@@ -685,9 +705,10 @@ function CinematicScene({ scenePhase, vehicleKind }) {
 
       {worldKind === "road" && (
         <>
+          <RoadGround palette={palette} />
           <RoadSurface palette={palette} />
           <LaneDashes palette={palette} />
-          <ScrollingBuildings palette={palette} />
+          <ScrollingBuildings palette={palette} scenePhase={scenePhase} />
         </>
       )}
 

@@ -359,12 +359,22 @@
   }
   html[data-layout="mobile"] .planned-for-you-pill {
     flex: 0 0 auto;
-    max-width: min(88vw, 320px);
-    border-radius: 999px;
+    max-width: min(92vw, 340px);
+    border-radius: 12px;
   }
   html[data-layout="mobile"] .planned-for-you-text {
     font-size: 12px;
+    line-height: 1.45;
     white-space: normal;
+  }
+
+  html[data-layout="mobile"] .app-wrap.day .fuel-stop-card {
+    flex: 0 0 min(86%, 280px);
+  }
+
+  html[data-layout="mobile"] .app-wrap.day .fuel-stop-price {
+    color: var(--color-accent-orange) !important;
+    font-size: 15px;
   }
 
   html[data-layout="mobile"] .trip-tips-line {

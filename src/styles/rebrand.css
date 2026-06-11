@@ -609,6 +609,50 @@ body {
   color: var(--color-accent-gold) !important;
 }
 
+/* Day results — readable fuel cards & planned-for-you pills */
+.app-wrap.day .planned-for-you {
+  background: linear-gradient(135deg, rgba(253, 243, 224, 0.98) 0%, rgba(255, 248, 238, 0.95) 100%) !important;
+  border-color: rgba(224, 104, 32, 0.2) !important;
+}
+
+.app-wrap.day .planned-for-you-title {
+  color: var(--color-accent-orange) !important;
+}
+
+.app-wrap.day .planned-for-you-pill {
+  background: var(--color-surface) !important;
+  border-color: rgba(224, 104, 32, 0.22) !important;
+}
+
+.app-wrap.day .planned-for-you-text {
+  color: var(--color-text-primary) !important;
+}
+
+.app-wrap.day .fuel-stop-price,
+.app-wrap.day .fuel-required-badge,
+.app-wrap.day .fuel-brand-logo {
+  color: var(--color-accent-orange) !important;
+}
+
+.app-wrap.day .fuel-brand-logo {
+  background: rgba(224, 104, 32, 0.08) !important;
+  border-color: rgba(224, 104, 32, 0.22) !important;
+}
+
+.app-wrap.day .fuel-stop-name {
+  color: var(--color-text-primary) !important;
+}
+
+.app-wrap.day .trip-constraints-bar {
+  background: var(--color-surface) !important;
+  border-color: rgba(224, 104, 32, 0.18) !important;
+}
+
+.app-wrap.day .results-schedule-hint {
+  color: var(--color-accent-orange) !important;
+  background: rgba(253, 243, 224, 0.9) !important;
+}
+
 /* Drive straight through option */
 .app-wrap.day .qr-btn[data-answer*="Straight"],
 .app-wrap.day .qr-btn:has(.drive-through-label) {
