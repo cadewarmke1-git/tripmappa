@@ -4,7 +4,7 @@ import { expireFounderIfNeeded } from "./foundingMembers.js";
 import { expireTrialIfNeeded } from "./trials.js";
 import { getEffectiveTier } from "./tierEffective.js";
 import { buildReferralLink } from "./referrals.js";
-import { isExemptFounderUser } from "./foundingMembers.js";
+import { isUnlimitedUser } from "./adminAccess.js";
 
 export const FREE_LIFETIME_LIMIT = 3;
 export const VOYAGER_MONTHLY_LIMIT = 20;
@@ -72,7 +72,7 @@ async function refreshProfileLifecycle(admin, profile) {
 
 async function syncMonthlyPrefsIfNeeded(admin, profile) {
   const effectiveTier = getEffectiveTier(profile);
-  const isAdmin = isExemptFounderUser(profile?.user_id);
+  const isAdmin = isUnlimitedUser({ userId: profile?.user_id });
   if (!usesMonthlyLimit(effectiveTier, isAdmin)) return profile;
 
   const rawPrefs = profile.plan_preferences || {};
@@ -127,10 +127,10 @@ export async function getOrCreateProfile(admin, userId) {
   return created;
 }
 
-export function getCreditStatus(profile, userId = null) {
+export function getCreditStatus(profile, userId = null, userEmail = null) {
   const effectiveTier = getEffectiveTier(profile);
   const isFounder = isFounderTier(profile.tier);
-  const isAdmin = isExemptFounderUser(userId || profile?.user_id);
+  const isAdmin = isUnlimitedUser({ userId: userId || profile?.user_id, email: userEmail });
   const groceryDelivery = canUseGroceryDelivery(effectiveTier);
   const planPrefs = ensureMonthlyGenerationPrefs(profile.plan_preferences || {});
 
@@ -186,18 +186,18 @@ export function getCreditStatus(profile, userId = null) {
   };
 }
 
-export async function fetchCreditStatus(admin, userId) {
+export async function fetchCreditStatus(admin, userId, userEmail = null) {
   const profile = await getOrCreateProfile(admin, userId);
-  return getCreditStatus(profile, userId);
+  return getCreditStatus(profile, userId, userEmail);
 }
 
 /** Fast pre-flight from client cache — no DB read. Returns null to fall back to DB. */
-export function preflightCreditFromClient(clientCredit, userId) {
+export function preflightCreditFromClient(clientCredit, userId, userEmail = null) {
   if (!clientCredit || typeof clientCredit !== "object" || Array.isArray(clientCredit)) {
     return null;
   }
 
-  const isAdmin = isExemptFounderUser(userId);
+  const isAdmin = isUnlimitedUser({ userId, email: userEmail });
   if (clientCredit.unlimited === true) {
     if (!isAdmin) return null;
     return { ok: true, status: { unlimited: true, remaining: null, tier: clientCredit.tier } };
@@ -220,7 +220,7 @@ export function preflightCreditFromClient(clientCredit, userId) {
 }
 
 /** Lightweight DB read before consuming a credit after generation completes. */
-export async function validateCreditsBeforeConsume(admin, userId) {
+export async function validateCreditsBeforeConsume(admin, userId, userEmail = null) {
   const { data, error } = await admin
     .from("user_profiles")
     .select("tier, generations_used, plan_preferences, user_id, founder_expires_at, trailblazer_trial_ends_at, voyager_bonus_until")
@@ -230,7 +230,7 @@ export async function validateCreditsBeforeConsume(admin, userId) {
   if (error) throw error;
 
   const profile = data || await getOrCreateProfile(admin, userId);
-  const status = getCreditStatus(profile, userId);
+  const status = getCreditStatus(profile, userId, userEmail);
 
   if (!status.unlimited && (status.remaining ?? 0) <= 0) {
     return { ok: false, ...status, limitReached: true };
@@ -239,9 +239,9 @@ export async function validateCreditsBeforeConsume(admin, userId) {
   return { ok: true, ...status };
 }
 
-export async function consumeCredit(admin, userId) {
+export async function consumeCredit(admin, userId, userEmail = null) {
   const profile = await getOrCreateProfile(admin, userId);
-  const status = getCreditStatus(profile, userId);
+  const status = getCreditStatus(profile, userId, userEmail);
 
   if (!status.unlimited && (status.remaining ?? 0) <= 0) {
     return { ok: false, ...status, limitReached: true };

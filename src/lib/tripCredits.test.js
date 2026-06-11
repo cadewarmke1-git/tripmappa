@@ -54,6 +54,25 @@ describe("tripCredits monthly limits", () => {
     expect(status.remaining).toBe(TRAILBLAZER_MONTHLY_LIMIT - 10);
   });
 
+  it("returns unlimited credits for ADMIN_EMAIL match", () => {
+    const prev = process.env.ADMIN_EMAIL;
+    process.env.ADMIN_EMAIL = "admin@tripmappa.test";
+    try {
+      const status = getCreditStatus({
+        tier: "wanderer",
+        generations_used: 3,
+        plan_preferences: {},
+      }, "any-user-id", "admin@tripmappa.test");
+      expect(status.unlimited).toBe(true);
+      expect(status.isAdmin).toBe(true);
+      expect(status.remaining).toBeNull();
+      expect(status.limit).toBeNull();
+    } finally {
+      if (prev === undefined) delete process.env.ADMIN_EMAIL;
+      else process.env.ADMIN_EMAIL = prev;
+    }
+  });
+
   it("resetMonthlyGenerationAllowance clears monthly count but keeps generation_count", () => {
     const prefs = resetMonthlyGenerationAllowance({
       monthly_generation_count: 17,

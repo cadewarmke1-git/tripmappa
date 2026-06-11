@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     await ensureReferralCode(admin, user.id);
-    const status = await fetchCreditStatus(admin, user.id);
+    const status = await fetchCreditStatus(admin, user.id, user.email);
     return res.status(200).json(status);
   } catch (err) {
     console.error("trip-credits error:", err);

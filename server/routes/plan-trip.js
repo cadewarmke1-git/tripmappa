@@ -887,7 +887,7 @@ function finalizeSuccessfulGeneration({
   return (async () => {
     if (user && admin && tripResponseHasContent(parsed)) {
       try {
-        const validation = await validateCreditsBeforeConsume(admin, user.id);
+        const validation = await validateCreditsBeforeConsume(admin, user.id, user.email);
         if (!validation.ok) {
           writePlanTripSse(res, "error", {
             error: "No Trip Generations remaining",
@@ -900,7 +900,7 @@ function finalizeSuccessfulGeneration({
           res.end();
           return undefined;
         }
-        await consumeCredit(admin, user.id);
+        await consumeCredit(admin, user.id, user.email);
       } catch (creditErr) {
         console.error("Credit consumption after success failed:", creditErr);
       }
@@ -966,7 +966,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const preflight = preflightCreditFromClient(req.body.clientCreditStatus, user.id);
+    const preflight = preflightCreditFromClient(req.body.clientCreditStatus, user.id, user.email);
     if (preflight !== null && !preflight.ok) {
       return res.status(402).json({
         error: "No Trip Generations remaining",
@@ -978,7 +978,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const status = await fetchCreditStatus(admin, user.id);
+    const status = await fetchCreditStatus(admin, user.id, user.email);
     if (!status.unlimited && status.remaining <= 0) {
       return res.status(402).json({
         error: "No Trip Generations remaining",

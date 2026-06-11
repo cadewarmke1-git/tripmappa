@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       profile = await getOrCreateProfile(admin, user.id);
     }
 
-    const credits = await fetchCreditStatus(admin, user.id);
+    const credits = await fetchCreditStatus(admin, user.id, user.email);
 
     return res.status(200).json({
       referral,

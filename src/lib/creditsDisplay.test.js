@@ -25,6 +25,11 @@ describe("formatCreditsDisplay", () => {
       .toBe("1 free trip — sign in to save your plan");
   });
 
+  it("shows unlimited label for admin accounts", () => {
+    expect(formatCreditsDisplay({ isAdmin: true, unlimited: true, tier: TIERS.TRAILBLAZER }).label)
+      .toBe("Unlimited generations");
+  });
+
   it("shows trailblazer monthly counter without marketing copy", () => {
     expect(formatCreditsDisplay({
       tier: TIERS.TRAILBLAZER,

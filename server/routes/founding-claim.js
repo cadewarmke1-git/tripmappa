@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     const result = await tryClaimFoundingSlot(admin, user.id);
-    const status = await fetchCreditStatus(admin, user.id);
+    const status = await fetchCreditStatus(admin, user.id, user.email);
     return res.status(200).json({ ...result, credits: status });
   } catch (err) {
     console.error("founding-claim error:", err);

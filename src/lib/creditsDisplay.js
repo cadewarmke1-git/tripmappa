@@ -2,16 +2,16 @@ import { TIERS, normalizeTier } from "./tiers.js";
 
 /** Plan-panel generation counter copy and upgrade nudges. */
 export function formatCreditsDisplay(status) {
-  if (!status || status.isAdmin) {
+  if (!status) {
     return { label: null, nudge: null };
+  }
+
+  if (status.isAdmin || status.unlimited) {
+    return { label: "Unlimited generations", nudge: null };
   }
 
   if (status.tier === "guest") {
     return { label: "1 free trip — sign in to save your plan", nudge: null };
-  }
-
-  if (status.unlimited) {
-    return { label: null, nudge: null };
   }
 
   if (status.billingPeriod === "monthly") {

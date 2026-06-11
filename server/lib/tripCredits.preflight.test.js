@@ -38,4 +38,21 @@ describe("preflightCreditFromClient", () => {
     }, "regular-user-id");
     expect(result).toBeNull();
   });
+
+  it("accepts unlimited preflight for ADMIN_EMAIL", () => {
+    const prev = process.env.ADMIN_EMAIL;
+    process.env.ADMIN_EMAIL = "admin@example.com";
+    try {
+      const result = preflightCreditFromClient({
+        tier: "wanderer",
+        remaining: 0,
+        unlimited: true,
+      }, "user-1", "admin@example.com");
+      expect(result?.ok).toBe(true);
+      expect(result?.status?.unlimited).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.ADMIN_EMAIL;
+      else process.env.ADMIN_EMAIL = prev;
+    }
+  });
 });
