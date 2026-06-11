@@ -8,6 +8,8 @@ import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 
 const App = lazy(() => import("./App.jsx"));
 import { initViewportLayout } from "./lib/viewportLayout.js";
+import { syncSkyCycle } from "./lib/surfaceTheme.js";
+import { computeAutoTheme } from "./lib/theme.js";
 import { initPwaInstall } from "./lib/pwaInstall.js";
 import "./index.css";
 import "./styles/tripmappa.css";
@@ -25,6 +27,7 @@ import "./styles/hero-surface.css";
 import "./styles/plan-flow-theme.css";
 
 initViewportLayout();
+syncSkyCycle({ theme: computeAutoTheme() });
 initPwaInstall();
 sessionStorage.removeItem("tm-chunk-reload");
 

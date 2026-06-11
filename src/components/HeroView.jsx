@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo } from "react";
 import HeroExploreRange from "./HeroExploreRange.jsx";
 
 const HeroExploreMap = lazy(() => import("./HeroExploreMap.jsx"));
-import { lockHeroSurfaceTheme, syncSurfaceTheme, unlockHeroSurfaceTheme } from "../lib/surfaceTheme.js";
+import { lockHeroSurfaceTheme, syncSkyCycle, unlockHeroSurfaceTheme } from "../lib/surfaceTheme.js";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
@@ -12,7 +12,7 @@ import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
-import { getHeroSurfaceTheme, getSkyPhaseFromHour } from "../lib/skyTime.js";
+import { getHeroSurfaceTheme, getHeroUiThemeFromHour, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
 export default function HeroView({
   isLoaded,
@@ -72,17 +72,23 @@ export default function HeroView({
   } = useHeroSkyHour();
 
   const skyPhase = useMemo(() => getSkyPhaseFromHour(skyHour), [skyHour]);
-  const heroTheme = heroThemeProp || getHeroSurfaceTheme(skyHour);
-  const heroSurfaceStyle = getHeroSurfaceCssVars(heroTheme);
+  const heroShellTheme = useMemo(() => getHeroSurfaceTheme(skyHour), [skyHour]);
+  const heroSurfaceTheme = useMemo(() => getHeroUiThemeFromHour(skyHour), [skyHour]);
+  const heroTheme = heroShellTheme;
+  const heroSurfaceStyle = getHeroSurfaceCssVars(heroShellTheme);
 
   useEffect(() => {
-    lockHeroSurfaceTheme(heroTheme);
+    lockHeroSurfaceTheme(heroSurfaceTheme, { skyPhase, hour: skyHour });
     return () => {
       unlockHeroSurfaceTheme();
-      const appTheme = document.body.classList.contains("theme-day") ? "day" : "night";
-      syncSurfaceTheme(appTheme);
+      const bodyTheme = document.body.classList.contains("theme-day")
+        ? "day"
+        : document.body.classList.contains("theme-twilight")
+          ? "twilight"
+          : "night";
+      syncSkyCycle({ theme: bodyTheme });
     };
-  }, [heroTheme]);
+  }, [heroSurfaceTheme, skyPhase, skyHour]);
 
   const handleLaunchKey = (e) => {
     if (e.key === "Enter" && !launchDisabled) onLaunch();
@@ -111,7 +117,7 @@ export default function HeroView({
 
       <div
         className={`hero ${heroTheme}`}
-        data-surface-theme={heroTheme}
+        data-surface-theme={heroSurfaceTheme}
         style={heroSurfaceStyle}
       >
         <HeroMountainScene phase={skyPhase} hour={skyHour} />

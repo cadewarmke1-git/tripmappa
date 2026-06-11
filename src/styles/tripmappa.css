@@ -1891,6 +1891,9 @@
     flex-shrink: 0;
     margin-bottom: 2px;
   }
+  .chat-wrap-plan-flow .question-page-header {
+    margin-bottom: 0;
+  }
   .question-page-title {
     margin: 0 0 4px;
     font-family: 'Fraunces', Georgia, serif;
@@ -1899,11 +1902,66 @@
     letter-spacing: -0.02em;
     color: var(--gold-primary);
   }
+  .chat-wrap-plan-flow .question-page-title {
+    margin: 0 0 2px;
+    font-size: 16px;
+    line-height: 1.25;
+  }
   .question-page-subtitle {
     margin: 0 0 10px;
     font-size: 13px;
     line-height: 1.5;
     color: rgba(255,255,255,0.68);
+  }
+  .chat-wrap-plan-flow .question-page-subtitle {
+    margin: 0 0 6px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  .travelers-solo-privacy-note {
+    margin: 8px 0 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details {
+    gap: 6px;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .question-group-section {
+    margin-top: 0;
+    gap: 4px;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .question-section-label {
+    margin: 0 0 4px;
+    font-size: 11px;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .quick-replies {
+    gap: 6px;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .qr-btn {
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .question-more-options {
+    margin-top: 6px;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .question-more-options-toggle {
+    min-height: 36px;
+    padding: 6px 10px;
+    margin-bottom: 0;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details:has(.question-more-options) .question-group-section:first-of-type .question-choices-scroll,
+  .chat-wrap-plan-flow .question-choices-trip-details .question-group-section .question-choices-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--sparse.plan-flow-current .question-choices-trip-details {
+    flex: 0 0 auto;
+    overflow: visible;
   }
   .vehicle-tabs {
     display: flex;
@@ -2203,6 +2261,90 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
+  }
+  .plan-flow-stack:has(.plan-flow-body) {
+    gap: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .plan-flow-body {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+  .plan-flow-main {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .plan-flow-main > .plan-flow-current {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .plan-flow-answer-sidebar {
+    flex: 0 0 90px;
+    width: 90px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 6px 10px 8px;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    align-self: stretch;
+  }
+  .plan-flow-answer-sidebar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .plan-flow-answer-sidebar-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.25;
+    color: var(--text-secondary);
+    word-break: break-word;
+  }
+  .plan-flow-answer-sidebar-value {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--accent);
+    word-break: break-word;
+  }
+  @media (min-width: 769px) {
+    .plan-route-card-chips--history {
+      display: none;
+    }
+  }
+  @media (max-width: 768px) {
+    .plan-flow-answer-sidebar {
+      display: none !important;
+    }
+    .plan-route-card:has(.plan-route-card-chips--history .plan-route-card-chip) .plan-route-card-chips--default {
+      display: none;
+    }
+  }
+  html[data-layout="mobile"] .plan-flow-answer-sidebar {
+    display: none !important;
+  }
+  html[data-layout="mobile"] .plan-route-card:has(.plan-route-card-chips--history .plan-route-card-chip) .plan-route-card-chips--default {
+    display: none;
+  }
+  .chat-wrap-plan-flow .plan-flow-main .plan-flow-actions {
+    width: 100%;
+    box-sizing: border-box;
   }
   .plan-flow-stack--sparse,
   .plan-flow-stack-payoff {

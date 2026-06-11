@@ -4,7 +4,7 @@ import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import SummaryCard from "./SummaryCard.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
-import QuestionThread from "./QuestionThread.jsx";
+import QuestionAnswerSidebar from "./QuestionAnswerSidebar.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
@@ -112,6 +112,7 @@ export default function PlanPanel({
             dest={dest}
             routeInfo={routeInfo}
             answers={answers}
+            questionHistory={questionHistory}
             routePending={routePending && !routeError}
             routeError={routeError}
             onRetryRoute={onRetryRoute}
@@ -149,11 +150,11 @@ export default function PlanPanel({
           <div className="plan-view">
             {(currentQuestion || qIndex === -2) && (
               <div className={`plan-flow-stack${convoComplete ? " plan-flow-stack-payoff" : ""}${planFlowLayout === "sparse" ? " plan-flow-stack--sparse" : ""}`}>
-                <QuestionThread history={questionHistory} />
-
-                <div
-                  className={`ai-msg plan-flow-current plan-flow-layout--${planFlowLayout}${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
-                >
+                <div className="plan-flow-body">
+                  <div className="plan-flow-main">
+                    <div
+                      className={`ai-msg plan-flow-current plan-flow-layout--${planFlowLayout}${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
+                    >
                   {stepMessage && !showContinuousConfirm && !hideStepBubble && (
                     <div className="ai-bubble">
                       {stepMessage}
@@ -225,6 +226,11 @@ export default function PlanPanel({
                         onEditQuestion={onEditQuestion}
                       />
                     </div>
+                  )}
+                    </div>
+                  </div>
+                  {inQuestionFlow && !convoComplete && (
+                    <QuestionAnswerSidebar history={questionHistory} />
                   )}
                 </div>
               </div>

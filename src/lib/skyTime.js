@@ -11,10 +11,14 @@ export const SKY_PHASES = {
   night: "night",
 };
 
-/** App theme follows the same sky-cycle surface as the hero (day vs night panels). */
+/** Fractional local hour (0–24). */
+export function getLocalSkyHour(now = new Date()) {
+  return now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+}
+
+/** App + html surface theme: day | twilight (sunrise/sunset) | night. */
 export function computeAutoTheme(now = new Date()) {
-  const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-  return getHeroSurfaceTheme(hour);
+  return getHeroUiThemeFromHour(getLocalSkyHour(now));
 }
 
 /** Toggle target; clears manual override when it matches the time-based default. */

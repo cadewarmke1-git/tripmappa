@@ -1,5 +1,6 @@
 export {
   computeAutoTheme,
+  getLocalSkyHour,
   getSkyPhase,
   resolveSkyPhase,
   resolveThemeToggle,

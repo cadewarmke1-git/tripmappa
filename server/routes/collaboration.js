@@ -15,6 +15,12 @@ import {
   isValidInviteToken,
 } from "../lib/apiSecurity.js";
 
+function isSoloTripSnapshot(snapshot = {}) {
+  const answers = snapshot?.answers && typeof snapshot.answers === "object" ? snapshot.answers : snapshot;
+  const travelers = answers?.travelers;
+  return travelers === "1" || travelers === 1;
+}
+
 function redactInvitees(invitees, includePii) {
   if (includePii) return invitees || [];
   return (invitees || []).map(({ name, status, invitedAt }) => ({
@@ -76,6 +82,9 @@ export default async function handler(req, res) {
     if (action === "create") {
       if (!user) return res.status(401).json({ error: "Not authenticated" });
       const { tripId = null, tripSnapshot = {} } = req.body || {};
+      if (isSoloTripSnapshot(tripSnapshot)) {
+        return res.status(400).json({ error: "Group collaboration requires more than one traveler" });
+      }
       const { data, error } = await admin
         .from("trip_collaborations")
         .insert({
@@ -101,6 +110,9 @@ export default async function handler(req, res) {
         .maybeSingle();
       if (fetchErr) throw fetchErr;
       if (!row) return res.status(404).json({ error: "Collaboration not found" });
+      if (isSoloTripSnapshot(row.trip_snapshot)) {
+        return res.status(400).json({ error: "Invites require a multi-traveler trip" });
+      }
       const emailClean = sanitizeInviteContact(email);
       const phoneClean = sanitizeInviteContact(phone);
       if (!emailClean && !phoneClean) {

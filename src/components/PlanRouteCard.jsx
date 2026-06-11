@@ -1,4 +1,5 @@
 import { isContinuousDrive } from "../lib/driveMode.js";
+import { formatFlowAnswer } from "../lib/tripFlow.js";
 import { isScenicRoute } from "../lib/vehicles.js";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
@@ -7,13 +8,14 @@ export default function PlanRouteCard({
   dest,
   routeInfo,
   answers = {},
+  questionHistory = [],
   routePending = false,
   routeError = null,
   onRetryRoute,
 }) {
   const ready = Boolean(routeInfo?.distance || routeInfo?.duration);
 
-  const chips = [
+  const defaultChips = [
     answers.vehicle,
     answers.travelers && `${answers.travelers} traveler${answers.travelers === "1" ? "" : "s"}`,
     isScenicRoute(answers) && "Scenic",
@@ -21,6 +23,11 @@ export default function PlanRouteCard({
     answers.overnight_preference === "Stop overnight along the way" && "Overnights",
     answers.lodging && answers.lodging !== "No overnight stay" && answers.lodging,
   ].filter(Boolean);
+
+  const historyChips = questionHistory.map((entry, index) => ({
+    key: `${entry.question?.id ?? "q"}-${index}`,
+    text: formatFlowAnswer(entry.question, entry.answer),
+  })).filter(chip => chip.text);
 
   return (
     <div className={`plan-route-card${routePending ? " plan-route-card-pending" : ""}${routeError ? " plan-route-card-error" : ""}`}>
@@ -51,9 +58,16 @@ export default function PlanRouteCard({
           Retry route
         </button>
       )}
-      {chips.length > 0 && (
-        <div className="plan-route-card-chips">
-          {chips.map(chip => (
+      {historyChips.length > 0 && (
+        <div className="plan-route-card-chips plan-route-card-chips--history" aria-label="Answers so far">
+          {historyChips.map(chip => (
+            <span className="plan-route-card-chip" key={chip.key}>{chip.text}</span>
+          ))}
+        </div>
+      )}
+      {defaultChips.length > 0 && (
+        <div className="plan-route-card-chips plan-route-card-chips--default">
+          {defaultChips.map(chip => (
             <span className="plan-route-card-chip" key={chip}>{chip}</span>
           ))}
         </div>

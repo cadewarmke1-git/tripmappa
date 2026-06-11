@@ -14,11 +14,12 @@ import {
 } from "./skyTime.js";
 
 describe("skyTime", () => {
-  it("matches hero surface theme to the sky cycle", () => {
+  it("matches auto theme to sky cycle phases", () => {
     expect(computeAutoTheme(new Date("2026-05-23T12:00:00"))).toBe("day");
-    expect(computeAutoTheme(new Date("2026-05-23T18:59:00"))).toBe("night");
+    expect(computeAutoTheme(new Date("2026-05-23T18:59:00"))).toBe("twilight");
     expect(computeAutoTheme(new Date("2026-05-23T22:00:00"))).toBe("night");
     expect(computeAutoTheme(new Date("2026-05-23T08:00:00"))).toBe("day");
+    expect(computeAutoTheme(new Date("2026-05-23T06:30:00"))).toBe("twilight");
   });
 
   it("maps local hours to sky phases", () => {

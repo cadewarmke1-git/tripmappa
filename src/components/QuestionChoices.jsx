@@ -248,7 +248,8 @@ export default function QuestionChoices({
   const scrollOptions = compact
     && currentQ.type !== "loading"
     && currentQ.type !== "text"
-    && currentQ.type !== "party_composition";
+    && currentQ.type !== "party_composition"
+    && currentQ.type !== "trip_details";
 
   function wrapScrollable(content) {
     if (!scrollOptions) return content;
@@ -259,7 +260,7 @@ export default function QuestionChoices({
 
   return (
     <div className={`question-choices-shell${compact ? " question-choices-shell-compact" : ""}`}>
-    <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}`}>
+    <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}${isTripDetails ? " question-choices-trip-details" : ""}`}>
       {showNavRow && (
         <div className="convo-nav-row">
           {!frozen && (
@@ -375,6 +376,11 @@ export default function QuestionChoices({
                 >
                   Skip for now
                 </button>
+              )}
+              {currentQ.id === "travelers" && (
+                <p className="travelers-solo-privacy-note">
+                  Choosing &ldquo;Just me&rdquo; or &ldquo;1 traveler&rdquo;? Your trip stays private by default.
+                </p>
               )}
             </div>
           )}

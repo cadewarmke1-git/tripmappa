@@ -3393,7 +3393,7 @@ export default function App() {
               onDismissTrafficAlert={() => setTrafficAlert(false)}
               routeLoading={routeLoading}
               tripGenerating={loading}
-              isDarkMode={theme === "night"}
+              isDarkMode={theme === "night" || theme === "twilight"}
               theme={theme}
               mapRef={mapRef}
               directions={tripLegs.length === 0 ? directionsResult : null}
@@ -3452,7 +3452,7 @@ export default function App() {
             onDismissTrafficAlert={() => setTrafficAlert(false)}
             routeLoading={routeLoading}
             tripGenerating={loading}
-            isDarkMode={theme === "night"}
+            isDarkMode={theme === "night" || theme === "twilight"}
             theme={theme}
             mapRef={mapRef}
             directions={tripLegs.length === 0 ? directionsResult : null}

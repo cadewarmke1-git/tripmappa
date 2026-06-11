@@ -30,6 +30,22 @@ html[data-surface-theme="night"] {
   --text-on-accent: #1A0D00;
 }
 
+html[data-surface-theme="twilight"] {
+  --color-autocomplete-bg: #2A1A35;
+  --color-autocomplete-border: rgba(255, 180, 120, 0.22);
+  --color-autocomplete-match: #FFB070;
+  --color-autocomplete-text-top: #FFF4E8;
+  --color-autocomplete-text-rest: #C8A8A0;
+  --color-autocomplete-pin-bg: rgba(255, 160, 90, 0.12);
+  --color-autocomplete-pin-color: #FFB070;
+  --color-autocomplete-top-bg: rgba(255, 140, 80, 0.08);
+  --color-autocomplete-divider: rgba(255, 160, 90, 0.12);
+  --color-autocomplete-hover-bg: rgba(255, 140, 80, 0.14);
+  --color-autocomplete-hover-text: #FFF4E8;
+  --color-autocomplete-text: #FFF4E8;
+  --text-on-accent: #1A0D00;
+}
+
 html[data-surface-theme="day"] {
   --color-autocomplete-bg: #FDF3E0;
   --color-autocomplete-border: rgba(160, 64, 16, 0.2);
@@ -46,11 +62,15 @@ html[data-surface-theme="day"] {
   --text-on-accent: #1A0D00;
 }
 
-/* Night mode palette */
-:root,
+/* Night mode palette — never on :root alone (was forcing night at all hours). */
+html[data-surface-theme="night"],
+html:not([data-surface-theme]),
 body.theme-night,
 .tm-theme-night,
 .app-wrap.night,
+.app-wrap.twilight,
+body.theme-twilight,
+.tm-theme-twilight,
 .hero.night,
 .app-nav-bar--night,
 .live-view-page-night,
@@ -135,6 +155,7 @@ body.theme-night,
 }
 
 /* Day mode palette */
+html[data-surface-theme="day"],
 body.theme-day,
 .tm-theme-day,
 .app-wrap.day,

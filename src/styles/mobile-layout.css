@@ -252,6 +252,14 @@
     padding-right: 4px;
   }
 
+  html[data-layout="mobile"] .plan-flow-answer-sidebar {
+    display: none !important;
+  }
+
+  html[data-layout="mobile"] .plan-flow-body {
+    flex-direction: column;
+  }
+
   html[data-layout="mobile"] .question-choices-compact .qr-btn,
   html[data-layout="mobile"] .btn-generate,
   html[data-layout="mobile"] .btn-generate-trip,

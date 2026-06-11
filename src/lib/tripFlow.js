@@ -249,10 +249,15 @@ function buildTowingQuestion(answers) {
 
 const TRAVELERS_QUESTION = {
   id: "travelers",
-  ask: "Who's coming along?",
+  ask: "How many are joining you?",
   hint: "Helps us pick the right-sized restaurants, rooms, and rest stops.",
   type: "travelers",
-  choices: ["1", "2", "3 to 5", "6 or more"],
+  choices: [
+    { value: "1", label: "Just me" },
+    { value: "2", label: "2 travelers" },
+    "3 to 5",
+    "6 or more",
+  ],
 };
 
 const PARTY_COMPOSITION_QUESTION = {
@@ -1154,7 +1159,8 @@ export function getPlanFlowLayoutClass(question, convoComplete = false) {
   const sparseIds = new Set(["party_composition", "sleeper_cab", "overnight_preference"]);
   if (sparseIds.has(question.id)) return "sparse";
   if (question.type === "party_composition") return "sparse";
-  const tallTypes = new Set(["trip_details", "lodging_stay", "multiselect", "multiselect_group"]);
+  if (question.type === "trip_details") return "sparse";
+  const tallTypes = new Set(["lodging_stay", "multiselect", "multiselect_group"]);
   if (tallTypes.has(question.type)) return "tall";
   if (question.type === "choice" && Array.isArray(question.choices) && question.choices.length <= 2 && !question.pendingRoute) {
     return "sparse";

@@ -1,18 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeAutoTheme, SKY_CHECK_MS } from "../lib/theme.js";
-import { isHeroSurfaceThemeLocked, syncSurfaceTheme } from "../lib/surfaceTheme.js";
+import { isHeroSurfaceThemeLocked, syncSkyCycle } from "../lib/surfaceTheme.js";
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(computeAutoTheme);
+  const [theme, setTheme] = useState(() => computeAutoTheme());
 
   useEffect(() => {
-    document.body.classList.remove("theme-day", "theme-night");
-    document.body.classList.add(`theme-${theme}`);
-    if (!isHeroSurfaceThemeLocked()) syncSurfaceTheme(theme);
+    const bodyTheme = theme === "day" ? "day" : theme === "twilight" ? "twilight" : "night";
+    document.body.classList.remove("theme-day", "theme-twilight", "theme-night");
+    document.body.classList.add(`theme-${bodyTheme}`);
+    if (!isHeroSurfaceThemeLocked()) {
+      syncSkyCycle({ theme });
+    }
     return () => {
-      document.body.classList.remove("theme-day", "theme-night");
+      document.body.classList.remove("theme-day", "theme-twilight", "theme-night");
     };
   }, [theme]);
 
