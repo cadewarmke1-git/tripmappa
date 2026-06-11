@@ -10,7 +10,12 @@ import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
+import { preloadGenerationStreamOverlay } from "../lib/preloadGenerationLoader.js";
 import { getPlanFlowLayoutClass } from "../lib/tripFlow.js";
+
+function warmGenerationLoader() {
+  preloadGenerationStreamOverlay().catch(() => undefined);
+}
 
 export default function PlanPanel({
   qIndex,
@@ -261,6 +266,8 @@ export default function PlanPanel({
               <button
                 type="button"
                 className="btn-generate-trip btn-generate-trip--pulse"
+                onMouseEnter={warmGenerationLoader}
+                onFocus={warmGenerationLoader}
                 onClick={() => { triggerPrimaryHaptic(); onGenerateTrip?.(); }}
                 disabled={loading}
               >

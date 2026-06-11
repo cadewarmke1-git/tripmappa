@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildGenerationStreamProgress,
   buildClientCreditSnapshot,
+  buildGenerationPrepProgress,
+  computeGenerationProgressFraction,
+  createInitialGenerationProgress,
   decrementCachedCreditStatus,
   readPlanTripSseStream,
 } from "./planTripStream.js";
@@ -41,6 +44,21 @@ describe("planTripStream client helpers", () => {
     expect(progress.stopNames).toContain("Buc-ee's");
     expect(progress.cityNames).toContain("Temple, TX");
     expect(progress.message).toMatch(/Buc-ee/i);
+    expect(progress.fraction).toBeGreaterThan(0.4);
+    expect(progress.fraction).toBeLessThan(1);
+  });
+
+  it("createInitialGenerationProgress starts before SSE connects", () => {
+    const initial = createInitialGenerationProgress({ cityNames: ["Little Rock, AR"] });
+    expect(initial.phase).toBe("starting");
+    expect(initial.fraction).toBeGreaterThan(0);
+    expect(initial.cityNames).toContain("Little Rock, AR");
+    expect(buildGenerationPrepProgress("places").fraction).toBeGreaterThan(initial.fraction);
+  });
+
+  it("computeGenerationProgressFraction maps parallel legs to 0..1", () => {
+    expect(computeGenerationProgressFraction({ totalSegments: 2, completedSegments: 1 })).toBeCloseTo(0.52, 1);
+    expect(computeGenerationProgressFraction({ phase: "route" })).toBe(0.34);
   });
 
   it("builds client credit snapshot from status", () => {

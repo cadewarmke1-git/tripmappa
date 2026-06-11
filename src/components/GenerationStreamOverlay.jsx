@@ -1,54 +1,86 @@
 /** Real-time generation progress overlay during SSE streaming. */
 import { useEffect, useMemo, useState } from "react";
-import BrandWordmark from "./BrandWordmark.jsx";
+import GenerationCinematicLoader from "./GenerationCinematicLoader.jsx";
+import {
+  computeGenerationProgressFraction,
+  createInitialGenerationProgress,
+} from "../lib/planTripStream.js";
 
-function formatRouteLine(origin, dest, routeSummary) {
-  const short = (value) => value?.split(",")[0]?.trim() || value?.trim() || "";
-  if (origin?.trim() && dest?.trim()) {
-    return `${short(origin)} to ${short(dest)}`;
-  }
-  return routeSummary?.trim() || null;
+function shortCity(value) {
+  return value?.split(",")[0]?.trim() || value?.trim() || "";
 }
 
-export default function GenerationStreamOverlay({ progress, origin, dest }) {
-  const cities = useMemo(
-    () => [...new Set((progress?.cityNames || []).filter(Boolean))],
-    [progress?.cityNames],
+function themeToSkyPhase(theme) {
+  if (theme === "day") return "midday";
+  if (theme === "twilight") return "golden_hour";
+  return "night";
+}
+
+export default function GenerationStreamOverlay({
+  progress,
+  origin,
+  dest,
+  vehicleType = "Car",
+  theme = "night",
+  routeCities = [],
+}) {
+  const stream = progress || createInitialGenerationProgress({ cityNames: routeCities });
+
+  const [displayFraction, setDisplayFraction] = useState(() => computeGenerationProgressFraction(stream));
+
+  const targetFraction = useMemo(
+    () => computeGenerationProgressFraction(stream),
+    [stream],
   );
-  const [cityIndex, setCityIndex] = useState(0);
 
   useEffect(() => {
-    setCityIndex(0);
-  }, [cities.join("|")]);
+    setDisplayFraction((prev) => Math.max(prev, targetFraction));
+  }, [targetFraction]);
 
   useEffect(() => {
-    if (cities.length <= 1) return undefined;
-    const timer = setInterval(() => {
-      setCityIndex((current) => (current + 1) % cities.length);
-    }, 2000);
-    return () => clearInterval(timer);
-  }, [cities.length]);
+    if (targetFraction >= 0.92) return undefined;
+    const timer = window.setInterval(() => {
+      setDisplayFraction((prev) => {
+        const ceiling = Math.max(targetFraction, 0.05);
+        if (prev >= ceiling + 0.02) return prev;
+        return Math.min(ceiling + 0.02, prev + 0.004);
+      });
+    }, 400);
+    return () => window.clearInterval(timer);
+  }, [targetFraction]);
 
-  if (!progress) return null;
+  useEffect(() => {
+    if (targetFraction < 0.9) return undefined;
+    const timer = window.setInterval(() => {
+      setDisplayFraction((prev) => (prev >= 0.998 ? 1 : Math.min(1, prev + 0.03)));
+    }, 40);
+    return () => window.clearInterval(timer);
+  }, [targetFraction]);
 
-  const statusMessage = cities.length > 0
-    ? cities[cityIndex]
-    : "Planning your route...";
+  const cityBeats = useMemo(() => {
+    const fromStream = [...new Set((stream.cityNames || []).filter(Boolean))];
+    if (fromStream.length) return fromStream;
+    return [...new Set((routeCities || []).filter(Boolean))];
+  }, [stream.cityNames, routeCities]);
 
-  const routeLine = formatRouteLine(origin, dest, progress.routeSummary);
+  const routeSubtitle = useMemo(() => {
+    const o = shortCity(origin);
+    const d = shortCity(dest);
+    if (o && d) return `${o} → ${d}`;
+    return stream.routeSummary?.trim() || stream.message || "Mapping your route";
+  }, [origin, dest, stream.routeSummary, stream.message]);
 
   return (
     <div className="generation-stream-overlay" aria-live="polite" aria-busy="true">
-      <div className="generation-stream-body">
-        <div className="generation-stream-hero">
-          <div className="generation-stream-glow" aria-hidden="true" />
-          <BrandWordmark as="div" className="generation-stream-wordmark" />
-        </div>
-        <p className="generation-stream-message">{statusMessage}</p>
-      </div>
-      {routeLine && (
-        <p className="generation-stream-route">{routeLine}</p>
-      )}
+      <GenerationCinematicLoader
+        progress={displayFraction}
+        vehicleType={vehicleType}
+        skyPhase={themeToSkyPhase(theme)}
+        cityBeats={cityBeats}
+        subtitle={routeSubtitle}
+        destination={dest}
+        statusMessage={stream.message}
+      />
     </div>
   );
 }

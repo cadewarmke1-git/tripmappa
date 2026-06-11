@@ -1,5 +1,45 @@
 /** Client-side SSE parsing and stream progress for /api/plan-trip. */
 
+const PREP_PHASE_FRACTION = {
+  starting: 0.05,
+  routing: 0.14,
+  places: 0.24,
+  sending: 0.3,
+};
+
+/** Shown immediately when the user taps Generate — before SSE connects. */
+export function createInitialGenerationProgress({ cityNames = [], routeSummary = null } = {}) {
+  return {
+    phase: "starting",
+    fraction: PREP_PHASE_FRACTION.starting,
+    message: "Planning your route…",
+    cityNames: (cityNames || []).filter(Boolean).slice(0, 8),
+    routeSummary,
+    chars: 0,
+    stopCount: 0,
+  };
+}
+
+/** Bump progress while routing, Places prefetch, and payload assembly run. */
+export function buildGenerationPrepProgress(phase, { cityNames = [], routeSummary = null } = {}) {
+  const fraction = PREP_PHASE_FRACTION[phase] ?? PREP_PHASE_FRACTION.starting;
+  const messages = {
+    starting: "Planning your route…",
+    routing: "Mapping your route…",
+    places: "Scouting stops along your corridor…",
+    sending: "Starting your personalized plan…",
+  };
+  return {
+    phase,
+    fraction,
+    message: messages[phase] || messages.starting,
+    cityNames: (cityNames || []).filter(Boolean).slice(0, 8),
+    routeSummary,
+    chars: 0,
+    stopCount: 0,
+  };
+}
+
 export function buildGenerationStreamProgress(accumulatedText = "") {
   const text = String(accumulatedText);
   const summaryMatch = text.match(/"route_summary"\s*:\s*"((?:[^"\\]|\\.)*)"/);
@@ -28,7 +68,7 @@ export function buildGenerationStreamProgress(accumulatedText = "") {
     message = latest ? `Adding ${latest}…` : "Building stops along your route…";
   }
 
-  return {
+  const payload = {
     phase,
     chars: text.length,
     routeSummary: summaryMatch?.[1]?.replace(/\\"/g, '"') || null,
@@ -37,6 +77,33 @@ export function buildGenerationStreamProgress(accumulatedText = "") {
     stopCount: stopNames.length + cityNames.length,
     message,
   };
+  payload.fraction = computeGenerationProgressFraction(payload);
+  return payload;
+}
+
+/** Map SSE stream state to 0..1 for the cinematic loader progress bar. */
+export function computeGenerationProgressFraction(progress) {
+  if (!progress || typeof progress !== "object") return 0;
+
+  const total = progress.totalSegments || 0;
+  const completed = progress.completedSegments ?? 0;
+  if (total > 0) {
+    return Math.min(0.94, 0.12 + (completed / total) * 0.8);
+  }
+
+  if (progress.fraction != null && Number.isFinite(progress.fraction)) {
+    return Math.max(0, Math.min(1, progress.fraction));
+  }
+
+  if (progress.phase === "route") return 0.34;
+  if (progress.phase === "stops") {
+    const n = progress.stopCount || 0;
+    return Math.min(0.9, 0.4 + (n / 14) * 0.48);
+  }
+  if (progress.phase === "parallel_start") return 0.1;
+
+  const chars = progress.chars || 0;
+  return Math.min(0.32, 0.06 + (chars / 10000) * 0.26);
 }
 
 function parseSseFrames(buffer) {
@@ -103,10 +170,9 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
             completedSegments: 0,
             message: `Planning leg 1 of ${frame.data.segmentCount || 2}…`,
           };
-          onProgress?.({
-            phase: "parallel_start",
-            ...parallelLegProgress,
-          });
+          const startPayload = { phase: "parallel_start", ...parallelLegProgress };
+          startPayload.fraction = computeGenerationProgressFraction(startPayload);
+          onProgress?.(startPayload);
         } else if (frame.event === "chunk" && frame.data?.text) {
           accumulated += frame.data.text;
           if (!parallelMode) {
@@ -118,10 +184,9 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
               ...parallelLegProgress,
               ...frame.data,
             };
-            onProgress?.({
-              ...parallelLegProgress,
-              ...frame.data,
-            });
+            const legPayload = { ...parallelLegProgress, ...frame.data };
+            legPayload.fraction = computeGenerationProgressFraction(legPayload);
+            onProgress?.(legPayload);
           } else {
             onProgress?.({
               ...buildGenerationStreamProgress(accumulated),
@@ -149,6 +214,7 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
             cityNames: segmentStopNames.slice(0, 8),
             stopCount: completed,
           };
+          parallelLegProgress.fraction = computeGenerationProgressFraction(parallelLegProgress);
           onProgress?.(parallelLegProgress);
         } else if (frame.event === "complete") {
           completePayload = frame.data;

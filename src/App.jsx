@@ -4,7 +4,6 @@
  * See ROADMAP.md for phase status and conventions.
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
 import { applyMapThemeStyles } from "./lib/mapStyles.js";
@@ -21,8 +20,14 @@ import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./l
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { buildContinuousDriveTip, isContinuousDrive, OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { generateTripPlan } from "./lib/apiClient.js";
-import { buildClientCreditSnapshot, decrementCachedCreditStatus } from "./lib/planTripStream.js";
+import {
+  buildClientCreditSnapshot,
+  buildGenerationPrepProgress,
+  createInitialGenerationProgress,
+  decrementCachedCreditStatus,
+} from "./lib/planTripStream.js";
 import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } from "./lib/generateTripFlow.js";
+import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } from "./lib/postGenerationPersistence.js";
 import { resolvePlaceFromAutocomplete } from "./lib/places.js";
@@ -1513,6 +1518,14 @@ export default function App() {
   }, [currentQuestion?.id, questionHistory.length, convoComplete]);
 
   useEffect(() => {
+    if (!shouldPreloadGenerationLoader({
+      convoComplete,
+      currentQuestionId: currentQuestion?.id,
+    })) return;
+    preloadGenerationStreamOverlay().catch(() => undefined);
+  }, [convoComplete, currentQuestion?.id]);
+
+  useEffect(() => {
     if (!trafficAlert) return;
     const t = setTimeout(() => setTrafficAlert(false), 5000);
     return () => clearTimeout(t);
@@ -2516,9 +2529,16 @@ export default function App() {
       }
     }
 
+    void preloadGenerationStreamOverlay();
+
     setOrigin(tripOrigin);
     setDest(tripDest);
-    setGenerationStream(null);
+    setGenerationStream(createInitialGenerationProgress({
+      cityNames: routeInfo?.citiesAlongRoute || [],
+      routeSummary: routeInfo?.distance
+        ? `${tripOrigin?.split(",")[0]?.trim() || tripOrigin} to ${tripDest?.split(",")[0]?.trim() || tripDest}`
+        : null,
+    }));
     setLoading(true);
     setEnrichmentLimited(false);
     setEnrichmentNoticeDismissed(false);
@@ -2570,6 +2590,9 @@ export default function App() {
       let routeSnapshot = routeInfo;
       const hasRoute = Boolean(routeSnapshot?.distance && routeSnapshot?.routePoints?.length);
       if (isLoaded && window.google && !hasRoute) {
+        setGenerationStream(buildGenerationPrepProgress("routing", {
+          cityNames: routeSnapshot?.citiesAlongRoute || [],
+        }));
         const routeResult = await fetchDirections(getEffectiveVehicle(answers));
         if (!routeResult?.ok) {
           toast_("Route could not be calculated — trip planning may be limited.", { isError: true });
@@ -2631,6 +2654,9 @@ export default function App() {
       let placesContext = null;
       let placesContextPrompt = "";
       if (isLoaded && window.google && activeRouteInfo.routePoints?.length) {
+        setGenerationStream(buildGenerationPrepProgress("places", {
+          cityNames: activeRouteInfo.citiesAlongRoute || [],
+        }));
         placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
         placesContextPrompt = formatPlacesContextForPrompt(placesContext);
       }
@@ -2669,6 +2695,10 @@ export default function App() {
         model: "claude-sonnet-4-6",
         clientCreditStatus: user ? buildClientCreditSnapshot(creditStatusRef.current || creditStatus) : null,
       };
+
+      setGenerationStream(buildGenerationPrepProgress("sending", {
+        cityNames: activeRouteInfo.citiesAlongRoute || [],
+      }));
 
       let lastErr = null;
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -2742,6 +2772,14 @@ export default function App() {
               setTimeout(() => openTripsUpgrade({ limitReached: false }), 1200);
             }
           }
+
+          setGenerationStream({
+            phase: "complete",
+            fraction: 1,
+            message: "Your trip is ready",
+            cityNames: activeRouteInfo.citiesAlongRoute || [],
+          });
+          await new Promise(resolve => setTimeout(resolve, 520));
           return;
         } catch (err) {
           lastErr = err;
@@ -3412,9 +3450,14 @@ export default function App() {
         transition: "color 1.8s ease",
       }}>
         {loading && (
-          generationStream
-            ? <LazyGenerationStreamOverlay progress={generationStream} origin={origin} dest={dest} />
-            : <RouteDrawingLoader theme={theme} variant="fullscreen" />
+          <LazyGenerationStreamOverlay
+            progress={generationStream}
+            origin={origin}
+            dest={dest}
+            vehicleType={getEffectiveVehicle(answers)}
+            theme={theme}
+            routeCities={routeInfo?.citiesAlongRoute || []}
+          />
         )}
         {renderAppNavBar("app")}
         <ConfigWarningBanner missing={configMissing} />
