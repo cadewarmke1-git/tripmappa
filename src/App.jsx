@@ -3445,7 +3445,7 @@ export default function App() {
 
   return (
     <>
-      <div className={`app-wrap ${theme}${generated && resultsView === "itinerary" ? " results-split-mode" : ""}${generated && resultsView === "map" ? " map-fullscreen-mode" : ""}`} style={{
+      <div className={`app-wrap ${theme}${generated && resultsView === "itinerary" ? " results-fullscreen" : ""}${generated && resultsView === "map" ? " map-fullscreen-mode" : ""}`} style={{
         display: "flex", flexDirection: "column", height: "100vh",
         transition: "color 1.8s ease",
       }}>
@@ -3469,85 +3469,8 @@ export default function App() {
             title="Could not show trip results"
             onRetry={() => setResultsBoundaryKey(k => k + 1)}
           >
-            <div className="trip-results-split">
-            <div className="trip-results-split-map">
-            <ErrorBoundary
-              key={`${mapBoundaryKey}-split`}
-              label="map-split"
-              title="Could not load map"
-              onRetry={() => setMapBoundaryKey(k => k + 1)}
-            >
-            <AppMap
-              isLoaded={isLoaded}
-              mapCenter={mapCenter}
-              mapStyle={mapStyle}
-              mapStyleOpen={mapStyleOpen}
-              trafficAlert={trafficAlert}
-              onDismissTrafficAlert={() => setTrafficAlert(false)}
-              routeLoading={routeLoading}
-              tripGenerating={loading}
-              isDarkMode={theme === "night" || theme === "twilight"}
-              theme={theme}
-              mapRef={mapRef}
-              directions={directionsResult}
-              routeInfo={routeInfo}
-              routePoints={routeInfo?.routePoints || []}
-              answers={answers}
-              mapMarkers={mapMarkers}
-              dismissedAlertIds={dismissedAlerts}
-              dayRoutePaths={[]}
-              activeDayIndex={activeDayIndex}
-              nightSegmentPaths={nightSegmentPaths}
-              lowFuelSegmentPaths={lowFuelSegmentPaths}
-              mapFocusTarget={mapFocusTarget}
-              highlightedLegPath={itinerarySync.highlightedLegPath}
-              inAppNavigationOnly
-              showNavigationCar
-              onMapReady={() => setMapReady(true)}
-              onMapUnmount={() => setMapReady(false)}
-              onMapStyleOpenChange={setMapStyleOpen}
-              onMapStyleChange={setMapStyle}
-              onRecenter={recenterMap}
-              onMarkerSelect={handleMapMarkerSelect}
-              onMapBackgroundClick={handleMapBackgroundClick}
-              truckRoutePath={truckRoutePath}
-              showRoutePill={false}
-              onMarkerAction={(action, marker) => {
-                if (action === "add") {
-                  addRoadStopToTrip({
-                    id: marker.id,
-                    name: marker.title,
-                    location: marker.subtitle,
-                    lat: marker.lat,
-                    lng: marker.lng,
-                    category: marker.category || "poi",
-                  });
-                } else if (action === "navigate") {
-                  handleResultsStopSelect({
-                    id: marker.waypointId || marker.id,
-                    lat: marker.lat,
-                    lng: marker.lng,
-                    title: marker.title,
-                  });
-                }
-              }}
-            />
-            </ErrorBoundary>
-            </div>
             <LazyTripResultsPanel
-            panelClassName="trip-results-split-panel"
             theme={theme}
-            waypoints={itinerarySync.itineraryWaypoints}
-            routeLegs={itinerarySync.routeLegs}
-            onReorder={itinerarySync.handleReorder}
-            onNavigateToStop={itinerarySync.handleNavigateToStop}
-            expandedStopId={itinerarySync.expandedTimelineStopId}
-            onExpandedStopIdChange={itinerarySync.setExpandedTimelineStopId}
-            onRegisterTimelineScroller={itinerarySync.registerTimelineScroller}
-            onStartNavigation={() => {
-              itinerarySync.handleStartNavigation();
-              setResultsView("map");
-            }}
             origin={origin}
             dest={dest}
             answers={answers}
@@ -3613,7 +3536,6 @@ export default function App() {
             isGuest={!user}
             onGrocerySignIn={() => openAuthModal("signin")}
           />
-            </div>
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen view-panel-animate">
