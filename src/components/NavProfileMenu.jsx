@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
-import { getAvatarTierBadge } from "../lib/tiers.js";
+import { getTierCssClass } from "../lib/tiers.js";
 
 export default function NavProfileMenu({
   user,
@@ -30,7 +30,7 @@ export default function NavProfileMenu({
   const isSignedIn = Boolean(user?.id);
   const displayName = isSignedIn ? getDisplayName(user, profile) : "Welcome to TripMappa";
   const heroPalette = heroTheme ? HERO_SURFACE_PALETTE[heroTheme] : null;
-  const tierBadge = isSignedIn ? getAvatarTierBadge(creditStatus?.tier || profile?.tier) : null;
+  const tierRing = isSignedIn ? getTierCssClass(creditStatus?.tier || profile?.tier) : null;
 
   const closeMenu = useCallback(() => {
     if (!open || closing) return;
@@ -88,6 +88,12 @@ export default function NavProfileMenu({
     }
   }
 
+  function openPhotoPicker(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    photoInputRef.current?.click();
+  }
+
   const navItems = [
     { id: "plan", label: "Plan", action: onOpenPlan },
     { id: "trips", label: "Trips", action: onOpenTrips },
@@ -99,24 +105,53 @@ export default function NavProfileMenu({
 
   return (
     <div className="profile-card-menu" ref={wrapRef}>
-      <button
-        type="button"
-        className={`profile-card-trigger${open ? " is-active" : ""}`}
-        onClick={() => (open ? closeMenu() : openMenu())}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label={triggerLabel}
-      >
-        <UserAvatar
-          user={user}
-          profile={profile}
-          size="md"
-          showRing
-          tierBadge={tierBadge}
-          className="profile-card-trigger-avatar"
-          heroPalette={heroPalette}
+      {isSignedIn && (
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="profile-card-photo-input"
+          aria-hidden="true"
+          tabIndex={-1}
+          onChange={handlePhotoChange}
         />
-      </button>
+      )}
+      <div className="profile-card-trigger-wrap">
+        <button
+          type="button"
+          className={`profile-card-trigger${open ? " is-active" : ""}`}
+          onClick={() => (open ? closeMenu() : openMenu())}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          aria-label={triggerLabel}
+        >
+          <UserAvatar
+            user={user}
+            profile={profile}
+            size="md"
+            tierRing={tierRing}
+            className="profile-card-trigger-avatar"
+            heroPalette={heroPalette}
+          />
+        </button>
+        {isSignedIn && (
+          <button
+            type="button"
+            className="profile-card-avatar-edit"
+            disabled={uploadingPhoto}
+            onClick={openPhotoPicker}
+            aria-label="Change profile photo"
+            title="Change profile photo"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <path
+                d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
 
       {showDropdown && (
         <div
@@ -127,15 +162,33 @@ export default function NavProfileMenu({
           <div className="profile-card-dropdown-glow" aria-hidden="true" />
 
           <div className="profile-card-identity profile-card-identity--static">
-            <UserAvatar
-              user={user}
-              profile={profile}
-              size={72}
-              showRing
-              tierBadge={tierBadge}
-              className="profile-card-dropdown-avatar profile-card-dropdown-avatar--large"
-              heroPalette={heroPalette}
-            />
+            <div className="profile-card-identity-avatar-wrap">
+              <UserAvatar
+                user={user}
+                profile={profile}
+                size={72}
+                tierRing={tierRing}
+                className="profile-card-dropdown-avatar profile-card-dropdown-avatar--large"
+                heroPalette={heroPalette}
+              />
+              {isSignedIn && (
+                <button
+                  type="button"
+                  className="profile-card-avatar-edit profile-card-avatar-edit--large"
+                  disabled={uploadingPhoto}
+                  onClick={openPhotoPicker}
+                  aria-label="Change profile photo"
+                  title="Change profile photo"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path
+                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
             <div className="profile-card-name">{displayName}</div>
             {isSignedIn ? (
               <div className="profile-card-email">{user?.email || ""}</div>
@@ -198,29 +251,6 @@ export default function NavProfileMenu({
               </>
             )}
           </div>
-
-          {isSignedIn && (
-            <>
-              <hr className="profile-card-dropdown-divider" />
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="profile-card-photo-input"
-                aria-hidden="true"
-                tabIndex={-1}
-                onChange={handlePhotoChange}
-              />
-              <button
-                type="button"
-                className="profile-card-photo-btn"
-                disabled={uploadingPhoto}
-                onClick={() => photoInputRef.current?.click()}
-              >
-                {uploadingPhoto ? "Uploading…" : "Change Profile Photo"}
-              </button>
-            </>
-          )}
 
           <hr className="profile-card-dropdown-divider" />
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import AmenityBadges from "./AmenityBadges.jsx";
 import PlaceRatingLine from "../results/PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
-import { scalePlacesPhotoUrl } from "../../lib/placePhotos.js";
+import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
 
 const BADGE_LABELS = {
   premium: "Premium Pick",
@@ -16,7 +16,7 @@ export default function HotelCard({ hotel, onSave, onToast }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const photoSrc = photoFailed
     ? "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=192&q=80"
-    : scalePlacesPhotoUrl(hotel.photo, 96);
+    : resolvePlacePhotoUrl(hotel.photo || hotel.photoUrl, 96);
 
   function handleBook() {
     if (!hotel.bookUrl) return;

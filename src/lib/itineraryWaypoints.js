@@ -146,6 +146,10 @@ export function setWaypointIncluded(waypoints, id, included) {
   return waypoints.map(w => (w.id === id && w.kind === "stop" ? { ...w, included } : w));
 }
 
+export function removeWaypoint(waypoints, id) {
+  return waypoints.filter(w => !(w.id === id && w.kind === "stop"));
+}
+
 export function addWaypointBeforeDestination(waypoints, stop) {
   const destination = waypoints.find(w => w.kind === "destination");
   const rest = waypoints.filter(w => w.kind !== "destination");

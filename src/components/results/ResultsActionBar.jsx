@@ -1,4 +1,4 @@
-export default function ResultsActionBar({ onStartNavigation, onShare, onEditTrip }) {
+export default function ResultsActionBar({ onStartNavigation, onShare, onEditTrip, onViewMap }) {
   return (
     <footer className="results-action-bar" aria-label="Trip actions">
       <button
@@ -8,6 +8,14 @@ export default function ResultsActionBar({ onStartNavigation, onShare, onEditTri
         data-testid="results-start-navigation"
       >
         Start navigation
+      </button>
+      <button
+        type="button"
+        className="results-action-bar-secondary"
+        onClick={onViewMap}
+        data-testid="results-view-on-map"
+      >
+        View on Map
       </button>
       <button type="button" className="results-action-bar-secondary" onClick={onShare}>
         Share

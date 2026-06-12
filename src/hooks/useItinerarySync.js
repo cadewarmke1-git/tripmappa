@@ -3,6 +3,7 @@ import {
   buildInitialItineraryWaypoints,
   reorderItineraryWaypoints,
   setWaypointIncluded,
+  removeWaypoint,
   addWaypointBeforeDestination,
   waypointsToStopsAndRoad,
 } from "../lib/itineraryWaypoints.js";
@@ -181,6 +182,15 @@ export function useItinerarySync({
     commitWaypoints(next);
   }, [commitWaypoints]);
 
+  const handleRemoveStop = useCallback((stopId) => {
+    const wp = waypointsRef.current.find(w => w.id === stopId);
+    if (!wp) return;
+    const next = wp.stopData?.userAdded
+      ? removeWaypoint(waypointsRef.current, stopId)
+      : setWaypointIncluded(waypointsRef.current, stopId, false);
+    commitWaypoints(next);
+  }, [commitWaypoints]);
+
   const highlightedLegPath = useMemo(() => {
     if (highlightedLegIndex == null || !routeInfo?.routePoints?.length) return [];
     const anchors = buildAnchorPointsFromWaypoints(itineraryWaypoints);
@@ -252,6 +262,7 @@ export function useItinerarySync({
     handleReorder,
     handleToggleIncluded,
     handleAddStop,
+    handleRemoveStop,
     handleMarkerSelect,
     handleNavigateToStop,
     handleStartNavigation,

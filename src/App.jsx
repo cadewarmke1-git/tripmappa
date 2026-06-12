@@ -1637,6 +1637,19 @@ export default function App() {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
+  function dismissToast() {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(null);
+    setToastAction(null);
+    setToastIsError(false);
+  }
+
+  function runToastAction() {
+    const action = toastAction?.onClick;
+    dismissToast();
+    action?.();
+  }
+
   function toast_(msg, options = false) {
     const opts = typeof options === "boolean" ? { isGold: options } : options;
     const { isGold = false, isError = false, actionLabel, onAction, duration = isError ? 8000 : 2400 } = opts;
@@ -2275,10 +2288,13 @@ export default function App() {
 
   function handleResultsStopSelect(stop) {
     if (!stop) return;
-    const id = stop.id || `focus-${stop.lat}-${stop.lng}`;
+    const id = stop.id || stop.placeId || `focus-${stop.lat}-${stop.lng}`;
     highlightStop(id);
     if (generated && itinerarySync.itineraryWaypoints.length) {
-      itinerarySync.handleNavigateToStop(stop);
+      itinerarySync.handleNavigateToStop({ ...stop, id });
+      if (resultsView === "itinerary") {
+        setResultsView("map");
+      }
       return;
     }
     if (stop.lat == null || stop.lng == null) return;
@@ -2375,7 +2391,7 @@ export default function App() {
     if (!normalized) return;
     const id = stop?.id || normalized.id || roadStopKey(normalized);
     if (generated && itinerarySync.itineraryWaypoints.length) {
-      itinerarySync.handleToggleIncluded(id, false);
+      itinerarySync.handleRemoveStop(id);
       return;
     }
     const key = roadStopKey(normalized);
@@ -3272,7 +3288,7 @@ export default function App() {
           isGold={toastIsGold}
           isError={toastIsError}
           actionLabel={toastAction?.label}
-          onAction={toastAction?.onClick}
+          onAction={toastAction ? runToastAction : undefined}
         />
       </>
     );
@@ -3341,7 +3357,7 @@ export default function App() {
           isGold={toastIsGold}
           isError={toastIsError}
           actionLabel={toastAction?.label}
-          onAction={toastAction?.onClick}
+          onAction={toastAction ? runToastAction : undefined}
         />
       </>
     );
@@ -3464,7 +3480,7 @@ export default function App() {
         isGold={toastIsGold}
         isError={toastIsError}
         actionLabel={toastAction?.label}
-        onAction={toastAction?.onClick}
+        onAction={toastAction ? runToastAction : undefined}
       />
       {founderWelcomeName && (
         <LazyFounderWelcomeOverlay
@@ -3547,8 +3563,18 @@ export default function App() {
             showGuestBanner={!user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
             onEditTrip={handleEditTrip}
             onViewMap={() => {
+              itinerarySync.setRouteFocusMode(false);
               setResultsView("map");
-              window.setTimeout(() => recenterMap(), 200);
+              window.setTimeout(() => recenterMap(), 250);
+            }}
+            onStartNavigation={() => {
+              if (itinerarySync.itineraryWaypoints.length) {
+                itinerarySync.handleStartNavigation();
+              } else {
+                recenterMap();
+              }
+              setResultsView("map");
+              window.setTimeout(() => recenterMap(), 250);
             }}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
@@ -3628,8 +3654,18 @@ export default function App() {
                     lng: marker.lng,
                     category: marker.category || "poi",
                   });
-                  toast_("Added to trip");
-                } else if (action === "navigate") {
+                  toast_("Added to trip", {
+                    actionLabel: "Undo",
+                    onAction: () => removeRoadStopFromTrip({
+                      id: marker.id,
+                      name: marker.title,
+                      location: marker.subtitle,
+                      lat: marker.lat,
+                      lng: marker.lng,
+                      category: marker.category || "poi",
+                    }),
+                  });
+                } else if (action === "navigate" || action === "directions") {
                   handleResultsStopSelect({
                     id: marker.waypointId || marker.id,
                     lat: marker.lat,
@@ -3693,9 +3729,31 @@ export default function App() {
                   lng: marker.lng,
                   category: marker.category || "poi",
                 });
-                toast_("Added to trip");
+                toast_("Added to trip", {
+                  actionLabel: "Undo",
+                  onAction: () => removeRoadStopFromTrip({
+                    id: marker.id,
+                    name: marker.title,
+                    location: marker.subtitle,
+                    lat: marker.lat,
+                    lng: marker.lng,
+                    category: marker.category || "poi",
+                  }),
+                });
+              } else if (action === "navigate" || action === "directions") {
+                handleResultsStopSelect({
+                  id: marker.waypointId || marker.id,
+                  lat: marker.lat,
+                  lng: marker.lng,
+                  title: marker.title,
+                });
+              } else {
+                focusMapOnStop(marker);
               }
             }}
+            highlightedLegPath={generated ? itinerarySync.highlightedLegPath : []}
+            routeFocusMode={generated ? itinerarySync.routeFocusMode : false}
+            inAppNavigationOnly={generated}
           />
           </ErrorBoundary>
 
@@ -3997,7 +4055,7 @@ export default function App() {
         isGold={toastIsGold}
         isError={toastIsError}
         actionLabel={toastAction?.label}
-        onAction={toastAction?.onClick}
+        onAction={toastAction ? runToastAction : undefined}
       />
     </>
   );

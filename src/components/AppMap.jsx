@@ -117,10 +117,6 @@ export default function AppMap({
 
   function handleInfoAction(action, marker) {
     onMarkerAction?.(action, marker);
-    if (inAppNavigationOnly) return;
-    if (action === "directions" && marker.lat != null && marker.lng != null) {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`, "_blank");
-    }
   }
 
   const pulsePoints = routePoints.length > 1

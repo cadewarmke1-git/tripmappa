@@ -284,6 +284,7 @@ export default function TripResultsPanel({
           onStartNavigation={onStartNavigation}
           onShare={onShare}
           onEditTrip={onEditTrip}
+          onViewMap={onViewMap}
         />
       </div>
     </div>

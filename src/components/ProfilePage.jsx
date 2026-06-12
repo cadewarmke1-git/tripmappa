@@ -13,7 +13,6 @@ import {
   isFounderTier,
   normalizeTier,
   getTierCssClass,
-  getAvatarTierBadge,
 } from "../lib/tiers.js";
 import PricingPlans from "./PricingPlans.jsx";
 
@@ -321,7 +320,7 @@ export default function ProfilePage({
               profile={profile}
               size="xl"
               showRing
-              tierBadge={getAvatarTierBadge(rawTier)}
+              tierRing={getTierCssClass(rawTier)}
               className="profile-photo"
             />
             <button

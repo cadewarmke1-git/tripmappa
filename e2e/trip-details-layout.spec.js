@@ -59,4 +59,41 @@ test.describe("trip details layout", () => {
       }
     });
   }
+
+  test("food and budget pills receive clicks (not intercepted by footer)", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await reachTripDetails(page);
+
+    const glutenBtn = page.getByRole("button", { name: "Gluten Free", exact: true });
+    await expect(glutenBtn).toBeVisible();
+    await expect(glutenBtn).toBeEnabled({ timeout: 10_000 });
+    const btnBox = await glutenBtn.boundingBox();
+    expect(btnBox).toBeTruthy();
+
+    const hitTarget = await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      return el
+        ? { tag: el.tagName, className: el.className, text: (el.textContent || "").trim().slice(0, 40) }
+        : null;
+    }, { x: btnBox.x + btnBox.width / 2, y: btnBox.y + btnBox.height / 2 });
+
+    expect(hitTarget?.className || "").toMatch(/qr-btn/);
+
+    await glutenBtn.click();
+    await expect(glutenBtn).toHaveClass(/qr-selected/);
+
+    const budgetBtn = page.getByRole("button", { name: "$200 to $500", exact: true });
+    await expect(budgetBtn).toBeEnabled({ timeout: 10_000 });
+    const budgetBox = await budgetBtn.boundingBox();
+    expect(budgetBox).toBeTruthy();
+
+    const budgetHit = await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      return el ? el.className : null;
+    }, { x: budgetBox.x + budgetBox.width / 2, y: budgetBox.y + budgetBox.height / 2 });
+
+    expect(budgetHit || "").toMatch(/qr-btn/);
+    await budgetBtn.click();
+    await expect(budgetBtn).toHaveClass(/qr-selected/);
+  });
 });

@@ -159,6 +159,7 @@ export default function ResultsDaySection({
             answers={answers}
             preloaded={restaurantsByCity?.[day.overnight.city]}
             onToast={onToast}
+            onDirections={onStopSelect}
           />
           {showGroceryCard && dest && (
             <div className="results-subsection grocery-card-section">

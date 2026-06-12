@@ -1761,6 +1761,19 @@
   .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions {
     margin-top: 0;
     box-shadow: 0 -10px 20px color-mix(in srgb, var(--color-surface, var(--surface)) 88%, transparent);
+    pointer-events: none;
+  }
+  .chat-wrap-plan-flow .question-choices-shell-compact > .plan-flow-actions > * {
+    pointer-events: auto;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .question-options-scroll {
+    padding-bottom: 4px;
+    position: relative;
+    z-index: 1;
+  }
+  .chat-wrap-plan-flow .question-choices-trip-details .question-group-section {
+    position: relative;
+    z-index: 1;
   }
   .chat-wrap-plan-flow .question-choices-shell-compact .question-options-scroll {
     overscroll-behavior: contain;
@@ -4962,6 +4975,7 @@
   .results-action-bar {
     flex-shrink: 0;
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
     padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
@@ -5981,18 +5995,47 @@
   /* ── User avatar ── */
   .user-avatar {
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    border-radius: 50%; overflow: visible; flex-shrink: 0;
     background: linear-gradient(135deg, #FFD28C, #FF8C42);
     color: #1A0D00; font-weight: 700; font-family: 'Inter', sans-serif;
+    position: relative;
   }
-  .user-avatar.user-avatar--tier-visible {
-    overflow: visible;
+  .user-avatar-img,
+  .user-avatar-initials {
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .user-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .user-avatar-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    user-select: none;
+    color: #1A0D00;
   }
   .user-avatar-ring {
     box-shadow: 0 0 0 3px rgba(255,210,140,0.85), 0 0 20px rgba(255,210,140,0.25);
   }
-  .user-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .user-avatar-initials { line-height: 1; user-select: none; color: #1A0D00; }
+
+  .user-avatar-tier-ring--wanderer {
+    box-shadow: 0 0 0 2px var(--border);
+  }
+  .user-avatar-tier-ring--voyager {
+    box-shadow: 0 0 0 2px #4A90D9;
+  }
+  .user-avatar-tier-ring--trailblazer {
+    box-shadow: 0 0 0 2px #FFD28C;
+  }
+  .user-avatar-tier-ring--founder {
+    animation: founderAvatarRing 2.4s ease-in-out infinite;
+  }
+  @keyframes founderAvatarRing {
+    0%, 100% { box-shadow: 0 0 0 2px #FFD28C; }
+    50% { box-shadow: 0 0 0 2px #FF8C42; }
+  }
 
   .user-avatar-ring:not(:has(.user-avatar-img)) {
     background: linear-gradient(135deg, #FFD28C, #FF8C42) !important;
@@ -6011,52 +6054,60 @@
 
   .user-avatar { position: relative; }
 
-  .user-avatar-tier-badge {
-    position: absolute;
-    right: -3px;
-    bottom: -3px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
+  /* ── Profile card menu (avatar dropdown) ── */
+  .profile-card-menu { position: relative; z-index: 130; }
+  .profile-card-trigger-wrap {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--color-surface);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-gold) 35%, transparent);
+    overflow: visible;
+  }
+  .profile-card-avatar-edit {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-surface, var(--surface));
+    background: var(--gold-primary, #ffd28c);
+    color: var(--deep-dark, #1a0d00);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0;
     pointer-events: none;
-    color: var(--color-btn-primary-text);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 2;
   }
-
-  .user-avatar-tier-badge svg {
-    width: 8px;
-    height: 8px;
-    display: block;
+  .profile-card-trigger-wrap:hover .profile-card-avatar-edit,
+  .profile-card-trigger-wrap:focus-within .profile-card-avatar-edit,
+  html[data-layout="mobile"] .profile-card-avatar-edit {
+    opacity: 1;
+    pointer-events: auto;
   }
-
-  .user-avatar-tier-badge--founder,
-  .user-avatar-tier-badge--trailblazer {
-    background: var(--color-accent-gradient);
-    color: var(--color-btn-primary-text);
+  .profile-card-avatar-edit:hover:not(:disabled) {
+    transform: scale(1.06);
   }
-
-  .user-avatar-tier-badge--voyager {
-    background: var(--color-tier-voyager);
-    color: var(--color-surface);
+  .profile-card-avatar-edit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
-
-  .user-avatar-tier-ring--founder.user-avatar-ring,
-  .user-avatar-tier-ring--trailblazer.user-avatar-ring {
-    box-shadow:
-      0 0 0 2px var(--color-accent-gold),
-      0 0 0 4px var(--color-surface),
-      0 0 18px color-mix(in srgb, var(--color-accent-orange) 45%, transparent);
+  .profile-card-identity-avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    overflow: visible;
   }
-
-  .user-avatar-tier-ring--voyager.user-avatar-ring {
-    box-shadow:
-      0 0 0 2px var(--color-tier-voyager),
-      0 0 0 4px var(--color-surface),
-      0 0 14px color-mix(in srgb, var(--color-tier-voyager) 45%, transparent);
+  .profile-card-avatar-edit--large {
+    width: 26px;
+    height: 26px;
+    right: 0;
+    bottom: 0;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .account-sidebar-founder-tag {
@@ -6072,8 +6123,7 @@
     line-height: 1.35;
   }
 
-  /* ── Profile card menu (avatar dropdown) ── */
-  .profile-card-menu { position: relative; z-index: 130; }
+
   .profile-card-trigger {
     display: inline-flex;
     align-items: center;

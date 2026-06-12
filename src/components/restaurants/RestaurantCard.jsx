@@ -1,6 +1,7 @@
+import { useState } from "react";
 import GoldStarRating from "./GoldStarRating.jsx";
 import { dinnerOpenStatus } from "../../lib/restaurantHours.js";
-import { scalePlacesPhotoUrl } from "../../lib/placePhotos.js";
+import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
 import { parseRating } from "../../lib/ratings.js";
 import CategoryIcon from "../icons/CategoryIcon.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
@@ -11,24 +12,33 @@ const SLOT_LABELS = {
   quick: "Quick bite",
 };
 
-export default function RestaurantCard({ restaurant, onToast, estimatedArrival = null }) {
+export default function RestaurantCard({
+  restaurant,
+  onToast,
+  estimatedArrival = null,
+  onDirections = null,
+}) {
+  const [photoFailed, setPhotoFailed] = useState(false);
   const status = dinnerOpenStatus(restaurant, estimatedArrival || new Date());
-  const directionsUrl = restaurant.lat != null
-    ? `https://www.google.com/maps/dir/?api=1&destination=${restaurant.lat},${restaurant.lng}`
-    : restaurant.googleMapsUrl;
-  const photoSrc = scalePlacesPhotoUrl(restaurant.photoUrl, 64);
+  const photoSrc = resolvePlacePhotoUrl(restaurant.photoUrl || restaurant.photo, 64);
   const rating = parseRating(restaurant.rating);
 
   function handleDirections(e) {
     e.stopPropagation();
-    if (directionsUrl) window.open(directionsUrl, "_blank", "noopener,noreferrer");
+    onDirections?.(restaurant);
   }
 
   return (
     <article className="restaurant-card">
       <div className="restaurant-card-photo-wrap restaurant-card-photo-thumb">
-        {photoSrc ? (
-          <img className="restaurant-card-photo" src={photoSrc} alt={restaurant.name} loading="lazy" />
+        {photoSrc && !photoFailed ? (
+          <img
+            className="restaurant-card-photo"
+            src={photoSrc}
+            alt={restaurant.name}
+            loading="lazy"
+            onError={() => setPhotoFailed(true)}
+          />
         ) : (
           <div className="restaurant-card-photo-fallback" aria-hidden="true">
             <CategoryIcon category="food" />
@@ -61,9 +71,11 @@ export default function RestaurantCard({ restaurant, onToast, estimatedArrival =
         )}
         <p className="restaurant-card-desc">{restaurant.description}</p>
         <div className="restaurant-card-actions">
-          <button type="button" className="restaurant-btn-directions" onClick={handleDirections}>
-            Directions
-          </button>
+          {(onDirections || restaurant.lat != null) && (
+            <button type="button" className="restaurant-btn-directions" onClick={handleDirections}>
+              Directions
+            </button>
+          )}
         </div>
       </div>
     </article>

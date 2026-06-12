@@ -29,6 +29,7 @@ export default function RestaurantCardsSection({
   city, lat, lng, answers, preloaded, onToast, estimatedArrival = null,
   overnightMode = true,
   sectionLabel,
+  onDirections = null,
 }) {
   const hasPreload = preloaded !== undefined && preloaded !== null;
   const [loading, setLoading] = useState(!hasPreload);
@@ -130,6 +131,7 @@ export default function RestaurantCardsSection({
               key={r.placeId}
               restaurant={r}
               estimatedArrival={estimateArrival(estimatedArrival)}
+              onDirections={onDirections}
             />
           ))}
         </div>

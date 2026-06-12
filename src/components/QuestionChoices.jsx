@@ -26,7 +26,8 @@ function isGroupDraft(prefDraft) {
 }
 
 function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false } = {}) {
-  const draft = includePrefill && isGroupDraft(prefDraft) ? { ...prefDraft } : {};
+  const hasWorkingDraft = isGroupDraft(prefDraft);
+  const draft = (includePrefill || hasWorkingDraft) && hasWorkingDraft ? { ...prefDraft } : {};
   for (const sec of currentQ?.sections || []) {
     if (!Array.isArray(draft[sec.id])) {
       draft[sec.id] = Array.isArray(answers?.[sec.id]) ? [...answers[sec.id]] : [];

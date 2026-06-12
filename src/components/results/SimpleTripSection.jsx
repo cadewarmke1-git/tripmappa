@@ -149,6 +149,7 @@ export default function SimpleTripSection({
             answers={answers}
             preloaded={findCityData(restaurantsByCity, day.overnight.city)}
             onToast={onToast}
+            onDirections={onStopSelect}
           />
           {dest && (
             <div className="results-subsection grocery-card-section">
@@ -226,6 +227,7 @@ export default function SimpleTripSection({
               preloaded={preloaded}
               onToast={onToast}
               overnightMode
+              onDirections={onStopSelect}
             />
           </div>
         );
