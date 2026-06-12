@@ -47,6 +47,14 @@ export const ACCESSIBILITY_CHOICES = [
   "Sick pet — veterinary care needed",
 ];
 
+export const TRUCK_STOPS_INTERESTS = [
+  "Truck stop restaurants",
+  "Weigh station awareness",
+  "Scenic pullouts for breaks",
+  "Historic roadside stops",
+  "No specific interests",
+];
+
 export const STOPS_INTERESTS_BASE = [
   "National Parks or Nature",
   "Casinos",
@@ -193,6 +201,8 @@ export function isLargeParty(answers) {
 }
 
 export function getStopsInterestsChoices(answers) {
+  const vehicle = getEffectiveVehicle(answers);
+  if (isTruckVehicle(vehicle)) return [...TRUCK_STOPS_INTERESTS];
   const base = [...STOPS_INTERESTS_BASE];
   if (isLargeParty(answers)) return [...base, ...FAMILY_INTERESTS];
   return base;

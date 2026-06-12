@@ -4,6 +4,7 @@ import { estimateOvernightStops } from "./budget.js";
 import { getEffectiveVehicle } from "./vehicles.js";
 import { lodgingTierToPriceBand } from "./placesFilters.js";
 import { FUEL_PRICES, getVehicleMpg } from "./fuel.js";
+import { isContinuousDrive } from "./driveMode.js";
 
 const LODGING_BAND_MIDPOINT = {
   budget: 65,
@@ -40,7 +41,10 @@ export function computeTransparentTripCostEstimate(answers, routeInfo, options =
     }
   }
 
-  const nights = estimateOvernightStops(hours, answers?.trip_type, answers?.lodging);
+  const straightThrough = isContinuousDrive(answers);
+  const nights = straightThrough
+    ? 0
+    : estimateOvernightStops(hours, answers?.trip_type, answers?.lodging);
   const band = lodgingTierToPriceBand(answers?.lodging);
   const lodgingMid = band ? LODGING_BAND_MIDPOINT[band] : null;
   let lodging = null;
@@ -52,10 +56,13 @@ export function computeTransparentTripCostEstimate(answers, routeInfo, options =
 
   if (fuel == null || lodging == null) return null;
 
+  const fuelOnly = straightThrough || nights === 0;
   return {
     fuel,
     lodging,
-    total: fuel + lodging,
-    label: "Rough estimate — fuel from regional average × distance, lodging from your selected band midpoint",
+    total: fuelOnly ? fuel : fuel + lodging,
+    label: fuelOnly
+      ? "Rough estimate — fuel from regional average × distance ÷ vehicle consumption"
+      : "Rough estimate — fuel from regional average × distance, lodging from your selected band midpoint",
   };
 }

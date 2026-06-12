@@ -22,6 +22,7 @@ function mapPlaceResult(place, originLat, originLng) {
     lng,
     distanceMiles,
     rating: place.rating,
+    types: place.types || [],
     photoUrl: place.photos?.[0]?.getUrl?.({ maxWidth: 480 }) || null,
   };
 }

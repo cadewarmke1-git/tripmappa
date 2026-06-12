@@ -11,7 +11,7 @@ export function formatCreditsDisplay(status) {
   }
 
   if (status.tier === "guest") {
-    return { label: "1 free trip — sign in to save your plan", nudge: null };
+    return { label: null, nudge: null };
   }
 
   if (status.billingPeriod === "monthly") {

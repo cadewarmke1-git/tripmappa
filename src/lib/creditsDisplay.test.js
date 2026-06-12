@@ -20,9 +20,9 @@ describe("formatCreditsDisplay", () => {
     expect(nudge).toMatch(/Running low/);
   });
 
-  it("shows guest sign-in nudge", () => {
-    expect(formatCreditsDisplay({ tier: "guest" }).label)
-      .toBe("1 free trip — sign in to save your plan");
+  it("hides misleading guest generation label", () => {
+    expect(formatCreditsDisplay({ tier: "guest" }).label).toBeNull();
+    expect(formatCreditsDisplay({ tier: "guest" }).nudge).toBeNull();
   });
 
   it("shows unlimited label for admin accounts", () => {

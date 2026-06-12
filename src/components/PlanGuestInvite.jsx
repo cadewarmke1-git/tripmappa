@@ -1,0 +1,34 @@
+/** First-step invitation for guests — account required before planning. */
+import { triggerPrimaryHaptic } from "../lib/haptic.js";
+
+export default function PlanGuestInvite({ onSignUp, onSignIn }) {
+  return (
+    <div className="plan-guest-invite">
+      <div className="ai-bubble plan-guest-invite-bubble">
+        <p className="plan-guest-invite-lead">
+          Create a free account to plan this trip
+        </p>
+        <p className="plan-guest-invite-detail">
+          You get <strong>3 trip generations</strong> with no credit card required.
+          We&apos;ll save your route and answers so you can pick up anytime.
+        </p>
+      </div>
+      <div className="plan-guest-invite-actions">
+        <button
+          type="button"
+          className="btn-generate btn-generate-inline plan-guest-invite-primary"
+          onClick={() => { triggerPrimaryHaptic(); onSignUp?.(); }}
+        >
+          Sign up free
+        </button>
+        <button
+          type="button"
+          className="convo-nav-btn plan-guest-invite-secondary"
+          onClick={() => { triggerPrimaryHaptic(); onSignIn?.(); }}
+        >
+          Sign in
+        </button>
+      </div>
+    </div>
+  );
+}

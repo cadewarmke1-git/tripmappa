@@ -104,7 +104,13 @@ export default function QuestionChoices({
     setGroupDraft(null);
     if (currentQ?.type === "multiselect") {
       const fromAnswers = Array.isArray(committed[currentQ.id]) ? committed[currentQ.id] : [];
-      setMultiDraft(questionConfirmed ? [...fromAnswers] : []);
+      if (questionConfirmed) {
+        setMultiDraft([...fromAnswers]);
+      } else if (Array.isArray(prefDraft)) {
+        setMultiDraft([...prefDraft]);
+      } else {
+        setMultiDraft([]);
+      }
       return;
     }
     if (currentQ?.type === "party_composition") {

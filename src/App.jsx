@@ -1103,6 +1103,7 @@ export default function App() {
     Boolean(currentQuestion) ||
     (convoComplete && !returnedFromResults)
   );
+  const showGuestSignInGate = !user && inQuestionFlow;
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
 
   const creditsExhausted = useMemo(() => {
@@ -2501,6 +2502,11 @@ export default function App() {
   }
 
   async function generateTrip() {
+    if (!user) {
+      openAuthModal("signup");
+      return;
+    }
+
     const tripOrigin = originRef.current?.value?.trim() || origin;
     const tripDest = destRef.current?.value?.trim() || dest;
 
@@ -2644,19 +2650,6 @@ export default function App() {
         destination: tripDest,
         scenic: isScenicRoute(answers),
       };
-
-      if (!user) {
-        if (!consumeGuestCredit()) {
-          applyCreditStatus(getGuestCreditStatus());
-          const msg = generationFailureMessage({ code: "no_credits" });
-          setGenerationError(msg);
-          toast_(msg, { isError: true });
-          ensurePayoffScreen();
-          openTripsUpgrade({ limitReached: false });
-          return;
-        }
-        applyCreditStatus(getGuestCreditStatus());
-      }
 
       let placesContext = null;
       let placesContextPrompt = "";
@@ -3836,6 +3829,8 @@ export default function App() {
                       creditsNudge={creditsNudge}
                       creditsExhausted={creditsExhausted}
                       showGuestSaveHint={!user && !!answers.vehicle && !convoComplete}
+                      showGuestSignInGate={showGuestSignInGate}
+                      onGuestSignUp={() => openAuthModal("signup")}
                       onGuestSignIn={() => openAuthModal("signin")}
                       onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}

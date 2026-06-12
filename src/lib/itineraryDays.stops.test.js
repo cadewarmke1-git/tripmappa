@@ -23,4 +23,18 @@ describe("countTimelineStops", () => {
     });
     expect(overview.stopCount).toBe(3);
   });
+
+  it("hides day count for straight-through trips", () => {
+    const overview = getItineraryOverview({
+      origin: "Dallas, TX",
+      dest: "Houston, TX",
+      routeInfo: { distance: "240 mi", duration: "4 hr" },
+      stops: [],
+      roadStops: [{ name: "Fuel", location: "Madisonville, TX" }],
+      answers: { overnight_preference: "Drive straight through", continuous_drive: true },
+    });
+    expect(overview.dayCount).toBeNull();
+    expect(overview.straightThrough).toBe(true);
+    expect(overview.stopCount).toBe(1);
+  });
 });

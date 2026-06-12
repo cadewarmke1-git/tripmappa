@@ -1,5 +1,6 @@
 const TYPES = {
   fuel: "fuel",
+  charging: "charging",
   food: "food",
   rest: "rest",
   discovery: "discovery",
@@ -10,7 +11,9 @@ const TYPES = {
 
 function normalizeCategory(category) {
   const key = String(category || "").toLowerCase();
-  if (/fuel|gas|ev|diesel|propane/.test(key)) return TYPES.fuel;
+  if (/charg/.test(key)) return TYPES.charging;
+  if (/fuel|gas|diesel|propane/.test(key)) return TYPES.fuel;
+  if (/\bev\b/.test(key)) return TYPES.charging;
   if (/food|dining|meal|cafe|restaurant|bakery/.test(key)) return TYPES.food;
   if (/rest|scenic|park/.test(key)) return TYPES.rest;
   if (/discovery|attraction|poi/.test(key)) return TYPES.discovery;
@@ -24,6 +27,11 @@ const ICONS = {
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M6 20V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14" stroke="currentColor" strokeWidth="1.6"/>
       <path d="M6 10h8M14 12h2l2 3v5h-4v-8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+    </svg>
+  ),
+  charging: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13 2L5 14h6l-1 8 8-12h-6l1-8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
     </svg>
   ),
   food: (

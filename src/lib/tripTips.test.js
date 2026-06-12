@@ -4,6 +4,7 @@ import {
   splitTripTips,
   isBareWeatherTip,
   formatActionTipsBlock,
+  pickDefaultExpandedTips,
 } from "./tripTips.js";
 
 describe("tripTips", () => {
@@ -42,5 +43,20 @@ describe("tripTips", () => {
     ]);
     expect(split.action).toHaveLength(1);
     expect(split.more).toHaveLength(1);
+  });
+
+  it("shows action tips and top advisory tips expanded by default", () => {
+    const { expanded, collapsed } = pickDefaultExpandedTips([
+      { severity: "action", title: "Leave earlier", detail: "Storms ahead" },
+      { severity: "advisory", title: "Construction", detail: "I-35 lane closure" },
+      { severity: "info", title: "Pack snacks", detail: "" },
+      { severity: "info", title: "Rest areas sparse", detail: "Plan breaks ahead" },
+      { severity: "info", title: "Clear skies", detail: "72°F" },
+    ]);
+    expect(expanded.some(t => t.title === "Leave earlier")).toBe(true);
+    expect(expanded.some(t => t.title === "Construction")).toBe(true);
+    expect(expanded.some(t => t.title === "Pack snacks")).toBe(true);
+    expect(collapsed.some(t => t.title === "Rest areas sparse")).toBe(true);
+    expect(collapsed.some(t => t.title === "Clear skies")).toBe(false);
   });
 });

@@ -3,7 +3,20 @@ import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
 
-export default function RoadStopCard({ stop, onAdd, onRemove, onSelect, highlighted = false, cardRef, added = false }) {
+export default function RoadStopCard({
+  stop,
+  onAdd,
+  onRemove,
+  onSelect,
+  highlighted = false,
+  cardRef,
+  added = false,
+  showTruckWarnings = false,
+}) {
+  const isCharging = String(stop.category || "").toLowerCase() === "charging";
+  const charging = stop.charging || stop.stopData;
+  const showTruckParkingWarning = showTruckWarnings && stop.truckParking === false
+    && /food|rest|dining/i.test(String(stop.category || ""));
   function handleClick() {
     onSelect?.(stop);
   }
@@ -41,14 +54,35 @@ export default function RoadStopCard({ stop, onAdd, onRemove, onSelect, highligh
         />
         {stop.verified === true && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
         {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
-        <span className="road-stop-badge-cat">{stop.category || "Stop"}</span>
+        <span className={`road-stop-badge-cat${isCharging ? " road-stop-badge-charging" : ""}`}>
+          {stop.category || "Stop"}
+        </span>
       </div>
       <div className="road-stop-card-body">
         <h4 className="road-stop-card-name">{stop.title}</h4>
+        {isCharging && (
+          <p className="road-stop-charging-meta">
+            {[
+              charging?.network || stop.stopData?.network,
+              charging?.level || stop.stopData?.chargerTypes?.join(" · "),
+              charging?.chargeTime80 || stop.stopData?.chargeTime80
+                ? `${charging?.chargeTime80 || stop.stopData?.chargeTime80} to 80%`
+                : null,
+              charging?.ports != null || stop.stopData?.ports != null
+                ? `${charging?.ports ?? stop.stopData?.ports} ports`
+                : null,
+            ].filter(Boolean).join(" · ")}
+          </p>
+        )}
         <div className="road-stop-card-meta">
           <PlaceRatingLine rating={stop.rating} className="road-stop-rating" emptyClassName="road-stop-no-reviews" />
           {stop.distanceFromRoute != null && (
             <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
+          )}
+          {showTruckParkingWarning && (
+            <span className="road-stop-truck-warning" title="No verified truck parking at this stop">
+              Limited truck parking
+            </span>
           )}
         </div>
         <button

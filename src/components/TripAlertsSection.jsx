@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { splitTripTips, tipsForDisplay } from "../lib/tripTips.js";
+import { pickDefaultExpandedTips } from "../lib/tripTips.js";
 
 export function TripTipsSection({
   tips = [],
@@ -10,14 +10,15 @@ export function TripTipsSection({
   dismissedActionIds = [],
   hideActionCards = false,
 }) {
-  const display = tipsForDisplay(tips);
-  const { action, more } = splitTripTips(display);
+  const { expanded, collapsed } = pickDefaultExpandedTips(tips);
   const visibleActions = hideActionCards
     ? []
-    : action.filter((t, i) => !dismissedActionIds.includes(`${i}-${t.title}`));
+    : expanded.filter(t => t.severity === "action")
+      .filter((t, i) => !dismissedActionIds.includes(`${i}-${t.title}`));
+  const visibleDefault = expanded.filter(t => t.severity !== "action");
   const [moreOpen, setMoreOpen] = useState(false);
 
-  if (!visibleActions.length && !more.length) return null;
+  if (!visibleActions.length && !visibleDefault.length && !collapsed.length) return null;
 
   const updatedLabel = updatedAt
     ? formatUpdatedLabel(updatedAt, refreshing)
@@ -51,7 +52,14 @@ export function TripTipsSection({
         );
       })}
 
-      {more.length > 0 && (
+      {visibleDefault.map((tip, i) => (
+        <div key={`default-${i}-${tip.title}`} className="trip-tip-default-card" role="note">
+          <div className="trip-tip-default-title">{tip.title}</div>
+          {tip.detail && <p className="trip-tip-default-detail">{tip.detail}</p>}
+        </div>
+      ))}
+
+      {collapsed.length > 0 && (
         <div className="trip-tips-more">
           <button
             type="button"
@@ -59,11 +67,11 @@ export function TripTipsSection({
             aria-expanded={moreOpen}
             onClick={() => setMoreOpen(v => !v)}
           >
-            More tips ({more.length})
+            More tips ({collapsed.length})
           </button>
           {moreOpen && (
             <ul className="trip-tips-list">
-              {more.map((tip, i) => (
+              {collapsed.map((tip, i) => (
                 <li key={`${i}-${tip.title}`} className="trip-tips-line">
                   <strong>{tip.title}</strong>
                   {tip.detail ? ` — ${tip.detail}` : ""}

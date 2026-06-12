@@ -18,6 +18,7 @@ import {
   filterStationsByPreferredBrand,
 } from "../../lib/fuel.js";
 import { applyStopFilters } from "../../lib/placesFilters.js";
+import { isPlausibleEvChargingStation } from "../../lib/roadStopCategory.js";
 import FuelStopCard from "./FuelStopCard.jsx";
 
 import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
@@ -130,6 +131,7 @@ export default function FuelStopsRow({
             evStations = buildFallbackEvStations(lat, lng);
             if (!cancelled) setUsedFallback(true);
           }
+          evStations = evStations.filter(s => isPlausibleEvChargingStation(s));
           evStations = selectOnRouteFuelStations(applyStopFilters(evStations, answers), 1);
           collected.push(...evStations.map(s => ({ ...s, cardType: "ev" })));
         }

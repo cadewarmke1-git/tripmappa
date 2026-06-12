@@ -177,9 +177,7 @@ export default function TripResultsPanel({
             stops={stops}
             roadStops={roadStops}
             answers={answers}
-            tripLegs={tripLegs}
-            selectedLodging={selectedLodging}
-            restaurantsByCity={restaurantsByCity}
+            days={days}
           />
 
           {hosLine && (
@@ -252,6 +250,7 @@ export default function TripResultsPanel({
             onLodgingSelect={onLodgingSelect}
             onNavigateToStop={onNavigateToStop}
             onToast={onToast}
+            showTruckWarnings={isTruckerTrip(answers)}
           />
 
           <TripTipsSection

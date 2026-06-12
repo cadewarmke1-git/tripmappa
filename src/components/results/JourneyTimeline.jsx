@@ -19,11 +19,14 @@ import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import { buildJourneyTimelineFromWaypoints } from "../../lib/buildJourneyTimeline.js";
 import { getSortableStopIds } from "../../lib/itineraryWaypoints.js";
 
-function formatMetaLine(stop) {
+function formatMetaLine(stop, showTruckWarnings = false) {
   const parts = [stop.category || stop.type, null, stop.distance || stop.distanceFromRoute != null
     ? (typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute)
     : null];
   if (stop.rating != null) parts[1] = `${stop.rating}★`;
+  if (showTruckWarnings && stop.truckParking === false && /food|rest|dining/i.test(String(stop.category || ""))) {
+    parts.push("Limited truck parking");
+  }
   return parts.filter(Boolean).join(" · ");
 }
 
@@ -121,6 +124,7 @@ function TimelineRowInner({
   onNavigateToStop,
   onToast,
   dragHandleProps = null,
+  showTruckWarnings = false,
 }) {
   if (row.kind === "drive") {
     const label = [row.duration, row.miles].filter(Boolean).join(" · ");
@@ -210,7 +214,7 @@ function TimelineRowInner({
           <span className={`journey-timeline-name${row.isOvernight ? " journey-timeline-name-overnight" : ""}`}>
             {stop.title}
           </span>
-          <span className="journey-timeline-meta">{formatMetaLine(stop)}</span>
+          <span className="journey-timeline-meta">{formatMetaLine(stop, showTruckWarnings)}</span>
         </div>
         <span className="journey-timeline-chevron" aria-hidden="true">{expanded ? "▾" : "›"}</span>
       </button>
@@ -249,6 +253,7 @@ export default function JourneyTimeline({
   onLodgingSelect,
   onNavigateToStop,
   onToast,
+  showTruckWarnings = false,
 }) {
   const expandedId = expandedStopId;
   const setExpandedId = onExpandedStopIdChange || (() => {});
@@ -293,6 +298,7 @@ export default function JourneyTimeline({
         onLodgingSelect={onLodgingSelect}
         onNavigateToStop={onNavigateToStop}
         onToast={onToast}
+        showTruckWarnings={showTruckWarnings}
       />
     ) : (
       <TimelineRowInner
@@ -311,6 +317,7 @@ export default function JourneyTimeline({
         onLodgingSelect={onLodgingSelect}
         onNavigateToStop={onNavigateToStop}
         onToast={onToast}
+        showTruckWarnings={showTruckWarnings}
       />
     );
     return content;

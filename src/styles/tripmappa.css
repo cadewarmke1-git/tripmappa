@@ -2495,6 +2495,14 @@
     opacity: 0.65;
   }
   .summary-section-panel { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .plan-guest-invite { display: flex; flex-direction: column; gap: 14px; margin-bottom: 8px; }
+  .plan-guest-invite-bubble { margin-bottom: 0; }
+  .plan-guest-invite-lead { font-size: 16px; font-weight: 700; margin: 0 0 8px; line-height: 1.35; }
+  .plan-guest-invite-detail { font-size: 14px; line-height: 1.55; margin: 0; color: rgba(255,255,255,0.82); }
+  .plan-guest-invite-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .plan-guest-invite-primary { flex: 1 1 160px; }
+  .plan-guest-invite-secondary { flex: 0 0 auto; }
+
   .plan-flow-guest-hint {
     display: flex;
     flex-wrap: wrap;
@@ -3980,6 +3988,12 @@
     border: 1px solid rgba(255,255,255,0.18); background: transparent;
     color: var(--text-secondary, rgba(255,255,255,0.7)); font-size: 12px;
   }
+  .trip-tip-default-card {
+    margin-bottom: 10px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
+  }
+  .trip-tip-default-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.92); margin-bottom: 4px; }
+  .trip-tip-default-detail { font-size: 12px; line-height: 1.45; color: var(--text-secondary, rgba(255,255,255,0.65)); margin: 0; }
   .trip-tips-more-toggle {
     width: 100%; text-align: left; padding: 8px 0; border: none; background: transparent;
     color: var(--accent, var(--gold-primary)); font-weight: 600; font-size: 13px; cursor: pointer;
@@ -4916,6 +4930,10 @@
   }
   .road-stop-badge-local { position: absolute; top: 6px; left: 6px; font-size: 8px; font-weight: 700; padding: 3px 6px; border-radius: 4px; background: var(--gold-primary); color: var(--deep-dark); text-transform: uppercase; }
   .road-stop-badge-cat { position: absolute; bottom: 6px; left: 6px; font-size: 9px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: rgba(0,0,0,0.55); color: #fff; }
+  .road-stop-badge-charging { background: var(--gold-primary); color: var(--deep-dark); }
+  .road-stop-charging-meta { font-size: 11px; color: var(--brand); margin: 0 0 6px; line-height: 1.35; }
+  .road-stop-truck-warning { color: #d97706; font-weight: 600; }
+  .tm-icon-charging { color: var(--gold-primary); }
   .road-stop-card-body { padding: 0; flex: 1; min-width: 0; }
   .tripmappa-verified-badge {
     display: inline-flex; align-items: center; font-size: 9px; font-weight: 700;

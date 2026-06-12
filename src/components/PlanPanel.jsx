@@ -6,6 +6,7 @@ import SummaryCard from "./SummaryCard.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 import QuestionAnswerSidebar from "./QuestionAnswerSidebar.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
+import PlanGuestInvite from "./PlanGuestInvite.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
@@ -51,6 +52,8 @@ export default function PlanPanel({
   creditsNudge = null,
   creditsExhausted = false,
   showGuestSaveHint = false,
+  showGuestSignInGate = false,
+  onGuestSignUp,
   onGuestSignIn,
   onUpgrade,
   onGenerateTrip,
@@ -125,7 +128,7 @@ export default function PlanPanel({
           />
         )}
 
-        {inQuestionFlow && showGuestSaveHint && onGuestSignIn && (
+        {inQuestionFlow && showGuestSaveHint && !showGuestSignInGate && onGuestSignIn && (
           <div className="plan-flow-guest-hint">
             <span className="plan-flow-guest-hint-text">Sign in to save your answers and pick up later.</span>
             <button type="button" className="plan-flow-guest-hint-btn" onClick={onGuestSignIn}>Sign in</button>
@@ -203,7 +206,10 @@ export default function PlanPanel({
                       </div>
                     </div>
                   )}
-                  {currentQuestion && !showContinuousConfirm && (
+                  {showGuestSignInGate && onGuestSignUp && onGuestSignIn && (
+                    <PlanGuestInvite onSignUp={onGuestSignUp} onSignIn={onGuestSignIn} />
+                  )}
+                  {currentQuestion && !showContinuousConfirm && !showGuestSignInGate && (
                     <ErrorBoundary label="question-choices" title="Could not show choices">
                       <QuestionChoices
                         currentQ={currentQuestion}

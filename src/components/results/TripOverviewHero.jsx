@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { computeTransparentTripCostEstimate } from "../../lib/tripCostEstimate.js";
-import { parseTravelerCount } from "../../lib/vehicles.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
 export default function TripOverviewHero({
@@ -10,9 +9,7 @@ export default function TripOverviewHero({
   stops,
   roadStops,
   answers,
-  tripLegs,
-  selectedLodging,
-  restaurantsByCity = {},
+  days = null,
   routeOptimized = false,
   compact = false,
 }) {
@@ -22,7 +19,8 @@ export default function TripOverviewHero({
   );
 
   const overview = getItineraryOverview({
-    origin, dest, routeInfo, stops, roadStops, budgetTotal: costEstimate?.total ?? null,
+    origin, dest, routeInfo, stops, roadStops, days, answers,
+    budgetTotal: costEstimate?.total ?? null,
     costEstimateLabel: costEstimate?.label ?? null,
   });
 
@@ -45,10 +43,12 @@ export default function TripOverviewHero({
           <span className="trip-overview-hero-val">{overview.duration}</span>
           <span className="trip-overview-hero-label">Drive time</span>
         </div>
-        <div className="trip-overview-hero-stat">
-          <span className="trip-overview-hero-val">{overview.dayCount}</span>
-          <span className="trip-overview-hero-label">Days</span>
-        </div>
+        {overview.dayCount != null && (
+          <div className="trip-overview-hero-stat">
+            <span className="trip-overview-hero-val">{overview.dayCount}</span>
+            <span className="trip-overview-hero-label">Days</span>
+          </div>
+        )}
         <div className="trip-overview-hero-stat">
           <span className="trip-overview-hero-val">{overview.stopCount}</span>
           <span className="trip-overview-hero-label">Stops</span>

@@ -1,5 +1,6 @@
 /** NREL API — enrich Google-found EV/propane stations with charger details only. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { isPlausibleEvChargingStation } from "../../src/lib/roadStopCategory.js";
 
 const NREL_BASE = "https://developer.nrel.gov/api/alt-fuel-stations/v1/nearest.json";
 
@@ -143,10 +144,13 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.NREL_API_KEY;
   if (!apiKey) {
+    const fallbackStations = stations
+      .map(s => enrichStation(s, null, fuelType))
+      .filter(s => fuelType === "LPG" || isPlausibleEvChargingStation(s));
     return res.status(200).json({
-      stations: (teslaOnly
-        ? stations.map(s => enrichStation(s, null, fuelType)).filter(s => /tesla/i.test(s.network || s.name || ""))
-        : stations.map(s => enrichStation(s, null, fuelType))),
+      stations: teslaOnly
+        ? fallbackStations.filter(s => /tesla/i.test(s.network || s.name || ""))
+        : fallbackStations,
       fallback: true,
       error: "NREL_API_KEY not configured",
     });
@@ -162,9 +166,10 @@ export default async function handler(req, res) {
       return enrichStation(googleStation, match, fuelType);
     }));
 
+    const validated = enriched.filter(s => fuelType === "LPG" || isPlausibleEvChargingStation(s));
     const filtered = teslaOnly
-      ? enriched.filter(s => /tesla/i.test(s.network || s.name || ""))
-      : enriched;
+      ? validated.filter(s => /tesla/i.test(s.network || s.name || ""))
+      : validated;
 
     return res.status(200).json({ stations: filtered, fallback: false });
   } catch (err) {

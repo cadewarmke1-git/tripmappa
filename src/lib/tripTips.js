@@ -71,6 +71,26 @@ export function splitTripTips(tips = []) {
   };
 }
 
+function tipKey(tip) {
+  return `${tip.severity}:${tip.title}:${tip.detail}`;
+}
+
+/** Action tips always visible; up to two advisory/info tips shown expanded by default. */
+export function pickDefaultExpandedTips(tips = [], maxNonAction = 2) {
+  const normalized = tipsForDisplay(tips);
+  const actions = normalized.filter(t => t.severity === "action");
+  const others = normalized
+    .filter(t => t.severity !== "action")
+    .sort((a, b) => {
+      const rank = { advisory: 0, info: 1 };
+      return (rank[a.severity] ?? 2) - (rank[b.severity] ?? 2);
+    });
+  const expanded = [...actions, ...others.slice(0, maxNonAction)];
+  const expandedKeys = new Set(expanded.map(tipKey));
+  const collapsed = normalized.filter(t => !expandedKeys.has(tipKey(t)));
+  return { expanded, collapsed };
+}
+
 export function formatActionTipDirective(tip) {
   if (!tip?.action) return "";
   const subject = [tip.title, tip.detail].filter(Boolean).join(" — ");
