@@ -5,8 +5,6 @@ import ActivityDiningCard from "./ActivityDiningCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
 import GroceryCard from "../grocery/GroceryCard.jsx";
-import { parseHoursFromDuration } from "../../lib/parsing.js";
-import { tripIncludesOvernight } from "../../lib/itineraryDays.js";
 
 function legLabel(stop) {
   if (!stop) return null;
@@ -18,19 +16,6 @@ function legLabel(stop) {
       : String(stop.distanceFromRoute);
   }
   return null;
-}
-
-function estimateDayArrival(departureTime, dayIdx, drivingSummary) {
-  const base = departureTime ? new Date(departureTime) : new Date();
-  const arrival = new Date(base);
-  arrival.setDate(arrival.getDate() + dayIdx);
-  const hours = parseHoursFromDuration(drivingSummary?.duration);
-  if (hours) {
-    arrival.setMinutes(arrival.getMinutes() + Math.round(hours * 60));
-  } else {
-    arrival.setHours(18, 0, 0, 0);
-  }
-  return arrival;
 }
 
 function RouteLegConnector({ label }) {
@@ -96,10 +81,9 @@ export default function ResultsDaySection({
     };
   }
 
-  const hasOvernight = tripIncludesOvernight(stops, answers);
   const orderedStops = [
     ...(day.roadStops || []).map(stop => ({ kind: "road", stop })),
-    ...(!continuousDrive && hasOvernight && day.overnight ? [{ kind: "overnight", stop: day.overnight }] : []),
+    ...(!continuousDrive && day.overnight ? [{ kind: "overnight", stop: day.overnight }] : []),
   ];
 
   return (
@@ -156,7 +140,7 @@ export default function ResultsDaySection({
         </div>
       )}
 
-      {hasOvernight && day.overnight && !continuousDrive && (
+      {day.overnight && !continuousDrive && (
         <>
           <LodgingCardsSection
             city={day.overnight.city}
@@ -174,7 +158,6 @@ export default function ResultsDaySection({
             lng={day.overnight.lng}
             answers={answers}
             preloaded={restaurantsByCity?.[day.overnight.city]}
-            estimatedArrival={estimateDayArrival(departureTime, (day.stopIndex ?? day.dayNumber - 1), day.drivingSummary)}
             onToast={onToast}
           />
           {showGroceryCard && dest && (

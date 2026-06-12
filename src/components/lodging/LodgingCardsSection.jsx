@@ -33,7 +33,6 @@ export default function LodgingCardsSection({
   const [items, setItems] = useState([]);
   const [restAreas, setRestAreas] = useState([]);
   const [lodgingType, setLodgingType] = useState("hotel");
-  const [placesSource, setPlacesSource] = useState(false);
 
   const isTrucker = isTruckerTrip(answers);
   const isRv = isRvTrip(answers);
@@ -54,7 +53,6 @@ export default function LodgingCardsSection({
           if (!cancelled && parks.length) {
             setItems(parks);
             setRestAreas([]);
-            setPlacesSource(true);
             setLoading(false);
             return;
           }
@@ -62,7 +60,6 @@ export default function LodgingCardsSection({
         if (!cancelled) {
           setItems(getRvParksForStop(city));
           setRestAreas([]);
-          setPlacesSource(false);
         }
       } else if (isTrucker) {
         setLodgingType("truck");
@@ -74,7 +71,6 @@ export default function LodgingCardsSection({
           if (!cancelled && stops.length) {
             setItems(stops);
             setRestAreas(areas.length ? areas : getRestAreasForStop(city));
-            setPlacesSource(true);
             setLoading(false);
             return;
           }
@@ -82,7 +78,6 @@ export default function LodgingCardsSection({
         if (!cancelled) {
           setItems(getTruckStopsForStop(city, answers));
           setRestAreas(getRestAreasForStop(city));
-          setPlacesSource(false);
         }
       } else {
         setLodgingType("hotel");
@@ -91,7 +86,6 @@ export default function LodgingCardsSection({
           const hotels = processLodgingResults(raw, answers, routeInfo);
           if (!cancelled && hotels.length) {
             setItems(hotels);
-            setPlacesSource(true);
             setRestAreas([]);
             setLoading(false);
             return;
@@ -99,7 +93,6 @@ export default function LodgingCardsSection({
         }
         if (!cancelled) {
           setItems([]);
-          setPlacesSource(false);
         }
       }
       if (!cancelled) setLoading(false);
@@ -133,7 +126,7 @@ export default function LodgingCardsSection({
     ? "RV parks & campgrounds"
     : lodgingType === "truck"
       ? "Truck stops"
-      : "Hotels & lodging";
+      : "Hotels";
 
   const skeletonCount = lodgingType === "truck" ? 4 : 3;
 

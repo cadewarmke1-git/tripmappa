@@ -32,6 +32,24 @@ function opensBeforeArrival(openTime, arrival) {
   return openMins <= arrMins + 30;
 }
 
+function opensWithinMinutes(openTime, arrival, withinMinutes = 120) {
+  if (!openTime) return false;
+  const nowMins = arrival.getHours() * 60 + arrival.getMinutes();
+  const openMins = openTime.h * 60 + openTime.min;
+  const diff = openMins - nowMins;
+  return diff >= 0 && diff <= withinMinutes;
+}
+
+export function isOpenOrOpeningWithinTwoHours(restaurant, arrival = new Date()) {
+  const openNow = restaurant.currentlyOpen ?? restaurant.openNow;
+  if (openNow === true) return true;
+  const opensAt = opensTodayFromWeekdayText(restaurant.hours, arrival);
+  if (openNow === false && opensAt) {
+    return opensWithinMinutes(opensAt, arrival, 120);
+  }
+  return false;
+}
+
 export function dinnerOpenStatus(restaurant, arrival = new Date()) {
   const openNow = restaurant.currentlyOpen ?? restaurant.openNow;
   if (openNow === true) {

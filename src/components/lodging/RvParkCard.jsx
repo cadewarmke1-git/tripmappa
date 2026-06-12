@@ -1,7 +1,7 @@
 import AmenityBadges from "./AmenityBadges.jsx";
 
 export default function RvParkCard({ park, onSave, onToast }) {
-  const bookLabel = park.fromGooglePlaces ? "View on map" : "View listing (soon)";
+  const bookLabel = "View on map";
 
   function handleReserve() {
     if (!park.reserveUrl) return;
@@ -45,9 +45,11 @@ export default function RvParkCard({ park, onSave, onToast }) {
         <p className="lodging-card-distance">{park.distanceFromRoute} mi from route</p>
 
         <div className="lodging-card-actions">
-          <button type="button" className="btn-generate lodging-btn-book" onClick={handleReserve}>
-            {bookLabel}
-          </button>
+          {park.reserveUrl && (
+            <button type="button" className="btn-generate lodging-btn-book" onClick={handleReserve}>
+              {bookLabel}
+            </button>
+          )}
           <button type="button" className="lodging-btn-save" onClick={handleSave}>
             Save
           </button>

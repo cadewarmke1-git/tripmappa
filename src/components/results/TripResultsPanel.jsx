@@ -1,17 +1,15 @@
-import { useMemo, useRef, useEffect, useCallback } from "react";
-import { buildItineraryDays } from "../../lib/itineraryDays.js";
+import { useMemo, useRef, useEffect } from "react";
+import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
 import { isContinuousDrive } from "../../lib/driveMode.js";
-import { parseHoursFromDuration } from "../../lib/parsing.js";
-import { computeHOSCompliance } from "../../lib/hos.js";
-import { isTruckerTrip } from "../../lib/vehicles.js";
-import { formatHosSummaryLine } from "../../lib/heroVariantContent.js";
 import { tipsForDisplay } from "../../lib/tripTips.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
-import PersonalTouchesStrip from "./PersonalTouchesStrip.jsx";
-import JourneyTimeline from "./JourneyTimeline.jsx";
-import ResultsActionBar from "./ResultsActionBar.jsx";
+import ResultsDaySection from "./ResultsDaySection.jsx";
+import SimpleTripSection from "./SimpleTripSection.jsx";
 import { TripTipsSection } from "../TripAlertsSection.jsx";
+import PlannedForYouSection from "./PlannedForYouSection.jsx";
+import PersonalTouchesStrip from "./PersonalTouchesStrip.jsx";
+import ResultsActionBar from "./ResultsActionBar.jsx";
 import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
@@ -19,14 +17,6 @@ import EnrichmentNotice from "./EnrichmentNotice.jsx";
 import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
 import TripConstraintsBar from "./TripConstraintsBar.jsx";
-
-function firstStopIdForDay(day) {
-  if (!day) return null;
-  const road = day.roadStops?.[0];
-  if (road?.id) return road.id;
-  if (day.overnight?.id) return day.overnight.id;
-  return null;
-}
 
 export default function TripResultsPanel({
   panelClassName = "",
@@ -38,6 +28,7 @@ export default function TripResultsPanel({
   roadStops,
   routeInfo,
   tripLegs,
+  tripFormat,
   recommendations = [],
   selectedLodging = [],
   tripAlerts = [],
@@ -64,6 +55,7 @@ export default function TripResultsPanel({
   optionalStopCards = [],
   activitiesByCity = {},
   restaurantsByCity = {},
+  weatherByCity = {},
   routeOptimized = false,
   departureTime,
   activeDayIndex = 0,
@@ -81,26 +73,38 @@ export default function TripResultsPanel({
   onStopSelect,
   onGuestSignUp,
   onDismissGuestBanner,
-  waypoints = [],
-  routeLegs = [],
-  onReorder,
-  onNavigateToStop,
-  expandedStopId = null,
-  onExpandedStopIdChange,
-  onRegisterTimelineScroller,
+  groceryAllowed = false,
+  accessToken = null,
+  onUpgradeGrocery,
+  isGuest = false,
+  onGrocerySignIn,
   onStartNavigation,
+  // Accepted from App.jsx but unused after timeline layout removal
+  waypoints: _waypoints,
+  routeLegs: _routeLegs,
+  onReorder: _onReorder,
+  onNavigateToStop: _onNavigateToStop,
+  expandedStopId: _expandedStopId,
+  onExpandedStopIdChange: _onExpandedStopIdChange,
+  onRegisterTimelineScroller: _onRegisterTimelineScroller,
+  onDismissAlert: _onDismissAlert,
+  onCollaborate: _onCollaborate,
+  timingMode: _timingMode,
+  arriveByDate: _arriveByDate,
 }) {
+  const dayRefs = useRef([]);
   const stopRefs = useRef({});
-  const timelineScrollRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  const simplified = useMemo(
+    () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),
+    [answers, routeInfo, stops, tripFormat],
+  );
 
   const continuousDrive = useMemo(() => isContinuousDrive(answers), [answers]);
 
   const displayTips = useMemo(() => {
-    if (liveTripTips.length) {
-      return tipsForDisplay(liveTripTips.map((tip) => (
-        typeof tip === "string" ? { severity: "info", title: tip, detail: "" } : tip
-      )));
-    }
+    if (liveTripTips.length) return tipsForDisplay(liveTripTips);
     return tipsForDisplay(tripTips);
   }, [liveTripTips, tripTips]);
 
@@ -118,58 +122,30 @@ export default function TripResultsPanel({
     recommendations,
   }), [origin, dest, stops, roadStops, routeInfo, departureTime, answers, optionalStopCards, activitiesByCity, restaurantsByCity, recommendations]);
 
-  const hosCompliance = useMemo(() => {
-    if (!isTruckerTrip(answers)) return null;
-    const hours = parseHoursFromDuration(routeInfo?.duration);
-    return hours ? computeHOSCompliance(hours) : null;
-  }, [answers, routeInfo]);
-
-  const hosLine = useMemo(
-    () => (hosCompliance ? formatHosSummaryLine(hosCompliance, routeInfo) : null),
-    [hosCompliance, routeInfo],
-  );
-
-  const scrollToTimelineStop = useCallback((stopId) => {
-    const el = stopRefs.current[stopId];
-    const container = timelineScrollRef.current;
-    if (!el || !container) return;
-    const top = el.offsetTop - 8;
-    container.scrollTo({ top, behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    onRegisterTimelineScroller?.(scrollToTimelineStop);
-  }, [onRegisterTimelineScroller, scrollToTimelineStop]);
-
-  const scrollToDay = useCallback((index) => {
+  function scrollToDay(index) {
     onDaySelect?.(index);
-    const stopId = firstStopIdForDay(days[index]);
-    if (stopId) scrollToTimelineStop(stopId);
-  }, [days, onDaySelect, scrollToTimelineStop]);
+    dayRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   useEffect(() => {
     if (!highlightedStopId) return;
-    scrollToTimelineStop(highlightedStopId);
-  }, [highlightedStopId, scrollToTimelineStop]);
+    const el = stopRefs.current[highlightedStopId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedStopId]);
 
   return (
-    <div className={`trip-results-panel trip-results-panel-${theme || "night"} trip-results-layout${panelClassName ? ` ${panelClassName}` : ""}${planOutOfDate ? " trip-results-stale" : ""}`}>
+    <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate${panelClassName ? ` ${panelClassName}` : ""}${planOutOfDate ? " trip-results-stale" : ""}`}>
       <header className="trip-results-topbar trip-results-topbar-with-logo">
         <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit plan</button>
         <div className="trip-results-topbar-title">Your Trip</div>
         <button type="button" className="trip-results-map-btn" onClick={onViewMap}>View on Map</button>
       </header>
 
-      <div className="trip-results-body">
-        <div className="trip-results-fixed-top">
-          {routeOptimized && (
-            <div className="trip-route-optimized-notice trip-route-optimized-notice-compact" role="status">
-              Overnight stops reordered for a shorter drive.
-            </div>
-          )}
-
+      <div className="trip-results-shell">
+        <div className="trip-results-sticky-summary">
           <TripOverviewHero
-            compact
             origin={origin}
             dest={dest}
             routeInfo={routeInfo}
@@ -177,28 +153,19 @@ export default function TripResultsPanel({
             stops={stops}
             roadStops={roadStops}
             answers={answers}
-            days={days}
+            tripLegs={tripLegs}
+            selectedLodging={selectedLodging}
+            restaurantsByCity={restaurantsByCity}
           />
-
-          {hosLine && (
-            <p className="results-truck-hos-line" role="status">{hosLine}</p>
-          )}
-
-          {days.length > 1 && (
-            <RouteProgressBar
-              days={days}
-              activeDayIndex={activeDayIndex}
-              onDaySelect={scrollToDay}
-            />
-          )}
-
-          <PersonalTouchesStrip touches={personalTouches} changesMade={changesMade} />
         </div>
 
-        <div className="trip-results-timeline-scroll" ref={timelineScrollRef}>
+        <div className="trip-results-scroll" ref={scrollRef}>
           {showGuestBanner && (
             <GuestSignupBanner onSignUp={onGuestSignUp} onDismiss={onDismissGuestBanner} />
           )}
+
+          <PlannedForYouSection touches={personalTouches} changesMade={changesMade} />
+          <PersonalTouchesStrip touches={personalTouches} changesMade={changesMade} />
 
           <WeatherWarningBanner alerts={tripAlerts} />
 
@@ -222,6 +189,21 @@ export default function TripResultsPanel({
             onCancel={onCancelEnrichment}
           />
 
+          {!simplified && days.length > 1 && (
+            <div className="route-progress-sticky-wrap">
+              <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
+            </div>
+          )}
+
+          <TripTipsSection
+            tips={displayTips}
+            updatedAt={liveTipsUpdatedAt}
+            refreshing={liveTipsRefreshing}
+            onAcceptActionTip={onAcceptActionTip}
+            onDismissActionTip={onDismissActionTip}
+            dismissedActionIds={dismissedActionTipIds}
+          />
+
           {enrichingTrip && <ResultsEnrichmentSkeleton theme={theme} />}
 
           {continuousDrive && (
@@ -234,37 +216,68 @@ export default function TripResultsPanel({
             />
           )}
 
-          <JourneyTimeline
-            waypoints={waypoints}
-            routeLegs={routeLegs}
-            stopRefs={stopRefs}
-            highlightedStopId={highlightedStopId}
-            expandedStopId={expandedStopId}
-            onExpandedStopIdChange={onExpandedStopIdChange}
-            onStopSelect={onStopSelect}
-            onReorder={onReorder}
-            restaurantsByCity={restaurantsByCity}
-            isStopAdded={isStopAdded}
-            onAddRoadStop={onAddRoadStop}
-            onRemoveRoadStop={onRemoveRoadStop}
-            onLodgingSelect={onLodgingSelect}
-            onNavigateToStop={onNavigateToStop}
-            onToast={onToast}
-            showTruckWarnings={isTruckerTrip(answers)}
-          />
-
-          <TripTipsSection
-            tips={displayTips}
-            updatedAt={liveTipsUpdatedAt}
-            refreshing={liveTipsRefreshing}
-            onAcceptActionTip={onAcceptActionTip}
-            onDismissActionTip={onDismissActionTip}
-            dismissedActionIds={dismissedActionTipIds}
-          />
-
-          <p className="trip-results-places-attribution" aria-label="Google attribution">
-            Restaurant and lodging details from Google
-          </p>
+          {simplified ? (
+            <SimpleTripSection
+              days={days}
+              stops={stops}
+              roadStops={roadStops}
+              recommendations={recommendations}
+              answers={answers}
+              origin={origin}
+              dest={dest}
+              routeInfo={routeInfo}
+              weatherByCity={weatherByCity}
+              restaurantsByCity={restaurantsByCity}
+              selectedLodging={selectedLodging}
+              continuousDrive={continuousDrive}
+              onLodgingSelect={onLodgingSelect}
+              onToast={onToast}
+              onAddRoadStop={onAddRoadStop}
+              onRemoveRoadStop={onRemoveRoadStop}
+              isStopAdded={isStopAdded}
+              highlightedStopId={highlightedStopId}
+              stopRefs={stopRefs}
+              onStopSelect={onStopSelect}
+              departureTime={departureTime}
+              groceryAllowed={groceryAllowed}
+              accessToken={accessToken}
+              onUpgradeGrocery={onUpgradeGrocery}
+              isGuest={isGuest}
+              onGrocerySignIn={onGrocerySignIn}
+            />
+          ) : (
+            days.map((day, i) => (
+              <ResultsDaySection
+                key={day.dayNumber}
+                day={day}
+                answers={answers}
+                origin={origin}
+                dest={dest}
+                routeInfo={routeInfo}
+                selectedLodging={selectedLodging}
+                continuousDrive={continuousDrive}
+                weatherByCity={weatherByCity}
+                restaurantsByCity={restaurantsByCity}
+                onLodgingSelect={onLodgingSelect}
+                onToast={onToast}
+                onAddRoadStop={onAddRoadStop}
+                onRemoveRoadStop={onRemoveRoadStop}
+                isStopAdded={isStopAdded}
+                highlightedStopId={highlightedStopId}
+                stopRefs={stopRefs}
+                onStopSelect={onStopSelect}
+                sectionRef={el => { dayRefs.current[i] = el; }}
+                showGroceryCard={i === days.length - 1}
+                stops={stops}
+                departureTime={departureTime}
+                groceryAllowed={groceryAllowed}
+                accessToken={accessToken}
+                onUpgradeGrocery={onUpgradeGrocery}
+                isGuest={isGuest}
+                onGrocerySignIn={onGrocerySignIn}
+              />
+            ))
+          )}
         </div>
 
         <ResultsActionBar

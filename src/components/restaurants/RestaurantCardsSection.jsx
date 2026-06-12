@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import { fetchRestaurantsForStop } from "../../lib/restaurantsClient.js";
 import { isRestaurantPreloadInFlight, subscribeRestaurantPreload } from "../../lib/tripEnrichment.js";
 import { selectDisplayRestaurants } from "../../lib/restaurantPlaces.js";
+import { isOpenOrOpeningWithinTwoHours } from "../../lib/restaurantHours.js";
 import RestaurantCard from "./RestaurantCard.jsx";
 import RestaurantCardSkeleton from "./RestaurantCardSkeleton.jsx";
+
+function filterOpenTonightRestaurants(list, estimatedArrival, overnightMode) {
+  if (!overnightMode || !Array.isArray(list)) return list;
+  const arrival = estimateArrival(estimatedArrival);
+  return list.filter(r => isOpenOrOpeningWithinTwoHours(r, arrival));
+}
 
 function estimateArrival(estimatedArrival) {
   if (estimatedArrival instanceof Date && !Number.isNaN(estimatedArrival.getTime())) {
@@ -25,13 +32,16 @@ export default function RestaurantCardsSection({
 }) {
   const hasPreload = preloaded !== undefined && preloaded !== null;
   const [loading, setLoading] = useState(!hasPreload);
-  const [restaurants, setRestaurants] = useState(() => (
-    hasPreload ? selectDisplayRestaurants(Array.isArray(preloaded) ? preloaded : []) : []
-  ));
+  const [restaurants, setRestaurants] = useState(() => {
+    if (!hasPreload) return [];
+    const list = filterOpenTonightRestaurants(Array.isArray(preloaded) ? preloaded : [], estimatedArrival, overnightMode);
+    return selectDisplayRestaurants(list, { arrivalTime: estimateArrival(estimatedArrival) });
+  });
   const [status, setStatus] = useState(() => {
     if (hasPreload) {
-      const list = Array.isArray(preloaded) ? preloaded : [];
-      return list.length ? "ready" : "empty";
+      const list = filterOpenTonightRestaurants(Array.isArray(preloaded) ? preloaded : [], estimatedArrival, overnightMode);
+      const display = selectDisplayRestaurants(list, { arrivalTime: estimateArrival(estimatedArrival) });
+      return display.length ? "ready" : "empty";
     }
     return "loading";
   });
@@ -41,10 +51,11 @@ export default function RestaurantCardsSection({
 
   useEffect(() => {
     if (preloaded !== undefined && preloaded !== null) {
-      const list = Array.isArray(preloaded) ? preloaded : [];
-      setRestaurants(selectDisplayRestaurants(list, { arrivalTime: estimateArrival(estimatedArrival) }));
+      const list = filterOpenTonightRestaurants(Array.isArray(preloaded) ? preloaded : [], estimatedArrival, overnightMode);
+      const display = selectDisplayRestaurants(list, { arrivalTime: estimateArrival(estimatedArrival) });
+      setRestaurants(display);
       setLoading(false);
-      setStatus(list.length ? "ready" : "empty");
+      setStatus(display.length ? "ready" : "empty");
       return undefined;
     }
     if (!city) {
@@ -81,13 +92,15 @@ export default function RestaurantCardsSection({
         setRestaurants([]);
         setStatus("empty");
       } else {
-        setRestaurants(selectDisplayRestaurants(result.restaurants, { arrivalTime: estimateArrival(estimatedArrival) }));
-        setStatus("ready");
+        const list = filterOpenTonightRestaurants(result.restaurants, estimatedArrival, overnightMode);
+        const display = selectDisplayRestaurants(list, { arrivalTime: estimateArrival(estimatedArrival) });
+        setRestaurants(display);
+        setStatus(display.length ? "ready" : "empty");
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [city, lat, lng, answers, preloaded, preloadRevision, estimatedArrival]);
+  }, [city, lat, lng, answers, preloaded, preloadRevision, estimatedArrival, overnightMode]);
 
   if (!city) return null;
 
