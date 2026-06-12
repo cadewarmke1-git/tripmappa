@@ -1,6 +1,6 @@
 import { isContinuousDrive } from "../lib/driveMode.js";
 import { formatFlowAnswer } from "../lib/tripFlow.js";
-import { isScenicRoute } from "../lib/vehicles.js";
+import { formatTravelersLabel, isScenicRoute } from "../lib/vehicles.js";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
 export default function PlanRouteCard({
@@ -17,7 +17,7 @@ export default function PlanRouteCard({
 
   const defaultChips = [
     answers.vehicle,
-    answers.travelers && `${answers.travelers} traveler${answers.travelers === "1" ? "" : "s"}`,
+    formatTravelersLabel(answers.travelers),
     isScenicRoute(answers) && "Scenic",
     isContinuousDrive(answers) && "Straight through",
     answers.overnight_preference === "Stop overnight along the way" && "Overnights",

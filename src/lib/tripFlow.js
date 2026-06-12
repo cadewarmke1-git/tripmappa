@@ -5,6 +5,9 @@ import {
   applyAssumedVehicleSpecs,
   getEffectiveVehicle,
   MULTI_VEHICLE_TRIP,
+  TRAVELER_COUNT_CHOICES,
+  formatTravelersLabel,
+  isGroupTravelersBand,
 } from "./vehicles.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import {
@@ -205,6 +208,9 @@ export function formatFlowAnswer(question, answer) {
     const loyalty = question._loyalty || "";
     return loyalty && loyalty !== "No preference" ? `${answer} · ${loyalty}` : String(answer);
   }
+  if (question.id === "travelers" || question.type === "travelers") {
+    return formatTravelersLabel(answer) || "—";
+  }
   if (question.id === "party_composition" || question.type === "party_composition") {
     const payload = answer && typeof answer === "object" ? answer : {};
     const adults = payload.adults ?? payload.adult_count;
@@ -252,12 +258,7 @@ const TRAVELERS_QUESTION = {
   ask: "How many are joining you?",
   hint: "Helps us pick the right-sized restaurants, rooms, and rest stops.",
   type: "travelers",
-  choices: [
-    { value: "1", label: "Just me" },
-    { value: "2", label: "2 travelers" },
-    "3 to 5",
-    "6 or more",
-  ],
+  choices: TRAVELER_COUNT_CHOICES,
 };
 
 const PARTY_COMPOSITION_QUESTION = {
@@ -278,8 +279,7 @@ const TRIP_NIGHTS_QUESTION = {
 };
 
 function needsPartyCompositionQuestion(answers) {
-  const t = answers.travelers;
-  if (t !== "3 to 5" && t !== "6 or more") return false;
+  if (!isGroupTravelersBand(answers.travelers)) return false;
   return answers.adult_count == null || answers.child_count == null;
 }
 
@@ -1097,7 +1097,7 @@ export function pruneStaleBranchAnswers(answers, context = {}) {
   if (!needsKidsAgesDetail(out)) {
     delete out.kids_ages;
   }
-  if (out.travelers !== "3 to 5" && out.travelers !== "6 or more") {
+  if (!isGroupTravelersBand(out.travelers)) {
     delete out.adult_count;
     delete out.child_count;
   }

@@ -12,6 +12,7 @@ import MapZoomControls from "./map/MapZoomControls.jsx";
 import MapBackToTripButton from "./map/MapBackToTripButton.jsx";
 import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
 import HighlightRouteLeg from "./map/HighlightRouteLeg.jsx";
+import NavigationCarMarker from "./map/NavigationCarMarker.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
 import { resolveMapStyles, applyMapThemeStyles } from "../lib/mapStyles.js";
 
@@ -54,6 +55,7 @@ export default function AppMap({
   highlightedLegPath = [],
   inAppNavigationOnly = false,
   routeFocusMode = false,
+  showNavigationCar = false,
 }) {
   const theme = themeProp ?? "night";
   const [selectedMarker, setSelectedMarker] = useState(null);
@@ -61,8 +63,11 @@ export default function AppMap({
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
   const activeRoutePath = useMemo(() => {
     if (truckRoutePath?.length > 1) return truckRoutePath;
-    return directionsPath;
-  }, [truckRoutePath, directionsPath]);
+    if (directionsPath?.length > 1) return directionsPath;
+    if (routePoints?.length > 1) return routePoints;
+    if (routeInfo?.routePoints?.length > 1) return routeInfo.routePoints;
+    return [];
+  }, [truckRoutePath, directionsPath, routePoints, routeInfo?.routePoints]);
   const mapStyles = useMemo(() => resolveMapStyles(mapStyle, theme), [mapStyle, theme]);
   const mapOptions = useMemo(() => ({
     disableDefaultUI: false,
@@ -150,6 +155,10 @@ export default function AppMap({
             {activeRoutePath.length > 1 && (
               <AnimatedRoutePath path={activeRoutePath} />
             )}
+            <NavigationCarMarker
+              path={activeRoutePath}
+              visible={showNavigationCar || routeFocusMode}
+            />
             {highlightedLegPath.length > 1 && (
               <HighlightRouteLeg path={highlightedLegPath} />
             )}

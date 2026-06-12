@@ -10,6 +10,10 @@ import * as THREE from "three";
 const GOLD = "#FFD28C";
 const ORANGE = "#FF8C42";
 const TAILLIGHT = "#ff6b4a";
+const VEHICLE_MAT = { roughness: 0.4, metalness: 0.3 };
+const CELESTIAL_DISTANCE = 140;
+const MOON_MAX_RADIUS = 5;
+const MIN_CELESTIAL_ELEVATION = (30 * Math.PI) / 180;
 
 const SKY_PHASE_MAP = {
   night: "night",
@@ -166,7 +170,7 @@ function buildingColorForPhase(scenePhase) {
 function SceneFog({ color }) {
   const { scene } = useThree();
   useEffect(() => {
-    scene.fog = new THREE.Fog(color, 5, 28);
+    scene.fog = new THREE.Fog(color, 18, 160);
     return () => {
       scene.fog = null;
     };
@@ -248,17 +252,19 @@ function Stars({ visible }) {
 
 function Celestial({ phase, palette }) {
   const ref = useRef(null);
+  const radius = phase === "night" ? MOON_MAX_RADIUS * 0.85 : MOON_MAX_RADIUS;
+  const baseY = CELESTIAL_DISTANCE * Math.tan(MIN_CELESTIAL_ELEVATION);
   useFrame(({ clock }) => {
     const m = ref.current;
     if (!m) return;
     const t = clock.elapsedTime;
-    m.position.x = -3.5 + Math.sin(t * 0.08) * 0.4;
-    m.position.y = phase === "night" ? 2.4 + Math.sin(t * 0.15) * 0.15 : 1.8 + Math.sin(t * 0.12) * 0.2;
-    m.position.z = -5.2;
+    m.position.x = -CELESTIAL_DISTANCE * 0.22 + Math.sin(t * 0.08) * 2;
+    m.position.y = baseY + Math.sin(t * 0.12) * 1.5;
+    m.position.z = -CELESTIAL_DISTANCE;
   });
   return (
     <mesh ref={ref}>
-      <sphereGeometry args={[phase === "night" ? 0.35 : 0.5, 20, 20]} />
+      <sphereGeometry args={[radius, 32, 32]} />
       <meshBasicMaterial color={palette.celestial} fog={false} />
     </mesh>
   );
@@ -283,30 +289,30 @@ function RoadSurface({ palette }) {
   );
 }
 
-function LaneDashes({ palette, speed = 2.4 }) {
+function LaneDashes({ speed = 2.4 }) {
   const dashes = useMemo(() => Array.from({ length: 20 }, (_, i) => i), []);
   return (
     <group>
       {dashes.map(i => (
-        <LaneDash key={i} index={i} color={palette.lane} speed={speed} />
+        <LaneDash key={i} index={i} speed={speed} />
       ))}
     </group>
   );
 }
 
-function LaneDash({ index, color, speed }) {
+function LaneDash({ index, speed }) {
   const ref = useRef(null);
   useFrame(({ clock }) => {
     const m = ref.current;
     if (!m) return;
     const t = clock.elapsedTime * speed + index * 1.1;
-    const z = -((t % 26) - 13);
+    const z = (t % 26) - 13;
     m.position.set(0, -1.245, z);
   });
   return (
     <mesh ref={ref}>
       <boxGeometry args={[0.12, 0.005, 0.78]} />
-      <meshBasicMaterial color={color} />
+      <meshBasicMaterial color={GOLD} />
     </mesh>
   );
 }
@@ -347,20 +353,26 @@ function ScrollingBuildings({ palette, scenePhase, speed = 2.6 }) {
   return (
     <instancedMesh ref={meshRef} args={[null, null, BUILDING_COUNT]} frustumCulled={false}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={buildingColor} roughness={0.88} metalness={0.04} />
+      <meshStandardMaterial
+        color={buildingColor}
+        emissive={buildingColor}
+        emissiveIntensity={0.08}
+        roughness={0.88}
+        metalness={0.04}
+      />
     </instancedMesh>
   );
 }
 
-function Wheel({ position, speed = 9 }) {
+function Wheel({ position, speed = 9, scale = 1 }) {
   const ref = useRef(null);
   useFrame(({ clock }) => {
     if (ref.current) ref.current.rotation.x = clock.elapsedTime * speed;
   });
   return (
-    <mesh ref={ref} position={position} rotation={[0, 0, Math.PI / 2]}>
-      <cylinderGeometry args={[0.038, 0.038, 0.028, 10]} />
-      <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+    <mesh ref={ref} position={position} rotation={[0, 0, Math.PI / 2]} scale={scale}>
+      <cylinderGeometry args={[0.038, 0.038, 0.028, 16]} />
+      <meshStandardMaterial color="#1a1a1a" roughness={0.55} metalness={0.2} />
     </mesh>
   );
 }
@@ -403,12 +415,12 @@ function VehicleMesh({ vehicleKind }) {
     return (
       <group>
         <mesh position={[0, 0.08, 0.05]}>
-          <boxGeometry args={[0.3, 0.13, 0.5]} />
-          <meshStandardMaterial color={GOLD} roughness={0.55} metalness={0.1} />
+          <boxGeometry args={[0.3, 0.13, 0.5, 2, 2, 2]} />
+          <meshStandardMaterial color={GOLD} {...VEHICLE_MAT} />
         </mesh>
         <mesh position={[0, 0.11, -0.32]}>
-          <boxGeometry args={[0.24, 0.17, 0.34]} />
-          <meshStandardMaterial color={ORANGE} roughness={0.5} metalness={0.12} />
+          <boxGeometry args={[0.24, 0.17, 0.34, 2, 2, 2]} />
+          <meshStandardMaterial color={ORANGE} {...VEHICLE_MAT} />
         </mesh>
         <Wheel position={[-0.1, 0.02, 0.18]} />
         <Wheel position={[0.1, 0.02, 0.18]} />
@@ -488,18 +500,22 @@ function VehicleMesh({ vehicleKind }) {
   }
   return (
     <group>
-      <mesh position={[0, 0.08, 0]}>
-        <boxGeometry args={[0.22, 0.11, 0.36]} />
-        <meshStandardMaterial color={GOLD} roughness={0.5} metalness={0.1} />
+      <mesh position={[0, 0.04, 0.02]}>
+        <boxGeometry args={[0.42, 0.09, 0.58, 2, 2, 2]} />
+        <meshStandardMaterial color={GOLD} {...VEHICLE_MAT} />
       </mesh>
-      <mesh position={[0, 0.1, -0.14]}>
-        <boxGeometry args={[0.18, 0.09, 0.14]} />
-        <meshStandardMaterial color={ORANGE} roughness={0.5} />
+      <mesh position={[0, 0.1, -0.2]} rotation={[0.42, 0, 0]}>
+        <boxGeometry args={[0.34, 0.05, 0.22, 2, 2, 2]} />
+        <meshStandardMaterial color={ORANGE} {...VEHICLE_MAT} />
       </mesh>
-      <Wheel position={[-0.08, 0.02, 0.12]} />
-      <Wheel position={[0.08, 0.02, 0.12]} />
-      <Wheel position={[-0.08, 0.02, -0.12]} />
-      <Wheel position={[0.08, 0.02, -0.12]} />
+      <mesh position={[0, 0.13, 0.08]}>
+        <boxGeometry args={[0.3, 0.05, 0.28, 2, 2, 2]} />
+        <meshStandardMaterial color={GOLD} {...VEHICLE_MAT} />
+      </mesh>
+      <Wheel position={[-0.14, 0.02, 0.2]} />
+      <Wheel position={[0.14, 0.02, 0.2]} />
+      <Wheel position={[-0.14, 0.02, -0.22]} />
+      <Wheel position={[0.14, 0.02, -0.22]} />
       <Taillights />
     </group>
   );
@@ -522,8 +538,8 @@ function Vehicles({ vehicleKind, worldKind, scenePhase }) {
       g.position.set(sway * 0.4, -1.16 + Math.sin(t * 1.4) * 0.05, 0.5);
       g.rotation.set(Math.sin(t * 1.1) * 0.03, 0, Math.sin(t * 0.8) * 0.04);
     } else {
-      g.position.set(sway * 0.25, -1.22, 0.75);
-      g.rotation.set(0, 0, Math.sin(t * 1.3) * 0.015);
+      g.position.set(sway * 0.25, -1.22, -1.6);
+      g.rotation.set(0, Math.PI, Math.sin(t * 1.3) * 0.015);
     }
   });
 
@@ -680,10 +696,10 @@ function CameraRig({ worldKind }) {
       state.camera.position.z = 4.6;
       state.camera.lookAt(0, -0.6, -1.5);
     } else {
-      state.camera.position.x = Math.sin(t * 0.2) * 0.08;
-      state.camera.position.y = 0.2 + Math.sin(t * 0.55) * 0.03;
-      state.camera.position.z = 4.8;
-      state.camera.lookAt(0, -0.35, -1.8);
+      state.camera.position.x = Math.sin(t * 0.2) * 0.1;
+      state.camera.position.y = 1.05 + Math.sin(t * 0.55) * 0.04;
+      state.camera.position.z = 3.4;
+      state.camera.lookAt(0, 0.02, -18);
     }
   });
   return null;
@@ -707,7 +723,7 @@ function CinematicScene({ scenePhase, vehicleKind }) {
         <>
           <RoadGround palette={palette} />
           <RoadSurface palette={palette} />
-          <LaneDashes palette={palette} />
+          <LaneDashes />
           <ScrollingBuildings palette={palette} scenePhase={scenePhase} />
         </>
       )}
@@ -1031,7 +1047,7 @@ export default function GenerationCinematicLoader({
       <Canvas
         dpr={dpr}
         frameloop={frameloop}
-        camera={{ position: [0, 0.2, 4.8], fov: 45, near: 0.1, far: 60 }}
+        camera={{ position: [0, 1.05, 3.4], fov: 45, near: 0.1, far: 200 }}
         gl={{ antialias: dpr[1] > 1, alpha: true, powerPreference: "high-performance" }}
         style={canvasStyle}
       >

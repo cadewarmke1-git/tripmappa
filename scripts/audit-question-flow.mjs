@@ -84,7 +84,7 @@ function applyAnswer(q, answers, options) {
   if (q.id === "route_restrictions") return { ...answers, route_restrictions: ["No restrictions"] };
   if (q.id === "coordination_needs") return { ...answers, coordination_needs: ["Stay together the whole way"] };
   if (q.id === "preferences") return { ...answers, preferences: [] };
-  if (q.id === "travelers") return { ...answers, travelers: "3 to 5" };
+  if (q.id === "travelers") return { ...answers, travelers: "3 to 5 travelers" };
   if (q.type === "party_composition") {
     return { ...answers, adult_count: 2, child_count: 1 };
   }

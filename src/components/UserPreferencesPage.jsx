@@ -8,6 +8,7 @@ import {
 } from "../lib/tripAccommodations.js";
 import { SCHEDULE_RESTRICTION_CHOICES } from "../lib/scheduleRestrictions.js";
 import { fetchPlanPreferences, savePlanPreferences } from "../lib/planPreferencesApi.js";
+import { TRAVELER_COUNT_CHOICES, formatTravelersLabel } from "../lib/vehicles.js";
 
 const VEHICLE_CHOICES = [
   "Car",
@@ -26,7 +27,7 @@ const LODGING_CHOICES = [
   "No lodging needed",
 ];
 
-const PARTY_CHOICES = ["1", "2", "3 to 5", "6 or more"];
+const PARTY_CHOICES = TRAVELER_COUNT_CHOICES;
 
 const SETUP_SECTIONS = [
   { id: "vehicle", label: "Vehicle type", key: "vehicle", choices: VEHICLE_CHOICES },
@@ -58,6 +59,7 @@ function summarizeValue(section, prefs) {
     if (value.length <= 2) return value.join(", ");
     return `${value.length} selected`;
   }
+  if (section.key === "travelers") return formatTravelersLabel(value) || "Not set";
   return value || "Not set";
 }
 
@@ -278,21 +280,29 @@ export default function UserPreferencesPage({
   );
 }
 
+function resolveChoice(choice) {
+  if (choice && typeof choice === "object" && choice.value != null) {
+    return { value: choice.value, label: choice.label ?? choice.value };
+  }
+  return { value: choice, label: choice };
+}
+
 function ChoiceGrid({ choices, selected, onSelect, multi = false }) {
   return (
     <div className="user-preferences-choices">
       {choices.map(choice => {
+        const { value, label } = resolveChoice(choice);
         const active = multi
-          ? Array.isArray(selected) && selected.includes(choice)
-          : selected === choice;
+          ? Array.isArray(selected) && selected.includes(value)
+          : selected === value;
         return (
           <button
-            key={choice}
+            key={value}
             type="button"
             className={`user-preferences-choice${active ? " is-active" : ""}`}
-            onClick={() => onSelect(multi ? toggleInList(selected, choice) : choice)}
+            onClick={() => onSelect(multi ? toggleInList(selected, value) : value)}
           >
-            {choice}
+            {label}
           </button>
         );
       })}

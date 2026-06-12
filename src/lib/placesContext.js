@@ -309,7 +309,7 @@ export function formatPlacesContextForPrompt(ctx) {
     lines.push("\n- placesContext: none available — use corridor GPS boundary only; keep names generic if unsure");
     return lines.join("\n");
   }
-  lines.push("\nVERIFIED PLACES CONTEXT (use ONLY these real business names when suggesting stops in matching areas):");
+  lines.push("\nVERIFIED PLACES CONTEXT (corridor samples span the FULL route from origin to destination — use stops from multiple samples, not only the last sample):");
   ctx.corridor?.forEach((seg, i) => {
     lines.push(`Corridor sample ${i + 1} @ ${seg.lat?.toFixed(4)}, ${seg.lng?.toFixed(4)}:`);
     if (seg.gasStations?.length) lines.push(`  Gas: ${seg.gasStations.map(g => `${g.name}${g.rating ? ` (${g.rating}★)` : ""}`).join(", ")}`);

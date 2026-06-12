@@ -21,6 +21,13 @@ import {
 import { readUserTripPreferences, formatPreferencesForPrompt } from "./user-trip-preferences.js";
 import { calculateMaxTokens } from "../lib/planTripTokens.js";
 import { normalizeTripResponse } from "../lib/tripResponseNormalize.js";
+import { buildCorridorDistributionRules } from "../lib/corridorStopDistribution.js";
+import {
+  parseTravelerCount,
+  isGroupTravelersBand,
+  isSoloTraveler,
+  formatTravelersLabel,
+} from "../../src/lib/vehicles.js";
 import { buildGenerationLogRow, logGenerationUsage } from "../lib/generationLogs.js";
 import { logPlanTripDev } from "../lib/apiLog.js";
 import {
@@ -90,11 +97,11 @@ function buildTravelerProfile(answers) {
   const youngKids = Array.isArray(answers?.accessibility) && answers.accessibility.includes("Traveling with young children");
   const elderly = Array.isArray(answers?.accessibility) && answers.accessibility.includes("Traveling with elderly passengers");
   if (youngKids) return "Family with young children";
-  if (t === "1") return "Solo traveler";
-  if (t === "2" && !youngKids) return "Couple";
-  if (t === "3 to 5" || t === "6 or more") return youngKids ? "Family group" : "Group travelers";
+  if (isSoloTraveler(t)) return "Solo traveler";
+  if ((t === "2" || t === "2 travelers") && !youngKids) return "Couple";
+  if (isGroupTravelersBand(t)) return youngKids ? "Family group" : "Group travelers";
   if (elderly) return "Travelers including elderly passengers";
-  return t ? `${t} travelers` : "Not specified";
+  return formatTravelersLabel(t) || "Not specified";
 }
 
 function classifyTrip(answers, vehicle, rawVehicle) {
@@ -180,14 +187,7 @@ function buildTripContext(reqBody) {
     tripCategory,
     truckRestrictions: Array.isArray(routeInfo.restrictions) ? routeInfo.restrictions : [],
     weighStationCount: Array.isArray(routeInfo.weighStations) ? routeInfo.weighStations.length : 0,
-    partySize: (() => {
-      const t = answers.travelers;
-      if (t === "1") return 1;
-      if (t === "2") return 2;
-      if (t === "3 to 5") return 4;
-      if (t === "6 or more") return 6;
-      return null;
-    })(),
+    partySize: parseTravelerCount(answers.travelers),
   };
 }
 
@@ -488,6 +488,7 @@ ${ctx.scheduleRestrictions.join("; ")}${ctx.scheduleDriveHours ? `\nPreferred dr
   return `
 === UNIVERSAL RULES (every trip) ===
 ${placesContextPrompt || ""}
+${buildCorridorDistributionRules({ ...ctx, routeDistanceMiles: ctx.routeMiles })}
 PLACES DATA RULE: For road_stops and named businesses, use ONLY verified names from placesContext in this request. Never invent business names. If placesContext has no match, use stop city and category only — do NOT fabricate a brand name.
 CORRIDOR RULE: Every stop must be a real place along the driving corridor between ${ctx.routeOrigin} and ${ctx.routeDestination}, within 10 miles of the highway — no significant detours.
 CITY FORMAT: Every stop city as "City, ST" (full city name and two-letter state).
@@ -660,6 +661,7 @@ Overnight stops to generate on THIS leg only: ${segment.overnightCount}
 Corridor cities for this leg: ${segment.citiesAlongRoute.join(" → ")}
 ${segment.isFirstSegment ? "This is the FIRST leg — include departure context from the trip origin." : ""}
 ${segment.isLastSegment ? "This is the FINAL leg — the segment destination is the trip's final destination." : "Include exactly one overnight stop at the end of this leg."}
+Distribute road_stops along THIS leg's corridor (${segment.origin} → ${segment.destination}) — not only at ${segment.destination}. Mid-leg fuel, food, and rest stops are required when leg distance exceeds 120 miles.
 ${ctx.tripCategory === "commercial" ? "Generate ONLY truck stops, motels (if no sleeper), road_stops, safety warnings, and HOS summary for THIS leg. Max 3 road_stops, max 3 weigh stations, max 2 motels per overnight city." : "Generate ONLY stops, hotels, restaurants, and road_stops for THIS leg."} Do NOT plan other legs of the journey.`;
 }
 

@@ -36,7 +36,9 @@ html body .app-wrap.day .plan-panel-dock .route-footer {
 }
 
 html body .app-wrap.day .chat-wrap-plan-flow .ai-bubble,
-html body .app-wrap.day .chat-wrap-plan-flow .question-page-title {
+html body .app-wrap.day .chat-wrap-plan-flow .question-page-title,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-flow-question-title,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-heading {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -45,8 +47,21 @@ html body .app-wrap.day .chat-wrap-plan-flow .question-page-title {
 
 html body .app-wrap.day .chat-wrap-plan-flow .question-page-subtitle,
 html body .app-wrap.day .chat-wrap-plan-flow .question-hint,
-html body .app-wrap.day .chat-wrap-plan-flow .scenic-route-note {
+html body .app-wrap.day .chat-wrap-plan-flow .scenic-route-note,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-flow-question-hint,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-subtitle {
   color: rgba(26, 13, 0, 0.72) !important;
+}
+
+html body .app-wrap.day .chat-wrap-plan-flow .plan-flow-step-label,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-eyebrow,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-fuel-label,
+html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-fuel-note {
+  color: rgba(26, 13, 0, 0.55) !important;
+}
+
+html body .app-wrap.day .chat-wrap-plan-flow .plan-flow-answer-sidebar--ready {
+  background: rgba(0, 0, 0, 0.03) !important;
 }
 
 html body .app-wrap.day .qr-btn {

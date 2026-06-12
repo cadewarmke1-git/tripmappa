@@ -14,11 +14,11 @@ import {
   guardTokenWriteRoute,
   isValidInviteToken,
 } from "../lib/apiSecurity.js";
+import { isSoloTraveler } from "../../src/lib/vehicles.js";
 
 function isSoloTripSnapshot(snapshot = {}) {
   const answers = snapshot?.answers && typeof snapshot.answers === "object" ? snapshot.answers : snapshot;
-  const travelers = answers?.travelers;
-  return travelers === "1" || travelers === 1;
+  return isSoloTraveler(answers?.travelers);
 }
 
 function redactInvitees(invitees, includePii) {

@@ -1,5 +1,11 @@
 /** Generation context: recent trips, preference fallbacks, graceful degradation. */
-import { getEffectiveVehicle, isTruckVehicle, isWaterVehicle, MULTI_VEHICLE_TRIP } from "./vehicles.js";
+import {
+  getEffectiveVehicle,
+  isTruckVehicle,
+  isWaterVehicle,
+  MULTI_VEHICLE_TRIP,
+  formatTravelersLabel,
+} from "./vehicles.js";
 import { asArray } from "./tripAccommodations.js";
 import {
   getScheduleRestrictionLabels,
@@ -116,7 +122,7 @@ export function formatScheduleConstraintForHints(answers = {}) {
 export function formatTravelersContextLines(answers = {}) {
   if (!answers.travelers && answers.adult_count == null) return [];
 
-  let line = `Travelers: ${answers.travelers || "Not specified"}`;
+  let line = `Travelers: ${formatTravelersLabel(answers.travelers) || "Not specified"}`;
   if (answers.adult_count != null && answers.child_count != null) {
     const adults = Number(answers.adult_count);
     const children = Number(answers.child_count);
@@ -190,7 +196,7 @@ function tripHasPetFriendly(answers = {}) {
 
 function formatPartySummary(answers = {}) {
   if (!answers.travelers && answers.adult_count == null) return null;
-  let line = answers.travelers || "Not specified";
+  let line = formatTravelersLabel(answers.travelers) || "Not specified";
   if (answers.adult_count != null && answers.child_count != null) {
     const adults = Number(answers.adult_count);
     const children = Number(answers.child_count);

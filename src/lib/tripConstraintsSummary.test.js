@@ -111,7 +111,7 @@ describe("tripConstraintsSummary", () => {
   it("includes travelers, party split, kids ages, nights, and pet constraint", () => {
     const hints = formatGenerationHints({
       vehicle: "Car",
-      travelers: "3 to 5",
+      travelers: "3 to 5 travelers",
       adult_count: 2,
       child_count: 2,
       kids_ages: ["Toddlers (2-4)", "Young children (5-10)"],
@@ -123,7 +123,7 @@ describe("tripConstraintsSummary", () => {
       trip_budget: "No budget limit",
       stops_interests: [],
     });
-    expect(hints).toContain("Travelers: 3 to 5 (2 adults, 2 children)");
+    expect(hints).toContain("Travelers: 3 to 5 travelers (2 adults, 2 children)");
     expect(hints).toContain("including children ages: Toddlers (2-4), Young children (5-10)");
     expect(hints).toContain("Planned overnight stops: 2 nights");
     expect(hints).toContain("Traveling with a pet — all stop and lodging recommendations must be pet-friendly");

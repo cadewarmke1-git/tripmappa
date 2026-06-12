@@ -1,12 +1,11 @@
-/** Floating planner panel — question flow and budget (footer docked in App.jsx). */
+/** Floating planner panel — question flow and ready screen (footer docked in App.jsx). */
 import { isScenicRoute } from "../lib/vehicles.js";
-import BudgetCard from "./BudgetCard.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
-import SummaryCard from "./SummaryCard.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 import QuestionAnswerSidebar from "./QuestionAnswerSidebar.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
 import PlanGuestInvite from "./PlanGuestInvite.jsx";
+import PlanFuelEstimateFooter from "./PlanFuelEstimateFooter.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
@@ -43,9 +42,6 @@ export default function PlanPanel({
   planOutOfDate = false,
   planChanges = [],
   generationError = null,
-  roadStops,
-  selectedLodging,
-  restaurantsByCity = {},
   convoEndRef,
   convoScrollRef,
   creditsLabel,
@@ -81,6 +77,43 @@ export default function PlanPanel({
     || currentQuestion?.type === "trip_details"
     || (currentQuestion?.type === "multiselect" && planFlowLayout === "tall")
   );
+  const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm
+    && !showGuestSignInGate && !convoComplete;
+  const showFlowSidebar = inQuestionFlow && questionHistory.length > 0 && !convoComplete;
+  const showReadySidebar = inQuestionFlow && convoComplete && questionHistory.length > 0;
+
+  function renderGenerateButton({ className = "btn-generate-trip btn-generate-trip--pulse" } = {}) {
+    if (creditsExhausted && onUpgrade) {
+      return (
+        <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
+          Upgrade for more generations — Trailblazer includes 100/mo
+        </button>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className={className}
+        onMouseEnter={warmGenerationLoader}
+        onFocus={warmGenerationLoader}
+        onClick={() => { triggerPrimaryHaptic(); onGenerateTrip?.(); }}
+        disabled={loading}
+      >
+        {loading ? (
+          <RouteDrawingLoader variant="button" />
+        ) : (
+          <>
+            Generate My Trip →
+            {creditsLabel && (
+              <span className="generate-credits-badge" style={{ color: "var(--text-secondary)" }}>
+                {creditsLabel}
+              </span>
+            )}
+          </>
+        )}
+      </button>
+    );
+  }
 
   return (
     <div className={`chat-wrap chat-wrap-plan${inQuestionFlow ? " chat-wrap-plan-flow" : ""}`}>
@@ -159,142 +192,149 @@ export default function PlanPanel({
           <div className="plan-view">
             {(currentQuestion || qIndex === -2) && (
               <div className={`plan-flow-stack${convoComplete ? " plan-flow-stack-payoff" : ""}${planFlowLayout === "sparse" ? " plan-flow-stack--sparse" : ""}`}>
-                <div className="plan-flow-body">
-                  <div className="plan-flow-main">
-                    <div
-                      className={`ai-msg plan-flow-current plan-flow-layout--${planFlowLayout}${convoComplete ? " ai-msg-payoff" : ""}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
-                    >
-                  {stepMessage && !showContinuousConfirm && !hideStepBubble && (
-                    <div className="ai-bubble">
-                      {stepMessage}
-                      {currentQuestion?.mediumTripHint && (
-                        <div className="question-hint">{currentQuestion.mediumTripHint}</div>
+                {convoComplete && inQuestionFlow ? (
+                  <div className="plan-ready-screen">
+                    <div className="plan-ready-body">
+                      <div className="plan-ready-main">
+                        <p className="plan-ready-eyebrow">Your trip is ready to plan</p>
+                        <h2 className="plan-ready-heading">Let&apos;s build your perfect route</h2>
+                        <p className="plan-ready-subtitle">
+                          We&apos;ll find the best stops, restaurants, and overnight options along your drive
+                        </p>
+                        {renderGenerateButton({ className: "btn-generate-trip btn-generate-trip-ready btn-generate-trip--pulse" })}
+                        {creditsNudge && !creditsExhausted && (
+                          <p className="plan-credits-nudge plan-ready-credits-nudge">{creditsNudge}</p>
+                        )}
+                        {loading && onCancelGenerate && (
+                          <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                      {showReadySidebar && (
+                        <QuestionAnswerSidebar
+                          history={questionHistory}
+                          variant="ready"
+                          onEditQuestion={onEditQuestion}
+                        />
                       )}
-                      {currentQuestion?.hint && (
-                        <div className="question-hint">{currentQuestion.hint}</div>
-                      )}
-                      {isScenicRoute(answers) && (
-                        <div className="scenic-route-note" style={{ marginTop: inQuestionFlow ? 6 : 12 }}>
-                          I&apos;ll find the most scenic roads for your trip.
+                    </div>
+                    <PlanFuelEstimateFooter
+                      answers={answers}
+                      routeInfo={routeInfo}
+                      tripLegs={tripLegs}
+                    />
+                  </div>
+                ) : (
+                  <div className="plan-flow-body">
+                    <div className="plan-flow-main">
+                      {showQuestionHeader && (
+                        <div className="plan-flow-question-header">
+                          {showProgress && flowProgress && (
+                            <p className="plan-flow-step-label">
+                              Step {flowProgress.stepIndex} of {flowProgress.stepTotal} · {flowProgress.phaseLabel}
+                            </p>
+                          )}
+                          {!hideStepBubble && currentQuestion.ask && (
+                            <h2 className="plan-flow-question-title">{currentQuestion.ask}</h2>
+                          )}
+                          {!hideStepBubble && currentQuestion.hint && (
+                            <p className="plan-flow-question-hint">{currentQuestion.hint}</p>
+                          )}
+                          {!hideStepBubble && currentQuestion.mediumTripHint && (
+                            <p className="plan-flow-question-hint">{currentQuestion.mediumTripHint}</p>
+                          )}
+                          {!hideStepBubble && isScenicRoute(answers) && (
+                            <p className="plan-flow-question-hint scenic-route-note">
+                              I&apos;ll find the most scenic roads for your trip.
+                            </p>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
-                  {showContinuousConfirm && (
-                    <div className="ai-bubble">
-                      <p className="continuous-drive-confirm-msg">{continuousDriveConfirm.warn}</p>
-                      <p className="question-hint">
-                        Confirm you intend to drive straight through without an overnight stop.
-                      </p>
-                      <div className="pref-actions-row">
-                        <button
-                          type="button"
-                          className="btn-generate btn-generate-inline"
-                          disabled={frozen}
-                          onClick={() => { triggerPrimaryHaptic(); onConfirmContinuousDrive?.(); }}
-                        >
-                          Yes, drive straight through
-                        </button>
-                        <button
-                          type="button"
-                          className="convo-nav-btn"
-                          disabled={frozen}
-                          onClick={onCancelContinuousDrive}
-                        >
-                          Go back
-                        </button>
+                      <div
+                        className={`ai-msg plan-flow-current plan-flow-layout--${planFlowLayout}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
+                      >
+                        {!inQuestionFlow && stepMessage && !showContinuousConfirm && !hideStepBubble && (
+                          <div className="ai-bubble">
+                            {stepMessage}
+                            {currentQuestion?.mediumTripHint && (
+                              <div className="question-hint">{currentQuestion.mediumTripHint}</div>
+                            )}
+                            {currentQuestion?.hint && (
+                              <div className="question-hint">{currentQuestion.hint}</div>
+                            )}
+                          </div>
+                        )}
+                        {showContinuousConfirm && (
+                          <div className="ai-bubble">
+                            <p className="continuous-drive-confirm-msg">{continuousDriveConfirm.warn}</p>
+                            <p className="question-hint">
+                              Confirm you intend to drive straight through without an overnight stop.
+                            </p>
+                            <div className="pref-actions-row plan-flow-actions">
+                              <button
+                                type="button"
+                                className="btn-generate btn-generate-inline"
+                                disabled={frozen}
+                                onClick={() => { triggerPrimaryHaptic(); onConfirmContinuousDrive?.(); }}
+                              >
+                                Yes, drive straight through
+                              </button>
+                              <button
+                                type="button"
+                                className="convo-nav-btn"
+                                disabled={frozen}
+                                onClick={onCancelContinuousDrive}
+                              >
+                                Go back
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {showGuestSignInGate && onGuestSignUp && onGuestSignIn && (
+                          <PlanGuestInvite onSignUp={onGuestSignUp} onSignIn={onGuestSignIn} />
+                        )}
+                        {currentQuestion && !showContinuousConfirm && !showGuestSignInGate && (
+                          <ErrorBoundary label="question-choices" title="Could not show choices">
+                            <QuestionChoices
+                              currentQ={currentQuestion}
+                              stepAnim={stepAnim}
+                              answers={answers}
+                              committedAnswers={committedAnswers}
+                              prefDraft={prefDraft}
+                              questionHistory={questionHistory}
+                              questionHistoryLength={questionHistoryLength}
+                              compact={inQuestionFlow}
+                              showNavRow={!inQuestionFlow}
+                              onResetPlan={onResetPlan}
+                              onGoBack={onGoBack}
+                              onPickAnswer={onPickAnswer}
+                              onSetPrefDraft={onSetPrefDraft}
+                              onSkipRoutePending={onSkipRoutePending}
+                              onRoutePendingTimeout={onRoutePendingTimeout}
+                            />
+                          </ErrorBoundary>
+                        )}
                       </div>
                     </div>
-                  )}
-                  {showGuestSignInGate && onGuestSignUp && onGuestSignIn && (
-                    <PlanGuestInvite onSignUp={onGuestSignUp} onSignIn={onGuestSignIn} />
-                  )}
-                  {currentQuestion && !showContinuousConfirm && !showGuestSignInGate && (
-                    <ErrorBoundary label="question-choices" title="Could not show choices">
-                      <QuestionChoices
-                        currentQ={currentQuestion}
-                        stepAnim={stepAnim}
-                        answers={answers}
-                        committedAnswers={committedAnswers}
-                        prefDraft={prefDraft}
-                        questionHistory={questionHistory}
-                        questionHistoryLength={questionHistoryLength}
-                        compact={inQuestionFlow}
-                        showNavRow={!inQuestionFlow}
-                        onResetPlan={onResetPlan}
-                        onGoBack={onGoBack}
-                        onPickAnswer={onPickAnswer}
-                        onSetPrefDraft={onSetPrefDraft}
-                        onSkipRoutePending={onSkipRoutePending}
-                        onRoutePendingTimeout={onRoutePendingTimeout}
-                      />
-                    </ErrorBoundary>
-                  )}
-                  {qIndex === -2 && convoComplete && (
-                    <div className="payoff-summary-wrap">
-                      <SummaryCard
-                        answers={answers}
-                        compactGrid
-                        editable={returnedFromResults || convoComplete}
-                        questionHistory={questionHistory}
+                    {showFlowSidebar && (
+                      <QuestionAnswerSidebar
+                        history={questionHistory}
+                        variant="flow"
                         onEditQuestion={onEditQuestion}
                       />
-                    </div>
-                  )}
-                    </div>
+                    )}
                   </div>
-                  {inQuestionFlow && !convoComplete && (
-                    <QuestionAnswerSidebar history={questionHistory} />
-                  )}
-                </div>
+                )}
               </div>
-            )}
-            {!inQuestionFlow && answers.vehicle && routeInfo?.distance && (
-              <ErrorBoundary label="budget-card" title="Could not show budget estimate">
-                <BudgetCard
-                  compact
-                  answers={answers}
-                  routeInfo={routeInfo}
-                  tripLegs={tripLegs}
-                  roadStops={roadStops}
-                  selectedLodging={selectedLodging}
-                  restaurantsByCity={restaurantsByCity}
-                />
-              </ErrorBoundary>
             )}
             <div ref={convoEndRef}/>
           </div>
         </div>
-        {(inQuestionFlow || returnedFromResults) && convoComplete && (
+        {(inQuestionFlow || returnedFromResults) && convoComplete && !inQuestionFlow && (
           <div className="plan-generate-sticky">
-            {creditsExhausted && onUpgrade ? (
-              <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
-                Upgrade for more generations — Trailblazer includes 100/mo
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn-generate-trip btn-generate-trip--pulse"
-                onMouseEnter={warmGenerationLoader}
-                onFocus={warmGenerationLoader}
-                onClick={() => { triggerPrimaryHaptic(); onGenerateTrip?.(); }}
-                disabled={loading}
-              >
-                {loading ? (
-                  <RouteDrawingLoader variant="button" />
-                ) : (
-                  <>
-                    Generate My Trip →
-                    {creditsLabel && (
-                      <span className="generate-credits-badge" style={{ color: "var(--text-secondary)" }}>
-                        {creditsLabel}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-            )}
-            {creditsNudge && convoComplete && !creditsExhausted && (
+            {renderGenerateButton()}
+            {creditsNudge && !creditsExhausted && (
               <p className="plan-credits-nudge" style={{ color: "var(--accent)", margin: "8px 0 0", fontSize: "0.875rem" }}>
                 {creditsNudge}
               </p>

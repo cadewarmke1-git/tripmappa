@@ -3489,7 +3489,7 @@ export default function App() {
               isDarkMode={theme === "night" || theme === "twilight"}
               theme={theme}
               mapRef={mapRef}
-              directions={tripLegs.length === 0 ? directionsResult : null}
+              directions={directionsResult}
               routeInfo={routeInfo}
               routePoints={routeInfo?.routePoints || []}
               answers={answers}
@@ -3502,6 +3502,7 @@ export default function App() {
               mapFocusTarget={mapFocusTarget}
               highlightedLegPath={itinerarySync.highlightedLegPath}
               inAppNavigationOnly
+              showNavigationCar
               onMapReady={() => setMapReady(true)}
               onMapUnmount={() => setMapReady(false)}
               onMapStyleOpenChange={setMapStyleOpen}
@@ -3637,7 +3638,7 @@ export default function App() {
               isDarkMode={theme === "night" || theme === "twilight"}
               theme={theme}
               mapRef={mapRef}
-              directions={tripLegs.length === 0 ? directionsResult : null}
+              directions={directionsResult}
               routeInfo={routeInfo}
               routePoints={routeInfo?.routePoints || []}
               answers={answers}
@@ -3648,7 +3649,7 @@ export default function App() {
               nightSegmentPaths={nightSegmentPaths}
               lowFuelSegmentPaths={lowFuelSegmentPaths}
               mapFocusTarget={mapFocusTarget}
-              onMapReady={() => setMapReady(true)}
+              onMapReady={() => { setMapReady(true); window.setTimeout(() => recenterMap(), 200); }}
               onMapUnmount={() => setMapReady(false)}
               onMapStyleOpenChange={setMapStyleOpen}
               onMapStyleChange={setMapStyle}
@@ -3662,6 +3663,7 @@ export default function App() {
               highlightedLegPath={itinerarySync.highlightedLegPath}
               inAppNavigationOnly
               routeFocusMode={itinerarySync.routeFocusMode}
+              showNavigationCar
               onMarkerAction={(action, marker) => {
                 if (action === "add") {
                   addRoadStopToTrip({
@@ -3707,7 +3709,7 @@ export default function App() {
             isDarkMode={theme === "night" || theme === "twilight"}
             theme={theme}
             mapRef={mapRef}
-            directions={tripLegs.length === 0 ? directionsResult : null}
+            directions={directionsResult}
             routeInfo={routeInfo}
             routePoints={routeInfo?.routePoints || []}
             answers={answers}

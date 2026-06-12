@@ -1,4 +1,5 @@
 import { filterDinnerRestaurants, sortRestaurantsForDinner } from "./restaurantHours.js";
+import { parseTravelerCount } from "./vehicles.js";
 
 /** Pick 3 display restaurants: sit-down, mid-range, quick/fast food. */
 const FAST_FOOD_RE = /\b(mcdonald|burger king|wendy|taco bell|kfc|subway|chipotle|panda express|arby|sonic|jack in the box|dairy queen|popeyes|chick-fil-a|five guys|in-n-out|whataburger|starbucks|dunkin|fast food|quick service)\b/i;
@@ -82,11 +83,7 @@ export function estimateFoodCostFromRestaurants(restaurantsByCity, answers, nigh
 }
 
 function parsePartySize(travelers) {
-  if (travelers === "1") return 1;
-  if (travelers === "2") return 2;
-  if (travelers === "3 to 5") return 4;
-  if (travelers === "6 or more") return 6;
-  return 2;
+  return parseTravelerCount(travelers) ?? 2;
 }
 
 export function openStatusLabel(openNow) {

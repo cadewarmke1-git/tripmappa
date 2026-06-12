@@ -401,7 +401,7 @@ export default function QuestionChoices({
               )}
               {currentQ.id === "travelers" && (
                 <p className="travelers-solo-privacy-note">
-                  Choosing &ldquo;Just me&rdquo; or &ldquo;1 traveler&rdquo;? Your trip stays private by default.
+                  Choosing &ldquo;Just me&rdquo;? Your trip stays private by default.
                 </p>
               )}
             </div>

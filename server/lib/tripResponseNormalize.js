@@ -315,6 +315,21 @@ function normalizeStopItem(stop, verifiedNames, placesIndex, log = []) {
   return reconcileFoodLodgingCategory(out, placesIndex, log) || out;
 }
 
+function parseRoadStopDistanceMiles(value) {
+  if (value == null || value === "") return Number.NaN;
+  const m = String(value).match(/([\d,.]+)/);
+  return m ? parseFloat(m[1].replace(/,/g, "")) : Number.NaN;
+}
+
+function sortRoadStopsByDistance(stops = []) {
+  return [...stops].sort((a, b) => {
+    const aDist = parseRoadStopDistanceMiles(a?.distance);
+    const bDist = parseRoadStopDistanceMiles(b?.distance);
+    if (!Number.isNaN(aDist) && !Number.isNaN(bDist) && aDist !== bDist) return aDist - bDist;
+    return 0;
+  });
+}
+
 function normalizeRoadStopItem(stop, verifiedNames, placesIndex, log = []) {
   if (!stop || typeof stop !== "object") return stop;
   let out = normalizeStopItem(stop, verifiedNames, placesIndex, log);
@@ -362,9 +377,11 @@ export function normalizeTripResponse(parsed, options = {}) {
       .filter(Boolean);
   }
   if (Array.isArray(out.road_stops)) {
-    out.road_stops = out.road_stops
-      .map(s => normalizeRoadStopItem(s, verifiedNames, placesIndex, categoryLog))
-      .filter(Boolean);
+    out.road_stops = sortRoadStopsByDistance(
+      out.road_stops
+        .map(s => normalizeRoadStopItem(s, verifiedNames, placesIndex, categoryLog))
+        .filter(Boolean),
+    );
   }
   if (Array.isArray(out.recommendations)) {
     out.recommendations = out.recommendations.map(r => verifyNamedItem(r, verifiedNames, { placesIndex }));

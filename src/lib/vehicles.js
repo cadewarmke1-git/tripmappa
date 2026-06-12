@@ -89,20 +89,47 @@ export function hasFamilyKids() {
   return false;
 }
 
+export const TRAVELER_COUNT_CHOICES = [
+  { value: "1", label: "Just me" },
+  { value: "2", label: "2 travelers" },
+  { value: "3 to 5 travelers", label: "3 to 5 travelers" },
+  { value: "6 or more travelers", label: "6 or more travelers" },
+];
+
 /** Session-only party size from traveler count answer — not persisted. */
 export function parseTravelerCount(travelers) {
-  if (!travelers) return null;
-  if (travelers === "1") return 1;
-  if (travelers === "2") return 2;
-  if (travelers === "3 to 5") return 4;
-  if (travelers === "6 or more") return 6;
+  if (travelers == null || travelers === "") return null;
+  const t = String(travelers);
+  if (t === "1" || t === "Just me") return 1;
+  if (t === "2" || t === "2 travelers") return 2;
+  if (t === "3 to 5" || t === "3 to 5 travelers") return 4;
+  if (t === "6 or more" || t === "6 or more travelers") return 6;
   return null;
 }
 
+export function formatTravelersLabel(travelers) {
+  if (travelers == null || travelers === "") return null;
+  const t = String(travelers);
+  if (t === "1" || t === "Just me") return "Just me";
+  if (t === "2" || t === "2 travelers") return "2 travelers";
+  if (t === "3 to 5" || t === "3 to 5 travelers") return "3 to 5 travelers";
+  if (t === "6 or more" || t === "6 or more travelers") return "6 or more travelers";
+  return t;
+}
+
+export function isGroupTravelersBand(travelers) {
+  const t = String(travelers || "");
+  return t === "3 to 5" || t === "6 or more"
+    || t === "3 to 5 travelers" || t === "6 or more travelers";
+}
+
+export function isSoloTraveler(travelers) {
+  const t = String(travelers ?? "");
+  return t === "1" || t === "Just me" || travelers === 1;
+}
+
 export function formatPartySizeLabel(travelers) {
-  const n = parseTravelerCount(travelers);
-  if (n == null) return null;
-  return `${n} traveler${n === 1 ? "" : "s"}`;
+  return formatTravelersLabel(travelers);
 }
 
 export function isTruckerTrip(answers) {
