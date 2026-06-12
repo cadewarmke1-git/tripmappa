@@ -206,7 +206,7 @@ html[data-layout="web"] .float-card--plan-flow-collapsed.collapsed {
   max-width: 160px !important;
   border-radius: 0 16px 16px 0 !important;
   overflow: visible !important;
-  z-index: 220 !important;
+  z-index: 200 !important;
 }
 
 html[data-layout="web"] .float-card-handle {

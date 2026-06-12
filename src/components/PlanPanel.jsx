@@ -11,7 +11,7 @@ import StalePlanNotice from "./StalePlanNotice.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { preloadGenerationStreamOverlay } from "../lib/preloadGenerationLoader.js";
-import { getPlanFlowLayoutClass } from "../lib/tripFlow.js";
+import { getAssumedTruckLodgingPill, getPlanFlowLayoutClass } from "../lib/tripFlow.js";
 
 function warmGenerationLoader() {
   preloadGenerationStreamOverlay().catch(() => undefined);
@@ -64,9 +64,11 @@ export default function PlanPanel({
   onConfirmContinuousDrive,
   onCancelContinuousDrive,
   onEditQuestion,
+  onEditAssumedLodging,
   getStepMessage,
 }) {
   const stepMessage = getStepMessage?.() ?? "";
+  const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
   const frozen = !!stepAnim;
   const planFlowLayout = getPlanFlowLayoutClass(currentQuestion, convoComplete);
   const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
@@ -80,7 +82,7 @@ export default function PlanPanel({
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm
     && !showGuestSignInGate && !convoComplete;
   const showFlowSidebar = inQuestionFlow && questionHistory.length > 0 && !convoComplete;
-  const showReadySidebar = inQuestionFlow && convoComplete && questionHistory.length > 0;
+  const showReadySidebar = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
 
   function renderGenerateButton({ className = "btn-generate-trip btn-generate-trip--pulse" } = {}) {
     if (creditsExhausted && onUpgrade) {
@@ -158,6 +160,7 @@ export default function PlanPanel({
             routePending={routePending && !routeError}
             routeError={routeError}
             onRetryRoute={onRetryRoute}
+            onEditAssumedLodging={onEditAssumedLodging}
           />
         )}
 
@@ -183,8 +186,16 @@ export default function PlanPanel({
         )}
 
         {generationError && convoComplete && (
-          <div className="plan-generation-error" role="alert">
-            {generationError}
+          <div className="plan-generation-error plan-generation-error--prominent" role="alert">
+            <p className="plan-generation-error-text">{generationError}</p>
+            <button
+              type="button"
+              className="btn-generate-trip plan-generation-error-retry"
+              onClick={() => { triggerPrimaryHaptic(); onGenerateTrip?.(); }}
+              disabled={loading}
+            >
+              {loading ? "Retrying…" : "Try again"}
+            </button>
           </div>
         )}
 
@@ -201,7 +212,22 @@ export default function PlanPanel({
                         <p className="plan-ready-subtitle">
                           We&apos;ll find the best stops, restaurants, and overnight options along your drive
                         </p>
-                        {renderGenerateButton({ className: "btn-generate-trip btn-generate-trip-ready btn-generate-trip--pulse" })}
+                        {generationError ? (
+                          <div className="plan-generation-error plan-generation-error--ready" role="alert">
+                            <p className="plan-generation-error-title">Trip generation didn&apos;t finish</p>
+                            <p className="plan-generation-error-text">{generationError}</p>
+                            <button
+                              type="button"
+                              className="btn-generate-trip btn-generate-trip-ready btn-generate-trip--pulse plan-generation-error-retry"
+                              onClick={() => { triggerPrimaryHaptic(); onGenerateTrip?.(); }}
+                              disabled={loading}
+                            >
+                              {loading ? "Retrying…" : "Try again"}
+                            </button>
+                          </div>
+                        ) : (
+                          renderGenerateButton({ className: "btn-generate-trip btn-generate-trip-ready btn-generate-trip--pulse" })
+                        )}
                         {creditsNudge && !creditsExhausted && (
                           <p className="plan-credits-nudge plan-ready-credits-nudge">{creditsNudge}</p>
                         )}
@@ -216,6 +242,8 @@ export default function PlanPanel({
                           history={questionHistory}
                           variant="ready"
                           onEditQuestion={onEditQuestion}
+                          assumedLodging={assumedLodging}
+                          onEditAssumedLodging={onEditAssumedLodging}
                         />
                       )}
                     </div>

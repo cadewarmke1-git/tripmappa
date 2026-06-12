@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildTruckLodgingQuestion,
+  dedupeQuestionHistoryById,
+  getAssumedTruckLodgingPill,
   getFlowPhaseId,
   getFlowProgress,
   getNextFlowQuestion,
   isRouteContextReady,
   normalizeTripAnswers,
+  TRUCK_LODGING_CHOICES,
 } from "./tripFlow.js";
+import { OVERNIGHT_PREFERENCE_OVERNIGHT } from "./driveMode.js";
 import { DIETARY_CHOICES } from "./tripAccommodations.js";
 
 describe("tripFlow UX", () => {
@@ -27,6 +32,8 @@ describe("tripFlow UX", () => {
     fuel_type: "Gasoline",
     towing: "No",
     travelers: "2",
+    adult_count: 2,
+    child_count: 0,
   };
 
   it("asks route preferences before overnight on personal trips", () => {
@@ -47,13 +54,31 @@ describe("tripFlow UX", () => {
       vehicle: "Car",
       fuel_type: "Gasoline",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
     };
     expect(getNextFlowQuestion(withTravelers, dayContext).id).toBe("trip_details");
+  });
+
+  it("asks party composition after 2 travelers", () => {
+    const next = getNextFlowQuestion(
+      { vehicle: "Car", fuel_type: "Gasoline", towing: "No", travelers: "2 travelers" },
+      longTripContext,
+    );
+    expect(next.id).toBe("party_composition");
   });
 
   it("asks kids ages right after party composition", () => {
     const next = getNextFlowQuestion(
       { ...basePersonal, travelers: "3 to 5", adult_count: 2, child_count: 1 },
+      longTripContext,
+    );
+    expect(next.id).toBe("kids_ages");
+  });
+
+  it("asks kids ages after 2 travelers when party includes a child", () => {
+    const next = getNextFlowQuestion(
+      { ...basePersonal, travelers: "2 travelers", adult_count: 1, child_count: 1 },
       longTripContext,
     );
     expect(next.id).toBe("kids_ages");
@@ -167,6 +192,8 @@ describe("tripFlow UX", () => {
     const answers = {
       vehicle: "Plane",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
       dietary: [],
       stops_interests: ["Cities and culture"],
       accessibility: [],
@@ -179,7 +206,10 @@ describe("tripFlow UX", () => {
   });
 
   it("boat path includes destination interests in trip details", () => {
-    const next = getNextFlowQuestion({ vehicle: "Boat", travelers: "2" }, longTripContext);
+    const next = getNextFlowQuestion(
+      { vehicle: "Boat", travelers: "2", adult_count: 2, child_count: 0 },
+      longTripContext,
+    );
     expect(next.id).toBe("trip_details");
     expect(next.sections.some((s) => s.id === "stops_interests")).toBe(true);
   });
@@ -222,6 +252,8 @@ describe("tripFlow UX", () => {
       ...answers,
       fuel_type: "Gasoline",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
       preferences: ["Scenic route"],
     };
     expect(getNextFlowQuestion(afterRv, longTripContext).id).toBe("trip_nights");
@@ -286,6 +318,8 @@ describe("tripFlow UX", () => {
       vehicle: "RV",
       fuel_type: "Gasoline",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
       preferences: ["Pet friendly"],
     };
     expect(getNextFlowQuestion(answers, longTripContext).id).toBe("trip_nights");
@@ -302,20 +336,28 @@ describe("tripFlow UX", () => {
       vehicle: "RV",
       fuel_type: "Gasoline",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
       preferences: ["Pet friendly"],
     };
     expect(getNextFlowQuestion(answers, dayContext).id).toBe("trip_details");
   });
 
   it("includes music_nightlife in plane destination interest choices", () => {
-    const next = getNextFlowQuestion({ vehicle: "Plane", travelers: "2" }, longTripContext);
+    const next = getNextFlowQuestion(
+      { vehicle: "Plane", travelers: "2", adult_count: 2, child_count: 0 },
+      longTripContext,
+    );
     const destSection = next.sections?.find(s => s.id === "stops_interests");
     const musicChoice = destSection?.choices?.find(c => c?.value === "music_nightlife");
     expect(musicChoice?.label).toBe("Music and nightlife");
   });
 
   it("includes destination interests for boat trips", () => {
-    const next = getNextFlowQuestion({ vehicle: "Boat", travelers: "2" }, longTripContext);
+    const next = getNextFlowQuestion(
+      { vehicle: "Boat", travelers: "2", adult_count: 2, child_count: 0 },
+      longTripContext,
+    );
     const destSection = next.sections?.find(s => s.id === "stops_interests");
     expect(destSection?.label).toBe("Destination interests");
   });
@@ -328,5 +370,80 @@ describe("tripFlow UX", () => {
     expect(normalized.schedule_restrictions).toEqual([
       "Travel only during specific hours — I will specify",
     ]);
+  });
+
+  it("does not return trip_details after it is confirmed in questionHistory", () => {
+    const answers = {
+      ...basePersonal,
+      preferences: [],
+      overnight_preference: "Drive straight through",
+    };
+    const history = [{
+      question: { id: "trip_details", type: "trip_details" },
+      answer: { dietary: ["Local food"], trip_budget: "No budget limit" },
+    }];
+    const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
+    expect(next.id).not.toBe("trip_details");
+  });
+
+  it("asks truck lodging with motel tiers before trip_details for no-sleeper routes", () => {
+    const answers = {
+      vehicle: "Semi Truck (18-wheeler)",
+      hauling_type: "General freight",
+      sleeper_cab: "No — I need a motel or hotel",
+      truck_stop_brand: "Love's",
+      route_restrictions: ["No restrictions"],
+      overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
+    };
+    const next = getNextFlowQuestion(answers, longTripContext);
+    expect(next.id).toBe("lodging");
+    expect(next.choices).toEqual(TRUCK_LODGING_CHOICES);
+    expect(buildTruckLodgingQuestion().ask).toMatch(/motel or hotel/i);
+  });
+
+  it("uses motorcycle-specific towing copy on long routes", () => {
+    const next = getNextFlowQuestion(
+      { vehicle: "Motorcycle", fuel_type: "Gasoline" },
+      longTripContext,
+    );
+    expect(next.id).toBe("towing");
+    expect(next.ask).toMatch(/sidecar or cargo trailer/i);
+    expect(next.choices).toContain("No, just the bike");
+    expect(next.choices).toContain("Yes — sidecar or trailer");
+  });
+
+  it("maps user-selected truck lodging and skips auto-assignment", () => {
+    const normalized = normalizeTripAnswers({
+      vehicle: "Semi Truck (18-wheeler)",
+      hauling_type: "General freight",
+      sleeper_cab: "No — I need a motel or hotel",
+      overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
+      lodging: "Budget motel",
+    }, longTripContext);
+    expect(normalized.lodging).toBe("Budget motel");
+    expect(normalized.lodging_auto_assigned).toBeUndefined();
+  });
+
+  it("surfaces assumed truck lodging when tier was auto-assigned", () => {
+    const normalized = normalizeTripAnswers({
+      vehicle: "Semi Truck (18-wheeler)",
+      hauling_type: "General freight",
+      sleeper_cab: "No — I need a motel or hotel",
+      overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
+    }, longTripContext);
+    expect(normalized.lodging).toBe("Mid-range hotel");
+    expect(normalized.lodging_auto_assigned).toBe(true);
+    const pill = getAssumedTruckLodgingPill(normalized, []);
+    expect(pill?.lodging).toBe("Mid-range hotel");
+  });
+
+  it("dedupeQuestionHistoryById keeps the latest entry per question id", () => {
+    const deduped = dedupeQuestionHistoryById([
+      { question: { id: "vehicle" }, answer: "Car" },
+      { question: { id: "trip_nights" }, answer: "1 night" },
+      { question: { id: "trip_nights" }, answer: "2 nights" },
+    ]);
+    expect(deduped).toHaveLength(2);
+    expect(deduped[1].answer).toBe("2 nights");
   });
 });

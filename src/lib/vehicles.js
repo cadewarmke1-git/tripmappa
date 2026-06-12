@@ -123,6 +123,11 @@ export function isGroupTravelersBand(travelers) {
     || t === "3 to 5 travelers" || t === "6 or more travelers";
 }
 
+/** Any non-solo travelers band — includes "2 travelers" for adult/child breakdown. */
+export function needsPartyCompositionBand(travelers) {
+  return !isSoloTraveler(travelers);
+}
+
 export function isSoloTraveler(travelers) {
   const t = String(travelers ?? "");
   return t === "1" || t === "Just me" || travelers === 1;

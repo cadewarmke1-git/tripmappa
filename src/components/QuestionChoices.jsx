@@ -270,8 +270,7 @@ export default function QuestionChoices({
   const scrollOptions = compact
     && currentQ.type !== "loading"
     && currentQ.type !== "text"
-    && currentQ.type !== "party_composition"
-    && currentQ.type !== "trip_details";
+    && currentQ.type !== "party_composition";
 
   function wrapScrollable(content) {
     if (!scrollOptions) return content;
@@ -369,7 +368,10 @@ export default function QuestionChoices({
           {!vehicleGroups && isSingleSelect && (
             <div className={`quick-replies quick-replies-described${currentQ.id === "fuel_type" ? " question-choices-scroll" : ""}`}>
               {routePending && routeLocked && (
-                <p className="question-pending-note">Route details are still loading — choices unlock in a moment.</p>
+                <p className="question-pending-note question-pending-note--loading">
+                  <RouteDrawingLoader variant="inline" />
+                  <span>Calculating your route — choices unlock in a moment.</span>
+                </p>
               )}
               {routePending && routePendingExpired && (
                 <p className="question-pending-note">Route details are still loading — your answer will be used as-is.</p>

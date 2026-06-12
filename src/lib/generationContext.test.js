@@ -52,6 +52,24 @@ describe("generationContext flow prefill", () => {
     expect(isQuestionConfirmedInHistory("fuel_type", [{ question: { id: "fuel_type" } }])).toBe(true);
   });
 
+  it("stripUnconfirmedPrefillFromAnswers keeps trip_details sub-fields after trip_details is confirmed", () => {
+    const prefill = { dietary: ["Vegan"], trip_budget: "No budget limit" };
+    const kept = stripUnconfirmedPrefillFromAnswers(
+      {
+        vehicle: "Car",
+        dietary: ["Vegan"],
+        stops_interests: [],
+        accessibility: [],
+        schedule_restrictions: [],
+        trip_budget: "No budget limit",
+      },
+      prefill,
+      [{ question: { id: "trip_details" }, answer: { dietary: ["Vegan"], trip_budget: "No budget limit" } }],
+    );
+    expect(kept.dietary).toEqual(["Vegan"]);
+    expect(kept.trip_budget).toBe("No budget limit");
+  });
+
   it("stripUnconfirmedPrefillFromAnswers removes leaked prefill-only answer fields", () => {
     const prefill = { fuel_type: "Electric — Tesla Superchargers", dietary: ["Vegan"] };
     const stripped = stripUnconfirmedPrefillFromAnswers(

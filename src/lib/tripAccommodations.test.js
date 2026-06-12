@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getDietarySearchKeywords,
+  isTowingSelected,
   needsSafeStopsOnly,
   needsTowingQuestion,
 } from "./tripAccommodations.js";
@@ -33,5 +34,10 @@ describe("tripAccommodations preferences", () => {
     expect(needsTowingQuestion({ vehicle: "Motorcycle" }, { routeDistanceMiles: 79 })).toBe(false);
     expect(needsTowingQuestion({ vehicle: "Motorcycle" }, { routeDistanceMiles: 80 })).toBe(true);
     expect(needsTowingQuestion({ vehicle: "Motorcycle" }, { routeDistanceMiles: 100 })).toBe(true);
+  });
+
+  it("treats motorcycle no-tow answers as not towing", () => {
+    expect(isTowingSelected({ towing: "No, just the bike" })).toBe(false);
+    expect(isTowingSelected({ towing: "Yes — sidecar or trailer" })).toBe(true);
   });
 });

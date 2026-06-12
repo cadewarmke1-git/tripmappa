@@ -352,16 +352,7 @@ export default function SharePanel({
             <input className="live-share-url-input" readOnly value={shareUrl} onFocus={e => e.target.select()} />
             <button type="button" className="profile-btn profile-btn-gold" onClick={handleCopyLink}>Copy Link</button>
           </div>
-          {!showSmsInput ? (
-            <button
-              type="button"
-              className="live-share-sms-btn live-share-sms-btn-disabled"
-              disabled
-              title="SMS sharing requires Twilio setup (coming soon)"
-            >
-              Send via SMS (soon)
-            </button>
-          ) : (
+          {showSmsInput && (
             <div className="live-share-sms-row">
               <input
                 className="profile-input"

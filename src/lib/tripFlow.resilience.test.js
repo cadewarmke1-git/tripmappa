@@ -39,6 +39,8 @@ describe("tripFlow resilience", () => {
       fuel_type: "Gasoline",
       towing: "No",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
       preferences: [],
     };
     const next = getNextFlowQuestion(answers, { ...longTripContext, routeFailed: true });
@@ -68,6 +70,8 @@ describe("tripFlow resilience", () => {
       multi_vehicles: ["Car", "Plane"],
       primary_vehicle: "Plane",
       travelers: "2",
+      adult_count: 2,
+      child_count: 0,
       dietary: [],
       stops_interests: ["Food and dining"],
       accessibility: [],

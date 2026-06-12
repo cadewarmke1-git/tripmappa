@@ -173,9 +173,8 @@ export function isMotorcycleTowingQuestion(answers) {
 }
 
 export const MOTORCYCLE_TOWING_CHOICES = [
-  "No",
-  "Yes — trailer",
-  "Yes — sidecar",
+  "No, just the bike",
+  "Yes — sidecar or trailer",
 ];
 
 export function needsKidsAgesDetail(answers) {
@@ -192,7 +191,9 @@ export function needsTruckExternalLodging(answers) {
 
 export function isTowingSelected(answers) {
   const t = answers?.towing;
-  return t && t !== "No";
+  if (!t) return false;
+  if (t === "No" || t === "No, just the bike") return false;
+  return true;
 }
 
 export function isLargeParty(answers) {

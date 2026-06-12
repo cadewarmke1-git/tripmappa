@@ -364,8 +364,11 @@ export function stripUnconfirmedPrefillFromAnswers(answers = {}, flowPrefill = {
   let changed = false;
   const out = { ...answers };
 
+  const tripDetailsConfirmed = confirmed.has("trip_details");
+
   for (const [key, prefillVal] of Object.entries(flowPrefill || {})) {
     if (confirmed.has(key)) continue;
+    if (tripDetailsConfirmed && TRIP_DETAILS_PREFILL_KEYS.includes(key)) continue;
     const answerVal = out[key];
     if (answerVal == null || answerVal === "" || (Array.isArray(answerVal) && !answerVal.length)) continue;
     if (prefillValuesMatch(answerVal, prefillVal)) {
@@ -374,7 +377,7 @@ export function stripUnconfirmedPrefillFromAnswers(answers = {}, flowPrefill = {
     }
   }
 
-  if (!confirmed.has("trip_details")) {
+  if (!tripDetailsConfirmed) {
     for (const key of TRIP_DETAILS_PREFILL_KEYS) {
       const prefillVal = flowPrefill?.[key];
       const answerVal = out[key];

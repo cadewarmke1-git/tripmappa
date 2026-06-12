@@ -47,7 +47,7 @@ export default function UserAvatar({
 
   return (
     <span
-      className={`user-avatar${showRing ? " user-avatar-ring" : ""}${badge ? ` user-avatar-has-tier-badge user-avatar-tier-ring--${badge}` : ""}${className ? ` ${className}` : ""}`}
+      className={`user-avatar${badge ? " user-avatar--tier-visible" : ""}${showRing ? " user-avatar-ring" : ""}${badge ? ` user-avatar-has-tier-badge user-avatar-tier-ring--${badge}` : ""}${className ? ` ${className}` : ""}`}
       style={{
         width: px,
         height: px,

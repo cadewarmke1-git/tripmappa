@@ -28,6 +28,7 @@ import {
   isSoloTraveler,
   formatTravelersLabel,
 } from "../../src/lib/vehicles.js";
+import { isTowingSelected } from "../../src/lib/tripAccommodations.js";
 import { buildGenerationLogRow, logGenerationUsage } from "../lib/generationLogs.js";
 import { logPlanTripDev } from "../lib/apiLog.js";
 import {
@@ -312,7 +313,7 @@ function buildContextBlock(ctx) {
   if (ctx.accessibility.length) lines.push(`Accessibility: ${ctx.accessibility.join(", ")}`);
   if (ctx.stopsInterests.length) lines.push(`Stop interests: ${ctx.stopsInterests.join(", ")}`);
   if (ctx.tripBudget && ctx.tripBudget !== "No budget limit") lines.push(`Total trip budget cap: ${ctx.tripBudget}`);
-  if (ctx.towing && ctx.towing !== "No") lines.push(`Towing: ${ctx.towing} — favor routes with trailer parking and avoid tight turns where possible`);
+  if (isTowingSelected({ towing: ctx.towing })) lines.push(`Towing: ${ctx.towing} — favor routes with trailer parking and avoid tight turns where possible`);
   if (ctx.loyalty && ctx.loyalty !== "No preference") lines.push(`Hotel loyalty: ${ctx.loyalty}`);
   if (ctx.scheduleRestrictions.length) {
     lines.push(`Schedule restrictions: ${ctx.scheduleRestrictions.join(", ")}${ctx.scheduleDriveHours ? ` · preferred hours: ${ctx.scheduleDriveHours}` : ""}`);
@@ -350,7 +351,7 @@ Couple: recommend romantic scenic stops, vineyard or winery detours only if genu
 Scenic route preference active — name the specific scenic byway or highway for this corridor (e.g. Route 66 vs I-40, Highway 1 vs I-5) with real towns and stops along that byway.`;
   }
 
-  if (ctx.towing && ctx.towing !== "No") {
+  if (isTowingSelected({ towing: ctx.towing })) {
     block += `
 Towing (${ctx.towing}): recommend pull-through fuel lanes and stops with trailer parking; avoid tight downtown areas; note low-clearance or sharp-turn risk at each major stop; space stops closer than a non-towing trip.`;
   }

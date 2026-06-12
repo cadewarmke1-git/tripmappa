@@ -30,6 +30,9 @@ export const LODGING_NIGHTLY_RATES = {
   "Mid-range": 130,
   Upscale: 220,
   "RV Park": 55,
+  "Budget motel": 65,
+  "Mid-range hotel": 130,
+  "Any available": 100,
 };
 
 export function estimateOvernightStops(hours, tripType, lodging) {

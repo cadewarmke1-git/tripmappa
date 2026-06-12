@@ -1,5 +1,5 @@
 import { isContinuousDrive } from "../lib/driveMode.js";
-import { formatFlowAnswer } from "../lib/tripFlow.js";
+import { dedupeQuestionHistoryById, formatFlowAnswer, getAssumedTruckLodgingPill } from "../lib/tripFlow.js";
 import { formatTravelersLabel, isScenicRoute } from "../lib/vehicles.js";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 
@@ -12,8 +12,10 @@ export default function PlanRouteCard({
   routePending = false,
   routeError = null,
   onRetryRoute,
+  onEditAssumedLodging,
 }) {
   const ready = Boolean(routeInfo?.distance || routeInfo?.duration);
+  const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
 
   const defaultChips = [
     answers.vehicle,
@@ -21,11 +23,11 @@ export default function PlanRouteCard({
     isScenicRoute(answers) && "Scenic",
     isContinuousDrive(answers) && "Straight through",
     answers.overnight_preference === "Stop overnight along the way" && "Overnights",
-    answers.lodging && answers.lodging !== "No overnight stay" && answers.lodging,
+    answers.lodging && answers.lodging !== "No overnight stay" && !assumedLodging && answers.lodging,
   ].filter(Boolean);
 
-  const historyChips = questionHistory.map((entry, index) => ({
-    key: `${entry.question?.id ?? "q"}-${index}`,
+  const historyChips = dedupeQuestionHistoryById(questionHistory).map(entry => ({
+    key: entry.question?.id ?? "q",
     text: formatFlowAnswer(entry.question, entry.answer),
   })).filter(chip => chip.text);
 
@@ -63,6 +65,23 @@ export default function PlanRouteCard({
           {historyChips.map(chip => (
             <span className="plan-route-card-chip" key={chip.key}>{chip.text}</span>
           ))}
+        </div>
+      )}
+      {assumedLodging && (
+        <div className="plan-route-card-chips plan-route-card-chips--assumed" aria-label="Assumed lodging">
+          <span className="plan-route-card-chip plan-route-card-chip--assumed">
+            {assumedLodging.lodging}
+            <span className="plan-route-card-chip-assumed-tag">assumed</span>
+            {onEditAssumedLodging && (
+              <button
+                type="button"
+                className="plan-route-card-chip-edit"
+                onClick={onEditAssumedLodging}
+              >
+                Edit
+              </button>
+            )}
+          </span>
         </div>
       )}
       {defaultChips.length > 0 && (

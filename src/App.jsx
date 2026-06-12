@@ -15,7 +15,7 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
+import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
 import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./lib/guestCredits.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { buildContinuousDriveTip, isContinuousDrive, OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
@@ -761,6 +761,8 @@ export default function App() {
   const directionsFetchRef = useRef(null);
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  const questionHistoryRef = useRef(questionHistory);
+  questionHistoryRef.current = questionHistory;
   const toastFnRef = useRef(null);
 
   const fetchDirections = useCallback((vehicleType) => {
@@ -1103,7 +1105,7 @@ export default function App() {
     Boolean(currentQuestion) ||
     (convoComplete && !returnedFromResults)
   );
-  const showGuestSignInGate = !user && inQuestionFlow;
+  const showGuestSignInGate = false;
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
 
   const creditsExhausted = useMemo(() => {
@@ -2015,6 +2017,7 @@ export default function App() {
       routeDurationHours: parseHoursFromDuration(routeInfo?.duration),
       routeFailed: Boolean(routeError),
       routeErrorMessage: routeError || null,
+      questionHistory: questionHistoryRef.current,
     };
   }
 
@@ -2034,7 +2037,11 @@ export default function App() {
 
   function handleRoutePendingTimeout() {
     if (answersRef.current.route_context_unavailable) return;
-    setAnswers(prev => ({ ...prev, route_context_unavailable: true }));
+    const patch = { ...answersRef.current, route_context_unavailable: true };
+    const ctx = buildQuestionContext(patch);
+    const na = normalizeTripAnswers(patch, ctx);
+    setAnswers(na);
+    loadNextQuestion(na);
   }
 
   function confirmContinuousDrive() {
@@ -2153,7 +2160,16 @@ export default function App() {
         const historyQuestion = activeQuestion.type === "lodging_stay"
           ? { ...activeQuestion, _loyalty: extraFields.loyalty_program || "No preference" }
           : activeQuestion;
-        setQuestionHistory(h => [...h, { question: historyQuestion, answer: value }]);
+        setQuestionHistory(h => {
+          const entry = { question: historyQuestion, answer: value };
+          const idx = h.findIndex(e => e.question?.id === activeQuestion.id);
+          if (idx >= 0) {
+            const next = [...h];
+            next[idx] = entry;
+            return next;
+          }
+          return [...h, entry];
+        });
       }
       loadNextQuestion(na);
       if (activeQuestion.id === "vehicle" && originRef.current?.value && destRef.current?.value) {
@@ -3089,6 +3105,22 @@ export default function App() {
     return out;
   }
 
+  function jumpToAssumedTruckLodging() {
+    if (stepAnim) return;
+    reAnswerFromEditRef.current = true;
+    setAnswers(prev => {
+      const next = { ...prev };
+      delete next.lodging;
+      delete next.lodging_auto_assigned;
+      return next;
+    });
+    setConvoComplete(false);
+    setCurrentQuestion(buildTruckLodgingQuestion());
+    setQIndex(0);
+    setPrefDraft(null);
+    scrollPlanToTop();
+  }
+
   function jumpToQuestion(questionId) {
     if (stepAnim || !questionId) return;
     const idx = questionHistory.findIndex(h => h.question?.id === questionId);
@@ -3752,7 +3784,7 @@ export default function App() {
                       creditsLabel={formatCreditsLabel(creditStatus)}
                       creditsNudge={creditsNudge}
                       creditsExhausted={creditsExhausted}
-                      showGuestSaveHint={!user && !!answers.vehicle && !convoComplete}
+                      showGuestSaveHint={!user && inQuestionFlow}
                       showGuestSignInGate={showGuestSignInGate}
                       onGuestSignUp={() => openAuthModal("signup")}
                       onGuestSignIn={() => openAuthModal("signin")}
@@ -3778,6 +3810,7 @@ export default function App() {
                       onConfirmContinuousDrive={confirmContinuousDrive}
                       onCancelContinuousDrive={cancelContinuousDrive}
                       onEditQuestion={jumpToQuestion}
+                      onEditAssumedLodging={jumpToAssumedTruckLodging}
                       getStepMessage={getStepMessage}
                     />
                     </ErrorBoundary>

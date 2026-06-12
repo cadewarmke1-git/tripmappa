@@ -69,7 +69,7 @@ test.describe("plan flow UX", () => {
     expect(parseFloat(styles.borderLeftWidth)).toBeGreaterThan(0);
     const labelFs = await label.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
     const valueFs = await value.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
-    expect(labelFs).toBe(9);
+    expect(labelFs).toBe(11);
     expect(valueFs).toBe(10);
     const labelColor = await label.evaluate(el => getComputedStyle(el).color);
     const valueColor = await value.evaluate(el => getComputedStyle(el).color);

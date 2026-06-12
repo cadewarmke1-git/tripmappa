@@ -81,9 +81,11 @@ export default function HotelCard({ hotel, onSave, onToast }) {
         </div>
 
         <div className="lodging-card-actions lodging-card-actions-anchor">
-          <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook} title={bookTitle}>
-            {bookLabel}
-          </button>
+          {hotel.bookUrl && (
+            <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook} title={bookTitle}>
+              {bookLabel}
+            </button>
+          )}
           <button type="button" className="lodging-btn-save" onClick={handleSave}>
             Save
           </button>

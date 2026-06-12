@@ -4,6 +4,8 @@ export default function SosButton({ onConfirm, className = "", comingSoon = fals
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
+  if (comingSoon) return null;
+
   async function handleConfirm() {
     setSending(true);
     try {
