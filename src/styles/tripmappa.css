@@ -1888,8 +1888,7 @@
     flex-direction: column;
   }
   .chat-wrap-plan-flow .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact,
-  .chat-wrap-plan-flow .plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact,
-  .chat-wrap-plan-flow .plan-flow-layout--sparse.plan-flow-current .question-choices-shell-compact {
+  .chat-wrap-plan-flow .plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact {
     flex: 1 1 0;
     min-height: 0;
     max-height: 100%;
@@ -1904,6 +1903,13 @@
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--sparse.plan-flow-current .question-choices-shell-compact,
+  .chat-wrap-plan-flow .plan-flow-layout--sparse.plan-flow-current .question-choices-shell-compact .question-choices-compact {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
   }
   .chat-wrap-plan-flow .question-choices-shell-compact .plan-flow-actions {
     flex: 0 0 auto;
