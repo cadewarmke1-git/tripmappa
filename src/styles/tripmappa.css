@@ -1942,6 +1942,37 @@
     min-height: 0;
     overflow-y: visible;
   }
+
+  /* Desktop web: tall layout — grow scroll region so multiselect pills stay visible */
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .float-card-body--plan-flow .float-card-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .chat-wrap-plan-flow,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .chat-wrap-plan-flow .convo-stage,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .chat-wrap-plan-flow .convo-scroll,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-stack,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-body,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-main,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-main > .plan-flow-current {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .chat-wrap-plan-flow .convo-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact .question-choices-compact,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-compact .question-options-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
   .chat-wrap-plan-flow:has(.plan-flow-stack--sparse) .plan-route-card {
     margin-top: 4px;
     margin-bottom: 4px;
