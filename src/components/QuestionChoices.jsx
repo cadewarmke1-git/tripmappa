@@ -107,7 +107,9 @@ export default function QuestionChoices({
       const fromAnswers = Array.isArray(committed[currentQ.id]) ? committed[currentQ.id] : [];
       if (questionConfirmed) {
         setMultiDraft([...fromAnswers]);
-      } else if (Array.isArray(prefDraft)) {
+      } else if (fromAnswers.length > 0) {
+        setMultiDraft([...fromAnswers]);
+      } else if (Array.isArray(prefDraft) && prefDraft.length > 0) {
         setMultiDraft([...prefDraft]);
       } else {
         setMultiDraft([]);

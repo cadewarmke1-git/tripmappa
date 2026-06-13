@@ -86,14 +86,12 @@ describe("generationContext flow prefill", () => {
     expect(kept.fuel_type).toBe("Gasoline");
   });
 
-  it("mergeDisplayAnswers applies prefill until question is confirmed in history", () => {
-    const prefill = { vehicle: "Car", fuel_type: "Gasoline", dietary: ["Vegan"] };
+  it("mergeDisplayAnswers does not apply saved prefill to the question UI", () => {
+    const prefill = { vehicle: "Car", fuel_type: "Gasoline", preferences: ["Pet friendly"], dietary: ["Vegan"] };
     const merged = mergeDisplayAnswers({}, prefill, []);
-    expect(merged.vehicle).toBe("Car");
-    expect(merged.dietary).toEqual(["Vegan"]);
-    const afterVehicle = mergeDisplayAnswers({ vehicle: "RV" }, prefill, [{ question: { id: "vehicle" } }]);
-    expect(afterVehicle.vehicle).toBe("RV");
-    expect(afterVehicle.fuel_type).toBe("Gasoline");
+    expect(merged).toEqual({});
+    const withAnswers = mergeDisplayAnswers({ vehicle: "RV", preferences: ["Scenic route"] }, prefill, []);
+    expect(withAnswers).toEqual({ vehicle: "RV", preferences: ["Scenic route"] });
   });
 
   it("resolveAnswersWithFallback merges plan prefs at generation time", () => {

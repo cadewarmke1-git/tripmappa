@@ -393,30 +393,11 @@ export function stripUnconfirmedPrefillFromAnswers(answers = {}, flowPrefill = {
   return changed ? out : answers;
 }
 
-/** Merge saved prefill into display state for questions not yet confirmed in history. */
+/** Display copy for the question UI — saved prefill is not merged here (generation uses resolveAnswersWithFallback). */
 export function mergeDisplayAnswers(answers = {}, flowPrefill = {}, questionHistory = []) {
-  const confirmed = new Set(questionHistory.map(h => h.question?.id).filter(Boolean));
-  const out = { ...answers };
-
-  for (const [key, val] of Object.entries(flowPrefill || {})) {
-    if (confirmed.has(key)) continue;
-    if (out[key] != null && out[key] !== "") {
-      if (!Array.isArray(out[key]) || out[key].length) continue;
-    }
-    if (val == null || val === "" || (Array.isArray(val) && !val.length)) continue;
-    out[key] = Array.isArray(val) ? [...val] : val;
-  }
-
-  if (!confirmed.has("trip_details")) {
-    for (const key of TRIP_DETAILS_PREFILL_KEYS) {
-      const val = flowPrefill?.[key];
-      if (val == null || val === "" || (Array.isArray(val) && !val.length)) continue;
-      if (out[key] != null && out[key] !== "" && !(Array.isArray(out[key]) && !out[key].length)) continue;
-      out[key] = Array.isArray(val) ? [...val] : val;
-    }
-  }
-
-  return out;
+  void flowPrefill;
+  void questionHistory;
+  return { ...answers };
 }
 
 export function preferencesToAnswerFallback(prefs) {

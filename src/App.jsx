@@ -1969,17 +1969,15 @@ export default function App() {
       const draft = {};
       for (const sec of question.sections || []) {
         const fromAnswers = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
-        const fromPrefill = Array.isArray(prefillSource[sec.id]) ? prefillSource[sec.id] : [];
-        draft[sec.id] = fromAnswers.length ? fromAnswers : fromPrefill;
+        draft[sec.id] = fromAnswers.length ? [...fromAnswers] : [];
       }
       if (question.type === "trip_details") {
-        draft.trip_budget = newAnswers.trip_budget || prefillSource.trip_budget || "No budget limit";
+        draft.trip_budget = newAnswers.trip_budget || "No budget limit";
       }
       setPrefDraft(draft);
     } else if (question.type === "multiselect") {
       const fromAnswers = Array.isArray(newAnswers[question.id]) ? newAnswers[question.id] : [];
-      const fromPrefill = Array.isArray(prefillSource[question.id]) ? prefillSource[question.id] : [];
-      setPrefDraft(fromAnswers.length ? fromAnswers : fromPrefill);
+      setPrefDraft(fromAnswers.length ? [...fromAnswers] : []);
     } else if (question.type === "party_composition") {
       setPrefDraft({
         adults: newAnswers.adult_count ?? prefillSource.adult_count ?? 2,
