@@ -66,6 +66,11 @@ export default function QuestionChoices({
   const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
   const [routePendingExpired, setRoutePendingExpired] = useState(false);
   const [budgetTouched, setBudgetTouched] = useState(false);
+  const [partyTouched, setPartyTouched] = useState(false);
+
+  useEffect(() => {
+    setPartyTouched(false);
+  }, [currentQ?.id]);
 
   useEffect(() => {
     setRoutePendingExpired(false);
@@ -76,6 +81,18 @@ export default function QuestionChoices({
     }, ROUTE_PENDING_UNLOCK_MS);
     return () => clearTimeout(timer);
   }, [currentQ?.id, currentQ?.pendingRoute, onRoutePendingTimeout]);
+
+  useEffect(() => {
+    if (currentQ?.type !== "party_composition" || stepAnim || !partyTouched) return undefined;
+    const timer = setTimeout(() => {
+      onPickAnswer(
+        { adults: Number(partyAdults), children: Number(partyChildren) },
+        {},
+        { instant: true },
+      );
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [partyAdults, partyChildren, partyTouched, currentQ?.type, currentQ?.id, stepAnim, onPickAnswer]);
 
   const committed = committedAnswers ?? answers;
   const questionConfirmed = useMemo(
@@ -189,11 +206,6 @@ export default function QuestionChoices({
     });
   }
 
-  function submitLodgingStay() {
-    if (!lodgingDraft) return;
-    pickInstant(lodgingDraft, { loyalty_program: loyaltyDraft || "No preference" });
-  }
-
   function isTripDetailsDraftEmpty(draft) {
     const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
     const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
@@ -251,10 +263,6 @@ export default function QuestionChoices({
     });
   }
 
-  function submitPartyComposition() {
-    pickInstant({ adults: Number(partyAdults), children: Number(partyChildren) });
-  }
-
   function adjustPartyCount(field, delta) {
     const [min, max] = field === "adults"
       ? (currentQ.adultRange || [1, 8])
@@ -262,6 +270,7 @@ export default function QuestionChoices({
     const setter = field === "adults" ? setPartyAdults : setPartyChildren;
     setter(prev => {
       const next = Math.min(max, Math.max(min, Number(prev) + delta));
+      setPartyTouched(true);
       onSetPrefDraft({
         adults: field === "adults" ? next : partyAdults,
         children: field === "children" ? next : partyChildren,
@@ -340,7 +349,7 @@ export default function QuestionChoices({
                     type="button"
                     className={mkClass(opt.value)}
                     disabled={frozen}
-                    onClick={() => onPickAnswer(opt.value)}
+                    onClick={() => pickInstant(opt.value)}
                   >
                     {opt.label}
                   </button>
@@ -359,7 +368,7 @@ export default function QuestionChoices({
                     type="button"
                     className={mkClass(opt.value)}
                     disabled={frozen}
-                    onClick={() => onPickAnswer(opt.value)}
+                    onClick={() => pickInstant(opt.value)}
                   >
                     {opt.label}
                   </button>
@@ -387,7 +396,7 @@ export default function QuestionChoices({
                     type="button"
                     className={`${mkClass(value)}${description ? " qr-btn-described" : ""}`}
                     disabled={frozen || routeLocked}
-                    onClick={() => onPickAnswer(value)}
+                    onClick={() => pickInstant(value)}
                   >
                     <span className="qr-btn-label">{label}</span>
                     {description && <span className="qr-btn-desc">{description}</span>}
@@ -426,7 +435,7 @@ export default function QuestionChoices({
                       type="button"
                       className={mkClass(value, " qr-btn-lodging")}
                       disabled={frozen}
-                      onClick={() => setLodgingDraft(value)}
+                      onClick={() => pickInstant(value, { loyalty_program: loyaltyDraft || "No preference" })}
                     >
                       {label}
                     </button>
@@ -637,17 +646,6 @@ export default function QuestionChoices({
             }}
           />
           <div className={actionRowClass}>
-            <button
-              type="button"
-              className="btn-generate btn-generate-inline"
-              disabled={frozen}
-              onClick={continueWithHaptic(() => {
-                const el = document.querySelector(".question-text-input");
-                if (el?.value?.trim()) pickInstant(el.value.trim());
-              })}
-            >
-              Continue
-            </button>
             {currentQ.id === "food_allergies" && (
               <button
                 type="button"
@@ -672,32 +670,6 @@ export default function QuestionChoices({
         </div>
       )}
     </div>
-
-      {isLodgingStay && (
-        <div className={actionRowClass}>
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen || !lodgingDraft}
-            onClick={continueWithHaptic(submitLodgingStay)}
-          >
-            Continue
-          </button>
-        </div>
-      )}
-
-      {currentQ.type === "party_composition" && (
-        <div className={actionRowClass}>
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen}
-            onClick={continueWithHaptic(submitPartyComposition)}
-          >
-            Continue
-          </button>
-        </div>
-      )}
 
       {currentQ.type === "multiselect" && (
         <div className={actionRowClass}>

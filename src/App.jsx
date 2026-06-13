@@ -2207,6 +2207,9 @@ export default function App() {
       || currentQuestion.type === "lodging_stay"
       || currentQuestion.type === "party_composition"
       || currentQuestion.type === "text"
+      || currentQuestion.type === "choice"
+      || currentQuestion.type === "travelers"
+      || currentQuestion.type === "vehicle"
     );
     const TAP_DELAY_MS = 80;
     const STEP_ANIM_MS = 320;
