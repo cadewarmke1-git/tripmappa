@@ -386,6 +386,43 @@ describe("tripFlow UX", () => {
     expect(next.id).not.toBe("trip_details");
   });
 
+  it("does not return fuel_type when answer pruned but question is in history", () => {
+    const answers = {
+      vehicle: "Car",
+      travelers: "2",
+      adult_count: 2,
+      child_count: 0,
+    };
+    const history = [{ question: { id: "fuel_type" }, answer: "Gasoline" }];
+    const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
+    expect(next.id).not.toBe("fuel_type");
+  });
+
+  it("does not return trip_details for thin transport when in history", () => {
+    const answers = {
+      vehicle: "Plane",
+      travelers: "2",
+      adult_count: 2,
+      child_count: 0,
+    };
+    const history = [{ question: { id: "trip_details", type: "trip_details" }, answer: {} }];
+    const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
+    expect(next.id).not.toBe("trip_details");
+    expect(next.done).toBe(true);
+  });
+
+  it("does not return overnight_preference when pruned but confirmed in history", () => {
+    const answers = {
+      ...basePersonal,
+      preferences: [],
+    };
+    const history = [
+      { question: { id: "overnight_preference" }, answer: OVERNIGHT_PREFERENCE_OVERNIGHT },
+    ];
+    const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
+    expect(next.id).not.toBe("overnight_preference");
+  });
+
   it("asks truck lodging with motel tiers before trip_details for no-sleeper routes", () => {
     const answers = {
       vehicle: "Semi Truck (18-wheeler)",

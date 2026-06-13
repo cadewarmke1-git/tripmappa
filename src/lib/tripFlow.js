@@ -544,8 +544,8 @@ function buildThinTransportDetailsQuestion(answers) {
   };
 }
 
-function getNextThinTransportQuestions(answers) {
-  if (!isAnswered("travelers", answers)) {
+function getNextThinTransportQuestions(answers, context = {}) {
+  if (!isQuestionDone("travelers", answers, context)) {
     const effective = getEffectiveVehicle(answers);
     const hint = effective === "Plane"
       ? "Helps us suggest the right-sized airport dining and destination activities."
@@ -554,12 +554,12 @@ function getNextThinTransportQuestions(answers) {
         : "Helps us tailor dining, lodging, and activities for your group.";
     return { done: false, ...TRAVELERS_QUESTION, hint };
   }
-  const partyKids = getNextPartyAndKidsFollowups(answers);
+  const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
-  if (!isThinTransportDetailsAnswered(answers)) {
+  if (!isTripDetailsConfirmedInHistory(context) && !isThinTransportDetailsAnswered(answers)) {
     return { done: false, ...buildThinTransportDetailsQuestion(answers) };
   }
-  const tail = getNextDetailFollowups(answers);
+  const tail = getNextDetailFollowups(answers, context);
   if (tail) return tail;
   return null;
 }
@@ -649,6 +649,13 @@ function isAnswered(id, answers) {
   return answers[id] !== "";
 }
 
+function isQuestionDone(id, answers, context = {}) {
+  if (isAnswered(id, answers)) return true;
+  const history = context?.questionHistory;
+  if (!Array.isArray(history)) return false;
+  return history.some(entry => entry.question?.id === id);
+}
+
 function needsOvernightPreferenceQuestion(answers, context) {
   const effective = getEffectiveVehicle(answers);
   if (isRvVehicle(effective) || isTruckVehicle(effective)) return false;
@@ -705,7 +712,7 @@ function needsTruckLodgingQuestion(answers, context) {
 
 function getNextTruckOvernightQuestion(answers, context) {
   if (!needsTruckOvernightPreferenceQuestion(answers, context)) return null;
-  if (isAnswered("overnight_preference", answers)) return null;
+  if (isQuestionDone("overnight_preference", answers, context)) return null;
   const overnightQ = buildOvernightPreferenceQuestion(context);
   if (shouldPendingOvernightRoute(answers, context)) {
     return { done: false, ...overnightQ, pendingRoute: true };
@@ -727,7 +734,7 @@ function getNextTruckOvernightQuestion(answers, context) {
 function getNextTruckBranchAfterCommercial(answers, context) {
   const truckOvernight = getNextTruckOvernightQuestion(answers, context);
   if (truckOvernight) return truckOvernight;
-  if (needsTruckLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
+  if (needsTruckLodgingQuestion(answers, context) && !isQuestionDone("lodging", answers, context)) {
     return { done: false, ...buildTruckLodgingQuestion() };
   }
   return getNextTailQuestions(answers, context);
@@ -749,28 +756,28 @@ function buildPrimaryVehicleQuestion(selectedVehicles) {
   };
 }
 
-function getNextCommercialQuestion(answers) {
+function getNextCommercialQuestion(answers, context = {}) {
   for (const q of TRUCKER_QUESTION_SEQUENCE) {
-    if (!isAnswered(q.id, answers)) return { done: false, ...q };
+    if (!isQuestionDone(q.id, answers, context)) return { done: false, ...q };
   }
   return null;
 }
 
-function getNextPartyAndKidsFollowups(answers) {
-  if (needsPartyCompositionQuestion(answers)) {
+function getNextPartyAndKidsFollowups(answers, context = {}) {
+  if (needsPartyCompositionQuestion(answers) && !isQuestionDone("party_composition", answers, context)) {
     return { done: false, ...PARTY_COMPOSITION_QUESTION };
   }
-  if (needsKidsAgesDetail(answers) && !isAnswered("kids_ages", answers)) {
+  if (needsKidsAgesDetail(answers) && !isQuestionDone("kids_ages", answers, context)) {
     return { done: false, ...KIDS_AGES_QUESTION };
   }
   return null;
 }
 
-function getNextDetailFollowups(answers) {
-  if (needsFoodAllergyDetail(answers) && !isAnswered("food_allergies", answers)) {
+function getNextDetailFollowups(answers, context = {}) {
+  if (needsFoodAllergyDetail(answers) && !isQuestionDone("food_allergies", answers, context)) {
     return { done: false, ...FOOD_ALLERGIES_QUESTION };
   }
-  if (needsScheduleHoursDetail(answers) && !isAnswered("schedule_drive_hours", answers)) {
+  if (needsScheduleHoursDetail(answers) && !isQuestionDone("schedule_drive_hours", answers, context)) {
     return { done: false, ...buildScheduleDriveHoursQuestion(answers) };
   }
   return null;
@@ -778,22 +785,22 @@ function getNextDetailFollowups(answers) {
 
 function getNextTailQuestions(answers, context = {}) {
   if (!isTripDetailsAnswered(answers, context)) return { done: false, ...buildTripDetailsQuestion(answers) };
-  return getNextDetailFollowups(answers);
+  return getNextDetailFollowups(answers, context);
 }
 
 function getNextPersonalBranchQuestion(answers, context) {
-  if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_QUESTION };
-  if (needsTowingQuestion(answers, context) && !isAnswered("towing", answers)) {
+  if (!isQuestionDone("fuel_type", answers, context)) return { done: false, ...FUEL_TYPE_QUESTION };
+  if (needsTowingQuestion(answers, context) && !isQuestionDone("towing", answers, context)) {
     return { done: false, ...buildTowingQuestion(answers) };
   }
-  if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
-  const partyKids = getNextPartyAndKidsFollowups(answers);
+  if (!isQuestionDone("travelers", answers, context)) return { done: false, ...TRAVELERS_QUESTION };
+  const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
-  if (needsPersonalPreferencesQuestion(answers, context)) {
+  if (needsPersonalPreferencesQuestion(answers, context) && !isQuestionDone("preferences", answers, context)) {
     return { done: false, ...buildPersonalPreferencesQuestion(context) };
   }
 
-  if (!isAnswered("overnight_preference", answers) && needsPersonalOvernightBranch(answers)) {
+  if (!isQuestionDone("overnight_preference", answers, context) && needsPersonalOvernightBranch(answers)) {
     if (shouldPendingOvernightRoute(answers, context) || needsOvernightPreferenceQuestion(answers, context)) {
       const overnightQ = buildOvernightPreferenceQuestion(context);
       if (shouldPendingOvernightRoute(answers, context)) {
@@ -810,10 +817,10 @@ function getNextPersonalBranchQuestion(answers, context) {
       };
     }
   }
-  if (needsTripNightsQuestion(answers, context)) {
+  if (needsTripNightsQuestion(answers, context) && !isQuestionDone("trip_nights", answers, context)) {
     return { done: false, ...TRIP_NIGHTS_QUESTION };
   }
-  if (needsLodgingQuestion(answers, context) && !isAnswered("lodging", answers)) {
+  if (needsLodgingQuestion(answers, context) && !isQuestionDone("lodging", answers, context)) {
     return { done: false, ...buildLodgingQuestion(context) };
   }
 
@@ -823,12 +830,12 @@ function getNextPersonalBranchQuestion(answers, context) {
 }
 
 function getNextRvBranchQuestion(answers, context) {
-  if (!isAnswered("fuel_type", answers)) return { done: false, ...FUEL_TYPE_QUESTION };
-  if (!isAnswered("travelers", answers)) return { done: false, ...TRAVELERS_QUESTION };
-  const partyKids = getNextPartyAndKidsFollowups(answers);
+  if (!isQuestionDone("fuel_type", answers, context)) return { done: false, ...FUEL_TYPE_QUESTION };
+  if (!isQuestionDone("travelers", answers, context)) return { done: false, ...TRAVELERS_QUESTION };
+  const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
-  if (!isAnswered("preferences", answers)) return { done: false, ...buildRvPreferencesQuestion(context) };
-  if (needsRvTripNightsQuestion(answers, context)) {
+  if (!isQuestionDone("preferences", answers, context)) return { done: false, ...buildRvPreferencesQuestion(context) };
+  if (needsRvTripNightsQuestion(answers, context) && !isQuestionDone("trip_nights", answers, context)) {
     return { done: false, ...TRIP_NIGHTS_QUESTION };
   }
   return getNextTailQuestions(answers, context);
@@ -853,7 +860,7 @@ function guardMultiVehicleBranchNext(effective, branchNext, answers, context) {
   if (isRvVehicle(effective) || isTruckVehicle(effective)) {
     if (isPersonalOvernightOrLodgingQuestion(branchNext)) {
       if (isTruckVehicle(effective)) {
-        const truckNext = getNextCommercialQuestion(answers);
+        const truckNext = getNextCommercialQuestion(answers, context);
         if (truckNext) return truckNext;
         return getNextTruckBranchAfterCommercial(answers, context);
       }
@@ -865,10 +872,10 @@ function guardMultiVehicleBranchNext(effective, branchNext, answers, context) {
 
 function getNextBranchQuestion(effective, answers, context) {
   if (isThinTransportVehicle(effective)) {
-    return getNextThinTransportQuestions(answers);
+    return getNextThinTransportQuestions(answers, context);
   }
   if (isTruckVehicle(effective)) {
-    const truckNext = getNextCommercialQuestion(answers);
+    const truckNext = getNextCommercialQuestion(answers, context);
     if (truckNext) return truckNext;
     return getNextTruckBranchAfterCommercial(answers, context);
   }
@@ -878,8 +885,10 @@ function getNextBranchQuestion(effective, answers, context) {
 }
 
 function getNextMultiVehicleQuestion(answers, context) {
-  if (!isAnswered("multi_vehicles", answers)) return { done: false, ...MULTI_VEHICLES_QUESTION };
-  if (!answers.primary_vehicle) return buildPrimaryVehicleQuestion(answers.multi_vehicles);
+  if (!isQuestionDone("multi_vehicles", answers, context)) return { done: false, ...MULTI_VEHICLES_QUESTION };
+  if (!isQuestionDone("primary_vehicle", answers, context)) {
+    return buildPrimaryVehicleQuestion(answers.multi_vehicles);
+  }
   const effective = getEffectiveVehicle(answers);
   const branchNext = guardMultiVehicleBranchNext(
     effective,
@@ -888,7 +897,7 @@ function getNextMultiVehicleQuestion(answers, context) {
     context,
   );
   if (branchNext) return branchNext;
-  if (!isAnswered("coordination_needs", answers)) return { done: false, ...COORDINATION_QUESTION };
+  if (!isQuestionDone("coordination_needs", answers, context)) return { done: false, ...COORDINATION_QUESTION };
   return null;
 }
 
