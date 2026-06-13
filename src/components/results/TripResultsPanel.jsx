@@ -3,7 +3,6 @@ import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js
 import { isContinuousDrive } from "../../lib/driveMode.js";
 import { tipsForDisplay } from "../../lib/tripTips.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
-import RouteProgressBar from "../itinerary/RouteProgressBar.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import { TripTipsSection } from "../TripAlertsSection.jsx";
@@ -188,12 +187,6 @@ export default function TripResultsPanel({
             enriching={enrichingTrip}
             onCancel={onCancelEnrichment}
           />
-
-          {!simplified && days.length > 1 && (
-            <div className="route-progress-sticky-wrap">
-              <RouteProgressBar days={days} activeDayIndex={activeDayIndex} onDaySelect={scrollToDay} />
-            </div>
-          )}
 
           <TripTipsSection
             tips={displayTips}

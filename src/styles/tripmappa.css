@@ -3842,8 +3842,8 @@
     transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
   }
   .lodging-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
-  .lodging-card-photo-wrap { position: relative; width: 100%; max-height: 96px; overflow: hidden; }
-  .lodging-card-photo { width: 100%; height: 96px; max-height: 96px; object-fit: cover; display: block; }
+  .lodging-card-photo-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; }
+  .lodging-card-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
   .lodging-card-photo-gradient {
     position: absolute; inset: 0;
     background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 45%, transparent 100%);
@@ -4546,12 +4546,15 @@
     z-index: 90;
     display: flex;
     flex-direction: column;
+    align-items: center;
     background: var(--results-bg, linear-gradient(180deg, #0f0f1a 0%, var(--deep-dark) 40%, #12121f 100%));
     color: var(--ink);
     transition: background 1.8s ease, color 1.8s ease;
   }
   .trip-results-topbar {
     flex-shrink: 0;
+    width: 100%;
+    max-width: 720px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -5093,6 +5096,8 @@
   /* Sticky action bar */
   .results-action-bar {
     flex-shrink: 0;
+    width: 100%;
+    max-width: 720px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -5160,6 +5165,8 @@
   .trip-results-shell {
     flex: 1;
     min-height: 0;
+    width: 100%;
+    max-width: 720px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -5176,7 +5183,15 @@
     border-left: none;
     border-right: none;
     border-top: none;
+    padding: 12px 16px 10px;
   }
+  .trip-results-sticky-summary .trip-overview-hero-eyebrow { display: none; }
+  .trip-results-sticky-summary .trip-overview-hero-title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  .trip-results-sticky-summary .trip-overview-hero-stats { gap: 8px; }
+  .trip-results-sticky-summary .trip-overview-hero-stat { padding: 8px 6px; }
   .trip-results-shell > .trip-results-scroll {
     flex: 1;
     min-height: 0;
@@ -5255,6 +5270,11 @@
     height: auto;
     min-height: 96px;
   }
+  .results-route-timeline .road-stop-card-photo-thumb {
+    width: 100%;
+    height: 80px;
+  }
+  .road-stop-card .place-photo-fallback-name { display: none; }
   .results-route-timeline .road-stop-card-body { flex: 1; min-width: 0; }
   .results-route-leg {
     display: flex;

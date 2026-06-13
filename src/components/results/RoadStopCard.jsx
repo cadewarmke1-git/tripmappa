@@ -46,7 +46,6 @@ export default function RoadStopCard({
       <div className="road-stop-card-photo-wrap road-stop-card-photo-thumb">
         <PlacePhotoOrIcon
           photoUrl={stop.photoUrl}
-          name={stop.title}
           category={stop.category}
           imgClassName="road-stop-card-photo"
           className="road-stop-card-photo-fallback"
