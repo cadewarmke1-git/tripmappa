@@ -5418,12 +5418,11 @@
   .trip-summary-share-btn { width: 100%; margin-top: 8px; padding: 14px; font-size: 15px; }
 
   .trip-map-fullscreen {
-    position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 50;
     background: var(--ink);
   }
   .map-fullscreen-mode {
@@ -5433,12 +5432,10 @@
     flex: 1;
   }
   .trip-map-fullscreen .map-full {
-    flex: 1 1 auto;
-    position: relative !important;
-    inset: auto !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 280px;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
   }
   .trip-map-fullscreen .gmap-wrap { width: 100%; height: 100% !important; min-height: 280px; }
   .map-fullscreen-mode .app { display: none; }

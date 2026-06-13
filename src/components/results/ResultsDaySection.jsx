@@ -18,6 +18,15 @@ function legLabel(stop) {
   return null;
 }
 
+function findTripResultsScrollRoot(element) {
+  let node = element?.parentElement;
+  while (node) {
+    if (node.classList?.contains("trip-results-scroll")) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
 function RouteLegConnector({ label }) {
   if (!label) return null;
   return (
@@ -67,9 +76,10 @@ export default function ResultsDaySection({
   useEffect(() => {
     const el = sectionEl.current;
     if (!el) return;
+    const root = findTripResultsScrollRoot(el);
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) entry.target.classList.add("results-day-visible"); },
-      { threshold: 0.1 },
+      root ? { threshold: 0.1, root } : { threshold: 0.1 },
     );
     obs.observe(el);
     return () => obs.disconnect();
