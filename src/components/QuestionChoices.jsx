@@ -25,6 +25,21 @@ function isGroupDraft(prefDraft) {
   return prefDraft && typeof prefDraft === "object" && !Array.isArray(prefDraft);
 }
 
+/** Upper bound from travelers band answer already in flow (e.g. "3 to 5 travelers" → 5). */
+function parseTravelersBandMax(travelers) {
+  if (travelers == null || travelers === "") return null;
+  const t = String(travelers);
+  if (t === "1" || t === "Just me") return 1;
+  if (t === "2" || t === "2 travelers") return 2;
+  if (t === "3 to 5" || t === "3 to 5 travelers") return 5;
+  if (t === "6 or more" || t === "6 or more travelers") return 6;
+  const rangeMatch = t.match(/(\d+)\s*to\s*(\d+)/i);
+  if (rangeMatch) return Number(rangeMatch[2]);
+  const leading = t.match(/^(\d+)/);
+  if (leading) return Number(leading[1]);
+  return null;
+}
+
 function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false } = {}) {
   const hasWorkingDraft = isGroupDraft(prefDraft);
   const draft = (includePrefill || hasWorkingDraft) && hasWorkingDraft ? { ...prefDraft } : {};
@@ -67,6 +82,11 @@ export default function QuestionChoices({
   const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
   const [routePendingExpired, setRoutePendingExpired] = useState(false);
   const [budgetTouched, setBudgetTouched] = useState(false);
+
+  const partyMax = useMemo(
+    () => parseTravelersBandMax(answers?.travelers),
+    [answers?.travelers],
+  );
 
   useEffect(() => {
     setRoutePendingExpired(false);
@@ -261,12 +281,17 @@ export default function QuestionChoices({
     const [min, max] = field === "adults"
       ? (currentQ.adultRange || [1, 8])
       : (currentQ.childRange || [0, 6]);
+    const currentTotal = Number(partyAdults) + Number(partyChildren);
+    if (delta > 0 && partyMax != null && currentTotal >= partyMax) return;
+
     const nextAdults = field === "adults"
       ? Math.min(max, Math.max(min, Number(partyAdults) + delta))
       : partyAdults;
     const nextChildren = field === "children"
       ? Math.min(max, Math.max(min, Number(partyChildren) + delta))
       : partyChildren;
+    if (partyMax != null && nextAdults + nextChildren > partyMax) return;
+
     setPartyAdults(nextAdults);
     setPartyChildren(nextChildren);
     onSetPrefDraft({ adults: nextAdults, children: nextChildren });
@@ -485,35 +510,44 @@ export default function QuestionChoices({
 
           {currentQ.type === "party_composition" && (
             <div className="party-composition-inputs">
+              {partyMax != null && (
+                <p className="party-composition-total">
+                  Total: {Number(partyAdults) + Number(partyChildren)} / {partyMax}
+                </p>
+              )}
               {[
                 { field: "adults", label: "Adults", value: partyAdults, range: currentQ.adultRange || [1, 8] },
                 { field: "children", label: "Children", value: partyChildren, range: currentQ.childRange || [0, 6] },
-              ].map(({ field, label, value, range }) => (
-                <div className="party-composition-row" key={field}>
-                  <span className="party-composition-label">{label}</span>
-                  <div className="party-composition-stepper">
-                    <button
-                      type="button"
-                      className="party-composition-stepper-btn"
-                      disabled={frozen || value <= range[0]}
-                      onClick={() => adjustPartyCount(field, -1)}
-                      aria-label={`Fewer ${label.toLowerCase()}`}
-                    >
-                      −
-                    </button>
-                    <span className="party-composition-value">{value}</span>
-                    <button
-                      type="button"
-                      className="party-composition-stepper-btn"
-                      disabled={frozen || value >= range[1]}
-                      onClick={() => adjustPartyCount(field, 1)}
-                      aria-label={`More ${label.toLowerCase()}`}
-                    >
-                      +
-                    </button>
+              ].map(({ field, label, value, range }) => {
+                const atPartyMax = partyMax != null
+                  && Number(partyAdults) + Number(partyChildren) >= partyMax;
+                return (
+                  <div className="party-composition-row" key={field}>
+                    <span className="party-composition-label">{label}</span>
+                    <div className="party-composition-stepper">
+                      <button
+                        type="button"
+                        className="party-composition-stepper-btn"
+                        disabled={frozen || value <= range[0]}
+                        onClick={() => adjustPartyCount(field, -1)}
+                        aria-label={`Fewer ${label.toLowerCase()}`}
+                      >
+                        −
+                      </button>
+                      <span className="party-composition-value">{value}</span>
+                      <button
+                        type="button"
+                        className="party-composition-stepper-btn"
+                        disabled={frozen || value >= range[1] || atPartyMax}
+                        onClick={() => adjustPartyCount(field, 1)}
+                        aria-label={`More ${label.toLowerCase()}`}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

@@ -8264,6 +8264,13 @@
     gap: 10px;
     width: 100%;
   }
+  .party-composition-total {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+  }
   .party-composition-row {
     display: flex;
     align-items: center;
