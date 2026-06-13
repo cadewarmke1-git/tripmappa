@@ -1964,11 +1964,16 @@
     overflow-y: auto;
     overflow-x: hidden;
   }
-  html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact,
+  html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
   html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact .question-choices-compact,
   html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current .question-choices-compact .question-options-scroll {
     flex: 1 1 0;
-    min-height: 0;
+    min-height: 120px;
     overflow-y: auto;
     overflow-x: hidden;
   }
