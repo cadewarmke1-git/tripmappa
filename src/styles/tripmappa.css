@@ -1860,6 +1860,7 @@
   }
   .chat-wrap-plan-flow .plan-flow-layout--sparse.plan-flow-current {
     flex: 0 0 auto;
+    overflow: visible;
   }
   .chat-wrap-plan-flow .plan-flow-layout--sparse .question-choices-compact {
     flex: 0 0 auto;
@@ -1919,8 +1920,7 @@
     position: relative;
   }
   .chat-wrap-plan-flow .plan-flow-layout--tall .question-choices-compact .question-options-scroll,
-  .chat-wrap-plan-flow .plan-flow-layout--standard .question-choices-compact .question-options-scroll,
-  .chat-wrap-plan-flow .plan-flow-layout--sparse .question-choices-compact .question-options-scroll {
+  .chat-wrap-plan-flow .plan-flow-layout--standard .question-choices-compact .question-options-scroll {
     flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
@@ -1941,6 +1941,13 @@
     flex: 0 1 auto;
     min-height: 0;
     overflow-y: visible;
+  }
+  .chat-wrap-plan-flow .plan-flow-layout--sparse .question-choices-compact .question-options-scroll {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: hidden;
   }
 
   /* Desktop web: tall layout — grow scroll region so multiselect pills stay visible */

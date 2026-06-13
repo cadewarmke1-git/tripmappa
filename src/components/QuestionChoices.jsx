@@ -48,6 +48,7 @@ export default function QuestionChoices({
   questionHistory = [],
   questionHistoryLength,
   compact = false,
+  planFlowLayout = "standard",
   showNavRow = true,
   onResetPlan,
   onGoBack,
@@ -280,6 +281,7 @@ export default function QuestionChoices({
   }
 
   const scrollOptions = compact
+    && planFlowLayout !== "sparse"
     && currentQ.type !== "loading"
     && currentQ.type !== "text"
     && currentQ.type !== "party_composition";

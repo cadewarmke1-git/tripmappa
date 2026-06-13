@@ -333,6 +333,7 @@ export default function PlanPanel({
                               questionHistory={questionHistory}
                               questionHistoryLength={questionHistoryLength}
                               compact={inQuestionFlow}
+                              planFlowLayout={planFlowLayout}
                               showNavRow={!inQuestionFlow}
                               onResetPlan={onResetPlan}
                               onGoBack={onGoBack}
