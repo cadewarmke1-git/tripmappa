@@ -67,11 +67,6 @@ export default function QuestionChoices({
   const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
   const [routePendingExpired, setRoutePendingExpired] = useState(false);
   const [budgetTouched, setBudgetTouched] = useState(false);
-  const [partyTouched, setPartyTouched] = useState(false);
-
-  useEffect(() => {
-    setPartyTouched(false);
-  }, [currentQ?.id]);
 
   useEffect(() => {
     setRoutePendingExpired(false);
@@ -82,18 +77,6 @@ export default function QuestionChoices({
     }, ROUTE_PENDING_UNLOCK_MS);
     return () => clearTimeout(timer);
   }, [currentQ?.id, currentQ?.pendingRoute, onRoutePendingTimeout]);
-
-  useEffect(() => {
-    if (currentQ?.type !== "party_composition" || stepAnim || !partyTouched) return undefined;
-    const timer = setTimeout(() => {
-      onPickAnswer(
-        { adults: Number(partyAdults), children: Number(partyChildren) },
-        {},
-        { instant: true },
-      );
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [partyAdults, partyChildren, partyTouched, currentQ?.type, currentQ?.id, stepAnim, onPickAnswer]);
 
   const committed = committedAnswers ?? answers;
   const questionConfirmed = useMemo(
@@ -111,6 +94,17 @@ export default function QuestionChoices({
     );
     setBudgetTouched(false);
   }, [currentQ?.id, currentQ?.type, committed.loyalty_program, questionConfirmed]);
+
+  useEffect(() => {
+    if (currentQ?.type !== "party_composition") return;
+    if (questionConfirmed) {
+      setPartyAdults(committed.adult_count ?? 2);
+      setPartyChildren(committed.child_count ?? 0);
+    } else {
+      setPartyAdults(2);
+      setPartyChildren(0);
+    }
+  }, [currentQ?.id, currentQ?.type, questionConfirmed, committed.adult_count, committed.child_count]);
 
   useEffect(() => {
     if (currentQ?.type === "trip_details" || currentQ?.type === "multiselect_group") {
@@ -132,12 +126,6 @@ export default function QuestionChoices({
       } else {
         setMultiDraft([]);
       }
-      return;
-    }
-    if (currentQ?.type === "party_composition") {
-      const draft = questionConfirmed && isGroupDraft(prefDraft) ? prefDraft : {};
-      setPartyAdults(draft.adults ?? (questionConfirmed ? committed.adult_count : null) ?? 2);
-      setPartyChildren(draft.children ?? (questionConfirmed ? committed.child_count : null) ?? 0);
       return;
     }
     setMultiDraft([]);
@@ -176,6 +164,11 @@ export default function QuestionChoices({
 
   function pickInstant(value, extraFields) {
     onPickAnswer(value, extraFields, { instant: true });
+  }
+
+  function pickWithAnim(value, extraFields) {
+    triggerPrimaryHaptic();
+    onPickAnswer(value, extraFields);
   }
 
   function continueWithHaptic(handler) {
@@ -268,16 +261,22 @@ export default function QuestionChoices({
     const [min, max] = field === "adults"
       ? (currentQ.adultRange || [1, 8])
       : (currentQ.childRange || [0, 6]);
-    const setter = field === "adults" ? setPartyAdults : setPartyChildren;
-    setter(prev => {
-      const next = Math.min(max, Math.max(min, Number(prev) + delta));
-      setPartyTouched(true);
-      onSetPrefDraft({
-        adults: field === "adults" ? next : partyAdults,
-        children: field === "children" ? next : partyChildren,
-      });
-      return next;
-    });
+    const nextAdults = field === "adults"
+      ? Math.min(max, Math.max(min, Number(partyAdults) + delta))
+      : partyAdults;
+    const nextChildren = field === "children"
+      ? Math.min(max, Math.max(min, Number(partyChildren) + delta))
+      : partyChildren;
+    setPartyAdults(nextAdults);
+    setPartyChildren(nextChildren);
+    onSetPrefDraft({ adults: nextAdults, children: nextChildren });
+  }
+
+  function submitPartyComposition() {
+    onPickAnswer(
+      { adults: Number(partyAdults), children: Number(partyChildren) },
+      {},
+    );
   }
 
   const scrollOptions = compact
@@ -351,7 +350,7 @@ export default function QuestionChoices({
                     type="button"
                     className={mkClass(opt.value)}
                     disabled={frozen}
-                    onClick={() => pickInstant(opt.value)}
+                    onClick={() => pickWithAnim(opt.value)}
                   >
                     {opt.label}
                   </button>
@@ -370,7 +369,7 @@ export default function QuestionChoices({
                     type="button"
                     className={mkClass(opt.value)}
                     disabled={frozen}
-                    onClick={() => pickInstant(opt.value)}
+                    onClick={() => pickWithAnim(opt.value)}
                   >
                     {opt.label}
                   </button>
@@ -398,7 +397,7 @@ export default function QuestionChoices({
                     type="button"
                     className={`${mkClass(value)}${description ? " qr-btn-described" : ""}`}
                     disabled={frozen || routeLocked}
-                    onClick={() => pickInstant(value)}
+                    onClick={() => pickWithAnim(value)}
                   >
                     <span className="qr-btn-label">{label}</span>
                     {description && <span className="qr-btn-desc">{description}</span>}
@@ -672,6 +671,19 @@ export default function QuestionChoices({
         </div>
       )}
     </div>
+
+      {currentQ.type === "party_composition" && (
+        <div className={actionRowClass}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={continueWithHaptic(submitPartyComposition)}
+          >
+            Continue
+          </button>
+        </div>
+      )}
 
       {currentQ.type === "multiselect" && (
         <div className={actionRowClass}>
