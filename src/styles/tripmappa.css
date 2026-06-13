@@ -1316,14 +1316,30 @@
     .route-loading-pill { top: 12px; max-width: calc(100% - 24px); }
   }
 
-  /* Mobile — cap planning panel height so map stays visible */
+  /* Mobile — plan flow: full-width panel, map hidden */
   @media (max-width: 767px) {
+    .app:has(.float-card--plan-flow) .map-full {
+      display: none !important;
+    }
+
     .float-card:not(.collapsed) {
       max-height: calc(100dvh - var(--nav-h) - 48px);
     }
     .float-card--plan-flow:not(.collapsed) {
-      height: min(78dvh, calc(100dvh - var(--nav-h)));
-      max-height: min(78dvh, calc(100dvh - var(--nav-h)));
+      top: var(--nav-h) !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: calc(100dvh - var(--nav-h)) !important;
+      max-height: calc(100dvh - var(--nav-h)) !important;
+      border-radius: 0 !important;
+    }
+    .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
+    .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) {
+      height: calc(100dvh - var(--nav-h)) !important;
+      max-height: calc(100dvh - var(--nav-h)) !important;
     }
     .float-card-body {
       flex: 1;
