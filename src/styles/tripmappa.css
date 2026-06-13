@@ -1341,6 +1341,46 @@
       height: calc(100dvh - var(--nav-h)) !important;
       max-height: calc(100dvh - var(--nav-h)) !important;
     }
+
+    /* Full-height plan flow: grow scroll region so question choices stay visible */
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow {
+      flex: 1 1 0;
+      min-height: 0;
+    }
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow .float-card-scroll {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-stage,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-scroll,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-stack,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-body,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-main,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-main > .plan-flow-current {
+      flex: 1 1 0;
+      min-height: 0;
+    }
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact,
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact .question-choices-compact {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-options-scroll {
+      flex: 1 1 0;
+      min-height: 0;
+      max-height: none;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
     .float-card-body {
       flex: 1;
       min-height: 0;
