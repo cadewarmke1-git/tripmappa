@@ -90,7 +90,7 @@ export default function QuestionChoices({
         {},
         { instant: true },
       );
-    }, 600);
+    }, 1500);
     return () => clearTimeout(timer);
   }, [partyAdults, partyChildren, partyTouched, currentQ?.type, currentQ?.id, stepAnim, onPickAnswer]);
 
