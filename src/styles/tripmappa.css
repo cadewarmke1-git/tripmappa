@@ -2773,7 +2773,21 @@
     gap: 4px;
   }
 
-  .chat-wrap-plan-flow .plan-route-card { margin-top: 8px; }
+  .chat-wrap-plan-flow .plan-route-card {
+    margin-top: 4px;
+    margin-bottom: 6px;
+    padding: 8px 12px;
+  }
+  .chat-wrap-plan-flow .plan-route-card-row {
+    gap: 6px 12px;
+  }
+  .chat-wrap-plan-flow .plan-route-card-chips {
+    margin-top: 6px;
+    gap: 5px;
+  }
+  .chat-wrap-plan-flow .plan-route-card-chip {
+    padding: 4px 10px;
+  }
   .chat-wrap-plan-flow .question-thread {
     max-height: 88px;
     scrollbar-width: none;
