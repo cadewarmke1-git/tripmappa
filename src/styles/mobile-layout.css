@@ -213,22 +213,6 @@
     width: 100%;
   }
 
-  html[data-layout="mobile"] .app:has(.float-card--plan-flow) .map-full {
-    display: none !important;
-  }
-
-  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) {
-    top: var(--nav-h) !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: calc(100dvh - var(--nav-h)) !important;
-    max-height: calc(100dvh - var(--nav-h)) !important;
-    border-radius: 0 !important;
-  }
-
   html[data-layout="mobile"] .float-card--plan-flow-collapsed.collapsed {
     top: 50% !important;
     left: 0 !important;
@@ -760,5 +744,24 @@
   html[data-layout="mobile"] .auth-modal-submit,
   html[data-layout="mobile"] .auth-modal-alt-btn {
     min-height: 44px;
+  }
+}
+
+/* Plan flow: hide map + full-width panel — mobile layout only, ≤767px */
+@media (max-width: 767px) {
+  html[data-layout="mobile"] .app:has(.float-card--plan-flow) .map-full {
+    display: none !important;
+  }
+
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) {
+    top: var(--nav-h) !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: calc(100dvh - var(--nav-h)) !important;
+    max-height: calc(100dvh - var(--nav-h)) !important;
+    border-radius: 0 !important;
   }
 }
