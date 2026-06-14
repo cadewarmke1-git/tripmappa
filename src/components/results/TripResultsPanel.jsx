@@ -1,21 +1,17 @@
 import { useMemo, useRef, useEffect } from "react";
 import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
 import { isContinuousDrive } from "../../lib/driveMode.js";
-import { tipsForDisplay } from "../../lib/tripTips.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
-import { TripTipsSection } from "../TripAlertsSection.jsx";
 import PlannedForYouSection from "./PlannedForYouSection.jsx";
 import PersonalTouchesStrip from "./PersonalTouchesStrip.jsx";
 import ResultsActionBar from "./ResultsActionBar.jsx";
-import WeatherWarningBanner from "../WeatherWarningBanner.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
 import EnrichmentNotice from "./EnrichmentNotice.jsx";
 import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
-import TripConstraintsBar from "./TripConstraintsBar.jsx";
 
 export default function TripResultsPanel({
   panelClassName = "",
@@ -30,16 +26,8 @@ export default function TripResultsPanel({
   tripFormat,
   recommendations = [],
   selectedLodging = [],
-  tripAlerts = [],
-  liveTripTips = [],
-  tripTips = [],
-  onAcceptActionTip,
-  onDismissActionTip,
-  dismissedActionTipIds = [],
   personalTouches = [],
   changesMade = [],
-  liveTipsUpdatedAt = null,
-  liveTipsRefreshing = false,
   enrichingTrip = false,
   enrichmentLimited = false,
   planOutOfDate = false,
@@ -101,11 +89,6 @@ export default function TripResultsPanel({
   );
 
   const continuousDrive = useMemo(() => isContinuousDrive(answers), [answers]);
-
-  const displayTips = useMemo(() => {
-    if (liveTripTips.length) return tipsForDisplay(liveTripTips);
-    return tipsForDisplay(tripTips);
-  }, [liveTripTips, tripTips]);
 
   const days = useMemo(() => buildItineraryDays({
     origin,
@@ -187,8 +170,6 @@ export default function TripResultsPanel({
           <PlannedForYouSection touches={personalTouches} changesMade={changesMade} />
           <PersonalTouchesStrip touches={personalTouches} changesMade={changesMade} />
 
-          <WeatherWarningBanner alerts={tripAlerts} />
-
           {tripUsedFallback && (
             <div className="trip-fallback-notice" role="status">
               This trip uses estimated route data from an earlier session.
@@ -199,23 +180,12 @@ export default function TripResultsPanel({
             <StalePlanNotice onRegenerate={onRegenerateTrip} loading={generateLoading} changes={planChanges} />
           )}
 
-          <TripConstraintsBar answers={answers} routeInfo={routeInfo} />
-
           <EnrichmentNotice
             limited={enrichmentLimited}
             onDismiss={onDismissEnrichmentNotice}
             onRetry={onRetryEnrichment}
             enriching={enrichingTrip}
             onCancel={onCancelEnrichment}
-          />
-
-          <TripTipsSection
-            tips={displayTips}
-            updatedAt={liveTipsUpdatedAt}
-            refreshing={liveTipsRefreshing}
-            onAcceptActionTip={onAcceptActionTip}
-            onDismissActionTip={onDismissActionTip}
-            dismissedActionIds={dismissedActionTipIds}
           />
 
           {enrichingTrip && <ResultsEnrichmentSkeleton theme={theme} />}

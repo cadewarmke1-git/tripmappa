@@ -1,6 +1,7 @@
 /** OSM rest stop lookup helpers — Overpass query, bbox grid cache keys, normalization. */
 
 const GRID_DEG = 0.15;
+const MIN_BBOX_DEG = 0.3;
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 const OVERPASS_TIMEOUT_MS = 10_000;
@@ -11,11 +12,38 @@ export function roundBboxCoord(value) {
   return Math.round(n / GRID_DEG) * GRID_DEG;
 }
 
+function padBboxExtents(bbox) {
+  let { north, south, east, west } = bbox;
+  const latSpan = north - south;
+  if (latSpan < MIN_BBOX_DEG) {
+    const mid = (north + south) / 2;
+    const half = MIN_BBOX_DEG / 2;
+    north = mid + half;
+    south = mid - half;
+  }
+  const lngSpan = east - west;
+  if (lngSpan < MIN_BBOX_DEG) {
+    const mid = (east + west) / 2;
+    const half = MIN_BBOX_DEG / 2;
+    east = mid + half;
+    west = mid - half;
+  }
+  return { north, south, east, west };
+}
+
 export function normalizeBbox(bbox) {
-  const north = roundBboxCoord(bbox?.north);
-  const south = roundBboxCoord(bbox?.south);
-  const east = roundBboxCoord(bbox?.east);
-  const west = roundBboxCoord(bbox?.west);
+  const northRaw = Number(bbox?.north);
+  const southRaw = Number(bbox?.south);
+  const eastRaw = Number(bbox?.east);
+  const westRaw = Number(bbox?.west);
+  if ([northRaw, southRaw, eastRaw, westRaw].some(v => !Number.isFinite(v))) return null;
+  if (northRaw <= southRaw || eastRaw <= westRaw) return null;
+
+  const padded = padBboxExtents({ north: northRaw, south: southRaw, east: eastRaw, west: westRaw });
+  const north = roundBboxCoord(padded.north);
+  const south = roundBboxCoord(padded.south);
+  const east = roundBboxCoord(padded.east);
+  const west = roundBboxCoord(padded.west);
   if ([north, south, east, west].some(v => v == null)) return null;
   if (north <= south || east <= west) return null;
   return { north, south, east, west };
@@ -108,7 +136,10 @@ export async function fetchOverpassRestStops(bbox) {
   try {
     const res = await fetch(OVERPASS_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "TripMappa/1.0",
+      },
       body: `data=${encodeURIComponent(query)}`,
       signal: controller.signal,
     });

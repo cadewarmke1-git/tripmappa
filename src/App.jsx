@@ -108,6 +108,7 @@ import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
+import ProximityTripTipAlert from "./components/ProximityTripTipAlert.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
 import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
@@ -3526,16 +3527,8 @@ export default function App() {
             tripFormat={tripFormat}
             recommendations={recommendations}
             selectedLodging={selectedLodging}
-            tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
-            liveTripTips={displayLiveTips}
-            tripTips={tripTips}
-            onAcceptActionTip={handleAcceptActionTip}
-            onDismissActionTip={handleDismissActionTip}
-            dismissedActionTipIds={dismissedActionTipIds}
             personalTouches={personalTouches}
             changesMade={changesMade}
-            liveTipsUpdatedAt={liveTipsUpdatedAt}
-            liveTipsRefreshing={liveTipsRefreshing}
             enrichingTrip={enrichingTrip}
             enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
             planOutOfDate={planOutOfDate}
@@ -3597,6 +3590,15 @@ export default function App() {
             <div className="map-float-nav map-float-nav--edit-only">
               <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit plan</button>
             </div>
+            <ProximityTripTipAlert
+              active={itinerarySync.routeFocusMode}
+              tripTips={tripTips}
+              liveTripTips={displayLiveTips}
+              tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
+              weatherByCity={weatherByCity}
+              routePoints={routeInfo?.routePoints || []}
+              destination={dest}
+            />
             <ErrorBoundary
               key={mapBoundaryKey}
               label="map-fullscreen"

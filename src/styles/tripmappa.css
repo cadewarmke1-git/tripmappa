@@ -8872,3 +8872,50 @@
   .collab-page-main { max-width: 800px; margin: 0 auto; padding: 24px 16px 48px; }
   .collab-page-title { font-family: "Fraunces", Georgia, serif; margin: 0 0 8px; }
   .collab-page-route { color: var(--text-secondary); margin: 0 0 20px; }
+
+  /* Proximity trip tip alerts during navigation */
+  .proximity-tip-alert {
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1200;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: min(520px, calc(100vw - 24px));
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 200, 120, 0.35);
+    background: rgba(18, 22, 32, 0.94);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+  }
+  .proximity-tip-alert-icon { flex-shrink: 0; color: rgba(255, 210, 140, 0.95); margin-top: 2px; }
+  .proximity-tip-alert-icon svg { width: 20px; height: 20px; display: block; }
+  .proximity-tip-alert-icon--traffic { color: rgba(255, 160, 120, 0.95); }
+  .proximity-tip-alert-body { flex: 1; min-width: 0; }
+  .proximity-tip-alert-title { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.35; }
+  .proximity-tip-alert-text { margin: 4px 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.75); line-height: 1.45; }
+  .proximity-tip-alert-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .proximity-tip-alert-reroute {
+    border: 1px solid rgba(255, 210, 140, 0.45);
+    background: rgba(255, 210, 140, 0.12);
+    color: var(--gold-primary, #f5c76a);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .proximity-tip-alert-reroute:hover { background: rgba(255, 210, 140, 0.2); }
+  .proximity-tip-alert-dismiss {
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 20px;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  .proximity-tip-alert-dismiss:hover { color: #fff; }

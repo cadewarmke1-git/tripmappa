@@ -26,9 +26,10 @@ const CONTINUOUS_DRIVE_SEARCHES = [
 ];
 
 const HYBRID_PLACES_SEARCHES = [
-  { type: "truck_stop", category: "truck_stop" },
-  { type: "gas_station", keyword: "gas station", category: "fuel" },
+  { keyword: "truck stop", category: "truck_stop" },
   { keyword: "travel plaza", category: "rest" },
+  { keyword: "Love's Travel Stop OR Pilot Flying J OR Flying J OR TA Truck Stop OR Petro", category: "truck_stop" },
+  { type: "gas_station", keyword: "gas station", category: "fuel" },
 ];
 
 const SEGMENT_MILES = 30;
