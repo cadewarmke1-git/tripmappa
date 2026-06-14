@@ -16,6 +16,7 @@ export default function RoadStopCard({
 }) {
   const isCharging = String(stop.category || "").toLowerCase() === "charging";
   const charging = stop.charging || stop.stopData;
+  const hasPhoto = Boolean(resolvePlacePhotoUrl(stop.photoUrl, 64));
   const showTruckParkingWarning = showTruckWarnings && stop.truckParking === false
     && /food|rest|dining/i.test(String(stop.category || ""));
   function handleClick() {
