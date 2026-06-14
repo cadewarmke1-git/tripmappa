@@ -1,6 +1,5 @@
 import RoadStopCard from "./RoadStopCard.jsx";
 import ActivityDiningCard from "./ActivityDiningCard.jsx";
-import OvernightStayCard from "./OvernightStayCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
 import GroceryCard from "../grocery/GroceryCard.jsx";
@@ -83,11 +82,6 @@ export default function SimpleTripSection({
 
   return (
     <section className="results-day-section results-day-visible simple-trip-section">
-      <div className="results-day-header">
-        <h2 className="results-day-label">Your Trip</h2>
-        {day?.date && <span className="results-day-date">{day.date}</span>}
-      </div>
-      <div className="results-day-divider"/>
       {day?.drivingSummary && (
         <p className="results-driving-summary">
           {day.drivingSummary.miles} · {day.drivingSummary.duration} driving
@@ -118,20 +112,7 @@ export default function SimpleTripSection({
       )}
 
       {hasOvernight && day?.overnight && !continuousDrive && (
-        <div className="results-subsection">
-          <h3 className="results-subsection-label">Tonight&apos;s Stay</h3>
-          <OvernightStayCard
-            overnight={day.overnight}
-            answers={answers}
-            routeInfo={routeInfo}
-            selectedLodging={selectedLodging}
-            weather={findCityData(weatherByCity, day.overnight.city)}
-            onLodgingSelect={onLodgingSelect}
-            onToast={onToast}
-            onSelect={onStopSelect}
-            highlighted={highlightedStopId === (day.overnight.id || `overnight-${day.overnight.city}`)}
-            cardRef={setStopRef(day.overnight.id || `overnight-${day.overnight.city}`)}
-          />
+        <>
           <LodgingCardsSection
             city={day.overnight.city}
             answers={answers}
@@ -169,7 +150,7 @@ export default function SimpleTripSection({
               />
             </div>
           )}
-        </div>
+        </>
       )}
 
       {dest && (continuousDrive || !day?.overnight) && (

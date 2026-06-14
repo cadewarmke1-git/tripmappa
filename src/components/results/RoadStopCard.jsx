@@ -2,6 +2,7 @@ import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
+import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
 
 export default function RoadStopCard({
   stop,
@@ -36,29 +37,42 @@ export default function RoadStopCard({
   return (
     <article
       ref={cardRef}
-      className={`road-stop-card${highlighted ? " stop-highlighted" : ""}`}
+      className={`road-stop-card${!hasPhoto ? " road-stop-card--no-photo" : ""}${highlighted ? " stop-highlighted" : ""}`}
       data-stop-id={stop.id}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === "Enter") handleClick(); }}
       role="button"
       tabIndex={0}
     >
-      <div className="road-stop-card-photo-wrap road-stop-card-photo-thumb">
-        <PlacePhotoOrIcon
-          photoUrl={stop.photoUrl}
-          category={stop.category}
-          imgClassName="road-stop-card-photo"
-          className="road-stop-card-photo-fallback"
-          displayPx={64}
-        />
-        {stop.verified === true && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
-        {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
-        <span className={`road-stop-badge-cat${isCharging ? " road-stop-badge-charging" : ""}`}>
-          {stop.category || "Stop"}
-        </span>
-      </div>
+      {hasPhoto && (
+        <div className="road-stop-card-photo-wrap road-stop-card-photo-thumb">
+          <PlacePhotoOrIcon
+            photoUrl={stop.photoUrl}
+            category={stop.category}
+            imgClassName="road-stop-card-photo"
+            className="road-stop-card-photo-fallback"
+            displayPx={64}
+          />
+          {stop.verified === true && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
+          {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
+          <span className={`road-stop-badge-cat${isCharging ? " road-stop-badge-charging" : ""}`}>
+            {stop.category || "Stop"}
+          </span>
+        </div>
+      )}
       <div className="road-stop-card-body">
-        <h4 className="road-stop-card-name">{stop.title}</h4>
+        <div className="road-stop-card-header">
+          <h4 className="road-stop-card-name">{stop.title}</h4>
+          {!hasPhoto && (
+            <div className="road-stop-card-header-badges">
+              {stop.verified === true && <TripMappaVerifiedBadge />}
+              {stop.localFavorite && <span className="road-stop-badge-local-inline">Local Favorite</span>}
+              <span className={`road-stop-badge-cat-inline${isCharging ? " road-stop-badge-charging" : ""}`}>
+                {stop.category || "Stop"}
+              </span>
+            </div>
+          )}
+        </div>
         {isCharging && (
           <p className="road-stop-charging-meta">
             {[

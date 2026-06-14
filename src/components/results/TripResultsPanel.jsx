@@ -121,9 +121,12 @@ export default function TripResultsPanel({
     recommendations,
   }), [origin, dest, stops, roadStops, routeInfo, departureTime, answers, optionalStopCards, activitiesByCity, restaurantsByCity, recommendations]);
 
-  function scrollToDay(index) {
+  const isMultiDay = !simplified && days.length > 1;
+  const activeDay = days[Math.min(activeDayIndex, Math.max(0, days.length - 1))] ?? days[0];
+  const activeDayIdx = days.indexOf(activeDay);
+
+  function selectDay(index) {
     onDaySelect?.(index);
-    dayRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   useEffect(() => {
@@ -157,6 +160,24 @@ export default function TripResultsPanel({
             restaurantsByCity={restaurantsByCity}
           />
         </div>
+
+        {isMultiDay && (
+          <div className="results-day-tabs" role="tablist" aria-label="Trip days">
+            {days.map((day, i) => (
+              <button
+                key={day.dayNumber}
+                type="button"
+                role="tab"
+                aria-selected={activeDayIdx === i}
+                className={`results-day-tab${activeDayIdx === i ? " results-day-tab-active" : ""}`}
+                onClick={() => selectDay(i)}
+              >
+                <span className="results-day-tab-label">{day.label}</span>
+                {day.date && <span className="results-day-tab-date">{day.date}</span>}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="trip-results-scroll" ref={scrollRef}>
           {showGuestBanner && (
@@ -238,38 +259,36 @@ export default function TripResultsPanel({
               isGuest={isGuest}
               onGrocerySignIn={onGrocerySignIn}
             />
-          ) : (
-            days.map((day, i) => (
-              <ResultsDaySection
-                key={day.dayNumber}
-                day={day}
-                answers={answers}
-                origin={origin}
-                dest={dest}
-                routeInfo={routeInfo}
-                selectedLodging={selectedLodging}
-                continuousDrive={continuousDrive}
-                weatherByCity={weatherByCity}
-                restaurantsByCity={restaurantsByCity}
-                onLodgingSelect={onLodgingSelect}
-                onToast={onToast}
-                onAddRoadStop={onAddRoadStop}
-                onRemoveRoadStop={onRemoveRoadStop}
-                isStopAdded={isStopAdded}
-                highlightedStopId={highlightedStopId}
-                stopRefs={stopRefs}
-                onStopSelect={onStopSelect}
-                sectionRef={el => { dayRefs.current[i] = el; }}
-                showGroceryCard={i === days.length - 1}
-                stops={stops}
-                departureTime={departureTime}
-                groceryAllowed={groceryAllowed}
-                accessToken={accessToken}
-                onUpgradeGrocery={onUpgradeGrocery}
-                isGuest={isGuest}
-                onGrocerySignIn={onGrocerySignIn}
-              />
-            ))
+          ) : activeDay && (
+            <ResultsDaySection
+              key={activeDay.dayNumber}
+              day={activeDay}
+              answers={answers}
+              origin={origin}
+              dest={dest}
+              routeInfo={routeInfo}
+              selectedLodging={selectedLodging}
+              continuousDrive={continuousDrive}
+              weatherByCity={weatherByCity}
+              restaurantsByCity={restaurantsByCity}
+              onLodgingSelect={onLodgingSelect}
+              onToast={onToast}
+              onAddRoadStop={onAddRoadStop}
+              onRemoveRoadStop={onRemoveRoadStop}
+              isStopAdded={isStopAdded}
+              highlightedStopId={highlightedStopId}
+              stopRefs={stopRefs}
+              onStopSelect={onStopSelect}
+              sectionRef={el => { dayRefs.current[activeDayIdx] = el; }}
+              showGroceryCard={activeDayIdx === days.length - 1}
+              stops={stops}
+              departureTime={departureTime}
+              groceryAllowed={groceryAllowed}
+              accessToken={accessToken}
+              onUpgradeGrocery={onUpgradeGrocery}
+              isGuest={isGuest}
+              onGrocerySignIn={onGrocerySignIn}
+            />
           )}
         </div>
 

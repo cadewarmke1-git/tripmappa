@@ -3990,14 +3990,16 @@
   .skeleton-btn { flex: 1; height: 42px; border-radius: 12px; }
   .skeleton-btn-secondary { flex: 0 0 72px; }
 
-  @media (min-width: 768px) {
-    .lodging-cards-scroll {
-      flex-direction: column; overflow-x: visible; scroll-snap-type: none;
-    }
-    .lodging-card {
-      flex: none; width: 100%; max-width: none;
-    }
-    .lodging-card + .lodging-card { margin-top: 0; }
+  html[data-layout="web"] .lodging-cards-scroll {
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  html[data-layout="web"] .lodging-section .lodging-card,
+  html[data-layout="web"] .lodging-cards-rest .lodging-card {
+    flex: 0 0 calc(50% - 7px);
+    width: auto;
+    max-width: none;
   }
 
   /* ── Fuel & EV charging stops (Phase 4) ── */
@@ -5229,6 +5231,60 @@
   .app-wrap.day .trip-overview-hero-val { color: var(--color-text-primary); }
   .trip-overview-hero-label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 3px; }
 
+  .results-day-tabs {
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--results-topbar-bg, rgba(15,15,26,0.88));
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .results-day-tabs::-webkit-scrollbar { display: none; }
+  .results-day-tab {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+  }
+  .results-day-tab:hover {
+    color: var(--ink);
+    background: rgba(255,255,255,0.04);
+  }
+  .results-day-tab-active {
+    color: var(--ink);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .results-day-tab-label {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .results-day-tab-date {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.2;
+  }
+  .results-day-tab-active .results-day-tab-date {
+    color: color-mix(in srgb, var(--accent) 70%, var(--muted));
+  }
+
   .results-day-section {
     margin-bottom: 36px; opacity: 0; transform: translateY(20px);
     transition: opacity 0.55s ease, transform 0.55s ease;
@@ -5276,6 +5332,48 @@
   }
   .road-stop-card .place-photo-fallback-name { display: none; }
   .results-route-timeline .road-stop-card-body { flex: 1; min-width: 0; }
+
+  /* Desktop web: wider results shell + two-column grids */
+  html[data-layout="web"] .trip-results-topbar,
+  html[data-layout="web"] .trip-results-shell,
+  html[data-layout="web"] .results-action-bar {
+    max-width: 1040px;
+  }
+  html[data-layout="web"] .results-days-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 20px;
+    align-items: start;
+  }
+  html[data-layout="web"] .results-route-timeline {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  html[data-layout="web"] .results-route-timeline-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  html[data-layout="web"] .results-route-leg { display: none; }
+  html[data-layout="web"] .results-route-timeline .road-stop-card {
+    width: auto;
+    max-width: none;
+  }
+  html[data-layout="web"] .results-road-stops-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    overflow-x: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
+  }
+  html[data-layout="web"] .results-road-stops-scroll .road-stop-card {
+    flex: none;
+    width: auto;
+    max-width: none;
+  }
+
   .results-route-leg {
     display: flex;
     align-items: center;
@@ -5344,6 +5442,25 @@
   .road-stop-truck-warning { color: #d97706; font-weight: 600; }
   .tm-icon-charging { color: var(--gold-primary); }
   .road-stop-card-body { padding: 0; flex: 1; min-width: 0; }
+  .road-stop-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px;
+  }
+  .road-stop-card-header .road-stop-card-name { margin-bottom: 0; flex: 1; min-width: 0; }
+  .road-stop-card-header-badges {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0;
+  }
+  .road-stop-badge-cat-inline {
+    font-size: 9px; font-weight: 600; padding: 3px 7px; border-radius: 4px;
+    background: rgba(0,0,0,0.55); color: #fff; white-space: nowrap;
+  }
+  .road-stop-badge-local-inline {
+    font-size: 8px; font-weight: 700; padding: 3px 6px; border-radius: 4px;
+    background: var(--gold-primary); color: var(--deep-dark); text-transform: uppercase; white-space: nowrap;
+  }
+  .road-stop-card--no-photo {
+    flex-direction: column; align-items: stretch; gap: 0; padding: 12px 14px;
+  }
+  .road-stop-card--no-photo .road-stop-card-body { padding: 0; }
   .tripmappa-verified-badge {
     display: inline-flex; align-items: center; font-size: 9px; font-weight: 700;
     letter-spacing: 0.02em; text-transform: uppercase; padding: 3px 7px; border-radius: 99px;

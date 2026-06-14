@@ -1,6 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
 import RoadStopCard from "./RoadStopCard.jsx";
-import OvernightStayCard from "./OvernightStayCard.jsx";
 import ActivityDiningCard from "./ActivityDiningCard.jsx";
 import LodgingCardsSection from "../lodging/LodgingCardsSection.jsx";
 import RestaurantCardsSection from "../restaurants/RestaurantCardsSection.jsx";
@@ -57,6 +56,7 @@ export default function ResultsDaySection({
   stopRefs,
   onStopSelect,
   continuousDrive = false,
+  showDayHeader = false,
   showGroceryCard = false,
   stops = [],
   departureTime = null,
@@ -91,18 +91,19 @@ export default function ResultsDaySection({
     };
   }
 
-  const orderedStops = [
-    ...(day.roadStops || []).map(stop => ({ kind: "road", stop })),
-    ...(!continuousDrive && day.overnight ? [{ kind: "overnight", stop: day.overnight }] : []),
-  ];
+  const orderedStops = (day.roadStops || []).map(stop => ({ kind: "road", stop }));
 
   return (
-    <section className="results-day-section" ref={mergedRef}>
-      <div className="results-day-header">
-        <h2 className="results-day-label">{day.label}</h2>
-        {day.date && <span className="results-day-date">{day.date}</span>}
-      </div>
-      <div className="results-day-divider"/>
+    <section className="results-day-section results-day-visible" ref={mergedRef}>
+      {showDayHeader && (
+        <>
+          <div className="results-day-header">
+            <h2 className="results-day-label">{day.label}</h2>
+            {day.date && <span className="results-day-date">{day.date}</span>}
+          </div>
+          <div className="results-day-divider"/>
+        </>
+      )}
 
       <p className="results-driving-summary">
         <span className="results-driving-summary-label">Today&apos;s drive</span>
@@ -119,31 +120,16 @@ export default function ResultsDaySection({
             {orderedStops.map((item, index) => (
               <div key={item.stop.id || `${item.kind}-${index}`} className="results-route-timeline-item">
                 {index > 0 && <RouteLegConnector label={legLabel(item.stop) || "Continue driving"} />}
-                {item.kind === "road" ? (
-                  <RoadStopCard
-                    stop={item.stop}
-                    onAdd={onAddRoadStop}
-                    onRemove={onRemoveRoadStop}
-                    onToast={onToast}
-                    added={isStopAdded?.(item.stop)}
-                    onSelect={onStopSelect}
-                    highlighted={highlightedStopId === item.stop.id}
-                    cardRef={setStopRef(item.stop.id)}
-                  />
-                ) : (
-                  <OvernightStayCard
-                    overnight={item.stop}
-                    answers={answers}
-                    routeInfo={routeInfo}
-                    selectedLodging={selectedLodging}
-                    weather={weatherByCity[item.stop.city]}
-                    onLodgingSelect={onLodgingSelect}
-                    onToast={onToast}
-                    onSelect={onStopSelect}
-                    highlighted={highlightedStopId === (item.stop.id || `overnight-${item.stop.city}`)}
-                    cardRef={setStopRef(item.stop.id || `overnight-${item.stop.city}`)}
-                  />
-                )}
+                <RoadStopCard
+                  stop={item.stop}
+                  onAdd={onAddRoadStop}
+                  onRemove={onRemoveRoadStop}
+                  onToast={onToast}
+                  added={isStopAdded?.(item.stop)}
+                  onSelect={onStopSelect}
+                  highlighted={highlightedStopId === item.stop.id}
+                  cardRef={setStopRef(item.stop.id)}
+                />
               </div>
             ))}
           </div>
