@@ -80,6 +80,7 @@ function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
     distanceMiles: place.distanceMiles,
     detourMiles: place.isDetour ? place.detourMiles : undefined,
     source: "places",
+    userAdded: false,
   };
 }
 
@@ -106,6 +107,7 @@ function roadStopFromOsm(osm, distanceLabel, distanceMiles) {
     distanceMiles,
     amenities,
     source: "osm",
+    userAdded: false,
   };
 }
 

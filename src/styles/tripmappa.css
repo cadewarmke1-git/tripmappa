@@ -7696,6 +7696,81 @@
     100% { background-position: -200% 0; }
   }
 
+  /* Generation loader skeleton (replaces cinematic WebGL scene) */
+  .generation-loader-skeleton {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 24px 20px;
+    overflow: hidden;
+  }
+  .generation-loader-skeleton-panel {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-card);
+    border-radius: var(--r-lg);
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    overflow: hidden;
+  }
+  .generation-loader-title-bar {
+    height: 28px;
+    width: 72%;
+    border-radius: var(--r);
+  }
+  .generation-loader-day {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .generation-loader-day-label {
+    height: 14px;
+    width: 38%;
+    border-radius: 7px;
+  }
+  .generation-loader-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .generation-loader-stop {
+    height: 64px;
+    width: 100%;
+    border-radius: var(--r);
+  }
+  .generation-loader-shimmer-block {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--bg-card) 88%, var(--ink) 12%);
+  }
+  .generation-loader-shimmer-block::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--accent) 15%, transparent) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: generation-loader-shimmer 1.8s ease-in-out infinite;
+  }
+  @keyframes generation-loader-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .generation-loader-shimmer-block::after {
+      animation: none;
+      background-position: 50% 0;
+    }
+  }
+
   .trip-tips-updated { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; }
 
   /* View panel enter animation (map ↔ itinerary) */

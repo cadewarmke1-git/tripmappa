@@ -67,7 +67,7 @@ export default function TripResultsPanel({
   onGrocerySignIn,
   onStartNavigation,
   // Accepted from App.jsx but unused after timeline layout removal
-  waypoints: _waypoints,
+  waypoints = null,
   routeLegs: _routeLegs,
   onReorder: _onReorder,
   onNavigateToStop: _onNavigateToStop,
@@ -141,6 +141,7 @@ export default function TripResultsPanel({
             tripLegs={tripLegs}
             selectedLodging={selectedLodging}
             restaurantsByCity={restaurantsByCity}
+            waypoints={waypoints}
           />
         </div>
 

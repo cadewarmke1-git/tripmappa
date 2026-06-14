@@ -101,12 +101,8 @@ export function buildInitialItineraryWaypoints({
   const waypoints = [makeOriginWaypoint(origin, routeInfo)];
   for (const row of rows) {
     if (row.kind !== "stop") continue;
-    const roadEntry = roadStops.find(rs => (rs.id || `road-${rs.name}`) === row.stop.id
-      || rs.id === row.stop.id);
-    const included = row.isOvernight
-      || roadEntry?.userAdded !== false
-      || !roadEntry
-      || roadEntry.userAdded === true;
+    const stopData = row.stop?.stopData;
+    const included = row.isOvernight || stopData?.userAdded !== false;
     waypoints.push(stopToWaypoint(row.stop, { isOvernight: row.isOvernight, included: included !== false }));
   }
   waypoints.push(makeDestinationWaypoint(dest, routeInfo));

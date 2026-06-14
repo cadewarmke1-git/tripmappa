@@ -42,7 +42,6 @@ export function dietaryMatchesRestaurant(restaurant, answers = {}) {
   if (dietary.includes("Halal")) checks.push(/halal/i);
   if (dietary.includes("Kosher")) checks.push(/kosher/i);
   if (dietary.includes("Pescatarian")) checks.push(/seafood|fish|sushi/i);
-  if (dietary.includes("Drive-Through Only")) checks.push(/drive.thru|drive.through|fast food/i);
 
   if (!checks.length) return true;
   return checks.some(re => re.test(blob));

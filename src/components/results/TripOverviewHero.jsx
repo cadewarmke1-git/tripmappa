@@ -2,14 +2,14 @@ import { useMemo } from "react";
 import { computeBudgetEstimate } from "../../lib/budget.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
-export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false }) {
+export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false, waypoints = null }) {
   const budget = useMemo(
     () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
     [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
   );
 
   const overview = getItineraryOverview({
-    origin, dest, routeInfo, stops, roadStops, budgetTotal: budget.total,
+    origin, dest, routeInfo, stops, roadStops, budgetTotal: budget.total, waypoints,
   });
 
   return (

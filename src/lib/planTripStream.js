@@ -1,4 +1,5 @@
 /** Client-side SSE parsing and stream progress for /api/plan-trip. */
+import { extractStreamStopProgress } from "./planTripStreamExtract.js";
 
 const PREP_PHASE_FRACTION = {
   starting: 0.05,
@@ -42,26 +43,17 @@ export function buildGenerationPrepProgress(phase, { cityNames = [], routeSummar
 
 export function buildGenerationStreamProgress(accumulatedText = "") {
   const text = String(accumulatedText);
-  const summaryMatch = text.match(/"route_summary"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  const stopNames = [];
-  for (const match of text.matchAll(/"name"\s*:\s*"((?:[^"\\]|\\.)*?)"/g)) {
-    const name = match[1]?.replace(/\\"/g, '"').trim();
-    if (name && !stopNames.includes(name)) stopNames.push(name);
-  }
-  const cityNames = [];
-  for (const match of text.matchAll(/"city"\s*:\s*"((?:[^"\\]|\\.)*?)"/g)) {
-    const city = match[1]?.replace(/\\"/g, '"').trim();
-    if (city && !cityNames.includes(city)) cityNames.push(city);
-  }
+  const extracted = extractStreamStopProgress(text);
+  const { routeSummary, cityNames, stopNames, stopCount } = extracted;
 
-  const phase = stopNames.length > 0 || cityNames.length > 0
+  const phase = stopCount > 0
     ? "stops"
-    : summaryMatch
+    : routeSummary
       ? "route"
       : "streaming";
 
   let message = "Planning your route…";
-  if (phase === "route" && summaryMatch?.[1]) {
+  if (phase === "route" && routeSummary) {
     message = "Route summary ready — adding stops…";
   } else if (phase === "stops") {
     const latest = stopNames[stopNames.length - 1] || cityNames[cityNames.length - 1];
@@ -71,10 +63,10 @@ export function buildGenerationStreamProgress(accumulatedText = "") {
   const payload = {
     phase,
     chars: text.length,
-    routeSummary: summaryMatch?.[1]?.replace(/\\"/g, '"') || null,
+    routeSummary,
     stopNames: stopNames.slice(0, 16),
     cityNames: cityNames.slice(0, 8),
-    stopCount: stopNames.length + cityNames.length,
+    stopCount,
     message,
   };
   payload.fraction = computeGenerationProgressFraction(payload);

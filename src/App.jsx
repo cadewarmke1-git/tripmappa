@@ -3583,6 +3583,7 @@ export default function App() {
             onUpgradeGrocery={openGroceryUpgrade}
             isGuest={!user}
             onGrocerySignIn={() => openAuthModal("signin")}
+            waypoints={itinerarySync.itineraryWaypoints}
           />
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (

@@ -7,6 +7,7 @@ import { dedupeRoadStops } from "./placesDedup.js";
 import { buildPlacesRatingLookup, resolveEnrichedRating } from "./placeRatings.js";
 import { scheduleHintForDay } from "./scheduleRestrictions.js";
 import { inferRoadStopCategory, chargingStopDetails } from "./roadStopCategory.js";
+import { countIncludedStops } from "./itineraryWaypoints.js";
 
 export function tripIncludesOvernight(stops = [], answers = {}) {
   if (isContinuousDrive(answers)) return false;
@@ -71,9 +72,14 @@ function resolveRoadStopRating(rs) {
   );
 }
 
+/** Road stops the user (or LLM plan) has kept — excludes enrichment suggestions and removed stops. */
+export function isIncludedRoadStop(rs) {
+  return Boolean(rs) && rs.userAdded !== false;
+}
+
 export function countTimelineStops({ stops = [], roadStops = [] }) {
   const overnightCount = stops.filter(s => s?.city).length;
-  const roadCount = dedupeRoadStops(roadStops).length;
+  const roadCount = dedupeRoadStops(roadStops).filter(isIncludedRoadStop).length;
   return roadCount + overnightCount;
 }
 
@@ -292,15 +298,21 @@ export function getItineraryOverview({
   costEstimateLabel = null,
   answers = {},
   days = null,
+  waypoints = null,
 }) {
   const miles = parseMilesFromDistance(routeInfo?.distance);
   const hours = parseHoursFromDuration(routeInfo?.duration);
   const overnightCount = stops.filter(s => s.city).length;
   const straightThrough = isContinuousDrive(answers) && overnightCount === 0;
   const dayCount = straightThrough ? null : Math.max(1, overnightCount || 1);
-  const stopCount = Array.isArray(days) && days.length
-    ? countStitchedTimelineStops(days)
-    : countTimelineStops({ stops, roadStops });
+  let stopCount;
+  if (Array.isArray(waypoints) && waypoints.length) {
+    stopCount = countIncludedStops(waypoints);
+  } else if (Array.isArray(days) && days.length) {
+    stopCount = countStitchedTimelineStops(days);
+  } else {
+    stopCount = countTimelineStops({ stops, roadStops });
+  }
   return {
     origin: cityLabel(origin) || origin,
     destination: cityLabel(dest) || dest,

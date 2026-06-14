@@ -1,5 +1,6 @@
 /** SSE helpers and Anthropic streaming for /api/plan-trip. */
 import { logPlanTripDev } from "./apiLog.js";
+import { extractStreamStopProgress } from "../../src/lib/planTripStreamExtract.js";
 
 export function initPlanTripSse(res) {
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
@@ -32,31 +33,21 @@ export function createPlanTripSseWriter(res) {
 }
 
 export function buildStreamProgress(accumulatedText = "") {
-  const text = String(accumulatedText);
-  const summaryMatch = text.match(/"route_summary"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  const stopNames = [];
-  for (const match of text.matchAll(/"name"\s*:\s*"((?:[^"\\]|\\.)*?)"/g)) {
-    const name = match[1]?.replace(/\\"/g, '"').trim();
-    if (name && !stopNames.includes(name)) stopNames.push(name);
-  }
-  const cityNames = [];
-  for (const match of text.matchAll(/"city"\s*:\s*"((?:[^"\\]|\\.)*?)"/g)) {
-    const city = match[1]?.replace(/\\"/g, '"').trim();
-    if (city && !cityNames.includes(city)) cityNames.push(city);
-  }
-  const phase = stopNames.length > 0 || cityNames.length > 0
+  const extracted = extractStreamStopProgress(accumulatedText);
+  const { routeSummary, cityNames, stopNames, stopCount } = extracted;
+  const phase = stopCount > 0
     ? "stops"
-    : summaryMatch
+    : routeSummary
       ? "route"
       : "streaming";
 
   return {
     phase,
-    chars: text.length,
-    routeSummary: summaryMatch?.[1]?.replace(/\\"/g, '"') || null,
+    chars: String(accumulatedText).length,
+    routeSummary,
     stopNames: stopNames.slice(0, 16),
     cityNames: cityNames.slice(0, 8),
-    stopCount: stopNames.length + cityNames.length,
+    stopCount,
   };
 }
 
