@@ -29,6 +29,7 @@ export default function ProximityTripTipAlert({
 }) {
   const [userLocation, setUserLocation] = useState(null);
   const [activeTip, setActiveTip] = useState(null);
+  const [gpsWatching, setGpsWatching] = useState(false);
   const [handledIds, setHandledIds] = useState(() => new Set());
 
   const proximityTips = useMemo(
@@ -40,10 +41,12 @@ export default function ProximityTripTipAlert({
     if (!active) {
       setUserLocation(null);
       setActiveTip(null);
+      setGpsWatching(false);
       return undefined;
     }
     if (!navigator.geolocation) return undefined;
 
+    setGpsWatching(true);
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -52,7 +55,10 @@ export default function ProximityTripTipAlert({
       { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 },
     );
 
-    return () => navigator.geolocation.clearWatch(watchId);
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+      setGpsWatching(false);
+    };
   }, [active]);
 
   useEffect(() => {
@@ -83,30 +89,35 @@ export default function ProximityTripTipAlert({
     window.open(`https://www.google.com/maps/dir/?${params}`, "_blank", "noopener,noreferrer");
   }
 
-  if (!active || !activeTip) return null;
+  if (!active) return null;
 
   return (
-    <div className="proximity-tip-alert" role="alert" aria-live="polite">
-      <AlertTypeIcon type={activeTip.type} />
-      <div className="proximity-tip-alert-body">
-        <div className="proximity-tip-alert-title">{activeTip.title}</div>
-        {activeTip.text && activeTip.text !== activeTip.title && (
-          <p className="proximity-tip-alert-text">{activeTip.text}</p>
-        )}
-      </div>
-      <div className="proximity-tip-alert-actions">
-        <button type="button" className="proximity-tip-alert-reroute" onClick={reroute}>
-          Reroute
-        </button>
-        <button
-          type="button"
-          className="proximity-tip-alert-dismiss"
-          onClick={dismiss}
-          aria-label="Dismiss alert"
-        >
-          ×
-        </button>
-      </div>
-    </div>
+    <>
+      {gpsWatching && <div data-gps-active="true" hidden aria-hidden="true" />}
+      {activeTip && (
+        <div className="proximity-tip-alert" role="alert" aria-live="polite">
+          <AlertTypeIcon type={activeTip.type} />
+          <div className="proximity-tip-alert-body">
+            <div className="proximity-tip-alert-title">{activeTip.title}</div>
+            {activeTip.text && activeTip.text !== activeTip.title && (
+              <p className="proximity-tip-alert-text">{activeTip.text}</p>
+            )}
+          </div>
+          <div className="proximity-tip-alert-actions">
+            <button type="button" className="proximity-tip-alert-reroute" onClick={reroute}>
+              Reroute
+            </button>
+            <button
+              type="button"
+              className="proximity-tip-alert-dismiss"
+              onClick={dismiss}
+              aria-label="Dismiss alert"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

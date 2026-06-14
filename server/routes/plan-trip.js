@@ -249,7 +249,9 @@ Required price_band for this trip: ${requiredBand}. ${buildLodgingRules(ctx.lodg
 STOP AND RESTAURANT NAMES (mandatory):
 - Use business names EXACTLY as they appear in the VERIFIED PLACES list — character-for-character, no paraphrasing.
 - NEVER invent, guess, or embellish stop names (no "corridor", "vicinity", or planning jargon in user-visible names).
-- When no verified place fits a slot, use a plain generic descriptor only, e.g. "EV charging near Marietta OK" or "Diesel fuel near Little Rock AR" — never a fabricated brand.
+- Every road_stop must be a real named business that would appear on Google Maps — never a generic description like "rest stop near X", "drive-through near Y", or "dining near Z".
+- Food stops on any route must always use the actual business name from VERIFIED PLACES.
+- HARD RULE: If a specific named business cannot be identified for a stop, omit the stop entirely rather than using a generic placeholder description.
 
 RESTAURANT VERIFICATION (every restaurant object):
 - verified:true ONLY when the name exists in VERIFIED PLACES from placesContext.
@@ -391,7 +393,7 @@ Treat this as a professional commercial driving route with FMCSA HOS compliance 
 Driver limits: 11 hours driving per day; mandatory 30-minute break after 8 consecutive hours driving; minimum 10-hour rest at each overnight stop before driving resumes.
 Using total distance ${ctx.routeDistance} and drive time ${ctx.routeDuration}, place the mandatory 30-minute break and each overnight stop to remain HOS compliant. Never recommend a stop that would put the driver over hours-of-service limits.
 ${noSleeper ? "No sleeper cab — include up to 2 motels near the overnight truck stop (override universal 3-hotel minimum)." : "Sleeper cab available — truck stop parking for overnight; do not default to hotels."}
-TRUCK STOPS: At most 3 fuel/rest road_stops per leg. Prioritize preferred brand "${ctx.truckStopBrand}" when set. Per stop: brand, location, CAT scale yes/no, diesel price if known, and one short amenities line (showers/laundry/food). Do not add supplemental rest-area stops unless one is required for the HOS break.
+TRUCK STOPS: At most 3 fuel/rest road_stops per leg. Road stops must be named truck-friendly facilities: Love's Travel Stop, Pilot Flying J, Flying J, TA Travel Center, Petro Stopping Center, Sapp Bros, or Buc-ee's — prioritize preferred brand "${ctx.truckStopBrand}" when set. Never use generic descriptions; omit the stop if no named facility can be identified. Per stop: brand, location, CAT scale yes/no, diesel price if known, and one short amenities line (showers/laundry/food). Do not add supplemental rest-area stops unless one is required for the HOS break.
 WEIGH STATIONS: At most 3 per leg in safety.weighStations — only the most relevant on this segment (state + highway + approximate mile marker, one line each). Do not list every weigh station on the corridor.
 HOS: One concise hos_compliance string per leg (3–5 sentences) covering drive time, mandatory break location, overnight location, and rest requirements. No nested HOS objects or per-stop compliance breakdowns.
 MOTELS: At most 2 motel options per overnight city when motels are needed — name, price, and one-line parking note each.
@@ -490,7 +492,7 @@ ${ctx.scheduleRestrictions.join("; ")}${ctx.scheduleDriveHours ? `\nPreferred dr
 === UNIVERSAL RULES (every trip) ===
 ${placesContextPrompt || ""}
 ${buildCorridorDistributionRules({ ...ctx, routeDistanceMiles: ctx.routeMiles })}
-PLACES DATA RULE: For road_stops and named businesses, use ONLY verified names from placesContext in this request. Never invent business names. If placesContext has no match, use stop city and category only — do NOT fabricate a brand name.
+PLACES DATA RULE: For road_stops and named businesses, use ONLY verified names from placesContext in this request. Never invent business names. Every road_stop must be a real named business on Google Maps — never generic "near X" descriptions. If no verified named business fits, omit the road_stop entirely.
 CORRIDOR RULE: Every stop must be a real place along the driving corridor between ${ctx.routeOrigin} and ${ctx.routeDestination}, within 10 miles of the highway — no significant detours.
 CITY FORMAT: Every stop city as "City, ST" (full city name and two-letter state).
 ${lodgingRules}${scheduleRules}${dietaryRules}${medicalRules}
@@ -498,7 +500,7 @@ BUDGET: ${ctx.tripBudget && ctx.tripBudget !== "No budget limit" ? `Keep total e
 TIPS: Include tips array (structured objects per TIPS ARRAY REQUIREMENTS) with 5–8 genuinely useful tips specific to THIS route and vehicle — not generic advice. Max 2 action-severity tips. No bare weather readings.
 ROAD CONDITIONS: Include road_condition_warnings array for mountain passes, desert heat, winter weather, or construction zones actually relevant to this specific route.
 ORDER: Stops must progress geographically from origin toward destination; distance and eta fields must increase logically.
-ANTI-HALLUCINATION: If uncertain whether a business exists, output the city and category without a business name.
+ANTI-HALLUCINATION: If uncertain whether a named business exists, omit the stop rather than outputting a generic placeholder or city+category description.
 ${buildVerificationChecklist(ctx)}`;
 }
 
