@@ -89,7 +89,14 @@ export default function RoadStopCard({
           </p>
         )}
         <div className="road-stop-card-meta">
-          <PlaceRatingLine rating={stop.rating} className="road-stop-rating" emptyClassName="road-stop-no-reviews" />
+          {stop.source === "osm" ? (
+            <span className="road-stop-osm-badge">Highway facility</span>
+          ) : (
+            <PlaceRatingLine rating={stop.rating} className="road-stop-rating" emptyClassName="road-stop-no-reviews" />
+          )}
+          {Array.isArray(stop.amenities) && stop.amenities.length > 0 && (
+            <span className="road-stop-amenity-tags">{stop.amenities.join(" · ")}</span>
+          )}
           {stop.distanceFromRoute != null && (
             <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
           )}

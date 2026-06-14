@@ -115,6 +115,8 @@ function mapRoadItem(rs, key, ratingLookup = null) {
     nearbyRestaurants: rs.nearbyRestaurants,
     truckParking: truckParking === true ? true : truckParking === false ? false : undefined,
     charging,
+    source: rs.source,
+    amenities: rs.amenities,
   };
 }
 

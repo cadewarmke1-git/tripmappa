@@ -29,6 +29,7 @@ const ROUTES = {
   "plan-trip": () => import("../server/routes/plan-trip.js"),
   "plan-preferences": () => import("../server/routes/plan-preferences.js"),
   "register-follower-phone": () => import("../server/routes/register-follower-phone.js"),
+  "rest-stops": () => import("../server/routes/rest-stops.js"),
   "restaurants": () => import("../server/routes/restaurants.js"),
   "route-optimize": () => import("../server/routes/route-optimize.js"),
   "send-sms-otp": () => import("../server/routes/send-sms-otp.js"),
