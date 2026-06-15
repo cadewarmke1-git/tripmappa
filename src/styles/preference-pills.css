@@ -1,0 +1,60 @@
+/* Shared preference pill UI — onboarding + profile preferences */
+.preference-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.preference-pill-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.preference-pill-group-label,
+.preference-pill-group .preference-pill-group-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text-primary, #fff) 52%, transparent);
+}
+
+.preference-pill {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-text-primary, #fff) 18%, transparent);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.preference-pill.is-selected {
+  border-color: var(--accent, var(--gold-primary));
+  background: color-mix(in srgb, var(--accent, var(--gold-primary)) 14%, transparent);
+}
+
+.preference-pill:active {
+  transform: scale(0.98);
+}
+
+.user-preferences-page .preference-pill-group-label {
+  color: color-mix(in srgb, var(--color-text-secondary, #a89bcf) 85%, transparent);
+}
+
+.user-preferences-page .preference-pill {
+  border-color: var(--color-card-border);
+  background: var(--color-card-bg);
+  color: var(--color-text-primary);
+}
+
+.user-preferences-page .preference-pill.is-selected {
+  border-color: var(--accent, var(--gold-primary));
+  background: color-mix(in srgb, var(--accent, var(--gold-primary)) 12%, var(--color-card-bg));
+}

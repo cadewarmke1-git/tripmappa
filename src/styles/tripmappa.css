@@ -1332,14 +1332,14 @@
       right: 0 !important;
       width: 100% !important;
       max-width: 100% !important;
-      height: calc(100dvh - var(--nav-h)) !important;
-      max-height: calc(100dvh - var(--nav-h)) !important;
+      height: calc(var(--app-height) - var(--nav-h)) !important;
+      max-height: calc(var(--app-height) - var(--nav-h)) !important;
       border-radius: 0 !important;
     }
     html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
     html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) {
-      height: calc(100dvh - var(--nav-h)) !important;
-      max-height: calc(100dvh - var(--nav-h)) !important;
+      height: calc(var(--app-height) - var(--nav-h)) !important;
+      max-height: calc(var(--app-height) - var(--nav-h)) !important;
     }
 
     /* Full-height plan flow: grow scroll region so question choices stay visible */
@@ -1638,12 +1638,12 @@
     display: flex;
     flex-direction: column;
     height: auto;
-    max-height: calc(100dvh - var(--nav-h) - 16px);
+    max-height: calc(var(--app-height) - var(--nav-h) - 16px);
   }
   .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
   .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) {
-    height: calc(100dvh - var(--nav-h) - 16px);
-    max-height: calc(100dvh - var(--nav-h) - 16px);
+    height: calc(var(--app-height) - var(--nav-h) - 16px);
+    max-height: calc(var(--app-height) - var(--nav-h) - 16px);
     overflow: hidden;
   }
   .float-card--plan-flow .float-card-chevron-btn {
@@ -6211,6 +6211,55 @@
   .app-nav-bar .profile-card-dropdown.is-open {
     pointer-events: auto;
   }
+
+  .app-nav-mode-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-surface-elevated, #2a1a4a) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-card-border, rgba(255,255,255,0.12)) 80%, transparent);
+    flex-shrink: 0;
+  }
+
+  .app-nav-mode-btn {
+    min-height: 32px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: color-mix(in srgb, var(--color-text-secondary, #a89bcf) 90%, transparent);
+    font-family: var(--font-body, "Inter", sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .app-nav-mode-btn.is-active {
+    background: color-mix(in srgb, var(--accent, var(--gold-primary)) 18%, transparent);
+    color: var(--accent, var(--gold-primary));
+  }
+
+  .navigate-map-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .navigate-map-fullscreen {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .user-preferences-pill-section {
+    margin-bottom: 8px;
+  }
+
   .app-nav-bar:has(.profile-card-dropdown.is-open),
   .app-nav-bar:has(.profile-card-dropdown.is-closing) {
     z-index: 420;
@@ -8454,10 +8503,10 @@
     margin-top: 14px;
   }
   .chat-wrap-plan-flow .question-choices-compact .question-group-section .question-choices-scroll {
-    max-height: min(24dvh, 180px);
+    max-height: min(calc(var(--app-height) * 0.24), 180px);
   }
   .chat-wrap-plan-flow .question-choices-compact:has(.question-more-options) .question-group-section:first-of-type .question-choices-scroll {
-    max-height: min(16dvh, 112px);
+    max-height: min(calc(var(--app-height) * 0.16), 112px);
   }
   .chat-wrap-plan-flow .question-choices-compact .question-more-options {
     flex-shrink: 0;
@@ -8468,7 +8517,7 @@
     margin-bottom: 4px;
   }
   .chat-wrap-plan-flow .question-collapsible-panel.is-open .question-collapsible-inner {
-    max-height: min(22dvh, 168px);
+    max-height: min(calc(var(--app-height) * 0.22), 168px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -8706,8 +8755,8 @@
     transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
   .user-preferences-choice.is-active {
-    border-color: var(--color-accent-gold);
-    background: color-mix(in srgb, var(--color-accent-gold) 14%, var(--color-card-bg));
+    border-color: var(--accent, var(--gold-primary));
+    background: color-mix(in srgb, var(--accent, var(--gold-primary)) 14%, var(--color-card-bg));
   }
   .user-preferences-save {
     width: 100%;

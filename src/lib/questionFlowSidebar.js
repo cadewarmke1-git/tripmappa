@@ -9,6 +9,7 @@ export const QUESTION_SIDEBAR_LABELS = {
   party_composition: "PARTY",
   adult_count: "ADULTS",
   child_count: "CHILDREN",
+  stop_count: "STOPS",
   overnight_preference: "DRIVE",
   lodging: "LODGING",
   trip_nights: "NIGHTS",

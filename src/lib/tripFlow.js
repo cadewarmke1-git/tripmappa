@@ -60,6 +60,7 @@ export const SUMMARY_EDIT_QUESTION_BY_ROW = {
   "Route restrictions": "route_restrictions",
   "Coordination": "coordination_needs",
   "Preferences": "preferences",
+  "Stop count": "stop_count",
   "Drive mode": "overnight_preference",
   "Fuel type": "fuel_type",
 };
@@ -168,7 +169,7 @@ export const FLOW_PHASES = [
 ];
 
 const ABOUT_QUESTION_IDS = new Set([
-  "vehicle", "fuel_type", "towing", "travelers", "party_composition", "multi_vehicles", "primary_vehicle",
+  "vehicle", "fuel_type", "towing", "travelers", "party_composition", "stop_count", "multi_vehicles", "primary_vehicle",
   "hauling_type", "sleeper_cab", "truck_stop_brand",
 ]);
 const ROUTE_QUESTION_IDS = new Set([
@@ -269,6 +270,29 @@ const PARTY_COMPOSITION_QUESTION = {
   adultRange: [1, 8],
   childRange: [0, 6],
 };
+
+const STOP_COUNT_CHOICES = [
+  "Just one stop",
+  "A few (2-3)",
+  "Several (4-6)",
+  "Plenty (7+)",
+  "Surprise me",
+];
+
+const STOP_COUNT_QUESTION = {
+  id: "stop_count",
+  ask: "How many stops are you looking to make?",
+  hint: "We'll pace food, fuel, and fun breaks to match.",
+  type: "choice",
+  choices: STOP_COUNT_CHOICES,
+};
+
+function needsStopCountQuestion(answers, context = {}) {
+  const effective = getEffectiveVehicle(answers);
+  if (isTruckVehicle(effective) || isThinTransportVehicle(effective)) return false;
+  if (!isPersonalVehicle(effective) && !isRvVehicle(effective)) return false;
+  return !isQuestionDone("stop_count", answers, context);
+}
 
 const TRIP_NIGHTS_QUESTION = {
   id: "trip_nights",
@@ -796,6 +820,7 @@ function getNextPersonalBranchQuestion(answers, context) {
   if (!isQuestionDone("travelers", answers, context)) return { done: false, ...TRAVELERS_QUESTION };
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
+  if (needsStopCountQuestion(answers, context)) return { done: false, ...STOP_COUNT_QUESTION };
   if (needsPersonalPreferencesQuestion(answers, context) && !isQuestionDone("preferences", answers, context)) {
     return { done: false, ...buildPersonalPreferencesQuestion(context) };
   }
@@ -834,6 +859,7 @@ function getNextRvBranchQuestion(answers, context) {
   if (!isQuestionDone("travelers", answers, context)) return { done: false, ...TRAVELERS_QUESTION };
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
+  if (needsStopCountQuestion(answers, context)) return { done: false, ...STOP_COUNT_QUESTION };
   if (!isQuestionDone("preferences", answers, context)) return { done: false, ...buildRvPreferencesQuestion(context) };
   if (needsRvTripNightsQuestion(answers, context) && !isQuestionDone("trip_nights", answers, context)) {
     return { done: false, ...TRIP_NIGHTS_QUESTION };

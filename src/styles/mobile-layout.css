@@ -760,8 +760,8 @@
     right: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: calc(100dvh - var(--nav-h)) !important;
-    max-height: calc(100dvh - var(--nav-h)) !important;
+    height: calc(var(--app-height) - var(--nav-h)) !important;
+    max-height: calc(var(--app-height) - var(--nav-h)) !important;
     border-radius: 0 !important;
   }
 }

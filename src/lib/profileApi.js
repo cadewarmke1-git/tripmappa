@@ -3,7 +3,7 @@ import { resizeImageToSquare } from "./avatarUtils.js";
 
 const GUEST_HOME_KEY = "tripmappa-home-address";
 
-const PROFILE_FIELDS = "display_name, avatar_url, home_address, emergency_contact_phone, tier, generations_used, credits_month, notify_trip_reminders, notify_new_features, premium_renewal_at, founder_expires_at, referral_code, created_at";
+const PROFILE_FIELDS = "display_name, avatar_url, home_address, emergency_contact_phone, tier, generations_used, credits_month, notify_trip_reminders, notify_new_features, premium_renewal_at, founder_expires_at, referral_code, created_at, traveler_profile, onboarding_complete";
 
 export function getGuestHomeAddress() {
   try {
@@ -59,6 +59,13 @@ export async function saveNotificationPrefs(userId, prefs) {
   return upsertUserProfile(userId, {
     notify_trip_reminders: prefs.notifyTripReminders,
     notify_new_features: prefs.notifyNewFeatures,
+  });
+}
+
+export async function saveTravelerOnboarding(userId, travelerProfile) {
+  return upsertUserProfile(userId, {
+    traveler_profile: travelerProfile || {},
+    onboarding_complete: true,
   });
 }
 

@@ -91,6 +91,7 @@ function applyAnswer(q, answers, options) {
   if (q.id === "route_restrictions") return { ...answers, route_restrictions: ["No restrictions"] };
   if (q.id === "coordination_needs") return { ...answers, coordination_needs: ["Stay together the whole way"] };
   if (q.id === "preferences") return { ...answers, preferences: [] };
+  if (q.id === "stop_count") return { ...answers, stop_count: "A few (2-3)" };
   if (q.id === "travelers") return { ...answers, travelers: "3 to 5 travelers" };
   if (q.type === "party_composition") {
     return { ...answers, adult_count: 2, child_count: 1 };
@@ -229,7 +230,7 @@ function simulateFlow(vehicle, context, options = {}) {
 
   if (vehicle === MULTI_VEHICLE_TRIP && multiPrimary === "RV") {
     const ids = path.filter((p) => !p.done).map((p) => p.id);
-    const expectedPrefix = ["multi_vehicles", "primary_vehicle", "fuel_type", "travelers", "party_composition", "kids_ages", "preferences"];
+    const expectedPrefix = ["multi_vehicles", "primary_vehicle", "fuel_type", "travelers", "party_composition", "kids_ages", "stop_count", "preferences"];
     if (requiresMultipleDays(context)) expectedPrefix.push("trip_nights");
     expectedPrefix.push("trip_details");
     for (let i = 0; i < expectedPrefix.length; i += 1) {
@@ -323,7 +324,7 @@ for (const [contextKey, context] of Object.entries(ROUTE_CONTEXTS)) {
 
 // Medium trip must ask overnight (3.5hr threshold)
 const mediumNext = getNextFlowQuestion(
-  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_TWO_TRAVELERS_PARTY, preferences: [] },
+  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_TWO_TRAVELERS_PARTY, stop_count: "A few (2-3)", preferences: [] },
   ROUTE_CONTEXTS.medium,
 );
 if (mediumNext.id !== "overnight_preference") {
@@ -343,6 +344,7 @@ const mediumNights = getNextFlowQuestion(
     fuel_type: "Gasoline",
     towing: "No",
     ...CAR_TWO_TRAVELERS_PARTY,
+    stop_count: "A few (2-3)",
     preferences: [],
     overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
   },
@@ -362,6 +364,7 @@ const mediumLodging = getNextFlowQuestion(
     fuel_type: "Gasoline",
     towing: "No",
     ...CAR_TWO_TRAVELERS_PARTY,
+    stop_count: "A few (2-3)",
     preferences: [],
     overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
     trip_nights: "2 nights",
@@ -398,7 +401,7 @@ if (mediumNoLodging.id === "lodging" || mediumNoLodging.type === "lodging_stay")
 
 // Route pending unlock simulation
 const pendingQ = getNextFlowQuestion(
-  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_TWO_TRAVELERS_PARTY, preferences: [] },
+  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_TWO_TRAVELERS_PARTY, stop_count: "A few (2-3)", preferences: [] },
   ROUTE_CONTEXTS.none,
 );
 if (!pendingQ.pendingRoute || pendingQ.id !== "overnight_preference") {

@@ -35,6 +35,8 @@ export default function HeroView({
   onLaunch,
   onGoHome,
   activeNav = null,
+  appMode = "plan",
+  onAppModeChange,
   onOpenPlan,
   onOpenTrips,
   onOpenShare,
@@ -104,6 +106,8 @@ export default function HeroView({
         userProfile={userProfile}
         creditStatus={creditStatus}
         activeNav={activeNav}
+        appMode={appMode}
+        onAppModeChange={onAppModeChange}
         onOpenPlan={onOpenPlan}
         onOpenTrips={onOpenTrips}
         onOpenShare={onOpenShare}

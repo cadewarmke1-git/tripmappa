@@ -73,6 +73,7 @@ export default function QuestionChoices({
   onRoutePendingTimeout,
 }) {
   const [vehicleTab, setVehicleTab] = useState(0);
+  const [vehicleDraft, setVehicleDraft] = useState(null);
   const [lodgingDraft, setLodgingDraft] = useState(null);
   const [loyaltyDraft, setLoyaltyDraft] = useState(null);
   const [groupDraft, setGroupDraft] = useState(null);
@@ -106,6 +107,11 @@ export default function QuestionChoices({
 
   useEffect(() => {
     setVehicleTab(0);
+    setVehicleDraft(
+      questionConfirmed && currentQ?.type === "vehicle"
+        ? (committed[currentQ.id] || null)
+        : null,
+    );
     setLodgingDraft(null);
     setLoyaltyDraft(
       questionConfirmed && currentQ?.type === "lodging_stay"
@@ -113,7 +119,7 @@ export default function QuestionChoices({
         : null,
     );
     setBudgetTouched(false);
-  }, [currentQ?.id, currentQ?.type, committed.loyalty_program, questionConfirmed]);
+  }, [currentQ?.id, currentQ?.type, committed.loyalty_program, committed, questionConfirmed]);
 
   useEffect(() => {
     if (currentQ?.type !== "party_composition") return;
@@ -160,11 +166,12 @@ export default function QuestionChoices({
   const useVehicleTabs = compact && vehicleGroups;
 
   const committedChoiceValue = questionConfirmed ? committed[currentQ.id] : undefined;
+  const prefillChoiceValue = !questionConfirmed && typeof prefDraft === "string" ? prefDraft : undefined;
 
   const mkClass = (val, extra = "") => {
     const sel = selected === val ? " qr-selected" : "";
-    const active = committedChoiceValue === val || lodgingDraft === val ? " qr-selected" : "";
-    return `qr-btn${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
+    const active = committedChoiceValue === val || prefillChoiceValue === val || vehicleDraft === val || lodgingDraft === val ? " qr-selected" : "";
+    return `qr-btn${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && prefillChoiceValue !== val && vehicleDraft !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
   };
   const mkPrefClass = (p) => {
     const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
@@ -375,7 +382,7 @@ export default function QuestionChoices({
                     type="button"
                     className={mkClass(opt.value)}
                     disabled={frozen}
-                    onClick={() => pickWithAnim(opt.value)}
+                    onClick={() => setVehicleDraft(opt.value)}
                   >
                     {opt.label}
                   </button>
@@ -394,7 +401,7 @@ export default function QuestionChoices({
                     type="button"
                     className={mkClass(opt.value)}
                     disabled={frozen}
-                    onClick={() => pickWithAnim(opt.value)}
+                    onClick={() => setVehicleDraft(opt.value)}
                   >
                     {opt.label}
                   </button>
@@ -705,6 +712,19 @@ export default function QuestionChoices({
         </div>
       )}
     </div>
+
+      {currentQ.type === "vehicle" && (
+        <div className={actionRowClass}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen || !vehicleDraft}
+            onClick={continueWithHaptic(() => pickInstant(vehicleDraft))}
+          >
+            Continue
+          </button>
+        </div>
+      )}
 
       {currentQ.type === "party_composition" && (
         <div className={actionRowClass}>

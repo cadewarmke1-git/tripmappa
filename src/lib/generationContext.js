@@ -13,6 +13,7 @@ import {
   SCHEDULE_NO_RESTRICTIONS,
 } from "./scheduleRestrictions.js";
 import { resolveTripsForContext } from "./tripHistoryAnalysis.js";
+import { travelerProfileToFlowPrefill } from "./travelerOnboarding.js";
 
 export {
   buildRecentTripsPreferencesRollup,
@@ -323,11 +324,12 @@ export function planPreferencesToFlowPrefill(planPrefs = {}) {
   return out;
 }
 
-/** Prefill for the question UI — plan defaults plus learned trip prefs, excluding route-specific fields. */
-export function buildFlowPrefillFromPreferences(planPrefs = {}, tripPrefs = null) {
+/** Prefill for the question UI — traveler profile, plan defaults, and learned trip prefs. */
+export function buildFlowPrefillFromPreferences(planPrefs = {}, tripPrefs = null, travelerProfile = null) {
+  const fromTraveler = travelerProfileToFlowPrefill(travelerProfile);
   const fromPlan = planPreferencesToFlowPrefill(planPrefs);
   const fromTrips = preferencesToAnswerFallback(tripPrefs);
-  const out = { ...fromTrips };
+  const out = { ...fromTraveler, ...fromTrips };
   for (const [key, val] of Object.entries(fromPlan)) {
     if (val == null || val === "") continue;
     if (Array.isArray(val)) {
@@ -469,8 +471,8 @@ export function reconcileInferredRestaurantHint(prefs, answers = {}, planPrefs =
 }
 
 export function resolveAnswersWithFallback(answers = {}, prefs = null, options = {}) {
-  const { planPrefs = null } = options;
-  const prefill = buildFlowPrefillFromPreferences(planPrefs, prefs);
+  const { planPrefs = null, travelerProfile = null } = options;
+  const prefill = buildFlowPrefillFromPreferences(planPrefs, prefs, travelerProfile);
   delete prefill.restaurant_preference;
   delete prefill.truck_stop_brand;
   delete prefill.fuel_brand_preference;

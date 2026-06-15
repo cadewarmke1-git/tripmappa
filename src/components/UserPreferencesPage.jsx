@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import {
   FUEL_TYPE_CHOICES,
-  DIETARY_PREFERENCE_CHOICES,
   ACCESSIBILITY_CHOICES,
-  STOPS_INTERESTS_BASE,
   TRIP_BUDGET_CHOICES,
 } from "../lib/tripAccommodations.js";
+import {
+  TRAVELER_DIETARY_OPTIONS,
+  TRAVELER_STOPS_INTEREST_GROUPS,
+} from "../lib/travelerPreferenceOptions.js";
 import { SCHEDULE_RESTRICTION_CHOICES } from "../lib/scheduleRestrictions.js";
 import { fetchPlanPreferences, savePlanPreferences } from "../lib/planPreferencesApi.js";
 import { TRAVELER_COUNT_CHOICES, formatTravelersLabel } from "../lib/vehicles.js";
+import PreferencePillGrid, { PreferencePillGroups, togglePreferenceValue } from "./PreferencePillGrid.jsx";
+import "../styles/preference-pills.css";
 
 const VEHICLE_CHOICES = [
   "Car",
@@ -37,12 +41,10 @@ const SETUP_SECTIONS = [
 ];
 
 const PRIMARY_SECTIONS = [
-  { id: "dietary", label: "Food", key: "dietary", choices: DIETARY_PREFERENCE_CHOICES, multi: true },
   { id: "trip_budget", label: "Budget", key: "trip_budget", choices: TRIP_BUDGET_CHOICES },
 ];
 
 const MORE_OPTION_SECTIONS = [
-  { id: "stops_interests", label: "Fun stops", key: "stops_interests", choices: STOPS_INTERESTS_BASE, multi: true },
   { id: "accessibility", label: "Accessibility", key: "accessibility", choices: ACCESSIBILITY_CHOICES, multi: true },
   { id: "schedule_restrictions", label: "Schedule", key: "schedule_restrictions", choices: SCHEDULE_RESTRICTION_CHOICES, multi: true },
 ];
@@ -210,6 +212,27 @@ export default function UserPreferencesPage({
           >
             <div className="user-preferences-sections">
               {SETUP_SECTIONS.map(renderCollapsibleSection)}
+
+              <section className="user-preferences-primary user-preferences-pill-section">
+                <h2 className="user-preferences-section-title">Food</h2>
+                <PreferencePillGrid
+                  options={TRAVELER_DIETARY_OPTIONS}
+                  selected={prefs.dietary}
+                  onToggle={value => setField("dietary", togglePreferenceValue(prefs.dietary, value))}
+                />
+              </section>
+
+              <section className="user-preferences-primary user-preferences-pill-section">
+                <h2 className="user-preferences-section-title">Fun stops</h2>
+                <PreferencePillGroups
+                  groups={TRAVELER_STOPS_INTEREST_GROUPS}
+                  selected={prefs.stops_interests}
+                  onToggle={value => setField(
+                    "stops_interests",
+                    togglePreferenceValue(prefs.stops_interests, value),
+                  )}
+                />
+              </section>
 
               {PRIMARY_SECTIONS.map(section => (
                 <section key={section.id} className="user-preferences-primary">

@@ -101,11 +101,12 @@ import {
 } from "./components/LazyModals.jsx";
 import { getDisplayName } from "./lib/avatarUtils.js";
 import { useTheme } from "./context/ThemeContext.jsx";
-import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
+import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress, saveTravelerOnboarding } from "./lib/profileApi.js";
 
 import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
 import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
+import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
 import ProximityTripTipAlert from "./components/ProximityTripTipAlert.jsx";
@@ -124,6 +125,7 @@ import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
 export default function App() {
   const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
   const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
+  const [appMode, setAppMode] = useState("plan"); // "plan" | "navigate"
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
@@ -200,6 +202,7 @@ export default function App() {
   const foundingClaimAttemptedRef = useRef(false);
   const trialPromptShownRef = useRef(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [userProfileLoaded, setUserProfileLoaded] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalReason, setUpgradeModalReason] = useState("trips");
   const [upgradeModalResetDate, setUpgradeModalResetDate] = useState(null);
@@ -568,6 +571,7 @@ export default function App() {
   useEffect(() => {
     if (authLoading) return;
     if (user?.id && session?.access_token) {
+      setUserProfileLoaded(false);
       fetchTripCredits(session.access_token)
         .then(applyCreditStatus)
         .catch(() => applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 }));
@@ -575,11 +579,16 @@ export default function App() {
         .then(profile => {
           if (profile?.home_address) setHomeAddress(profile.home_address);
           setUserProfile(profile);
+          setUserProfileLoaded(true);
         })
-        .catch(() => {});
+        .catch(() => {
+          setUserProfile(null);
+          setUserProfileLoaded(true);
+        });
     } else {
       applyCreditStatus(getGuestCreditStatus());
       setUserProfile(null);
+      setUserProfileLoaded(true);
       const guestHome = getGuestHomeAddress();
       if (guestHome) setHomeAddress(guestHome);
     }
@@ -600,7 +609,8 @@ export default function App() {
       .then(({ preferences, meta }) => {
         if (!cancelled) {
           applyPlanPreferencesSaved(preferences, meta);
-          if (!convoComplete && !generated && questionHistory.length === 0) {
+          if (userProfileLoaded && userProfile?.onboarding_complete === true
+            && !convoComplete && !generated && questionHistory.length === 0) {
             buildFlowPrefillForUser().then(setFlowPrefill);
           }
         }
@@ -612,7 +622,7 @@ export default function App() {
         }
       });
     return () => { cancelled = true; };
-  }, [user?.id, session?.access_token]);
+  }, [user?.id, session?.access_token, userProfileLoaded, userProfile?.traveler_profile, userProfile?.onboarding_complete]);
 
   async function buildFlowPrefillForUser() {
     let tripPrefs = null;
@@ -623,7 +633,37 @@ export default function App() {
         tripPrefs = null;
       }
     }
-    return buildFlowPrefillFromPreferences(planPreferencesRef.current, tripPrefs);
+    return buildFlowPrefillFromPreferences(
+      planPreferencesRef.current,
+      tripPrefs,
+      userProfile?.traveler_profile,
+    );
+  }
+
+  async function handleTravelerOnboardingComplete(travelerProfile) {
+    if (!user?.id) return;
+    try {
+      const profile = await saveTravelerOnboarding(user.id, travelerProfile);
+      setUserProfile(profile);
+      if (!convoComplete && !generated && questionHistory.length === 0) {
+        let tripPrefs = null;
+        if (session?.access_token) {
+          try {
+            tripPrefs = await fetchUserTripPreferences(session.access_token);
+          } catch {
+            tripPrefs = null;
+          }
+        }
+        setFlowPrefill(buildFlowPrefillFromPreferences(
+          planPreferencesRef.current,
+          tripPrefs,
+          profile?.traveler_profile,
+        ));
+      }
+    } catch (err) {
+      console.warn("traveler onboarding save failed:", err);
+      toast_("Could not save your preferences — you can set them later in your profile.", { isError: true });
+    }
   }
 
   useEffect(() => {
@@ -1206,6 +1246,14 @@ export default function App() {
     return null;
   }, [view, tab]);
 
+  function handleAppModeChange(mode) {
+    if (mode === appMode) return;
+    setAppMode(mode);
+    if (mode === "navigate" && view !== "hero") {
+      setView("hero");
+    }
+  }
+
   function renderAppNavBar(variant = "app") {
     return (
       <AppNavBar
@@ -1216,6 +1264,8 @@ export default function App() {
         userProfile={userProfile}
         creditStatus={creditStatus}
         activeNav={navActiveTab}
+        appMode={appMode}
+        onAppModeChange={handleAppModeChange}
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
@@ -1970,15 +2020,19 @@ export default function App() {
       const draft = {};
       for (const sec of question.sections || []) {
         const fromAnswers = Array.isArray(newAnswers[sec.id]) ? newAnswers[sec.id] : [];
-        draft[sec.id] = fromAnswers.length ? [...fromAnswers] : [];
+        const fromPrefill = Array.isArray(prefillSource[sec.id]) ? prefillSource[sec.id] : [];
+        draft[sec.id] = fromAnswers.length ? [...fromAnswers] : (fromPrefill.length ? [...fromPrefill] : []);
       }
       if (question.type === "trip_details") {
-        draft.trip_budget = newAnswers.trip_budget || "No budget limit";
+        draft.trip_budget = newAnswers.trip_budget || prefillSource.trip_budget || "No budget limit";
       }
       setPrefDraft(draft);
     } else if (question.type === "multiselect") {
       const fromAnswers = Array.isArray(newAnswers[question.id]) ? newAnswers[question.id] : [];
-      setPrefDraft(fromAnswers.length ? [...fromAnswers] : []);
+      const fromPrefill = Array.isArray(prefillSource[question.id]) ? prefillSource[question.id] : [];
+      setPrefDraft(fromAnswers.length ? [...fromAnswers] : (fromPrefill.length ? [...fromPrefill] : []));
+    } else if (question.type === "choice" && prefillSource[question.id]) {
+      setPrefDraft(prefillSource[question.id]);
     } else if (question.type === "party_composition") {
       setPrefDraft({
         adults: newAnswers.adult_count ?? prefillSource.adult_count ?? 2,
@@ -2655,6 +2709,7 @@ export default function App() {
         : null;
       normalizedAnswers = resolveAnswersWithFallback(normalizedAnswers, userPrefs, {
         planPrefs: planPreferencesRef.current,
+        travelerProfile: userProfile?.traveler_profile,
       });
       normalizedAnswers = stripAnswersForSonnet(normalizedAnswers);
       const answerGaps = detectAnswerGaps(normalizedAnswers);
@@ -2719,7 +2774,10 @@ export default function App() {
         answerConfidenceNotes,
         gracefulDegradationNotes,
         fallbackPreferences: userPrefs
-          ? resolveAnswersWithFallback({}, userPrefs, { planPrefs: planPreferencesRef.current })
+          ? resolveAnswersWithFallback({}, userPrefs, {
+            planPrefs: planPreferencesRef.current,
+            travelerProfile: userProfile?.traveler_profile,
+          })
           : undefined,
         legs: tripLegs.length > 0 ? tripLegs : undefined,
         model: "claude-sonnet-4-6",
@@ -3361,6 +3419,79 @@ export default function App() {
     );
   }
 
+  if (user && !userProfileLoaded) {
+    return null;
+  }
+
+  if (user && userProfileLoaded && userProfile?.onboarding_complete !== true) {
+    return (
+      <TravelerOnboarding onComplete={handleTravelerOnboardingComplete} />
+    );
+  }
+
+  if (view === "hero" && appMode === "navigate") {
+    return (
+      <>
+        <div className={`app-wrap ${theme} navigate-map-wrap`}>
+          {renderAppNavBar("hero")}
+          <div className="trip-map-fullscreen navigate-map-fullscreen view-panel-animate">
+            <ErrorBoundary
+              key={mapBoundaryKey}
+              label="navigate-map"
+              title="Could not load map"
+              onRetry={() => setMapBoundaryKey(k => k + 1)}
+            >
+              <AppMap
+                isLoaded={isLoaded}
+                mapCenter={mapCenter}
+                mapStyle={mapStyle}
+                mapStyleOpen={mapStyleOpen}
+                trafficAlert={trafficAlert}
+                onDismissTrafficAlert={() => setTrafficAlert(false)}
+                routeLoading={routeLoading}
+                tripGenerating={loading}
+                isDarkMode={theme === "night" || theme === "twilight"}
+                theme={theme}
+                mapRef={mapRef}
+                directions={directionsResult}
+                routeInfo={routeInfo}
+                routePoints={routeInfo?.routePoints || []}
+                answers={answers}
+                mapMarkers={mapMarkers}
+                dismissedAlertIds={dismissedAlerts}
+                dayRoutePaths={[]}
+                activeDayIndex={null}
+                nightSegmentPaths={nightSegmentPaths}
+                lowFuelSegmentPaths={lowFuelSegmentPaths}
+                mapFocusTarget={mapFocusTarget}
+                onMapReady={() => { setMapReady(true); window.setTimeout(() => recenterMap(), 200); }}
+                onMapUnmount={() => setMapReady(false)}
+                onMapStyleOpenChange={setMapStyleOpen}
+                onMapStyleChange={setMapStyle}
+                onRecenter={recenterMap}
+                onMarkerSelect={handleMapMarkerSelect}
+                onMapBackgroundClick={handleMapBackgroundClick}
+                onNavigateHome={handleNavigateHome}
+                navigateHomePending={navigateHomePending}
+                truckRoutePath={truckRoutePath}
+                highlightedLegPath={[]}
+                inAppNavigationOnly
+                showNavigationCar
+              />
+            </ErrorBoundary>
+          </div>
+        </div>
+        <Toast
+          message={toast}
+          isGold={toastIsGold}
+          isError={toastIsError}
+          actionLabel={toastAction?.label}
+          onAction={toastAction ? runToastAction : undefined}
+        />
+      </>
+    );
+  }
+
   if (view === "hero") return (
     <>
       <HeroView
@@ -3391,6 +3522,8 @@ export default function App() {
         onLaunch={launchFromHero}
         onGoHome={goHome}
         activeNav={null}
+        appMode={appMode}
+        onAppModeChange={handleAppModeChange}
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}

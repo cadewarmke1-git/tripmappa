@@ -9,6 +9,7 @@ import {
   formatTruckContextBlock,
   formatTravelersContextLines,
   formatTripNightsLine,
+  formatStopCountLine,
   formatPetConstraintLine,
   formatScheduleConstraintForHints,
 } from "./generationContext.js";
@@ -122,6 +123,9 @@ export function formatGenerationHints(answers = {}, routeInfo = null, options = 
 
   const nightsLine = formatTripNightsLine(answers);
   if (nightsLine) lines.push(nightsLine);
+
+  const stopCountLine = formatStopCountLine(answers);
+  if (stopCountLine) lines.push(stopCountLine);
 
   const petLine = formatPetConstraintLine(answers);
   if (petLine) lines.push(petLine);

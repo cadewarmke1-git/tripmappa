@@ -26,6 +26,13 @@ import "./styles/hero-palette.css";
 import "./styles/hero-surface.css";
 import "./styles/plan-flow-theme.css";
 
+function syncAppHeight() {
+  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+}
+
+syncAppHeight();
+window.addEventListener("orientationchange", syncAppHeight);
+
 initViewportLayout();
 syncSkyCycle({ theme: computeAutoTheme() });
 initPwaInstall();
