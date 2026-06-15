@@ -4398,9 +4398,7 @@
     color: var(--gold-primary);
   }
   .planned-for-you-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    overflow: visible;
   }
   .planned-for-you-scroll::-webkit-scrollbar {
     display: none;
@@ -4410,8 +4408,21 @@
     margin: 0;
     padding: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .planned-for-you-highlights {
+    flex-wrap: nowrap;
+  }
+  .planned-for-you-highlight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    max-width: 100%;
   }
   .planned-for-you-pill {
     display: inline-flex;
@@ -4445,8 +4456,13 @@
   }
   .planned-for-you-text {
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.3;
     color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
   }
   .planned-for-you-changes {
     margin-top: 10px;
@@ -4845,8 +4861,9 @@
     white-space: nowrap;
   }
 
-  /* Personal touches strip */
+  /* Personal touches strip — superseded by compact planned-for-you highlights */
   .personal-touches-strip {
+    display: none;
     margin: 0 0 8px;
     padding: 0;
     border: none;

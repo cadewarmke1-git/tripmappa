@@ -1,6 +1,10 @@
 import { useState } from "react";
 import CategoryIcon from "../icons/CategoryIcon.jsx";
 import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
+import {
+  resolveBrandPhotoFallback,
+  resolveCategoryPhotoFallback,
+} from "../../lib/brandPhotoFallbacks.js";
 
 export default function PlacePhotoOrIcon({
   photoUrl,
@@ -11,7 +15,10 @@ export default function PlacePhotoOrIcon({
   displayPx = 64,
 }) {
   const [failed, setFailed] = useState(false);
-  const src = resolvePlacePhotoUrl(photoUrl, displayPx);
+  const placePhoto = resolvePlacePhotoUrl(photoUrl, displayPx);
+  const brandPhoto = !placePhoto ? resolveBrandPhotoFallback(name) : null;
+  const categoryPhoto = !placePhoto && !brandPhoto ? resolveCategoryPhotoFallback(category) : null;
+  const src = placePhoto || brandPhoto || categoryPhoto;
 
   if (src && !failed) {
     return (

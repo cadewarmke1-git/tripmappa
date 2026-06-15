@@ -43,6 +43,27 @@ const ICONS = {
       <path d="M20 4v3h-3M4 20v-3h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
+  route: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 19V5M5 19h3M5 19l-2-2M19 5v14M19 5h-3M19 5l2 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 12h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2 3" />
+    </svg>
+  ),
+  fuel: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 4h8v16H6z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M14 8h2l2 3v9h-4V8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M9 8h2v4H9z" fill="currentColor" />
+    </svg>
+  ),
+  food: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 4v8a3 3 0 0 0 6 0V4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M9 12v8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M16 4v16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M19 4v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  ),
 };
 
 export default function PersonalTouchIcon({ type = "default", className = "" }) {
