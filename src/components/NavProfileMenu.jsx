@@ -23,11 +23,13 @@ export default function NavProfileMenu({
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const wrapRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
   const closeTimerRef = useRef(null);
   const photoInputRef = useRef(null);
 
   const isSignedIn = Boolean(user?.id);
+  const wasSignedInRef = useRef(isSignedIn);
   const displayName = isSignedIn ? getDisplayName(user, profile) : "Welcome to TripMappa";
   const heroPalette = heroTheme ? HERO_SURFACE_PALETTE[heroTheme] : null;
   const tierRing = isSignedIn ? getTierCssClass(creditStatus?.tier || profile?.tier) : null;
@@ -64,13 +66,37 @@ export default function NavProfileMenu({
   useEffect(() => {
     if (!open) return undefined;
     if (isSignedIn) onRefreshCredits?.();
+
+    const isPointerOverPlanFlow = (event) => {
+      const planFlow = document.querySelector(".float-card--plan-flow:not(.collapsed)");
+      if (!planFlow) return false;
+      const rect = planFlow.getBoundingClientRect();
+      return (
+        event.clientX >= rect.left
+        && event.clientX <= rect.right
+        && event.clientY >= rect.top
+        && event.clientY <= rect.bottom
+      );
+    };
+
     const onPointerDown = (e) => {
-      if (wrapRef.current?.contains(e.target)) return;
+      const target = e.target instanceof Node ? e.target : null;
+      if (triggerRef.current?.contains(target)) return;
+      if (dropdownRef.current?.contains(target)) {
+        if (isPointerOverPlanFlow(e)) closeMenu();
+        return;
+      }
       closeMenu();
     };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
   }, [open, onRefreshCredits, closeMenu, isSignedIn]);
+
+  useEffect(() => {
+    if (isSignedIn && !wasSignedInRef.current && open) closeMenu();
+    wasSignedInRef.current = isSignedIn;
+  }, [isSignedIn, open, closeMenu]);
 
   useEffect(() => () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -104,7 +130,7 @@ export default function NavProfileMenu({
   const triggerLabel = isSignedIn ? `Profile menu for ${displayName}` : "Open menu";
 
   return (
-    <div className="profile-card-menu" ref={wrapRef}>
+    <div className="profile-card-menu">
       {isSignedIn && (
         <input
           ref={photoInputRef}
@@ -116,7 +142,7 @@ export default function NavProfileMenu({
           onChange={handlePhotoChange}
         />
       )}
-      <div className="profile-card-trigger-wrap">
+      <div className="profile-card-trigger-wrap" ref={triggerRef}>
         <button
           type="button"
           className={`profile-card-trigger${open ? " is-active" : ""}`}
@@ -155,6 +181,7 @@ export default function NavProfileMenu({
 
       {showDropdown && (
         <div
+          ref={dropdownRef}
           className={`profile-card-dropdown${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
           role="dialog"
           aria-label="Navigation menu"

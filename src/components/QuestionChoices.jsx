@@ -213,18 +213,16 @@ export default function QuestionChoices({
     : null;
 
   function toggleGroupSection(sectionId, value) {
-    setGroupDraft(prev => {
-      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, committed);
-      const section = Array.isArray(base[sectionId]) ? base[sectionId] : [];
-      const next = {
-        ...base,
-        [sectionId]: section.includes(value)
-          ? section.filter(x => x !== value)
-          : [...section, value],
-      };
-      onSetPrefDraft(next);
-      return next;
-    });
+    const base = groupDraft ?? buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
+    const section = Array.isArray(base[sectionId]) ? base[sectionId] : [];
+    const next = {
+      ...base,
+      [sectionId]: section.includes(value)
+        ? section.filter(x => x !== value)
+        : [...section, value],
+    };
+    setGroupDraft(next);
+    onSetPrefDraft(next);
   }
 
   function isTripDetailsDraftEmpty(draft) {
@@ -260,13 +258,11 @@ export default function QuestionChoices({
 
   function setBudgetDraft(value) {
     setBudgetTouched(true);
-    setGroupDraft(prev => {
-      const base = prev ? { ...prev } : buildGroupDraft(currentQ, {}, committed);
-      const current = base.trip_budget || "No budget limit";
-      const next = { ...base, trip_budget: current === value ? "No budget limit" : value };
-      onSetPrefDraft(next);
-      return next;
-    });
+    const base = groupDraft ?? buildGroupDraft(currentQ, {}, committed);
+    const current = base.trip_budget || "No budget limit";
+    const next = { ...base, trip_budget: current === value ? "No budget limit" : value };
+    setGroupDraft(next);
+    onSetPrefDraft(next);
   }
 
   function isBudgetSelected(value) {
@@ -276,12 +272,10 @@ export default function QuestionChoices({
   }
 
   function toggleMultiDraft(value) {
-    setMultiDraft(prev => {
-      const list = Array.isArray(prev) ? prev : [];
-      const next = list.includes(value) ? list.filter(x => x !== value) : [...list, value];
-      onSetPrefDraft(next);
-      return next;
-    });
+    const list = Array.isArray(multiDraft) ? multiDraft : [];
+    const next = list.includes(value) ? list.filter(x => x !== value) : [...list, value];
+    setMultiDraft(next);
+    onSetPrefDraft(next);
   }
 
   function adjustPartyCount(field, delta) {

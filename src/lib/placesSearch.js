@@ -14,6 +14,38 @@ const RADIUS_2MI = 3219;
 const RADIUS_5MI = 8047;
 const RADIUS_10MI = 16093;
 
+/** Pause between sequential Places API calls to reduce rate-limit bursts. */
+export const PLACES_API_CALL_DELAY_MS = 250;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function placesApiDelay() {
+  await sleep(PLACES_API_CALL_DELAY_MS);
+}
+
+function placesStatus() {
+  return window.google?.maps?.places?.PlacesServiceStatus;
+}
+
+function isRateLimitedStatus(status) {
+  const S = placesStatus();
+  return Boolean(S && status === S.OVER_QUERY_LIMIT);
+}
+
+async function withPlacesRateLimitRetry(fetchOnce, emptyValue) {
+  let backoffMs = 500;
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    const { value, status } = await fetchOnce();
+    if (!isRateLimitedStatus(status)) return value;
+    if (attempt === 2) return emptyValue;
+    await sleep(backoffMs);
+    backoffMs *= 2;
+  }
+  return emptyValue;
+}
+
 function haversineMiles(lat1, lng1, lat2, lng2) {
   const R = 3958.8;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -29,46 +61,51 @@ function getPlaceService() {
   return new window.google.maps.places.PlacesService(container);
 }
 
-function nearbySearch(request) {
+function nearbySearchRaw(request) {
   return new Promise((resolve) => {
     const service = getPlaceService();
-    if (!service) { resolve([]); return; }
+    if (!service) {
+      resolve({ results: [], status: null });
+      return;
+    }
     service.nearbySearch(request, (results, status) => {
-      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results?.length) {
-        resolve([]);
-        return;
-      }
-      resolve(results);
+      resolve({ results: results || [], status });
     });
   });
 }
 
-function textSearch(request) {
-  return new Promise((resolve) => {
-    const service = getPlaceService();
-    if (!service) { resolve([]); return; }
-    service.textSearch(request, (results, status) => {
-      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results?.length) {
-        resolve([]);
-        return;
-      }
-      resolve(results);
-    });
-  });
+async function nearbySearch(request) {
+  const OK = placesStatus()?.OK;
+  return withPlacesRateLimitRetry(async () => {
+    const { results, status } = await nearbySearchRaw(request);
+    if (status === OK && results?.length) return { value: results, status };
+    return { value: [], status };
+  }, []);
 }
 
-function getPlaceDetails(placeId) {
+function getPlaceDetailsRaw(placeId) {
   return new Promise((resolve) => {
     const service = getPlaceService();
-    if (!service || !placeId) { resolve(null); return; }
+    if (!service || !placeId) {
+      resolve({ place: null, status: null });
+      return;
+    }
     service.getDetails({
       placeId,
       fields: ["name", "formatted_address", "formatted_phone_number", "website", "opening_hours", "rating", "user_ratings_total", "price_level", "photos", "url", "geometry", "types"],
     }, (place, status) => {
-      if (status !== window.google.maps.places.PlacesServiceStatus.OK) { resolve(null); return; }
-      resolve(place);
+      resolve({ place: place || null, status });
     });
   });
+}
+
+async function getPlaceDetails(placeId) {
+  const OK = placesStatus()?.OK;
+  return withPlacesRateLimitRetry(async () => {
+    const { place, status } = await getPlaceDetailsRaw(placeId);
+    if (status === OK && place) return { value: place, status };
+    return { value: null, status };
+  }, null);
 }
 
 function mapPlace(place, originLat, originLng, category = "poi") {
@@ -97,19 +134,28 @@ function mapPlace(place, originLat, originLng, category = "poi") {
 
 async function enrichPlaces(places) {
   const top = places.slice(0, 5);
-  return Promise.all(top.map(async (p) => {
-    if (!p.placeId) return p;
+  const enriched = [];
+  for (const p of top) {
+    if (enriched.length > 0) await placesApiDelay();
+    if (!p.placeId) {
+      enriched.push(p);
+      continue;
+    }
     const details = await getPlaceDetails(p.placeId);
-    if (!details) return p;
-    return {
+    if (!details) {
+      enriched.push(p);
+      continue;
+    }
+    enriched.push({
       ...p,
       phone: details.formatted_phone_number,
       website: details.website,
       hours: details.opening_hours?.weekday_text?.join("; "),
       bookUrl: details.website || details.url,
       photoUrl: p.photoUrl || details.photos?.[0]?.getUrl?.({ maxWidth: 256 }),
-    };
-  }));
+    });
+  }
+  return enriched;
 }
 
 export async function searchNearbyCategory(lat, lng, { type, keyword, radius = RADIUS_5MI, maxResults = 8, wheelchair = false } = {}) {
@@ -135,12 +181,14 @@ export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5,
   const onRouteMap = new Map();
   const detourMap = new Map();
 
-  await Promise.all(searchTerms.map(async (keyword) => {
+  for (const keyword of searchTerms) {
+    await placesApiDelay();
     const onRoute = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_1MI, maxResults: 6 });
+    await placesApiDelay();
     const detour = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_5MI, maxResults: 10 });
     onRoute.forEach(r => { if (r.placeId) onRouteMap.set(r.placeId, r); });
     detour.forEach(r => { if (r.placeId && !onRouteMap.has(r.placeId)) detourMap.set(r.placeId, r); });
-  }));
+  }
 
   let onRoute = applyStopFilters([...onRouteMap.values()], answers, { nightOnly });
   let detour = applyStopFilters([...detourMap.values()], answers, { nightOnly });
@@ -202,7 +250,8 @@ export async function searchLodging(lat, lng, answers, routeInfo = null) {
 
 export async function searchNearbyServices(lat, lng, categories) {
   const out = {};
-  await Promise.all(categories.map(async (cat) => {
+  for (const cat of categories) {
+    await placesApiDelay();
     const items = await searchNearbyCategory(lat, lng, {
       type: cat.type,
       keyword: cat.keyword,
@@ -210,7 +259,7 @@ export async function searchNearbyServices(lat, lng, categories) {
       maxResults: 3,
     });
     out[cat.id] = await enrichPlaces(items);
-  }));
+  }
   return out;
 }
 

@@ -143,6 +143,11 @@ export function formatTripNightsLine(answers = {}) {
   return `Planned overnight stops: ${answers.trip_nights}`;
 }
 
+export function formatStopCountLine(answers = {}) {
+  if (!answers.stop_count) return "";
+  return `Preferred stop count: ${answers.stop_count}`;
+}
+
 export function formatPetConstraintLine(answers = {}) {
   if (!asArray(answers.preferences).includes("Pet friendly")) return "";
   return "Traveling with a pet — all stop and lodging recommendations must be pet-friendly";

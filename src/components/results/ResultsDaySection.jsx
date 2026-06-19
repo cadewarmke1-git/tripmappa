@@ -202,7 +202,13 @@ export default function ResultsDaySection({
           <h3 className="results-subsection-label">Things to Do and Eat</h3>
           <div className="results-activities-grid">
             {day.activities.map(item => (
-              <ActivityDiningCard key={item.id} item={item} onAdd={onAddRoadStop} onToast={onToast} added={isStopAdded?.(item)}/>
+              <ActivityDiningCard
+                key={item.id || item.placeId || `${item.name}-${item.lat}-${item.lng}`}
+                item={item}
+                onAdd={onAddRoadStop}
+                onToast={onToast}
+                added={isStopAdded?.(item)}
+              />
             ))}
           </div>
         </div>

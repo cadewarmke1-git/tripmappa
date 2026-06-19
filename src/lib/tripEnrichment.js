@@ -4,6 +4,7 @@ import {
   searchNearbyServices,
   searchInterestPOIs,
   searchNearbyCategory,
+  placesApiDelay,
   RADIUS_2MI,
 } from "./placesSearch.js";
 import { computeTripAlerts } from "./tripAlerts.js";
@@ -241,6 +242,7 @@ export async function enrichGeneratedTrip({
       nearbyServicesByCity[stop.city] = await searchNearbyServices(geo.lat, geo.lng, serviceCats);
 
       for (const interest of interests) {
+        await placesApiDelay();
         const pois = await searchInterestPOIs(geo.lat, geo.lng, interest);
         if (!activitiesByCity[stop.city]) activitiesByCity[stop.city] = [];
         pois.forEach(p => {
@@ -302,6 +304,7 @@ export async function enrichGeneratedTrip({
   if (wantsPlaygrounds && routeInfo?.routePoints?.length) {
     const routeSamples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 30);
     for (const pt of routeSamples) {
+      await placesApiDelay();
       const parks = await searchNearbyCategory(pt.lat, pt.lng, {
         keyword: "playground park",
         radius: RADIUS_2MI,

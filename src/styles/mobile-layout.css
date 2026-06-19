@@ -769,4 +769,22 @@
     max-height: calc(var(--app-height) - var(--nav-h)) !important;
     border-radius: 0 !important;
   }
+
+  /* Plan-flow buttons: explicit pointer-events on narrow viewports (incl. data-layout=web). */
+  .float-card--plan-flow:not(.collapsed) .question-choices-compact .qr-btn,
+  .float-card--plan-flow:not(.collapsed) .vehicle-tab,
+  .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .btn-generate-inline,
+  .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn {
+    pointer-events: auto;
+  }
+
+  /* Open profile dropdown must not intercept clicks on the plan panel beneath. */
+  .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-dropdown.is-open {
+    pointer-events: none;
+  }
+
+  .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-trigger,
+  .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-trigger-wrap {
+    pointer-events: auto;
+  }
 }

@@ -4,6 +4,7 @@ import {
   isUnlimitedUser,
   isUnlimitedSessionUser,
   resolveSessionEmail,
+  PLAYWRIGHT_ADMIN_EMAIL,
 } from "./adminAccess.js";
 import { preflightCreditFromClient, getCreditStatus } from "./tripCredits.js";
 
@@ -27,6 +28,12 @@ describe("adminAccess", () => {
   it("grants unlimited when email matches ADMIN_EMAIL", () => {
     expect(isUnlimitedUser({ userId: "regular-user", email: "admin@example.com" })).toBe(true);
     expect(isUnlimitedUser({ userId: "regular-user", email: "other@example.com" })).toBe(false);
+  });
+
+  it("grants unlimited for Playwright admin email alongside ADMIN_EMAIL", () => {
+    expect(isAdminEmail(PLAYWRIGHT_ADMIN_EMAIL)).toBe(true);
+    expect(isAdminEmail("TripMappa@gmail.com")).toBe(true);
+    expect(isUnlimitedUser({ userId: "playwright-user", email: PLAYWRIGHT_ADMIN_EMAIL })).toBe(true);
   });
 
   it("resolveSessionEmail uses only authenticated session email", () => {

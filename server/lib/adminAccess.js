@@ -1,17 +1,33 @@
 import { isExemptFounderUser } from "./foundingMembers.js";
 
-/** Designated admin email — bypasses all generation limits when signed in. */
+/** Playwright / E2E admin — email/password auth for automated testing. */
+export const PLAYWRIGHT_ADMIN_EMAIL = "tripmappa@gmail.com";
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+/** All designated admin emails — bypass generation limits when signed in. */
+export function getAdminEmails() {
+  const emails = new Set();
+  const primary = normalizeEmail(process.env.ADMIN_EMAIL);
+  if (primary) emails.add(primary);
+  emails.add(normalizeEmail(PLAYWRIGHT_ADMIN_EMAIL));
+  return [...emails];
+}
+
+/** @deprecated Prefer getAdminEmails(); kept for single-email callers. */
 export function getAdminEmail() {
-  return (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  return getAdminEmails()[0] || "";
 }
 
 export function isAdminEmail(email) {
-  const admin = getAdminEmail();
-  if (!admin || !email) return false;
-  return String(email).trim().toLowerCase() === admin;
+  if (!email) return false;
+  const normalized = normalizeEmail(email);
+  return getAdminEmails().includes(normalized);
 }
 
-/** Permanent unlimited credits: ADMIN_USER_IDS or ADMIN_EMAIL match. */
+/** Permanent unlimited credits: founder exemption or any designated admin email. */
 export function isUnlimitedUser({ userId, email } = {}) {
   return isExemptFounderUser(userId) || isAdminEmail(email);
 }
