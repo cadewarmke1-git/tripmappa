@@ -136,11 +136,15 @@ html body .app-wrap.day .question-progress-fill {
   transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-html body .app-wrap.day .plan-flow-credits,
-html body .app-wrap.day .generate-credits-badge {
+html body .app-wrap.day .plan-flow-credits {
   color: var(--color-text-secondary) !important;
   background: transparent !important;
   border: none !important;
+}
+
+html body .app-wrap.day .btn-generate-trip .generate-credits-badge {
+  color: var(--deep-dark, #1a0d00) !important;
+  opacity: 0.88 !important;
 }
 
 html body .app-wrap.day .plan-route-card-chip {
@@ -311,11 +315,15 @@ html body .app-wrap.night .question-progress-fill {
   transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-html body .app-wrap.night .plan-flow-credits,
-html body .app-wrap.night .generate-credits-badge {
+html body .app-wrap.night .plan-flow-credits {
   color: var(--color-text-secondary) !important;
   background: transparent !important;
   border: none !important;
+}
+
+html body .app-wrap.night .btn-generate-trip .generate-credits-badge {
+  color: var(--deep-dark, #1a0d00) !important;
+  opacity: 0.88 !important;
 }
 
 html body .app-wrap.night .plan-route-card-chip {

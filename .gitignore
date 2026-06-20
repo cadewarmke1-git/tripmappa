@@ -28,3 +28,4 @@ dist-ssr
 e2e/.auth/
 e2e/.verify-checkpoint.json
 test-results/
+visual-regression-sweep/

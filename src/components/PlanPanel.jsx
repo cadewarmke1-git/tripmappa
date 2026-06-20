@@ -107,9 +107,7 @@ export default function PlanPanel({
           <>
             Generate My Trip →
             {creditsLabel && (
-              <span className="generate-credits-badge" style={{ color: "var(--text-secondary)" }}>
-                {creditsLabel}
-              </span>
+              <span className="generate-credits-badge">{creditsLabel}</span>
             )}
           </>
         )}
