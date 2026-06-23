@@ -64,24 +64,24 @@ export default function UpgradeModal({
   const effectiveResetDate = resetDate || creditStatus?.resetDate;
 
   const title = isMonthlyLimit
-    ? "You have used all your Trip Generations this month"
+    ? "You have used all your trip generations this month"
     : isTrialEnded
       ? "Your Trailblazer trial has ended"
       : isGrocery
         ? "Grocery delivery is a Trailblazer feature"
         : isGuest
-          ? "You've used your free Trip Generation"
+          ? "You've used your free trip generation"
           : "Trip generations used";
 
   const lead = isMonthlyLimit
-    ? `Your generation limit resets on ${formatResetDate(effectiveResetDate)}. Upgrade for more generations before then.`
+    ? `Your generation limit resets on ${formatResetDate(effectiveResetDate)}. Upgrade for more trip generations before then.`
     : isTrialEnded
       ? "Choose a plan to keep generating trips and premium features."
       : isGrocery
         ? "Grocery delivery to your hotel is included with Trailblazer."
         : isGuest
           ? "Create a free Wanderer account (3 trips total), or choose a paid plan below."
-          : "You've used all 3 Wanderer generations. Upgrade to Voyager or Trailblazer to keep planning.";
+          : "You've used all 3 Wanderer trip generations. Upgrade to Voyager or Trailblazer to keep planning.";
 
   const monthlyLimitCta = tier === TIERS.VOYAGER
     ? "Upgrade to Trailblazer"

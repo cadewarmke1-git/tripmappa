@@ -6,10 +6,9 @@ export default function PlanGuestInvite({ onSignUp, onSignIn }) {
     <div className="plan-guest-invite">
       <div className="ai-bubble plan-guest-invite-bubble">
         <p className="plan-guest-invite-lead">
-          Create a free account to plan this trip
+          Sign up free to save this trip
         </p>
         <p className="plan-guest-invite-detail">
-          You get <strong>3 trip generations</strong> with no credit card required.
           We&apos;ll save your route and answers so you can pick up anytime.
         </p>
       </div>

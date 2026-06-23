@@ -47,6 +47,23 @@
         var w = window.matchMedia("(min-width: 769px)").matches;
         var fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
         document.documentElement.dataset.layout = w || fine ? "web" : "mobile";
+
+        var wideMq = window.matchMedia("(min-width: 769px)");
+        var pointerMq = window.matchMedia("(hover: hover) and (pointer: fine)");
+        var resizeTimer;
+
+        function syncLayout() {
+          document.documentElement.dataset.layout = wideMq.matches || pointerMq.matches ? "web" : "mobile";
+        }
+
+        function onResize() {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(syncLayout, 150);
+        }
+
+        wideMq.addEventListener("change", syncLayout);
+        pointerMq.addEventListener("change", syncLayout);
+        window.addEventListener("resize", onResize, { passive: true });
       })();
     </script>
   </head>

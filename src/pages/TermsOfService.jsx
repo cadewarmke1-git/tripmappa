@@ -32,7 +32,7 @@ const DOCUMENT = {
       ],
     },
     {
-      heading: "Trip Generation",
+      heading: "Trip generations",
       paragraphs: [
         "TripMappa uses AI to generate trip plans. Trip suggestions including stops, hotels, restaurants, and fuel stations are recommendations only. We do not guarantee the accuracy, availability, or safety of any suggested location. You are responsible for verifying information before relying on it for travel decisions. Fuel price estimates are based on regional average data sourced from the U.S. Energy Information Administration or other data providers and are approximations only. Prices may vary by location and change frequently. TripMappa may in the future provide live per-station fuel pricing where available but does not guarantee the accuracy or timeliness of any fuel price information.",
       ],

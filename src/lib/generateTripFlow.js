@@ -31,7 +31,7 @@ export function generationFailureMessage(err) {
   }
   if (err?.code === "no_credits") {
     if (err?.limitReached || err?.credits?.billingPeriod === "monthly") {
-      return "You have used all your Trip Generations this month.";
+      return "You have used all your trip generations this month.";
     }
     return "No trip generations remaining.";
   }

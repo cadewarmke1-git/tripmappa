@@ -13,8 +13,8 @@ export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshC
   const tier = getTierLabel(tierKey);
   const isPaid = hasUnlimitedTripGenerations(tierKey);
   const generationsLabel = isPaid
-    ? "Unlimited Trip Generations"
-    : `${creditStatus?.remaining ?? 0} of ${creditStatus?.limit ?? 3} Trip Generations remaining this month`;
+    ? "Unlimited trip generations"
+    : `${creditStatus?.remaining ?? 0} of ${creditStatus?.limit ?? 3} trip generations remaining this month`;
 
   useEffect(() => {
     if (!open) return;
@@ -49,7 +49,7 @@ export default function AccountBadge({ user, creditStatus, onSignOut, onRefreshC
             <span className="account-dropdown-tier">{tier}</span>
           </div>
           <div className="account-dropdown-row">
-            <span className="account-dropdown-label">Trip Generations</span>
+            <span className="account-dropdown-label">Trip generations</span>
             <span className="account-dropdown-val">{generationsLabel}</span>
           </div>
           <button type="button" className="account-dropdown-signout" onClick={() => { setOpen(false); onSignOut?.(); }}>

@@ -7,7 +7,7 @@ export function formatCreditsDisplay(status) {
   }
 
   if (status.isAdmin || status.unlimited) {
-    return { label: "Unlimited generations", nudge: null };
+    return { label: "Unlimited trip generations", nudge: null };
   }
 
   if (status.tier === "guest") {
@@ -20,7 +20,7 @@ export function formatCreditsDisplay(status) {
     const label = `${remaining} of ${limit} remaining this month`;
     const usedThisMonth = status.monthlyUsed ?? status.used ?? 0;
     const nudge = normalizeTier(status.tier) === TIERS.VOYAGER && usedThisMonth >= 16
-      ? "Running low — Trailblazer includes 100 Trip Generations per month."
+      ? "Running low — Trailblazer includes 100 trip generations per month."
       : null;
     return { label, nudge };
   }

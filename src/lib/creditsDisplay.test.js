@@ -27,7 +27,7 @@ describe("formatCreditsDisplay", () => {
 
   it("shows unlimited label for admin accounts", () => {
     expect(formatCreditsDisplay({ isAdmin: true, unlimited: true, tier: TIERS.TRAILBLAZER }).label)
-      .toBe("Unlimited generations");
+      .toBe("Unlimited trip generations");
   });
 
   it("shows trailblazer monthly counter without marketing copy", () => {

@@ -95,7 +95,7 @@ export default function PlanPanel({
     if (creditsExhausted && onUpgrade) {
       return (
         <button type="button" className="btn-generate-trip btn-generate-trip-upgrade" onClick={onUpgrade}>
-          Upgrade for more generations — Trailblazer includes 100/mo
+          Upgrade for more trip generations — Trailblazer includes 100/mo
         </button>
       );
     }

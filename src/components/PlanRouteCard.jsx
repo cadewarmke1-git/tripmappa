@@ -26,10 +26,27 @@ export default function PlanRouteCard({
     answers.lodging && answers.lodging !== "No overnight stay" && !assumedLodging && answers.lodging,
   ].filter(Boolean);
 
-  const historyChips = dedupeQuestionHistoryById(questionHistory).map(entry => ({
-    key: entry.question?.id ?? "q",
-    text: formatFlowAnswer(entry.question, entry.answer),
-  })).filter(chip => chip.text);
+  const defaultChipQuestionIds = new Set();
+  if (answers.vehicle) defaultChipQuestionIds.add("vehicle");
+  if (answers.travelers != null) {
+    defaultChipQuestionIds.add("travelers");
+    defaultChipQuestionIds.add("party_composition");
+  }
+  if (isScenicRoute(answers)) defaultChipQuestionIds.add("preferences");
+  if (isContinuousDrive(answers) || answers.overnight_preference === "Stop overnight along the way") {
+    defaultChipQuestionIds.add("overnight_preference");
+  }
+  if (answers.lodging && answers.lodging !== "No overnight stay" && !assumedLodging) {
+    defaultChipQuestionIds.add("lodging");
+    defaultChipQuestionIds.add("lodging_stay");
+  }
+
+  const historyChips = dedupeQuestionHistoryById(questionHistory)
+    .filter(entry => !defaultChipQuestionIds.has(entry.question?.id))
+    .map(entry => ({
+      key: entry.question?.id ?? "q",
+      text: formatFlowAnswer(entry.question, entry.answer),
+    })).filter(chip => chip.text);
 
   return (
     <div className={`plan-route-card${routePending ? " plan-route-card-pending" : ""}${routeError ? " plan-route-card-error" : ""}`}>

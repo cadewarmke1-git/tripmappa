@@ -512,7 +512,7 @@ export default function QuestionChoices({
           {currentQ.type === "party_composition" && (
             <div className="party-composition-inputs">
               {partyMax != null && (
-                <p className="party-composition-total">
+                <p className="party-composition-total" aria-live="polite" aria-atomic="true">
                   Total: {Number(partyAdults) + Number(partyChildren)} / {partyMax}
                 </p>
               )}
@@ -535,7 +535,7 @@ export default function QuestionChoices({
                       >
                         −
                       </button>
-                      <span className="party-composition-value">{value}</span>
+                      <span className="party-composition-value" aria-live="polite" aria-atomic="true">{value}</span>
                       <button
                         type="button"
                         className="party-composition-stepper-btn"

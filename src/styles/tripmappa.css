@@ -3042,6 +3042,10 @@
   }
   .qr-btn:hover { border-color: rgba(255,210,140,0.6); transform: translateY(-1px); background: rgba(255,255,255,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
   .qr-btn:active { transform: scale(0.98); }
+  .qr-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   .qr-btn.qr-selected {
     animation: qrGoldFlash 150ms ease forwards;
     border-color: var(--gold-primary) !important;
@@ -5325,6 +5329,10 @@
   .results-day-tab:hover {
     color: var(--ink);
     background: rgba(255,255,255,0.04);
+  }
+  .results-day-tab:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   .results-day-tab-active {
     color: var(--ink);
