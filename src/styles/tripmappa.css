@@ -798,6 +798,8 @@
     font-size: 14px; font-weight: 700; cursor: pointer;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); white-space: nowrap;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
     box-shadow: 0 6px 20px rgba(255,210,140,0.25);
   }
   .hero-go-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,210,140,0.4); }
@@ -1031,12 +1033,14 @@
   .scroll-arrow { width: 18px; height: 18px; border-right: 1.5px solid rgba(255,255,255,0.35); border-bottom: 1.5px solid rgba(255,255,255,0.35); transform: rotate(45deg); margin-top: -4px; }
 
   .pac-container {
-    z-index: 100000 !important;
+    z-index: 250 !important;
     border-radius: 0 0 14px 14px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     font-family: 'Inter', sans-serif !important;
     margin-top: 0 !important;
-    overflow: visible !important;
+    max-height: min(240px, 40vh) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     border-top: none !important;
     background-color: var(--color-autocomplete-bg, #1A1035) !important;
     background-image: none !important;

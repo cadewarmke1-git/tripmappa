@@ -36,6 +36,24 @@ function getPlaceDetails(placeId) {
   });
 }
 
+/** Hide Google Places dropdowns appended to document.body (pac-container). */
+export function dismissGooglePlacesDropdown() {
+  if (typeof document === "undefined") return;
+  document.querySelectorAll(".pac-container").forEach(el => {
+    el.style.display = "none";
+  });
+}
+
+/** Request geometry + address fields from legacy Autocomplete widgets when supported. */
+export function configurePlacesAutocomplete(autocompleteInstance) {
+  autocompleteInstance?.setFields?.([
+    "formatted_address",
+    "geometry",
+    "place_id",
+    "name",
+  ]);
+}
+
 /** Resolve free-text or Autocomplete selection to a verified Places result. */
 export function resolvePlaceFromAutocomplete(input, autocompleteInstance) {
   const text = input?.trim();
@@ -43,11 +61,14 @@ export function resolvePlaceFromAutocomplete(input, autocompleteInstance) {
 
   if (autocompleteInstance) {
     const selected = autocompleteInstance.getPlace();
-    if (selected?.place_id && selected.geometry && placeMatchesInput(selected, text)) {
-      return Promise.resolve({
-        formattedAddress: selected.formatted_address || text,
-        placeId: selected.place_id,
-      });
+    if (selected?.place_id && placeMatchesInput(selected, text)) {
+      if (selected.geometry) {
+        return Promise.resolve({
+          formattedAddress: selected.formatted_address || text,
+          placeId: selected.place_id,
+        });
+      }
+      return getPlaceDetails(selected.place_id);
     }
   }
 

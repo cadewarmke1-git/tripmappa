@@ -8,6 +8,7 @@ import AppNavBar from "./AppNavBar.jsx";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
+import { dismissGooglePlacesDropdown } from "../lib/places.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { getHeroSurfaceTheme, getHeroUiThemeFromHour, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
@@ -83,6 +84,18 @@ export default function HeroView({
     if (e.key === "Enter" && !launchDisabled) onLaunch();
   };
 
+  function syncHeroInput(field, value) {
+    if (field === "origin") onHeroOriginChange(value);
+    else onHeroDestChange(value);
+  }
+
+  function prepareLaunch() {
+    dismissGooglePlacesDropdown();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  }
+
   return (
     <>
       <AppNavBar
@@ -157,10 +170,10 @@ export default function HeroView({
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroOriginAcLoad} onPlaceChanged={onHeroOriginPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey} aria-label="Trip origin"/>
+                        <input ref={heroOriginRef} className="hero-input" placeholder="Dallas, TX" defaultValue={heroOrigin} onChange={e => syncHeroInput("origin", e.target.value)} onInput={e => syncHeroInput("origin", e.currentTarget.value)} onKeyDown={handleLaunchKey} aria-label="Trip origin" autoComplete="off"/>
                       </Autocomplete>
                     ) : (
-                      <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => onHeroOriginChange(e.target.value)} onKeyDown={handleLaunchKey} aria-label="Trip origin"/>
+                      <input className="hero-input" placeholder="Dallas, TX" value={heroOrigin} onChange={e => syncHeroInput("origin", e.target.value)} onKeyDown={handleLaunchKey} aria-label="Trip origin" autoComplete="off"/>
                     )}
                   </div>
                   {heroOriginError && <div className="hero-input-error">{heroOriginError}</div>}
@@ -184,10 +197,10 @@ export default function HeroView({
                   <div className="hero-input-box">
                     {isLoaded ? (
                       <Autocomplete onLoad={onHeroDestAcLoad} onPlaceChanged={onHeroDestPlaceChanged} options={{ types: ["geocode", "establishment"] }}>
-                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles, CA" defaultValue={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey} aria-label="Trip destination"/>
+                        <input ref={heroDestRef} className="hero-input" placeholder="Los Angeles, CA" defaultValue={heroDest} onChange={e => syncHeroInput("dest", e.target.value)} onInput={e => syncHeroInput("dest", e.currentTarget.value)} onKeyDown={handleLaunchKey} aria-label="Trip destination" autoComplete="off"/>
                       </Autocomplete>
                     ) : (
-                      <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e => onHeroDestChange(e.target.value)} onKeyDown={handleLaunchKey} aria-label="Trip destination"/>
+                      <input className="hero-input" placeholder="Los Angeles, CA" value={heroDest} onChange={e => syncHeroInput("dest", e.target.value)} onKeyDown={handleLaunchKey} aria-label="Trip destination" autoComplete="off"/>
                     )}
                   </div>
                   {heroDestError && <div className="hero-input-error">{heroDestError}</div>}
@@ -199,6 +212,7 @@ export default function HeroView({
             <button
               type="button"
               className="hero-go-btn"
+              onMouseDown={prepareLaunch}
               onClick={() => { triggerPrimaryHaptic(); onLaunch?.(); }}
               disabled={launchDisabled}
             >

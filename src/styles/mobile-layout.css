@@ -522,6 +522,7 @@
     width: calc(100vw - 32px) !important;
     max-width: calc(100vw - 32px) !important;
     min-width: 0 !important;
+    max-height: min(168px, 30vh) !important;
   }
 
   html[data-layout="mobile"] .plan-flow-header-bar {

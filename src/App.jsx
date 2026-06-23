@@ -30,7 +30,7 @@ import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } 
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } from "./lib/postGenerationPersistence.js";
-import { resolvePlaceFromAutocomplete } from "./lib/places.js";
+import { configurePlacesAutocomplete, resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
 import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
 import { copyToClipboard } from "./lib/copyToClipboard.js";
@@ -3519,8 +3519,8 @@ export default function App() {
         heroDestRef={heroDestRef}
         user={user}
         onSwap={swapHeroCities}
-        onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; }}
-        onHeroDestAcLoad={ac => { heroDestAcRef.current = ac; }}
+        onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; configurePlacesAutocomplete(ac); }}
+        onHeroDestAcLoad={ac => { heroDestAcRef.current = ac; configurePlacesAutocomplete(ac); }}
         onHeroOriginPlaceChanged={() => {
           if (heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value);
           setHeroOriginError("");
