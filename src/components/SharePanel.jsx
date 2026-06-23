@@ -21,6 +21,9 @@ import {
 import { useLiveLocationBroadcast } from "../hooks/useLiveLocationBroadcast.js";
 import LocationPermissionModal from "./LocationPermissionModal.jsx";
 
+/** Twilio SMS sharing — hidden until integration is complete. */
+const SMS_SHARING_UI_ENABLED = false;
+
 const WARN_KEY = "tripmappa-live-share-warn";
 
 export default function SharePanel({
@@ -352,7 +355,7 @@ export default function SharePanel({
             <input className="live-share-url-input" readOnly value={shareUrl} onFocus={e => e.target.select()} />
             <button type="button" className="profile-btn profile-btn-gold" onClick={handleCopyLink}>Copy Link</button>
           </div>
-          {showSmsInput && (
+          {SMS_SHARING_UI_ENABLED && showSmsInput && (
             <div className="live-share-sms-row">
               <input
                 className="profile-input"

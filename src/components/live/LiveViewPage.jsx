@@ -9,8 +9,11 @@ import LiveTravelerMarker from "./LiveTravelerMarker.jsx";
 import BreadcrumbPath from "./BreadcrumbPath.jsx";
 import ConvoyPin from "./ConvoyPin.jsx";
 import ConvoyMemberList from "./ConvoyMemberList.jsx";
-import SosButton from "./SosButton.jsx";
+import SosButton, { SOS_UI_ENABLED } from "./SosButton.jsx";
 import ArrivalCelebration, { TripCompletePanel } from "./ArrivalCelebration.jsx";
+
+/** Twilio SMS follower alerts — hidden until integration is complete. */
+const SMS_ALERTS_UI_ENABLED = false;
 import UserAvatar from "../UserAvatar.jsx";
 import {
   fetchLiveTripByToken,
@@ -344,24 +347,26 @@ export default function LiveViewPage({ shareToken, toast }) {
             </div>
           )}
 
-          <div className="live-view-follower-phone">
-            <div className="live-view-eta-label">Get SMS alerts at 30 min out</div>
-            <div className="live-share-sms-row">
-              <input
-                className="profile-input"
-                placeholder="(555) 123-4567"
-                value={followerPhone}
-                onChange={e => setFollowerPhone(e.target.value)}
-              />
-              <button type="button" className="profile-btn profile-btn-gold" onClick={handleRegisterPhone}>
-                Notify me
-              </button>
+          {SMS_ALERTS_UI_ENABLED && (
+            <div className="live-view-follower-phone">
+              <div className="live-view-eta-label">Get SMS alerts at 30 min out</div>
+              <div className="live-share-sms-row">
+                <input
+                  className="profile-input"
+                  placeholder="(555) 123-4567"
+                  value={followerPhone}
+                  onChange={e => setFollowerPhone(e.target.value)}
+                />
+                <button type="button" className="profile-btn profile-btn-gold" onClick={handleRegisterPhone}>
+                  Notify me
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {!tripComplete && <SosButton onConfirm={handleSos} className="live-sos-map" comingSoon />}
+      {!tripComplete && SOS_UI_ENABLED && <SosButton onConfirm={handleSos} className="live-sos-map" comingSoon />}
     </div>
   );
 }

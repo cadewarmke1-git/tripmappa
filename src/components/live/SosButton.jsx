@@ -1,10 +1,13 @@
 import { useState } from "react";
 
+/** Emergency SOS — hidden until Twilio SMS alerts are live. */
+export const SOS_UI_ENABLED = false;
+
 export default function SosButton({ onConfirm, className = "", comingSoon = false }) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
-  if (comingSoon) return null;
+  if (!SOS_UI_ENABLED || comingSoon) return null;
 
   async function handleConfirm() {
     setSending(true);

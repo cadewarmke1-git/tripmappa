@@ -3,7 +3,7 @@
  * State, effects, handlers, and layout only — logic lives in src/lib/, UI in src/components/.
  * See ROADMAP.md for phase status and conventions.
  */
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
 import { applyMapThemeStyles } from "./lib/mapStyles.js";
@@ -99,6 +99,7 @@ import {
   LazyUpgradeModal,
   LazyUserPreferencesPage,
 } from "./components/LazyModals.jsx";
+const LazyHeroExploreMap = lazy(() => import("./components/HeroExploreMap.jsx"));
 import { getDisplayName } from "./lib/avatarUtils.js";
 import { useTheme } from "./context/ThemeContext.jsx";
 import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress, saveTravelerOnboarding } from "./lib/profileApi.js";
@@ -118,6 +119,7 @@ import { parseLiveShareToken } from "./lib/liveShareApi.js";
 import { resolveAppRoute } from "./lib/appRouter.js";
 import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import Toast from "./components/Toast.jsx";
+import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
@@ -134,13 +136,13 @@ export default function App() {
   const [heroOriginError, setHeroOriginError] = useState("");
   const [heroDestError, setHeroDestError] = useState("");
   const [heroLaunching, setHeroLaunching] = useState(false);
-  const [heroExploreEnabled, setHeroExploreEnabled] = useState(false);
-  const [heroExploreDriveSeconds, setHeroExploreDriveSeconds] = useState(7200);
-  const [heroExplorePolygon, setHeroExplorePolygon] = useState([]);
-  const [heroExploreLoading, setHeroExploreLoading] = useState(false);
-  const [heroExploreError, setHeroExploreError] = useState(null);
-  const [heroOriginCoords, setHeroOriginCoords] = useState(null);
-  const heroExploreAbortRef = useRef(null);
+  const [exploreRangeEnabled, setExploreRangeEnabled] = useState(false);
+  const [exploreRangeDriveSeconds, setExploreRangeDriveSeconds] = useState(7200);
+  const [exploreRangePolygon, setExploreRangePolygon] = useState([]);
+  const [exploreRangeLoading, setExploreRangeLoading] = useState(false);
+  const [exploreRangeError, setExploreRangeError] = useState(null);
+  const [exploreOriginCoords, setExploreOriginCoords] = useState(null);
+  const exploreRangeAbortRef = useRef(null);
   const [heroEmail, setHeroEmail] = useState("");
   const [authModal, setAuthModal] = useState(null); // signin | signup | phone | oauth-*
   const [authPhone, setAuthPhone] = useState("");
@@ -1829,108 +1831,6 @@ export default function App() {
     setHeroDestError("");
   }
 
-  function clearHeroExploreRange() {
-    heroExploreAbortRef.current?.abort();
-    heroExploreAbortRef.current = null;
-    setHeroExplorePolygon([]);
-    setHeroExploreLoading(false);
-    setHeroExploreError(null);
-  }
-
-  const loadHeroExploreIsoline = useCallback(async (coords, driveSeconds) => {
-    if (!coords?.lat || !coords?.lng || !driveSeconds) return;
-    heroExploreAbortRef.current?.abort();
-    const controller = new AbortController();
-    heroExploreAbortRef.current = controller;
-    setHeroExploreLoading(true);
-    setHeroExploreError(null);
-    try {
-      const data = await fetchIsoline(coords.lat, coords.lng, driveSeconds, { signal: controller.signal });
-      if (controller.signal.aborted) return;
-      const polygon = data.polygon || [];
-      setHeroExplorePolygon(polygon);
-      setHeroOriginCoords({ lat: coords.lat, lng: coords.lng });
-      if (polygon.length < 3) {
-        setHeroExploreError("Could not draw a range for this origin — try another city.");
-      }
-    } catch (err) {
-      if (err.name === "AbortError") return;
-      setHeroExplorePolygon([]);
-      setHeroExploreError(err.message || "Could not load explore range");
-    } finally {
-      if (heroExploreAbortRef.current === controller) {
-        setHeroExploreLoading(false);
-        heroExploreAbortRef.current = null;
-      }
-    }
-  }, [isLoaded]);
-
-  useEffect(() => {
-    if (!heroExploreEnabled) {
-      clearHeroExploreRange();
-      return undefined;
-    }
-    if (!isLoaded || !window.google) return undefined;
-
-    let cancelled = false;
-    (async () => {
-      const text = heroOriginRef.current?.value?.trim() || heroOrigin.trim();
-      const coords = heroOriginCoords
-        || await resolveHeroOriginCoords(text, heroOriginAcRef.current);
-      if (cancelled) return;
-      if (!coords) {
-        setHeroExplorePolygon([]);
-        setHeroExploreError("Enter a valid origin to explore your range");
-        setHeroExploreLoading(false);
-        return;
-      }
-      setHeroOriginCoords({ lat: coords.lat, lng: coords.lng });
-      await loadHeroExploreIsoline(coords, heroExploreDriveSeconds);
-    })();
-
-    return () => { cancelled = true; };
-  }, [heroExploreEnabled, heroExploreDriveSeconds, heroOrigin, isLoaded, loadHeroExploreIsoline]);
-
-  async function handleHeroExploreToggle(enabled) {
-    setHeroExploreEnabled(enabled);
-    if (!enabled) clearHeroExploreRange();
-  }
-
-  function handleHeroExploreDriveTimeChange(seconds) {
-    setHeroExploreDriveSeconds(seconds);
-  }
-
-  async function applyHeroExploreDestination(label) {
-    const value = label?.trim();
-    if (!value) return;
-    setHeroDest(value);
-    if (heroDestRef.current) heroDestRef.current.value = value;
-    setHeroDestError("");
-    setHeroExploreEnabled(false);
-    clearHeroExploreRange();
-  }
-
-  async function handleHeroExploreMapClick({ lat, lng }) {
-    if (!heroExplorePolygon.length || !pointInPolygon(lat, lng, heroExplorePolygon)) return;
-    const address = await reverseGeocodeLatLng(lat, lng);
-    await applyHeroExploreDestination(address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-  }
-
-  async function handleHeroExplorePlaceSelect(place) {
-    if (!place) return;
-    const label = place.address ? `${place.name}, ${place.address}` : place.name;
-    await applyHeroExploreDestination(label);
-  }
-
-  function captureHeroOriginCoordsFromAutocomplete() {
-    const selected = heroOriginAcRef.current?.getPlace?.();
-    if (!selected?.geometry?.location) return;
-    setHeroOriginCoords({
-      lat: selected.geometry.location.lat(),
-      lng: selected.geometry.location.lng(),
-    });
-  }
-
   function swapRouteCities() {
     const fromVal = originRef.current?.value ?? origin;
     const toVal = destRef.current?.value ?? dest;
@@ -1941,6 +1841,112 @@ export default function App() {
     setRouteError(null);
     setAnswers(prev => pruneRouteDependentAnswers(prev, buildQuestionContext(prev)));
     if (isLoaded && window.google && toVal && fromVal && answers.vehicle) fetchDirections(answers.vehicle);
+  }
+
+  function clearExploreRange() {
+    exploreRangeAbortRef.current?.abort();
+    exploreRangeAbortRef.current = null;
+    setExploreRangePolygon([]);
+    setExploreRangeLoading(false);
+    setExploreRangeError(null);
+  }
+
+  const loadExploreRangeIsoline = useCallback(async (coords, driveSeconds) => {
+    if (!coords?.lat || !coords?.lng || !driveSeconds) return;
+    exploreRangeAbortRef.current?.abort();
+    const controller = new AbortController();
+    exploreRangeAbortRef.current = controller;
+    setExploreRangeLoading(true);
+    setExploreRangeError(null);
+    try {
+      const data = await fetchIsoline(coords.lat, coords.lng, driveSeconds, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      const polygon = data.polygon || [];
+      setExploreRangePolygon(polygon);
+      setExploreOriginCoords({ lat: coords.lat, lng: coords.lng });
+      if (polygon.length < 3) {
+        setExploreRangeError("Could not draw a range for this origin — try another city.");
+      }
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setExploreRangePolygon([]);
+      setExploreRangeError(err.message || "Could not load explore range");
+    } finally {
+      if (exploreRangeAbortRef.current === controller) {
+        setExploreRangeLoading(false);
+        exploreRangeAbortRef.current = null;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!exploreRangeEnabled || tab !== "plan" || generated) {
+      clearExploreRange();
+      return undefined;
+    }
+    if (!isLoaded || !window.google) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      const text = originRef.current?.value?.trim() || origin.trim();
+      const routeStart = routeInfo?.routePoints?.[0];
+      const coords = (routeStart?.lat != null && routeStart?.lng != null
+          ? { lat: routeStart.lat, lng: routeStart.lng }
+          : null)
+        || await resolveHeroOriginCoords(text, null);
+      if (cancelled) return;
+      if (!coords) {
+        setExploreRangePolygon([]);
+        setExploreRangeError("Enter a valid origin to explore your range");
+        setExploreRangeLoading(false);
+        return;
+      }
+      setExploreOriginCoords({ lat: coords.lat, lng: coords.lng });
+      await loadExploreRangeIsoline(coords, exploreRangeDriveSeconds);
+    })();
+
+    return () => { cancelled = true; };
+  }, [
+    exploreRangeEnabled,
+    exploreRangeDriveSeconds,
+    origin,
+    routeInfo?.routePoints,
+    tab,
+    generated,
+    isLoaded,
+    loadExploreRangeIsoline,
+  ]);
+
+  function handleExploreRangeToggle(enabled) {
+    setExploreRangeEnabled(enabled);
+    if (!enabled) clearExploreRange();
+  }
+
+  function handleExploreRangeDriveTimeChange(seconds) {
+    setExploreRangeDriveSeconds(seconds);
+  }
+
+  async function applyExploreRangeDestination(label) {
+    const value = label?.trim();
+    if (!value) return;
+    setDest(value);
+    if (destRef.current) destRef.current.value = value;
+    setRouteError(null);
+    setExploreRangeEnabled(false);
+    clearExploreRange();
+    if (isLoaded && window.google) fetchDirections(answers.vehicle);
+  }
+
+  async function handleExploreRangeMapClick({ lat, lng }) {
+    if (!exploreRangePolygon.length || !pointInPolygon(lat, lng, exploreRangePolygon)) return;
+    const address = await reverseGeocodeLatLng(lat, lng);
+    await applyExploreRangeDestination(address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+  }
+
+  async function handleExploreRangePlaceSelect(place) {
+    if (!place) return;
+    const label = place.address ? `${place.name}, ${place.address}` : place.name;
+    await applyExploreRangeDestination(label);
   }
 
   async function launchFromHero() {
@@ -3420,7 +3426,14 @@ export default function App() {
   }
 
   if (user && !userProfileLoaded) {
-    return null;
+    return (
+      <div className={`app-wrap ${theme}`}>
+        {renderAppNavBar("app")}
+        <div className="profile-loading-shell" role="status" aria-busy="true" aria-label="Loading your profile">
+          <RouteDrawingLoader theme={theme} variant="inline" />
+        </div>
+      </div>
+    );
   }
 
   if (user && userProfileLoaded && userProfile?.onboarding_complete !== true) {
@@ -3511,7 +3524,6 @@ export default function App() {
         onHeroOriginPlaceChanged={() => {
           if (heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value);
           setHeroOriginError("");
-          captureHeroOriginCoordsFromAutocomplete();
         }}
         onHeroDestPlaceChanged={() => {
           if (heroDestRef.current) setHeroDest(heroDestRef.current.value);
@@ -3538,17 +3550,7 @@ export default function App() {
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
-        heroExploreEnabled={heroExploreEnabled}
-        heroExploreDriveSeconds={heroExploreDriveSeconds}
-        heroExploreLoading={heroExploreLoading}
-        heroExploreError={heroExploreError}
-        heroExplorePolygon={heroExplorePolygon}
-        heroExploreCenter={heroOriginCoords}
         heroTheme={theme}
-        onHeroExploreToggle={handleHeroExploreToggle}
-        onHeroExploreDriveTimeChange={handleHeroExploreDriveTimeChange}
-        onHeroExploreMapClick={handleHeroExploreMapClick}
-        onHeroExplorePlaceSelect={handleHeroExplorePlaceSelect}
       />
       {founderWelcomeName && (
         <LazyFounderWelcomeOverlay
@@ -3613,12 +3615,6 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction ? runToastAction : undefined}
       />
-      {founderWelcomeName && (
-        <LazyFounderWelcomeOverlay
-          firstName={founderWelcomeName}
-          onDismiss={() => setFounderWelcomeName(null)}
-        />
-      )}
     </>
   );
 
@@ -3814,6 +3810,20 @@ export default function App() {
           </div>
         ) : (
         <div className="app">
+          {exploreRangeEnabled && exploreOriginCoords && exploreRangePolygon.length >= 3 && tab === "plan" && !generated && (
+            <Suspense fallback={null}>
+              <div className="plan-explore-map">
+                <LazyHeroExploreMap
+                  isLoaded={isLoaded}
+                  center={exploreOriginCoords}
+                  polygon={exploreRangePolygon}
+                  theme={theme}
+                  onMapClick={handleExploreRangeMapClick}
+                  onPlaceSelect={handleExploreRangePlaceSelect}
+                />
+              </div>
+            </Suspense>
+          )}
           <ErrorBoundary
             key={mapBoundaryKey}
             label="map"
@@ -4003,6 +4013,12 @@ export default function App() {
                       onEditQuestion={jumpToQuestion}
                       onEditAssumedLodging={jumpToAssumedTruckLodging}
                       getStepMessage={getStepMessage}
+                      exploreRangeEnabled={exploreRangeEnabled}
+                      exploreRangeDriveSeconds={exploreRangeDriveSeconds}
+                      exploreRangeLoading={exploreRangeLoading}
+                      exploreRangeError={exploreRangeError}
+                      onExploreRangeToggle={handleExploreRangeToggle}
+                      onExploreRangeDriveTimeChange={handleExploreRangeDriveTimeChange}
                     />
                     </ErrorBoundary>
                   )}
@@ -4052,6 +4068,12 @@ export default function App() {
                   onSetDest={setDest}
                   onSetTimingMode={setTimingMode}
                   onSetArriveByDate={setArriveByDate}
+                  exploreRangeEnabled={exploreRangeEnabled}
+                  exploreRangeDriveSeconds={exploreRangeDriveSeconds}
+                  exploreRangeLoading={exploreRangeLoading}
+                  exploreRangeError={exploreRangeError}
+                  onExploreRangeToggle={handleExploreRangeToggle}
+                  onExploreRangeDriveTimeChange={handleExploreRangeDriveTimeChange}
                 />
               )}
             </div>

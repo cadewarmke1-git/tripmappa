@@ -25,6 +25,10 @@ function getBrandInitials(brand, type) {
 export default function FuelStopCard({ stop, type, onAdd, required }) {
   const brand = stop.brand || stop.network || stop.name;
   const initials = getBrandInitials(brand, type);
+  const dieselPrice = stop.dieselPrice || "$3.95/gal";
+  const regularPrice = stop.regularPrice || "$3.45/gal";
+  const dieselEstimated = Boolean(stop.estimated || !stop.dieselPrice);
+  const gasEstimated = Boolean(stop.estimated || !stop.regularPrice);
 
   return (
     <article className={`fuel-stop-card${required ? " fuel-stop-required" : ""}`}>
@@ -59,7 +63,10 @@ export default function FuelStopCard({ stop, type, onAdd, required }) {
       {type === "diesel" && (
         <>
           <div className="fuel-type-badge fuel-type-diesel">Diesel</div>
-          <div className="fuel-stop-price">{stop.dieselPrice || "$3.95/gal"}</div>
+          <div className="fuel-stop-price">
+            {dieselPrice}
+            {dieselEstimated && <span className="fuel-estimated-label"> Estimated</span>}
+          </div>
           {stop.hasDef && <div className="fuel-stop-meta">DEF available</div>}
         </>
       )}
@@ -68,7 +75,8 @@ export default function FuelStopCard({ stop, type, onAdd, required }) {
         <>
           <div className="fuel-type-badge fuel-type-gas">Gas</div>
           <div className="fuel-stop-price">
-            {stop.regularPrice || "$3.45/gal"}
+            {regularPrice}
+            {gasEstimated && <span className="fuel-estimated-label"> Estimated</span>}
             {stop.premiumPrice && (
               <span className="fuel-premium"> · Prem {stop.premiumPrice.replace("/gal", "")}</span>
             )}

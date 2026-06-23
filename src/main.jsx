@@ -25,6 +25,7 @@ import "./styles/hero-desktop.css";
 import "./styles/hero-palette.css";
 import "./styles/hero-surface.css";
 import "./styles/plan-flow-theme.css";
+import "./styles/preference-pills.css";
 
 function syncAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);

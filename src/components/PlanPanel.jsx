@@ -1,5 +1,6 @@
 /** Floating planner panel — question flow and ready screen (footer docked in App.jsx). */
 import { isScenicRoute } from "../lib/vehicles.js";
+import HeroExploreRange from "./HeroExploreRange.jsx";
 import QuestionChoices from "./QuestionChoices.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 import QuestionAnswerSidebar from "./QuestionAnswerSidebar.jsx";
@@ -66,6 +67,12 @@ export default function PlanPanel({
   onEditQuestion,
   onEditAssumedLodging,
   getStepMessage,
+  exploreRangeEnabled = false,
+  exploreRangeDriveSeconds = 7200,
+  exploreRangeLoading = false,
+  exploreRangeError = null,
+  onExploreRangeToggle,
+  onExploreRangeDriveTimeChange,
 }) {
   const stepMessage = getStepMessage?.() ?? "";
   const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
@@ -159,6 +166,17 @@ export default function PlanPanel({
             routeError={routeError}
             onRetryRoute={onRetryRoute}
             onEditAssumedLodging={onEditAssumedLodging}
+          />
+        )}
+
+        {inQuestionFlow && origin?.trim() && (
+          <HeroExploreRange
+            enabled={exploreRangeEnabled}
+            driveTimeSeconds={exploreRangeDriveSeconds}
+            loading={exploreRangeLoading}
+            error={exploreRangeError}
+            onToggle={onExploreRangeToggle}
+            onDriveTimeChange={onExploreRangeDriveTimeChange}
           />
         )}
 

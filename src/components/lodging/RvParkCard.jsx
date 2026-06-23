@@ -23,7 +23,10 @@ export default function RvParkCard({ park, onSave, onToast }) {
 
       <div className="lodging-card-body">
         <h3 className="lodging-card-name">{park.name}</h3>
-        <div className="lodging-card-price">{park.priceLabel}</div>
+        <div className="lodging-card-price">
+          {park.priceLabel}
+          <span className="data-estimated-label"> Estimated</span>
+        </div>
 
         <div className="lodging-detail-grid">
           <div className="lodging-detail-item">

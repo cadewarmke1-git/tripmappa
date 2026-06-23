@@ -5,7 +5,6 @@ import TripOverviewHero from "./TripOverviewHero.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import PlannedForYouSection from "./PlannedForYouSection.jsx";
-import PersonalTouchesStrip from "./PersonalTouchesStrip.jsx";
 import ResultsActionBar from "./ResultsActionBar.jsx";
 import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
@@ -169,7 +168,6 @@ export default function TripResultsPanel({
           )}
 
           <PlannedForYouSection touches={personalTouches} changesMade={changesMade} />
-          <PersonalTouchesStrip touches={personalTouches} changesMade={changesMade} />
 
           {tripUsedFallback && (
             <div className="trip-fallback-notice" role="status">

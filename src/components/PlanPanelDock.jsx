@@ -1,4 +1,5 @@
 import RouteFooter from "./RouteFooter.jsx";
+import HeroExploreRange from "./HeroExploreRange.jsx";
 
 /** Pinned bottom of plan panel — origin, destination, and timing fields. */
 export default function PlanPanelDock({
@@ -16,6 +17,12 @@ export default function PlanPanelDock({
   onSetDest,
   onSetTimingMode,
   onSetArriveByDate,
+  exploreRangeEnabled = false,
+  exploreRangeDriveSeconds = 7200,
+  exploreRangeLoading = false,
+  exploreRangeError = null,
+  onExploreRangeToggle,
+  onExploreRangeDriveTimeChange,
 }) {
   return (
     <div className="plan-panel-dock">
@@ -35,6 +42,16 @@ export default function PlanPanelDock({
         onSetTimingMode={onSetTimingMode}
         onSetArriveByDate={onSetArriveByDate}
       />
+      {origin?.trim() && (
+        <HeroExploreRange
+          enabled={exploreRangeEnabled}
+          driveTimeSeconds={exploreRangeDriveSeconds}
+          loading={exploreRangeLoading}
+          error={exploreRangeError}
+          onToggle={onExploreRangeToggle}
+          onDriveTimeChange={onExploreRangeDriveTimeChange}
+        />
+      )}
     </div>
   );
 }

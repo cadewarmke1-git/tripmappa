@@ -1,7 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo } from "react";
-import HeroExploreRange from "./HeroExploreRange.jsx";
-
-const HeroExploreMap = lazy(() => import("./HeroExploreMap.jsx"));
+import { useEffect, useMemo } from "react";
 import { lockHeroSurfaceTheme, syncSkyCycle, unlockHeroSurfaceTheme } from "../lib/surfaceTheme.js";
 import { Autocomplete } from "@react-google-maps/api";
 import HeroMountainScene from "./HeroMountainScene.jsx";
@@ -51,17 +48,7 @@ export default function HeroView({
   planDraft = null,
   onResumeDraft,
   onDismissDraft,
-  heroExploreEnabled = false,
-  heroExploreDriveSeconds = 7200,
-  heroExploreLoading = false,
-  heroExploreError = null,
-  heroExplorePolygon = [],
-  heroExploreCenter = null,
   heroTheme: heroThemeProp,
-  onHeroExploreToggle,
-  onHeroExploreDriveTimeChange,
-  onHeroExploreMapClick,
-  onHeroExplorePlaceSelect,
 }) {
   const {
     skyHour,
@@ -125,18 +112,6 @@ export default function HeroView({
         style={heroSurfaceStyle}
       >
         <HeroMountainScene phase={skyPhase} hour={skyHour} />
-        {heroExploreEnabled && heroExploreCenter && heroExplorePolygon.length >= 3 && (
-          <Suspense fallback={null}>
-            <HeroExploreMap
-              isLoaded={isLoaded}
-              center={heroExploreCenter}
-              polygon={heroExplorePolygon}
-              theme={heroTheme}
-              onMapClick={onHeroExploreMapClick}
-              onPlaceSelect={onHeroExplorePlaceSelect}
-            />
-          </Suspense>
-        )}
         <div className="hero-overlay" />
         <div className="hero-palette-vignette" aria-hidden="true" />
         <div className="hero-palette-ridge" aria-hidden="true" />
@@ -220,14 +195,6 @@ export default function HeroView({
               </div>
               </div>
               <HeroFoundingSlots />
-              <HeroExploreRange
-                enabled={heroExploreEnabled}
-                driveTimeSeconds={heroExploreDriveSeconds}
-                loading={heroExploreLoading}
-                error={heroExploreError}
-                onToggle={onHeroExploreToggle}
-                onDriveTimeChange={onHeroExploreDriveTimeChange}
-              />
             </div>
             <button
               type="button"

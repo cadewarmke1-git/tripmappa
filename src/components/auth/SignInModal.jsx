@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDialogA11y } from "../../hooks/useDialogA11y.js";
-import AuthSocialButtons from "./AuthSocialButtons.jsx";
+import AuthSocialButtons, { SOCIAL_AUTH_UI_ENABLED } from "./AuthSocialButtons.jsx";
 import ModalCloseButton from "../ModalCloseButton.jsx";
 import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
 import BrandWordmark from "../BrandWordmark.jsx";
@@ -79,8 +79,12 @@ export default function SignInModal({
           </p>
         </form>
 
-        <div className="auth-modal-divider"><span>or sign in with</span></div>
-        <AuthSocialButtons onGoogle={onGoogle} onFacebook={onFacebook} onApple={onApple} compact disabled={loading}/>
+        {SOCIAL_AUTH_UI_ENABLED && (
+          <>
+            <div className="auth-modal-divider"><span>or sign in with</span></div>
+            <AuthSocialButtons onGoogle={onGoogle} onFacebook={onFacebook} onApple={onApple} compact disabled={loading}/>
+          </>
+        )}
         <p className="auth-modal-footer">
           New here?{" "}
           <button type="button" className="auth-modal-link-btn" onClick={onSwitchToSignup} disabled={loading}>Create an account</button>

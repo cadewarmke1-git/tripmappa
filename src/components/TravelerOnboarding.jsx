@@ -5,7 +5,6 @@ import {
 } from "../lib/travelerPreferenceOptions.js";
 import PreferencePillGrid, { PreferencePillGroups, togglePreferenceValue } from "./PreferencePillGrid.jsx";
 import "../styles/traveler-onboarding.css";
-import "../styles/preference-pills.css";
 
 const WORDMARK = "TripMappa";
 const WORDMARK_LETTER_STAGGER_MS = 62.5;

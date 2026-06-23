@@ -54,6 +54,14 @@
     <div id="root"></div>
     <script>
       (function () {
+        window.addEventListener("vite:preloadError", function (event) {
+          var err = event.payload;
+          var msg = err && err.message ? err.message : String(err || "");
+          if (msg.indexOf("Unable to preload CSS for") === 0) {
+            event.preventDefault();
+          }
+        });
+
         window.addEventListener("error", function (event) {
           var target = event.target;
           if (!target || target.tagName !== "SCRIPT" || !target.src) return;

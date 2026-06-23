@@ -12,7 +12,6 @@ import { SCHEDULE_RESTRICTION_CHOICES } from "../lib/scheduleRestrictions.js";
 import { fetchPlanPreferences, savePlanPreferences } from "../lib/planPreferencesApi.js";
 import { TRAVELER_COUNT_CHOICES, formatTravelersLabel } from "../lib/vehicles.js";
 import PreferencePillGrid, { PreferencePillGroups, togglePreferenceValue } from "./PreferencePillGrid.jsx";
-import "../styles/preference-pills.css";
 
 const VEHICLE_CHOICES = [
   "Car",

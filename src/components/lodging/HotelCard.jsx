@@ -4,6 +4,9 @@ import PlaceRatingLine from "../results/PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
 import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
 
+/** Booking.com deep links — hidden until affiliate API is live. */
+const HOTEL_BOOKING_UI_ENABLED = false;
+
 const BADGE_LABELS = {
   premium: "Premium Pick",
   bestValue: "Best Value",
@@ -23,10 +26,11 @@ export default function HotelCard({ hotel, onSave, onToast }) {
     window.open(hotel.bookUrl, "_blank", "noopener,noreferrer");
   }
 
-  const bookLabel = hotel.fromGooglePlaces ? "View listing" : "View listing";
+  const bookLabel = "View listing";
   const bookTitle = hotel.fromGooglePlaces
     ? "Opens Google Maps or hotel website"
     : "Live booking links require Booking.com API (coming soon)";
+  const showBookAction = Boolean(hotel.bookUrl) && (hotel.fromGooglePlaces || HOTEL_BOOKING_UI_ENABLED);
 
   function handleSave() {
     onSave?.(hotel);
@@ -62,7 +66,12 @@ export default function HotelCard({ hotel, onSave, onToast }) {
           <div className="lodging-card-stats">
             <PlaceRatingLine rating={hotel.rating} className="lodging-card-inline-rating" emptyClassName="lodging-no-reviews" />
             {hotel.verified === true && <TripMappaVerifiedBadge />}
-            <div className="lodging-card-price">{hotel.priceLabel}</div>
+            <div className="lodging-card-price">
+              {hotel.priceLabel}
+              {(hotel.priceIsEstimated || !hotel.fromGooglePlaces) && (
+                <span className="data-estimated-label"> Estimated</span>
+              )}
+            </div>
           </div>
           {hotel.amenities?.length > 0 && (
             <div className="lodging-card-amenities-wrap">
@@ -81,7 +90,7 @@ export default function HotelCard({ hotel, onSave, onToast }) {
         </div>
 
         <div className="lodging-card-actions lodging-card-actions-anchor">
-          {hotel.bookUrl && (
+          {showBookAction && (
             <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook} title={bookTitle}>
               {bookLabel}
             </button>

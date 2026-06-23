@@ -39,7 +39,10 @@ export default function TruckStopCard({ stop, onSave, onToast }) {
           </div>
           <div className="lodging-detail-item">
             <span className="lodging-detail-label">Diesel</span>
-            <span className="lodging-detail-value lodging-card-price-inline">{stop.dieselPrice}</span>
+            <span className="lodging-detail-value lodging-card-price-inline">
+              {stop.dieselPrice}
+              <span className="data-estimated-label"> Estimated</span>
+            </span>
           </div>
         </div>
 

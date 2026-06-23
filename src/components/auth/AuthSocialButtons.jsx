@@ -1,4 +1,9 @@
+/** OAuth social sign-in buttons — hidden until Supabase OAuth is fully wired. */
+export const SOCIAL_AUTH_UI_ENABLED = false;
+
 export default function AuthSocialButtons({ onGoogle, onFacebook, onApple, compact = false, disabled = false }) {
+  if (!SOCIAL_AUTH_UI_ENABLED) return null;
+
   return (
     <div className={`auth-social-btns${compact ? " auth-social-btns-compact" : ""}`}>
       <div className="auth-social-btns-row">
