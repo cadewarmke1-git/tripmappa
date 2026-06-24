@@ -4,6 +4,12 @@ import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
 import { parseRating } from "../../lib/ratings.js";
 
+function prefersPhotoFallback(category, source) {
+  if (source === "osm") return true;
+  const cat = String(category || "").toLowerCase();
+  return !/fuel|gas|charg|truck|rest_area|diesel|ev/.test(cat);
+}
+
 export default function RoadStopCard({
   stop,
   onAdd,
@@ -53,6 +59,7 @@ export default function RoadStopCard({
           imgClassName="road-stop-card-photo"
           className="road-stop-card-photo-fallback"
           displayPx={64}
+          preferFallback={prefersPhotoFallback(stop.category, stop.source)}
         />
         {stop.verified === true && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
         {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}

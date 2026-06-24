@@ -1,16 +1,29 @@
-/** Build road stop suggestions from Google Places and OSM along the route polyline. */
+/** Build road stop suggestions from OSM corridor data with Google gap-fill and display enrichment. */
 import {
   sampleRoutePointsEveryMiles,
   getFuelStopMode,
   getPreferredFuelBrand,
   matchesPreferredFuelBrand,
 } from "./fuel.js";
-import { searchNearbyCategory, getPlaceDetails } from "./placesSearch.js";
-import { searchGasStations } from "./placesStations.js";
+import { fetchPlacesNearbyCached } from "./placesCorridorClient.js";
 import { parseMilesFromDistance } from "./parsing.js";
 import { isTruckerTrip } from "./vehicles.js";
 import { fetchRestStopsForBbox } from "./restStopsClient.js";
 import { dedupePlaces, placeDedupKey } from "./placesDedup.js";
+import { ensureNamedEnrichedPlace } from "./osmPlaceEnrichment.js";
+import {
+  DENSE_SAMPLE_INTERVAL_MI,
+  hasOsmPoisNear,
+  missingTruckBrandsInSegment,
+  osmPlaceToCandidate,
+  placesNearPoint,
+  truckStopsFromOsm,
+} from "./osmCorridorPlaces.js";
+
+const DISCOVERY_OSM_CATEGORIES = {
+  cafe: ["restaurant"],
+  bakery: ["restaurant"],
+};
 
 const GENERAL_SEARCHES = [
   { type: "restaurant", keyword: "restaurant", category: "food" },
@@ -25,16 +38,85 @@ const CONTINUOUS_DRIVE_SEARCHES = [
   { fuel: true, category: "fuel" },
 ];
 
-const HYBRID_PLACES_SEARCHES = [
-  { keyword: "truck stop", category: "truck_stop" },
-  { keyword: "travel plaza", category: "rest" },
-  { keyword: "Love's Travel Stop OR Pilot Flying J OR Flying J OR TA Truck Stop OR Petro", category: "truck_stop" },
-  { type: "gas_station", keyword: "gas station", category: "fuel" },
-];
-
 const SEGMENT_MILES = 30;
 const OSM_DEDUPE_MILES = 0.5;
 const PLACES_ROUTE_MILES = 1;
+const SAMPLE_INTERVAL_MI = DENSE_SAMPLE_INTERVAL_MI;
+const CONTINUOUS_SAMPLE_INTERVAL_MI = 35;
+const CONTEXT_MATCH_MILES = 2;
+
+function findCorridorSegmentForPoint(placesContext, lat, lng) {
+  const corridor = placesContext?.corridor;
+  if (!corridor?.length || lat == null || lng == null) return null;
+  let best = null;
+  let bestDist = CONTEXT_MATCH_MILES;
+  for (const seg of corridor) {
+    if (seg.lat == null || seg.lng == null) continue;
+    const d = haversineMiles(lat, lng, seg.lat, seg.lng);
+    if (d < bestDist) {
+      bestDist = d;
+      best = seg;
+    }
+  }
+  return best;
+}
+
+function compactPlaceToCandidate(compact, category) {
+  if (!compact || compact.lat == null) return null;
+  return {
+    placeId: compact.placeId,
+    osmId: compact.osmId,
+    name: compact.name,
+    address: compact.address,
+    rating: compact.rating,
+    lat: compact.lat,
+    lng: compact.lng,
+    distanceMiles: compact.distanceMi ?? compact.distanceMiles,
+    category,
+    source: compact.source || (compact.placeId ? "google" : "osm"),
+    brandId: compact.brandId,
+  };
+}
+
+function fuelCandidatesFromSegment(segment, answers) {
+  if (!segment) return [];
+  const brand = getPreferredFuelBrand(answers);
+  const gas = (segment.gasStations || []).map(g => compactPlaceToCandidate(g, "fuel")).filter(Boolean);
+  const ev = (segment.evStations || []).map(e => compactPlaceToCandidate(e, "fuel")).filter(Boolean);
+  let combined = [...gas, ...ev];
+  if (brand) {
+    const named = combined.filter(g => g.name && matchesPreferredFuelBrand(g.name, brand));
+    if (named.length) combined = named;
+  }
+  return combined.filter(p => (p.distanceMiles ?? 99) <= PLACES_ROUTE_MILES);
+}
+
+function foodCandidatesFromSegment(segment) {
+  if (!segment) return [];
+  return (segment.restaurants || [])
+    .map(r => compactPlaceToCandidate(r, "food"))
+    .filter(p => p && (p.distanceMiles ?? 99) <= PLACES_ROUTE_MILES);
+}
+
+function truckCandidatesFromOsm(osmPlaces, lat, lng) {
+  if (!osmPlaces?.length) return [];
+  return truckStopsFromOsm(osmPlaces, lat, lng, PLACES_ROUTE_MILES)
+    .filter(p => (p.distanceMiles ?? 99) <= PLACES_ROUTE_MILES);
+}
+
+function allContextCandidatesFromSegment(segment, osmPlaces, lat, lng) {
+  const out = [
+    ...fuelCandidatesFromSegment(segment, {}),
+    ...foodCandidatesFromSegment(segment),
+    ...truckCandidatesFromOsm(osmPlaces, lat, lng),
+  ];
+  if (!segment) return out;
+  for (const p of segment.playgrounds || []) {
+    const c = compactPlaceToCandidate(p, "discovery");
+    if (c && (c.distanceMiles ?? 99) <= PLACES_ROUTE_MILES) out.push(c);
+  }
+  return out;
+}
 
 function haversineMiles(lat1, lng1, lat2, lng2) {
   const R = 3958.8;
@@ -49,24 +131,83 @@ function useHybridRestEnrichment(answers, continuousDrive) {
   return continuousDrive || isTruckerTrip(answers);
 }
 
-async function pickUniquePhoto(placeId, usedPhotoUrls) {
-  if (!placeId) return null;
-  const details = await getPlaceDetails(placeId);
-  const photos = details?.photos || [];
-  for (const photo of photos) {
-    const url = photo.getUrl?.({ maxWidth: 480 });
-    if (url && !usedPhotoUrls.has(url)) {
-      usedPhotoUrls.add(url);
-      return url;
-    }
+function photoUrlFromPlace(place) {
+  if (place.photoUrl) return place.photoUrl;
+  const ref = place.photoReference;
+  const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+  if (ref && key) {
+    return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=480&photo_reference=${encodeURIComponent(ref)}&key=${key}`;
   }
   return null;
 }
 
+async function pickUniquePhoto(place, usedPhotoUrls, cachedDetails = null) {
+  const fromNearby = photoUrlFromPlace(place);
+  if (fromNearby && !usedPhotoUrls.has(fromNearby)) {
+    usedPhotoUrls.add(fromNearby);
+    return fromNearby;
+  }
+
+  const photoReference = cachedDetails?.photoReference || place.photoReference;
+  if (photoReference) {
+    const fromDetails = photoUrlFromPlace({ photoReference });
+    if (fromDetails && !usedPhotoUrls.has(fromDetails)) {
+      usedPhotoUrls.add(fromDetails);
+      return fromDetails;
+    }
+  }
+
+  return null;
+}
+
+async function enrichStopsForDisplay(stops) {
+  const usedPhotoUrls = new Set();
+  const enriched = [];
+
+  for (const stop of stops) {
+    const place = {
+      placeId: stop.placeId,
+      osmId: stop.id?.startsWith?.("osm-") ? stop.id : null,
+      name: stop.name,
+      address: stop.location,
+      rating: stop.rating,
+      lat: stop.lat,
+      lng: stop.lng,
+      distanceMiles: stop.distanceMiles,
+      category: stop.category,
+      source: stop.source,
+      photoUrl: stop.photoUrl,
+      photoReference: stop.photoReference,
+    };
+
+    const verified = await ensureNamedEnrichedPlace(place, stop.category);
+    if (!verified) continue;
+
+    const photoUrl = await pickUniquePhoto(
+      { placeId: verified.placeId, photoUrl: verified.photoUrl, photoReference: verified.photoReference },
+      usedPhotoUrls,
+      verified,
+    );
+
+    enriched.push({
+      ...stop,
+      id: verified.placeId || stop.id,
+      placeId: verified.placeId,
+      name: verified.name,
+      rating: verified.rating,
+      note: verified.rating ? `${verified.rating} / 5` : "",
+      photoUrl: photoUrl || verified.photoUrl || null,
+      source: "google",
+    });
+  }
+
+  return enriched;
+}
+
 function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
   return {
-    id: place.placeId || place.id,
-    placeId: place.placeId || place.place_id || place.id,
+    id: place.placeId || place.osmId || place.id,
+    placeId: place.placeId || place.place_id || null,
     location: place.address?.split(",")[0]?.trim() || "Along route",
     distance: distanceLabel,
     eta: "—",
@@ -79,16 +220,10 @@ function roadStopFromPlace(place, category, distanceLabel, photoUrl) {
     rating: place.rating,
     distanceMiles: place.distanceMiles,
     detourMiles: place.isDetour ? place.detourMiles : undefined,
-    source: "places",
+    source: place.source || "places",
     userAdded: false,
   };
 }
-
-const OSM_TYPE_LABELS = {
-  rest_area: "Highway Rest Area",
-  truck_stop: "Truck Stop",
-  services: "Services Area",
-};
 
 function roadStopFromOsm(osm, distanceLabel, distanceMiles) {
   const amenities = Array.isArray(osm.amenities) ? osm.amenities : [];
@@ -97,11 +232,11 @@ function roadStopFromOsm(osm, distanceLabel, distanceMiles) {
     location: "Along route",
     distance: distanceLabel,
     eta: "—",
-    category: osm.type || "rest_area",
-    name: osm.name || OSM_TYPE_LABELS[osm.type] || "Highway Rest Area",
+    category: osm.type || osm.category || "rest_area",
+    name: osm.name || null,
     note: amenities.length ? amenities.join(", ") : "",
     lat: osm.lat,
-    lng: osm.lon,
+    lng: osm.lon ?? osm.lng,
     photoUrl: null,
     rating: null,
     distanceMiles,
@@ -185,32 +320,77 @@ function countPlacesInSegment(places, segment, routePoints) {
 }
 
 function isNearAnyPlace(osm, places, thresholdMiles = OSM_DEDUPE_MILES) {
-  if (osm.lat == null || osm.lon == null) return false;
+  const osmLat = osm.lat;
+  const osmLng = osm.lon ?? osm.lng;
+  if (osmLat == null || osmLng == null) return false;
   return places.some(p => {
     if (p.lat == null || p.lng == null) return false;
-    return haversineMiles(osm.lat, osm.lon, p.lat, p.lng) <= thresholdMiles;
+    return haversineMiles(osmLat, osmLng, p.lat, p.lng) <= thresholdMiles;
   });
 }
 
-async function searchHybridPlacesAtSample(pt) {
+async function corridorNearbyAt(lat, lng, opts) {
+  const { places } = await fetchPlacesNearbyCached({ lat, lng, ...opts });
+  return places || [];
+}
+
+async function googleBrandGapFill(pt, osmPlaces) {
+  const missing = missingTruckBrandsInSegment(osmPlaces, pt.lat, pt.lng, 5);
+  if (!missing.length) return [];
+
+  const merged = [];
+  for (const brand of missing.slice(0, 2)) {
+    const list = await corridorNearbyAt(pt.lat, pt.lng, {
+      keyword: brand.googleKeyword,
+      radius: 1609,
+      maxResults: 4,
+    });
+    list.forEach((place) => {
+      merged.push({ ...place, category: "truck_stop", brandId: brand.id, source: "google" });
+    });
+  }
+  return merged;
+}
+
+async function searchHybridPlacesAtSample(pt, placesContext) {
+  const osmPlaces = placesContext?.osmPlaces || [];
+  const segment = findCorridorSegmentForPoint(placesContext, pt.lat, pt.lng);
+  const fromContext = allContextCandidatesFromSegment(segment, osmPlaces, pt.lat, pt.lng);
+
   const merged = new Map();
-  await Promise.all(HYBRID_PLACES_SEARCHES.map(async (search) => {
-    const list = await searchNearbyCategory(pt.lat, pt.lng, {
-      type: search.type,
-      keyword: search.keyword,
+  fromContext.forEach((place) => {
+    const key = placeDedupKey(place) || place.osmId || `${place.name}:${place.lat}`;
+    if (key) merged.set(key, place);
+  });
+
+  if (fromContext.length < 2) {
+    const gapBrands = await googleBrandGapFill(pt, osmPlaces);
+    gapBrands.forEach((place) => {
+      const key = placeDedupKey(place);
+      if (!key || merged.has(key)) return;
+      merged.set(key, place);
+    });
+  }
+
+  if (merged.size < 2 && fromContext.length === 0) {
+    const list = await corridorNearbyAt(pt.lat, pt.lng, {
+      keyword: "truck stop travel plaza gas station",
       radius: 1609,
       maxResults: 8,
     });
     list.forEach((place) => {
       const key = placeDedupKey(place);
       if (!key || merged.has(key)) return;
-      merged.set(key, { ...place, category: search.category });
+      merged.set(key, { ...place, category: "truck_stop" });
     });
-  }));
+  }
+
   return [...merged.values()];
 }
 
-async function searchAtSample(pt, sampleIndex, answers, fuelMode, continuousDrive) {
+async function searchAtSample(pt, sampleIndex, answers, fuelMode, continuousDrive, placesContext) {
+  const osmPlaces = placesContext?.osmPlaces || [];
+  const segment = findCorridorSegmentForPoint(placesContext, pt.lat, pt.lng);
   const searches = continuousDrive
     ? [...CONTINUOUS_DRIVE_SEARCHES]
     : [...GENERAL_SEARCHES];
@@ -220,7 +400,25 @@ async function searchAtSample(pt, sampleIndex, answers, fuelMode, continuousDriv
   const pick = searches[sampleIndex % searches.length];
 
   if (pick.fuel) {
-    const gasList = await searchGasStations(pt.lat, pt.lng, 8, 1609);
+    const fromContext = fuelCandidatesFromSegment(segment, answers);
+    if (fromContext.length) return fromContext;
+
+    const osmFuel = placesNearPoint(osmPlaces, pt.lat, pt.lng, PLACES_ROUTE_MILES, ["fuel", "truck_stop"])
+      .map(p => osmPlaceToCandidate(p, "fuel", pt.lat, pt.lng));
+    if (osmFuel.length) {
+      const brand = getPreferredFuelBrand(answers);
+      if (brand) {
+        const named = osmFuel.filter(g => g.name && matchesPreferredFuelBrand(g.name, brand));
+        if (named.length) return named;
+      }
+      return osmFuel;
+    }
+
+    const gasList = await corridorNearbyAt(pt.lat, pt.lng, {
+      type: "gas_station",
+      radius: 1609,
+      maxResults: 8,
+    });
     const brand = getPreferredFuelBrand(answers);
     const filtered = brand
       ? gasList.filter(g => matchesPreferredFuelBrand(g.name, brand))
@@ -228,34 +426,50 @@ async function searchAtSample(pt, sampleIndex, answers, fuelMode, continuousDriv
     return filtered.map(g => ({ ...g, category: "fuel" }));
   }
 
-  return searchNearbyCategory(pt.lat, pt.lng, {
+  if (pick.category === "food") {
+    const fromContext = foodCandidatesFromSegment(segment);
+    if (fromContext.length) return fromContext;
+
+    const osmFood = placesNearPoint(osmPlaces, pt.lat, pt.lng, PLACES_ROUTE_MILES, ["restaurant"])
+      .map(p => osmPlaceToCandidate(p, "food", pt.lat, pt.lng));
+    if (osmFood.length) return osmFood;
+  }
+
+  const osmDiscoveryCats = DISCOVERY_OSM_CATEGORIES[pick.type];
+  if (osmDiscoveryCats && hasOsmPoisNear(osmPlaces, pt.lat, pt.lng, PLACES_ROUTE_MILES, osmDiscoveryCats)) {
+    const osmDiscovery = placesNearPoint(osmPlaces, pt.lat, pt.lng, PLACES_ROUTE_MILES, osmDiscoveryCats)
+      .map(p => osmPlaceToCandidate(p, pick.category, pt.lat, pt.lng));
+    if (osmDiscovery.length) return osmDiscovery;
+  }
+
+  const list = await corridorNearbyAt(pt.lat, pt.lng, {
     type: pick.type,
     keyword: pick.keyword,
     radius: 1609,
     maxResults: 8,
-  }).then(list => list.map(p => ({ ...p, category: pick.category })));
+  });
+  return list.map(p => ({ ...p, category: pick.category }));
 }
 
 async function buildHybridRoadStops(answers, routeInfo, options) {
-  const { continuousDrive, totalMiles, maxStops, fuelMode } = options;
+  const { continuousDrive, totalMiles, maxStops, fuelMode, placesContext } = options;
   const routePoints = routeInfo.routePoints;
-  const sampleInterval = continuousDrive ? 20 : 30;
+  const sampleInterval = continuousDrive ? CONTINUOUS_SAMPLE_INTERVAL_MI : SAMPLE_INTERVAL_MI;
   const samples = sampleRoutePointsEveryMiles(routePoints, sampleInterval);
   const placesCollected = [];
   const seenKeys = new Set();
-  const usedPhotoUrls = new Set();
   const stops = [];
 
   for (let i = 0; i < samples.length; i++) {
     const pt = samples[i];
     if (!pt?.lat) continue;
 
-    const hybridCandidates = await searchHybridPlacesAtSample(pt);
-    const fuelCandidates = await searchAtSample(pt, i, answers, fuelMode, continuousDrive);
+    const hybridCandidates = await searchHybridPlacesAtSample(pt, placesContext);
+    const fuelCandidates = await searchAtSample(pt, i, answers, fuelMode, continuousDrive, placesContext);
     const candidates = [...hybridCandidates, ...fuelCandidates];
 
     for (const place of candidates) {
-      const key = placeDedupKey(place);
+      const key = placeDedupKey(place) || (place.osmId ? `osm:${place.osmId}` : null);
       if (!key || seenKeys.has(key)) continue;
       if ((place.distanceMiles ?? 99) > PLACES_ROUTE_MILES) continue;
       seenKeys.add(key);
@@ -283,8 +497,7 @@ async function buildHybridRoadStops(answers, routeInfo, options) {
   for (const place of placesCollected) {
     const { fraction, distanceMiles } = closestRouteFraction(place.lat, place.lng, routePoints);
     const mileLabel = mileLabelForFraction(fraction, totalMiles);
-    const photoUrl = await pickUniquePhoto(place.placeId || place.id, usedPhotoUrls);
-    stops.push(roadStopFromPlace(place, place.category || "fuel", mileLabel, photoUrl));
+    stops.push(roadStopFromPlace(place, place.category || "fuel", mileLabel, null));
     if (place.distanceMiles == null) {
       stops[stops.length - 1].distanceMiles = distanceMiles;
     }
@@ -296,15 +509,16 @@ async function buildHybridRoadStops(answers, routeInfo, options) {
     stops.push(roadStopFromOsm(osm, mileLabel, distanceMiles));
   }
 
-  return dedupePlaces(stops).slice(0, maxStops);
+  const finalStops = dedupePlaces(stops).slice(0, maxStops);
+  return enrichStopsForDisplay(finalStops);
 }
 
-export async function buildRoadStopsFromRoute(answers, routeInfo) {
-  if (!routeInfo?.routePoints?.length || !window.google?.maps?.places) return [];
+export async function buildRoadStopsFromRoute(answers, routeInfo, placesContext = null) {
+  if (!routeInfo?.routePoints?.length) return [];
 
   const continuousDrive = answers?.continuous_drive === true
     || answers?.overnight_preference === "Drive straight through";
-  const sampleInterval = continuousDrive ? 20 : 30;
+  const sampleInterval = continuousDrive ? CONTINUOUS_SAMPLE_INTERVAL_MI : SAMPLE_INTERVAL_MI;
   const maxStops = continuousDrive ? 16 : 12;
   const totalMiles = parseMilesFromDistance(routeInfo?.distance) || 0;
   const fuelMode = getFuelStopMode(answers);
@@ -315,13 +529,13 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
       totalMiles,
       maxStops,
       fuelMode,
+      placesContext,
     });
   }
 
   const samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, sampleInterval);
   const stops = [];
   const seenKeys = new Set();
-  const usedPhotoUrls = new Set();
 
   for (let i = 0; i < samples.length; i++) {
     const pt = samples[i];
@@ -331,19 +545,19 @@ export async function buildRoadStopsFromRoute(answers, routeInfo) {
       ? `${Math.round((i / Math.max(1, samples.length - 1)) * totalMiles)} mi`
       : "—";
 
-    const candidates = await searchAtSample(pt, i, answers, fuelMode, continuousDrive);
+    const candidates = await searchAtSample(pt, i, answers, fuelMode, continuousDrive, placesContext);
     const place = candidates.find(p => {
-      const key = placeDedupKey(p);
+      const key = placeDedupKey(p) || (p.osmId ? `osm:${p.osmId}` : null);
       if (!key || seenKeys.has(key)) return false;
       return (p.distanceMiles ?? 99) <= PLACES_ROUTE_MILES;
     });
     if (!place) continue;
 
-    const key = placeDedupKey(place);
+    const key = placeDedupKey(place) || (place.osmId ? `osm:${place.osmId}` : null);
     if (key) seenKeys.add(key);
-    const photoUrl = await pickUniquePhoto(place.placeId || place.id, usedPhotoUrls);
-    stops.push(roadStopFromPlace(place, place.category || "discovery", mileLabel, photoUrl));
+    stops.push(roadStopFromPlace(place, place.category || "discovery", mileLabel, null));
   }
 
-  return dedupePlaces(stops).slice(0, maxStops);
+  const finalStops = dedupePlaces(stops).slice(0, maxStops);
+  return enrichStopsForDisplay(finalStops);
 }

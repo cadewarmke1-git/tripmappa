@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "address_components": [
+        { "long_name": "Dallas", "short_name": "Dallas", "types": ["locality", "political"] },
+        { "long_name": "Texas", "short_name": "TX", "types": ["administrative_area_level_1", "political"] },
+        { "long_name": "United States", "short_name": "US", "types": ["country", "political"] }
+      ],
+      "formatted_address": "Dallas, TX, USA",
+      "geometry": {
+        "location": { "lat": 32.7766642, "lng": -96.7969879 },
+        "location_type": "APPROXIMATE",
+        "viewport": {
+          "northeast": { "lat": 33.0237921, "lng": -96.4637101 },
+          "southwest": { "lat": 32.617537, "lng": -97.0647159 }
+        }
+      },
+      "place_id": "mock-geocode-dallas",
+      "types": ["locality", "political"]
+    }
+  ],
+  "status": "OK"
+}

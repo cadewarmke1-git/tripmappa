@@ -1,34 +1,14 @@
-/** NREL API — enrich Google-found EV/propane stations with charger details only. */
+/** NREL primary EV/LPG discovery with optional Google-station enrichment. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { isPlausibleEvChargingStation } from "../../src/lib/roadStopCategory.js";
-
-const NREL_BASE = "https://developer.nrel.gov/api/alt-fuel-stations/v1/nearest.json";
-
-function parseChargerTypes(station) {
-  const types = new Set();
-  const evL2 = station.ev_level2_evse_num > 0 ? "Level 2" : null;
-  const evDc = station.ev_dc_fast_num > 0 ? "DC Fast Charge" : null;
-  [evL2, evDc].filter(Boolean).forEach(t => types.add(t));
-  if (station.ev_connector_types) {
-    String(station.ev_connector_types).split(",").forEach(c => {
-      const t = c.trim();
-      if (/CHADEMO|CCS|J1772COMBO|NEMA/i.test(t)) types.add("DC Fast Charge");
-      else if (/J1772/i.test(t)) types.add("Level 2");
-    });
-  }
-  if (!types.size) types.add("Level 2");
-  return [...types];
-}
-
-function parseNetwork(station) {
-  if (station.ev_network) return station.ev_network;
-  const name = (station.station_name || "").toLowerCase();
-  if (name.includes("tesla")) return "Tesla";
-  if (name.includes("chargepoint")) return "ChargePoint";
-  if (name.includes("electrify")) return "Electrify America";
-  if (name.includes("evgo")) return "EVgo";
-  return "Other";
-}
+import {
+  fetchNrelNearest,
+  filterTeslaStations,
+  haversineMiles,
+  mapNrelStationToCard,
+  parseChargerTypes,
+  parseNetwork,
+} from "../lib/nrelEv.js";
 
 function countPorts(station) {
   return (station.ev_level1_evse_num || 0)
@@ -41,35 +21,6 @@ function estimateChargeTime(chargerTypes) {
   if (chargerTypes.includes("DC Fast Charge")) return "~30 min";
   if (chargerTypes.includes("Level 2")) return "~4 hrs";
   return "~6 hrs";
-}
-
-function haversineMiles(lat1, lng1, lat2, lng2) {
-  const R = 3958.8;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-async function fetchNrelNearest(lat, lng, fuelType) {
-  const apiKey = process.env.NREL_API_KEY;
-  if (!apiKey) return [];
-
-  const params = new URLSearchParams({
-    api_key: apiKey,
-    latitude: String(lat),
-    longitude: String(lng),
-    radius: "1",
-    fuel_type: fuelType,
-    status: "E",
-    limit: "5",
-  });
-
-  const response = await fetch(`${NREL_BASE}?${params}`);
-  const data = await response.json();
-  if (!response.ok) return [];
-  return data.fuel_stations || [];
 }
 
 function matchNrelStation(googleStation, nrelStations) {
@@ -87,15 +38,16 @@ function matchNrelStation(googleStation, nrelStations) {
   return bestDist <= 1.5 ? best : null;
 }
 
-function enrichStation(googleStation, nrelMatch, fuelType) {
+function enrichGoogleStation(googleStation, nrelMatch, fuelType) {
   const base = {
     id: googleStation.id || googleStation.placeId,
-    placeId: googleStation.placeId,
+    placeId: googleStation.placeId || null,
     name: googleStation.name,
     address: googleStation.address,
     lat: googleStation.lat,
     lng: googleStation.lng,
     distanceMiles: googleStation.distanceMiles,
+    source: "google",
     estimated: !nrelMatch,
   };
 
@@ -137,20 +89,56 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (guardProxyRoute(req, res)) return undefined;
 
-  const { stations = [], fuelType = "ELEC", teslaOnly = false } = req.body;
+  const {
+    discover = false,
+    lat,
+    lng,
+    radius = 5,
+    stations = [],
+    fuelType = "ELEC",
+    teslaOnly = false,
+  } = req.body || {};
+
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+
+  if (discover) {
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+      return res.status(400).json({ error: "lat and lng are required for discovery" });
+    }
+    if (!process.env.NREL_API_KEY) {
+      return res.status(200).json({ stations: [], source: "nrel", fallback: true, error: "NREL_API_KEY not configured" });
+    }
+    try {
+      let nrelRaw = await fetchNrelNearest(latNum, lngNum, fuelType, radius, 12);
+      if (teslaOnly && fuelType === "ELEC") {
+        nrelRaw = nrelRaw.filter(s => /tesla/i.test(`${s.ev_network || ""} ${s.station_name || ""}`));
+      }
+      let mapped = nrelRaw.map(s => mapNrelStationToCard(s, latNum, lngNum, fuelType));
+      if (fuelType === "ELEC") {
+        mapped = mapped.filter(s => isPlausibleEvChargingStation(s));
+      }
+      return res.status(200).json({ stations: mapped, source: "nrel", fallback: false });
+    } catch (err) {
+      console.error("NREL discover error:", err);
+      return res.status(200).json({ stations: [], source: "nrel", fallback: true, error: "Failed to discover charging stations" });
+    }
+  }
+
   if (!Array.isArray(stations) || !stations.length || stations.length > 30) {
-    return res.status(400).json({ error: "Missing stations array from Google Places" });
+    return res.status(400).json({ error: "Missing stations array" });
   }
 
   const apiKey = process.env.NREL_API_KEY;
   if (!apiKey) {
     const fallbackStations = stations
-      .map(s => enrichStation(s, null, fuelType))
+      .map(s => enrichGoogleStation(s, null, fuelType))
       .filter(s => fuelType === "LPG" || isPlausibleEvChargingStation(s));
     return res.status(200).json({
       stations: teslaOnly
-        ? fallbackStations.filter(s => /tesla/i.test(s.network || s.name || ""))
+        ? filterTeslaStations(fallbackStations)
         : fallbackStations,
+      source: "google",
       fallback: true,
       error: "NREL_API_KEY not configured",
     });
@@ -159,23 +147,22 @@ export default async function handler(req, res) {
   try {
     const enriched = await Promise.all(stations.map(async (googleStation) => {
       if (googleStation.lat == null || googleStation.lng == null) {
-        return enrichStation(googleStation, null, fuelType);
+        return enrichGoogleStation(googleStation, null, fuelType);
       }
-      const nrelNearby = await fetchNrelNearest(googleStation.lat, googleStation.lng, fuelType);
+      const nrelNearby = await fetchNrelNearest(googleStation.lat, googleStation.lng, fuelType, 1, 5);
       const match = matchNrelStation(googleStation, nrelNearby);
-      return enrichStation(googleStation, match, fuelType);
+      return enrichGoogleStation(googleStation, match, fuelType);
     }));
 
     const validated = enriched.filter(s => fuelType === "LPG" || isPlausibleEvChargingStation(s));
-    const filtered = teslaOnly
-      ? validated.filter(s => /tesla/i.test(s.network || s.name || ""))
-      : validated;
+    const filtered = teslaOnly ? filterTeslaStations(validated) : validated;
 
-    return res.status(200).json({ stations: filtered, fallback: false });
+    return res.status(200).json({ stations: filtered, source: "google", fallback: false });
   } catch (err) {
     console.error("NREL enrich error:", err);
     return res.status(200).json({
-      stations: stations.map(s => enrichStation(s, null, fuelType)),
+      stations: stations.map(s => enrichGoogleStation(s, null, fuelType)),
+      source: "google",
       fallback: true,
       error: "Failed to enrich charging stations",
     });

@@ -1,0 +1,50 @@
+{
+  "html_attributions": [],
+  "result": {
+    "address_components": [
+      { "long_name": "100", "short_name": "100", "types": ["street_number"] },
+      { "long_name": "Mock Riverwalk", "short_name": "Mock Riverwalk", "types": ["route"] },
+      { "long_name": "Waco", "short_name": "Waco", "types": ["locality", "political"] },
+      { "long_name": "Texas", "short_name": "TX", "types": ["administrative_area_level_1", "political"] }
+    ],
+    "adr_address": "<span class=\"street-address\">100 Mock Riverwalk</span>, <span class=\"locality\">Waco</span>, <span class=\"region\">TX</span>",
+    "business_status": "OPERATIONAL",
+    "formatted_address": "100 Mock Riverwalk, Waco, TX 76701, USA",
+    "formatted_phone_number": "(254) 555-0100",
+    "geometry": {
+      "location": { "lat": 31.5493, "lng": -97.1467 },
+      "viewport": {
+        "northeast": { "lat": 31.551, "lng": -97.144 },
+        "southwest": { "lat": 31.547, "lng": -97.149 }
+      }
+    },
+    "name": "Mock Riverwalk Grill",
+    "opening_hours": {
+      "open_now": true,
+      "weekday_text": [
+        "Monday: 11:00 AM – 9:00 PM",
+        "Tuesday: 11:00 AM – 9:00 PM",
+        "Wednesday: 11:00 AM – 9:00 PM",
+        "Thursday: 11:00 AM – 9:00 PM",
+        "Friday: 11:00 AM – 10:00 PM",
+        "Saturday: 10:00 AM – 10:00 PM",
+        "Sunday: 10:00 AM – 8:00 PM"
+      ]
+    },
+    "photos": [
+      {
+        "height": 800,
+        "html_attributions": ["<a href=\"https://mock.test\">Mock Photo</a>"],
+        "photo_reference": "mock-photo-ref-riverwalk-grill",
+        "width": 1200
+      }
+    ],
+    "place_id": "mock-place-riverwalk-grill",
+    "rating": 4.6,
+    "types": ["restaurant", "food", "point_of_interest", "establishment"],
+    "url": "https://maps.google.com/?cid=mock-riverwalk-grill",
+    "user_ratings_total": 842,
+    "website": "https://mock.example/riverwalk-grill"
+  },
+  "status": "OK"
+}

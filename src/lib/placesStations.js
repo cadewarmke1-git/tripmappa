@@ -64,6 +64,7 @@ export async function searchGasStations(lat, lng, maxResults = 10, radius = 8047
   return searchNearbyStations(lat, lng, { type: "gas_station", maxResults, radius });
 }
 
+/** Google Places nearby search — gap-fill when NREL has no stations nearby. */
 export async function searchEvChargingStations(lat, lng, maxResults = 10, radius = 8047) {
   return searchNearbyStations(lat, lng, { type: "electric_vehicle_charging_station", maxResults, radius });
 }

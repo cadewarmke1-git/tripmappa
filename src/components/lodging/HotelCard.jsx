@@ -3,6 +3,7 @@ import AmenityBadges from "./AmenityBadges.jsx";
 import PlaceRatingLine from "../results/PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
 import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
+import { useOnScreen } from "../../hooks/useOnScreen.js";
 
 /** Booking.com deep links — hidden until affiliate API is live. */
 const HOTEL_BOOKING_UI_ENABLED = false;
@@ -17,9 +18,10 @@ const BADGE_LABELS = {
 export default function HotelCard({ hotel, onSave, onToast }) {
   const badges = hotel.badges || [];
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [photoRef, photoVisible] = useOnScreen();
   const photoSrc = photoFailed
     ? "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=192&q=80"
-    : resolvePlacePhotoUrl(hotel.photo || hotel.photoUrl, 96);
+    : (photoVisible ? resolvePlacePhotoUrl(hotel.photo || hotel.photoUrl, 96) : null);
 
   function handleBook() {
     if (!hotel.bookUrl) return;
@@ -39,7 +41,8 @@ export default function HotelCard({ hotel, onSave, onToast }) {
 
   return (
     <article className="lodging-card lodging-card-hotel lodging-card-premium">
-      <div className="lodging-card-photo-wrap">
+      <div className="lodging-card-photo-wrap" ref={photoRef}>
+        {photoSrc ? (
         <img
           className="lodging-card-photo"
           src={photoSrc}
@@ -47,6 +50,9 @@ export default function HotelCard({ hotel, onSave, onToast }) {
           loading="lazy"
           onError={() => setPhotoFailed(true)}
         />
+        ) : (
+          <div className="lodging-card-photo lodging-card-photo-placeholder" aria-hidden="true" />
+        )}
         <div className="lodging-card-photo-gradient" />
         {badges.length > 0 && (
           <div className="lodging-card-badges">

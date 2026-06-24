@@ -1,11 +1,11 @@
-/** Live Trip Tips — weather conditions and traffic along the route. */
+/** Live Trip Tips — Weather.gov conditions and Google traffic along the route. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import {
-  fetchGoogleCurrentConditions,
+  fetchCurrentConditions,
   weatherConditionText,
   weatherTemperatureF,
-} from "../lib/googleWeather.js";
+} from "../lib/weatherGov.js";
 import { cacheGet, cacheSet, cacheThrough, roundCoord } from "../lib/apiCache.js";
 const DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json";
 const TRAFFIC_BUCKET_MS = 10 * 60 * 1000;
@@ -23,12 +23,12 @@ function sampleRoutePoints(routePoints, max = 4) {
   return out;
 }
 
-async function fetchWeatherTip(lat, lng, key) {
+async function fetchWeatherTip(lat, lng) {
   const cacheKey = `weather-tip:${roundCoord(lat)}:${roundCoord(lng)}`;
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  const data = await fetchGoogleCurrentConditions(key, lat, lng);
+  const data = await fetchCurrentConditions(null, lat, lng);
   if (!data) return null;
   const tempF = weatherTemperatureF(data);
   const condition = weatherConditionText(data);
@@ -122,12 +122,14 @@ async function buildTripTips(origin, destination, routePoints, waypoints, key) {
   const samples = sampleRoutePoints(routePoints, 4);
   const weatherSamples = samples.length ? samples : waypoints.slice(0, 3);
   const weatherResults = await Promise.all(
-    weatherSamples.slice(0, 3).map(pt => fetchWeatherTip(pt.lat, pt.lng, key)),
+    weatherSamples.slice(0, 3).map(pt => fetchWeatherTip(pt.lat, pt.lng)),
   );
   weatherResults.filter(Boolean).forEach(addTip);
 
-  const trafficTips = await fetchTrafficTips(origin, destination, waypoints, key);
-  trafficTips.forEach(addTip);
+  if (key) {
+    const trafficTips = await fetchTrafficTips(origin, destination, waypoints, key);
+    trafficTips.forEach(addTip);
+  }
 
   return tips.slice(0, 5);
 }
@@ -137,7 +139,6 @@ export default async function handler(req, res) {
   if (guardProxyRoute(req, res)) return undefined;
 
   const key = getGoogleMapsKey();
-  if (!key) return res.status(503).json({ error: "Google Maps API key not configured" });
 
   const { origin, destination, routePoints = [], waypoints = [] } = req.body || {};
   if (!origin || !destination) {

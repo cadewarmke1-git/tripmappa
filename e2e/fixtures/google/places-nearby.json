@@ -1,0 +1,87 @@
+{
+  "html_attributions": [],
+  "results": [
+    {
+      "business_status": "OPERATIONAL",
+      "geometry": {
+        "location": { "lat": 31.5493, "lng": -97.1467 },
+        "viewport": {
+          "northeast": { "lat": 31.551, "lng": -97.144 },
+          "southwest": { "lat": 31.547, "lng": -97.149 }
+        }
+      },
+      "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+      "icon_background_color": "#FF9E67",
+      "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/restaurant_pinlet",
+      "name": "Mock Riverwalk Grill",
+      "opening_hours": { "open_now": true },
+      "photos": [
+        {
+          "height": 800,
+          "html_attributions": ["<a href=\"https://mock.test\">Mock Photo</a>"],
+          "photo_reference": "mock-photo-ref-riverwalk-grill",
+          "width": 1200
+        }
+      ],
+      "place_id": "mock-place-riverwalk-grill",
+      "plus_code": { "compound_code": "Mock+Code Waco, TX", "global_code": "8625MockCode" },
+      "price_level": 2,
+      "rating": 4.6,
+      "reference": "mock-place-riverwalk-grill",
+      "types": ["restaurant", "food", "point_of_interest", "establishment"],
+      "user_ratings_total": 842,
+      "vicinity": "100 Mock Riverwalk, Waco"
+    },
+    {
+      "business_status": "OPERATIONAL",
+      "geometry": {
+        "location": { "lat": 31.5512, "lng": -97.1421 },
+        "viewport": {
+          "northeast": { "lat": 31.553, "lng": -97.140 },
+          "southwest": { "lat": 31.549, "lng": -97.144 }
+        }
+      },
+      "name": "Mock Magnolia Market Cafe",
+      "photos": [
+        {
+          "height": 600,
+          "html_attributions": ["<a href=\"https://mock.test\">Mock Photo</a>"],
+          "photo_reference": "mock-photo-ref-magnolia-cafe",
+          "width": 900
+        }
+      ],
+      "place_id": "mock-place-magnolia-cafe",
+      "rating": 4.4,
+      "reference": "mock-place-magnolia-cafe",
+      "types": ["cafe", "restaurant", "food", "point_of_interest", "establishment"],
+      "user_ratings_total": 1203,
+      "vicinity": "601 Mock Webster Ave, Waco"
+    },
+    {
+      "business_status": "OPERATIONAL",
+      "geometry": {
+        "location": { "lat": 31.5478, "lng": -97.1502 },
+        "viewport": {
+          "northeast": { "lat": 31.549, "lng": -97.148 },
+          "southwest": { "lat": 31.546, "lng": -97.152 }
+        }
+      },
+      "name": "Mock Brazos Diner",
+      "photos": [
+        {
+          "height": 720,
+          "html_attributions": ["<a href=\"https://mock.test\">Mock Photo</a>"],
+          "photo_reference": "mock-photo-ref-brazos-diner",
+          "width": 1080
+        }
+      ],
+      "place_id": "mock-place-brazos-diner",
+      "rating": 4.2,
+      "reference": "mock-place-brazos-diner",
+      "types": ["restaurant", "food", "point_of_interest", "establishment"],
+      "user_ratings_total": 516,
+      "vicinity": "220 Mock Brazos St, Waco"
+    }
+  ],
+  "status": "OK"
+}

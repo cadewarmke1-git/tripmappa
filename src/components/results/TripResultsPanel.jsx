@@ -37,6 +37,7 @@ export default function TripResultsPanel({
   tripUsedFallback = false,
   onDismissEnrichmentNotice,
   onRetryEnrichment,
+  onEnrichPlacesOnMount,
   isStopAdded,
   optionalStopCards = [],
   activitiesByCity = {},
@@ -110,6 +111,10 @@ export default function TripResultsPanel({
   function selectDay(index) {
     onDaySelect?.(index);
   }
+
+  useEffect(() => {
+    onEnrichPlacesOnMount?.();
+  }, [onEnrichPlacesOnMount]);
 
   useEffect(() => {
     if (!highlightedStopId) return;

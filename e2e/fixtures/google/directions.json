@@ -1,0 +1,57 @@
+{
+  "routes": [
+    {
+      "bounds": {
+        "northeast": { "lat": 32.901, "lng": -95.250 },
+        "southwest": { "lat": 29.650, "lng": -96.900 }
+      },
+      "copyrights": "Mock data for TripMappa tests",
+      "legs": [
+        {
+          "distance": { "text": "239 mi", "value": 384633 },
+          "duration": { "text": "3 hours 30 mins", "value": 12600 },
+          "duration_in_traffic": { "text": "3 hours 45 mins", "value": 13500 },
+          "end_address": "Houston, TX, USA",
+          "end_location": { "lat": 29.7604267, "lng": -95.3698028 },
+          "start_address": "Dallas, TX, USA",
+          "start_location": { "lat": 32.7766642, "lng": -96.7969879 },
+          "steps": [
+            {
+              "distance": { "text": "120 mi", "value": 193121 },
+              "duration": { "text": "1 hour 45 mins", "value": 6300 },
+              "end_location": { "lat": 31.549333, "lng": -97.1466695 },
+              "start_location": { "lat": 32.7766642, "lng": -96.7969879 },
+              "html_instructions": "Head south on I-35 S",
+              "polyline": { "points": "mock-polyline-segment-1" },
+              "travel_mode": "DRIVING",
+              "end_address": "Waco, TX, USA"
+            },
+            {
+              "distance": { "text": "119 mi", "value": 191512 },
+              "duration": { "text": "1 hour 45 mins", "value": 6300 },
+              "end_location": { "lat": 29.7604267, "lng": -95.3698028 },
+              "start_location": { "lat": 31.549333, "lng": -97.1466695 },
+              "html_instructions": "Continue on I-45 S toward Houston",
+              "polyline": { "points": "mock-polyline-segment-2" },
+              "travel_mode": "DRIVING",
+              "end_address": "Houston, TX, USA"
+            }
+          ],
+          "traffic_speed_entry": [],
+          "via_waypoint": []
+        }
+      ],
+      "overview_polyline": {
+        "points": "mock-overview-polyline-dallas-houston"
+      },
+      "summary": "I-45 S",
+      "warnings": [],
+      "waypoint_order": []
+    }
+  ],
+  "status": "OK",
+  "geocoded_waypoints": [
+    { "geocoder_status": "OK", "place_id": "mock-geocode-dallas", "types": ["locality"] },
+    { "geocoder_status": "OK", "place_id": "mock-geocode-houston", "types": ["locality"] }
+  ]
+}

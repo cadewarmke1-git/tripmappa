@@ -1,6 +1,17 @@
 /** Extended Google Places searches for trip planning and results. */
+import { fetchPlacesNearbyCached } from "./placesCorridorClient.js";
+import {
+  canMakeDetailsCall,
+  canMakeNearbyCall,
+  recordDetailsCall,
+  recordNearbyCall,
+} from "./placesBudget.js";
 import { getDietarySearchKeywords, getLoyaltyKeyword, needsWheelchairFilter, needsWheelchairLodgingFilter, asArray, needsSafeStopsOnly, prefIncludes } from "./tripAccommodations.js";
 import { dietaryMatchesRestaurant } from "./dietaryKeywords.js";
+import { fetchCorridorOsmForBbox } from "./corridorOsmClient.js";
+import { lodgingPlacesFromOsm } from "./osmCorridorPlaces.js";
+import { fetchPlaceDetailsCached as fetchPlaceDetailsFromApi } from "./placesDetailsClient.js";
+import { ensureNamedEnrichedPlace } from "./osmPlaceEnrichment.js";
 import {
   applyStopFilters,
   filterFoodCandidates,
@@ -13,6 +24,16 @@ const RADIUS_1MI = 1609;
 const RADIUS_2MI = 3219;
 const RADIUS_5MI = 8047;
 const RADIUS_10MI = 16093;
+
+/** Minimal Place Details fields — avoids Atmosphere + Contact SKU billing. */
+export const PLACE_DETAIL_FIELDS = [
+  "name",
+  "geometry",
+  "photos",
+  "rating",
+  "price_level",
+  "place_id",
+];
 
 /** Pause between sequential Places API calls to reduce rate-limit bursts. */
 export const PLACES_API_CALL_DELAY_MS = 250;
@@ -83,29 +104,35 @@ async function nearbySearch(request) {
   }, []);
 }
 
-function getPlaceDetailsRaw(placeId) {
-  return new Promise((resolve) => {
-    const service = getPlaceService();
-    if (!service || !placeId) {
-      resolve({ place: null, status: null });
-      return;
-    }
-    service.getDetails({
-      placeId,
-      fields: ["name", "formatted_address", "formatted_phone_number", "website", "opening_hours", "rating", "user_ratings_total", "price_level", "photos", "url", "geometry", "types"],
-    }, (place, status) => {
-      resolve({ place: place || null, status });
-    });
-  });
+function photoUrlFromReference(photoReference, maxWidth = 256) {
+  const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+  if (!photoReference || !key) return null;
+  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${encodeURIComponent(photoReference)}&key=${key}`;
+}
+
+function mapCachedDetailsToPlace(cached) {
+  if (!cached) return null;
+  return {
+    place_id: cached.placeId,
+    name: cached.name,
+    rating: cached.rating,
+    price_level: cached.priceLevel,
+    photos: cached.photoReference
+      ? [{ getUrl: ({ maxWidth } = {}) => photoUrlFromReference(cached.photoReference, maxWidth || 256) }]
+      : [],
+  };
 }
 
 async function getPlaceDetails(placeId) {
-  const OK = placesStatus()?.OK;
-  return withPlacesRateLimitRetry(async () => {
-    const { place, status } = await getPlaceDetailsRaw(placeId);
-    if (status === OK && place) return { value: place, status };
-    return { value: null, status };
-  }, null);
+  if (!placeId) return null;
+
+  const { details, cached, error } = await fetchPlaceDetailsFromApi(placeId);
+  if (details) {
+    if (!cached) recordDetailsCall();
+    return mapCachedDetailsToPlace(details);
+  }
+
+  return error ? null : null;
 }
 
 function mapPlace(place, originLat, originLng, category = "poi") {
@@ -132,39 +159,61 @@ function mapPlace(place, originLat, originLng, category = "poi") {
   };
 }
 
-async function enrichPlaces(places) {
-  const top = places.slice(0, 5);
+async function enrichSelectedPlaces(places, maxCount = 4) {
+  const selected = places.slice(0, maxCount);
   const enriched = [];
-  for (const p of top) {
+  for (const p of selected) {
     if (enriched.length > 0) await placesApiDelay();
-    if (!p.placeId) {
-      enriched.push(p);
-      continue;
-    }
-    const details = await getPlaceDetails(p.placeId);
-    if (!details) {
-      enriched.push(p);
-      continue;
-    }
-    enriched.push({
-      ...p,
-      phone: details.formatted_phone_number,
-      website: details.website,
-      hours: details.opening_hours?.weekday_text?.join("; "),
-      bookUrl: details.website || details.url,
-      photoUrl: p.photoUrl || details.photos?.[0]?.getUrl?.({ maxWidth: 256 }),
-    });
+    const verified = await ensureNamedEnrichedPlace(p, "lodging");
+    if (verified) enriched.push(verified);
   }
   return enriched;
 }
 
 export async function searchNearbyCategory(lat, lng, { type, keyword, radius = RADIUS_5MI, maxResults = 8, wheelchair = false } = {}) {
   if (lat == null || lng == null) return [];
+
+  if (canMakeNearbyCall()) {
+    const { places, error } = await fetchPlacesNearbyCached({
+      lat,
+      lng,
+      type,
+      keyword,
+      radius,
+      maxResults,
+    });
+
+    if (!error) {
+      let results = places.map(p => ({
+      id: p.id || p.placeId,
+      placeId: p.placeId,
+      name: p.name || "Place",
+      address: p.address || "",
+      lat: p.lat,
+      lng: p.lng,
+      distanceMiles: p.distanceMiles,
+      rating: p.rating,
+      userRatingsTotal: p.userRatingsTotal,
+      priceLevel: p.priceLevel,
+      category: type || keyword || "poi",
+      types: p.types || [],
+      photoUrl: p.photoUrl || null,
+    }));
+    if (wheelchair) {
+      results = results.filter(p => p.business_status !== "CLOSED_PERMANENTLY");
+    }
+    return results.slice(0, maxResults);
+    }
+  }
+
+  if (!canMakeNearbyCall()) return [];
+
   const location = new window.google.maps.LatLng(lat, lng);
   const req = { location, radius };
   if (type) req.type = type;
   if (keyword) req.keyword = keyword;
   let results = await nearbySearch(req);
+  recordNearbyCall();
   if (wheelchair) {
     results = results.filter(p => p.business_status !== "CLOSED_PERMANENTLY");
   }
@@ -216,17 +265,52 @@ export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5,
     .filter(r => (r.rating ?? 0) >= 4.5 && (r.distanceMiles ?? 99) <= maxDetourMiles)
     .map(r => ({ ...r, isDetour: true, detourMiles: r.distanceMiles }));
   const merged = [...onRoute.map(r => ({ ...r, isDetour: false })), ...detourOnly];
-  const enriched = await enrichPlaces(merged);
-  return enriched.map(r => ({
+  return merged.map(r => ({
     ...r,
     wifiAvailable: remoteWork || /wifi|coffee|cafe|starbucks|panera|library/i.test(`${r.name} ${r.address}`),
   }));
 }
 
 export async function searchLodging(lat, lng, answers, routeInfo = null) {
-  const loyalty = getLoyaltyKeyword(answers);
   const lodging = answers?.lodging || "";
   const wheelchairLodging = needsWheelchairLodgingFilter(answers);
+
+  if (!lodging.includes("Camping") && !lodging.includes("Airbnb")) {
+    const degLat = 5 / 69;
+    const degLng = 5 / (Math.max(0.2, Math.cos(lat * Math.PI / 180)) * 69);
+    const { places: osmPlaces } = await fetchCorridorOsmForBbox({
+      bbox: { north: lat + degLat, south: lat - degLat, east: lng + degLng, west: lng - degLng },
+    });
+    const osmLodging = lodgingPlacesFromOsm(osmPlaces || [], lat, lng, 5);
+    if (osmLodging.length >= 1) {
+      let results = osmLodging.map(h => ({
+        id: h.osmId || h.name,
+        placeId: null,
+        name: h.name,
+        address: h.address || "",
+        lat: h.lat,
+        lng: h.lng,
+        distanceMiles: h.distanceMi,
+        rating: null,
+        source: "osm",
+        category: "lodging",
+      }));
+      results = filterLodgingCandidates(results);
+      if (needsSafeStopsOnly(answers)) {
+        const safe = filterSafeStopsOnly(results);
+        if (safe.length) results = safe;
+      }
+      results = filterLodgingByBudget(results, answers, routeInfo || {});
+      const enriched = [];
+      for (const h of results.slice(0, 4)) {
+        const verified = await ensureNamedEnrichedPlace(h, "lodging");
+        if (verified) enriched.push(verified);
+      }
+      return enriched;
+    }
+  }
+
+  const loyalty = getLoyaltyKeyword(answers);
   let keyword = "hotel";
   if (lodging.includes("Camping")) keyword = "campground";
   else if (lodging.includes("Airbnb")) keyword = "vacation rental";
@@ -245,7 +329,8 @@ export async function searchLodging(lat, lng, answers, routeInfo = null) {
     if (safe.length) results = safe;
   }
   results = filterLodgingByBudget(results, answers, routeInfo || {});
-  return enrichPlaces(results);
+  const selected = results.slice(0, 4);
+  return enrichSelectedPlaces(selected, 4);
 }
 
 export async function searchNearbyServices(lat, lng, categories) {
@@ -258,7 +343,7 @@ export async function searchNearbyServices(lat, lng, categories) {
       radius: RADIUS_10MI,
       maxResults: 3,
     });
-    out[cat.id] = await enrichPlaces(items);
+    out[cat.id] = items;
   }
   return out;
 }
@@ -292,12 +377,12 @@ export async function searchInterestPOIs(lat, lng, interest, radius = RADIUS_10M
     "Prayer facilities": { keyword: "mosque church temple synagogue", radius: RADIUS_2MI },
   };
   const cfg = map[interest] || { keyword: interest };
-  return enrichPlaces(await searchNearbyCategory(lat, lng, {
+  return searchNearbyCategory(lat, lng, {
     type: cfg.type || "point_of_interest",
     keyword: cfg.keyword || interest,
     radius: cfg.radius || radius,
     maxResults: 5,
-  }));
+  });
 }
 
 export { getPlaceDetails, geocodeCity as geocodeAddress, RADIUS_1MI, RADIUS_2MI, RADIUS_5MI, RADIUS_10MI };

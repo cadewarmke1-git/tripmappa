@@ -62,6 +62,18 @@ export async function enrichFuelStations(stations, mode = "gas") {
   return data;
 }
 
+export async function discoverEvCharging(lat, lng, options = {}) {
+  const { teslaOnly = false, fuelType = "ELEC", radius = 5 } = options;
+  const response = await fetch("/api/ev-charging", {
+    method: "POST",
+    headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ discover: true, lat, lng, radius, fuelType, teslaOnly }),
+  });
+  const data = await readApiJson(response);
+  if (!response.ok) throw new Error(data.error || "EV charging discovery failed");
+  return data;
+}
+
 export async function enrichEvCharging(stations, fuelType = "ELEC", options = {}) {
   const { teslaOnly = false } = options;
   const response = await fetch("/api/ev-charging", {
@@ -82,8 +94,10 @@ export async function fetchFuelStations(latitude, longitude, mode = "gas") {
   return enrichFuelStations(googleStations, mode);
 }
 
-/** @deprecated Use enrichEvCharging after Google Places search. */
+/** @deprecated Use discoverEvCharging (NREL primary) with searchEvChargingStations gap-fill. */
 export async function fetchEvCharging(latitude, longitude, fuelType = "ELEC", options = {}) {
+  const nrelRes = await discoverEvCharging(latitude, longitude, { ...options, fuelType, radius: 5 });
+  if (nrelRes.stations?.length) return nrelRes;
   const googleStations = fuelType === "LPG"
     ? await searchPropaneStations(latitude, longitude)
     : await searchEvChargingStations(latitude, longitude);

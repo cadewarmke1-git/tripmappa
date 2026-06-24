@@ -2,6 +2,7 @@
 import { sampleRoutePoints, encodeRoutePoints } from "./fuel.js";
 import { parseMilesFromDistance } from "./parsing.js";
 import { runWithConcurrency } from "./asyncPool.js";
+import { fetchReverseGeocode } from "./geocodeClient.js";
 
 const DEFAULT_CONCURRENCY = 5;
 const MAX_CITIES = 15;
@@ -53,19 +54,30 @@ function appendCorridorCity(list, cityState) {
   list.push(normalized);
 }
 
-function reverseGeocodeCityState(lat, lng) {
-  return new Promise((resolve) => {
-    if (!window.google?.maps || lat == null || lng == null) {
-      resolve(null);
-      return;
+function citiesFromDirectionsLegs(legs) {
+  const cities = [];
+  for (const leg of legs || []) {
+    for (const step of leg.steps || []) {
+      appendCorridorCity(cities, parseCityStateFromFormattedAddress(step.end_address));
     }
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status !== "OK" || !results?.[0]) {
-        resolve(null);
-        return;
-      }
-      resolve(cityStateFromGeocodeComponents(results[0].address_components || []));
+    appendCorridorCity(cities, parseCityStateFromFormattedAddress(leg.end_address));
+  }
+  return cities;
+}
+
+function reverseGeocodeCityState(lat, lng) {
+  return fetchReverseGeocode(lat, lng).then(result => {
+    if (result?.cityState) return result.cityState;
+    if (!window.google?.maps || lat == null || lng == null) return null;
+    return new Promise((resolve) => {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status !== "OK" || !results?.[0]) {
+          resolve(null);
+          return;
+        }
+        resolve(cityStateFromGeocodeComponents(results[0].address_components || []));
+      });
     });
   });
 }
@@ -99,11 +111,20 @@ export async function deriveCitiesAlongRoute(routePoints, {
   origin,
   destination,
   distance,
+  directionsLegs = null,
   concurrency = DEFAULT_CONCURRENCY,
   maxCities = MAX_CITIES,
 } = {}) {
   const cities = [];
   appendCorridorCity(cities, parseCityStateFromFormattedAddress(origin));
+
+  if (directionsLegs?.length) {
+    for (const cityState of citiesFromDirectionsLegs(directionsLegs)) {
+      appendCorridorCity(cities, cityState);
+    }
+    appendCorridorCity(cities, parseCityStateFromFormattedAddress(destination));
+    return cities.slice(0, maxCities);
+  }
 
   if (!Array.isArray(routePoints) || routePoints.length < 2) {
     appendCorridorCity(cities, parseCityStateFromFormattedAddress(destination));

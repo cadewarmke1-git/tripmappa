@@ -32,6 +32,7 @@ import { optimizeStopOrder, shouldOptimizeRoute } from "./routeOptimization.js";
 import { isContinuousDrive } from "./driveMode.js";
 
 import { dedupePlaces, dedupeRoadStops } from "./placesDedup.js";
+import { resetPlacesBudget } from "./placesBudget.js";
 
 const restaurantPreloadInFlight = new Set();
 const restaurantPreloadListeners = new Set();
@@ -163,66 +164,22 @@ async function enrichFoodRoadStopRestaurants(roadStops, answers) {
   }
 }
 
-export async function enrichGeneratedTrip({
+/** Restaurants, services, POI markers, and playground cards — deferred until results panel opens. */
+export async function enrichPlacesLayer({
   answers,
   routeInfo,
   stops = [],
   roadStops = [],
-  customStops = [],
-  selectedLodging = [],
-  timingMode = "leave_now",
-  departureTime = null,
-  origin = null,
   destination = null,
   mapsReady = true,
   signal = null,
 }) {
   throwIfAborted(signal);
-  const continuousDrive = isContinuousDrive(answers);
   const nearbyServicesByCity = {};
   const activitiesByCity = {};
   const restaurantsByCity = {};
-  const weatherByCity = {};
   const optionalStopCards = [];
   const poiMarkers = [];
-  let enrichedStops = continuousDrive ? [] : stops.map(s => ({ ...s }));
-  let safeRoadStops = dedupeRoadStops(roadStops.map(rs => ({ ...rs })));
-  let routeOptimized = false;
-
-  if (!continuousDrive && shouldOptimizeRoute(answers, enrichedStops) && origin && destination) {
-    for (const stop of enrichedStops) {
-      if (!stop.city || (stop.lat != null && stop.lng != null)) continue;
-      const geo = await resolveStopGeo(stop, mapsReady);
-      if (geo) {
-        stop.lat = geo.lat;
-        stop.lng = geo.lng;
-      }
-    }
-    const { stops: reordered, optimized } = await optimizeStopOrder(origin, destination, enrichedStops);
-    if (optimized) {
-      enrichedStops = reordered;
-      routeOptimized = true;
-    }
-  }
-
-  if (mapsReady && routeInfo?.routePoints?.length) {
-    const llmRoadStopCount = roadStops.filter(rs => rs.fromLlm).length;
-    if (llmRoadStopCount < 2) {
-      const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo);
-      safeRoadStops = dedupeRoadStops([...safeRoadStops, ...corridorRoadStops]);
-    } else {
-      safeRoadStops = dedupeRoadStops(safeRoadStops);
-    }
-  } else {
-    safeRoadStops = dedupeRoadStops(safeRoadStops);
-  }
-
-  if (continuousDrive) {
-    safeRoadStops = safeRoadStops
-      .filter(rs => /fuel|rest|gas|diesel|ev|charge|truck stop|pilot|love'?s|ta\b/i.test(`${rs.category || ""} ${rs.name || ""}`))
-      .concat(safeRoadStops.filter(rs => !/fuel|rest|gas|diesel|ev|charge|truck stop|pilot|love'?s|ta\b/i.test(`${rs.category || ""} ${rs.name || ""}`)))
-      .slice(0, 16);
-  }
 
   const interests = mapsReady
     ? asArray(answers?.stops_interests).filter(i => i !== "No specific interests")
@@ -230,13 +187,11 @@ export async function enrichGeneratedTrip({
   const serviceCats = mapsReady ? serviceCategoriesForAnswers(answers) : [];
   const wantsPlaygrounds = mapsReady && interests.some(i => /playground|park/i.test(i));
 
-  for (const stop of enrichedStops) {
+  for (const stop of stops) {
     throwIfAborted(signal);
     if (!stop.city) continue;
     const geo = await resolveStopGeo(stop, mapsReady);
     if (!geo) continue;
-    stop.lat = stop.lat ?? geo.lat;
-    stop.lng = stop.lng ?? geo.lng;
 
     if (mapsReady) {
       nearbyServicesByCity[stop.city] = await searchNearbyServices(geo.lat, geo.lng, serviceCats);
@@ -285,13 +240,196 @@ export async function enrichGeneratedTrip({
     await assignRestaurantsForCity(restaurantsByCity, stop.city, geo, answers, 6);
   }
 
+  if (destination) {
+    const destGeo = await resolveDestinationGeo(destination, routeInfo, mapsReady);
+    if (destGeo && !stops.length) {
+      await assignRestaurantsForCity(restaurantsByCity, destination, destGeo, answers, 6);
+    }
+  }
+
+  const enrichedRoadStops = roadStops.map(rs => ({ ...rs }));
+  await enrichFoodRoadStopRestaurants(enrichedRoadStops, answers);
+
+  if (wantsPlaygrounds && routeInfo?.routePoints?.length) {
+    const routeSamples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 50);
+    for (const pt of routeSamples) {
+      await placesApiDelay();
+      const parks = await searchNearbyCategory(pt.lat, pt.lng, {
+        keyword: "playground park",
+        radius: RADIUS_2MI,
+        maxResults: 2,
+      });
+      parks.forEach(p => {
+        optionalStopCards.push({ ...p, type: "playground" });
+        if (p.lat != null && p.lng != null) {
+          poiMarkers.push({
+            id: `pg-${p.id}`,
+            lat: p.lat,
+            lng: p.lng,
+            category: "playground",
+            title: p.name,
+            subtitle: `${p.distanceMiles ?? "?"} mi from route`,
+            action: "add",
+          });
+        }
+      });
+    }
+  }
+
+  const ratingLookup = buildRatingLookup(restaurantsByCity);
+  for (const rs of enrichedRoadStops) {
+    const rating = resolveEnrichedRating(rs, ratingLookup);
+    if (rating != null) rs.rating = rating;
+  }
+  for (const stop of stops) {
+    const rating = resolveEnrichedRating(stop, ratingLookup);
+    if (rating != null) stop.rating = rating;
+  }
+
+  return {
+    nearbyServicesByCity,
+    activitiesByCity,
+    restaurantsByCity,
+    optionalStopCards,
+    poiMarkers,
+    roadStops: enrichedRoadStops,
+  };
+}
+
+export async function enrichGeneratedTrip({
+  answers,
+  routeInfo,
+  stops = [],
+  roadStops = [],
+  customStops = [],
+  selectedLodging = [],
+  timingMode = "leave_now",
+  departureTime = null,
+  origin = null,
+  destination = null,
+  mapsReady = true,
+  signal = null,
+  placesContext = null,
+  deferPlacesEnrichment = false,
+}) {
+  throwIfAborted(signal);
+  resetPlacesBudget();
+  const continuousDrive = isContinuousDrive(answers);
+  const nearbyServicesByCity = {};
+  const activitiesByCity = {};
+  const restaurantsByCity = {};
+  const weatherByCity = {};
+  const optionalStopCards = [];
+  const poiMarkers = [];
+  let enrichedStops = continuousDrive ? [] : stops.map(s => ({ ...s }));
+  let safeRoadStops = dedupeRoadStops(roadStops.map(rs => ({ ...rs })));
+  let routeOptimized = false;
+
+  if (!continuousDrive && shouldOptimizeRoute(answers, enrichedStops) && origin && destination) {
+    for (const stop of enrichedStops) {
+      if (!stop.city || (stop.lat != null && stop.lng != null)) continue;
+      const geo = await resolveStopGeo(stop, mapsReady);
+      if (geo) {
+        stop.lat = geo.lat;
+        stop.lng = geo.lng;
+      }
+    }
+    const { stops: reordered, optimized } = await optimizeStopOrder(origin, destination, enrichedStops);
+    if (optimized) {
+      enrichedStops = reordered;
+      routeOptimized = true;
+    }
+  }
+
+  if (mapsReady && routeInfo?.routePoints?.length) {
+    const llmRoadStopCount = roadStops.filter(rs => rs.fromLlm).length;
+    if (llmRoadStopCount < 2) {
+      const corridorRoadStops = await buildRoadStopsFromRoute(answers, routeInfo, placesContext);
+      safeRoadStops = dedupeRoadStops([...safeRoadStops, ...corridorRoadStops]);
+    } else {
+      safeRoadStops = dedupeRoadStops(safeRoadStops);
+    }
+  } else {
+    safeRoadStops = dedupeRoadStops(safeRoadStops);
+  }
+
+  if (continuousDrive) {
+    safeRoadStops = safeRoadStops
+      .filter(rs => /fuel|rest|gas|diesel|ev|charge|truck stop|pilot|love'?s|ta\b/i.test(`${rs.category || ""} ${rs.name || ""}`))
+      .concat(safeRoadStops.filter(rs => !/fuel|rest|gas|diesel|ev|charge|truck stop|pilot|love'?s|ta\b/i.test(`${rs.category || ""} ${rs.name || ""}`)))
+      .slice(0, 16);
+  }
+
+  const interests = mapsReady && !deferPlacesEnrichment
+    ? asArray(answers?.stops_interests).filter(i => i !== "No specific interests")
+    : [];
+  const serviceCats = mapsReady && !deferPlacesEnrichment ? serviceCategoriesForAnswers(answers) : [];
+  const wantsPlaygrounds = mapsReady && !deferPlacesEnrichment && interests.some(i => /playground|park/i.test(i));
+
+  for (const stop of enrichedStops) {
+    throwIfAborted(signal);
+    if (!stop.city) continue;
+    const geo = await resolveStopGeo(stop, mapsReady);
+    if (!geo) continue;
+    stop.lat = stop.lat ?? geo.lat;
+    stop.lng = stop.lng ?? geo.lng;
+
+    if (mapsReady && !deferPlacesEnrichment) {
+      nearbyServicesByCity[stop.city] = await searchNearbyServices(geo.lat, geo.lng, serviceCats);
+
+      for (const interest of interests) {
+        await placesApiDelay();
+        const pois = await searchInterestPOIs(geo.lat, geo.lng, interest);
+        if (!activitiesByCity[stop.city]) activitiesByCity[stop.city] = [];
+        pois.forEach(p => {
+          const entry = { ...p, interest, admissionEstimate: interest.includes("Kid friendly") ? "$15–45/person (est.)" : null };
+          activitiesByCity[stop.city].push(entry);
+          if (p.lat != null && p.lng != null) {
+            poiMarkers.push({
+              id: p.id,
+              lat: p.lat,
+              lng: p.lng,
+              category: interestToMarkerCategory(interest),
+              title: p.name,
+              subtitle: p.address || `${p.distanceMiles ?? "?"} mi`,
+              hours: p.hours,
+              rating: p.rating,
+            });
+          }
+        });
+      }
+
+      Object.entries(nearbyServicesByCity[stop.city] || {}).forEach(([key, items]) => {
+        items?.forEach(item => {
+          if (item.lat == null || item.lng == null) return;
+          let cat = null;
+          if (key === "hospital" || key === "pharmacy" || key === "urgent_care" || key === "dialysis") cat = "medical";
+          if (key === "vet") cat = "vet";
+          if (!cat) return;
+          poiMarkers.push({
+            id: `svc-${key}-${item.id}`,
+            lat: item.lat,
+            lng: item.lng,
+            category: cat,
+            title: item.name,
+            subtitle: item.phone ? `${item.distanceMiles ?? "?"} mi · ${item.phone}` : `${item.distanceMiles ?? "?"} mi`,
+          });
+        });
+      });
+
+      await assignRestaurantsForCity(restaurantsByCity, stop.city, geo, answers, 6);
+    }
+  }
+
   // Day / simple trips: enrich destination when no overnight stops
   const weatherStops = [...enrichedStops];
   let destGeo = null;
   if (destination) {
     destGeo = await resolveDestinationGeo(destination, routeInfo, mapsReady);
-    if (destGeo && !enrichedStops.length) {
+    if (destGeo && !enrichedStops.length && !deferPlacesEnrichment) {
       await assignRestaurantsForCity(restaurantsByCity, destination, destGeo, answers, 6);
+      weatherStops.push({ city: destination, lat: destGeo.lat, lng: destGeo.lng });
+    } else if (destGeo && !enrichedStops.length) {
       weatherStops.push({ city: destination, lat: destGeo.lat, lng: destGeo.lng });
     }
   }
@@ -299,10 +437,12 @@ export async function enrichGeneratedTrip({
   const weatherData = await fetchWeatherForStops(weatherStops);
   Object.assign(weatherByCity, weatherData.weatherByCity || {});
 
-  await enrichFoodRoadStopRestaurants(safeRoadStops, answers);
+  if (!deferPlacesEnrichment) {
+    await enrichFoodRoadStopRestaurants(safeRoadStops, answers);
+  }
 
   if (wantsPlaygrounds && routeInfo?.routePoints?.length) {
-    const routeSamples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 30);
+    const routeSamples = sampleRoutePointsEveryMiles(routeInfo.routePoints, 50);
     for (const pt of routeSamples) {
       await placesApiDelay();
       const parks = await searchNearbyCategory(pt.lat, pt.lng, {
@@ -383,13 +523,15 @@ export async function enrichGeneratedTrip({
   );
 
   const ratingLookup = buildRatingLookup(restaurantsByCity);
-  for (const rs of safeRoadStops) {
-    const rating = resolveEnrichedRating(rs, ratingLookup);
-    if (rating != null) rs.rating = rating;
-  }
-  for (const stop of enrichedStops) {
-    const rating = resolveEnrichedRating(stop, ratingLookup);
-    if (rating != null) stop.rating = rating;
+  if (!deferPlacesEnrichment) {
+    for (const rs of safeRoadStops) {
+      const rating = resolveEnrichedRating(rs, ratingLookup);
+      if (rating != null) rs.rating = rating;
+    }
+    for (const stop of enrichedStops) {
+      const rating = resolveEnrichedRating(stop, ratingLookup);
+      if (rating != null) stop.rating = rating;
+    }
   }
 
   return {
@@ -405,5 +547,6 @@ export async function enrichGeneratedTrip({
     liveTripTips: [],
     destGeo,
     mapMarkers,
+    placesEnrichmentPending: deferPlacesEnrichment && mapsReady,
   };
 }

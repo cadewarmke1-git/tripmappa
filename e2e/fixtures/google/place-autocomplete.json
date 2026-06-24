@@ -1,0 +1,39 @@
+{
+  "predictions": [
+    {
+      "description": "Dallas, TX, USA",
+      "matched_substrings": [{ "length": 6, "offset": 0 }],
+      "place_id": "mock-autocomplete-dallas",
+      "reference": "mock-autocomplete-dallas",
+      "structured_formatting": {
+        "main_text": "Dallas",
+        "main_text_matched_substrings": [{ "length": 6, "offset": 0 }],
+        "secondary_text": "TX, USA"
+      },
+      "terms": [
+        { "offset": 0, "value": "Dallas" },
+        { "offset": 8, "value": "TX" },
+        { "offset": 12, "value": "USA" }
+      ],
+      "types": ["locality", "political", "geocode"]
+    },
+    {
+      "description": "Houston, TX, USA",
+      "matched_substrings": [{ "length": 7, "offset": 0 }],
+      "place_id": "mock-autocomplete-houston",
+      "reference": "mock-autocomplete-houston",
+      "structured_formatting": {
+        "main_text": "Houston",
+        "main_text_matched_substrings": [{ "length": 7, "offset": 0 }],
+        "secondary_text": "TX, USA"
+      },
+      "terms": [
+        { "offset": 0, "value": "Houston" },
+        { "offset": 9, "value": "TX" },
+        { "offset": 13, "value": "USA" }
+      ],
+      "types": ["locality", "political", "geocode"]
+    }
+  ],
+  "status": "OK"
+}

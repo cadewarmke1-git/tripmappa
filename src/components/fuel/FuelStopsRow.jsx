@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { enrichFuelStations, enrichEvCharging } from "../../lib/apiClient.js";
+import { enrichFuelStations, discoverEvCharging, enrichEvCharging } from "../../lib/apiClient.js";
 import { isTeslaSuperchargerOnly } from "../../lib/tripAccommodations.js";
 import {
   searchGasStations,
@@ -121,15 +121,19 @@ export default function FuelStopsRow({
         }
 
         if (mode === "ev" || mode === "hybrid") {
-          const googleEv = await searchEvChargingStations(lat, lng, 10);
-          let evStations = googleEv;
-          if (googleEv.length) {
-            const evRes = await enrichEvCharging(googleEv, "ELEC", { teslaOnly: isTeslaSuperchargerOnly(answers) });
-            evStations = evRes.stations || googleEv;
-            if (evRes.fallback && !cancelled) setUsedFallback(true);
-          } else {
-            evStations = buildFallbackEvStations(lat, lng);
-            if (!cancelled) setUsedFallback(true);
+          const teslaOnly = isTeslaSuperchargerOnly(answers);
+          const nrelRes = await discoverEvCharging(lat, lng, { teslaOnly, fuelType: "ELEC", radius: 5 });
+          let evStations = nrelRes.stations || [];
+          if (!evStations.length) {
+            const googleEv = await searchEvChargingStations(lat, lng, 10);
+            if (googleEv.length) {
+              const evRes = await enrichEvCharging(googleEv, "ELEC", { teslaOnly });
+              evStations = evRes.stations || googleEv;
+              if (evRes.fallback && !cancelled) setUsedFallback(true);
+            } else {
+              evStations = buildFallbackEvStations(lat, lng);
+              if (!cancelled) setUsedFallback(true);
+            }
           }
           evStations = evStations.filter(s => isPlausibleEvChargingStation(s));
           evStations = selectOnRouteFuelStations(applyStopFilters(evStations, answers), 1);

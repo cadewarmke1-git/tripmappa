@@ -31,10 +31,10 @@ import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from ".
 import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } from "./lib/postGenerationPersistence.js";
 import { configurePlacesAutocomplete, resolvePlaceFromAutocomplete } from "./lib/places.js";
-import { enrichGeneratedTrip } from "./lib/tripEnrichment.js";
+import { enrichGeneratedTrip, enrichPlacesLayer } from "./lib/tripEnrichment.js";
 import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
 import { copyToClipboard } from "./lib/copyToClipboard.js";
-import { buildPlacesContext, formatPlacesContextForPrompt } from "./lib/placesContext.js";
+import { buildPlacesContext, formatPlacesContextForPrompt, shouldPrefetchPlacesContext } from "./lib/placesContext.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
 import { stopsToMapMarkers } from "./lib/mapMarkers.js";
@@ -171,6 +171,7 @@ export default function App() {
   const [personalTouches, setPersonalTouches] = useState([]);
   const [changesMade, setChangesMade] = useState([]);
   const [enrichingTrip, setEnrichingTrip] = useState(false);
+  const [enrichingPlaces, setEnrichingPlaces] = useState(false);
   const [enrichmentLimited, setEnrichmentLimited] = useState(false);
   const [enrichmentNoticeDismissed, setEnrichmentNoticeDismissed] = useState(false);
   const [planDraft, setPlanDraft] = useState(() => loadPlanDraft());
@@ -475,6 +476,9 @@ export default function App() {
   const generateAbortRef = useRef(null);
   const generateTripInFlightRef = useRef(false);
   const enrichAbortRef = useRef(null);
+  const placesEnrichAbortRef = useRef(null);
+  const placesEnrichmentPendingRef = useRef(false);
+  const placesEnrichmentContextRef = useRef(null);
   const hadUserRef = useRef(false);
   const intentionalSignOutRef = useRef(false);
   const sessionExpiredNotifiedRef = useRef(false);
@@ -2490,7 +2494,7 @@ export default function App() {
     );
   }, [routeInfo, answers, getDepartureTime]);
 
-  async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers, routeInfoOverride = null) {
+  async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers, routeInfoOverride = null, placesContextOverride = null) {
     const activeRouteInfo = routeInfoOverride ?? routeInfo;
     const mapsReady = isLoaded && !!window.google;
     enrichAbortRef.current?.abort();
@@ -2512,8 +2516,19 @@ export default function App() {
         destination: destRef.current?.value?.trim() || dest,
         mapsReady,
         signal: enrichController.signal,
+        placesContext: placesContextOverride,
+        deferPlacesEnrichment: true,
       });
       if (enrichController.signal.aborted) return null;
+      placesEnrichmentContextRef.current = {
+        answers: normalizedAnswers,
+        routeInfo: activeRouteInfo,
+        stops: enriched.stops,
+        roadStops: enriched.roadStops,
+        destination: destRef.current?.value?.trim() || dest,
+        mapsReady,
+      };
+      placesEnrichmentPendingRef.current = Boolean(enriched.placesEnrichmentPending);
       setStops(enriched.stops);
       setRoadStops(enriched.roadStops);
       setActivitiesByCity(enriched.activitiesByCity);
@@ -2567,9 +2582,49 @@ export default function App() {
 
   function cancelEnrichment() {
     enrichAbortRef.current?.abort();
+    placesEnrichAbortRef.current?.abort();
+    placesEnrichmentPendingRef.current = false;
+    setEnrichingPlaces(false);
     setEnrichingTrip(false);
     toast_("Enrichment cancelled — basic trip data is still shown.");
   }
+
+  const runPlacesEnrichment = useCallback(async () => {
+    if (!placesEnrichmentPendingRef.current || !placesEnrichmentContextRef.current) return;
+    placesEnrichmentPendingRef.current = false;
+    placesEnrichAbortRef.current?.abort();
+    const controller = new AbortController();
+    placesEnrichAbortRef.current = controller;
+    setEnrichingPlaces(true);
+    try {
+      const ctx = placesEnrichmentContextRef.current;
+      const layer = await enrichPlacesLayer({
+        ...ctx,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setActivitiesByCity(layer.activitiesByCity || {});
+      setRestaurantsByCity(layer.restaurantsByCity || {});
+      setOptionalStopCards(layer.optionalStopCards || []);
+      if (layer.roadStops?.length) setRoadStops(layer.roadStops);
+      if (layer.poiMarkers?.length && isLoaded && window.google) {
+        setMapMarkers(stopsToMapMarkers(
+          ctx.stops,
+          layer.roadStops || ctx.roadStops,
+          customStops,
+          layer.poiMarkers,
+          ctx.answers,
+        ));
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") console.warn("Places enrichment failed:", err);
+    } finally {
+      if (placesEnrichAbortRef.current === controller) {
+        placesEnrichAbortRef.current = null;
+      }
+      setEnrichingPlaces(false);
+    }
+  }, [customStops, isLoaded]);
 
   function capturePlanSnapshot() {
     const snapshot = buildPlanSnapshot({
@@ -2654,7 +2709,7 @@ export default function App() {
 
     let normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
 
-    const applyGeneratedTrip = (parsed, activeRouteInfo, { tips, mergedRoadStops }) => {
+    const applyGeneratedTrip = (parsed, activeRouteInfo, { tips, mergedRoadStops, placesContext: ctxForEnrichment }) => {
       if (activeRouteInfo) {
         setRouteInfo(prev => ({ ...(prev || {}), ...activeRouteInfo }));
       }
@@ -2684,7 +2739,7 @@ export default function App() {
         restaurantsByCity,
         recommendations: parsed.recommendations || [],
       });
-      void enrichAndSetTrip(parsed.stops, mergedRoadStops, normalizedAnswers, activeRouteInfo);
+      void enrichAndSetTrip(parsed.stops, mergedRoadStops, normalizedAnswers, activeRouteInfo, ctxForEnrichment);
       clearSavedPlanDraft();
       toast_("Trip planned", true);
     };
@@ -2744,7 +2799,8 @@ export default function App() {
 
       let placesContext = null;
       let placesContextPrompt = "";
-      if (isLoaded && window.google && activeRouteInfo.routePoints?.length) {
+      if (isLoaded && window.google && activeRouteInfo.routePoints?.length
+        && shouldPrefetchPlacesContext(normalizedAnswers, activeRouteInfo)) {
         setGenerationStream(buildGenerationPrepProgress("places", {
           cityNames: activeRouteInfo.citiesAlongRoute || [],
         }));
@@ -2833,7 +2889,7 @@ export default function App() {
             }
           }
 
-          applyGeneratedTrip(parsed, activeRouteInfo, { tips, mergedRoadStops });
+          applyGeneratedTrip(parsed, activeRouteInfo, { tips, mergedRoadStops, placesContext });
 
           if (user && session?.access_token) {
             applyCreditStatus(decrementCachedCreditStatus(creditStatusRef.current || creditStatus));
@@ -3658,7 +3714,7 @@ export default function App() {
             selectedLodging={selectedLodging}
             personalTouches={personalTouches}
             changesMade={changesMade}
-            enrichingTrip={enrichingTrip}
+            enrichingTrip={enrichingTrip || enrichingPlaces}
             enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
             planOutOfDate={planOutOfDate}
             planChanges={planChanges}
@@ -3667,6 +3723,7 @@ export default function App() {
             onCancelEnrichment={cancelEnrichment}
             onDismissEnrichmentNotice={() => setEnrichmentNoticeDismissed(true)}
             onRetryEnrichment={retryEnrichment}
+            onEnrichPlacesOnMount={runPlacesEnrichment}
             tripUsedFallback={tripUsedFallback}
             isStopAdded={isRoadStopAdded}
             activitiesByCity={activitiesByCity}
