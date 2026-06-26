@@ -107,6 +107,7 @@ import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPre
 import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
 import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
+import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -400,6 +401,64 @@ export default function App() {
     setAuthError("");
     setAuthPhone("");
     setAuthModal("phone");
+  }
+
+  function renderAuthModals() {
+    return (
+      <>
+        {authModal === "signup" && (
+          <LazyEmailModal
+            email={heroEmail}
+            onEmailChange={setHeroEmail}
+            onClose={() => setAuthModal(null)}
+            onSignUp={handleEmailSignUp}
+            onSwitchToSignIn={() => openAuthModal("signin")}
+            onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
+            onGoogle={() => handleOAuth("google")}
+            onFacebook={() => handleOAuth("facebook")}
+            onApple={() => handleOAuth("apple")}
+            loading={authBusy}
+            error={authError}
+            theme={theme}
+          />
+        )}
+        {authModal === "phone" && (
+          <LazyPhoneModal
+            onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
+            onSendCode={handlePhoneSendCode}
+            onVerifyCode={handlePhoneVerify}
+            onResendCode={handlePhoneResend}
+            initialPhone={authPhone}
+            loading={authBusy}
+            error={authError}
+            theme={theme}
+          />
+        )}
+        {authModal === "signin" && (
+          <LazySignInModal
+            onClose={() => setAuthModal(null)}
+            onSignIn={handleSignInSubmit}
+            onForgotPassword={handleForgotPassword}
+            onSwitchToSignup={() => openAuthModal("signup")}
+            onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
+            onGoogle={() => handleOAuth("google")}
+            onFacebook={() => handleOAuth("facebook")}
+            onApple={() => handleOAuth("apple")}
+            loading={authBusy}
+            error={authError}
+            theme={theme}
+          />
+        )}
+        {!isAuthConfigured && authModal?.startsWith("oauth-") && (
+          <LazyOAuthComingSoonModal
+            provider={authModal.replace("oauth-", "")}
+            onClose={() => setAuthModal(null)}
+            onUseEmail={() => openAuthModal("signup")}
+            theme={theme}
+          />
+        )}
+      </>
+    );
   }
 
   async function handleSignOut() {
@@ -799,6 +858,8 @@ export default function App() {
   const heroDestRef = useRef(null);
   const heroOriginAcRef = useRef(null);
   const heroDestAcRef = useRef(null);
+  const navigateOriginRef = useRef(null);
+  const navigateDestRef = useRef(null);
   const mapRef = useRef(null);
   const polylineRef = useRef(null);
   const polylinesRef = useRef([]);
@@ -1823,6 +1884,33 @@ export default function App() {
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
+
+  function swapNavigateRoute() {
+    const fromVal = navigateOriginRef.current?.value ?? origin;
+    const toVal = navigateDestRef.current?.value ?? dest;
+    if (navigateOriginRef.current) navigateOriginRef.current.value = toVal;
+    if (navigateDestRef.current) navigateDestRef.current.value = fromVal;
+    setOrigin(toVal);
+    setDest(fromVal);
+  }
+
+  async function handleNavigateGetRoute() {
+    const fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
+    const toVal = navigateDestRef.current?.value?.trim() || dest.trim();
+    if (!fromVal || !toVal) {
+      toast_("Enter a start and destination");
+      return;
+    }
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+    setOrigin(fromVal);
+    setDest(toVal);
+    const ok = await fetchRouteBetween(fromVal, toVal);
+    if (ok) toast_("Route ready", true);
+    else toast_("Could not calculate route — check addresses and try again", { isError: true });
+  }
 
   function swapHeroCities() {
     const fromVal = heroOriginRef.current?.value ?? heroOrigin;
@@ -3503,6 +3591,19 @@ export default function App() {
       <>
         <div className={`app-wrap ${theme} navigate-map-wrap`}>
           {renderAppNavBar("hero")}
+          <NavigateRoutePanel
+            isLoaded={isLoaded}
+            origin={origin}
+            dest={dest}
+            originRef={navigateOriginRef}
+            destRef={navigateDestRef}
+            onOriginChange={setOrigin}
+            onDestChange={setDest}
+            onSwap={swapNavigateRoute}
+            onGetRoute={handleNavigateGetRoute}
+            routeLoading={routeLoading}
+            theme={theme}
+          />
           <div className="trip-map-fullscreen navigate-map-fullscreen view-panel-animate">
             <ErrorBoundary
               key={mapBoundaryKey}
@@ -3550,6 +3651,15 @@ export default function App() {
             </ErrorBoundary>
           </div>
         </div>
+        {renderAuthModals()}
+        {showHomeAddressModal && (
+          <LazyHomeAddressModal
+            isLoaded={isLoaded}
+            initialAddress={homeAddress || getGuestHomeAddress() || ""}
+            onSave={handleSaveHomeAddress}
+            onClose={() => { setShowHomeAddressModal(false); setNavigateHomePending(false); }}
+          />
+        )}
         <Toast
           message={toast}
           isGold={toastIsGold}
@@ -3614,56 +3724,7 @@ export default function App() {
           onDismiss={() => setFounderWelcomeName(null)}
         />
       )}
-      {authModal === "signup" && (
-        <LazyEmailModal
-          email={heroEmail}
-          onEmailChange={setHeroEmail}
-          onClose={() => setAuthModal(null)}
-          onSignUp={handleEmailSignUp}
-          onSwitchToSignIn={() => openAuthModal("signin")}
-          onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
-          onGoogle={() => handleOAuth("google")}
-          onFacebook={() => handleOAuth("facebook")}
-          onApple={() => handleOAuth("apple")}
-          loading={authBusy}
-          error={authError}
-          theme={theme}
-        />
-      )}
-      {authModal === "phone" && (
-        <LazyPhoneModal
-          onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
-          onSendCode={handlePhoneSendCode}
-          onVerifyCode={handlePhoneVerify}
-          onResendCode={handlePhoneResend}
-          initialPhone={authPhone}
-          loading={authBusy}
-          error={authError}
-          theme={theme}
-        />
-      )}
-      {authModal === "signin" && (
-        <LazySignInModal
-          onClose={() => setAuthModal(null)}
-          onSignIn={handleSignInSubmit}
-          onForgotPassword={handleForgotPassword}
-          onSwitchToSignup={() => openAuthModal("signup")}
-          onGoogle={() => handleOAuth("google")}
-          onFacebook={() => handleOAuth("facebook")}
-          onApple={() => handleOAuth("apple")}
-          loading={authBusy}
-          error={authError}
-          theme={theme}
-        />
-      )}
-      {!isAuthConfigured && authModal?.startsWith("oauth-") && (
-        <LazyOAuthComingSoonModal
-          provider={authModal.replace("oauth-", "")}
-          onClose={() => setAuthModal(null)}
-          onUseEmail={() => openAuthModal("signup")}
-          theme={theme}
-        />
-      )}
+      {renderAuthModals()}
       <Toast
         message={toast}
         isGold={toastIsGold}
@@ -4151,56 +4212,7 @@ export default function App() {
           }}
         />
       )}
-      {authModal === "signup" && (
-        <LazyEmailModal
-          email={heroEmail}
-          onEmailChange={setHeroEmail}
-          onClose={() => setAuthModal(null)}
-          onSignUp={handleEmailSignUp}
-          onSwitchToSignIn={() => openAuthModal("signin")}
-          onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
-          onGoogle={() => handleOAuth("google")}
-          onFacebook={() => handleOAuth("facebook")}
-          onApple={() => handleOAuth("apple")}
-          loading={authBusy}
-          error={authError}
-          theme={theme}
-        />
-      )}
-      {authModal === "phone" && (
-        <LazyPhoneModal
-          onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
-          onSendCode={handlePhoneSendCode}
-          onVerifyCode={handlePhoneVerify}
-          onResendCode={handlePhoneResend}
-          initialPhone={authPhone}
-          loading={authBusy}
-          error={authError}
-          theme={theme}
-        />
-      )}
-      {authModal === "signin" && (
-        <LazySignInModal
-          onClose={() => setAuthModal(null)}
-          onSignIn={handleSignInSubmit}
-          onForgotPassword={handleForgotPassword}
-          onSwitchToSignup={() => openAuthModal("signup")}
-          onGoogle={() => handleOAuth("google")}
-          onFacebook={() => handleOAuth("facebook")}
-          onApple={() => handleOAuth("apple")}
-          loading={authBusy}
-          error={authError}
-          theme={theme}
-        />
-      )}
-      {!isAuthConfigured && authModal?.startsWith("oauth-") && (
-        <LazyOAuthComingSoonModal
-          provider={authModal.replace("oauth-", "")}
-          onClose={() => setAuthModal(null)}
-          onUseEmail={() => openAuthModal("signup")}
-          theme={theme}
-        />
-      )}
+      {renderAuthModals()}
       {showCollabPanel && (
         <CollaborationPanel
           open={showCollabPanel}

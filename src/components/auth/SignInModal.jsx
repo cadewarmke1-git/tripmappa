@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 import AuthSocialButtons, { SOCIAL_AUTH_UI_ENABLED } from "./AuthSocialButtons.jsx";
+import { PhoneIcon } from "./PhoneModal.jsx";
 import ModalCloseButton from "../ModalCloseButton.jsx";
 import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
 import BrandWordmark from "../BrandWordmark.jsx";
@@ -10,6 +11,7 @@ export default function SignInModal({
   onSignIn,
   onForgotPassword,
   onSwitchToSignup,
+  onContinueWithPhone,
   onGoogle,
   onFacebook,
   onApple,
@@ -78,6 +80,11 @@ export default function SignInModal({
             <a href="/privacy" className="auth-modal-link-btn">Privacy Policy</a>.
           </p>
         </form>
+
+        <div className="auth-modal-divider"><span>or</span></div>
+        <button type="button" className="hero-email-btn auth-modal-alt-btn" onClick={onContinueWithPhone} disabled={loading}>
+          <PhoneIcon /> Continue with phone
+        </button>
 
         {SOCIAL_AUTH_UI_ENABLED && (
           <>

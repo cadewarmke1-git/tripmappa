@@ -1,5 +1,5 @@
-/** OAuth social sign-in buttons — hidden until Supabase OAuth is fully wired. */
-export const SOCIAL_AUTH_UI_ENABLED = false;
+/** OAuth social sign-in buttons — shown when Supabase auth is configured. */
+export const SOCIAL_AUTH_UI_ENABLED = true;
 
 export default function AuthSocialButtons({ onGoogle, onFacebook, onApple, compact = false, disabled = false }) {
   if (!SOCIAL_AUTH_UI_ENABLED) return null;
