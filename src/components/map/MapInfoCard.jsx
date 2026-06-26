@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MARKER_CATEGORIES } from "../../lib/mapMarkers.js";
+import { markerToSignCategory } from "../../lib/neonSignCategory.js";
 
 export default function MapInfoCard({ marker, theme = "night", onClose, onAction }) {
   const [visible, setVisible] = useState(false);
@@ -11,6 +12,7 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
 
   if (!marker) return null;
   const cat = MARKER_CATEGORIES[marker.category]?.label || "Stop";
+  const signCategory = markerToSignCategory(marker.category);
 
   function handleClose() {
     setVisible(false);
@@ -19,7 +21,7 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
 
   return (
     <div
-      className={`map-info-card map-info-card-drawer ${theme}${visible ? " is-open" : ""}`}
+      className={`map-info-card map-info-card-drawer map-info-sign map-info-sign--${signCategory} ${theme}${visible ? " is-open" : ""}`}
       role="dialog"
       aria-label={marker.title}
     >

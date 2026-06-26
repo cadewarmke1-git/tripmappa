@@ -1,0 +1,550 @@
+/* Vintage neon motel-sign cards — day/night via html[data-surface-theme] sky cycle */
+
+@import url('https://fonts.googleapis.com/css2?family=Limelight&display=swap');
+
+:root {
+  --vneon-cream: #f4e6c8;
+  --vneon-cream-backing: #dcc9a8;
+  --vneon-night-bg: #0f1428;
+  --vneon-night-backing: #0f1428;
+  --vneon-pink: #ff5fa8;
+  --vneon-teal: #3dd9d0;
+  --vneon-gold: #ffd28c;
+  --vneon-muted-teal: #5a9e96;
+  --vneon-lodging-orange: #ff8c42;
+  --vneon-lodging-orange-flat: #c96a28;
+  --vneon-lodging-blue: #5b9fd9;
+  --vneon-lodging-blue-flat: #2d6eb5;
+  --vneon-pink-flat: #c94d84;
+  --vneon-teal-flat: #2a8f88;
+  --vneon-gold-flat: #b8860b;
+}
+
+/* ── Card shell ── */
+.vneon-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* ── Mounting bracket + pole ── */
+.vneon-mount {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 14px;
+  margin-bottom: -2px;
+  pointer-events: none;
+}
+.vneon-mount-bracket {
+  display: block;
+  width: 28px;
+  height: 6px;
+  border: 2px solid var(--vneon-gold-flat);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+}
+.vneon-mount-pole {
+  display: block;
+  width: 3px;
+  height: 8px;
+  background: var(--vneon-gold-flat);
+  border-radius: 1px;
+}
+
+/* ── Sign shell + backing panel ── */
+.vneon-sign-shell {
+  position: relative;
+  padding: 10px 8px 12px;
+}
+.vneon-backing {
+  position: absolute;
+  inset: 4px 2px 2px;
+  border-radius: 18px;
+  background: var(--vneon-night-backing);
+  z-index: 0;
+}
+.vneon-tube {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+.vneon-shape {
+  position: relative;
+  z-index: 2;
+  padding: 14px 12px 16px;
+  background: var(--vneon-night-bg);
+  border: 2px solid transparent;
+}
+
+/* ── Shape variants ── */
+.vneon-card--food .vneon-shape {
+  border-radius: 50% / 44%;
+  min-height: 108px;
+}
+.vneon-card--fuel .vneon-shape {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  padding: 18px 20px 16px;
+  min-height: 120px;
+}
+.vneon-card--lodging .vneon-shape {
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+  padding: 22px 12px 20px;
+  min-height: 110px;
+  border-radius: 4px;
+}
+.vneon-card--general .vneon-shape {
+  border-radius: 14px;
+  min-height: 88px;
+  padding: 12px;
+}
+
+/* ── Inner content ── */
+.vneon-sign-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+.vneon-name {
+  font-family: "Limelight", "Fraunces", Georgia, serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0;
+  color: #fff;
+  letter-spacing: 0.02em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.vneon-cat-badge {
+  display: inline-block;
+  font-family: "Inter", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1.5px solid currentColor;
+  line-height: 1.2;
+}
+.vneon-photo-slot {
+  position: relative;
+  width: 100%;
+  max-width: 140px;
+  margin: 0 auto 4px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.vneon-card--lodging .vneon-photo-slot {
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.vneon-photo-slot .road-stop-card-photo-wrap,
+.vneon-photo-slot .restaurant-card-photo-wrap,
+.vneon-photo-slot .lodging-card-photo-wrap {
+  width: 100%;
+  height: auto;
+}
+.vneon-photo-slot .road-stop-card-photo-thumb {
+  width: 100%;
+  height: 72px;
+}
+.vneon-photo-slot .restaurant-card-photo-thumb {
+  width: 100%;
+  height: 72px;
+}
+.vneon-photo-slot .lodging-card-photo-wrap {
+  aspect-ratio: 16 / 9;
+}
+.vneon-photo-slot .road-stop-badge-cat {
+  display: none;
+}
+
+/* ── Food: starburst + gold diamonds ── */
+.vneon-starburst {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  background:
+    conic-gradient(from 0deg, currentColor 0 10deg, transparent 10deg 20deg);
+  mask: radial-gradient(circle, transparent 35%, #000 36%);
+  -webkit-mask: radial-gradient(circle, transparent 35%, #000 36%);
+  opacity: 0.9;
+}
+.vneon-starburst::before,
+.vneon-starburst::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  mask: inherit;
+  -webkit-mask: inherit;
+}
+.vneon-starburst::before { transform: rotate(45deg); }
+.vneon-starburst::after { transform: rotate(22.5deg); }
+.vneon-diamonds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.vneon-diamond {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: var(--vneon-gold-flat);
+  transform: rotate(45deg);
+}
+.vneon-diamond:nth-child(1) { top: 8%; left: 6%; }
+.vneon-diamond:nth-child(2) { top: 8%; right: 6%; }
+.vneon-diamond:nth-child(3) { bottom: 12%; left: 8%; }
+.vneon-diamond:nth-child(4) { bottom: 12%; right: 8%; }
+
+/* ── Fuel: hex tick marks ── */
+.vneon-hex-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.vneon-hex-tick {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: currentColor;
+  left: 50%;
+  top: 50%;
+  transform-origin: center -42px;
+}
+.vneon-hex-tick:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg) translateY(-52px); }
+.vneon-hex-tick:nth-child(2) { transform: translate(-50%, -50%) rotate(60deg) translateY(-52px); }
+.vneon-hex-tick:nth-child(3) { transform: translate(-50%, -50%) rotate(120deg) translateY(-52px); }
+.vneon-hex-tick:nth-child(4) { transform: translate(-50%, -50%) rotate(180deg) translateY(-52px); }
+.vneon-hex-tick:nth-child(5) { transform: translate(-50%, -50%) rotate(240deg) translateY(-52px); }
+.vneon-hex-tick:nth-child(6) { transform: translate(-50%, -50%) rotate(300deg) translateY(-52px); }
+
+/* ── Lodging: chase-light bulbs ── */
+.vneon-chase-bulbs {
+  position: absolute;
+  top: 6px;
+  left: 10%;
+  right: 10%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.vneon-chase-bulb {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: calc(0.35 + (var(--bulb-i, 0) * 0.07));
+}
+
+/* ── General: accent line under name ── */
+.vneon-name-rule {
+  width: 48px;
+  height: 2px;
+  background: currentColor;
+  margin: 2px auto 0;
+  border-radius: 1px;
+}
+.vneon-card--general .vneon-name-rule { color: var(--vneon-muted-teal); }
+
+/* ── Category badge colors ── */
+.vneon-card--food .vneon-cat-badge { color: var(--vneon-teal); }
+.vneon-card--fuel .vneon-cat-badge { color: var(--vneon-pink); }
+.vneon-card--lodging .vneon-cat-badge { color: var(--vneon-lodging-blue); }
+.vneon-card--general .vneon-cat-badge { color: var(--vneon-muted-teal); }
+
+.vneon-card--fuel .vneon-hex-ticks { color: var(--vneon-pink); }
+.vneon-card--lodging .vneon-chase-bulbs { color: var(--vneon-lodging-blue); }
+
+/* ── Two-tone tube rings (food + fuel) ── */
+.vneon-card--food .vneon-tube-outer,
+.vneon-card--fuel .vneon-tube-outer {
+  inset: 2px 0 0;
+  border-radius: inherit;
+}
+.vneon-card--food .vneon-shape { border-radius: 50% / 44%; }
+.vneon-card--food .vneon-tube-outer {
+  border-radius: 50% / 44%;
+  border: 2px solid var(--vneon-pink);
+}
+.vneon-card--food .vneon-tube-inner {
+  inset: 8px 6px 4px;
+  border-radius: 50% / 44%;
+  border: 2px solid var(--vneon-teal);
+}
+.vneon-card--fuel .vneon-tube-outer {
+  inset: 2px 0 0;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  border: 2px solid var(--vneon-teal);
+}
+.vneon-card--fuel .vneon-tube-inner {
+  inset: 8px 10px 6px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  border: 2px solid var(--vneon-pink);
+}
+.vneon-card--lodging .vneon-tube-outer {
+  inset: 2px 0 0;
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+  border: 2px solid var(--vneon-lodging-orange);
+}
+.vneon-card--general .vneon-tube-outer {
+  inset: 2px 0 0;
+  border-radius: 14px;
+  border: 2px solid var(--vneon-muted-teal);
+}
+
+/* Hide inner tube for single-ring shapes */
+.vneon-card--lodging .vneon-tube-inner,
+.vneon-card--general .vneon-tube-inner {
+  display: none;
+}
+
+/* ── Info row (flat, no glow) ── */
+.vneon-info-row {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+}
+.vneon-footer {
+  margin-top: 8px;
+}
+
+/* ══════════════════════════════════════════
+   NIGHT — glow on sign frame + accents only
+   ══════════════════════════════════════════ */
+html[data-surface-theme="night"] .vneon-card,
+html[data-surface-theme="twilight"] .vneon-card {
+  background: transparent;
+}
+html[data-surface-theme="night"] .vneon-shape,
+html[data-surface-theme="twilight"] .vneon-shape {
+  background: var(--vneon-night-bg);
+}
+html[data-surface-theme="night"] .vneon-name,
+html[data-surface-theme="twilight"] .vneon-name {
+  color: #f8f4ec;
+}
+
+/* Food: pink outer + teal inner glow */
+html[data-surface-theme="night"] .vneon-card--food .vneon-tube-outer,
+html[data-surface-theme="twilight"] .vneon-card--food .vneon-tube-outer {
+  box-shadow:
+    0 0 4px var(--vneon-pink),
+    0 0 14px rgba(255, 95, 168, 0.65),
+    0 0 28px rgba(255, 95, 168, 0.35);
+}
+html[data-surface-theme="night"] .vneon-card--food .vneon-tube-inner,
+html[data-surface-theme="twilight"] .vneon-card--food .vneon-tube-inner {
+  box-shadow:
+    0 0 3px var(--vneon-teal),
+    0 0 10px rgba(61, 217, 208, 0.55);
+}
+html[data-surface-theme="night"] .vneon-card--food .vneon-cat-badge,
+html[data-surface-theme="twilight"] .vneon-card--food .vneon-cat-badge {
+  box-shadow: 0 0 8px rgba(61, 217, 208, 0.7);
+}
+html[data-surface-theme="night"] .vneon-card--food .vneon-starburst,
+html[data-surface-theme="twilight"] .vneon-card--food .vneon-starburst {
+  filter: drop-shadow(0 0 6px var(--vneon-pink));
+}
+html[data-surface-theme="night"] .vneon-card--food .vneon-diamond,
+html[data-surface-theme="twilight"] .vneon-card--food .vneon-diamond {
+  box-shadow: 0 0 6px rgba(255, 210, 140, 0.8);
+}
+
+/* Fuel: teal primary + pink accent glow */
+html[data-surface-theme="night"] .vneon-card--fuel .vneon-tube-outer,
+html[data-surface-theme="twilight"] .vneon-card--fuel .vneon-tube-outer {
+  box-shadow:
+    0 0 4px var(--vneon-teal),
+    0 0 14px rgba(61, 217, 208, 0.65),
+    0 0 24px rgba(61, 217, 208, 0.3);
+}
+html[data-surface-theme="night"] .vneon-card--fuel .vneon-tube-inner,
+html[data-surface-theme="twilight"] .vneon-card--fuel .vneon-tube-inner {
+  box-shadow: 0 0 8px rgba(255, 95, 168, 0.55);
+}
+html[data-surface-theme="night"] .vneon-card--fuel .vneon-cat-badge,
+html[data-surface-theme="twilight"] .vneon-card--fuel .vneon-cat-badge {
+  box-shadow: 0 0 8px rgba(255, 95, 168, 0.65);
+}
+html[data-surface-theme="night"] .vneon-card--fuel .vneon-hex-tick,
+html[data-surface-theme="twilight"] .vneon-card--fuel .vneon-hex-tick {
+  box-shadow: 0 0 5px rgba(255, 95, 168, 0.75);
+}
+
+/* Lodging: warm orange primary tube + blue accent glow */
+html[data-surface-theme="night"] .vneon-card--lodging .vneon-tube-outer,
+html[data-surface-theme="twilight"] .vneon-card--lodging .vneon-tube-outer {
+  box-shadow:
+    0 0 4px var(--vneon-lodging-orange),
+    0 0 14px rgba(255, 140, 66, 0.6),
+    0 0 22px rgba(255, 140, 66, 0.3);
+}
+html[data-surface-theme="night"] .vneon-card--lodging .vneon-cat-badge,
+html[data-surface-theme="twilight"] .vneon-card--lodging .vneon-cat-badge {
+  box-shadow: 0 0 8px rgba(91, 159, 217, 0.65);
+}
+html[data-surface-theme="night"] .vneon-card--lodging .vneon-chase-bulb,
+html[data-surface-theme="twilight"] .vneon-card--lodging .vneon-chase-bulb {
+  box-shadow: 0 0 4px rgba(91, 159, 217, 0.8);
+}
+
+/* General: muted teal single ring */
+html[data-surface-theme="night"] .vneon-card--general .vneon-tube-outer,
+html[data-surface-theme="twilight"] .vneon-card--general .vneon-tube-outer {
+  box-shadow:
+    0 0 3px var(--vneon-muted-teal),
+    0 0 10px rgba(90, 158, 150, 0.5);
+}
+html[data-surface-theme="night"] .vneon-card--general .vneon-cat-badge,
+html[data-surface-theme="twilight"] .vneon-card--general .vneon-cat-badge {
+  box-shadow: 0 0 6px rgba(90, 158, 150, 0.55);
+}
+html[data-surface-theme="night"] .vneon-card--general .vneon-name-rule,
+html[data-surface-theme="twilight"] .vneon-card--general .vneon-name-rule {
+  box-shadow: 0 0 6px rgba(90, 158, 150, 0.5);
+}
+
+html[data-surface-theme="night"] .vneon-mount-bracket,
+html[data-surface-theme="twilight"] .vneon-mount-bracket,
+html[data-surface-theme="night"] .vneon-mount-pole,
+html[data-surface-theme="twilight"] .vneon-mount-pole {
+  box-shadow: 0 0 6px rgba(255, 210, 140, 0.45);
+}
+
+html[data-surface-theme="night"] .vneon-info-row,
+html[data-surface-theme="twilight"] .vneon-info-row {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.72);
+  box-shadow: none;
+  filter: none;
+}
+
+/* ══════════════════════════════════════════
+   DAY — sun-bleached, zero glow/shadow
+   ══════════════════════════════════════════ */
+html[data-surface-theme="day"] .vneon-card {
+  background: transparent;
+}
+html[data-surface-theme="day"] .vneon-backing {
+  background: var(--vneon-cream-backing);
+  box-shadow: none;
+  filter: none;
+}
+html[data-surface-theme="day"] .vneon-shape {
+  background: var(--vneon-cream);
+  box-shadow: none;
+  filter: none;
+}
+html[data-surface-theme="day"] .vneon-tube-outer,
+html[data-surface-theme="day"] .vneon-tube-inner,
+html[data-surface-theme="day"] .vneon-cat-badge,
+html[data-surface-theme="day"] .vneon-starburst,
+html[data-surface-theme="day"] .vneon-diamond,
+html[data-surface-theme="day"] .vneon-hex-tick,
+html[data-surface-theme="day"] .vneon-chase-bulb,
+html[data-surface-theme="day"] .vneon-name-rule,
+html[data-surface-theme="day"] .vneon-mount-bracket,
+html[data-surface-theme="day"] .vneon-mount-pole {
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+}
+html[data-surface-theme="day"] .vneon-card--food .vneon-tube-outer { border-color: var(--vneon-pink-flat); }
+html[data-surface-theme="day"] .vneon-card--food .vneon-tube-inner { border-color: var(--vneon-teal-flat); }
+html[data-surface-theme="day"] .vneon-card--fuel .vneon-tube-outer { border-color: var(--vneon-teal-flat); }
+html[data-surface-theme="day"] .vneon-card--fuel .vneon-tube-inner { border-color: var(--vneon-pink-flat); }
+html[data-surface-theme="day"] .vneon-card--lodging .vneon-tube-outer { border-color: var(--vneon-lodging-orange-flat); }
+html[data-surface-theme="day"] .vneon-card--lodging .vneon-cat-badge { color: var(--vneon-lodging-blue-flat); }
+html[data-surface-theme="day"] .vneon-card--lodging .vneon-chase-bulbs { color: var(--vneon-lodging-blue-flat); }
+html[data-surface-theme="day"] .vneon-card--general .vneon-tube-outer { border-color: var(--vneon-muted-teal); }
+html[data-surface-theme="day"] .vneon-name {
+  color: #2a2218;
+}
+html[data-surface-theme="day"] .vneon-info-row {
+  background: rgba(42, 34, 24, 0.06);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+/* ── Parent card resets when neon sign is used ── */
+.road-stop-card:has(.vneon-card),
+.restaurant-card:has(.vneon-card),
+.lodging-card:has(.vneon-card) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  overflow: visible;
+  flex-direction: column;
+  align-items: stretch;
+}
+.results-route-timeline .road-stop-card:has(.vneon-card) {
+  flex-direction: column;
+}
+.results-route-timeline .road-stop-card:has(.vneon-card) .vneon-photo-slot .road-stop-card-photo-thumb {
+  height: 96px;
+}
+.results-road-stops-scroll .road-stop-card:has(.vneon-card) {
+  flex: 0 0 min(88%, 260px);
+}
+.lodging-cards-scroll .lodging-card:has(.vneon-card) {
+  flex: 0 0 min(88%, 300px);
+}
+
+/* ── Map popup: minimal flat sign (no neon treatment) ── */
+.map-info-card.map-info-sign {
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 12px;
+  padding: 14px 16px 12px;
+}
+.map-info-card.map-info-sign.night {
+  background: #12131f;
+}
+.map-info-card.map-info-sign.day {
+  background: var(--vneon-cream);
+  box-shadow: none;
+}
+.map-info-card.map-info-sign--food { border-color: var(--vneon-pink-flat); }
+.map-info-card.map-info-sign--fuel { border-color: var(--vneon-teal-flat); }
+.map-info-card.map-info-sign--lodging { border-color: var(--vneon-gold-flat); }
+.map-info-card.map-info-sign--general { border-color: var(--vneon-muted-teal); }
+.map-info-card.map-info-sign .map-info-title {
+  font-family: "Limelight", "Fraunces", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+  text-shadow: none;
+  filter: none;
+}
+html[data-surface-theme="day"] .map-info-card.map-info-sign .map-info-title {
+  color: #2a2218;
+}

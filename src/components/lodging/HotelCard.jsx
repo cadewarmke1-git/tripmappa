@@ -2,6 +2,7 @@ import { useState } from "react";
 import AmenityBadges from "./AmenityBadges.jsx";
 import PlaceRatingLine from "../results/PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
+import VintageNeonSignCard from "../signs/VintageNeonSignCard.jsx";
 import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
 import { useOnScreen } from "../../hooks/useOnScreen.js";
 
@@ -39,10 +40,9 @@ export default function HotelCard({ hotel, onSave, onToast }) {
     onToast?.(`Saved ${hotel.name}`);
   }
 
-  return (
-    <article className="lodging-card lodging-card-hotel lodging-card-premium">
-      <div className="lodging-card-photo-wrap" ref={photoRef}>
-        {photoSrc ? (
+  const photo = (
+    <div className="lodging-card-photo-wrap" ref={photoRef}>
+      {photoSrc ? (
         <img
           className="lodging-card-photo"
           src={photoSrc}
@@ -50,62 +50,74 @@ export default function HotelCard({ hotel, onSave, onToast }) {
           loading="lazy"
           onError={() => setPhotoFailed(true)}
         />
-        ) : (
-          <div className="lodging-card-photo lodging-card-photo-placeholder" aria-hidden="true" />
-        )}
-        <div className="lodging-card-photo-gradient" />
-        {badges.length > 0 && (
-          <div className="lodging-card-badges">
-            {badges.map(b => (
-              <span key={b} className={`lodging-feature-badge badge-${b}`}>{BADGE_LABELS[b] || b}</span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="lodging-card-body lodging-card-body-premium">
-        <div className="lodging-card-primary">
-          <h3 className="lodging-card-name">{hotel.name}</h3>
-          {hotel.neighborhood && (
-            <p className="lodging-card-neighborhood">{hotel.neighborhood}</p>
-          )}
-          <div className="lodging-card-stats">
-            <PlaceRatingLine rating={hotel.rating} className="lodging-card-inline-rating" emptyClassName="lodging-no-reviews" />
-            {hotel.verified === true && <TripMappaVerifiedBadge />}
-            <div className="lodging-card-price">
-              {hotel.priceLabel}
-              {(hotel.priceIsEstimated || !hotel.fromGooglePlaces) && (
-                <span className="data-estimated-label"> Estimated</span>
-              )}
-            </div>
-          </div>
-          {hotel.amenities?.length > 0 && (
-            <div className="lodging-card-amenities-wrap">
-              <AmenityBadges amenityIds={hotel.amenities} />
-            </div>
-          )}
+      ) : (
+        <div className="lodging-card-photo lodging-card-photo-placeholder" aria-hidden="true" />
+      )}
+      <div className="lodging-card-photo-gradient" />
+      {badges.length > 0 && (
+        <div className="lodging-card-badges">
+          {badges.map(b => (
+            <span key={b} className={`lodging-feature-badge badge-${b}`}>{BADGE_LABELS[b] || b}</span>
+          ))}
         </div>
+      )}
+    </div>
+  );
 
-        <div className="lodging-card-secondary">
-          {hotel.description && (
-            <p className="lodging-card-desc">{hotel.description}</p>
-          )}
-          {hotel.distanceFromRoute != null && (
-            <p className="lodging-card-distance">{hotel.distanceFromRoute} mi from route</p>
-          )}
-        </div>
+  const signExtra = hotel.neighborhood ? (
+    <p className="lodging-card-neighborhood">{hotel.neighborhood}</p>
+  ) : null;
 
-        <div className="lodging-card-actions lodging-card-actions-anchor">
-          {showBookAction && (
-            <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook} title={bookTitle}>
-              {bookLabel}
-            </button>
+  const infoRow = (
+    <>
+      <div className="lodging-card-stats">
+        <PlaceRatingLine rating={hotel.rating} className="lodging-card-inline-rating" emptyClassName="lodging-no-reviews" />
+        {hotel.verified === true && <TripMappaVerifiedBadge />}
+        <div className="lodging-card-price">
+          {hotel.priceLabel}
+          {(hotel.priceIsEstimated || !hotel.fromGooglePlaces) && (
+            <span className="data-estimated-label"> Estimated</span>
           )}
-          <button type="button" className="lodging-btn-save" onClick={handleSave}>
-            Save
-          </button>
         </div>
       </div>
+      {hotel.amenities?.length > 0 && (
+        <div className="lodging-card-amenities-wrap">
+          <AmenityBadges amenityIds={hotel.amenities} />
+        </div>
+      )}
+      {hotel.description && (
+        <p className="lodging-card-desc">{hotel.description}</p>
+      )}
+      {hotel.distanceFromRoute != null && (
+        <p className="lodging-card-distance">{hotel.distanceFromRoute} mi from route</p>
+      )}
+    </>
+  );
+
+  const footer = (
+    <div className="lodging-card-actions lodging-card-actions-anchor">
+      {showBookAction && (
+        <button type="button" className="btn-generate lodging-btn-book" onClick={handleBook} title={bookTitle}>
+          {bookLabel}
+        </button>
+      )}
+      <button type="button" className="lodging-btn-save" onClick={handleSave}>
+        Save
+      </button>
+    </div>
+  );
+
+  return (
+    <article className="lodging-card lodging-card-hotel lodging-card-premium">
+      <VintageNeonSignCard
+        signCategory="lodging"
+        businessName={hotel.name}
+        categoryLabel="Lodging"
+        photo={photo}
+        signExtra={signExtra}
+        infoRow={infoRow}
+        footer={footer}
+      />
     </article>
   );
 }
