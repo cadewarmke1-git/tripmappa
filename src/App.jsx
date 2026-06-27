@@ -3640,6 +3640,15 @@ export default function App() {
                 onMapStyleChange={setMapStyle}
                 onRecenter={recenterMap}
                 onMarkerSelect={handleMapMarkerSelect}
+                onMarkerAction={(action, marker) => {
+                  if (action === "directions" && marker?.lat != null && marker?.lng != null) {
+                    window.open(
+                      `https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                  }
+                }}
                 onMapBackgroundClick={handleMapBackgroundClick}
                 onNavigateHome={handleNavigateHome}
                 navigateHomePending={navigateHomePending}

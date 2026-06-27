@@ -123,6 +123,7 @@ export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
     }
 
     num += 1;
+    const stopData = w.stopData || {};
     markers.push({
       id: w.id,
       waypointId: w.id,
@@ -134,6 +135,9 @@ export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
       subtitle: w.city || "",
       zIndex: 10 + num,
       action: w.action || "navigate",
+      website: w.website || stopData.website || stopData.websiteUri,
+      bookUrl: w.bookUrl || stopData.bookUrl,
+      menuUrl: w.menuUrl || stopData.menuUrl || stopData.menu,
     });
   }
   return markers;
@@ -155,6 +159,8 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
         stopIndex: i,
         action: "book",
         bookUrl: stop.bookUrl,
+        website: stop.website || stop.bookUrl,
+        menuUrl: stop.menuUrl,
       });
     }
   });
@@ -166,9 +172,11 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
         lat: rs.lat,
         lng: rs.lng,
         category: mapRoadStopCategory(rs),
-        title: rs.name,
+        title: rs.name || rs.title,
         subtitle: rs.location || rs.distance,
         action: "add",
+        website: rs.website || rs.websiteUri || rs.url,
+        menuUrl: rs.menuUrl || rs.menu,
       });
     }
   });

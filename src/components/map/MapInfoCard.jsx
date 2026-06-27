@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
-import { MARKER_CATEGORIES } from "../../lib/mapMarkers.js";
-import { markerToSignCategory } from "../../lib/neonSignCategory.js";
+import VintageNeonSignCard from "../signs/VintageNeonSignCard.jsx";
+import { markerToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
+
+function resolveWebsiteUrl(marker) {
+  return marker?.website || marker?.websiteUri || marker?.bookUrl || null;
+}
+
+function resolveMenuUrl(marker) {
+  return marker?.menuUrl || marker?.menu || null;
+}
+
+function isRestaurantMarker(marker, signCategory) {
+  if (signCategory === "food") return true;
+  const cat = String(marker?.category || "").toLowerCase();
+  return cat === "restaurant" || cat === "food";
+}
 
 export default function MapInfoCard({ marker, theme = "night", onClose, onAction }) {
   const [visible, setVisible] = useState(false);
@@ -11,8 +25,12 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
   }, [marker?.id]);
 
   if (!marker) return null;
-  const cat = MARKER_CATEGORIES[marker.category]?.label || "Stop";
+
   const signCategory = markerToSignCategory(marker.category);
+  const categoryLabel = signCategoryLabel(signCategory, "Stop");
+  const websiteUrl = resolveWebsiteUrl(marker);
+  const menuUrl = resolveMenuUrl(marker);
+  const showMenu = isRestaurantMarker(marker, signCategory) && Boolean(menuUrl);
 
   function handleClose() {
     setVisible(false);
@@ -21,26 +39,45 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
 
   return (
     <div
-      className={`map-info-card map-info-card-drawer map-info-sign map-info-sign--${signCategory} ${theme}${visible ? " is-open" : ""}`}
+      className={`map-info-card map-info-card-drawer map-info-card--popup ${theme}${visible ? " is-open" : ""}`}
       role="dialog"
       aria-label={marker.title}
     >
       <button type="button" className="map-info-close" onClick={handleClose} aria-label="Close">×</button>
-      <div className="map-info-category">{cat}</div>
-      <div className="map-info-title">{marker.title}</div>
-      {marker.subtitle && <div className="map-info-sub">{marker.subtitle}</div>}
-      {marker.distanceMiles != null && (
-        <div className="map-info-distance">{marker.distanceMiles} mi from route</div>
-      )}
-      <div className="map-info-actions">
-        {marker.action === "book" && marker.bookUrl && (
-          <a href={marker.bookUrl} target="_blank" rel="noopener noreferrer" className="map-info-btn primary">Book Now</a>
+      <VintageNeonSignCard
+        variant="popup"
+        signCategory={signCategory}
+        businessName={marker.title}
+        categoryLabel={categoryLabel}
+        className="map-info-vneon"
+      />
+      <div className="map-info-action-row" role="group" aria-label="Place actions">
+        <button
+          type="button"
+          className="map-info-action-btn"
+          onClick={() => onAction?.("directions", marker)}
+        >
+          Directions
+        </button>
+        {websiteUrl && (
+          <a
+            href={websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="map-info-action-btn map-info-action-link"
+          >
+            Website
+          </a>
         )}
-        {marker.action === "add" && (
-          <button type="button" className="map-info-btn primary" onClick={() => onAction?.("add", marker)}>Add to Trip</button>
-        )}
-        {(marker.action === "directions" || !marker.action) && (
-          <button type="button" className="map-info-btn primary" onClick={() => onAction?.("directions", marker)}>Get Directions</button>
+        {showMenu && (
+          <a
+            href={menuUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="map-info-action-btn map-info-action-link"
+          >
+            Menu
+          </a>
         )}
       </div>
     </div>

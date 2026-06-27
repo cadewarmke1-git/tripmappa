@@ -62,17 +62,38 @@ export default function VintageNeonSignCard({
   signExtra = null,
   infoRow = null,
   footer = null,
+  variant = "card",
   className = "",
 }) {
   const Decor = SHAPE_DECOR[signCategory] || GeneralDecor;
   const badge = categoryLabel || "Stop";
+  const isPopup = variant === "popup";
+
+  const signContent = isPopup ? (
+    <>
+      <h3 className="vneon-name">{businessName}</h3>
+      <span className="vneon-cat-badge">{badge}</span>
+    </>
+  ) : (
+    <>
+      <span className="vneon-cat-badge">{badge}</span>
+      {photo ? <div className="vneon-photo-slot">{photo}</div> : null}
+      <h3 className="vneon-name">{businessName}</h3>
+      {signCategory === "general" ? (
+        <div className="vneon-deco vneon-name-rule" aria-hidden="true" />
+      ) : null}
+      {signExtra}
+    </>
+  );
 
   return (
-    <div className={`vneon-card vneon-card--${signCategory} ${className}`.trim()}>
-      <div className="vneon-mount" aria-hidden="true">
-        <span className="vneon-mount-bracket" />
-        <span className="vneon-mount-pole" />
-      </div>
+    <div className={`vneon-card vneon-card--${signCategory}${isPopup ? " vneon-card--popup" : ""} ${className}`.trim()}>
+      {!isPopup && (
+        <div className="vneon-mount" aria-hidden="true">
+          <span className="vneon-mount-bracket" />
+          <span className="vneon-mount-pole" />
+        </div>
+      )}
 
       <div className="vneon-sign-shell">
         <div className="vneon-backing" aria-hidden="true" />
@@ -80,20 +101,12 @@ export default function VintageNeonSignCard({
         <div className="vneon-tube vneon-tube-inner" aria-hidden="true" />
         <div className="vneon-shape">
           <Decor />
-          <div className="vneon-sign-inner">
-            <span className="vneon-cat-badge">{badge}</span>
-            {photo ? <div className="vneon-photo-slot">{photo}</div> : null}
-            <h3 className="vneon-name">{businessName}</h3>
-            {signCategory === "general" ? (
-              <div className="vneon-deco vneon-name-rule" aria-hidden="true" />
-            ) : null}
-            {signExtra}
-          </div>
+          <div className="vneon-sign-inner">{signContent}</div>
         </div>
       </div>
 
-      {infoRow ? <div className="vneon-info-row">{infoRow}</div> : null}
-      {footer ? <div className="vneon-footer">{footer}</div> : null}
+      {!isPopup && infoRow ? <div className="vneon-info-row">{infoRow}</div> : null}
+      {!isPopup && footer ? <div className="vneon-footer">{footer}</div> : null}
     </div>
   );
 }
