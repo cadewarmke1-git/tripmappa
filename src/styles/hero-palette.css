@@ -27,6 +27,7 @@
 }
 
 /* ── Nav wordmark on hero (nav is outside .hero — needs explicit paths) ── */
+/* impeccable-disable gradient-text: gold-to-orange wordmark gradient is approved TripMappa brand (see DESIGN.md). */
 .app-nav-bar.transparent.app-nav-bar--night .nav-logo-home .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--night .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
@@ -52,6 +53,7 @@
 }
 
 /* ── Hero headline (inside .hero.night / .hero.day) — superseded by hero-surface.css fit-content rules ── */
+/* impeccable-disable gradient-text: hero headline gradient is approved TripMappa brand (see DESIGN.md). */
 .hero.night .hero-title-line,
 .hero.night .hero-content .hero-title-line {
   background-image: linear-gradient(90deg, #5A3A9A 0%, #FFD28C 100%) !important;

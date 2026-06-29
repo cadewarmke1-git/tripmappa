@@ -133,7 +133,8 @@ html body .app-wrap.day .question-progress-track {
 
 html body .app-wrap.day .question-progress-fill {
   background: linear-gradient(90deg, var(--color-accent-gold), var(--color-accent-orange)) !important;
-  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* Match scaleX progress animation (no width transition) per Impeccable optimize. */
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 html body .app-wrap.day .plan-flow-credits {
@@ -312,7 +313,8 @@ html body .app-wrap.night .question-progress-track {
 
 html body .app-wrap.night .question-progress-fill {
   background: linear-gradient(90deg, var(--color-accent-gold), var(--color-accent-orange)) !important;
-  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* Match scaleX progress animation (no width transition) per Impeccable optimize. */
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 html body .app-wrap.night .plan-flow-credits {

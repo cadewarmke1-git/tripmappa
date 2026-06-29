@@ -30,9 +30,10 @@ export default function QuestionProgress({
         </p>
       )}
       <div className="question-progress-track">
+        {/* Drive progress bar via scaleX custom property instead of width (Impeccable optimize). */}
         <div
           className="question-progress-fill"
-          style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+          style={{ "--progress": `${Math.min(100, Math.max(0, progressPercent)) / 100}` }}
         />
       </div>
       <div className="question-progress-phases" role="list" aria-label="Planning progress">

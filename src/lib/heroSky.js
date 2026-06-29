@@ -16,9 +16,9 @@ export function parseSkyHourParam(search = "") {
   return Math.max(0, Math.min(24, n));
 }
 
-/** Always show sky test dial until removed before launch. */
+/** Show sky test dial in local dev only — does not affect live sky hour resolution. */
 export function isSkyTestEnabled() {
-  return true;
+  return import.meta.env.DEV;
 }
 
 export function resolveHeroSkyHour({ liveHour, dialOverride, urlHour }) {

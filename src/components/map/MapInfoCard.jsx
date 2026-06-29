@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 import VintageNeonSignCard from "../signs/VintageNeonSignCard.jsx";
 import { markerToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
 
@@ -24,6 +25,15 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
     return () => cancelAnimationFrame(t);
   }, [marker?.id]);
 
+  // Stable close handler so focus trap / Escape listener are not re-bound every render (a11y harden).
+  const handleClose = useCallback(() => {
+    setVisible(false);
+    setTimeout(() => onClose?.(), 200);
+  }, [onClose]);
+
+  // Wire aria-modal, Escape-to-close, initial focus, and Tab trap for the map pin popup (a11y harden).
+  const dialogRef = useDialogA11y(Boolean(marker), handleClose, "map-info-card-title");
+
   if (!marker) return null;
 
   const signCategory = markerToSignCategory(marker.category);
@@ -32,17 +42,16 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
   const menuUrl = resolveMenuUrl(marker);
   const showMenu = isRestaurantMarker(marker, signCategory) && Boolean(menuUrl);
 
-  function handleClose() {
-    setVisible(false);
-    setTimeout(() => onClose?.(), 200);
-  }
-
   return (
     <div
+      ref={dialogRef}
       className={`map-info-card map-info-card-drawer map-info-card--popup ${theme}${visible ? " is-open" : ""}`}
       role="dialog"
-      aria-label={marker.title}
+      aria-modal="true"
+      aria-labelledby="map-info-card-title"
     >
+      {/* Screen-reader dialog title; visible sign name stays in VintageNeonSignCard for sighted users. */}
+      <h2 id="map-info-card-title" className="map-info-card-sr-title">{marker.title}</h2>
       <button type="button" className="map-info-close" onClick={handleClose} aria-label="Close">×</button>
       <VintageNeonSignCard
         variant="popup"

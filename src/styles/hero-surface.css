@@ -43,6 +43,7 @@ html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
 }
 
 /* ── Travel / Reimagined — per-line gradient clip (fit-content so gradient spans text, not container) ── */
+/* impeccable-disable gradient-text: hero title line gradients are approved TripMappa brand (see DESIGN.md). */
 html body .hero .hero-title {
   overflow: visible;
   padding-bottom: 0.14em;
