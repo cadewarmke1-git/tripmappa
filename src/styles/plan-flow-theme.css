@@ -60,6 +60,18 @@ html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-fuel-note {
   color: rgba(26, 13, 0, 0.55) !important;
 }
 
+html body .app-wrap.day .chat-wrap-plan-flow .plan-ready-scout {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(160, 64, 16, 0.08);
+  border: 1px solid rgba(160, 64, 16, 0.18);
+  color: rgba(26, 13, 0, 0.78) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
 html body .app-wrap.day .chat-wrap-plan-flow .plan-flow-answer-sidebar--ready {
   background: rgba(0, 0, 0, 0.03) !important;
 }

@@ -7,6 +7,7 @@ import { resolveWeatherIconType } from "../../lib/weatherIconTypes.js";
 import AmenityBadges from "../lodging/AmenityBadges.jsx";
 import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
+import { hasGooglePlacesData } from "../../lib/placesVerification.js";
 import { formatPriceBandLabel } from "../../lib/heroVariantContent.js";
 
 export default function OvernightStayCard({
@@ -105,7 +106,7 @@ export default function OvernightStayCard({
           <h3 className="overnight-card-name">{name}</h3>
           <div className="overnight-card-stats">
             <PlaceRatingLine rating={rating} className="overnight-rating" emptyClassName="overnight-no-reviews" />
-            {featured?.verified === true && <TripMappaVerifiedBadge />}
+            {hasGooglePlacesData(featured) && <TripMappaVerifiedBadge />}
             {price && <span className="overnight-price">{price}</span>}
           </div>
           {featured?.amenities?.length > 0 && (

@@ -288,8 +288,8 @@ export default function SharePanel({
           <p className="share-mode-desc">Friends follow your real-time location on the map while you drive.</p>
         </div>
         <div className="share-mode-card share-mode-card-muted">
-          <div className="share-mode-title">Static safety link</div>
-          <p className="share-mode-desc">A read-only itinerary snapshot — no live tracking. Copy it below after you plan.</p>
+          <div className="share-mode-title">Share your itinerary</div>
+          <p className="share-mode-desc">A polished, read-only trip anyone can open — family, friends, or social. Works on any device.</p>
         </div>
         <div className="share-mode-card share-mode-card-collab">
           <div className="share-mode-title">Group collaboration</div>
@@ -442,12 +442,12 @@ export default function SharePanel({
 
       {hasTrip && onShareSafetyTrip && (
         <div className="share-safety-block">
-          <div className="share-safety-title">Static safety link</div>
+          <div className="share-safety-title">Share your itinerary</div>
           <div className="share-safety-sub">
-            Send a read-only itinerary snapshot without live GPS tracking.
+            Copy a link to your full trip — verified stops, route, and overnights. No live GPS.
           </div>
           <button type="button" className="action-btn share-safety-btn" onClick={onShareSafetyTrip}>
-            Copy safety trip link
+            Copy trip link
           </button>
         </div>
       )}

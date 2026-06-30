@@ -51,6 +51,8 @@ export default function ResultsDaySection({
   onAddRoadStop,
   onRemoveRoadStop,
   isStopAdded,
+  isStopOnRoute,
+  readOnly = false,
   sectionRef,
   highlightedStopId,
   stopRefs,
@@ -115,7 +117,7 @@ export default function ResultsDaySection({
 
       {orderedStops.length > 0 && (
         <div className="results-subsection">
-          <h3 className="results-subsection-label">Stops Along the Route</h3>
+          <h3 className="results-subsection-label">Stops on your route</h3>
           <div className="results-route-timeline">
             {orderedStops.map((item, index) => (
               <div key={item.stop.id || `${item.kind}-${index}`} className="results-route-timeline-item">
@@ -126,6 +128,8 @@ export default function ResultsDaySection({
                   onRemove={onRemoveRoadStop}
                   onToast={onToast}
                   added={isStopAdded?.(item.stop)}
+                  onRoute={isStopOnRoute?.(item.stop)}
+                  readOnly={readOnly}
                   onSelect={onStopSelect}
                   highlighted={highlightedStopId === item.stop.id}
                   cardRef={setStopRef(item.stop.id)}
@@ -147,6 +151,7 @@ export default function ResultsDaySection({
             selectedLodging={selectedLodging}
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
+            readOnly={readOnly}
           />
           <RestaurantCardsSection
             city={day.overnight.city}
@@ -199,15 +204,16 @@ export default function ResultsDaySection({
 
       {day.activities?.length > 0 && (
         <div className="results-subsection">
-          <h3 className="results-subsection-label">Things to Do and Eat</h3>
+          <h3 className="results-subsection-label">Optional extras along the way</h3>
           <div className="results-activities-grid">
             {day.activities.map(item => (
               <ActivityDiningCard
                 key={item.id || item.placeId || `${item.name}-${item.lat}-${item.lng}`}
                 item={item}
                 onAdd={onAddRoadStop}
-                onToast={onToast}
                 added={isStopAdded?.(item)}
+                onRoute={isStopOnRoute?.(item)}
+                readOnly={readOnly}
               />
             ))}
           </div>

@@ -28,6 +28,7 @@ export default function LodgingCardsSection({
   onToast,
   onLodgingSelect,
   selectedLodging = [],
+  readOnly = false,
 }) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
@@ -146,13 +147,13 @@ export default function LodgingCardsSection({
         <>
           <div className="lodging-cards-scroll">
             {lodgingType === "hotel" && items.map(hotel => (
-              <HotelCard key={hotel.id} hotel={hotel} onSave={handleSave} onToast={onToast} />
+              <HotelCard key={hotel.id} hotel={hotel} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
             ))}
             {lodgingType === "rv" && items.map(park => (
-              <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} />
+              <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
             ))}
             {lodgingType === "truck" && items.map(stop => (
-              <TruckStopCard key={stop.id} stop={stop} onSave={handleSave} onToast={onToast} />
+              <TruckStopCard key={stop.id} stop={stop} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
             ))}
           </div>
 
@@ -161,7 +162,7 @@ export default function LodgingCardsSection({
               <div className="lodging-section-sublabel">Rest areas — backup option</div>
               <div className="lodging-cards-scroll lodging-cards-rest">
                 {restAreas.map(area => (
-                  <RestAreaCard key={area.id} restArea={area} onSave={handleSave} onToast={onToast} />
+                  <RestAreaCard key={area.id} restArea={area} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
                 ))}
               </div>
             </>

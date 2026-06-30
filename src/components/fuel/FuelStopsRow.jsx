@@ -37,6 +37,7 @@ export default function FuelStopsRow({
   segmentLabel,
   onAddStop,
   onToast,
+  readOnly = false,
 }) {
   const [loading, setLoading] = useState(true);
   const [cards, setCards] = useState([]);
@@ -206,6 +207,7 @@ export default function FuelStopsRow({
                 type={stop.cardType}
                 required={point.required && stop.cardType === "ev"}
                 onAdd={handleAdd}
+                readOnly={readOnly}
               />
             ))}
           </div>

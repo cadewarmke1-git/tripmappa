@@ -22,7 +22,7 @@ function getBrandInitials(brand, type) {
   return brand.slice(0, 2).toUpperCase();
 }
 
-export default function FuelStopCard({ stop, type, onAdd, required }) {
+export default function FuelStopCard({ stop, type, onAdd, required, readOnly = false }) {
   const brand = stop.brand || stop.network || stop.name;
   const initials = getBrandInitials(brand, type);
   const dieselPrice = stop.dieselPrice || "$3.95/gal";
@@ -100,9 +100,11 @@ export default function FuelStopCard({ stop, type, onAdd, required }) {
         <div className="fuel-estimate-note">Regional avg — updated weekly</div>
       )}
 
-      <button type="button" className="btn-generate fuel-add-btn" onClick={() => onAdd(stop, type)}>
-        Add to Trip
-      </button>
+      {!readOnly && (
+        <button type="button" className="btn-generate fuel-add-btn" onClick={() => onAdd(stop, type)}>
+          Add to Trip
+        </button>
+      )}
     </article>
   );
 }

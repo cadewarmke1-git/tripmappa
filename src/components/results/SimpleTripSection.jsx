@@ -33,6 +33,8 @@ export default function SimpleTripSection({
   onAddRoadStop,
   onRemoveRoadStop,
   isStopAdded,
+  isStopOnRoute,
+  readOnly = false,
   highlightedStopId,
   stopRefs,
   onStopSelect,
@@ -91,7 +93,7 @@ export default function SimpleTripSection({
       {roadItems.length > 0 && (
         <div className="results-subsection">
           <h3 className="results-subsection-label">
-            {continuousDrive ? "Fuel and rest stops along the route" : "Stops Along the Way"}
+            {continuousDrive ? "Fuel and rest stops on your route" : "Stops on your route"}
           </h3>
           <div className="results-road-stops-scroll">
             {roadItems.map(stop => (
@@ -102,6 +104,8 @@ export default function SimpleTripSection({
                 onRemove={onRemoveRoadStop}
                 onToast={onToast}
                 added={isStopAdded?.(stop)}
+                onRoute={isStopOnRoute?.(stop)}
+                readOnly={readOnly}
                 onSelect={item => onStopSelect?.({ ...item, lat: item.lat ?? item.stopData?.lat, lng: item.lng ?? item.stopData?.lng })}
                 highlighted={highlightedStopId === stop.id}
                 cardRef={setStopRef(stop.id)}
@@ -122,6 +126,7 @@ export default function SimpleTripSection({
             selectedLodging={selectedLodging}
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
+            readOnly={readOnly}
           />
           <RestaurantCardsSection
             city={day.overnight.city}
@@ -216,10 +221,17 @@ export default function SimpleTripSection({
 
       {recs.length > 0 && (
         <div className="results-subsection">
-          <h3 className="results-subsection-label">Things to Do and Eat</h3>
+          <h3 className="results-subsection-label">Optional extras along the way</h3>
           <div className="results-activities-grid">
             {recs.map(item => (
-              <ActivityDiningCard key={item.id} item={item} onAdd={onAddRoadStop} onToast={onToast} added={isStopAdded?.(item)}/>
+              <ActivityDiningCard
+                key={item.id}
+                item={item}
+                onAdd={onAddRoadStop}
+                added={isStopAdded?.(item)}
+                onRoute={isStopOnRoute?.(item)}
+                readOnly={readOnly}
+              />
             ))}
           </div>
         </div>

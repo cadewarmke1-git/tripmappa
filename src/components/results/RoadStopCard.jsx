@@ -3,6 +3,7 @@ import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
 import { parseRating } from "../../lib/ratings.js";
+import { hasGooglePlacesData } from "../../lib/placesVerification.js";
 
 function prefersPhotoFallback(category, source) {
   if (source === "osm") return true;
@@ -18,27 +19,27 @@ export default function RoadStopCard({
   highlighted = false,
   cardRef,
   added = false,
+  onRoute = false,
   showTruckWarnings = false,
+  readOnly = false,
 }) {
   const isCharging = String(stop.category || "").toLowerCase() === "charging";
   const charging = stop.charging || stop.stopData;
   const hasRating = parseRating(stop.rating) != null;
-  const showTruckParkingWarning = showTruckWarnings && stop.truckParking === false
+  const stopData = stop.stopData || stop;
+  const showVerifiedBadge = hasGooglePlacesData(stopData);
+  const includedOnRoute = onRoute || added;
+  const showTruckParkingWarning = showTruckWarnings && stopData.truckParking === false
     && /food|rest|dining/i.test(String(stop.category || ""));
+
   function handleClick() {
     onSelect?.(stop);
   }
 
-  function handleAdd(e) {
+  function handleRouteToggle(e) {
     e.stopPropagation();
-    if (added) return;
-    onAdd?.(stop);
-  }
-
-  function handleRemove(e) {
-    e.stopPropagation();
-    if (!added) return;
-    onRemove?.(stop);
+    if (includedOnRoute) onRemove?.(stop);
+    else onAdd?.(stop);
   }
 
   // Expose stop name + category to screen readers on the interactive card (Impeccable harden).
@@ -65,7 +66,7 @@ export default function RoadStopCard({
           displayPx={64}
           preferFallback={prefersPhotoFallback(stop.category, stop.source)}
         />
-        {stop.verified === true && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
+        {showVerifiedBadge && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
         {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
         <span className={`road-stop-badge-cat${isCharging ? " road-stop-badge-charging" : ""}`}>
           {stop.category || "Stop"}
@@ -107,14 +108,18 @@ export default function RoadStopCard({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          className={`road-stop-add-btn${added ? " road-stop-add-btn-added" : ""}`}
-          disabled={!added && false}
-          onClick={added ? handleRemove : handleAdd}
-        >
-          {added ? "Remove from trip" : "Add to Trip"}
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            className={`road-stop-add-btn${includedOnRoute ? " road-stop-add-btn-added road-stop-on-route-btn" : ""}`}
+            onClick={handleRouteToggle}
+          >
+            {includedOnRoute ? "On your route" : "Add to route"}
+          </button>
+        )}
+        {readOnly && includedOnRoute && (
+          <span className="road-stop-on-route-label">On route</span>
+        )}
         {stop.category?.toLowerCase() === "food" && stop.nearbyRestaurants?.length > 0 && (
           <div className="road-food-stops">
             {stop.nearbyRestaurants.map(r => (

@@ -73,6 +73,7 @@ export default function PlanPanel({
   exploreRangeError = null,
   onExploreRangeToggle,
   onExploreRangeDriveTimeChange,
+  routeScoutLine = null,
 }) {
   const stepMessage = getStepMessage?.() ?? "";
   const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
@@ -223,11 +224,14 @@ export default function PlanPanel({
                   <div className="plan-ready-screen">
                     <div className="plan-ready-body">
                       <div className="plan-ready-main">
-                        <p className="plan-ready-eyebrow">Your trip is ready to plan</p>
-                        <h2 className="plan-ready-heading">Let&apos;s build your perfect route</h2>
+                        <p className="plan-ready-eyebrow">Ready when you are</p>
+                        <h2 className="plan-ready-heading">Your route, verified stops, and personalized itinerary — ready in seconds</h2>
                         <p className="plan-ready-subtitle">
-                          We&apos;ll find the best stops, restaurants, and overnight options along your drive
+                          No cross-referencing maps, reviews, and hotel listings — your full drive is built and ready to go.
                         </p>
+                        {routeScoutLine && (
+                          <p className="plan-ready-scout" role="status">{routeScoutLine}</p>
+                        )}
                         {generationError ? (
                           <div className="plan-generation-error plan-generation-error--ready" role="alert">
                             <p className="plan-generation-error-title">Trip generation didn&apos;t finish</p>

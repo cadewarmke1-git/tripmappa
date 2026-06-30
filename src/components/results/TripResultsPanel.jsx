@@ -11,6 +11,7 @@ import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
 import EnrichmentNotice from "./EnrichmentNotice.jsx";
 import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
+import { SharedItineraryHeader, SharedItineraryFooter } from "./SharedItineraryChrome.jsx";
 
 export default function TripResultsPanel({
   panelClassName = "",
@@ -66,6 +67,8 @@ export default function TripResultsPanel({
   isGuest = false,
   onGrocerySignIn,
   onStartNavigation,
+  shareMode = false,
+  isStopOnRoute,
   // Accepted from App.jsx but unused after timeline layout removal
   waypoints = null,
   routeLegs: _routeLegs,
@@ -125,12 +128,16 @@ export default function TripResultsPanel({
   }, [highlightedStopId]);
 
   return (
-    <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate${panelClassName ? ` ${panelClassName}` : ""}${planOutOfDate ? " trip-results-stale" : ""}`}>
-      <header className="trip-results-topbar trip-results-topbar-with-logo">
-        <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit plan</button>
-        <div className="trip-results-topbar-title">Your Trip</div>
-        <button type="button" className="trip-results-map-btn" onClick={onViewMap}>View on Map</button>
-      </header>
+    <div className={`trip-results-panel trip-results-panel-${theme || "night"} view-panel-animate${panelClassName ? ` ${panelClassName}` : ""}${planOutOfDate ? " trip-results-stale" : ""}${shareMode ? " trip-results-panel--shared" : ""}`}>
+      {shareMode ? (
+        <SharedItineraryHeader origin={origin} dest={dest} />
+      ) : (
+        <header className="trip-results-topbar trip-results-topbar-with-logo">
+          <button type="button" className="trip-results-back" onClick={onEditTrip}>← Edit plan</button>
+          <div className="trip-results-topbar-title">Your Trip</div>
+          <button type="button" className="trip-results-map-btn" onClick={onViewMap}>View on Map</button>
+        </header>
+      )}
 
       <div className="trip-results-shell">
         <div className="trip-results-sticky-summary">
@@ -201,6 +208,7 @@ export default function TripResultsPanel({
               stops={stops}
               onAddFuelStop={onAddFuelStop}
               onToast={onToast}
+              readOnly={shareMode}
             />
           )}
 
@@ -223,6 +231,8 @@ export default function TripResultsPanel({
               onAddRoadStop={onAddRoadStop}
               onRemoveRoadStop={onRemoveRoadStop}
               isStopAdded={isStopAdded}
+              isStopOnRoute={isStopOnRoute}
+              readOnly={shareMode}
               highlightedStopId={highlightedStopId}
               stopRefs={stopRefs}
               onStopSelect={onStopSelect}
@@ -250,6 +260,8 @@ export default function TripResultsPanel({
               onAddRoadStop={onAddRoadStop}
               onRemoveRoadStop={onRemoveRoadStop}
               isStopAdded={isStopAdded}
+              isStopOnRoute={isStopOnRoute}
+              readOnly={shareMode}
               highlightedStopId={highlightedStopId}
               stopRefs={stopRefs}
               onStopSelect={onStopSelect}
@@ -266,11 +278,15 @@ export default function TripResultsPanel({
           )}
         </div>
 
-        <ResultsActionBar
-          onStartNavigation={onStartNavigation}
-          onShare={onShare}
-          onEditTrip={onEditTrip}
-        />
+        {shareMode ? (
+          <SharedItineraryFooter />
+        ) : (
+          <ResultsActionBar
+            onStartNavigation={onStartNavigation}
+            onShare={onShare}
+            onEditTrip={onEditTrip}
+          />
+        )}
       </div>
     </div>
   );

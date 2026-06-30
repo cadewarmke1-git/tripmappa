@@ -1,6 +1,6 @@
 import AmenityBadges from "./AmenityBadges.jsx";
 
-export default function RvParkCard({ park, onSave, onToast }) {
+export default function RvParkCard({ park, onSave, onToast, readOnly = false }) {
   const bookLabel = "View on map";
 
   function handleReserve() {
@@ -53,9 +53,11 @@ export default function RvParkCard({ park, onSave, onToast }) {
               {bookLabel}
             </button>
           )}
-          <button type="button" className="lodging-btn-save" onClick={handleSave}>
-            Save
-          </button>
+          {!readOnly && (
+            <button type="button" className="lodging-btn-save" onClick={handleSave}>
+              Save
+            </button>
+          )}
         </div>
       </div>
     </article>

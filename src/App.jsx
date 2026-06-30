@@ -33,6 +33,8 @@ import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } fr
 import { configurePlacesAutocomplete, resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { enrichGeneratedTrip, enrichPlacesLayer } from "./lib/tripEnrichment.js";
 import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
+import { applySharePageMeta } from "./lib/itineraryShareApi.js";
+import { isIncludedRoadStop } from "./lib/itineraryDays.js";
 import { copyToClipboard } from "./lib/copyToClipboard.js";
 import { buildPlacesContext, formatPlacesContextForPrompt, shouldPrefetchPlacesContext } from "./lib/placesContext.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
@@ -166,6 +168,9 @@ export default function App() {
   const [convoComplete, setConvoComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [shareViewMode, setShareViewMode] = useState(
+    () => Boolean(new URLSearchParams(window.location.search).get("share")),
+  );
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
@@ -1200,6 +1205,19 @@ export default function App() {
     () => describePlanChanges(savedPlanSnapshot, currentPlanSnapshot),
     [savedPlanSnapshot, currentPlanSnapshot],
   );
+
+  const routeScoutLine = useMemo(() => {
+    if (!routeInfo) return null;
+    const milesRaw = routeInfo.distanceMiles ?? routeInfo.distance;
+    const miles = typeof milesRaw === "number"
+      ? milesRaw
+      : parseFloat(String(milesRaw || "").replace(/[^\d.]/g, ""));
+    const cityCount = routeInfo.citiesAlongRoute?.length;
+    const parts = [];
+    if (Number.isFinite(miles) && miles > 0) parts.push(`${Math.round(miles)} mi mapped`);
+    if (cityCount > 0) parts.push(`${cityCount} cities along your corridor`);
+    return parts.length ? parts.join(" · ") : null;
+  }, [routeInfo]);
 
   const configMissing = useMemo(() => {
     const missing = [];
@@ -2469,6 +2487,14 @@ export default function App() {
     return roadStops.some(s => s.userAdded && (s.id === normalized.id || roadStopKey(s) === key));
   }
 
+  function isRoadStopOnRoute(stop) {
+    const id = stop?.id || stop?.stopData?.id;
+    if (generated && itinerarySync.itineraryWaypoints.length && id) {
+      return itinerarySync.isWaypointIncluded(id);
+    }
+    return isIncludedRoadStop(stop?.stopData || stop);
+  }
+
   function addRoadStopToTrip(stop) {
     const normalized = normalizeRoadStopEntry(stop);
     if (!normalized) return;
@@ -3114,15 +3140,16 @@ export default function App() {
   }
 
   async function handleShareItinerary() {
-    const link = createItineraryShareLink({
+    const link = await createItineraryShareLink({
       origin, dest, stops, roadStops, tripTips, answers, routeInfo, selectedLodging,
-    });
+      personalTouches, changesMade,
+    }, session?.access_token || null);
     if (!link) {
       toast_("Could not create share link", { isError: true });
       return;
     }
     const { ok } = await copyToClipboard(link);
-    if (ok) toast_("Safety trip link copied — send to a trusted contact", true);
+    if (ok) toast_("Trip link copied — anyone can view your itinerary", true);
     else toast_("Could not copy — open Share and copy the link manually.", { isError: true, duration: 8000 });
   }
 
@@ -3158,29 +3185,49 @@ export default function App() {
   useEffect(() => {
     const shareId = new URLSearchParams(window.location.search).get("share");
     if (!shareId) return;
-    const shared = loadSharedItinerary(shareId);
-    if (!shared) {
-      toast_(
-        "This share link only works on the device that created it. Sign in to save trips across devices.",
-        { isError: true, duration: 10000 },
-      );
-      return;
-    }
-    setView("app");
-    setOrigin(shared.origin || "");
-    setDest(shared.dest || "");
-    setStops(shared.stops || []);
-    setRoadStops(shared.roadStops || []);
-    setTripTips(shared.tripTips || []);
-    setPersonalTouches(shared.personalTouches || []);
-    setChangesMade(shared.changesMade || []);
-    setAnswers(stripSessionOnlyAnswers(shared.answers || {}));
-    setSelectedLodging(shared.selectedLodging || []);
-    setGenerated(true);
-    setResultsView("itinerary");
-    setConvoComplete(true);
-    setTab("plan");
-    setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], [], answers));
+
+    let cancelled = false;
+    (async () => {
+      let shared;
+      try {
+        shared = await loadSharedItinerary(shareId);
+      } catch {
+        if (!cancelled) {
+          toast_("Could not load this trip link. It may have expired.", { isError: true, duration: 10000 });
+        }
+        return;
+      }
+      if (cancelled) return;
+      if (!shared) {
+        toast_("This trip link was not found or has expired.", { isError: true, duration: 10000 });
+        return;
+      }
+      setView("app");
+      setOrigin(shared.origin || "");
+      setDest(shared.dest || "");
+      setStops(shared.stops || []);
+      setRoadStops(shared.roadStops || []);
+      setTripTips(shared.tripTips || []);
+      setPersonalTouches(shared.personalTouches || []);
+      setChangesMade(shared.changesMade || []);
+      setAnswers(stripSessionOnlyAnswers(shared.answers || {}));
+      setSelectedLodging(shared.selectedLodging || []);
+      if (shared.routeInfo) setRouteInfo(shared.routeInfo);
+      setShareViewMode(true);
+      setGenerated(true);
+      setResultsView("itinerary");
+      setConvoComplete(true);
+      setTab("plan");
+      setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], [], shared.answers || {}));
+      applySharePageMeta({
+        origin: shared.origin,
+        dest: shared.dest,
+        stopCount: shared.shareMeta?.stopCount ?? ((shared.stops?.length || 0) + (shared.roadStops?.length || 0)),
+        dayCount: shared.shareMeta?.dayCount,
+      });
+    })();
+
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -3760,7 +3807,7 @@ export default function App() {
             routeCities={routeInfo?.citiesAlongRoute || []}
           />
         )}
-        {renderAppNavBar("app")}
+        {!shareViewMode && renderAppNavBar("app")}
         <ConfigWarningBanner missing={configMissing} />
 
         {generated && resultsView === "itinerary" ? (
@@ -3796,6 +3843,8 @@ export default function App() {
             onEnrichPlacesOnMount={runPlacesEnrichment}
             tripUsedFallback={tripUsedFallback}
             isStopAdded={isRoadStopAdded}
+            isStopOnRoute={isRoadStopOnRoute}
+            shareMode={shareViewMode}
             activitiesByCity={activitiesByCity}
             restaurantsByCity={restaurantsByCity}
             weatherByCity={weatherByCity}
@@ -3806,7 +3855,7 @@ export default function App() {
             arriveByDate={arriveByDate}
             activeDayIndex={activeDayIndex}
             highlightedStopId={highlightedStopId}
-            showGuestBanner={!user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
+            showGuestBanner={!shareViewMode && !user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
             onEditTrip={handleEditTrip}
             onViewMap={() => {
               itinerarySync.setRouteFocusMode(false);
@@ -4146,6 +4195,7 @@ export default function App() {
                       exploreRangeError={exploreRangeError}
                       onExploreRangeToggle={handleExploreRangeToggle}
                       onExploreRangeDriveTimeChange={handleExploreRangeDriveTimeChange}
+                      routeScoutLine={routeScoutLine}
                     />
                     </ErrorBoundary>
                   )}

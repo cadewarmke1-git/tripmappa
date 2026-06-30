@@ -4,6 +4,7 @@ import PlaceRatingLine from "../results/PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
 import VintageNeonSignCard from "../signs/VintageNeonSignCard.jsx";
 import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
+import { hasGooglePlacesData } from "../../lib/placesVerification.js";
 import { useOnScreen } from "../../hooks/useOnScreen.js";
 
 /** Booking.com deep links — hidden until affiliate API is live. */
@@ -16,7 +17,7 @@ const BADGE_LABELS = {
   kidFriendly: "Kid Friendly",
 };
 
-export default function HotelCard({ hotel, onSave, onToast }) {
+export default function HotelCard({ hotel, onSave, onToast, readOnly = false }) {
   const badges = hotel.badges || [];
   const [photoFailed, setPhotoFailed] = useState(false);
   const [photoRef, photoVisible] = useOnScreen();
@@ -72,7 +73,7 @@ export default function HotelCard({ hotel, onSave, onToast }) {
     <>
       <div className="lodging-card-stats">
         <PlaceRatingLine rating={hotel.rating} className="lodging-card-inline-rating" emptyClassName="lodging-no-reviews" />
-        {hotel.verified === true && <TripMappaVerifiedBadge />}
+        {hasGooglePlacesData(hotel) && <TripMappaVerifiedBadge />}
         <div className="lodging-card-price">
           {hotel.priceLabel}
           {(hotel.priceIsEstimated || !hotel.fromGooglePlaces) && (
@@ -101,9 +102,11 @@ export default function HotelCard({ hotel, onSave, onToast }) {
           {bookLabel}
         </button>
       )}
-      <button type="button" className="lodging-btn-save" onClick={handleSave}>
-        Save
-      </button>
+      {!readOnly && (
+        <button type="button" className="lodging-btn-save" onClick={handleSave}>
+          Choose stay
+        </button>
+      )}
     </div>
   );
 

@@ -1,4 +1,4 @@
-export default function RestAreaCard({ restArea, onSave, onToast }) {
+export default function RestAreaCard({ restArea, onSave, onToast, readOnly = false }) {
   function handleSave() {
     onSave?.(restArea);
     onToast?.(`Saved ${restArea.name}`);
@@ -48,9 +48,11 @@ export default function RestAreaCard({ restArea, onSave, onToast }) {
         <p className="lodging-card-distance">{restArea.distanceFromRoute} mi from current position</p>
 
         <div className="lodging-card-actions">
-          <button type="button" className="lodging-btn-save lodging-btn-save-full" onClick={handleSave}>
-            Save
-          </button>
+          {!readOnly && (
+            <button type="button" className="lodging-btn-save lodging-btn-save-full" onClick={handleSave}>
+              Save
+            </button>
+          )}
         </div>
       </div>
     </article>

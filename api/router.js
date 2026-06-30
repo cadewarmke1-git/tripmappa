@@ -26,6 +26,7 @@ const ROUTES = {
   "grocery/order": () => import("../server/routes/grocery-order.js"),
   "health": () => import("../server/routes/health.js"),
   "isoline": () => import("../server/routes/isoline.js"),
+  "itinerary-share": () => import("../server/routes/itinerary-share.js"),
   "join-convoy": () => import("../server/routes/join-convoy.js"),
   "live-trip": () => import("../server/routes/live-trip.js"),
   "plan-trip": () => import("../server/routes/plan-trip.js"),

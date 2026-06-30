@@ -9,6 +9,7 @@ export default function FuelStopsSection({
   stops,
   onAddFuelStop,
   onToast,
+  readOnly = false,
 }) {
   const mode = getFuelStopMode(answers);
   const totalMiles = parseMilesFromDistance(routeInfo?.distance);
@@ -45,6 +46,7 @@ export default function FuelStopsSection({
             segmentLabel={label}
             onAddStop={handleAdd}
             onToast={onToast}
+            readOnly={readOnly}
           />
         );
       })}

@@ -41,6 +41,18 @@ export async function runCacheCleanupJob() {
     results.push(await deleteExpiredFromTable(admin, table, expiresBefore));
   }
 
+  const shareCutoff = new Date().toISOString();
+  const { error: shareErr, count: shareDeleted } = await admin
+    .from("shared_itineraries")
+    .delete({ count: "exact" })
+    .lt("expires_at", shareCutoff);
+  if (shareErr) {
+    console.error("[cache-cleanup] shared_itineraries delete failed:", shareErr.message);
+    results.push({ table: "shared_itineraries", deleted: 0, error: shareErr.message });
+  } else {
+    results.push({ table: "shared_itineraries", deleted: shareDeleted ?? 0, cutoff: shareCutoff });
+  }
+
   const totalDeleted = results.reduce((sum, r) => sum + (r.deleted || 0), 0);
   console.log(`[cache-cleanup] total deleted: ${totalDeleted}`);
 

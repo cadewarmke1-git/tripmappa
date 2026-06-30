@@ -6,11 +6,12 @@ import { parseRating } from "../../lib/ratings.js";
 import CategoryIcon from "../icons/CategoryIcon.jsx";
 import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
 import VintageNeonSignCard from "../signs/VintageNeonSignCard.jsx";
+import { hasGooglePlacesData } from "../../lib/placesVerification.js";
 
 const SLOT_LABELS = {
-  sit_down: "Sit-down pick",
-  mid_range: "Mid-range pick",
-  quick: "Quick bite",
+  sit_down: "Dinner stop",
+  mid_range: "Dinner option",
+  quick: "Quick meal",
 };
 
 export default function RestaurantCard({
@@ -45,7 +46,7 @@ export default function RestaurantCard({
         </div>
       )}
       <div className="restaurant-card-photo-badges">
-        {restaurant.verified === true && <TripMappaVerifiedBadge />}
+        {hasGooglePlacesData(restaurant) && <TripMappaVerifiedBadge />}
         {restaurant.slot && SLOT_LABELS[restaurant.slot] && (
           <span className="restaurant-slot-badge">{SLOT_LABELS[restaurant.slot]}</span>
         )}

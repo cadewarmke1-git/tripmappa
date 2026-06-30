@@ -20,7 +20,10 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
           Overnight stops were reordered for a shorter drive — review each day before you go.
         </div>
       )}
-      <p className="trip-overview-hero-eyebrow">Your Trip</p>
+      <p className="trip-overview-hero-eyebrow">Your route is ready</p>
+      <p className="trip-overview-hero-ready-line" role="status">
+        Route mapped · {overview.stopCount} stops planned · Ready to drive
+      </p>
       <h1 className="trip-overview-hero-title">{overview.tripName}</h1>
       <div className="trip-overview-hero-stats">
         <div className="trip-overview-hero-stat">
