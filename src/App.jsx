@@ -110,7 +110,6 @@ import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
-import DevVisualSurface from "./components/DevVisualSurface.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
 import ProximityTripTipAlert from "./components/ProximityTripTipAlert.jsx";
@@ -3491,14 +3490,6 @@ export default function App() {
 
   if (AppRoutePage) {
     return <AppRoutePage />;
-  }
-
-  if (import.meta.env.DEV) {
-    const visual = new URLSearchParams(window.location.search).get("visual");
-    if (visual) {
-      const visualTheme = new URLSearchParams(window.location.search).get("theme") || "night";
-      return <DevVisualSurface surface={visual} theme={visualTheme} />;
-    }
   }
 
   if (liveShareToken) {
