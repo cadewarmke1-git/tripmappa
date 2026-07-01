@@ -8,7 +8,7 @@ import {
   expectOverlayShowsRoute,
   installMockPlanTrip,
   installSlowMockPlanTrip,
-  resetGuestCredits,
+  installE2eAuthSession,
   startPlanFlow,
   waitForOverlayChunkPreload,
 } from "./helpers/planFlowHelpers.js";
@@ -17,7 +17,7 @@ test.describe.configure({ timeout: 120_000 });
 
 test.describe("generation cinematic loader runthroughs", () => {
   test.beforeEach(async ({ page }) => {
-    await resetGuestCredits(page);
+    await installE2eAuthSession(page);
   });
 
   test("car desktop: overlay appears immediately, canvas renders, trip completes", async ({ page }) => {

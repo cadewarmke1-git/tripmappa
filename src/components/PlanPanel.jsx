@@ -5,7 +5,6 @@ import QuestionChoices from "./QuestionChoices.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 import QuestionAnswerSidebar from "./QuestionAnswerSidebar.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
-import PlanGuestInvite from "./PlanGuestInvite.jsx";
 import PlanFuelEstimateFooter from "./PlanFuelEstimateFooter.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
@@ -47,8 +46,6 @@ export default function PlanPanel({
   creditsNudge = null,
   creditsExhausted = false,
   showGuestSaveHint = false,
-  showGuestSignInGate = false,
-  onGuestSignUp,
   onGuestSignIn,
   onUpgrade,
   onGenerateTrip,
@@ -73,8 +70,7 @@ export default function PlanPanel({
   const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
-  const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm
-    && !showGuestSignInGate && !convoComplete;
+  const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
   const showFlowSidebar = inQuestionFlow && questionHistory.length > 0 && !convoComplete && !showContinuousConfirm;
   const showReadySidebar = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
   const actionsInDock = inQuestionFlow && !convoComplete;
@@ -95,15 +91,11 @@ export default function PlanPanel({
       });
       return () => onDockActionsChange(null);
     }
-    if (showGuestSignInGate) {
-      onDockActionsChange(null);
-    }
     return undefined;
   }, [
     actionsInDock,
     onDockActionsChange,
     showContinuousConfirm,
-    showGuestSignInGate,
     frozen,
     onCancelContinuousDrive,
     onConfirmContinuousDrive,
@@ -163,7 +155,7 @@ export default function PlanPanel({
         />
       )}
 
-      {inQuestionFlow && showGuestSaveHint && !showGuestSignInGate && onGuestSignIn && (
+      {inQuestionFlow && showGuestSaveHint && onGuestSignIn && (
         <div className="plan-flow-guest-hint">
           <span className="plan-flow-guest-hint-text">Sign in to save your answers and pick up later.</span>
           <button type="button" className="plan-flow-guest-hint-btn" onClick={onGuestSignIn}>Sign in</button>
@@ -221,16 +213,16 @@ export default function PlanPanel({
                         Cancel
                       </button>
                     )}
+                    {showReadySidebar && (
+                      <QuestionAnswerSidebar
+                        history={questionHistory}
+                        variant="ready"
+                        onEditQuestion={onEditQuestion}
+                        assumedLodging={assumedLodging}
+                        onEditAssumedLodging={onEditAssumedLodging}
+                      />
+                    )}
                   </div>
-                  {showReadySidebar && (
-                    <QuestionAnswerSidebar
-                      history={questionHistory}
-                      variant="ready"
-                      onEditQuestion={onEditQuestion}
-                      assumedLodging={assumedLodging}
-                      onEditAssumedLodging={onEditAssumedLodging}
-                    />
-                  )}
                 </div>
                 <PlanFuelEstimateFooter
                   answers={answers}
@@ -274,11 +266,7 @@ export default function PlanPanel({
                     </div>
                   )}
 
-                  {showGuestSignInGate && onGuestSignUp && onGuestSignIn && (
-                    <PlanGuestInvite onSignUp={onGuestSignUp} onSignIn={onGuestSignIn} />
-                  )}
-
-                  {currentQuestion && !showContinuousConfirm && !showGuestSignInGate && (
+                  {currentQuestion && !showContinuousConfirm && (
                     <ErrorBoundary label="question-choices" title="Could not show choices">
                       <div
                         className={`plan-flow-step plan-flow-layout--${planFlowLayout}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}

@@ -14,7 +14,7 @@ function prefersReducedMotion() {
 
 export default function useHeroSkyHour() {
   const urlHour = useMemo(() => parseSkyHourParam(window.location.search), []);
-  const skyTestEnabled = useMemo(() => isSkyTestEnabled(window.location.search), []);
+  const skyTestEnabled = useMemo(() => isSkyTestEnabled(), []);
 
   const [liveHour, setLiveHour] = useState(getLiveSkyHour);
   const [dialOverride, setDialOverride] = useState(null);

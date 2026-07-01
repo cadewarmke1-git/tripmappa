@@ -880,3 +880,51 @@ body {
     overflow-x: hidden;
   }
 }
+
+/* North star: warm paper surfaces — no backdrop-filter glass */
+.hero-swap-btn,
+.float-card-chevron-btn,
+.plan-flow-collapse-btn,
+.trip-results-topbar,
+.results-action-bar,
+.grocery-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.hero-swap-btn {
+  background: color-mix(in srgb, var(--color-card-bg, #fdf3e0) 88%, var(--gold-primary, #ffd28c)) !important;
+}
+
+.app-wrap.night .hero-swap-btn {
+  background: color-mix(in srgb, var(--color-surface, #1a1528) 90%, var(--gold-primary, #ffd28c)) !important;
+}
+
+.float-card-chevron-btn,
+.plan-flow-collapse-btn {
+  background: color-mix(in srgb, var(--color-plan-panel-bg, #fdf3e0) 96%, transparent) !important;
+}
+
+.app-wrap.night .float-card-chevron-btn,
+.app-wrap.night .plan-flow-collapse-btn {
+  background: color-mix(in srgb, var(--color-surface, #1a1528) 94%, transparent) !important;
+}
+
+.trip-results-topbar,
+.results-action-bar {
+  background: var(--color-card-bg, #fdf3e0) !important;
+}
+
+.app-wrap.night .trip-results-topbar,
+.app-wrap.night .results-action-bar {
+  background: var(--color-surface, #12121f) !important;
+}
+
+.grocery-card {
+  background: color-mix(in srgb, var(--color-card-bg, #fdf3e0) 94%, var(--gold-primary, #ffd28c)) !important;
+  box-shadow: 0 2px 12px rgba(26, 13, 0, 0.06) !important;
+}
+
+.app-wrap.night .grocery-card {
+  background: color-mix(in srgb, var(--color-surface, #1a1528) 92%, var(--gold-primary, #ffd28c)) !important;
+}

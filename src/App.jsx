@@ -16,7 +16,6 @@ import {
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
 import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
-import { consumeGuestCredit, refundGuestCredit, getGuestCreditStatus } from "./lib/guestCredits.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { buildContinuousDriveTip, isContinuousDrive, OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { generateTripPlan } from "./lib/apiClient.js";
@@ -111,6 +110,7 @@ import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
+import DevVisualSurface from "./components/DevVisualSurface.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
 import ProximityTripTipAlert from "./components/ProximityTripTipAlert.jsx";
@@ -127,6 +127,8 @@ import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
+
+const SIGNUP_GENERATE_LEAD = "Create a free account to get started — 3 trips on us.";
 
 export default function App() {
   const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
@@ -152,6 +154,7 @@ export default function App() {
   const [authPhone, setAuthPhone] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [authModalLead, setAuthModalLead] = useState("");
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState(null);
@@ -225,7 +228,6 @@ export default function App() {
   const [navigateHomePending, setNavigateHomePending] = useState(false);
   const [returnedFromResults, setReturnedFromResults] = useState(false);
   const [highlightedStopId, setHighlightedStopId] = useState(null);
-  const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
   const [liveSharingActive, setLiveSharingActive] = useState(false);
   const [routeError, setRouteError] = useState(null);
   const [tripUsedFallback, setTripUsedFallback] = useState(false);
@@ -271,9 +273,15 @@ export default function App() {
     }
   }
 
-  function openAuthModal(mode) {
+  function openAuthModal(mode, { lead } = {}) {
     setAuthError("");
+    setAuthModalLead(lead || "");
     setAuthModal(mode);
+  }
+
+  function closeAuthModal() {
+    setAuthModal(null);
+    setAuthModalLead("");
   }
 
   async function handleOAuth(provider) {
@@ -312,7 +320,7 @@ export default function App() {
       if (session) {
         toast_("Welcome to TripMappa!", true);
         setAuthModal(null);
-        setGuestBannerDismissed(true);
+        setAuthModalLead("");
         refreshCredits();
       } else {
         toast_("Check your email to confirm your account", true);
@@ -340,7 +348,7 @@ export default function App() {
       await signIn(email, password);
       toast_("Signed in", true);
       setAuthModal(null);
-      setGuestBannerDismissed(true);
+      setAuthModalLead("");
       refreshCredits();
     } catch (err) {
       setAuthError(err.message || "Sign in failed");
@@ -418,15 +426,16 @@ export default function App() {
           <LazyEmailModal
             email={heroEmail}
             onEmailChange={setHeroEmail}
-            onClose={() => setAuthModal(null)}
+            onClose={closeAuthModal}
             onSignUp={handleEmailSignUp}
             onSwitchToSignIn={() => openAuthModal("signin")}
-            onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
+            onContinueWithPhone={() => { closeAuthModal(); openLazyPhoneModal(); }}
             onGoogle={() => handleOAuth("google")}
             onFacebook={() => handleOAuth("facebook")}
             onApple={() => handleOAuth("apple")}
             loading={authBusy}
             error={authError}
+            lead={authModalLead}
             theme={theme}
           />
         )}
@@ -475,7 +484,7 @@ export default function App() {
       await signOut();
       setView("hero");
       setUserProfile(null);
-      applyCreditStatus(getGuestCreditStatus());
+      applyCreditStatus(null);
       toast_("Signed out");
     } catch (err) {
       intentionalSignOutRef.current = false;
@@ -549,7 +558,6 @@ export default function App() {
   const hadUserRef = useRef(false);
   const intentionalSignOutRef = useRef(false);
   const sessionExpiredNotifiedRef = useRef(false);
-  const [guestTripPendingSave, setGuestTripPendingSave] = useState(false);
   const panelDragStartY = useRef(null);
   const panelDragMoved = useRef(false);
   const [modal, setModal] = useState(null);
@@ -607,41 +615,6 @@ export default function App() {
   }, [user, authLoading]);
 
   useEffect(() => {
-    if (authLoading || !user?.id || !guestTripPendingSave) return undefined;
-    if (!generated || !origin?.trim() || !dest?.trim()) {
-      setGuestTripPendingSave(false);
-      return undefined;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        await persistTripForUser(user.id);
-        const normalizedAnswers = normalizeTripAnswers(
-          answers,
-          buildQuestionContext(answers),
-          { forGeneration: true },
-        );
-        if (session?.access_token) {
-          void writeBackPlanPreferencesSilently(
-            session.access_token,
-            normalizedAnswers,
-            applyPlanPreferencesSaved,
-          );
-        }
-        if (!cancelled) {
-          setGuestTripPendingSave(false);
-          toast_("Your trip has been saved to your account.", true);
-        }
-      } catch (err) {
-        console.warn("Auto-save guest trip failed:", err);
-        if (!cancelled) setGuestTripPendingSave(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, guestTripPendingSave, authLoading, generated]);
-
-  useEffect(() => {
     if (authLoading) return;
     if (user?.id && session?.access_token) {
       setUserProfileLoaded(false);
@@ -659,7 +632,7 @@ export default function App() {
           setUserProfileLoaded(true);
         });
     } else {
-      applyCreditStatus(getGuestCreditStatus());
+      applyCreditStatus(null);
       setUserProfile(null);
       setUserProfileLoaded(true);
       const guestHome = getGuestHomeAddress();
@@ -1234,14 +1207,11 @@ export default function App() {
     Boolean(currentQuestion) ||
     (convoComplete && !returnedFromResults)
   );
-  const showGuestSignInGate = false;
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
   const showPlanFlowActionDock = tab === "plan" && !cardCollapsed && inQuestionFlow && !convoComplete;
-
   const creditsExhausted = useMemo(() => {
-    const status = creditStatus || (!user ? getGuestCreditStatus() : null);
-    if (!status) return false;
-    return !status.unlimited && (status.remaining ?? 0) <= 0;
+    if (!user || !creditStatus) return false;
+    return !creditStatus.unlimited && (creditStatus.remaining ?? 0) <= 0;
   }, [creditStatus, user]);
 
   usePlanDraft({
@@ -1273,7 +1243,7 @@ export default function App() {
     if (user && session?.access_token) {
       fetchTripCredits(session.access_token).then(applyCreditStatus).catch(() => {});
     } else {
-      applyCreditStatus(getGuestCreditStatus());
+      applyCreditStatus(null);
     }
   }
 
@@ -1446,10 +1416,9 @@ export default function App() {
     setModal(null);
     setHelpMenuOpen(false);
     setReturnedFromResults(false);
-    setGuestBannerDismissed(false);
     setHighlightedStopId(null);
     setLoading(false);
-    setGuestTripPendingSave(false);
+    setAuthModalLead("");
     setView("hero");
     setTab("plan");
     setOrigin("");
@@ -2779,20 +2748,15 @@ export default function App() {
   }
 
   async function generateTrip() {
-    if (!user) {
-      openAuthModal("signup");
-      return;
-    }
-
     const tripOrigin = originRef.current?.value?.trim() || origin;
     const tripDest = destRef.current?.value?.trim() || dest;
 
-    let status = user
-      ? (creditStatusRef.current || creditStatus)
-      : getGuestCreditStatus();
     if (!user) {
-      applyCreditStatus(status);
+      openAuthModal("signup", { lead: SIGNUP_GENERATE_LEAD });
+      return;
     }
+
+    const status = creditStatusRef.current || creditStatus;
 
     const guard = canStartTripGeneration({
       inFlight: generateTripInFlightRef.current,
@@ -3048,13 +3012,6 @@ export default function App() {
               onTripSaved: prependSavedTrip,
               onPreferencesSaved: applyPlanPreferencesSaved,
             });
-          } else {
-            setGuestTripPendingSave(true);
-            const guestStatus = getGuestCreditStatus();
-            applyCreditStatus(guestStatus);
-            if (guestStatus.remaining <= 0) {
-              setTimeout(() => openTripsUpgrade({ limitReached: false }), 1200);
-            }
           }
 
           setGenerationStream({
@@ -3091,7 +3048,7 @@ export default function App() {
         const msg = "Sign in to generate a trip plan.";
         setGenerationError(msg);
         toast_(msg, { isError: true });
-        openAuthModal("signin");
+        openAuthModal("signup", { lead: SIGNUP_GENERATE_LEAD });
         ensurePayoffScreen();
         return;
       }
@@ -3104,12 +3061,9 @@ export default function App() {
           resetDate: err.resetDate || err.credits?.resetDate,
         });
         if (err.credits) applyCreditStatus(err.credits);
-        if (!user) refundGuestCredit();
         ensurePayoffScreen();
         return;
       }
-      if (!user) refundGuestCredit();
-      applyCreditStatus(getGuestCreditStatus());
       const msg = generationFailureMessage(err);
       setGenerationError(msg);
       ensurePayoffScreen();
@@ -3134,7 +3088,6 @@ export default function App() {
     setGenerationError(null);
     setSavedPlanSnapshot(null);
     setReturnedFromResults(false);
-    setGuestTripPendingSave(false);
     setAnswers({});
     buildFlowPrefillForUser().then(setFlowPrefill);
     setQIndex(-1);
@@ -3540,6 +3493,14 @@ export default function App() {
     return <AppRoutePage />;
   }
 
+  if (import.meta.env.DEV) {
+    const visual = new URLSearchParams(window.location.search).get("visual");
+    if (visual) {
+      const visualTheme = new URLSearchParams(window.location.search).get("theme") || "night";
+      return <DevVisualSurface surface={visual} theme={visualTheme} />;
+    }
+  }
+
   if (liveShareToken) {
     return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
   }
@@ -3878,7 +3839,6 @@ export default function App() {
             arriveByDate={arriveByDate}
             activeDayIndex={activeDayIndex}
             highlightedStopId={highlightedStopId}
-            showGuestBanner={!shareViewMode && !user && !guestBannerDismissed && (creditStatus?.remaining ?? 1) <= 0 && (creditStatus?.used ?? 0) >= 1}
             onEditTrip={handleEditTrip}
             onViewMap={() => {
               itinerarySync.setRouteFocusMode(false);
@@ -3904,8 +3864,6 @@ export default function App() {
             onCollaborate={handleOpenCollaborate}
             onToast={toast_}
             onStopSelect={handleResultsStopSelect}
-            onGuestSignUp={() => openAuthModal("signup")}
-            onDismissGuestBanner={() => setGuestBannerDismissed(true)}
             groceryAllowed={Boolean(creditStatus?.groceryDelivery)}
             accessToken={session?.access_token || null}
             onUpgradeGrocery={openGroceryUpgrade}
@@ -4181,8 +4139,6 @@ export default function App() {
                       creditsNudge={creditsNudge}
                       creditsExhausted={creditsExhausted}
                       showGuestSaveHint={!user && inQuestionFlow}
-                      showGuestSignInGate={showGuestSignInGate}
-                      onGuestSignUp={() => openAuthModal("signup")}
                       onGuestSignIn={() => openAuthModal("signin")}
                       onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}
@@ -4306,7 +4262,7 @@ export default function App() {
 
       {showUpgradeModal && (
         <LazyUpgradeModal
-          creditStatus={creditStatus || getGuestCreditStatus()}
+          creditStatus={creditStatus}
           user={user}
           accessToken={session?.access_token}
           onClose={() => setShowUpgradeModal(false)}

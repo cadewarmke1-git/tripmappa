@@ -38,6 +38,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.__TRIPMAPPA_E2E_AUTH__) {
+      const e2eUser = { id: "e2e-user", email: "e2e@tripmappa.test" };
+      setUser(e2eUser);
+      setSession({ access_token: "e2e-token", user: e2eUser });
+      setLoading(false);
+      return undefined;
+    }
+
     if (!supabase) {
       setLoading(false);
       return undefined;

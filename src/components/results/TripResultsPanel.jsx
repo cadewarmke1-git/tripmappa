@@ -6,7 +6,6 @@ import ResultsDaySection from "./ResultsDaySection.jsx";
 import SimpleTripSection from "./SimpleTripSection.jsx";
 import PlannedForYouSection from "./PlannedForYouSection.jsx";
 import ResultsActionBar from "./ResultsActionBar.jsx";
-import GuestSignupBanner from "./GuestSignupBanner.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
 import EnrichmentNotice from "./EnrichmentNotice.jsx";
 import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
@@ -48,7 +47,6 @@ export default function TripResultsPanel({
   departureTime,
   activeDayIndex = 0,
   highlightedStopId = null,
-  showGuestBanner = false,
   onEditTrip,
   onViewMap,
   onDaySelect,
@@ -59,8 +57,6 @@ export default function TripResultsPanel({
   onShare,
   onToast,
   onStopSelect,
-  onGuestSignUp,
-  onDismissGuestBanner,
   groceryAllowed = false,
   accessToken = null,
   onUpgradeGrocery,
@@ -175,10 +171,6 @@ export default function TripResultsPanel({
         )}
 
         <div className="trip-results-scroll" ref={scrollRef}>
-          {showGuestBanner && (
-            <GuestSignupBanner onSignUp={onGuestSignUp} onDismiss={onDismissGuestBanner} />
-          )}
-
           <PlannedForYouSection touches={personalTouches} changesMade={changesMade} />
 
           {tripUsedFallback && (

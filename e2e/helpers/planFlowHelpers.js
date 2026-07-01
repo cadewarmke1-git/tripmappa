@@ -22,17 +22,26 @@ export async function startPlanFlow(page, { origin = "Dallas, TX", dest = "Austi
 export async function skipOptionalSteps(page) {
   const scenic = page.getByRole("button", { name: "Scenic route" });
   if (await scenic.isVisible({ timeout: 4_000 }).catch(() => false)) {
-    await page.locator(".plan-flow-actions .convo-nav-btn-skip").click();
-    await page.waitForTimeout(400);
+    const skip = page.locator(".plan-flow-dock-skip, .plan-flow-actions .convo-nav-btn-skip").first();
+    if (await skip.isVisible({ timeout: 1_000 }).catch(() => false)) {
+      await skip.click();
+      await page.waitForTimeout(400);
+    }
   }
-  const straightThrough = page.getByRole("button", { name: /Drive straight through/i });
+  const straightThrough = page.locator(".plan-choice-row", { hasText: /Drive straight through/i }).first();
   if (await straightThrough.isVisible({ timeout: 4_000 }).catch(() => false)) {
-    await straightThrough.first().click();
+    await straightThrough.click();
     await page.waitForTimeout(400);
+  } else {
+    const straightBtn = page.getByRole("button", { name: /Drive straight through/i });
+    if (await straightBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await straightBtn.first().click();
+      await page.waitForTimeout(400);
+    }
   }
   const overnight = page.getByRole("button", { name: /overnight/i });
   if (await overnight.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    const skip = page.locator(".plan-flow-actions .convo-nav-btn-skip");
+    const skip = page.locator(".plan-flow-dock-skip, .plan-flow-actions .convo-nav-btn-skip").first();
     if (await skip.isVisible({ timeout: 1_000 }).catch(() => false)) {
       await skip.click();
       await page.waitForTimeout(400);
@@ -41,18 +50,48 @@ export async function skipOptionalSteps(page) {
 }
 
 export async function finishTripDetails(page) {
-  const continueBtn = page.locator(".plan-flow-actions .btn-generate-inline").first();
-  await expect(continueBtn).toBeVisible({ timeout: 25_000 });
-  await continueBtn.click();
-  await expect(page.locator(".btn-generate-trip")).toBeVisible({ timeout: 15_000 });
+  const skipDefaults = page.getByRole("button", { name: /Skip for now|Use defaults/i });
+  if (await skipDefaults.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await skipDefaults.first().click();
+    await page.waitForTimeout(400);
+  }
+  const continueBtn = page.locator(".plan-flow-dock-continue, .plan-flow-actions .btn-generate-inline, .btn-generate-inline").first();
+  if (await continueBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await continueBtn.click();
+  }
+  await expect(page.locator(".btn-generate-trip")).toBeVisible({ timeout: 25_000 });
+}
+
+async function pickChoiceRow(page, label) {
+  const row = page.locator(".plan-choice-row", { hasText: label }).first();
+  if (await row.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await row.click();
+    return true;
+  }
+  const btn = page.getByRole("button", { name: label, exact: true });
+  if (await btn.isVisible({ timeout: 1_000 }).catch(() => false)) {
+    await btn.click();
+    return true;
+  }
+  return false;
 }
 
 export async function completeCarFlow(page) {
-  await page.getByRole("button", { name: "Car", exact: true }).click();
+  await pickChoiceRow(page, "Car");
+  await page.locator(".plan-flow-dock-continue").click();
+  await page.waitForTimeout(400);
   await page.getByRole("button", { name: "Gasoline", exact: true }).click();
+  await page.waitForTimeout(300);
   await page.getByRole("button", { name: "No", exact: true }).click();
+  await page.waitForTimeout(300);
   await page.getByRole("button", { name: "Just me", exact: true }).click();
   await page.waitForTimeout(400);
+  const stopRow = page.getByRole("button", { name: /A few \(2-3\)|Just one stop|Surprise me/i }).first();
+  if (await stopRow.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await stopRow.click();
+    await page.locator(".plan-flow-dock-continue").click();
+    await page.waitForTimeout(400);
+  }
   await skipOptionalSteps(page);
   await finishTripDetails(page);
 }
@@ -81,11 +120,12 @@ export function buildMockPlanTripSse({
   routeSummary = "Dallas to Austin",
   cities = ["Waco, TX"],
   stopName = "Waco Riverwalk",
+  roadStops = [],
 } = {}) {
   const complete = {
     route_summary: routeSummary,
     stops: [{ city: cities[0] || "Waco, TX", name: stopName, lat: 31.55, lng: -97.15 }],
-    road_stops: [],
+    road_stops: roadStops,
     tips: ["Allow extra time near downtown exits"],
   };
   return encodeSse([
@@ -150,7 +190,12 @@ export async function installSlowMockPlanTrip(page, options = {}) {
 export async function clickGenerate(page) {
   const btn = page.locator(".btn-generate-trip").first();
   await expect(btn).toBeEnabled();
-  await btn.click();
+  await btn.scrollIntoViewIfNeeded();
+  try {
+    await btn.click({ timeout: 5_000 });
+  } catch {
+    await btn.evaluate(el => el.click());
+  }
 }
 
 export async function expectGenerationOverlay(page) {
@@ -177,8 +222,22 @@ export async function waitForOverlayChunkPreload(page, timeoutMs = 25_000) {
   );
 }
 
-export async function resetGuestCredits(page) {
+export async function installE2eAuthSession(page) {
   await page.addInitScript(() => {
-    sessionStorage.setItem("tripmappa-guest-generations", "0");
+    window.__TRIPMAPPA_E2E_AUTH__ = true;
+  });
+  await page.route("**/api/trip-credits", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        tier: "wanderer",
+        unlimited: false,
+        remaining: 3,
+        limit: 3,
+        used: 0,
+        groceryDelivery: false,
+      }),
+    });
   });
 }

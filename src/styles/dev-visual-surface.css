@@ -1,0 +1,34 @@
+.dev-visual-map-surface {
+  position: fixed;
+  inset: 0;
+  background: #1a1528;
+}
+
+.app-wrap.day.dev-visual-map-surface {
+  background: linear-gradient(180deg, #c9dce8 0%, #e8eef2 45%, #d4cfc4 100%);
+}
+
+.dev-visual-map-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(120, 140, 160, 0.4), transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(90, 110, 130, 0.3), transparent 45%);
+}
+
+.dev-visual-loader-surface {
+  position: fixed;
+  inset: 0;
+}
+
+.dev-visual-results-surface {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  background: var(--color-page-bg, #f5f0e8);
+}
+
+.app-wrap.night.dev-visual-results-surface {
+  background: #0d0a1a;
+}

@@ -18,6 +18,7 @@ export default function EmailModal({
   onContinueWithPhone,
   loading = false,
   error = "",
+  lead = "",
   theme = "night",
 }) {
   const [password, setPassword] = useState("");
@@ -41,7 +42,7 @@ export default function EmailModal({
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <BrandWordmark className="auth-modal-logo" as="div" />
         <h2 className="auth-modal-headline" id="signup-headline">Start planning your perfect trip.</h2>
-        <p className="auth-modal-sub">Create your free account to save trips, share routes, and unlock premium features.</p>
+        <p className="auth-modal-sub">{lead || "Create your free account to save trips, share routes, and unlock premium features."}</p>
 
         <form className="auth-modal-form" onSubmit={handleSubmit}>
           <label className="auth-field-label" htmlFor="signup-email">Email</label>

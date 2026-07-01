@@ -150,10 +150,28 @@
   }
 
   class Marker {
-    constructor(opts) { this._map = opts?.map || null; }
+    constructor(opts) {
+      this._map = opts?.map || null;
+      this._title = opts?.title || "";
+      this._click = opts?.click || null;
+    }
     setMap(map) { this._map = map; }
     setPosition() {}
     setIcon() {}
+    addListener(event, fn) {
+      if (event === "click") this._click = fn;
+      return { remove() {} };
+    }
+  }
+
+  class DirectionsRenderer {
+    constructor(opts = {}) {
+      this._map = opts?.map || null;
+      this._directions = null;
+    }
+    setMap(map) { this._map = map; }
+    setDirections(directions) { this._directions = directions; }
+    setOptions() {}
   }
 
   class Polyline {
@@ -249,6 +267,7 @@
   function patchMaps(maps) {
     maps.Map = Map;
     maps.Marker = Marker;
+    maps.DirectionsRenderer = DirectionsRenderer;
     maps.Polyline = Polyline;
     maps.Polygon = Polygon;
     maps.LatLng = latLng;

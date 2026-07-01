@@ -446,6 +446,27 @@ html body .app-wrap.night .btn-generate-trip {
   padding: 0 2px;
 }
 
+/* Ready screen: stack picks below CTA so the horizontal strip never covers Generate */
+.plan-ready-body {
+  flex-direction: column !important;
+  gap: 10px;
+}
+
+.plan-ready-main {
+  padding: 4px 0 8px !important;
+}
+
+.plan-ready-main .btn-generate-trip-ready {
+  position: relative;
+  z-index: 2;
+}
+
+.plan-flow-picks-strip--ready {
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+}
+
 .plan-flow-picks-strip-scroll {
   display: flex;
   gap: 8px;
