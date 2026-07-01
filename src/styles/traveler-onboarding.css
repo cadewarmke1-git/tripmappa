@@ -5,9 +5,7 @@
   z-index: 300;
   display: flex;
   flex-direction: column;
-  background:
-    linear-gradient(180deg, rgba(13, 10, 26, 0.92) 0%, rgba(13, 10, 26, 0.98) 55%, #0d0a1a 100%),
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 140, 66, 0.12), transparent 70%);
+  background: var(--bg-base);
   color: var(--color-text-primary, #f4f6fb);
   padding: calc(var(--nav-h, 56px) + env(safe-area-inset-top, 0px) + 16px) 24px calc(20px + env(safe-area-inset-bottom, 0px));
 }
@@ -25,7 +23,6 @@
   height: 8px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  transition: background 0.25s ease, transform 0.25s ease;
 }
 
 .traveler-onboarding-dot.is-active {
@@ -42,17 +39,6 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  transition: opacity 300ms ease, transform 300ms ease;
-}
-
-.traveler-onboarding-stage--enter {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.traveler-onboarding-stage--exit {
-  opacity: 0;
-  transform: translateY(18px);
 }
 
 .traveler-onboarding-welcome {
@@ -64,6 +50,29 @@
   text-align: center;
   gap: 16px;
   padding: 24px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.traveler-onboarding-welcome-sky {
+  position: absolute;
+  inset: -20% -10% 0;
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.traveler-onboarding-welcome-sky .hero-mountain-scene {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+}
+
+.traveler-onboarding-welcome .traveler-onboarding-wordmark,
+.traveler-onboarding-welcome .traveler-onboarding-tagline,
+.traveler-onboarding-welcome .traveler-onboarding-get-started {
+  position: relative;
+  z-index: 1;
 }
 
 .traveler-onboarding-wordmark {
@@ -76,48 +85,16 @@
   color: var(--accent, var(--gold-primary));
 }
 
-.traveler-onboarding-wordmark-letter {
-  display: inline-block;
-  opacity: 0;
-  animation: traveler-onboarding-letter-in 300ms ease forwards;
-}
-
-@keyframes traveler-onboarding-letter-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .traveler-onboarding-tagline {
   margin: 0;
   font-size: 18px;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--color-text-primary, #fff) 72%, transparent);
-  opacity: 0;
-  animation: traveler-onboarding-tagline-in 400ms ease 800ms forwards;
-}
-
-@keyframes traveler-onboarding-tagline-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .traveler-onboarding-get-started {
   width: min(280px, 100%);
   margin-top: 28px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 400ms ease;
-}
-
-.traveler-onboarding-get-started.is-visible {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .traveler-onboarding-panel-screen {
@@ -201,6 +178,19 @@
   color: color-mix(in srgb, var(--color-text-primary, #fff) 62%, transparent);
   font-size: 15px;
   cursor: pointer;
+}
+
+.preference-pill-group-label {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .traveler-onboarding-dot {
+    transition: none !important;
+  }
 }
 
 @media (min-width: 769px) {

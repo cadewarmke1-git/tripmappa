@@ -64,7 +64,8 @@ export default function QuestionChoices({
   questionHistoryLength,
   compact = false,
   planFlowLayout = "standard",
-  showNavRow = true,
+  actionsInDock = false,
+  onDockActionsChange,
   onResetPlan,
   onGoBack,
   onPickAnswer,
@@ -72,7 +73,6 @@ export default function QuestionChoices({
   onSkipRoutePending,
   onRoutePendingTimeout,
 }) {
-  const [vehicleTab, setVehicleTab] = useState(0);
   const [vehicleDraft, setVehicleDraft] = useState(null);
   const [lodgingDraft, setLodgingDraft] = useState(null);
   const [loyaltyDraft, setLoyaltyDraft] = useState(null);
@@ -106,7 +106,6 @@ export default function QuestionChoices({
   );
 
   useEffect(() => {
-    setVehicleTab(0);
     setVehicleDraft(
       questionConfirmed && currentQ?.type === "vehicle"
         ? (committed[currentQ.id] || null)
@@ -163,23 +162,22 @@ export default function QuestionChoices({
   const selected = stepAnim?.answer;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];
   const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) ? currentQ.groups : null;
-  const useVehicleTabs = compact && vehicleGroups;
 
   const committedChoiceValue = questionConfirmed ? committed[currentQ.id] : undefined;
   const prefillChoiceValue = !questionConfirmed && typeof prefDraft === "string" ? prefDraft : undefined;
 
   const mkClass = (val, extra = "") => {
-    const sel = selected === val ? " qr-selected" : "";
-    const active = committedChoiceValue === val || prefillChoiceValue === val || vehicleDraft === val || lodgingDraft === val ? " qr-selected" : "";
-    return `plan-choice-row qr-btn${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && prefillChoiceValue !== val && vehicleDraft !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
+    const sel = selected === val ? " plan-choice-selected" : "";
+    const active = committedChoiceValue === val || prefillChoiceValue === val || vehicleDraft === val || lodgingDraft === val ? " plan-choice-selected" : "";
+    return `plan-choice-row${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && prefillChoiceValue !== val && vehicleDraft !== val && lodgingDraft !== val ? " plan-choice-dimmed" : ""}`;
   };
   const mkPrefClass = (p) => {
     const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
-    return `plan-choice-row qr-btn${active ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
+    return `plan-choice-row${active ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`;
   };
   const mkGroupClass = (sectionId, value) => {
     const sectionDraft = Array.isArray(groupDraft?.[sectionId]) ? groupDraft[sectionId] : [];
-    return `plan-choice-row qr-btn${sectionDraft.includes(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
+    return `plan-choice-row${sectionDraft.includes(value) ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`;
   };
 
   function isChoiceSelected(val) {
@@ -194,8 +192,8 @@ export default function QuestionChoices({
     return (
       <>
         <span className="plan-choice-row-label">
-          <span className="qr-btn-label">{label}</span>
-          {description && <span className="qr-btn-desc plan-choice-row-desc">{description}</span>}
+          <span className="plan-choice-row-label">{label}</span>
+          {description && <span className="plan-choice-row-desc">{description}</span>}
         </span>
         <span className="plan-choice-row-chevron" aria-hidden="true">{selectedRow ? "✓" : "›"}</span>
       </>
@@ -224,13 +222,6 @@ export default function QuestionChoices({
       handler();
     };
   }
-
-  const labeledVehicleGroups = vehicleGroups
-    ? vehicleGroups.filter(g => Array.isArray(g.options) && g.options.length > 0)
-    : [];
-  const activeVehicleGroup = useVehicleTabs
-    ? labeledVehicleGroups[Math.min(vehicleTab, labeledVehicleGroups.length - 1)]
-    : null;
 
   function toggleGroupSection(sectionId, value) {
     const base = groupDraft ?? buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
@@ -338,20 +329,86 @@ export default function QuestionChoices({
 
   const actionRowClass = "pref-actions-row plan-flow-actions";
 
+  useEffect(() => {
+    if (!actionsInDock || !onDockActionsChange) return undefined;
+
+    const dock = {
+      visible: true,
+      showStartOver: !frozen && Boolean(onResetPlan),
+      showBack: questionHistoryLength > 0 && !frozen,
+      onBack: onGoBack,
+      showContinue: false,
+      showSkip: false,
+    };
+
+    if (currentQ.type === "vehicle") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen || !vehicleDraft;
+      dock.onContinue = continueWithHaptic(() => pickInstant(vehicleDraft));
+    } else if (currentQ.type === "party_composition") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(submitPartyComposition);
+    } else if (currentQ.type === "multiselect") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen
+        || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)
+        || (currentQ.id === "kids_ages" && multiDraft.length === 0);
+      dock.onContinue = continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]));
+      if (currentQ.id !== "multi_vehicles" && currentQ.id !== "kids_ages") {
+        dock.showSkip = true;
+        dock.onSkip = () => pickInstant([]);
+      }
+    } else if (isTripDetails) {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(submitTripDetails);
+      dock.showSkip = true;
+      dock.skipLabel = "Defaults are fine";
+      dock.onSkip = skipTripDetails;
+    } else if (currentQ.type === "multiselect_group") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(() => pickInstant({
+        dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
+        stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
+      }));
+      dock.showSkip = true;
+      dock.skipLabel = "Nothing special";
+      dock.onSkip = () => pickInstant({ dietary: [], stops_interests: [] });
+    } else if (currentQ.type === "text") {
+      if (currentQ.id === "food_allergies" || currentQ.id === "schedule_drive_hours") {
+        dock.showSkip = true;
+        dock.onSkip = () => pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours");
+      }
+    } else if (routePending && onSkipRoutePending) {
+      dock.showSkip = true;
+      dock.skipLabel = "Skip for now";
+      dock.onSkip = onSkipRoutePending;
+    }
+
+    onDockActionsChange(dock);
+    return () => onDockActionsChange(null);
+  }, [
+    actionsInDock,
+    onDockActionsChange,
+    currentQ?.id,
+    currentQ?.type,
+    frozen,
+    vehicleDraft,
+    multiDraft,
+    groupDraft,
+    questionHistoryLength,
+    routePending,
+    onGoBack,
+    onResetPlan,
+    onSkipRoutePending,
+    isTripDetails,
+  ]);
+
   return (
     <div className={`question-choices-shell${compact ? " question-choices-shell-compact" : ""}`}>
     <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}${isTripDetails ? " question-choices-trip-details" : ""}`}>
-      {showNavRow && (
-        <div className="convo-nav-row">
-          {!frozen && (
-            <button type="button" className="convo-nav-btn" onClick={onResetPlan}>Start over</button>
-          )}
-          {questionHistoryLength > 0 && !frozen && (
-            <button type="button" className="convo-nav-btn" onClick={onGoBack}>← Back</button>
-          )}
-        </div>
-      )}
-
       {currentQ.type === "loading" && (
         <div className="question-loading" aria-live="polite">
           <RouteDrawingLoader variant="inline" />
@@ -367,45 +424,9 @@ export default function QuestionChoices({
         </div>
       )}
 
-      {useVehicleTabs && (
-        <div className="vehicle-tabs" role="tablist" aria-label="Vehicle categories">
-          {labeledVehicleGroups.map((group, idx) => (
-            <button
-              key={group.label || `group-${idx}`}
-              type="button"
-              role="tab"
-              aria-selected={vehicleTab === idx}
-              className={`vehicle-tab${vehicleTab === idx ? " vehicle-tab-active" : ""}`}
-              disabled={frozen}
-              onClick={() => setVehicleTab(idx)}
-            >
-              {group.label || "More"}
-            </button>
-          ))}
-        </div>
-      )}
-
       {wrapScrollable(
         <>
-          {useVehicleTabs && activeVehicleGroup && (
-            <div className="vehicle-group vehicle-group-tabbed">
-              <div className="quick-replies vehicle-group-options">
-                {activeVehicleGroup.options.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={mkClass(opt.value)}
-                    disabled={frozen}
-                    onClick={() => setVehicleDraft(opt.value)}
-                  >
-                    {renderChoiceRow(opt.label, null, vehicleDraft === opt.value || committedChoiceValue === opt.value)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!useVehicleTabs && vehicleGroups && vehicleGroups.map(group => (
+          {vehicleGroups && vehicleGroups.map(group => (
             <div key={group.label || group.options?.[0]?.value} className="vehicle-group">
               {group.label && <div className="vehicle-group-label">{group.label}</div>}
               <div className="quick-replies vehicle-group-options">
@@ -441,7 +462,7 @@ export default function QuestionChoices({
                   <button
                     key={value}
                     type="button"
-                    className={`${mkClass(value)}${description ? " qr-btn-described" : ""}`}
+                    className={`${mkClass(value)}${description ? " plan-choice-described" : ""}`}
                     disabled={frozen || routeLocked}
                     onClick={() => pickWithAnim(value)}
                   >
@@ -449,7 +470,7 @@ export default function QuestionChoices({
                   </button>
                 );
               })}
-              {routePending && onSkipRoutePending && (
+              {routePending && onSkipRoutePending && !actionsInDock && (
                 <button
                   type="button"
                   className="question-skip-route-link"
@@ -479,7 +500,7 @@ export default function QuestionChoices({
                     <button
                       key={value}
                       type="button"
-                      className={mkClass(value, " qr-btn-lodging")}
+                      className={mkClass(value, " plan-choice-lodging")}
                       disabled={frozen}
                       onClick={() => pickInstant(value, { loyalty_program: loyaltyDraft || "No preference" })}
                     >
@@ -498,7 +519,7 @@ export default function QuestionChoices({
                         <button
                           key={value}
                           type="button"
-                          className={`plan-choice-row qr-btn${loyaltyDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          className={`plan-choice-row${loyaltyDraft === value ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`}
                           disabled={frozen}
                           onClick={() => setLoyaltyDraft(value)}
                         >
@@ -606,7 +627,7 @@ export default function QuestionChoices({
                         <button
                           key={value}
                           type="button"
-                          className={`plan-choice-row qr-btn${isBudgetSelected(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          className={`plan-choice-row${isBudgetSelected(value) ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`}
                           disabled={frozen}
                           onClick={() => setBudgetDraft(value)}
                         >
@@ -700,6 +721,7 @@ export default function QuestionChoices({
               }
             }}
           />
+          {!actionsInDock && (
           <div className={actionRowClass}>
             {currentQ.id === "food_allergies" && (
               <button
@@ -722,11 +744,12 @@ export default function QuestionChoices({
               </button>
             )}
           </div>
+          )}
         </div>
       )}
     </div>
 
-      {currentQ.type === "vehicle" && (
+      {!actionsInDock && currentQ.type === "vehicle" && (
         <div className={actionRowClass}>
           <button
             type="button"
@@ -739,7 +762,7 @@ export default function QuestionChoices({
         </div>
       )}
 
-      {currentQ.type === "party_composition" && (
+      {!actionsInDock && currentQ.type === "party_composition" && (
         <div className={actionRowClass}>
           <button
             type="button"
@@ -752,7 +775,7 @@ export default function QuestionChoices({
         </div>
       )}
 
-      {currentQ.type === "multiselect" && (
+      {!actionsInDock && currentQ.type === "multiselect" && (
         <div className={actionRowClass}>
           {currentQ.id === "multi_vehicles" && multiDraft.length === 0 && (
             <p className="question-inline-hint">Select at least one vehicle, or tap Back to choose a different trip type.</p>
@@ -778,7 +801,7 @@ export default function QuestionChoices({
         </div>
       )}
 
-      {isTripDetails && (
+      {!actionsInDock && isTripDetails && (
         <div className={actionRowClass}>
           <button type="button" className="btn-generate btn-generate-inline" disabled={frozen} onClick={continueWithHaptic(submitTripDetails)}>
             Continue
@@ -789,7 +812,7 @@ export default function QuestionChoices({
         </div>
       )}
 
-      {currentQ.type === "multiselect_group" && (
+      {!actionsInDock && currentQ.type === "multiselect_group" && (
         <div className={actionRowClass}>
           <button
             type="button"

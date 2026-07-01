@@ -2,6 +2,7 @@ import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
 import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
+import ResultsPlaceCard from "./ResultsPlaceCard.jsx";
 import { parseRating } from "../../lib/ratings.js";
 import { hasGooglePlacesData } from "../../lib/placesVerification.js";
 import { roadStopToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
@@ -45,93 +46,88 @@ export default function RoadStopCard({
     else onAdd?.(stop);
   }
 
-  // Expose stop name + category to screen readers on the interactive card (Impeccable harden).
   const cardLabel = `${stop.title || "Stop"}${stop.category ? `, ${stop.category}` : ""}`;
 
   return (
-    <article
-      ref={cardRef}
-      className={`road-stop-card road-stop-card--${signCategory}${highlighted ? " stop-highlighted" : ""}`}
-      data-stop-id={stop.id}
+    <ResultsPlaceCard
+      signCategory={signCategory}
+      categoryLabel={categoryLabel}
+      name={stop.title}
+      highlighted={highlighted}
+      cardRef={cardRef}
+      className={`road-stop-card--${signCategory}`}
+      ariaLabel={cardLabel}
       onClick={handleClick}
-      onKeyDown={e => { if (e.key === "Enter") handleClick(); }}
-      role="button"
-      tabIndex={0}
-      aria-label={cardLabel}
-    >
-      <div className="road-stop-card-photo-wrap road-stop-card-photo-thumb">
-        <PlacePhotoOrIcon
-          photoUrl={stop.photoUrl}
-          name={stop.title}
-          category={stop.category}
-          imgClassName="road-stop-card-photo"
-          className="road-stop-card-photo-fallback"
-          displayPx={64}
-          preferFallback={prefersPhotoFallback(stop.category, stop.source)}
-        />
-        {showVerifiedBadge && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
-        {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
-        <span className={`road-stop-badge-cat${isCharging ? " road-stop-badge-charging" : ""}`}>
-          {stop.category || "Stop"}
-        </span>
-      </div>
-      <div className="road-stop-card-body">
-        <div className="road-stop-card-header">
-          <span className="road-stop-card-cat-label">{categoryLabel}</span>
-          <h4 className="road-stop-card-name">{stop.title}</h4>
-        </div>
-        {isCharging && (
-          <p className="road-stop-charging-meta">
-            {[
-              charging?.network || stop.stopData?.network,
-              charging?.level || stop.stopData?.chargerTypes?.join(" · "),
-              charging?.chargeTime80 || stop.stopData?.chargeTime80
-                ? `${charging?.chargeTime80 || stop.stopData?.chargeTime80} to 80%`
-                : null,
-              charging?.ports != null || stop.stopData?.ports != null
-                ? `${charging?.ports ?? stop.stopData?.ports} ports`
-                : null,
-            ].filter(Boolean).join(" · ")}
-          </p>
-        )}
-        <div className="road-stop-card-meta">
-          {stop.source === "osm" ? (
-            <span className="road-stop-osm-badge">Highway facility</span>
-          ) : hasRating ? (
-            <PlaceRatingLine rating={stop.rating} className="road-stop-rating" />
-          ) : null}
-          {Array.isArray(stop.amenities) && stop.amenities.length > 0 && (
-            <span className="road-stop-amenity-tags">{stop.amenities.join(" · ")}</span>
+      photo={(
+        <>
+          <PlacePhotoOrIcon
+            photoUrl={stop.photoUrl}
+            name={stop.title}
+            category={stop.category}
+            imgClassName="road-stop-card-photo"
+            className="road-stop-card-photo-fallback"
+            displayPx={64}
+            preferFallback={prefersPhotoFallback(stop.category, stop.source)}
+          />
+          {showVerifiedBadge && <TripMappaVerifiedBadge className="road-stop-verified-badge" />}
+          {stop.localFavorite && <span className="road-stop-badge-local">Local Favorite</span>}
+        </>
+      )}
+      meta={(
+        <>
+          {isCharging && (
+            <p className="road-stop-charging-meta">
+              {[
+                charging?.network || stop.stopData?.network,
+                charging?.level || stop.stopData?.chargerTypes?.join(" · "),
+                charging?.chargeTime80 || stop.stopData?.chargeTime80
+                  ? `${charging?.chargeTime80 || stop.stopData?.chargeTime80} to 80%`
+                  : null,
+                charging?.ports != null || stop.stopData?.ports != null
+                  ? `${charging?.ports ?? stop.stopData?.ports} ports`
+                  : null,
+              ].filter(Boolean).join(" · ")}
+            </p>
           )}
-          {stop.distanceFromRoute != null && (
-            <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
-          )}
-          {showTruckParkingWarning && (
-            <span className="road-stop-truck-warning" title="No verified truck parking at this stop">
-              Limited truck parking
-            </span>
-          )}
-        </div>
-        {!readOnly && (
-          <button
-            type="button"
-            className={`road-stop-add-btn${includedOnRoute ? " road-stop-add-btn-added road-stop-on-route-btn" : ""}`}
-            onClick={handleRouteToggle}
-          >
-            {includedOnRoute ? "On your route" : "Add to route"}
-          </button>
-        )}
-        {readOnly && includedOnRoute && (
-          <span className="road-stop-on-route-label">On route</span>
-        )}
-        {stop.category?.toLowerCase() === "food" && stop.nearbyRestaurants?.length > 0 && (
-          <div className="road-food-stops">
-            {stop.nearbyRestaurants.map(r => (
-              <RoadFoodStopRow key={r.placeId || r.id || r.name} restaurant={r} />
-            ))}
+          <div className="road-stop-card-meta">
+            {stop.source === "osm" ? (
+              <span className="road-stop-osm-badge">Highway facility</span>
+            ) : hasRating ? (
+              <PlaceRatingLine rating={stop.rating} className="road-stop-rating" />
+            ) : null}
+            {Array.isArray(stop.amenities) && stop.amenities.length > 0 && (
+              <span className="road-stop-amenity-tags">{stop.amenities.join(" · ")}</span>
+            )}
+            {stop.distanceFromRoute != null && (
+              <span>{typeof stop.distanceFromRoute === "number" ? `${stop.distanceFromRoute} mi` : stop.distanceFromRoute}</span>
+            )}
+            {showTruckParkingWarning && (
+              <span className="road-stop-truck-warning" title="No verified truck parking at this stop">
+                Limited truck parking
+              </span>
+            )}
           </div>
-        )}
-      </div>
-    </article>
+        </>
+      )}
+      action={!readOnly ? (
+        <button
+          type="button"
+          className={`road-stop-add-btn${includedOnRoute ? " road-stop-add-btn-added road-stop-on-route-btn" : ""}`}
+          onClick={handleRouteToggle}
+        >
+          {includedOnRoute ? "On your route" : "Add to route"}
+        </button>
+      ) : includedOnRoute ? (
+        <span className="road-stop-on-route-label">On route</span>
+      ) : null}
+    >
+      {stop.category?.toLowerCase() === "food" && stop.nearbyRestaurants?.length > 0 && (
+        <div className="road-food-stops">
+          {stop.nearbyRestaurants.map(r => (
+            <RoadFoodStopRow key={r.placeId || r.id || r.name} restaurant={r} />
+          ))}
+        </div>
+      )}
+    </ResultsPlaceCard>
   );
 }

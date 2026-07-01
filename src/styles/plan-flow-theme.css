@@ -388,3 +388,173 @@ html body .app-wrap.night .btn-generate-trip {
   color: #1A0D00 !important;
   border-color: transparent !important;
 }
+
+/* ── PR4: form-on-paper plan flow ── */
+.plan-flow-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.plan-flow-form-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 4px 8px;
+}
+
+.plan-flow-question-header {
+  margin-bottom: 16px;
+}
+
+.plan-flow-question-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+
+.plan-flow-question-hint {
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.88;
+  margin: 0;
+}
+
+.plan-flow-confirm-panel {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 210, 140, 0.22);
+  background: color-mix(in srgb, var(--color-card-bg) 94%, var(--color-accent-gold));
+  margin-bottom: 12px;
+}
+
+.plan-flow-confirm-msg {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+
+.plan-flow-picks-strip {
+  margin: 0 0 12px;
+  padding: 0 2px;
+}
+
+.plan-flow-picks-strip-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.plan-flow-pick-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 140, 0.28);
+  background: color-mix(in srgb, var(--color-card-bg) 92%, rgba(255, 210, 140, 0.12));
+  font-size: 12px;
+  max-width: min(280px, 85vw);
+}
+
+.plan-flow-pick-chip-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 9px;
+  opacity: 0.72;
+}
+
+.plan-flow-pick-chip-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.plan-flow-pick-chip-edit {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-accent-gold);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.plan-flow-pick-chip-tag {
+  margin-left: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.plan-flow-action-dock {
+  flex-shrink: 0;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255, 210, 140, 0.12);
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+}
+
+.plan-flow-action-dock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.plan-flow-action-dock-primary {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-flow-dock-btn {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 210, 140, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+}
+
+.plan-flow-dock-continue {
+  min-width: 120px;
+}
+
+.plan-choice-selected {
+  border-color: rgba(255, 210, 140, 0.55) !important;
+  background: color-mix(in srgb, var(--color-answer-bg) 88%, var(--gold-primary)) !important;
+}
+
+.plan-choice-dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.choices-frozen .plan-choice-row:not(.plan-choice-selected) {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.plan-choice-row-selected .plan-choice-row-chevron,
+.plan-choice-selected .plan-choice-row-chevron {
+  opacity: 1;
+  color: var(--color-answer-selected-text, var(--deep-dark));
+}

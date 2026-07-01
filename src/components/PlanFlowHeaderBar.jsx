@@ -7,7 +7,6 @@ export default function PlanFlowHeaderBar({
   collapsed = false,
   frozen = false,
   helpButton = null,
-  onResetPlan,
   onExpand,
   onCollapse,
 }) {
@@ -46,11 +45,6 @@ export default function PlanFlowHeaderBar({
       </div>
       <div className="plan-flow-header-bar-actions" onClick={e => e.stopPropagation()}>
         {helpButton}
-        {!frozen && (
-          <button type="button" className="convo-nav-btn plan-flow-start-over" onClick={onResetPlan}>
-            Start over
-          </button>
-        )}
         <button
           type="button"
           className={`float-card-chevron-btn plan-flow-collapse-btn${collapsed ? " is-collapsed-tab" : " open"}`}

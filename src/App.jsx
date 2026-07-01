@@ -116,6 +116,7 @@ import AppMap from "./components/AppMap.jsx";
 import ProximityTripTipAlert from "./components/ProximityTripTipAlert.jsx";
 import PlanPanel from "./components/PlanPanel.jsx";
 import PlanPanelDock from "./components/PlanPanelDock.jsx";
+import PlanFlowActionDock from "./components/PlanFlowActionDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { parseLiveShareToken } from "./lib/liveShareApi.js";
@@ -154,6 +155,7 @@ export default function App() {
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState(null);
+  const [flowDockActions, setFlowDockActions] = useState(null);
   const [mapStyle, setMapStyle] = useState("standard");
   const [mapStyleOpen, setMapStyleOpen] = useState(false);
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
@@ -1234,6 +1236,7 @@ export default function App() {
   );
   const showGuestSignInGate = false;
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
+  const showPlanFlowActionDock = tab === "plan" && !cardCollapsed && inQuestionFlow && !convoComplete;
 
   const creditsExhausted = useMemo(() => {
     const status = creditStatus || (!user ? getGuestCreditStatus() : null);
@@ -4120,7 +4123,6 @@ export default function App() {
                   collapsed={cardCollapsed}
                   frozen={!!stepAnim}
                   helpButton={planPanelHelpButton}
-                  onResetPlan={requestResetPlan}
                   onExpand={() => setCardCollapsed(false)}
                   onCollapse={() => setCardCollapsed(true)}
                 />
@@ -4173,9 +4175,6 @@ export default function App() {
                       prefDraft={prefDraft}
                       questionHistory={questionHistory}
                       questionHistoryLength={questionHistory.length}
-                      roadStops={roadStops}
-                      selectedLodging={selectedLodging}
-                      restaurantsByCity={restaurantsByCity}
                       convoEndRef={convoEndRef}
                       convoScrollRef={convoScrollRef}
                       creditsLabel={formatCreditsLabel(creditStatus)}
@@ -4187,9 +4186,7 @@ export default function App() {
                       onGuestSignIn={() => openAuthModal("signin")}
                       onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}
-                      returnedFromResults={returnedFromResults}
                       inQuestionFlow={inQuestionFlow}
-                      toolbarInHeader={inQuestionFlow}
                       routeError={routeError}
                       onRetryRoute={retryRouteCalculation}
                       planOutOfDate={planOutOfDate}
@@ -4208,14 +4205,8 @@ export default function App() {
                       onCancelContinuousDrive={cancelContinuousDrive}
                       onEditQuestion={jumpToQuestion}
                       onEditAssumedLodging={jumpToAssumedTruckLodging}
-                      getStepMessage={getStepMessage}
-                      exploreRangeEnabled={exploreRangeEnabled}
-                      exploreRangeDriveSeconds={exploreRangeDriveSeconds}
-                      exploreRangeLoading={exploreRangeLoading}
-                      exploreRangeError={exploreRangeError}
-                      onExploreRangeToggle={handleExploreRangeToggle}
-                      onExploreRangeDriveTimeChange={handleExploreRangeDriveTimeChange}
                       routeScoutLine={routeScoutLine}
+                      onDockActionsChange={setFlowDockActions}
                     />
                     </ErrorBoundary>
                   )}
@@ -4249,6 +4240,12 @@ export default function App() {
                   )}
                 </div>
               </div>
+              {showPlanFlowActionDock && (
+                <PlanFlowActionDock
+                  actions={flowDockActions}
+                  onStartOver={requestResetPlan}
+                />
+              )}
               {showPlanPanelDock && (
                 <PlanPanelDock
                   isLoaded={isLoaded}

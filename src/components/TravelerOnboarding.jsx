@@ -1,4 +1,5 @@
 import { useState } from "react";
+import HeroMountainScene from "./HeroMountainScene.jsx";
 import {
   TRAVELER_DIETARY_OPTIONS,
   TRAVELER_STOPS_INTEREST_GROUPS,
@@ -26,11 +27,8 @@ export default function TravelerOnboarding({ onComplete }) {
   }
 
   function transitionTo(nextScreen) {
-    setScreenPhase("exit");
-    window.setTimeout(() => {
-      setScreen(nextScreen);
-      setScreenPhase("enter");
-    }, 300);
+    setScreen(nextScreen);
+    setScreenPhase("enter");
   }
 
   async function finish() {
@@ -73,13 +71,16 @@ export default function TravelerOnboarding({ onComplete }) {
       <div className={`traveler-onboarding-stage traveler-onboarding-stage--${screenPhase}`}>
         {screen === "welcome" && (
           <div className="traveler-onboarding-welcome">
+            <div className="traveler-onboarding-welcome-sky" aria-hidden="true">
+              <HeroMountainScene phase="night" hour={21} />
+            </div>
             <h1 className="traveler-onboarding-wordmark" aria-label="TripMappa">
               {WORDMARK}
             </h1>
             <p className="traveler-onboarding-tagline">Your trip, our mission.</p>
             <button
               type="button"
-              className="btn-generate traveler-onboarding-get-started is-visible"
+              className="btn-generate traveler-onboarding-get-started"
               onClick={handleWelcomeStart}
             >
               Get Started

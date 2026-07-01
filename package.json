@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "smoke": "node scripts/smoke-deploy.mjs"
+    "smoke": "node scripts/smoke-deploy.mjs",
+    "verify:deploy": "node scripts/visual-verify-deploy.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

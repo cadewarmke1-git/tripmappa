@@ -107,7 +107,7 @@ Night mode uses **tonal layering** (violet → `#0f1428` → `#1a1f35`) more tha
 - **Map marker popup** — `VintageNeonSignCard` variant `popup`: shape + name + category only; no photo inside sign
 - **Map popup action row** — Flat `map-info-action-btn` row: Directions, Website, Menu (conditional); no neon treatment
 - **Results stop cards** — Standard photo + metadata cards (not vintage sign shells)
-- **Question flow pills** — `qr-btn` / `qr-selected`; no pre-selected state from saved prefs before user tap
+- **Question flow choices** — `plan-choice-row` / `plan-choice-selected`; no pre-selected state from saved prefs before user tap
 
 ## Do's and Don'ts
 
@@ -134,3 +134,11 @@ These patterns are **approved brand choices**. Do not remove or flatten them whe
 | `dark-glow` | Vintage neon sign tubes (`neon-sign-cards.css`, map popup only) | Route 66 Americana neon at night; scoped to map pin popups |
 | `overused-font` | Inter (body/UI), Fraunces (display), Limelight (sign names) | Documented type system in Typography section above |
 | `nested-cards` | Map popup mount plate (`neon-sign-cards.css`) | Single cream/violet drawer plate behind vintage sign — not card-in-card SaaS nesting |
+
+## Deploy verification
+
+Run `npm run verify:deploy` against a live dev or preview server (`VERIFY_BASE_URL`). Checks hero copy, opaque search shell, banned legacy strings, and plan-flow form-on-paper (no chat metaphor classes in active flow).
+
+## Motion budget
+
+Allowed motion: hero sky cycle, map popup drawer slide, route-drawing loader path. Plan step transitions, results entrance, and loader wordmark pulse are disabled; `prefers-reduced-motion` removes sky/loader/onboarding transitions.

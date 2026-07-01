@@ -131,7 +131,7 @@ export default function HeroView({
         <div className="hero-palette-ridge" aria-hidden="true" />
 
         <div className="hero-content">
-          <p className="trip-overview-hero-eyebrow">Open road · Verified stops · Ready when you are</p>
+          <p className="trip-overview-hero-eyebrow">The open road · Your route · Our mission</p>
           <h1 className="hero-title">
             <span className="hero-title-line">Your trip, our mission.</span>
           </h1>

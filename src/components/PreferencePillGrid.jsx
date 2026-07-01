@@ -29,12 +29,10 @@ export default function PreferencePillGrid({
           <button
             key={value}
             type="button"
-            className={`plan-choice-row qr-btn preference-pill${active ? " is-selected qr-selected" : ""}`}
+            className={`plan-choice-row preference-pill${active ? " plan-choice-selected" : ""}`}
             onClick={() => onToggle(value)}
           >
-            <span className="plan-choice-row-label">
-              <span className="qr-btn-label">{label}</span>
-            </span>
+            <span className="plan-choice-row-label">{label}</span>
             <span className="plan-choice-row-chevron" aria-hidden="true">{active ? "✓" : "›"}</span>
           </button>
         );

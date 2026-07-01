@@ -96,6 +96,26 @@ html[data-layout="web"] .hero-go-btn {
   white-space: nowrap;
 }
 
+@media (max-height: 860px) {
+  html[data-layout="web"] .hero-title {
+    font-size: clamp(36px, 5.5vw, 68px);
+    margin: 12px 0 20px;
+  }
+
+  html[data-layout="web"] .hero-sub {
+    margin: 0 auto 28px;
+    font-size: 15px;
+  }
+
+  html[data-layout="web"] .trip-overview-hero-eyebrow {
+    margin-bottom: 4px;
+  }
+
+  html[data-layout="web"] .scroll-indicator {
+    display: none;
+  }
+}
+
 html[data-layout="web"] .hero-auth {
   width: 100%;
   max-width: 900px;

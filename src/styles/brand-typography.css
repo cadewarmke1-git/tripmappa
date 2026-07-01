@@ -42,7 +42,6 @@
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.02em;
-  animation: loaderWordmarkPulse 1.8s ease-in-out infinite;
 }
 
 /* ── Hero headline — gradient clip text (Travel / Reimagined only) ── */
@@ -110,4 +109,48 @@
 @keyframes loaderWordmarkPulse {
   0%, 100% { opacity: 0.55; transform: scale(0.98); }
   50% { opacity: 1; transform: scale(1); }
+}
+
+/* Typography budget — Fraunces: hero, sections, business names; Inter: body/UI */
+.hero-title,
+.hero-title-line,
+.trip-overview-hero-title,
+.results-day-label,
+.results-subsection-label,
+.lodging-section-label,
+.restaurant-section-label,
+.plan-flow-question-title,
+.road-stop-card-name,
+.restaurant-card-name {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+/* Limelight: map popup sign names only (neon-sign-cards.css) */
+
+/* Motion budget — sky cycle, popup drawer, route draw only */
+.plan-flow-step.step-exit,
+.plan-flow-step.step-enter,
+.results-view,
+.plan-view {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title,
+  .hero-sub,
+  .hero-search,
+  .hero-auth,
+  .scroll-indicator,
+  .route-drawing-loader-wordmark,
+  .generation-cinematic-loader,
+  .traveler-onboarding-stage,
+  .traveler-onboarding-dot,
+  .plan-flow-step,
+  .results-view,
+  .plan-view,
+  .step-exit,
+  .step-enter {
+    animation: none !important;
+    transition: none !important;
+  }
 }
