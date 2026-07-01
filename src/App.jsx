@@ -34,7 +34,7 @@ import { configurePlacesAutocomplete, resolvePlaceFromAutocomplete } from "./lib
 import { enrichGeneratedTrip, enrichPlacesLayer } from "./lib/tripEnrichment.js";
 import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
 import { applySharePageMeta } from "./lib/itineraryShareApi.js";
-import { isIncludedRoadStop } from "./lib/itineraryDays.js";
+import { getItineraryOverview, isIncludedRoadStop } from "./lib/itineraryDays.js";
 import { copyToClipboard } from "./lib/copyToClipboard.js";
 import { buildPlacesContext, formatPlacesContextForPrompt, shouldPrefetchPlacesContext } from "./lib/placesContext.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
@@ -168,6 +168,7 @@ export default function App() {
   const [convoComplete, setConvoComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [lastTripPreview, setLastTripPreview] = useState(null);
   const [shareViewMode, setShareViewMode] = useState(
     () => Boolean(new URLSearchParams(window.location.search).get("share")),
   );
@@ -1419,6 +1420,20 @@ export default function App() {
   function openGroceryUpgrade() {
     setUpgradeModalReason("grocery");
     setShowUpgradeModal(true);
+  }
+
+  function buildHeroTripPreview(tripStops, tripRoadStops, tripAnswers) {
+    const overview = getItineraryOverview({
+      stops: tripStops,
+      roadStops: tripRoadStops,
+      answers: tripAnswers || {},
+    });
+    const stopCount = overview.stopCount ?? 0;
+    if (!stopCount && !(tripStops?.length || tripRoadStops?.length)) return null;
+    return {
+      stopCount,
+      dayCount: overview.straightThrough ? 1 : Math.max(1, overview.dayCount || 1),
+    };
   }
 
   function goHome() {
@@ -2837,6 +2852,8 @@ export default function App() {
       setTripFormat(parsed.tripFormat || null);
       setRecommendations(parsed.recommendations || []);
       setGenerated(true);
+      const heroPreview = buildHeroTripPreview(parsed.stops, mergedRoadStops, normalizedAnswers);
+      if (heroPreview) setLastTripPreview(heroPreview);
       setResultsView("itinerary");
       setTab("plan");
       setCardCollapsed(false);
@@ -3488,6 +3505,8 @@ export default function App() {
     setRouteInfo(trip.routeInfo || null);
     setSelectedLodging(trip.selectedLodging || []);
     setGenerated(true);
+    const heroPreview = buildHeroTripPreview(trip.stops || [], trip.roadStops || [], tripAnswers);
+    if (heroPreview) setLastTripPreview(heroPreview);
     setResultsView("itinerary");
     setConvoComplete(true);
     setTab("plan");
@@ -3772,6 +3791,7 @@ export default function App() {
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
+        lastTripPreview={lastTripPreview}
         heroTheme={theme}
       />
       {founderWelcomeName && (

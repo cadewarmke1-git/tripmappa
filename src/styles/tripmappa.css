@@ -206,6 +206,21 @@
     margin: 0 auto 52px; line-height: 1.65; font-weight: 400;
   }
 
+  .hero-trip-preview {
+    margin: 8px 0 0;
+    font-family: var(--font-body, 'Inter', sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: var(--color-hero-subtitle, var(--tm-hero-tagline-color));
+    text-align: center;
+  }
+
+  .hero-trip-preview-sep {
+    opacity: 0.65;
+  }
+
   /* Hero search bar — frosted glass */
   .hero-search {
     position: relative;

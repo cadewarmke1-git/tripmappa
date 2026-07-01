@@ -49,6 +49,7 @@ export default function HeroView({
   planDraft = null,
   onResumeDraft,
   onDismissDraft,
+  lastTripPreview = null,
   heroTheme: heroThemeProp,
 }) {
   const {
@@ -130,11 +131,11 @@ export default function HeroView({
         <div className="hero-palette-ridge" aria-hidden="true" />
 
         <div className="hero-content">
+          <p className="trip-overview-hero-eyebrow">Open road · Verified stops · Ready when you are</p>
           <h1 className="hero-title">
-            <span className="hero-title-line">Travel</span>
-            <span className="hero-title-accent">Reimagined.</span>
+            <span className="hero-title-line">Your full drive — mapped, verified, ready to go.</span>
           </h1>
-          <p className="hero-sub">Your next trip, planned in seconds.</p>
+          <p className="hero-sub">Stops, lodging, and fuel along your actual route — one plan, not a suggestion list.</p>
 
           {planDraft?.origin && planDraft?.dest && (
             <div className="hero-draft-resume">
@@ -207,6 +208,15 @@ export default function HeroView({
                 </div>
               </div>
               </div>
+              {lastTripPreview && (
+                <p className="hero-trip-preview" role="status">
+                  <span>{lastTripPreview.stopCount} stops</span>
+                  <span className="hero-trip-preview-sep" aria-hidden="true"> · </span>
+                  <span>{lastTripPreview.dayCount} {lastTripPreview.dayCount === 1 ? "day" : "days"}</span>
+                  <span className="hero-trip-preview-sep" aria-hidden="true"> · </span>
+                  <span>Ready to drive</span>
+                </p>
+              )}
               <HeroFoundingSlots />
             </div>
             <button
