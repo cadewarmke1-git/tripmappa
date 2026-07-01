@@ -1,102 +1,84 @@
-import { useState } from "react";
-import GoldStarRating from "./GoldStarRating.jsx";
-import { dinnerOpenStatus } from "../../lib/restaurantHours.js";
-import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
-import { parseRating } from "../../lib/ratings.js";
-import CategoryIcon from "../icons/CategoryIcon.jsx";
-import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
-import VintageNeonSignCard from "../signs/VintageNeonSignCard.jsx";
-import { hasGooglePlacesData } from "../../lib/placesVerification.js";
-
-const SLOT_LABELS = {
-  sit_down: "Dinner stop",
-  mid_range: "Dinner option",
-  quick: "Quick meal",
-};
-
-export default function RestaurantCard({
-  restaurant,
-  onToast,
-  estimatedArrival = null,
-  onDirections = null,
-}) {
-  const [photoFailed, setPhotoFailed] = useState(false);
-  const status = dinnerOpenStatus(restaurant, estimatedArrival || new Date());
-  const photoSrc = resolvePlacePhotoUrl(restaurant.photoUrl || restaurant.photo, 64);
-  const rating = parseRating(restaurant.rating);
-
-  function handleDirections(e) {
-    e.stopPropagation();
-    onDirections?.(restaurant);
-  }
-
-  const photo = (
-    <div className="restaurant-card-photo-wrap restaurant-card-photo-thumb">
-      {photoSrc && !photoFailed ? (
-        <img
-          className="restaurant-card-photo"
-          src={photoSrc}
-          alt={restaurant.name}
-          loading="lazy"
-          onError={() => setPhotoFailed(true)}
-        />
-      ) : (
-        <div className="restaurant-card-photo-fallback" aria-hidden="true">
-          <CategoryIcon category="food" />
-        </div>
-      )}
-      <div className="restaurant-card-photo-badges">
-        {hasGooglePlacesData(restaurant) && <TripMappaVerifiedBadge />}
-        {restaurant.slot && SLOT_LABELS[restaurant.slot] && (
-          <span className="restaurant-slot-badge">{SLOT_LABELS[restaurant.slot]}</span>
-        )}
-        {restaurant.cuisineType && (
-          <span className="restaurant-cuisine-badge">{restaurant.cuisineType}</span>
-        )}
-      </div>
-    </div>
-  );
-
-  const infoRow = (
-    <>
-      <div className="restaurant-card-meta">
-        {rating != null
-          ? <GoldStarRating rating={rating} />
-          : <span className="restaurant-no-reviews">No reviews yet</span>}
-        <span className="restaurant-price-signs">{restaurant.priceSigns || "$$"}</span>
-        {status.kind !== "closed" && (
-          <span className={`restaurant-open-status ${status.className}`}>{status.label}</span>
-        )}
-      </div>
-      {restaurant.distanceMiles != null && (
-        <div className="restaurant-card-distance">{restaurant.distanceMiles} mi from stop</div>
-      )}
-      {restaurant.description && (
-        <p className="restaurant-card-desc">{restaurant.description}</p>
-      )}
-    </>
-  );
-
-  const footer = (
-    <div className="restaurant-card-actions">
-      {(onDirections || restaurant.lat != null) && (
-        <button type="button" className="restaurant-btn-directions" onClick={handleDirections}>
-          Directions
-        </button>
-      )}
-    </div>
-  );
-
-  return (
-    <article className="restaurant-card">
-      <VintageNeonSignCard
-        signCategory="food"
-        businessName={restaurant.name}
-        categoryLabel="Food"
-        photo={photo}
-        infoRow={infoRow}
-        footer={footer}
-      />
-    </article>
-  );
-}
+import { useState } from "react";
+import { dinnerOpenStatus } from "../../lib/restaurantHours.js";
+import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
+import { parseRating } from "../../lib/ratings.js";
+import CategoryIcon from "../icons/CategoryIcon.jsx";
+import TripMappaVerifiedBadge from "../results/TripMappaVerifiedBadge.jsx";
+import ResultsPlaceCard from "../results/ResultsPlaceCard.jsx";
+import { hasGooglePlacesData } from "../../lib/placesVerification.js";
+
+const SLOT_LABELS = {
+  sit_down: "Dinner",
+  mid_range: "Dinner",
+  quick: "Quick meal",
+};
+
+export default function RestaurantCard({
+  restaurant,
+  estimatedArrival = null,
+  onDirections = null,
+}) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const status = dinnerOpenStatus(restaurant, estimatedArrival || new Date());
+  const photoSrc = resolvePlacePhotoUrl(restaurant.photoUrl || restaurant.photo, 64);
+  const rating = parseRating(restaurant.rating);
+
+  function handleDirections(e) {
+    e.stopPropagation();
+    onDirections?.(restaurant);
+  }
+
+  const slotLabel = restaurant.slot ? SLOT_LABELS[restaurant.slot] : null;
+  const metaLine = [
+    slotLabel,
+    restaurant.cuisineType,
+    restaurant.priceSigns || "$$",
+    rating != null ? `${rating}★` : null,
+    status.kind !== "closed" ? status.label : null,
+    restaurant.distanceMiles != null ? `${restaurant.distanceMiles} mi from stop` : null,
+  ].filter(Boolean).join(" · ");
+
+  return (
+    <ResultsPlaceCard
+      signCategory="food"
+      categoryLabel="Food"
+      name={restaurant.name}
+      className="restaurant-card"
+      ariaLabel={restaurant.name}
+      photo={(
+        photoSrc && !photoFailed ? (
+          <img
+            className="restaurant-card-photo road-stop-card-photo"
+            src={photoSrc}
+            alt=""
+            loading="lazy"
+            onError={() => setPhotoFailed(true)}
+          />
+        ) : (
+          <div className="restaurant-card-photo-fallback road-stop-card-photo-fallback" aria-hidden="true">
+            <CategoryIcon category="food" />
+          </div>
+        )
+      )}
+      verifiedBadge={hasGooglePlacesData(restaurant) ? <TripMappaVerifiedBadge className="road-stop-verified-badge" /> : null}
+      meta={(
+        <div className="road-stop-card-meta restaurant-card-meta-line">
+          {metaLine ? (
+            <span className="restaurant-meta-oneline">{metaLine}</span>
+          ) : (
+            <span className="restaurant-no-reviews">No reviews yet</span>
+          )}
+        </div>
+      )}
+      action={(
+        (onDirections || restaurant.lat != null) ? (
+          <div className="restaurant-card-actions road-stop-card-actions">
+            <button type="button" className="road-stop-add-btn restaurant-btn-directions" onClick={handleDirections}>
+              Directions
+            </button>
+          </div>
+        ) : null
+      )}
+    />
+  );
+}

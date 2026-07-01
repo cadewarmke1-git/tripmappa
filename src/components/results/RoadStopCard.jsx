@@ -4,6 +4,7 @@ import PlaceRatingLine from "./PlaceRatingLine.jsx";
 import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
 import { parseRating } from "../../lib/ratings.js";
 import { hasGooglePlacesData } from "../../lib/placesVerification.js";
+import { roadStopToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
 
 function prefersPhotoFallback(category, source) {
   if (source === "osm") return true;
@@ -29,6 +30,8 @@ export default function RoadStopCard({
   const stopData = stop.stopData || stop;
   const showVerifiedBadge = hasGooglePlacesData(stopData);
   const includedOnRoute = onRoute || added;
+  const signCategory = roadStopToSignCategory(stop.category);
+  const categoryLabel = signCategoryLabel(signCategory, stop.category || "Stop");
   const showTruckParkingWarning = showTruckWarnings && stopData.truckParking === false
     && /food|rest|dining/i.test(String(stop.category || ""));
 
@@ -48,7 +51,7 @@ export default function RoadStopCard({
   return (
     <article
       ref={cardRef}
-      className={`road-stop-card${highlighted ? " stop-highlighted" : ""}`}
+      className={`road-stop-card road-stop-card--${signCategory}${highlighted ? " stop-highlighted" : ""}`}
       data-stop-id={stop.id}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === "Enter") handleClick(); }}
@@ -74,6 +77,7 @@ export default function RoadStopCard({
       </div>
       <div className="road-stop-card-body">
         <div className="road-stop-card-header">
+          <span className="road-stop-card-cat-label">{categoryLabel}</span>
           <h4 className="road-stop-card-name">{stop.title}</h4>
         </div>
         {isCharging && (

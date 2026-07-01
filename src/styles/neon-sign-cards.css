@@ -493,23 +493,38 @@ html[data-surface-theme="day"] .vneon-info-row {
 
 /* ── Map popup: vintage neon sign + flat action row ── */
 .map-info-card.map-info-card--popup {
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  border-radius: 8px;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  padding: 12px 14px 14px;
+  padding: 10px 12px 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+.map-info-card.map-info-card--popup.day {
+  background: #FDF3E0;
+  border: 1px solid rgba(160, 64, 16, 0.2);
+  box-shadow: 0 8px 28px rgba(58, 26, 8, 0.14);
+}
+.map-info-card.map-info-card--popup.night {
+  background: #0D0A1A;
+  border: 1px solid rgba(255, 210, 140, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.42);
+}
+.map-info-card.map-info-card--popup .vneon-backing {
+  background: transparent !important;
+  border-radius: 8px;
+  box-shadow: none !important;
 }
 .map-info-card.map-info-card--popup .map-info-close {
-  top: 4px;
-  right: 6px;
-  z-index: 5;
+  top: 6px;
+  right: 8px;
+  z-index: 6;
   color: rgba(255, 255, 255, 0.75);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
-.map-info-card.map-info-card--popup.day .map-info-close {
-  color: rgba(26, 26, 46, 0.65);
-  text-shadow: none;
+.map-info-card.map-info-card--popup.map-info-card--food .map-info-close {
+  top: 2px;
+  right: 4px;
 }
 
 .vneon-card--popup .vneon-sign-shell {
@@ -548,7 +563,20 @@ html[data-surface-theme="day"] .vneon-info-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 0;
+  padding: 10px 0 12px;
+  border-top: 1px solid rgba(255, 210, 140, 0.12);
+  background: inherit;
+}
+.map-info-card.day .map-info-action-row {
+  border-top-color: rgba(160, 64, 16, 0.2);
+}
+.map-info-action-btn:first-child {
+  color: var(--gold-primary);
+}
+.map-info-card.day .map-info-action-btn:first-child {
+  color: #1A0D00;
+  font-weight: 700;
 }
 /* impeccable-disable overused-font: Inter is the approved UI/body face per DESIGN.md (map popup actions). */
 .map-info-action-btn {

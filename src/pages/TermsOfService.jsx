@@ -10,7 +10,7 @@ const DOCUMENT = {
     {
       heading: "Use of Service",
       paragraphs: [
-        "TripMappa provides AI-powered road trip planning services. You must be at least 13 years old to use TripMappa. You are responsible for maintaining the security of your account credentials. You agree not to use TripMappa for any unlawful purpose or in any way that could harm TripMappa or other users.",
+        "TripMappa provides road trip planning services. You must be at least 13 years old to use TripMappa. You are responsible for maintaining the security of your account credentials. You agree not to use TripMappa for any unlawful purpose or in any way that could harm TripMappa or other users.",
       ],
     },
     {

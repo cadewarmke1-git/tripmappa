@@ -1,7 +1,7 @@
 {
   "name": "TripMappa",
   "short_name": "TripMappa",
-  "description": "AI-powered road trip planning",
+  "description": "Road trip planning that knows your route",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0D0A1A",

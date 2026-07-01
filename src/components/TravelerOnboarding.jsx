@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   TRAVELER_DIETARY_OPTIONS,
   TRAVELER_STOPS_INTEREST_GROUPS,
@@ -7,24 +7,15 @@ import PreferencePillGrid, { PreferencePillGroups, togglePreferenceValue } from 
 import "../styles/traveler-onboarding.css";
 
 const WORDMARK = "TripMappa";
-const WORDMARK_LETTER_STAGGER_MS = 62.5;
 const PREFERENCE_STEPS = ["dietary", "stops_interests"];
 
 export default function TravelerOnboarding({ onComplete }) {
   const [screen, setScreen] = useState("welcome");
   const [screenPhase, setScreenPhase] = useState("enter");
-  const [showGetStarted, setShowGetStarted] = useState(false);
   const [dietary, setDietary] = useState([]);
   const [foodAllergies, setFoodAllergies] = useState("");
   const [stopsInterests, setStopsInterests] = useState([]);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (screen !== "welcome") return undefined;
-    setShowGetStarted(false);
-    const timer = setTimeout(() => setShowGetStarted(true), 1500);
-    return () => clearTimeout(timer);
-  }, [screen]);
 
   function buildProfile() {
     return {
@@ -83,20 +74,12 @@ export default function TravelerOnboarding({ onComplete }) {
         {screen === "welcome" && (
           <div className="traveler-onboarding-welcome">
             <h1 className="traveler-onboarding-wordmark" aria-label="TripMappa">
-              {WORDMARK.split("").map((letter, index) => (
-                <span
-                  key={`${letter}-${index}`}
-                  className="traveler-onboarding-wordmark-letter"
-                  style={{ animationDelay: `${index * WORDMARK_LETTER_STAGGER_MS}ms` }}
-                >
-                  {letter}
-                </span>
-              ))}
+              {WORDMARK}
             </h1>
-            <p className="traveler-onboarding-tagline">Travel Reimagined.</p>
+            <p className="traveler-onboarding-tagline">Your trip, our mission.</p>
             <button
               type="button"
-              className={`btn-generate traveler-onboarding-get-started${showGetStarted ? " is-visible" : ""}`}
+              className="btn-generate traveler-onboarding-get-started is-visible"
               onClick={handleWelcomeStart}
             >
               Get Started

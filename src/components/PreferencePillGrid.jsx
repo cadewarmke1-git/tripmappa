@@ -21,7 +21,7 @@ export default function PreferencePillGrid({
 }) {
   const selectedSet = new Set(Array.isArray(selected) ? selected : []);
   return (
-    <div className={`preference-pill-grid${className ? ` ${className}` : ""}`}>
+    <div className={`preference-pill-grid preference-choice-list${className ? ` ${className}` : ""}`}>
       {options.map(raw => {
         const { value, label } = resolveOption(raw);
         const active = selectedSet.has(value);
@@ -29,10 +29,13 @@ export default function PreferencePillGrid({
           <button
             key={value}
             type="button"
-            className={`preference-pill${active ? " is-selected" : ""}`}
+            className={`plan-choice-row qr-btn preference-pill${active ? " is-selected qr-selected" : ""}`}
             onClick={() => onToggle(value)}
           >
-            {label}
+            <span className="plan-choice-row-label">
+              <span className="qr-btn-label">{label}</span>
+            </span>
+            <span className="plan-choice-row-chevron" aria-hidden="true">{active ? "✓" : "›"}</span>
           </button>
         );
       })}

@@ -397,7 +397,7 @@ body {
 
 /* ── Cards & panels — night ── */
 .app-wrap.night .float-card {
-  background: rgba(26, 16, 53, 0.92) !important;
+  background: #0D0A1A !important;
   border-color: rgba(255, 210, 140, 0.2) !important;
 }
 
@@ -486,7 +486,7 @@ body {
 
 /* ── Cards & panels — day ── */
 .app-wrap.day .float-card {
-  background: var(--color-plan-panel-bg) !important;
+  background: #FDF3E0 !important;
   border-color: var(--color-plan-panel-border) !important;
 }
 

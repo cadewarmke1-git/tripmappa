@@ -133,3 +133,4 @@ These patterns are **approved brand choices**. Do not remove or flatten them whe
 | `gradient-text` | Nav wordmark, hero headline (`hero-palette.css`, related hero CSS) | Gold-to-orange / violet-to-gold wordmark gradients are core TripMappa identity |
 | `dark-glow` | Vintage neon sign tubes (`neon-sign-cards.css`, map popup only) | Route 66 Americana neon at night; scoped to map pin popups |
 | `overused-font` | Inter (body/UI), Fraunces (display), Limelight (sign names) | Documented type system in Typography section above |
+| `nested-cards` | Map popup mount plate (`neon-sign-cards.css`) | Single cream/violet drawer plate behind vintage sign — not card-in-card SaaS nesting |

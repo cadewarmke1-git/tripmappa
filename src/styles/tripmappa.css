@@ -221,13 +221,13 @@
     opacity: 0.65;
   }
 
-  /* Hero search bar — frosted glass */
+  /* Hero search bar — solid paper panel */
   .hero-search {
     position: relative;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px; padding: 12px 16px;
+    background: #0D0A1A;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 14px; padding: 12px 16px;
     display: flex; align-items: center; gap: 16px;
     width: 100%; max-width: 900px; margin: 0 auto 40px;
     border: 1px solid rgba(255,255,255,0.3);
@@ -1220,6 +1220,10 @@
   /* ── App layout — full screen map with floating card ── */
   .app { position: relative; height: 100vh; overflow: hidden; }
   .map-full { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
+  .app:has(.float-card--plan-flow:not(.collapsed)) .map-full {
+    filter: brightness(0.58) saturate(0.85);
+    transition: filter 0.35s ease;
+  }
   .gmap-wrap { width: 100%; height: 100%; }
   .map-route-pill {
     position: static;
@@ -1253,16 +1257,16 @@
     border: 1px solid rgba(107, 203, 119, 0.45);
   }
 
-  /* Floating card — moody mountain-lodge frosted glass */
+  /* Floating card — solid paper panel */
   .float-card {
     position: absolute; top: calc(var(--nav-h) + 16px); left: 16px;
     width: 390px;
     max-height: calc(100dvh - var(--nav-h) - 48px);
-    background: rgba(15, 20, 40, 0.75);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    background: #0D0A1A;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border: 1px solid rgba(255, 210, 140, 0.15);
-    border-radius: 22px;
+    border-radius: 12px;
     box-shadow: 0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
     display: flex; flex-direction: column;
     overflow: hidden; z-index: 50;
@@ -2795,12 +2799,15 @@
   .question-progress-phases {
     display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 6px;
   }
+  .question-progress-compact .question-progress-phases { display: none; }
   .question-progress-subtitle {
+    font-family: var(--font-body, "Inter", sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     margin: 0 0 6px;
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.72);
-    letter-spacing: 0.02em;
+    color: var(--color-text-secondary, #a89bcf);
   }
   .question-progress-phase {
     font-size: 12px; opacity: 0.35; font-weight: 500; letter-spacing: 0.01em;
@@ -2985,7 +2992,7 @@
     transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
   }
   .convo-nav-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); }
-  .quick-replies { display: flex; flex-wrap: wrap; gap: 10px; }
+  .quick-replies { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
   .quick-replies-lodging { flex-direction: column; gap: 8px; }
   .chat-wrap-plan-flow .question-choices-compact .quick-replies-lodging {
     gap: 6px;
@@ -3055,19 +3062,43 @@
     font-weight: 700;
     box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   }
-  .qr-btn {
+  .qr-btn,
+  .plan-choice-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
     border: 1px solid var(--color-answer-border);
     background: var(--color-answer-bg);
-    border-radius: 99px;
-    padding: 13px 24px;
+    border-radius: 8px;
+    padding: 12px 16px;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
-    font-weight: 400;
+    font-weight: 500;
+    text-align: left;
     transition: transform 0.12s var(--ease), box-shadow 0.12s var(--ease), background 0.12s var(--ease), border-color 0.12s var(--ease), color 0.12s var(--ease);
     color: var(--color-answer-text);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
-  .qr-btn:hover { border-color: rgba(255,210,140,0.6); transform: translateY(-1px); background: rgba(255,255,255,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+  .plan-choice-row-label { flex: 1; min-width: 0; }
+  .plan-choice-row-desc {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.72;
+    margin-top: 2px;
+  }
+  .plan-choice-row-chevron {
+    flex-shrink: 0;
+    opacity: 0.45;
+    font-size: 14px;
+    line-height: 1;
+  }
+  .qr-btn.qr-selected .plan-choice-row-chevron,
+  .plan-choice-row.qr-selected .plan-choice-row-chevron { opacity: 1; color: var(--color-answer-selected-text, var(--deep-dark)); }
+  .qr-btn:hover, .plan-choice-row:hover { border-color: rgba(255,210,140,0.45); background: color-mix(in srgb, var(--color-answer-bg) 92%, var(--gold-primary)); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
   .qr-btn:active { transform: scale(0.98); }
   .qr-btn:focus-visible {
     outline: 2px solid var(--accent);
@@ -3894,28 +3925,28 @@
   }
   /* Polish lodging card rail spacing so scroll area clears card shadows (Impeccable polish). */
   .lodging-cards-scroll {
-    display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px;
-    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display: flex; flex-direction: column; gap: 12px; overflow-x: visible; padding-bottom: 12px;
   }
   .lodging-cards-scroll::-webkit-scrollbar { display: none; }
   .lodging-card {
-    flex: 0 0 min(88%, 320px); scroll-snap-align: start;
-    display: flex; flex-direction: column;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px; overflow: hidden;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-    transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+    flex: none; width: 100%; max-width: none; scroll-snap-align: unset;
+    display: flex; flex-direction: row; align-items: stretch; gap: 10px;
+    padding: 10px;
+    background: var(--color-results-card-bg, var(--card));
+    border: 1px solid var(--color-results-card-keyline, color-mix(in srgb, var(--accent) 42%, transparent));
+    border-left: 4px solid var(--accent);
+    border-radius: 10px; overflow: hidden;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: box-shadow 0.2s var(--ease);
   }
-  .lodging-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
-  .lodging-card-photo-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; }
-  .lodging-card-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .lodging-card-photo-gradient {
-    position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 45%, transparent 100%);
-    pointer-events: none;
+  .lodging-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+  .lodging-card-photo-wrap {
+    position: relative; width: 64px; height: 64px; flex-shrink: 0;
+    border-radius: 10px; overflow: hidden;
   }
+  .lodging-card-photo { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 10px; }
+  .lodging-card-photo-gradient { display: none; }
   .lodging-card-badges {
     position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 1;
   }
@@ -3936,7 +3967,7 @@
     letter-spacing: 0.04em; text-transform: uppercase;
     background: rgba(26,26,46,0.75); color: var(--gold-primary); border: 1px solid rgba(255,210,140,0.35);
   }
-  .lodging-card-body { padding: 16px 18px 18px; }
+  .lodging-card-body { padding: 0; flex: 1; min-width: 0; }
   .lodging-card-body-premium {
     flex: 1; display: flex; flex-direction: column; gap: 0; min-height: 0;
   }
@@ -4177,10 +4208,10 @@
   .nearby-services-meta { color: var(--muted); font-size: 11px; white-space: nowrap; }
 
   .activity-cards-section { margin-top: 10px; }
-  .activity-card { padding: 10px; border-radius: 10px; background: rgba(192,132,252,0.08); border: 1px solid rgba(192,132,252,0.2); margin-bottom: 6px; }
+  .activity-card { padding: 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); margin-bottom: 6px; }
   .activity-card-name { font-size: 13px; font-weight: 600; }
   .activity-card-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .activity-card-tag { font-size: 10px; color: #c084fc; margin-top: 4px; }
+  .activity-card-tag { font-size: 10px; color: var(--accent2); margin-top: 4px; }
 
   .budget-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
   .budget-warning-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: rgba(245,158,11,0.2); color: #f59e0b; }
@@ -4251,6 +4282,7 @@
   .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
   .map-info-card { position: absolute; z-index: 25; width: min(360px, calc(100% - 32px)); padding: 18px 18px 16px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+  .map-info-card.map-info-card--popup { border-radius: 8px; }
   /* Visually hidden dialog title for screen readers; sign name remains visible in VintageNeonSignCard. */
   .map-info-card-sr-title {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -5505,26 +5537,38 @@
 
   .results-subsection { margin-bottom: 28px; }
   .results-subsection-label {
-    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 15px; font-weight: 700; text-transform: none; letter-spacing: -0.02em;
     color: var(--gold, var(--gold-primary)); margin: 0 0 12px;
-    padding: 6px 10px; border-radius: 8px; display: inline-block;
-    background: var(--card); border: 1px solid var(--border);
-    backdrop-filter: blur(8px);
+    padding: 0; display: block;
+    background: none; border: none;
+    backdrop-filter: none;
   }
 
   /* Polish road-stop results rail padding/gap for clearer horizontal scroll (Impeccable polish). */
   .results-road-stops-scroll {
-    display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column; gap: 12px; overflow-x: visible; padding-bottom: 12px;
   }
   .results-road-stops-scroll::-webkit-scrollbar { height: 4px; }
   .results-road-stops-scroll::-webkit-scrollbar-thumb { background: rgba(255,210,140,0.3); border-radius: 99px; }
 
   .road-stop-card {
-    flex: 0 0 220px; scroll-snap-align: start; border-radius: 14px; overflow: hidden;
-    background: var(--card); border: 1px solid var(--border);
+    flex: none; width: 100%; max-width: none; scroll-snap-align: unset; border-radius: 10px; overflow: hidden;
     display: flex; flex-direction: row; align-items: stretch; gap: 10px; padding: 10px;
+    border: 1px solid var(--color-results-card-keyline, rgba(255, 210, 140, 0.35));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-left-width: 4px;
   }
+  .app-wrap.day .road-stop-card {
+    background: var(--color-results-card-bg, #FDF3E0);
+  }
+  .app-wrap.night .road-stop-card {
+    background: var(--color-results-card-bg, #0D0A1A);
+  }
+  .road-stop-card--food { border-left-color: #ff5fa8; }
+  .road-stop-card--fuel { border-left-color: #3dd9d0; }
+  .road-stop-card--lodging { border-left-color: var(--accent); }
+  .road-stop-card--general { border-left-color: #5a9e96; }
   .road-stop-card-photo-wrap { position: relative; overflow: hidden; flex-shrink: 0; }
   .road-stop-card-photo-thumb {
     width: 64px; height: 64px; border-radius: 10px;
@@ -5533,8 +5577,13 @@
   .place-photo-fallback, .road-stop-card-photo-fallback {
     width: 100%; height: 100%; min-height: 96px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    background: linear-gradient(145deg, rgba(26,26,46,0.92), rgba(40,36,58,0.88));
-    color: rgba(255,255,255,0.85); padding: 12px; text-align: center;
+    background: linear-gradient(145deg, #FDF3E0, #EED8A8);
+    color: #5A3A1A; padding: 12px; text-align: center;
+  }
+  .app-wrap.night .place-photo-fallback,
+  .app-wrap.night .road-stop-card-photo-fallback {
+    background: linear-gradient(145deg, #1A1035, #0D0A1A);
+    color: rgba(255, 248, 236, 0.88);
   }
   .place-photo-fallback-icon { line-height: 1; color: rgba(255,210,140,0.9); }
   .place-photo-fallback-name {
@@ -5543,15 +5592,27 @@
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   }
   .road-stop-badge-local { position: absolute; top: 6px; left: 6px; font-size: 8px; font-weight: 700; padding: 3px 6px; border-radius: 4px; background: var(--gold-primary); color: var(--deep-dark); text-transform: uppercase; }
-  .road-stop-badge-cat { position: absolute; bottom: 6px; left: 6px; font-size: 9px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: rgba(0,0,0,0.55); color: #fff; }
+  .road-stop-badge-cat { display: none; }
   .road-stop-badge-charging { background: var(--gold-primary); color: var(--deep-dark); }
   .road-stop-charging-meta { font-size: 11px; color: var(--brand); margin: 0 0 6px; line-height: 1.35; }
   .road-stop-truck-warning { color: #d97706; font-weight: 600; }
   .tm-icon-charging { color: var(--gold-primary); }
   .road-stop-card-body { padding: 0; flex: 1; min-width: 0; }
   .road-stop-card-header {
-    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 6px;
   }
+  .road-stop-card-cat-label {
+    font-family: "Inter", sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .road-stop-card--food .road-stop-card-cat-label { color: #ff5fa8; }
+  .road-stop-card--fuel .road-stop-card-cat-label { color: #3dd9d0; }
+  .road-stop-card--lodging .road-stop-card-cat-label { color: var(--accent); }
+  .road-stop-card--general .road-stop-card-cat-label { color: #5a9e96; }
   .road-stop-card-header .road-stop-card-name { margin-bottom: 0; flex: 1; min-width: 0; }
   .road-stop-card-header-badges {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0;
@@ -6158,15 +6219,18 @@
   /* Guest signup banner */
   .guest-signup-banner {
     display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-    margin: 0 0 16px; padding: 12px 14px; border-radius: 12px;
-    background: linear-gradient(135deg, rgba(255,210,140,0.18) 0%, rgba(255,210,140,0.06) 100%);
-    border: 1px solid rgba(255,210,140,0.28);
+    margin: 0 0 16px; padding: 10px 14px;
+    border-top: 1px solid rgba(255, 210, 140, 0.15);
+    border-bottom: 1px solid rgba(255, 210, 140, 0.15);
+    background: transparent;
+    border-radius: 0;
   }
-  .guest-signup-banner-text { margin: 0; font-size: 13px; line-height: 1.45; flex: 1; min-width: 200px; }
+  .guest-signup-banner-text { margin: 0; font-size: 13px; line-height: 1.45; flex: 1; min-width: 200px; color: var(--color-text-secondary, #a89bcf); }
   .guest-signup-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .guest-signup-banner-btn {
-    padding: 8px 16px; border-radius: 10px; border: none; background: var(--gold-primary); color: var(--deep-dark);
-    font-size: 13px; font-weight: 700; cursor: pointer;
+    padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255, 210, 140, 0.35);
+    background: transparent; color: var(--gold-primary);
+    font-size: 12px; font-weight: 700; cursor: pointer;
   }
   .guest-signup-banner-close {
     width: 28px; height: 28px; border: none; background: transparent; font-size: 20px; cursor: pointer; opacity: 0.6; color: inherit;
@@ -6185,14 +6249,15 @@
   }
   .restaurant-cards-scroll::-webkit-scrollbar { display: none; }
   .restaurant-card {
-    flex: 0 0 min(88%, 340px); scroll-snap-align: start;
-    border-radius: 16px; overflow: hidden;
-    background: rgba(15, 20, 40, 0.72);
-    backdrop-filter: blur(16px) saturate(1.2);
-    -webkit-backdrop-filter: blur(16px) saturate(1.2);
-    border: 1px solid rgba(255, 210, 140, 0.18);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-    display: flex; flex-direction: row; gap: 12px; padding: 12px;
+    flex: 0 0 min(100%, 340px); scroll-snap-align: start;
+    border-radius: 10px; overflow: hidden;
+    background: var(--color-results-card-bg, var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid var(--color-results-card-keyline, color-mix(in srgb, #ff5fa8 22%, var(--accent) 18%));
+    border-left: 4px solid #ff5fa8;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    display: flex; flex-direction: row; gap: 10px; padding: 10px;
   }
   .restaurant-card-photo-wrap { position: relative; overflow: hidden; flex-shrink: 0; }
   .restaurant-card-photo-thumb { width: 64px; height: 64px; border-radius: 10px; }
@@ -6350,10 +6415,10 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 20px 0 16px;
-    background: var(--color-nav-bg);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    border-bottom: 1px solid var(--color-nav-border);
+    background: var(--color-nav-bg-app, #1A0D00);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid rgba(255, 210, 140, 0.22);
     overflow: visible;
     /* Only interactive children receive clicks — never block the page below */
     pointer-events: none;
@@ -6385,34 +6450,39 @@
   .app-nav-mode-switch {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 3px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-surface-elevated, #2a1a4a) 72%, transparent);
-    border: 1px solid color-mix(in srgb, var(--color-card-border, rgba(255,255,255,0.12)) 80%, transparent);
+    gap: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 210, 140, 0.2);
     flex-shrink: 0;
   }
 
-  /* Raise inactive app mode tab contrast on dark nav (Impeccable colorize). */
   .app-nav-mode-btn {
     min-height: 32px;
-    padding: 0 12px;
+    padding: 6px 14px 8px;
     border: none;
-    border-radius: 999px;
+    border-radius: 0;
     background: transparent;
-    color: var(--color-text-secondary, #a89bcf);
+    color: rgba(255, 210, 140, 0.55);
     font-family: var(--font-body, "Inter", sans-serif);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
     white-space: nowrap;
   }
 
   .app-nav-mode-btn.is-active {
-    background: color-mix(in srgb, var(--accent, var(--gold-primary)) 28%, transparent);
-    color: var(--accent, var(--gold-primary));
+    background: transparent;
+    color: var(--gold-primary);
+    border-bottom-color: var(--gold-primary);
+    box-shadow: none;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, var(--gold-primary)) 45%, transparent);
   }
 
@@ -8045,79 +8115,33 @@
     100% { background-position: -200% 0; }
   }
 
-  /* Generation loader skeleton (replaces cinematic WebGL scene) */
+  /* Generation loader — route drawing overlay */
+  .generation-loader-route,
   .generation-loader-skeleton {
     position: absolute;
     inset: 0;
     display: flex;
-    align-items: stretch;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    gap: 20px;
     padding: 24px 20px;
     overflow: hidden;
+    background: #0D0A1A;
   }
-  .generation-loader-skeleton-panel {
-    width: 100%;
-    max-width: 420px;
-    background: var(--bg-card);
-    border-radius: var(--r-lg);
-    padding: 20px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    overflow: hidden;
+  .generation-stream-overlay {
+    background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(26, 16, 53, 0.55), #0D0A1A 70%);
   }
-  .generation-loader-title-bar {
-    height: 28px;
-    width: 72%;
-    border-radius: var(--r);
-  }
-  .generation-loader-day {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .generation-loader-day-label {
-    height: 14px;
-    width: 38%;
-    border-radius: 7px;
-  }
-  .generation-loader-stops {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .generation-loader-stop {
-    height: 64px;
-    width: 100%;
-    border-radius: var(--r);
-  }
-  .generation-loader-shimmer-block {
+  .generation-loader-route-drawing.route-drawing-loader--fullscreen {
     position: relative;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--bg-card) 88%, var(--ink) 12%);
+    width: min(420px, 92vw);
+    min-height: 120px;
   }
-  .generation-loader-shimmer-block::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--accent) 15%, transparent) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: generation-loader-shimmer 1.8s ease-in-out infinite;
-  }
-  @keyframes generation-loader-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .generation-loader-shimmer-block::after {
-      animation: none;
-      background-position: 50% 0;
-    }
+  .generation-loader-skeleton-panel,
+  .generation-loader-title-bar,
+  .generation-loader-day,
+  .generation-loader-shimmer-block {
+    display: none !important;
   }
 
   .generation-loader-live {

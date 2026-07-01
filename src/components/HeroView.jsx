@@ -133,7 +133,7 @@ export default function HeroView({
         <div className="hero-content">
           <p className="trip-overview-hero-eyebrow">Open road · Verified stops · Ready when you are</p>
           <h1 className="hero-title">
-            <span className="hero-title-line">Your full drive — mapped, verified, ready to go.</span>
+            <span className="hero-title-line">Your trip, our mission.</span>
           </h1>
           <p className="hero-sub">Stops, lodging, and fuel along your actual route — one plan, not a suggestion list.</p>
 
@@ -217,7 +217,6 @@ export default function HeroView({
                   <span>Ready to drive</span>
                 </p>
               )}
-              <HeroFoundingSlots />
             </div>
             <button
               type="button"
@@ -233,6 +232,7 @@ export default function HeroView({
         </div>
 
         <footer className="hero-footer">
+          <HeroFoundingSlots />
           <nav className="hero-footer-nav" aria-label="Legal and pricing">
             <a href="/pricing">Plans & pricing</a>
             <a href="/privacy">Privacy Policy</a>

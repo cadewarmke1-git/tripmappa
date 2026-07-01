@@ -8,9 +8,9 @@
    ══════════════════════════════════════════════════════════════ */
 html body .app-wrap.day .float-card,
 html body .app-wrap.day .float-card-header {
-  background: var(--color-plan-panel-bg) !important;
-  backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
-  -webkit-backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
+  background: #FDF3E0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border-color: var(--color-plan-panel-border) !important;
 }
 
@@ -29,10 +29,10 @@ html body .app-wrap.day .float-card-title {
 
 html body .app-wrap.day .plan-panel-dock,
 html body .app-wrap.day .plan-panel-dock .route-footer {
-  background: var(--color-plan-panel-bg) !important;
+  background: #FDF3E0 !important;
   border-color: var(--color-plan-panel-border) !important;
-  backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
-  -webkit-backdrop-filter: blur(var(--color-plan-panel-blur)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html body .app-wrap.day .chat-wrap-plan-flow .ai-bubble,
@@ -216,9 +216,9 @@ html body .app-wrap.day .btn-generate-trip {
    ══════════════════════════════════════════════════════════════ */
 html body .app-wrap.night .float-card,
 html body .app-wrap.night .float-card-header {
-  background: rgba(26, 16, 53, 0.92) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  background: #0D0A1A !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
 }
 
@@ -237,10 +237,10 @@ html body .app-wrap.night .float-card-title {
 
 html body .app-wrap.night .plan-panel-dock,
 html body .app-wrap.night .plan-panel-dock .route-footer {
-  background: rgba(26, 16, 53, 0.88) !important;
+  background: #0D0A1A !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html body .app-wrap.night .chat-wrap-plan-flow .ai-bubble,

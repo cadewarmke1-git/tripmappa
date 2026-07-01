@@ -45,7 +45,7 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
   return (
     <div
       ref={dialogRef}
-      className={`map-info-card map-info-card-drawer map-info-card--popup ${theme}${visible ? " is-open" : ""}`}
+      className={`map-info-card map-info-card-drawer map-info-card--popup map-info-card--${signCategory} ${theme}${visible ? " is-open" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="map-info-card-title"

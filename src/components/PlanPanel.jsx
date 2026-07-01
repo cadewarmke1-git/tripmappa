@@ -135,7 +135,7 @@ export default function PlanPanel({
         {inQuestionFlow && !toolbarInHeader && (
           <div className="plan-flow-toolbar">
             <div className="plan-flow-toolbar-left">
-              {showProgress && <QuestionProgress {...flowProgress} compact />}
+              {showProgress && <QuestionProgress {...flowProgress} compact showStepSubtitle />}
             </div>
             {creditsLabel && (
               <div className="plan-flow-toolbar-center">
@@ -227,7 +227,7 @@ export default function PlanPanel({
                         <p className="plan-ready-eyebrow">Ready when you are</p>
                         <h2 className="plan-ready-heading">Your route, verified stops, and personalized itinerary — ready in seconds</h2>
                         <p className="plan-ready-subtitle">
-                          No cross-referencing maps, reviews, and hotel listings — your full drive is built and ready to go.
+                          No cross-referencing maps, reviews, and hotel listings — your route is built and ready to go.
                         </p>
                         {routeScoutLine && (
                           <p className="plan-ready-scout" role="status">{routeScoutLine}</p>

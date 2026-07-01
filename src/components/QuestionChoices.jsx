@@ -171,16 +171,36 @@ export default function QuestionChoices({
   const mkClass = (val, extra = "") => {
     const sel = selected === val ? " qr-selected" : "";
     const active = committedChoiceValue === val || prefillChoiceValue === val || vehicleDraft === val || lodgingDraft === val ? " qr-selected" : "";
-    return `qr-btn${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && prefillChoiceValue !== val && vehicleDraft !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
+    return `plan-choice-row qr-btn${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && prefillChoiceValue !== val && vehicleDraft !== val && lodgingDraft !== val ? " qr-dimmed" : ""}`;
   };
   const mkPrefClass = (p) => {
     const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
-    return `qr-btn${active ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
+    return `plan-choice-row qr-btn${active ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
   };
   const mkGroupClass = (sectionId, value) => {
     const sectionDraft = Array.isArray(groupDraft?.[sectionId]) ? groupDraft[sectionId] : [];
-    return `qr-btn${sectionDraft.includes(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
+    return `plan-choice-row qr-btn${sectionDraft.includes(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`;
   };
+
+  function isChoiceSelected(val) {
+    return selected === val
+      || committedChoiceValue === val
+      || prefillChoiceValue === val
+      || vehicleDraft === val
+      || lodgingDraft === val;
+  }
+
+  function renderChoiceRow(label, description, selectedRow) {
+    return (
+      <>
+        <span className="plan-choice-row-label">
+          <span className="qr-btn-label">{label}</span>
+          {description && <span className="qr-btn-desc plan-choice-row-desc">{description}</span>}
+        </span>
+        <span className="plan-choice-row-chevron" aria-hidden="true">{selectedRow ? "✓" : "›"}</span>
+      </>
+    );
+  }
 
   const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers";
   const isLodgingStay = currentQ.type === "lodging_stay";
@@ -378,7 +398,7 @@ export default function QuestionChoices({
                     disabled={frozen}
                     onClick={() => setVehicleDraft(opt.value)}
                   >
-                    {opt.label}
+                    {renderChoiceRow(opt.label, null, vehicleDraft === opt.value || committedChoiceValue === opt.value)}
                   </button>
                 ))}
               </div>
@@ -397,7 +417,7 @@ export default function QuestionChoices({
                     disabled={frozen}
                     onClick={() => setVehicleDraft(opt.value)}
                   >
-                    {opt.label}
+                    {renderChoiceRow(opt.label, null, vehicleDraft === opt.value || committedChoiceValue === opt.value)}
                   </button>
                 ))}
               </div>
@@ -425,8 +445,7 @@ export default function QuestionChoices({
                     disabled={frozen || routeLocked}
                     onClick={() => pickWithAnim(value)}
                   >
-                    <span className="qr-btn-label">{label}</span>
-                    {description && <span className="qr-btn-desc">{description}</span>}
+                    {renderChoiceRow(label, description, isChoiceSelected(value))}
                   </button>
                 );
               })}
@@ -464,7 +483,7 @@ export default function QuestionChoices({
                       disabled={frozen}
                       onClick={() => pickInstant(value, { loyalty_program: loyaltyDraft || "No preference" })}
                     >
-                      {label}
+                      {renderChoiceRow(label, null, isChoiceSelected(value))}
                     </button>
                   );
                 })}
@@ -479,11 +498,11 @@ export default function QuestionChoices({
                         <button
                           key={value}
                           type="button"
-                          className={`qr-btn${loyaltyDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          className={`plan-choice-row qr-btn${loyaltyDraft === value ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
                           disabled={frozen}
                           onClick={() => setLoyaltyDraft(value)}
                         >
-                          {label}
+                          {renderChoiceRow(label, null, loyaltyDraft === value)}
                         </button>
                       );
                     })}
@@ -503,7 +522,7 @@ export default function QuestionChoices({
                   disabled={frozen}
                   onClick={() => toggleMultiDraft(c)}
                 >
-                  {c}
+                  {renderChoiceRow(c, null, multiDraft.includes(c))}
                 </button>
               ))}
             </div>
@@ -570,7 +589,7 @@ export default function QuestionChoices({
                             disabled={frozen}
                             onClick={() => toggleGroupSection(section.id, value)}
                           >
-                            {label}
+                            {renderChoiceRow(label, null, (groupDraft?.[section.id] || []).includes(value))}
                           </button>
                         );
                       })}
@@ -587,11 +606,11 @@ export default function QuestionChoices({
                         <button
                           key={value}
                           type="button"
-                          className={`qr-btn${isBudgetSelected(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
+                          className={`plan-choice-row qr-btn${isBudgetSelected(value) ? " qr-selected" : ""}${frozen ? " qr-dimmed" : ""}`}
                           disabled={frozen}
                           onClick={() => setBudgetDraft(value)}
                         >
-                          {label}
+                          {renderChoiceRow(label, null, isBudgetSelected(value))}
                         </button>
                       );
                     })}
@@ -655,7 +674,7 @@ export default function QuestionChoices({
                         disabled={frozen}
                         onClick={() => toggleGroupSection(section.id, c)}
                       >
-                        {c}
+                        {renderChoiceRow(c, null, (groupDraft?.[section.id] || []).includes(c))}
                       </button>
                     ))}
                   </div>

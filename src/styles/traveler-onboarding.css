@@ -1,11 +1,13 @@
 .traveler-onboarding {
-  --bg-base: var(--color-base, #0d0a1a);
+  --bg-base: #0d0a1a;
   position: fixed;
   inset: 0;
   z-index: 300;
   display: flex;
   flex-direction: column;
-  background: var(--bg-base);
+  background:
+    linear-gradient(180deg, rgba(13, 10, 26, 0.92) 0%, rgba(13, 10, 26, 0.98) 55%, #0d0a1a 100%),
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 140, 66, 0.12), transparent 70%);
   color: var(--color-text-primary, #f4f6fb);
   padding: calc(var(--nav-h, 56px) + env(safe-area-inset-top, 0px) + 16px) 24px calc(20px + env(safe-area-inset-bottom, 0px));
 }

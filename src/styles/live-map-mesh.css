@@ -193,19 +193,19 @@
 }
 
 .app-wrap.night .float-card {
-  background: var(--color-map-panel) !important;
+  background: #0D0A1A !important;
 }
 
 .app-wrap.night .float-card-header {
-  background: var(--color-surface) !important;
+  background: #0D0A1A !important;
 }
 
 .app-wrap.day .float-card {
-  background: var(--color-plan-panel-bg) !important;
+  background: #FDF3E0 !important;
 }
 
 .app-wrap.day .float-card-header {
-  background: var(--color-plan-panel-bg) !important;
+  background: #FDF3E0 !important;
 }
 
 .route-info-bar {
