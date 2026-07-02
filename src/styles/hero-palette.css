@@ -180,8 +180,6 @@
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
   color: #FFFFFF !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
 }
 
 .hero.night .hero-auth-or::before,
@@ -198,8 +196,6 @@
   background: rgba(13, 10, 26, 0.5) !important;
   border-color: rgba(255, 210, 140, 0.2) !important;
   color: #FFFFFF !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
 }
 
 .hero.day .hero-auth-label {
@@ -394,10 +390,8 @@
 
 /* ── Draft resume banner (frosted panel) ── */
 .hero.night .hero-draft-resume {
-  background: rgba(26, 16, 53, 0.65) !important;
+  background: #1A1228 !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
   box-shadow: 0 10px 36px rgba(0, 0, 0, 0.22);
 }
 
@@ -430,10 +424,8 @@
 }
 
 .hero.day .hero-draft-resume {
-  background: rgba(255, 255, 255, 0.75) !important;
+  background: #FDF3E0 !important;
   border-color: rgba(160, 64, 16, 0.3) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
   box-shadow: 0 10px 36px rgba(26, 13, 0, 0.08);
 }
 
