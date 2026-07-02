@@ -1,8 +1,37 @@
 import RoadTripStopCard from "../results/RoadTripStopCard.jsx";
+import HotelCard from "../lodging/HotelCard.jsx";
+import RestaurantCard from "../restaurants/RestaurantCard.jsx";
 
 const FOOD_IMG = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=128&h=128&fit=crop&q=80";
 const FUEL_IMG = "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=128&h=128&fit=crop&q=80";
 const LODGING_IMG = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=128&h=128&fit=crop&q=80";
+
+const MOCK_HOTEL = {
+  id: "demo-hotel",
+  name: "Blue Swallow Motel",
+  rating: 4.8,
+  photo: LODGING_IMG,
+  photoUrl: LODGING_IMG,
+  priceLabel: "$96/night",
+  neighborhood: "Route 66",
+  distanceFromRoute: 1.1,
+  fromGooglePlaces: true,
+  amenities: [],
+  lat: 35.1, lng: -103.7,
+};
+
+const MOCK_RESTAURANT = {
+  placeId: "demo-rest",
+  name: "Sunset Chrome Diner",
+  rating: 4.6,
+  photoUrl: FOOD_IMG,
+  cuisineType: "American",
+  priceSigns: "$$",
+  slot: "sit_down",
+  distanceMiles: 0.3,
+  lat: 35.2, lng: -103.6,
+  website: "https://example.com",
+};
 
 /** Dev/preview fixture — render at /?stopCards=1 for visual QA. */
 export default function StopCardDemo() {
@@ -51,6 +80,8 @@ export default function StopCardDemo() {
           ]}
           photo={<img className="road-stop-card-photo" src={LODGING_IMG} alt="" />}
         />
+        <RestaurantCard restaurant={MOCK_RESTAURANT} />
+        <HotelCard hotel={MOCK_HOTEL} onSave={() => {}} onToast={() => {}} />
         </div>
       </main>
     </div>

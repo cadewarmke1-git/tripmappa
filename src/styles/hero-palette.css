@@ -43,13 +43,14 @@
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
-  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
+  background-image: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   display: inline-block !important;
+  filter: drop-shadow(0 1px 6px rgba(255, 244, 224, 0.55)) !important;
 }
 
 /* ── Hero headline (inside .hero.night / .hero.day) — superseded by hero-surface.css fit-content rules ── */
@@ -67,13 +68,13 @@
 
 .hero.day .hero-title-line,
 .hero.day .hero-content .hero-title-line {
-  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #FDF3E0 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   text-shadow: none !important;
-  filter: none !important;
+  filter: drop-shadow(0 2px 10px rgba(58, 30, 10, 0.45)) !important;
 }
 
 .hero.night .hero-title-accent,
@@ -95,7 +96,7 @@
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   text-shadow: none !important;
-  filter: none !important;
+  filter: drop-shadow(0 2px 10px rgba(58, 30, 10, 0.5)) !important;
 }
 
 .hero.night .hero-sub {
@@ -462,10 +463,10 @@
 .hero.night .hero-sky-gradient {
   background: linear-gradient(
     180deg,
-    #1A1035 0%,
-    #2A1A4A 38%,
-    rgba(42, 26, 74, 0.92) 62%,
-    rgba(255, 210, 140, 0.12) 100%
+    #0D0A1A 0%,
+    #1A1228 38%,
+    rgba(58, 34, 24, 0.92) 72%,
+    rgba(255, 140, 66, 0.28) 100%
   ) !important;
 }
 
@@ -508,7 +509,7 @@
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(42, 26, 74, 0.12) 42%,
+    rgba(26, 18, 40, 0.12) 42%,
     rgba(13, 10, 26, 0.1) 56%,
     transparent 68%
   ) !important;
@@ -540,15 +541,17 @@
 .hero.night .hero-search .hero-input,
 .hero.day .hero-input,
 .hero.day .hero-search .hero-input {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   background: transparent !important;
 }
 
 .hero.night .hero-search .hero-input::placeholder,
 .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(90, 66, 42, 0.55) !important;
+  -webkit-text-fill-color: rgba(90, 66, 42, 0.55) !important;
   opacity: 1 !important;
+  font-style: italic !important;
   font-weight: 400 !important;
 }
 
@@ -601,7 +604,7 @@ html body .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
 }
 
 html body .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -621,13 +624,13 @@ html body .hero.night .hero-content .hero-title-line {
 
 html body .hero.day .hero-title-line,
 html body .hero.day .hero-content .hero-title-line {
-  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #FDF3E0 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   text-shadow: none !important;
-  filter: none !important;
+  filter: drop-shadow(0 2px 10px rgba(58, 30, 10, 0.45)) !important;
 }
 
 html body .hero.night .hero-title-accent {
@@ -647,7 +650,7 @@ html body .hero.day .hero-title-accent {
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   text-shadow: none !important;
-  filter: none !important;
+  filter: drop-shadow(0 2px 10px rgba(58, 30, 10, 0.5)) !important;
 }
 
 html body .hero.night .hero-sub {
@@ -665,5 +668,6 @@ html body .hero .hero-search .hero-input::placeholder {
 
 html body .hero.night .hero-search .hero-input::placeholder,
 html body .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(90, 66, 42, 0.55) !important;
+  -webkit-text-fill-color: rgba(90, 66, 42, 0.55) !important;
 }

@@ -145,7 +145,6 @@ export default function HeroView({
               <span className="hero-title-line-text">starts with a </span><span className="hero-title-accent">plan</span>
             </span>
           </h1>
-          <p className="hero-sub">Tell us where you&apos;re headed. We&apos;ll map the scenic route, the pit stops, and the hidden gems along the way.</p>
 
           {planDraft?.origin && planDraft?.dest && (
             <div className="hero-draft-resume">

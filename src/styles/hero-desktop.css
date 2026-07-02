@@ -19,7 +19,7 @@ html[data-layout="web"] .hero {
 }
 
 html[data-layout="web"] .hero:has(.hero-highway-scene) {
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 html[data-layout="web"] .hero-content {

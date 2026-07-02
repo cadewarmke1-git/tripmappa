@@ -111,16 +111,16 @@ function rgbStr([r, g, b]) {
 
 /** Hour samples — animated sky + photo mountain grade. */
 const SKY_ATMOSPHERE_KEYS = [
-  { h: 0, zenith: [26, 16, 53], horizon: [42, 26, 74], warm: [255, 210, 140], warmth: 0, stars: 1, glow: 0, cloudSea: 0, photoBright: 0.38, photoContrast: 1.12, photoSat: 0.52, photoTint: [26, 16, 53], photoTintOp: 0.35 },
-  { h: 4, zenith: [26, 16, 53], horizon: [42, 26, 74], warm: [255, 200, 130], warmth: 0.04, stars: 0.85, glow: 0, cloudSea: 0, photoBright: 0.48, photoContrast: 1.1, photoSat: 0.62, photoTint: [42, 26, 74], photoTintOp: 0.28 },
+  { h: 0, zenith: [13, 10, 26], horizon: [42, 28, 34], warm: [255, 210, 140], warmth: 0, stars: 1, glow: 0, cloudSea: 0, photoBright: 0.38, photoContrast: 1.12, photoSat: 0.52, photoTint: [20, 15, 26], photoTintOp: 0.35 },
+  { h: 4, zenith: [13, 10, 26], horizon: [42, 28, 34], warm: [255, 200, 130], warmth: 0.04, stars: 0.85, glow: 0, cloudSea: 0, photoBright: 0.48, photoContrast: 1.1, photoSat: 0.62, photoTint: [42, 28, 34], photoTintOp: 0.28 },
   { h: 5.5, zenith: [48, 58, 98], horizon: [145, 118, 138], warm: [255, 195, 145], warmth: 0.18, stars: 0.15, glow: 0.28, cloudSea: 0.22, photoBright: 0.82, photoContrast: 1.06, photoSat: 1.08, photoTint: [255, 170, 110], photoTintOp: 0.14 },
   { h: 7, zenith: [82, 128, 178], horizon: [196, 212, 232], warm: [255, 228, 200], warmth: 0.1, stars: 0, glow: 0.32, cloudSea: 0.08, photoBright: 1, photoContrast: 1.04, photoSat: 1.08, photoTint: [255, 220, 190], photoTintOp: 0.06 },
   { h: 12, zenith: [72, 132, 198], horizon: [218, 232, 245], warm: [255, 242, 225], warmth: 0.06, stars: 0, glow: 0.38, cloudSea: 0, photoBright: 1.02, photoContrast: 1.05, photoSat: 1.1, photoTint: [255, 248, 240], photoTintOp: 0 },
   { h: 16, zenith: [88, 118, 168], horizon: [225, 188, 148], warm: [255, 178, 95], warmth: 0.16, stars: 0, glow: 0.42, cloudSea: 0.05, photoBright: 0.98, photoContrast: 1.06, photoSat: 1.12, photoTint: [255, 200, 140], photoTintOp: 0.08 },
-  { h: 18.5, zenith: [62, 48, 88], horizon: [195, 115, 72], warm: [255, 145, 70], warmth: 0.22, stars: 0.08, glow: 0.38, cloudSea: 0.12, photoBright: 0.88, photoContrast: 1.08, photoSat: 1.05, photoTint: [255, 140, 80], photoTintOp: 0.16 },
-  { h: 20, zenith: [32, 26, 54], horizon: [82, 52, 68], warm: [255, 130, 80], warmth: 0.08, stars: 0.55, glow: 0.12, cloudSea: 0.2, photoBright: 0.55, photoContrast: 1.1, photoSat: 0.72, photoTint: [45, 32, 68], photoTintOp: 0.38 },
-  { h: 22, zenith: [26, 16, 53], horizon: [42, 26, 74], warm: [255, 210, 140], warmth: 0, stars: 0.92, glow: 0, cloudSea: 0, photoBright: 0.4, photoContrast: 1.12, photoSat: 0.55, photoTint: [26, 16, 53], photoTintOp: 0.32 },
-  { h: 24, zenith: [26, 16, 53], horizon: [42, 26, 74], warm: [255, 210, 140], warmth: 0, stars: 1, glow: 0, cloudSea: 0, photoBright: 0.38, photoContrast: 1.12, photoSat: 0.52, photoTint: [26, 16, 53], photoTintOp: 0.35 },
+  { h: 18.5, zenith: [46, 38, 58], horizon: [200, 118, 68], warm: [255, 145, 70], warmth: 0.22, stars: 0.08, glow: 0.38, cloudSea: 0.12, photoBright: 0.88, photoContrast: 1.08, photoSat: 1.05, photoTint: [255, 140, 80], photoTintOp: 0.16 },
+  { h: 20, zenith: [26, 20, 34], horizon: [92, 56, 52], warm: [255, 130, 80], warmth: 0.08, stars: 0.55, glow: 0.12, cloudSea: 0.2, photoBright: 0.55, photoContrast: 1.1, photoSat: 0.72, photoTint: [46, 34, 42], photoTintOp: 0.38 },
+  { h: 22, zenith: [13, 10, 26], horizon: [42, 28, 34], warm: [255, 210, 140], warmth: 0, stars: 0.92, glow: 0, cloudSea: 0, photoBright: 0.4, photoContrast: 1.12, photoSat: 0.55, photoTint: [20, 15, 26], photoTintOp: 0.32 },
+  { h: 24, zenith: [13, 10, 26], horizon: [42, 28, 34], warm: [255, 210, 140], warmth: 0, stars: 1, glow: 0, cloudSea: 0, photoBright: 0.38, photoContrast: 1.12, photoSat: 0.52, photoTint: [20, 15, 26], photoTintOp: 0.35 },
 ];
 
 function sampleAtmosphere(hour) {
