@@ -72,11 +72,37 @@ function isEvTrip(answers) {
   return /electric|ev|tesla/i.test(ft);
 }
 
+const CORRIDOR_SAMPLE_INTERVAL_MI = 50;
+const MAX_CORRIDOR_SAMPLES = 12;
+
+/** Evenly thin a list of samples down to at most maxCount, always keeping the endpoints. */
+function subsampleEvenly(samples, maxCount) {
+  if (!samples?.length || samples.length <= maxCount) return samples || [];
+  if (maxCount <= 1) return [samples[0]];
+  const out = [];
+  for (let i = 0; i < maxCount; i++) {
+    const idx = Math.round((i / (maxCount - 1)) * (samples.length - 1));
+    out.push(samples[idx]);
+  }
+  return out;
+}
+
 export function buildRouteBoundary(routeInfo) {
   if (!routeInfo?.routePoints?.length) return { samples: [], totalMiles: 0 };
   const totalMiles = parseMilesFromDistance(routeInfo.distance);
-  const intervalMiles = DENSE_SAMPLE_INTERVAL_MI;
-  const samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, intervalMiles);
+  let intervalMiles = CORRIDOR_SAMPLE_INTERVAL_MI;
+  let samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, intervalMiles);
+
+  // Long routes: widen the spacing so the corridor stays at most MAX_CORRIDOR_SAMPLES points.
+  if (samples.length > MAX_CORRIDOR_SAMPLES) {
+    intervalMiles = Math.max(CORRIDOR_SAMPLE_INTERVAL_MI, totalMiles / MAX_CORRIDOR_SAMPLES);
+    samples = sampleRoutePointsEveryMiles(routeInfo.routePoints, intervalMiles);
+  }
+  // Fallback hard cap in case dense geometry still overshoots after widening.
+  if (samples.length > MAX_CORRIDOR_SAMPLES) {
+    samples = subsampleEvenly(samples, MAX_CORRIDOR_SAMPLES);
+  }
+
   return { samples, totalMiles, intervalMiles };
 }
 

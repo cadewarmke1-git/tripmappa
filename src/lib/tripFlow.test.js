@@ -34,6 +34,7 @@ describe("tripFlow UX", () => {
     travelers: "2",
     adult_count: 2,
     child_count: 0,
+    stop_count: "A few (2-3)",
   };
 
   it("asks route preferences before overnight on personal trips", () => {
@@ -56,6 +57,7 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_count: "A few (2-3)",
     };
     expect(getNextFlowQuestion(withTravelers, dayContext).id).toBe("trip_details");
   });
@@ -254,6 +256,7 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_count: "A few (2-3)",
       preferences: ["Scenic route"],
     };
     expect(getNextFlowQuestion(afterRv, longTripContext).id).toBe("trip_nights");
@@ -320,6 +323,7 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_count: "A few (2-3)",
       preferences: ["Pet friendly"],
     };
     expect(getNextFlowQuestion(answers, longTripContext).id).toBe("trip_nights");
@@ -338,6 +342,7 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_count: "A few (2-3)",
       preferences: ["Pet friendly"],
     };
     expect(getNextFlowQuestion(answers, dayContext).id).toBe("trip_details");

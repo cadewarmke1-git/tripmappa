@@ -41,6 +41,7 @@ describe("tripFlow resilience", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_count: "A few (2-3)",
       preferences: [],
     };
     const next = getNextFlowQuestion(answers, { ...longTripContext, routeFailed: true });
