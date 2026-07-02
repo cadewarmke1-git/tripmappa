@@ -1,4 +1,24 @@
-/* v0 RoadTripStopCard — day cream + night violet stop rows */
+/* v0 RoadTripStopCard — day cream + warm-dark night stop rows */
+
+/* Dev/QA harness (/?stopCards=1) — mirrors production results column */
+.stop-card-demo {
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: var(--color-results-bg, #EFE1C6);
+  display: flex;
+  justify-content: center;
+}
+.stop-card-demo-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 555px;
+}
+.app-wrap.night .stop-card-demo {
+  background: #0D0A1A;
+}
+
 
 .road-trip-stop-card {
   --rtsc-accent: #5a9e96;
@@ -44,16 +64,16 @@
   --rtsc-accent-rule: #5a9e96;
 }
 
-/* Night — #1A0D2E cards on #0D0A1A surfaces */
+/* Night — warm dark #1A1228 cards on #0D0A1A surfaces */
 .app-wrap.night .road-trip-stop-card {
-  --rtsc-bg: #1A0D2E;
+  --rtsc-bg: #1A1228;
   --rtsc-border: rgba(255, 255, 255, 0.06);
   --rtsc-ink: #F5E6C8;
   --rtsc-muted: rgba(245, 230, 200, 0.5);
   --rtsc-verified: #FFD28C;
   --rtsc-secondary-btn-bg: rgba(245, 230, 200, 0.08);
   --rtsc-secondary-btn-ink: #F5E6C8;
-  --rtsc-primary-btn-ink: #1A0D2E;
+  --rtsc-primary-btn-ink: #1A1228;
 }
 
 .app-wrap.night .road-trip-stop-card--food {

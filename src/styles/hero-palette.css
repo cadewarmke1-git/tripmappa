@@ -462,10 +462,10 @@
 .hero.night .hero-sky-gradient {
   background: linear-gradient(
     180deg,
-    #1A1035 0%,
-    #2A1A4A 38%,
-    rgba(42, 26, 74, 0.92) 62%,
-    rgba(255, 210, 140, 0.12) 100%
+    #0D0A1A 0%,
+    #1A1228 38%,
+    rgba(58, 34, 24, 0.92) 72%,
+    rgba(255, 140, 66, 0.28) 100%
   ) !important;
 }
 

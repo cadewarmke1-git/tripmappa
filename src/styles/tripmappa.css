@@ -1055,7 +1055,7 @@
     overflow-x: hidden !important;
     overflow-y: auto !important;
     border-top: none !important;
-    background-color: var(--color-autocomplete-bg, #1A1035) !important;
+    background-color: var(--color-autocomplete-bg, #1A1228) !important;
     background-image: none !important;
     border: 1.5px solid var(--color-autocomplete-border, rgba(255, 210, 140, 0.15)) !important;
     min-width: min(calc(100vw - 32px), 420px) !important;
@@ -1081,7 +1081,7 @@
     overflow: visible !important;
     text-overflow: unset !important;
     color: var(--color-autocomplete-text-top, #FFFFFF) !important;
-    background-color: var(--color-autocomplete-bg, #1A1035) !important;
+    background-color: var(--color-autocomplete-bg, #1A1228) !important;
     background-image: none !important;
   }
   .pac-item-query {
@@ -5590,7 +5590,7 @@
   }
   .app-wrap.night .place-photo-fallback,
   .app-wrap.night .road-stop-card-photo-fallback {
-    background: linear-gradient(145deg, #1A1035, #0D0A1A);
+    background: linear-gradient(145deg, #1A1228, #0D0A1A);
     color: rgba(255, 248, 236, 0.88);
   }
   .place-photo-fallback-icon { line-height: 1; color: rgba(255,210,140,0.9); }
@@ -8133,7 +8133,7 @@
     background: #0D0A1A;
   }
   .generation-stream-overlay {
-    background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(26, 16, 53, 0.55), #0D0A1A 70%);
+    background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(58, 34, 24, 0.55), #0D0A1A 70%);
   }
   .generation-loader-route-drawing.route-drawing-loader--fullscreen {
     position: relative;
@@ -8349,7 +8349,7 @@
     padding: 22px 20px;
     border-radius: 14px;
     border: 1px solid var(--color-card-border);
-    background: #1A1035;
+    background: #1A1228;
     color: #FFFFFF;
   }
   .tm-theme-day .confirm-dialog {

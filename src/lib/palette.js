@@ -21,19 +21,19 @@ function blendHex(fg, bg, fgOpacity) {
 
 const MAP_NIGHT_HIGHWAY_GOLD = "#C8A060";
 
-/** Google Maps tile colors — night (deep space purple + gold accents). */
-export const MAP_NIGHT_BASE = "#1A1035";
-export const MAP_NIGHT_SURFACE = "#241A42";
-export const MAP_NIGHT_LOCAL_ROAD = "#2A1A4A";
-export const MAP_NIGHT_ARTERIAL = "#2A1A4A";
+/** Google Maps tile colors — night (warm desert-at-night charcoal + gold accents). */
+export const MAP_NIGHT_BASE = "#15120C";
+export const MAP_NIGHT_SURFACE = "#211B12";
+export const MAP_NIGHT_LOCAL_ROAD = "#2A2116";
+export const MAP_NIGHT_ARTERIAL = "#2A2116";
 /** #C8A060 at 30% over land base */
 export const MAP_NIGHT_HIGHWAY = blendHex(MAP_NIGHT_HIGHWAY_GOLD, MAP_NIGHT_BASE, 0.3);
 /** #C8A060 at 50% over land base */
 export const MAP_NIGHT_HIGHWAY_STROKE = blendHex(MAP_NIGHT_HIGHWAY_GOLD, MAP_NIGHT_BASE, 0.5);
-export const MAP_NIGHT_LABEL = "#A89BCF";
+export const MAP_NIGHT_LABEL = "#C8B48C";
 export const MAP_NIGHT_LABEL_ACCENT = "#FFD28C";
-export const MAP_NIGHT_WATER = "#0D0A1A";
-export const MAP_NIGHT_PARK = "#1A2A1A";
+export const MAP_NIGHT_WATER = "#0C1216";
+export const MAP_NIGHT_PARK = "#1A2414";
 
 /** @deprecated Use MAP_NIGHT_LOCAL_ROAD */
 export const MAP_NIGHT_ELEVATED = MAP_NIGHT_LOCAL_ROAD;
@@ -59,13 +59,13 @@ export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;
  * Hero landing chrome — canonical palette (follows sky day/night cycle).
  * Gold is the base accent family; wordmark + profile use gold gradients.
  *
- * Night: wordmark #FFD28C→#FF8C42, Travel #5A3A9A→#FFD28C, Reimagined #FFD28C→#FF8C42
- * Day:   wordmark #FFD28C→#FF8C42, Travel #FFD28C→#FF8C42, Reimagined #FF8C42→#C87010
+ * Night: wordmark #FFD28C→#FF8C42, Title #FFFFFF→#F5E6C8, Accent #FFD28C→#FF8C42
+ * Day:   wordmark #FFD28C→#FF8C42, Title #FFFFFF→#F5E6C8, Accent #FF8C42→#FFD28C
  */
 export const HERO_SURFACE_PALETTE = {
   night: {
     wordmarkGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
-    titleLineGradient: "linear-gradient(90deg, #5A3A9A 0%, #FFD28C 100%)",
+    titleLineGradient: "linear-gradient(90deg, #FFFFFF 0%, #F5E6C8 100%)",
     titleAccentGradient: "linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%)",
     subtitle: "rgba(255, 255, 255, 0.8)",
     avatarGradient: "linear-gradient(135deg, #FFD28C 0%, #FF8C42 100%)",

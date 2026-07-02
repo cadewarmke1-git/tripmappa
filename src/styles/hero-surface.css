@@ -301,12 +301,12 @@ html body .hero[data-surface-theme] .hero-search .hero-input:hover {
 
 /* Google Places — appended to <body>; beat injected stylesheet with explicit surface tokens */
 html[data-surface-theme="night"] .pac-container {
-  background-color: #1A1035 !important;
+  background-color: #1A1228 !important;
   background-image: none !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
 }
 html[data-surface-theme="night"] .pac-item {
-  background-color: #1A1035 !important;
+  background-color: #1A1228 !important;
   background-image: none !important;
   color: #FFFFFF !important;
   border-top-color: rgba(255, 210, 140, 0.08) !important;
