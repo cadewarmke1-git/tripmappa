@@ -1,40 +1,24 @@
 import { expect, test } from "@playwright/test";
-
-async function closeAutocomplete(page) {
-  await page.keyboard.press("Escape");
-  await page.locator(".hero-title").first().click({ force: true }).catch(() => {});
-  await page.waitForTimeout(200);
-}
+import { reachTripDetailsStep, startPlanFlow } from "./helpers/planFlowHelpers.js";
 
 async function reachTripDetails(page) {
-  await page.goto("/?skyHour=12&skyTest=0");
-  await page.waitForTimeout(1000);
-  await page.locator(".hero-input").first().fill("Dallas, TX");
-  await closeAutocomplete(page);
-  await page.locator(".hero-input").nth(1).fill("Austin, TX");
-  await closeAutocomplete(page);
-  await page.locator(".hero-go-btn").click();
-  await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
-  await page.getByRole("button", { name: "Car", exact: true }).click();
-  await page.getByRole("button", { name: "Gasoline", exact: true }).click();
-  await page.getByRole("button", { name: "No", exact: true }).click();
-  await page.getByRole("button", { name: "Just me", exact: true }).click();
-  await page.waitForTimeout(500);
-  const scenic = page.getByRole("button", { name: "Scenic route" });
-  if (await scenic.isVisible({ timeout: 8_000 }).catch(() => false)) {
-    await page.locator(".plan-flow-actions .convo-nav-btn-skip").click();
-    await page.waitForTimeout(500);
-  }
-  const straightThrough = page.getByRole("button", { name: /Drive straight through/i });
-  if (await straightThrough.isVisible({ timeout: 8_000 }).catch(() => false)) {
-    await straightThrough.first().click();
-  }
-  await expect(page.locator(".question-page-title")).toHaveText("A few more details", { timeout: 20_000 });
+  await startPlanFlow(page);
+  await reachTripDetailsStep(page);
 }
 
-function boxVisibleInPanel(box, panelBox) {
-  if (!box || !panelBox) return false;
-  return box.y >= panelBox.y && box.y + box.height <= panelBox.y + panelBox.height + 2;
+function boxAboveDock(box, dockBox) {
+  if (!box || !dockBox) return false;
+  return box.y + box.height <= dockBox.y + 2;
+}
+
+function boxWithin(box, containerBox) {
+  if (!box || !containerBox) return false;
+  return (
+    box.y >= containerBox.y - 2
+    && box.x >= containerBox.x - 2
+    && box.y + box.height <= containerBox.y + containerBox.height + 2
+    && box.x + box.width <= containerBox.x + containerBox.width + 2
+  );
 }
 
 test.describe("trip details layout", () => {
@@ -42,21 +26,27 @@ test.describe("trip details layout", () => {
     test(`food, budget, more options, and continue visible at ${size.width}px`, async ({ page }) => {
       await page.setViewportSize(size);
       await reachTripDetails(page);
-      const panel = page.locator(".float-card--plan-flow");
-      const panelBox = await panel.boundingBox();
-      expect(panelBox).toBeTruthy();
+      const dock = page.locator(".plan-flow-action-dock");
+      const dockBox = await dock.boundingBox();
+      expect(dockBox).toBeTruthy();
+
       const food = page.locator(".question-section-label", { hasText: "Food" }).first();
       const budget = page.locator(".question-section-label", { hasText: "Budget" }).first();
       const more = page.locator(".question-more-options-label").first();
-      const continueBtn = page.locator(".plan-flow-actions .btn-generate-inline").first();
+      const continueBtn = page.locator(".plan-flow-dock-continue").first();
       await expect(food).toBeVisible();
       await expect(budget).toBeVisible();
       await expect(more).toBeVisible();
+      await expect(dock).toBeVisible();
       await expect(continueBtn).toBeVisible();
-      for (const loc of [food, budget, more, continueBtn]) {
+
+      for (const loc of [food, budget, more]) {
+        await loc.scrollIntoViewIfNeeded();
         const box = await loc.boundingBox();
-        expect(boxVisibleInPanel(box, panelBox)).toBe(true);
+        expect(boxAboveDock(box, dockBox)).toBe(true);
       }
+      const continueBox = await continueBtn.boundingBox();
+      expect(boxWithin(continueBox, dockBox)).toBe(true);
     });
   }
 
@@ -64,36 +54,49 @@ test.describe("trip details layout", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await reachTripDetails(page);
 
-    const glutenBtn = page.getByRole("button", { name: "Gluten Free", exact: true });
+    const glutenBtn = page.locator(".plan-option-card").filter({
+      has: page.locator(".plan-option-card-label", { hasText: "Gluten Free", exact: true }),
+    }).first();
     await expect(glutenBtn).toBeVisible();
     await expect(glutenBtn).toBeEnabled({ timeout: 10_000 });
+    await glutenBtn.scrollIntoViewIfNeeded();
     const btnBox = await glutenBtn.boundingBox();
     expect(btnBox).toBeTruthy();
 
     const hitTarget = await page.evaluate(({ x, y }) => {
       const el = document.elementFromPoint(x, y);
-      return el
-        ? { tag: el.tagName, className: el.className, text: (el.textContent || "").trim().slice(0, 40) }
-        : null;
+      const card = el?.closest?.(".plan-option-card");
+      return card
+        ? { className: card.className, tag: card.tagName }
+        : el
+          ? { tag: el.tagName, className: el.className, text: (el.textContent || "").trim().slice(0, 40) }
+          : null;
     }, { x: btnBox.x + btnBox.width / 2, y: btnBox.y + btnBox.height / 2 });
 
-    expect(hitTarget?.className || "").toMatch(/qr-btn/);
+    expect(hitTarget?.className || "").toMatch(/plan-option-card/);
 
     await glutenBtn.click();
-    await expect(glutenBtn).toHaveClass(/qr-selected/);
+    await expect(glutenBtn).toHaveClass(/is-selected/);
 
-    const budgetBtn = page.getByRole("button", { name: "$200 to $500", exact: true });
+    const budgetBtn = page.locator(".plan-option-card").filter({
+      has: page.locator(".plan-option-card-label", { hasText: "$200 to $500", exact: true }),
+    }).first();
     await expect(budgetBtn).toBeEnabled({ timeout: 10_000 });
+    await budgetBtn.scrollIntoViewIfNeeded();
     const budgetBox = await budgetBtn.boundingBox();
     expect(budgetBox).toBeTruthy();
 
+    const dockBox = await page.locator(".plan-flow-action-dock").boundingBox();
+    expect(budgetBox.y + budgetBox.height).toBeLessThanOrEqual((dockBox?.y ?? Infinity) + 2);
+
     const budgetHit = await page.evaluate(({ x, y }) => {
       const el = document.elementFromPoint(x, y);
-      return el ? el.className : null;
+      const card = el?.closest?.(".plan-option-card");
+      return card ? card.className : (el?.className ?? null);
     }, { x: budgetBox.x + budgetBox.width / 2, y: budgetBox.y + budgetBox.height / 2 });
 
-    expect(budgetHit || "").toMatch(/qr-btn/);
+    expect(budgetHit || "").toMatch(/plan-option-card/);
     await budgetBtn.click();
-    await expect(budgetBtn).toHaveClass(/qr-selected/);
+    await expect(budgetBtn).toHaveClass(/is-selected/);
   });
 });

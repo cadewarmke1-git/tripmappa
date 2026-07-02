@@ -5,10 +5,12 @@ import {
   completeThinTransportFlow,
   expectGenerationCompletes,
   expectGenerationOverlay,
+  expectOverlayRouteLoader,
   expectOverlayShowsRoute,
   installMockPlanTrip,
   installSlowMockPlanTrip,
   installE2eAuthSession,
+  reachTripDetailsStep,
   startPlanFlow,
   waitForOverlayChunkPreload,
 } from "./helpers/planFlowHelpers.js";
@@ -30,8 +32,8 @@ test.describe("generation cinematic loader runthroughs", () => {
     const overlay = await expectGenerationOverlay(page);
     await expectOverlayShowsRoute(page, /Dallas.*Austin/i);
 
-    const canvas = overlay.locator("canvas");
-    await expect(canvas).toBeVisible({ timeout: 10_000 });
+    await expectOverlayRouteLoader(overlay);
+    await expect(overlay.locator("canvas")).toHaveCount(0);
     await expect(overlay.getByText(/Mapping your route|Planning your route|Scouting|Adding|ready/i)).toBeVisible();
 
     await expectGenerationCompletes(page);
@@ -86,6 +88,7 @@ test.describe("generation cinematic loader runthroughs", () => {
     await clickGenerate(page);
     const overlay = await expectGenerationOverlay(page);
     await expect(overlay.locator("canvas")).toHaveCount(0);
+    await expectOverlayRouteLoader(overlay);
     await expect(overlay.getByText(/Dallas.*Austin/i)).toBeVisible();
     await expectGenerationCompletes(page);
   });
@@ -107,22 +110,7 @@ test.describe("generation cinematic loader runthroughs", () => {
   test("preloads overlay chunk on trip details step", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await startPlanFlow(page);
-    await page.getByRole("button", { name: "Car", exact: true }).click();
-    await page.getByRole("button", { name: "Gasoline", exact: true }).click();
-    await page.getByRole("button", { name: "No", exact: true }).click();
-    await page.getByRole("button", { name: "Just me", exact: true }).click();
-    await page.waitForTimeout(400);
-
-    const skip = page.locator(".plan-flow-actions .convo-nav-btn-skip");
-    if (await skip.isVisible({ timeout: 4_000 }).catch(() => false)) {
-      await skip.click();
-    }
-    const straightThrough = page.getByRole("button", { name: /Drive straight through/i });
-    if (await straightThrough.isVisible({ timeout: 4_000 }).catch(() => false)) {
-      await straightThrough.first().click();
-    }
-
-    await expect(page.locator(".question-page-title")).toHaveText("A few more details", { timeout: 20_000 });
+    await reachTripDetailsStep(page);
     await waitForOverlayChunkPreload(page);
   });
 

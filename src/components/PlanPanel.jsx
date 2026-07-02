@@ -71,7 +71,7 @@ export default function PlanPanel({
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
-  const showFlowSidebar = false;
+  const showFlowSidebar = inQuestionFlow && questionHistory.length > 0;
   const showReadySidebar = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
   const actionsInDock = inQuestionFlow && !convoComplete;
 

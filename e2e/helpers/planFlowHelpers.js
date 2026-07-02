@@ -19,8 +19,37 @@ export async function startPlanFlow(page, { origin = "Dallas, TX", dest = "Austi
   await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
 }
 
+export async function pickPlanOption(page, label) {
+  const card = page.locator(".plan-option-card").filter({
+    has: page.locator(".plan-option-card-label", { hasText: label, exact: true }),
+  }).first();
+  if (await card.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await card.click();
+    return true;
+  }
+  const row = page.locator(".plan-choice-row", { hasText: label }).first();
+  if (await row.isVisible({ timeout: 1_000 }).catch(() => false)) {
+    await row.click();
+    return true;
+  }
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const btn = page.getByRole("button", { name: new RegExp(`^${escaped}(\\s|$|—)`, "i") }).first();
+  if (await btn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await btn.click();
+    return true;
+  }
+  return pickChoiceRow(page, label);
+}
+
+export async function pickStopCount(page) {
+  if (await pickPlanOption(page, "Just one stop")) return true;
+  if (await pickPlanOption(page, "A few (2-3)")) return true;
+  if (await pickPlanOption(page, "Surprise me")) return true;
+  return false;
+}
+
 export async function skipOptionalSteps(page) {
-  const scenic = page.getByRole("button", { name: "Scenic route" });
+  const scenic = page.locator(".plan-option-card-label", { hasText: "Scenic route" }).first();
   if (await scenic.isVisible({ timeout: 4_000 }).catch(() => false)) {
     const skip = page.locator(".plan-flow-dock-skip, .plan-flow-actions .convo-nav-btn-skip").first();
     if (await skip.isVisible({ timeout: 1_000 }).catch(() => false)) {
@@ -28,15 +57,19 @@ export async function skipOptionalSteps(page) {
       await page.waitForTimeout(400);
     }
   }
-  const straightThrough = page.locator(".plan-choice-row", { hasText: /Drive straight through/i }).first();
-  if (await straightThrough.isVisible({ timeout: 4_000 }).catch(() => false)) {
-    await straightThrough.click();
+  if (await pickPlanOption(page, "Drive straight through")) {
     await page.waitForTimeout(400);
   } else {
-    const straightBtn = page.getByRole("button", { name: /Drive straight through/i });
-    if (await straightBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await straightBtn.first().click();
+    const straightThrough = page.locator(".plan-choice-row", { hasText: /Drive straight through/i }).first();
+    if (await straightThrough.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await straightThrough.click();
       await page.waitForTimeout(400);
+    } else {
+      const straightBtn = page.getByRole("button", { name: /Drive straight through/i });
+      if (await straightBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+        await straightBtn.first().click();
+        await page.waitForTimeout(400);
+      }
     }
   }
   const overnight = page.getByRole("button", { name: /overnight/i });
@@ -50,16 +83,26 @@ export async function skipOptionalSteps(page) {
 }
 
 export async function finishTripDetails(page) {
-  const skipDefaults = page.getByRole("button", { name: /Skip for now|Use defaults/i });
+  const skipDefaults = page.getByRole("button", { name: /Skip for now|Use defaults|Defaults are fine/i });
   if (await skipDefaults.isVisible({ timeout: 3_000 }).catch(() => false)) {
     await skipDefaults.first().click();
     await page.waitForTimeout(400);
   }
-  const continueBtn = page.locator(".plan-flow-dock-continue, .plan-flow-actions .btn-generate-inline, .btn-generate-inline").first();
+  const continueBtn = page.locator(".plan-flow-dock-continue, .btn-generate.plan-flow-dock-continue, .plan-flow-actions .btn-generate-inline, .btn-generate-inline").first();
   if (await continueBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
     await continueBtn.click();
+    await page.waitForTimeout(400);
   }
   await expect(page.locator(".btn-generate-trip")).toBeVisible({ timeout: 25_000 });
+}
+
+export async function completeThinTransportFlow(page, vehicleLabel) {
+  await pickVehicle(page, vehicleLabel);
+  await waitPlanStepReady(page);
+  await pickPlanOption(page, "Just me");
+  await waitPlanStepReady(page);
+  await expect(page.locator(".question-page-title, .plan-flow-question-title").filter({ hasText: "A few more details" })).toBeVisible({ timeout: 20_000 });
+  await finishTripDetails(page);
 }
 
 async function pickChoiceRow(page, label) {
@@ -76,39 +119,42 @@ async function pickChoiceRow(page, label) {
   return false;
 }
 
-export async function completeCarFlow(page) {
-  await pickChoiceRow(page, "Car");
-  await page.waitForTimeout(500);
-  await page.getByRole("button", { name: "Gasoline", exact: true }).click();
-  await page.waitForTimeout(300);
-  await page.getByRole("button", { name: "No", exact: true }).click();
-  await page.waitForTimeout(300);
-  await page.getByRole("button", { name: "Just me", exact: true }).click();
-  await page.waitForTimeout(400);
-  const stopRow = page.getByRole("button", { name: /A few \(2-3\)|Just one stop|Surprise me/i }).first();
-  if (await stopRow.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await stopRow.click();
-    await page.locator(".plan-flow-dock-continue").click();
-    await page.waitForTimeout(400);
-  }
+export async function waitPlanStepReady(page) {
+  await expect(page.locator(".question-choices.choices-frozen")).toHaveCount(0, { timeout: 12_000 });
+}
+
+export async function reachTripDetailsStep(page) {
+  await pickPlanOption(page, "Car");
+  await waitPlanStepReady(page);
+  await pickPlanOption(page, "Gasoline");
+  await waitPlanStepReady(page);
+  await pickPlanOption(page, "No");
+  await waitPlanStepReady(page);
+  await pickPlanOption(page, "Just me");
+  await waitPlanStepReady(page);
+  await pickStopCount(page);
+  await waitPlanStepReady(page);
   await skipOptionalSteps(page);
+  await expect(page.locator(".question-page-title, .plan-flow-question-title").filter({ hasText: "A few more details" })).toBeVisible({ timeout: 20_000 });
+}
+
+export async function completeCarFlow(page) {
+  await reachTripDetailsStep(page);
   await finishTripDetails(page);
 }
 
 export async function pickVehicle(page, vehicleLabel) {
+  const expander = page.getByRole("button", { name: /More vehicle types/i });
+  if (await expander.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await expander.click();
+    await page.waitForTimeout(300);
+  }
   const otherTab = page.getByRole("tab", { name: "Other" });
-  if (await otherTab.isVisible({ timeout: 3_000 }).catch(() => false)) {
+  if (await otherTab.isVisible({ timeout: 1_000 }).catch(() => false)) {
     await otherTab.click();
     await page.waitForTimeout(300);
   }
-  await page.getByRole("button", { name: vehicleLabel, exact: true }).click();
-}
-
-export async function completeThinTransportFlow(page, vehicleLabel) {
-  await pickVehicle(page, vehicleLabel);
-  await page.getByRole("button", { name: "Just me", exact: true }).click();
-  await page.waitForTimeout(400);
-  await finishTripDetails(page);
+  await pickPlanOption(page, vehicleLabel);
 }
 
 function encodeSse(events) {
@@ -203,6 +249,12 @@ export async function expectGenerationOverlay(page) {
   return overlay;
 }
 
+export async function expectOverlayRouteLoader(overlay) {
+  const loader = overlay.locator(".route-drawing-loader-svg").first();
+  await expect(loader).toBeVisible({ timeout: 10_000 });
+  return loader;
+}
+
 export async function expectOverlayShowsRoute(page, pattern) {
   const overlay = page.locator(".generation-stream-overlay");
   await expect(overlay).toContainText(pattern, { timeout: 8_000 });
@@ -210,7 +262,9 @@ export async function expectOverlayShowsRoute(page, pattern) {
 
 export async function expectGenerationCompletes(page) {
   await expect(page.locator(".plan-generation-error")).toHaveCount(0, { timeout: 45_000 });
-  await expect(page.locator(".app-wrap.results-split-mode").first()).toBeVisible({ timeout: 45_000 });
+  await expect(
+    page.locator(".app-wrap.results-fullscreen, .app-wrap.map-fullscreen-mode, .trip-results-split").first(),
+  ).toBeVisible({ timeout: 45_000 });
   await expect(page.locator(".generation-stream-overlay")).toHaveCount(0, { timeout: 15_000 });
 }
 

@@ -10,7 +10,7 @@ test.describe("hero sky visuals", () => {
   for (const { hour, name } of SKY_HOURS) {
     test(`renders hero mountain scene at ${name} (${hour}:00)`, async ({ page }) => {
       await page.goto(`/?skyHour=${hour}&skyTest=0`);
-      const scene = page.locator(".hero-mountain-scene");
+      const scene = page.locator(".hero-highway-scene, .hero-mountain-scene");
       await expect(scene).toBeVisible({ timeout: 15_000 });
       await page.waitForTimeout(800);
       await expect(scene).toHaveScreenshot(`hero-sky-${name}.png`, {

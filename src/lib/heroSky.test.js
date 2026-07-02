@@ -15,8 +15,9 @@ describe("heroSky", () => {
     expect(parseSkyHourParam("")).toBeNull();
   });
 
-  it("shows sky test dial only in local development", () => {
-    expect(isSkyTestEnabled()).toBe(import.meta.env.DEV);
+  it("shows sky test dial in development or e2e builds", () => {
+    const e2e = import.meta.env.VITE_E2E === "1";
+    expect(isSkyTestEnabled()).toBe(import.meta.env.DEV || e2e);
   });
 
   it("resolves hero hour with URL > dial > live priority", () => {
