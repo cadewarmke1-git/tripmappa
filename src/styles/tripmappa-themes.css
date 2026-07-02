@@ -15,11 +15,11 @@
 
 /* Body-level Google Places dropdown — pac-container is appended to <body>, not .hero / .app-wrap */
 html[data-surface-theme="night"] {
-  --color-autocomplete-bg: #1A1035;
+  --color-autocomplete-bg: #1A1228;
   --color-autocomplete-border: rgba(255, 210, 140, 0.15);
   --color-autocomplete-match: #FFD28C;
-  --color-autocomplete-text-top: #FFFFFF;
-  --color-autocomplete-text-rest: #A89BCF;
+  --color-autocomplete-text-top: #F5E6C8;
+  --color-autocomplete-text-rest: rgba(245, 230, 200, 0.55);
   --color-autocomplete-pin-bg: rgba(255, 210, 140, 0.1);
   --color-autocomplete-pin-color: #FFD28C;
   --color-autocomplete-top-bg: rgba(255, 210, 140, 0.06);
@@ -79,7 +79,7 @@ body.theme-twilight,
   --color-surface: #1A1035;
   --color-surface-elevated: #2A1A4A;
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A89BCF;
+  --color-text-secondary: rgba(245, 230, 200, 0.5);
   --color-accent-gold: #FFD28C;
   --color-accent-orange: #FF8C42;
   --color-accent-gradient: linear-gradient(135deg, #FFD28C, #FF8C42);
@@ -94,7 +94,7 @@ body.theme-twilight,
   --color-btn-secondary-text: #FFFFFF;
   --color-input-bg: rgba(255, 255, 255, 0.07);
   --color-input-border: rgba(255, 210, 140, 0.2);
-  --color-input-placeholder: #A89BCF;
+  --color-input-placeholder: rgba(245, 230, 200, 0.45);
   --color-card-bg: #1A1035;
   --color-card-border: rgba(255, 210, 140, 0.1);
   --color-tag-fuel-bg: rgba(255, 140, 66, 0.12);
@@ -116,10 +116,10 @@ body.theme-twilight,
   --color-banner-bg: rgba(26, 16, 53, 0.85);
   --color-map-surface: #0D0A1A;
   --color-map-panel: #1A1035;
-  --color-hero-title-gradient: linear-gradient(90deg, #5A3A9A, #FFD28C);
+  --color-hero-title-gradient: linear-gradient(90deg, #FFFFFF, #FDF3E0);
   --color-hero-accent-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-subtitle: rgba(255, 255, 255, 0.8);
-  --color-tier-voyager: #8A7AAF;
+  --color-tier-voyager: #3dd9d0;
 
   /* Plan flow + map — canonical night tokens */
   --color-plan-panel-bg: #0D0A1A;
@@ -134,7 +134,7 @@ body.theme-twilight,
   --color-tab-active-bg: #FF8C42;
   --color-tab-active-text: #1A0D00;
   --color-tab-inactive-bg: rgba(255, 255, 255, 0.06);
-  --color-tab-inactive-text: #A89BCF;
+  --color-tab-inactive-text: rgba(245, 230, 200, 0.45);
   --color-results-card-bg: #0D0A1A;
   --color-results-card-keyline: rgba(255, 210, 140, 0.35);
   --color-nav-bg-app: #1A0D00;
@@ -145,11 +145,11 @@ body.theme-twilight,
   --plan-flow-sand: #F5E6C8;
   --plan-flow-gold: #FFD28C;
   --plan-flow-orange: #FF8C42;
-  --plan-flow-panel-header: #080612;
-  --plan-flow-card: #1A1528;
-  --plan-flow-card-border: #2A2438;
-  --plan-flow-card-fg: #FDF3E0;
-  --plan-flow-icon-tile: #221D32;
+  --plan-flow-panel-header: #0D0A1A;
+  --plan-flow-card: #1A1228;
+  --plan-flow-card-border: rgba(255, 210, 140, 0.12);
+  --plan-flow-card-fg: #F5E6C8;
+  --plan-flow-icon-tile: #241830;
   --plan-flow-icon-fg: #FFD28C;
   --plan-flow-muted-fg: #B8A48C;
   --plan-flow-selected-bg: rgba(255, 210, 140, 0.12);
@@ -157,7 +157,7 @@ body.theme-twilight,
   --plan-flow-selected-fg: #FFD28C;
   --plan-flow-cta-bg: #FFD28C;
   --plan-flow-cta-fg: #0D0A1A;
-  --plan-flow-divider: #2A2438;
+  --plan-flow-divider: rgba(255, 210, 140, 0.1);
   --cat-food: #ff5fa8;
   --cat-fuel: #3dd9d0;
   --cat-lodging: #FFD28C;
@@ -168,7 +168,7 @@ body.theme-twilight,
   --color-autocomplete-border: rgba(255, 210, 140, 0.15);
   --color-autocomplete-match: #FFD28C;
   --color-autocomplete-text-top: #FFFFFF;
-  --color-autocomplete-text-rest: #A89BCF;
+  --color-autocomplete-text-rest: rgba(245, 230, 200, 0.55);
   --color-autocomplete-pin-bg: rgba(255, 210, 140, 0.1);
   --color-autocomplete-pin-color: #FFD28C;
   --color-autocomplete-top-bg: rgba(255, 210, 140, 0.06);
@@ -247,7 +247,7 @@ body.theme-day,
   --color-hero-title-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-accent-gradient: linear-gradient(90deg, #FF8C42, #C87010);
   --color-hero-subtitle: rgba(255, 255, 255, 0.85);
-  --color-tier-voyager: #6A5A8A;
+  --color-tier-voyager: #3dd9d0;
 
   /* Plan flow + map — canonical day tokens (reference these everywhere) */
   --color-plan-panel-bg: #FDF3E0;
@@ -278,8 +278,8 @@ body.theme-day,
   --plan-flow-sand: #F5E6C8;
   --plan-flow-gold: #FFD28C;
   --plan-flow-orange: #FF8C42;
-  --plan-flow-card: #FFFFFF;
-  --plan-flow-card-border: #D9CDB8;
+  --plan-flow-card: #FDF3E0;
+  --plan-flow-card-border: rgba(160, 64, 16, 0.15);
   --plan-flow-card-fg: #0D0A1A;
   --plan-flow-icon-tile: #F5E6C8;
   --plan-flow-icon-fg: #0D0A1A;
@@ -339,7 +339,7 @@ body.theme-day,
   --color-btn-secondary-border: rgba(255, 255, 255, 0.18);
   --color-btn-secondary-text: #FFFFFF;
   --color-banner-bg: rgba(26, 16, 53, 0.65);
-  --color-hero-title-gradient: linear-gradient(90deg, #5A3A9A, #FFD28C);
+  --color-hero-title-gradient: linear-gradient(90deg, #FFFFFF, #FDF3E0);
   --color-hero-accent-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-subtitle: rgba(255, 255, 255, 0.8);
 }
@@ -564,7 +564,7 @@ body.theme-day,
   background: rgba(26,26,46,0.04) !important; border-color: rgba(26,26,46,0.12) !important; color: var(--deep-dark) !important;
 }
 .app-wrap.day .answer-input {
-  background: #fff !important; border-color: rgba(26,26,46,0.15) !important; color: var(--deep-dark) !important;
+  background: #FDF3E0 !important; border-color: rgba(160,64,16,0.15) !important; color: var(--deep-dark) !important;
 }
 .app-wrap.day .results-view { color: var(--deep-dark) !important; }
 .app-wrap.day .results-back {
@@ -930,7 +930,7 @@ body.theme-day,
 
 /* Profile page — day mode */
 .app-wrap.day.profile-view-wrap,
-.app-wrap.day .profile-view-wrap { background: #f4f6fa; color: var(--deep-dark); }
+.app-wrap.day .profile-view-wrap { background: #FDF3E0; color: var(--deep-dark); }
 .app-wrap.day .profile-card,
 .app-wrap.day .profile-stat-card {
   background: rgba(255,255,255,0.85);

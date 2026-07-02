@@ -47,9 +47,22 @@ export function computePathHeadingDegrees(path = []) {
   return getBearing(a, b);
 }
 
-/** Rotate the marker image to match travel heading (PNG art points north). */
-export function applyMarkerRotation(marker, headingDeg) {
-  const el = marker?.getElement?.();
+/**
+ * Rotate the car SVG to match travel heading.
+ * Works with both the old Marker approach (img) and the new OverlayView approach
+ * where we pass the container element directly.
+ */
+export function applyMarkerRotation(markerOrEl, headingDeg) {
+  // OverlayView path: container element passed directly
+  if (markerOrEl instanceof Element) {
+    const inner = markerOrEl.querySelector(".nav-car-inner");
+    const target = inner || markerOrEl;
+    target.style.transformOrigin = "center center";
+    target.style.transform = `rotate(${headingDeg}deg)`;
+    return;
+  }
+  // Legacy Marker path: Google Maps marker instance
+  const el = markerOrEl?.getElement?.();
   if (!el) return;
   const img = el.querySelector("img");
   const target = img || el;
