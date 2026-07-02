@@ -49,8 +49,7 @@ html body .hero .hero-title {
   padding-bottom: 0.14em;
 }
 
-html body .hero .hero-title-line,
-html body .hero .hero-title-accent {
+html body .hero .hero-title-line {
   display: block;
   width: fit-content;
   max-width: 100%;
@@ -69,20 +68,53 @@ html body .hero .hero-title-accent {
   filter: none !important;
 }
 
-html body .hero.night .hero-title-line {
+/* Mixed line — block wrapper, resets clip; inline children own their own gradients */
+html body .hero .hero-title-line--mixed {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: visible;
+  padding-bottom: 0.08em;
+  line-height: 1.12;
+  background: none !important;
+  background-image: none !important;
+  -webkit-text-fill-color: inherit !important;
+  color: inherit !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+html body .hero .hero-title-line-text,
+html body .hero .hero-title-accent {
+  display: inline;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+html body .hero.night .hero-title-line,
+html body .hero.night .hero-title-line-text {
   background-image: linear-gradient(90deg, #FFFFFF 0%, #FDF3E0 100%) !important;
 }
 
 html body .hero.night .hero-title-accent {
-  background-image: var(--color-hero-accent-gradient) !important;
-}
-
-html body .hero.day .hero-title-line {
   background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
 }
 
+html body .hero.day .hero-title-line,
+html body .hero.day .hero-title-line-text {
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #F5E6C8 100%) !important;
+}
+
 html body .hero.day .hero-title-accent {
-  background-image: linear-gradient(90deg, #FF8C42 0%, #C87010 100%) !important;
+  background-image: linear-gradient(90deg, #FF8C42 0%, #FFD28C 100%) !important;
 }
 
 .hero[data-surface-theme="night"] .hero-sub {

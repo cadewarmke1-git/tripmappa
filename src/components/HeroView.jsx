@@ -138,11 +138,14 @@ export default function HeroView({
         <div className="hero-palette-ridge" aria-hidden="true" />
 
         <div className="hero-content">
-          <p className="trip-overview-hero-eyebrow">The open road&nbsp;&nbsp;·&nbsp;&nbsp;Your route&nbsp;&nbsp;·&nbsp;&nbsp;Our mission</p>
+          <p className="trip-overview-hero-eyebrow">The open road awaits</p>
           <h1 className="hero-title">
-            <span className="hero-title-line">Your trip,&nbsp;<span className="hero-title-accent">our mission.</span></span>
+            <span className="hero-title-line">Every great trip</span>
+            <span className="hero-title-line hero-title-line--mixed">
+              <span className="hero-title-line-text">starts with a </span><span className="hero-title-accent">plan</span>
+            </span>
           </h1>
-          <p className="hero-sub">Plan the perfect road trip with curated stops, smart routing, and the open road ahead.</p>
+          <p className="hero-sub">Tell us where you&apos;re headed. We&apos;ll map the scenic route, the pit stops, and the hidden gems along the way.</p>
 
           {planDraft?.origin && planDraft?.dest && (
             <div className="hero-draft-resume">
