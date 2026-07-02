@@ -8,8 +8,8 @@ import {
 import PreferencePillGrid, { PreferencePillGroups, togglePreferenceValue } from "./PreferencePillGrid.jsx";
 import "../styles/traveler-onboarding.css";
 
-const HERO_DAY_PHOTO = "/hero/open-road-golden-hour.jpg";
-const HERO_NIGHT_PHOTO = "/hero/open-road-twilight.jpg";
+const HERO_DAY_PHOTO = "/hero/open-road-golden-hour.png";
+const HERO_NIGHT_PHOTO = "/hero/open-road-twilight.png";
 const PREFERENCE_STEPS = ["dietary", "stops_interests"];
 
 export default function TravelerOnboarding({ onComplete }) {

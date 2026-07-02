@@ -161,13 +161,14 @@
 
 .hero.day .hero-input,
 .hero.night .hero-input {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   background: transparent !important;
 }
 
 .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(90, 66, 42, 0.55) !important;
+  -webkit-text-fill-color: rgba(90, 66, 42, 0.55) !important;
   opacity: 1 !important;
   font-weight: 400 !important;
 }

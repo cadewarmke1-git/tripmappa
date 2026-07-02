@@ -1055,7 +1055,7 @@
     overflow-x: hidden !important;
     overflow-y: auto !important;
     border-top: none !important;
-    background-color: var(--color-autocomplete-bg, #1A1035) !important;
+    background-color: var(--color-autocomplete-bg, #1A1228) !important;
     background-image: none !important;
     border: 1.5px solid var(--color-autocomplete-border, rgba(255, 210, 140, 0.15)) !important;
     min-width: min(calc(100vw - 32px), 420px) !important;
@@ -1081,7 +1081,7 @@
     overflow: visible !important;
     text-overflow: unset !important;
     color: var(--color-autocomplete-text-top, #FFFFFF) !important;
-    background-color: var(--color-autocomplete-bg, #1A1035) !important;
+    background-color: var(--color-autocomplete-bg, #1A1228) !important;
     background-image: none !important;
   }
   .pac-item-query {
@@ -1093,7 +1093,7 @@
     font-family: 'Inter', sans-serif !important;
   }
   .pac-item > span:not(.pac-icon):not(.pac-matched):not(.pac-item-query) {
-    color: var(--color-autocomplete-text-rest, #A89BCF) !important;
+    color: var(--color-autocomplete-text-rest, rgba(245, 230, 200, 0.55)) !important;
   }
   .pac-item:first-child {
     border-top: none !important;
@@ -1680,6 +1680,7 @@
     display: flex;
     flex-direction: column;
     height: auto;
+    width: 436px;
     max-height: calc(var(--app-height) - var(--nav-h) - 16px);
   }
   .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
@@ -2796,7 +2797,7 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     margin: 0 0 6px;
-    color: var(--color-text-secondary, #a89bcf);
+    color: var(--color-text-secondary, rgba(245, 230, 200, 0.5));
   }
   .question-progress-phase {
     font-size: 12px; opacity: 0.35; font-weight: 500; letter-spacing: 0.01em;
@@ -3324,7 +3325,7 @@
     background: var(--ink); color: #fff; border: none; cursor: pointer;
     font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
   }
-  .stop-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.25s ease both; transition: box-shadow 0.2s; }
+  .stop-card { background: var(--color-card-bg, #FDF3E0); border: 1.5px solid var(--border); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.25s ease both; transition: box-shadow 0.2s; }
   .stop-card:hover { box-shadow: var(--shadow); }
   .stop-card-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1.5px solid var(--border); background: var(--surface); }
   .stop-num { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Inter', sans-serif; }
@@ -3480,8 +3481,8 @@
   .dot-pending { background: #f5a623; }
 
   /* ── Modal ── */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
-  .modal { background: #fff; border-radius: 20px; padding: 24px; max-width: 360px; width: 100%; box-shadow: var(--shadow-lg); }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: var(--color-card-bg, #FDF3E0); border-radius: 20px; padding: 24px; max-width: 360px; width: 100%; box-shadow: var(--shadow-lg); }
   .modal-title { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.3px; }
   .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
   .grocery-list { list-style: none; margin-bottom: 12px; max-height: 160px; overflow-y: auto; }
@@ -3938,7 +3939,7 @@
     display: flex; flex-direction: column; gap: 12px; overflow-x: visible; padding-bottom: 12px;
   }
   .lodging-cards-scroll::-webkit-scrollbar { display: none; }
-  .lodging-card {
+  .lodging-card:not(.road-trip-stop-card) {
     flex: none; width: 100%; max-width: none; scroll-snap-align: unset;
     display: flex; flex-direction: row; align-items: stretch; gap: 10px;
     padding: 10px;
@@ -3950,7 +3951,7 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transition: box-shadow 0.2s var(--ease);
   }
-  .lodging-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+  .lodging-card:not(.road-trip-stop-card):hover { box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
   .lodging-card-photo-wrap {
     position: relative; width: 64px; height: 64px; flex-shrink: 0;
     border-radius: 10px; overflow: hidden;
@@ -4003,7 +4004,7 @@
   }
   .lodging-star.filled { background: var(--gold-primary); }
   /* Use secondary text token for lodging metadata contrast on dark cards (Impeccable colorize). */
-  .lodging-card-neighborhood { font-size: 12px; color: var(--color-text-secondary, #a89bcf); margin-bottom: 8px; }
+  .lodging-card-neighborhood { font-size: 12px; color: var(--color-text-secondary, rgba(245, 230, 200, 0.5)); margin-bottom: 8px; }
   .lodging-card-price {
     font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 800;
     color: var(--gold-primary); letter-spacing: -0.02em; margin-bottom: 0;
@@ -4018,14 +4019,14 @@
   }
   .lodging-amenity-icon { font-size: 11px; line-height: 1; }
   .lodging-card-desc { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.75); margin-bottom: 8px; }
-  .lodging-card-distance { font-size: 11px; color: var(--color-text-secondary, #a89bcf); margin-bottom: 0; }
+  .lodging-card-distance { font-size: 11px; color: var(--color-text-secondary, rgba(245, 230, 200, 0.5)); margin-bottom: 0; }
   .lodging-detail-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 10px;
   }
   .lodging-detail-item { display: flex; flex-direction: column; gap: 2px; }
   .lodging-detail-label {
     font-size: 9px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--color-text-secondary, #a89bcf);
+    letter-spacing: 0.08em; color: var(--color-text-secondary, rgba(245, 230, 200, 0.5));
   }
   .lodging-detail-value { font-size: 12.5px; font-weight: 600; }
   .lodging-card-food { font-size: 12px; line-height: 1.45; margin-bottom: 10px; color: rgba(255,255,255,0.8); }
@@ -5590,7 +5591,7 @@
   }
   .app-wrap.night .place-photo-fallback,
   .app-wrap.night .road-stop-card-photo-fallback {
-    background: linear-gradient(145deg, #1A1035, #0D0A1A);
+    background: linear-gradient(145deg, #1A1228, #0D0A1A);
     color: rgba(255, 248, 236, 0.88);
   }
   .place-photo-fallback-icon { line-height: 1; color: rgba(255,210,140,0.9); }
@@ -5666,7 +5667,7 @@
   }
   .trip-overview-hero-ready-line {
     margin: 0 0 10px; font-size: 12px; font-weight: 600;
-    color: var(--color-text-secondary, #a89bcf); letter-spacing: 0.01em;
+    color: var(--color-text-secondary, rgba(245, 230, 200, 0.5)); letter-spacing: 0.01em;
   }
   .trip-results-panel--shared {
     background: linear-gradient(180deg, #0d0a1a 0%, #0f1428 42%, #0d0a1a 100%);
@@ -5703,7 +5704,7 @@
   }
   .road-stop-card-name { font-family: "Fraunces", Georgia, serif; font-size: 14px; font-weight: 700; margin: 0 0 6px; line-height: 1.2; color: var(--ink); }
   /* Raise road-stop card metadata contrast on dark surfaces (Impeccable colorize). */
-  .road-stop-card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--color-text-secondary, #a89bcf); margin-bottom: 8px; }
+  .road-stop-card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--color-text-secondary, rgba(245, 230, 200, 0.5)); margin-bottom: 8px; }
   .road-stop-rating { color: var(--gold, var(--gold-primary)); font-weight: 600; }
   .inline-star-rating {
     display: inline-flex; align-items: center; gap: 4px;
@@ -6229,7 +6230,7 @@
     background: color-mix(in srgb, var(--color-results-card-bg, #0D0A1A) 88%, rgba(255, 210, 140, 0.08));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  .guest-signup-banner-text { margin: 0; font-size: 13px; line-height: 1.45; flex: 1; min-width: 200px; color: var(--color-text-secondary, #a89bcf); }
+  .guest-signup-banner-text { margin: 0; font-size: 13px; line-height: 1.45; flex: 1; min-width: 200px; color: var(--color-text-secondary, rgba(245, 230, 200, 0.5)); }
   .guest-signup-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .guest-signup-banner-btn {
     padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255, 210, 140, 0.35);
@@ -6251,7 +6252,7 @@
     display: flex; flex-direction: column; gap: 14px; overflow-x: visible; padding-bottom: 4px;
   }
   .restaurant-cards-scroll::-webkit-scrollbar { display: none; }
-  .restaurant-card {
+  .restaurant-card:not(.road-trip-stop-card) {
     flex: none; width: 100%; max-width: none; scroll-snap-align: unset;
     border-radius: 10px; overflow: hidden;
     background: var(--color-results-card-bg, var(--card));
@@ -6490,7 +6491,7 @@
   }
 
   .app-nav-mode-btn:not(.is-active) {
-    color: color-mix(in srgb, var(--color-text-secondary, #a89bcf) 72%, transparent);
+    color: color-mix(in srgb, var(--color-text-secondary, rgba(245, 230, 200, 0.5)) 72%, transparent);
   }
 
   .navigate-map-wrap {
@@ -8133,7 +8134,7 @@
     background: #0D0A1A;
   }
   .generation-stream-overlay {
-    background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(26, 16, 53, 0.55), #0D0A1A 70%);
+    background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(58, 34, 24, 0.55), #0D0A1A 70%);
   }
   .generation-loader-route-drawing.route-drawing-loader--fullscreen {
     position: relative;
@@ -8349,7 +8350,7 @@
     padding: 22px 20px;
     border-radius: 14px;
     border: 1px solid var(--color-card-border);
-    background: #1A1035;
+    background: #1A1228;
     color: #FFFFFF;
   }
   .tm-theme-day .confirm-dialog {

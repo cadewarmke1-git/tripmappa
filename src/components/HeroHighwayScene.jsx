@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
-const HERO_DAY_PHOTO = "/hero/open-road-golden-hour.jpg";
-const HERO_NIGHT_PHOTO = "/hero/open-road-twilight.jpg";
+const HERO_DAY_PHOTO = "/hero/open-road-golden-hour.png";
+const HERO_NIGHT_PHOTO = "/hero/open-road-twilight.png";
 
 /**
  * Full-bleed highway hero background — cross-fades day/night photos with the sky cycle.

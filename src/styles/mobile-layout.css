@@ -468,7 +468,7 @@
   }
 
   html[data-layout="mobile"] .app-nav-mode-btn:not(.is-active) {
-    color: color-mix(in srgb, var(--color-text-secondary, #a89bcf) 80%, transparent);
+    color: color-mix(in srgb, var(--color-text-secondary, rgba(245, 230, 200, 0.5)) 80%, transparent);
   }
 
   html[data-layout="mobile"] .chat-wrap-plan-flow .question-choices-compact .vehicle-group-options .qr-btn {

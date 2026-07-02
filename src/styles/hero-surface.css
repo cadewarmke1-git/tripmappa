@@ -32,14 +32,14 @@ html body nav.app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
 
 nav.app-nav-bar.transparent[data-surface-theme="day"] .brand-wordmark,
 html body nav.app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
-  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
+  background-image: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   text-shadow: none !important;
-  filter: none !important;
+  filter: drop-shadow(0 1px 6px rgba(255, 244, 224, 0.55)) !important;
 }
 
 /* ── Travel / Reimagined — per-line gradient clip (fit-content so gradient spans text, not container) ── */
@@ -49,8 +49,7 @@ html body .hero .hero-title {
   padding-bottom: 0.14em;
 }
 
-html body .hero .hero-title-line,
-html body .hero .hero-title-accent {
+html body .hero .hero-title-line {
   display: block;
   width: fit-content;
   max-width: 100%;
@@ -69,20 +68,53 @@ html body .hero .hero-title-accent {
   filter: none !important;
 }
 
-html body .hero.night .hero-title-line {
-  background-image: var(--color-hero-title-gradient) !important;
+/* Mixed line — block wrapper, resets clip; inline children own their own gradients */
+html body .hero .hero-title-line--mixed {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: visible;
+  padding-bottom: 0.08em;
+  line-height: 1.12;
+  background: none !important;
+  background-image: none !important;
+  -webkit-text-fill-color: inherit !important;
+  color: inherit !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+html body .hero .hero-title-line-text,
+html body .hero .hero-title-accent {
+  display: inline;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+html body .hero.night .hero-title-line,
+html body .hero.night .hero-title-line-text {
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #FDF3E0 100%) !important;
 }
 
 html body .hero.night .hero-title-accent {
-  background-image: var(--color-hero-accent-gradient) !important;
-}
-
-html body .hero.day .hero-title-line {
   background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
 }
 
+html body .hero.day .hero-title-line,
+html body .hero.day .hero-title-line-text {
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #F5E6C8 100%) !important;
+}
+
 html body .hero.day .hero-title-accent {
-  background-image: linear-gradient(90deg, #FF8C42 0%, #C87010 100%) !important;
+  background-image: linear-gradient(90deg, #FF8C42 0%, #FFD28C 100%) !important;
 }
 
 .hero[data-surface-theme="night"] .hero-sub {
@@ -104,37 +136,31 @@ html body .hero.day .hero-title-accent {
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
 
-/* ── Day search row (white glass + warm labels) ── */
+/* ── Day search row (dark container + light input pills) ── */
 .hero[data-surface-theme="day"] .hero-search {
-  background: #FDF3E0 !important;
-  border-color: rgba(160, 64, 16, 0.3) !important;
+  background: #211A11 !important;
+  border-color: rgba(255, 210, 140, 0.3) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 .hero[data-surface-theme="day"] .hero-route-cell .hero-input-label,
 .hero[data-surface-theme="day"] .hero-input-label {
-  color: #A04010 !important;
+  color: #8A6338 !important;
 }
 
 .hero[data-surface-theme="day"] .hero-input {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   background: transparent !important;
 }
 
-.hero[data-surface-theme="day"] .hero-swap-btn {
-  background: rgba(224, 104, 32, 0.15) !important;
-  border-color: rgba(224, 104, 32, 0.4) !important;
-  color: #E06820 !important;
-}
-
 .hero[data-surface-theme="day"] .hero-go-btn:not(:disabled) {
-  background: #1A0D00 !important;
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
+  background: #FF8C42 !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   border: none !important;
-  box-shadow: none !important;
+  box-shadow: 0 4px 0 #C85A10 !important;
 }
 
 .hero[data-surface-theme="day"] .hero-auth-label {
@@ -158,9 +184,9 @@ html body .hero.day .hero-title-accent {
   color: rgba(90, 42, 16, 0.55) !important;
 }
 
-/* ── Night search row ── */
+/* ── Night search row (dark container + light input pills) ── */
 .hero[data-surface-theme="night"] .hero-search {
-  background: #0D0A1A !important;
+  background: #120E1E !important;
   border-color: rgba(255, 210, 140, 0.25) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -168,12 +194,12 @@ html body .hero.day .hero-title-accent {
 
 .hero[data-surface-theme="night"] .hero-route-cell .hero-input-label,
 .hero[data-surface-theme="night"] .hero-input-label {
-  color: #FFD28C !important;
+  color: #8A6338 !important;
 }
 
 .hero[data-surface-theme="night"] .hero-input {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   background: transparent !important;
 }
 
@@ -212,23 +238,17 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
   color: #1A0D00 !important;
 }
 
-/* ── City placeholders — dim but readable, no "e.g." prefix ── */
-.hero[data-surface-theme="night"] .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.52) !important;
-  font-style: italic !important;
-  font-weight: 400 !important;
-  opacity: 1 !important;
-}
-
+/* ── City placeholders — dim but readable on light pills, no "e.g." prefix ── */
+.hero[data-surface-theme="night"] .hero-search .hero-input::placeholder,
 .hero[data-surface-theme="day"] .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(90, 66, 42, 0.5) !important;
   font-style: italic !important;
   font-weight: 400 !important;
   opacity: 1 !important;
 }
 
 
-/* Route structure — no inner panel boxes around From/To */
+/* Route structure — inner wrappers stay transparent (the cell is the pill) */
 .hero[data-surface-theme] .hero-search .hero-search-main,
 .hero[data-surface-theme] .hero-search .hero-route-bar,
 .hero[data-surface-theme] .hero-search .hero-route-grid,
@@ -244,6 +264,34 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 .hero[data-surface-theme] .hero-search .hero-input-box {
   min-height: 0 !important;
   padding: 0 !important;
+}
+
+/* ── From/To as two light rounded pills, no swap button (matches design) ── */
+.hero[data-surface-theme] .hero-search .hero-route-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 12px !important;
+  align-items: stretch !important;
+}
+
+.hero[data-surface-theme] .hero-search .hero-route-swap-col {
+  display: none !important;
+}
+
+.hero[data-surface-theme] .hero-search .hero-route-cell {
+  background: #F5EDE0 !important;
+  border: 1px solid rgba(160, 64, 16, 0.18) !important;
+  border-radius: 10px !important;
+  padding: 8px 14px !important;
+  gap: 2px !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+
+.hero[data-surface-theme] .hero-search .hero-input-label {
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+  text-align: left !important;
+  align-self: flex-start !important;
 }
 
 /* City inputs — no grey fill boxes in day or night */
@@ -269,12 +317,12 @@ html body .hero[data-surface-theme] .hero-search .hero-input:hover {
 
 /* Google Places — appended to <body>; beat injected stylesheet with explicit surface tokens */
 html[data-surface-theme="night"] .pac-container {
-  background-color: #1A1035 !important;
+  background-color: #1A1228 !important;
   background-image: none !important;
   border-color: rgba(255, 210, 140, 0.15) !important;
 }
 html[data-surface-theme="night"] .pac-item {
-  background-color: #1A1035 !important;
+  background-color: #1A1228 !important;
   background-image: none !important;
   color: #FFFFFF !important;
   border-top-color: rgba(255, 210, 140, 0.08) !important;

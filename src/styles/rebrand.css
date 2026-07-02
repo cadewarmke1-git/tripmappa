@@ -19,7 +19,7 @@
   --tm-loader-bg: var(--color-base);
   --tm-focus: var(--gold-primary);
   --tm-selection: rgba(255, 210, 140, 0.35);
-  --tm-hover-surface: rgba(42, 26, 74, 0.85);
+  --tm-hover-surface: rgba(36, 28, 44, 0.85);
   --tm-border-accent: rgba(255, 210, 140, 0.35);
 }
 
@@ -123,7 +123,7 @@ body {
 }
 
 .app-wrap.night .nav-app .nav-tab.active {
-  background: rgba(42, 26, 74, 0.9) !important;
+  background: rgba(36, 28, 44, 0.9) !important;
   color: var(--gold-primary) !important;
 }
 
@@ -185,7 +185,7 @@ body {
 }
 
 .app-wrap.night .theme-toggle-btn {
-  background: rgba(42, 26, 74, 0.85) !important;
+  background: rgba(36, 28, 44, 0.85) !important;
   border-color: rgba(255, 210, 140, 0.35) !important;
   color: var(--gold-primary) !important;
 }
@@ -408,7 +408,7 @@ body {
 }
 
 .app-wrap.night .qr-btn:hover {
-  background: rgba(42, 26, 74, 0.95) !important;
+  background: rgba(36, 28, 44, 0.95) !important;
   border-color: rgba(255, 140, 66, 0.5) !important;
 }
 
@@ -690,7 +690,7 @@ body {
 }
 
 .app-wrap.night .profile-tier-badge {
-  background: rgba(42, 26, 74, 0.8) !important;
+  background: rgba(36, 28, 44, 0.8) !important;
   color: var(--gold-primary) !important;
   border-color: rgba(255, 210, 140, 0.3) !important;
 }
@@ -736,7 +736,7 @@ body {
 .app-wrap.night .lodging-btn-save:hover,
 .app-wrap.night .item-row:hover,
 .app-wrap.night .trips-saved-btn:hover:not(.trips-saved-btn-danger) {
-  background: rgba(42, 26, 74, 0.95) !important;
+  background: rgba(36, 28, 44, 0.95) !important;
   border-color: rgba(255, 140, 66, 0.4) !important;
 }
 
