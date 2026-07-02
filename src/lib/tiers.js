@@ -37,8 +37,8 @@ export const TIER_PRICING = {
   },
   [TIERS.TRAILBLAZER]: {
     label: "Trailblazer",
-    priceLabel: "$9.99/mo",
-    priceMonthly: 9.99,
+    priceLabel: "$7.99/mo",
+    priceMonthly: 7.99,
     priceAnnual: 79.99,
     priceAnnualLabel: "$79.99/yr",
     upgradeUrl: null,

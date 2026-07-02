@@ -18,6 +18,10 @@ html[data-layout="web"] .hero {
   padding-bottom: 0;
 }
 
+html[data-layout="web"] .hero:has(.hero-highway-scene) {
+  justify-content: flex-end;
+}
+
 html[data-layout="web"] .hero-content {
   max-width: 900px;
   width: 100%;

@@ -41,7 +41,7 @@ export default function PlanFlowActionDock({ actions, onStartOver }) {
               disabled={continueDisabled}
               onClick={onContinue}
             >
-              {continueLabel}
+              {continueLabel} →
             </button>
           )}
         </div>

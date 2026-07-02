@@ -8,6 +8,7 @@ import {
   sortLodgingByLoyalty,
 } from "./placesFilters.js";
 import { getLoyaltyKeyword, needsSafeStopsOnly } from "./tripAccommodations.js";
+import { resolveHotelListingUrl } from "./lodgingBookingLinks.js";
 
 const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80";
 
@@ -67,7 +68,8 @@ export function mapPlaceToHotel(place, answers, routeInfo) {
     description: place.rating ? `${place.rating} / 5 · ${place.userRatingsTotal ?? 0} reviews` : "Lodging near your route",
     verified: place.verified === true,
     distanceFromRoute: place.distanceMiles ?? 1,
-    bookUrl: place.bookUrl || place.website || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`,
+    bookUrl: resolveHotelListingUrl(place),
+    bookingUrl: place.bookingUrl || null,
     photo: place.photoUrl || DEFAULT_PHOTO,
     badges: badgesFor(place, answers),
     fromGooglePlaces: true,

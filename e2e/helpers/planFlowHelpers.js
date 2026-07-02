@@ -78,8 +78,7 @@ async function pickChoiceRow(page, label) {
 
 export async function completeCarFlow(page) {
   await pickChoiceRow(page, "Car");
-  await page.locator(".plan-flow-dock-continue").click();
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(500);
   await page.getByRole("button", { name: "Gasoline", exact: true }).click();
   await page.waitForTimeout(300);
   await page.getByRole("button", { name: "No", exact: true }).click();

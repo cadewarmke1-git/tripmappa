@@ -46,6 +46,14 @@ export default function FoundingSlotsCounter({ variant = "hero", className = "" 
     );
   }
 
+  if (variant === "plate") {
+    return (
+      <span className={`pricing-plate-founder-seats${className ? ` ${className}` : ""}`} aria-live="polite">
+        {remaining.toLocaleString()} of {FOUNDER_MEMBER_LIMIT.toLocaleString()} spots left
+      </span>
+    );
+  }
+
   return (
     <div className={`hero-founding-badge${className ? ` ${className}` : ""}`} aria-live="polite">
       <span className="hero-founding-badge-label">Founder — first {FOUNDER_MEMBER_LIMIT.toLocaleString()} users</span>

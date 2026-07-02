@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import PlanOptionCard from "./plan/PlanOptionCard.jsx";
+import PlanVehicleIcon from "./plan/PlanVehicleIcon.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { isQuestionConfirmedInHistory } from "../lib/generationContext.js";
 import { ROUTE_PENDING_UNLOCK_MS } from "../lib/tripFlow.js";
+import {
+  splitVehicleGroups,
+  vehicleOptionDescription,
+} from "../lib/planFlowDisplay.js";
 
 const TRIP_DETAILS_MORE_SECTION_IDS = new Set([
   "stops_interests",
@@ -81,6 +87,7 @@ export default function QuestionChoices({
   const [partyAdults, setPartyAdults] = useState(2);
   const [partyChildren, setPartyChildren] = useState(0);
   const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
+  const [vehicleTypesExpanded, setVehicleTypesExpanded] = useState(false);
   const [routePendingExpired, setRoutePendingExpired] = useState(false);
   const [budgetTouched, setBudgetTouched] = useState(false);
 
@@ -88,6 +95,10 @@ export default function QuestionChoices({
     () => parseTravelersBandMax(answers?.travelers),
     [answers?.travelers],
   );
+
+  useEffect(() => {
+    if (currentQ?.type === "vehicle") setVehicleTypesExpanded(false);
+  }, [currentQ?.id, currentQ?.type]);
 
   useEffect(() => {
     setRoutePendingExpired(false);
@@ -123,11 +134,11 @@ export default function QuestionChoices({
   useEffect(() => {
     if (currentQ?.type !== "party_composition") return;
     if (questionConfirmed) {
-      setPartyAdults(committed.adult_count ?? 2);
+      setPartyAdults(committed.adult_count ?? 1);
       setPartyChildren(committed.child_count ?? 0);
     } else {
-      setPartyAdults(2);
-      setPartyChildren(0);
+      setPartyAdults(null);
+      setPartyChildren(null);
     }
   }, [currentQ?.id, currentQ?.type, questionConfirmed, committed.adult_count, committed.child_count]);
 
@@ -161,42 +172,48 @@ export default function QuestionChoices({
   const frozen = !!stepAnim;
   const selected = stepAnim?.answer;
   const choices = Array.isArray(currentQ.choices) ? currentQ.choices : [];
-  const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) ? currentQ.groups : null;
+  const vehicleGroups = currentQ.type === "vehicle" && Array.isArray(currentQ.groups) && currentQ.groups.length > 0
+    ? currentQ.groups
+    : null;
 
   const committedChoiceValue = questionConfirmed ? committed[currentQ.id] : undefined;
-  const prefillChoiceValue = !questionConfirmed && typeof prefDraft === "string" ? prefDraft : undefined;
-
-  const mkClass = (val, extra = "") => {
-    const sel = selected === val ? " plan-choice-selected" : "";
-    const active = committedChoiceValue === val || prefillChoiceValue === val || vehicleDraft === val || lodgingDraft === val ? " plan-choice-selected" : "";
-    return `plan-choice-row${extra}${sel || active}${frozen && selected !== val && committedChoiceValue !== val && prefillChoiceValue !== val && vehicleDraft !== val && lodgingDraft !== val ? " plan-choice-dimmed" : ""}`;
-  };
-  const mkPrefClass = (p) => {
-    const active = Array.isArray(multiDraft) ? multiDraft.includes(p) : false;
-    return `plan-choice-row${active ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`;
-  };
-  const mkGroupClass = (sectionId, value) => {
-    const sectionDraft = Array.isArray(groupDraft?.[sectionId]) ? groupDraft[sectionId] : [];
-    return `plan-choice-row${sectionDraft.includes(value) ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`;
-  };
 
   function isChoiceSelected(val) {
     return selected === val
       || committedChoiceValue === val
-      || prefillChoiceValue === val
       || vehicleDraft === val
       || lodgingDraft === val;
   }
 
-  function renderChoiceRow(label, description, selectedRow) {
+  function vehicleDisplayLabel(label) {
+    const dash = String(label || "").indexOf("—");
+    if (dash > 0) return String(label).slice(0, dash).trim();
+    return label;
+  }
+
+  function renderOptionGrid(children) {
+    return <div className="plan-option-grid">{children}</div>;
+  }
+
+  function renderPlanOptionCard({
+    value,
+    label,
+    description = null,
+    selected: isSelected,
+    onSelect,
+    icon = null,
+    disabled = frozen,
+  }) {
     return (
-      <>
-        <span className="plan-choice-row-label">
-          <span className="plan-choice-row-label">{label}</span>
-          {description && <span className="plan-choice-row-desc">{description}</span>}
-        </span>
-        <span className="plan-choice-row-chevron" aria-hidden="true">{selectedRow ? "✓" : "›"}</span>
-      </>
+      <PlanOptionCard
+        key={value}
+        label={label}
+        description={description}
+        icon={icon}
+        selected={isSelected}
+        disabled={disabled}
+        onSelect={onSelect}
+      />
     );
   }
 
@@ -290,18 +307,20 @@ export default function QuestionChoices({
   }
 
   function adjustPartyCount(field, delta) {
+    const adultsBase = partyAdults ?? 1;
+    const childrenBase = partyChildren ?? 0;
     const [min, max] = field === "adults"
       ? (currentQ.adultRange || [1, 8])
       : (currentQ.childRange || [0, 6]);
-    const currentTotal = Number(partyAdults) + Number(partyChildren);
+    const currentTotal = Number(adultsBase) + Number(childrenBase);
     if (delta > 0 && partyMax != null && currentTotal >= partyMax) return;
 
     const nextAdults = field === "adults"
-      ? Math.min(max, Math.max(min, Number(partyAdults) + delta))
-      : partyAdults;
+      ? Math.min(max, Math.max(min, Number(adultsBase) + delta))
+      : adultsBase;
     const nextChildren = field === "children"
-      ? Math.min(max, Math.max(min, Number(partyChildren) + delta))
-      : partyChildren;
+      ? Math.min(max, Math.max(min, Number(childrenBase) + delta))
+      : childrenBase;
     if (partyMax != null && nextAdults + nextChildren > partyMax) return;
 
     setPartyAdults(nextAdults);
@@ -311,7 +330,7 @@ export default function QuestionChoices({
 
   function submitPartyComposition() {
     onPickAnswer(
-      { adults: Number(partyAdults), children: Number(partyChildren) },
+      { adults: Number(partyAdults ?? 1), children: Number(partyChildren ?? 0) },
       {},
     );
   }
@@ -342,9 +361,7 @@ export default function QuestionChoices({
     };
 
     if (currentQ.type === "vehicle") {
-      dock.showContinue = true;
-      dock.continueDisabled = frozen || !vehicleDraft;
-      dock.onContinue = continueWithHaptic(() => pickInstant(vehicleDraft));
+      dock.showContinue = false;
     } else if (currentQ.type === "party_composition") {
       dock.showContinue = true;
       dock.continueDisabled = frozen;
@@ -426,27 +443,45 @@ export default function QuestionChoices({
 
       {wrapScrollable(
         <>
-          {vehicleGroups && vehicleGroups.map(group => (
-            <div key={group.label || group.options?.[0]?.value} className="vehicle-group">
-              {group.label && <div className="vehicle-group-label">{group.label}</div>}
-              <div className="quick-replies vehicle-group-options">
-                {group.options.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={mkClass(opt.value)}
-                    disabled={frozen}
-                    onClick={() => setVehicleDraft(opt.value)}
-                  >
-                    {renderChoiceRow(opt.label, null, vehicleDraft === opt.value || committedChoiceValue === opt.value)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          {vehicleGroups && (() => {
+            const { primary, expanded } = splitVehicleGroups(vehicleGroups);
+            const primaryOptions = primary.flatMap(group => group.options);
+            const expandedOptions = expanded.flatMap(group => group.options);
+
+            function renderVehicleOption(opt) {
+              return renderPlanOptionCard({
+                value: opt.value,
+                label: vehicleDisplayLabel(opt.label),
+                description: vehicleOptionDescription(opt.value, opt.label),
+                selected: isChoiceSelected(opt.value),
+                onSelect: () => pickWithAnim(opt.value),
+                icon: <PlanVehicleIcon vehicle={opt.value} />,
+              });
+            }
+
+            return (
+              <>
+                {renderOptionGrid(primaryOptions.map(renderVehicleOption))}
+                {expandedOptions.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      className="plan-vehicle-types-expander"
+                      aria-expanded={vehicleTypesExpanded}
+                      disabled={frozen}
+                      onClick={() => setVehicleTypesExpanded(prev => !prev)}
+                    >
+                      {vehicleTypesExpanded ? "− Fewer vehicle types" : "+ More vehicle types"}
+                    </button>
+                    {vehicleTypesExpanded && renderOptionGrid(expandedOptions.map(renderVehicleOption))}
+                  </>
+                )}
+              </>
+            );
+          })()}
 
           {!vehicleGroups && isSingleSelect && (
-            <div className={`quick-replies quick-replies-described${currentQ.id === "fuel_type" ? " question-choices-scroll" : ""}`}>
+            <>
               {routePending && routeLocked && (
                 <p className="question-pending-note question-pending-note--loading">
                   <RouteDrawingLoader variant="inline" />
@@ -456,20 +491,17 @@ export default function QuestionChoices({
               {routePending && routePendingExpired && (
                 <p className="question-pending-note">Route details are still loading — your answer will be used as-is.</p>
               )}
-              {choices.map(raw => {
+              {renderOptionGrid(choices.map(raw => {
                 const { value, label, description } = normalizeChoice(raw);
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`${mkClass(value)}${description ? " plan-choice-described" : ""}`}
-                    disabled={frozen || routeLocked}
-                    onClick={() => pickWithAnim(value)}
-                  >
-                    {renderChoiceRow(label, description, isChoiceSelected(value))}
-                  </button>
-                );
-              })}
+                return renderPlanOptionCard({
+                  value,
+                  label,
+                  description,
+                  selected: isChoiceSelected(value),
+                  disabled: frozen || routeLocked,
+                  onSelect: () => pickWithAnim(value),
+                });
+              }))}
               {routePending && onSkipRoutePending && !actionsInDock && (
                 <button
                   type="button"
@@ -485,7 +517,7 @@ export default function QuestionChoices({
                   Choosing &ldquo;Just me&rdquo;? Your trip stays private by default.
                 </p>
               )}
-            </div>
+            </>
           )}
 
           {isLodgingStay && (
@@ -493,75 +525,54 @@ export default function QuestionChoices({
               {currentQ.ask && (
                 <p className="question-lodging-ask">{currentQ.ask}</p>
               )}
-              <div className="quick-replies quick-replies-lodging">
-                {choices.map(raw => {
-                  const { value, label } = normalizeChoice(raw);
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      className={mkClass(value, " plan-choice-lodging")}
-                      disabled={frozen}
-                      onClick={() => pickInstant(value, { loyalty_program: loyaltyDraft || "No preference" })}
-                    >
-                      {renderChoiceRow(label, null, isChoiceSelected(value))}
-                    </button>
-                  );
-                })}
-              </div>
+              {renderOptionGrid(choices.map(raw => {
+                const { value, label } = normalizeChoice(raw);
+                return renderPlanOptionCard({
+                  value,
+                  label,
+                  selected: isChoiceSelected(value),
+                  onSelect: () => pickInstant(value, { loyalty_program: loyaltyDraft || "No preference" }),
+                });
+              }))}
               {Array.isArray(currentQ.loyaltyChoices) && currentQ.loyaltyChoices.length > 0 && (
                 <div className="lodging-loyalty-section">
                   <div className="question-section-label">Hotel loyalty (optional)</div>
-                  <div className="quick-replies">
-                    {currentQ.loyaltyChoices.map(raw => {
-                      const { value, label } = normalizeChoice(raw);
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          className={`plan-choice-row${loyaltyDraft === value ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`}
-                          disabled={frozen}
-                          onClick={() => setLoyaltyDraft(value)}
-                        >
-                          {renderChoiceRow(label, null, loyaltyDraft === value)}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {renderOptionGrid(currentQ.loyaltyChoices.map(raw => {
+                    const { value, label } = normalizeChoice(raw);
+                    return renderPlanOptionCard({
+                      value,
+                      label,
+                      selected: loyaltyDraft === value,
+                      onSelect: () => setLoyaltyDraft(value),
+                    });
+                  }))}
                 </div>
               )}
             </>
           )}
 
           {currentQ.type === "multiselect" && (
-            <div className="quick-replies">
-              {choices.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  className={mkPrefClass(c)}
-                  disabled={frozen}
-                  onClick={() => toggleMultiDraft(c)}
-                >
-                  {renderChoiceRow(c, null, multiDraft.includes(c))}
-                </button>
-              ))}
-            </div>
+            renderOptionGrid(choices.map(c => renderPlanOptionCard({
+              value: c,
+              label: c,
+              selected: Array.isArray(multiDraft) && multiDraft.includes(c),
+              onSelect: () => toggleMultiDraft(c),
+            })))
           )}
 
           {currentQ.type === "party_composition" && (
             <div className="party-composition-inputs">
               {partyMax != null && (
                 <p className="party-composition-total" aria-live="polite" aria-atomic="true">
-                  Total: {Number(partyAdults) + Number(partyChildren)} / {partyMax}
+                  Total: {Number(partyAdults ?? 1) + Number(partyChildren ?? 0)} / {partyMax}
                 </p>
               )}
               {[
-                { field: "adults", label: "Adults", value: partyAdults, range: currentQ.adultRange || [1, 8] },
-                { field: "children", label: "Children", value: partyChildren, range: currentQ.childRange || [0, 6] },
+                { field: "adults", label: "Adults", value: partyAdults ?? 1, range: currentQ.adultRange || [1, 8] },
+                { field: "children", label: "Children", value: partyChildren ?? 0, range: currentQ.childRange || [0, 6] },
               ].map(({ field, label, value, range }) => {
                 const atPartyMax = partyMax != null
-                  && Number(partyAdults) + Number(partyChildren) >= partyMax;
+                  && Number(partyAdults ?? 1) + Number(partyChildren ?? 0) >= partyMax;
                 return (
                   <div className="party-composition-row" key={field}>
                     <span className="party-composition-label">{label}</span>
@@ -599,43 +610,29 @@ export default function QuestionChoices({
                 .map(section => (
                   <div className="question-group-section" key={section.id}>
                     <div className="question-section-label">{section.label}</div>
-                    <div className="quick-replies question-choices-scroll">
-                      {(section.choices || []).map(raw => {
-                        const { value, label } = normalizeChoice(raw);
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            className={mkGroupClass(section.id, value)}
-                            disabled={frozen}
-                            onClick={() => toggleGroupSection(section.id, value)}
-                          >
-                            {renderChoiceRow(label, null, (groupDraft?.[section.id] || []).includes(value))}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {renderOptionGrid((section.choices || []).map(raw => {
+                      const { value, label } = normalizeChoice(raw);
+                      return renderPlanOptionCard({
+                        value: `${section.id}:${value}`,
+                        label,
+                        selected: (groupDraft?.[section.id] || []).includes(value),
+                        onSelect: () => toggleGroupSection(section.id, value),
+                      });
+                    }))}
                   </div>
                 ))}
               {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
                 <div className="question-group-section">
                   <div className="question-section-label">Budget</div>
-                  <div className="quick-replies">
-                    {currentQ.budgetChoices.map(raw => {
-                      const { value, label } = normalizeChoice(raw);
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          className={`plan-choice-row${isBudgetSelected(value) ? " plan-choice-selected" : ""}${frozen ? " plan-choice-dimmed" : ""}`}
-                          disabled={frozen}
-                          onClick={() => setBudgetDraft(value)}
-                        >
-                          {renderChoiceRow(label, null, isBudgetSelected(value))}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {renderOptionGrid(currentQ.budgetChoices.map(raw => {
+                    const { value, label } = normalizeChoice(raw);
+                    return renderPlanOptionCard({
+                      value: `budget:${value}`,
+                      label,
+                      selected: isBudgetSelected(value),
+                      onSelect: () => setBudgetDraft(value),
+                    });
+                  }))}
                 </div>
               )}
               {(currentQ.sections || []).some(section => TRIP_DETAILS_MORE_SECTION_IDS.has(section.id)) && (
@@ -656,22 +653,15 @@ export default function QuestionChoices({
                         .map(section => (
                           <div className="question-more-options-group" key={section.id}>
                             <div className="question-section-label">{section.label}</div>
-                            <div className="quick-replies question-choices-scroll">
-                              {(section.choices || []).map(raw => {
-                                const { value, label } = normalizeChoice(raw);
-                                return (
-                                  <button
-                                    key={value}
-                                    type="button"
-                                    className={mkGroupClass(section.id, value)}
-                                    disabled={frozen}
-                                    onClick={() => toggleGroupSection(section.id, value)}
-                                  >
-                                    {label}
-                                  </button>
-                                );
-                              })}
-                            </div>
+                            {renderOptionGrid((section.choices || []).map(raw => {
+                              const { value, label } = normalizeChoice(raw);
+                              return renderPlanOptionCard({
+                                value: `${section.id}:${value}`,
+                                label,
+                                selected: (groupDraft?.[section.id] || []).includes(value),
+                                onSelect: () => toggleGroupSection(section.id, value),
+                              });
+                            }))}
                           </div>
                         ))}
                     </div>
@@ -686,19 +676,12 @@ export default function QuestionChoices({
               {(currentQ.sections || []).map(section => (
                 <div className="question-group-section" key={section.id}>
                   <div className="question-section-label">{section.label}</div>
-                  <div className="quick-replies">
-                    {(section.choices || []).map(c => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={mkGroupClass(section.id, c)}
-                        disabled={frozen}
-                        onClick={() => toggleGroupSection(section.id, c)}
-                      >
-                        {renderChoiceRow(c, null, (groupDraft?.[section.id] || []).includes(c))}
-                      </button>
-                    ))}
-                  </div>
+                  {renderOptionGrid((section.choices || []).map(c => renderPlanOptionCard({
+                    value: `${section.id}:${c}`,
+                    label: c,
+                    selected: (groupDraft?.[section.id] || []).includes(c),
+                    onSelect: () => toggleGroupSection(section.id, c),
+                  })))}
                 </div>
               ))}
             </>
@@ -748,19 +731,6 @@ export default function QuestionChoices({
         </div>
       )}
     </div>
-
-      {!actionsInDock && currentQ.type === "vehicle" && (
-        <div className={actionRowClass}>
-          <button
-            type="button"
-            className="btn-generate btn-generate-inline"
-            disabled={frozen || !vehicleDraft}
-            onClick={continueWithHaptic(() => pickInstant(vehicleDraft))}
-          >
-            Continue
-          </button>
-        </div>
-      )}
 
       {!actionsInDock && currentQ.type === "party_composition" && (
         <div className={actionRowClass}>

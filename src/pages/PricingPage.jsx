@@ -51,18 +51,19 @@ export default function PricingPage() {
       </header>
 
       <main className="pricing-page-main">
-        <p className="pricing-page-eyebrow">Plans & pricing</p>
-        <h1 className="pricing-page-title">Choose how you want to travel</h1>
-        <p className="pricing-page-lead">
-          Every plan includes full maps, routing, and trip planning. Upgrade when you need more generations,
-          live sharing, or grocery delivery on the road.
-        </p>
+        <header className="pricing-page-intro">
+          <p className="pricing-page-eyebrow">Fuel up your journey</p>
+          <h1 className="pricing-page-title">Pick your travel pass</h1>
+          <p className="pricing-page-lead">
+            Every road trip starts with the right plan. Upgrade any time.
+          </p>
+        </header>
 
         <PricingPlans
           billingInterval={billingInterval}
           onBillingChange={setBillingInterval}
-          showBillingToggle
-          showComparison
+          showBillingToggle={false}
+          showComparison={false}
           showFounder
           onGetStarted={() => { window.location.href = "/"; }}
           onSignIn={() => { window.location.href = "/"; }}

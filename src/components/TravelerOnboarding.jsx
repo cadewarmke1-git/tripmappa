@@ -1,5 +1,6 @@
 import { useState } from "react";
-import HeroMountainScene from "./HeroMountainScene.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 import {
   TRAVELER_DIETARY_OPTIONS,
   TRAVELER_STOPS_INTEREST_GROUPS,
@@ -7,16 +8,22 @@ import {
 import PreferencePillGrid, { PreferencePillGroups, togglePreferenceValue } from "./PreferencePillGrid.jsx";
 import "../styles/traveler-onboarding.css";
 
-const WORDMARK = "TripMappa";
+const HERO_DAY_PHOTO = "/hero/open-road-golden-hour.jpg";
+const HERO_NIGHT_PHOTO = "/hero/open-road-twilight.jpg";
 const PREFERENCE_STEPS = ["dietary", "stops_interests"];
 
 export default function TravelerOnboarding({ onComplete }) {
+  const { theme } = useTheme();
+  const { signOut } = useAuth();
+  const themeMode = theme === "day" ? "day" : "night";
+
   const [screen, setScreen] = useState("welcome");
   const [screenPhase, setScreenPhase] = useState("enter");
   const [dietary, setDietary] = useState([]);
   const [foodAllergies, setFoodAllergies] = useState("");
   const [stopsInterests, setStopsInterests] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [photosFailed, setPhotosFailed] = useState(false);
 
   function buildProfile() {
     return {
@@ -45,6 +52,15 @@ export default function TravelerOnboarding({ onComplete }) {
     transitionTo("dietary");
   }
 
+  async function handleSignIn() {
+    try {
+      await signOut();
+    } catch {
+      /* return to hero for sign-in even if sign-out fails */
+    }
+    window.location.href = "/";
+  }
+
   function handleDietaryContinue() {
     transitionTo("stops_interests");
   }
@@ -54,10 +70,15 @@ export default function TravelerOnboarding({ onComplete }) {
   }
 
   const preferenceStepIndex = PREFERENCE_STEPS.indexOf(screen);
+  const isWelcome = screen === "welcome";
 
   return (
-    <div className="traveler-onboarding" role="dialog" aria-modal="true">
-      {screen !== "welcome" && (
+    <div
+      className={`traveler-onboarding traveler-onboarding--${themeMode}${isWelcome ? " traveler-onboarding--welcome-screen" : ""}${photosFailed ? " traveler-onboarding--photos-failed" : ""}`}
+      role="dialog"
+      aria-modal="true"
+    >
+      {!isWelcome && (
         <div className="traveler-onboarding-dots" aria-hidden="true">
           {PREFERENCE_STEPS.map((stepId, index) => (
             <span
@@ -69,22 +90,52 @@ export default function TravelerOnboarding({ onComplete }) {
       )}
 
       <div className={`traveler-onboarding-stage traveler-onboarding-stage--${screenPhase}`}>
-        {screen === "welcome" && (
+        {isWelcome && (
           <div className="traveler-onboarding-welcome">
-            <div className="traveler-onboarding-welcome-sky" aria-hidden="true">
-              <HeroMountainScene phase="night" hour={21} />
+            <div className="traveler-onboarding-welcome-bg" aria-hidden="true">
+              <div className="traveler-onboarding-bg-fallback" />
+              <img
+                className="traveler-onboarding-photo traveler-onboarding-photo--day"
+                src={HERO_DAY_PHOTO}
+                alt=""
+                decoding="async"
+                onError={() => setPhotosFailed(true)}
+              />
+              <img
+                className="traveler-onboarding-photo traveler-onboarding-photo--night"
+                src={HERO_NIGHT_PHOTO}
+                alt=""
+                decoding="async"
+                onError={() => setPhotosFailed(true)}
+              />
+              <div className="traveler-onboarding-scrim" />
             </div>
-            <h1 className="traveler-onboarding-wordmark" aria-label="TripMappa">
-              {WORDMARK}
-            </h1>
-            <p className="traveler-onboarding-tagline">Your trip, our mission.</p>
-            <button
-              type="button"
-              className="btn-generate traveler-onboarding-get-started"
-              onClick={handleWelcomeStart}
-            >
-              Get Started
-            </button>
+
+            <div className="traveler-onboarding-welcome-content">
+              <p className="traveler-onboarding-kicker">Welcome to</p>
+              <div className="traveler-onboarding-road-dash" aria-hidden="true" />
+              <h1 className="traveler-onboarding-wordmark" aria-label="TripMappa">
+                <span className="traveler-onboarding-wordmark-trip">Trip</span>
+                <span className="traveler-onboarding-wordmark-mappa">Mappa</span>
+              </h1>
+              <p className="traveler-onboarding-tagline">Your trip, our mission.</p>
+              <p className="traveler-onboarding-lead">
+                Plan the perfect road trip with curated stops, smart routing, and the open road ahead.
+              </p>
+              <button
+                type="button"
+                className="traveler-onboarding-get-started"
+                onClick={handleWelcomeStart}
+              >
+                Get started →
+              </button>
+              <p className="traveler-onboarding-signin">
+                Already rolling?{" "}
+                <button type="button" className="traveler-onboarding-signin-link" onClick={handleSignIn}>
+                  Sign in
+                </button>
+              </p>
+            </div>
           </div>
         )}
 

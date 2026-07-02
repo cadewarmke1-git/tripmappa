@@ -139,6 +139,30 @@ body.theme-twilight,
   --color-results-card-keyline: rgba(255, 210, 140, 0.35);
   --color-nav-bg-app: #1A0D00;
 
+  /* Plan flow v0 tokens — night */
+  --plan-flow-ink: #0D0A1A;
+  --plan-flow-cream: #FDF3E0;
+  --plan-flow-sand: #F5E6C8;
+  --plan-flow-gold: #FFD28C;
+  --plan-flow-orange: #FF8C42;
+  --plan-flow-panel-header: #080612;
+  --plan-flow-card: #1A1528;
+  --plan-flow-card-border: #2A2438;
+  --plan-flow-card-fg: #FDF3E0;
+  --plan-flow-icon-tile: #221D32;
+  --plan-flow-icon-fg: #FFD28C;
+  --plan-flow-muted-fg: #B8A48C;
+  --plan-flow-selected-bg: rgba(255, 210, 140, 0.12);
+  --plan-flow-selected-border: #FFD28C;
+  --plan-flow-selected-fg: #FFD28C;
+  --plan-flow-cta-bg: #FFD28C;
+  --plan-flow-cta-fg: #0D0A1A;
+  --plan-flow-divider: #2A2438;
+  --cat-food: #ff5fa8;
+  --cat-fuel: #3dd9d0;
+  --cat-lodging: #FFD28C;
+  --cat-general: #5a9e96;
+
   /* Google Places autocomplete */
   --color-autocomplete-bg: #1A1035;
   --color-autocomplete-border: rgba(255, 210, 140, 0.15);
@@ -247,6 +271,29 @@ body.theme-day,
   --color-map-highway-stroke: #5A2A10;
   --color-map-local-road: #C8956A;
   --color-map-water: #4A8AB8;
+
+  /* Plan flow v0 tokens — day */
+  --plan-flow-ink: #0D0A1A;
+  --plan-flow-cream: #FDF3E0;
+  --plan-flow-sand: #F5E6C8;
+  --plan-flow-gold: #FFD28C;
+  --plan-flow-orange: #FF8C42;
+  --plan-flow-card: #FFFFFF;
+  --plan-flow-card-border: #D9CDB8;
+  --plan-flow-card-fg: #0D0A1A;
+  --plan-flow-icon-tile: #F5E6C8;
+  --plan-flow-icon-fg: #0D0A1A;
+  --plan-flow-muted-fg: #6B5A42;
+  --plan-flow-selected-bg: #FFD28C;
+  --plan-flow-selected-border: #0D0A1A;
+  --plan-flow-selected-fg: #0D0A1A;
+  --plan-flow-cta-bg: #0D0A1A;
+  --plan-flow-cta-fg: #FDF3E0;
+  --plan-flow-divider: #D9CDB8;
+  --cat-food: #ff5fa8;
+  --cat-fuel: #3dd9d0;
+  --cat-lodging: #FFD28C;
+  --cat-general: #5a9e96;
   --color-map-park: #6B8F5E;
   --color-map-label: #3A1A08;
   --color-autocomplete-bg: #FDF3E0;
@@ -641,10 +688,20 @@ body.theme-day,
   background: rgba(255, 210, 140, 0.12) !important;
 }
 .app-wrap.day .trip-overview-hero { box-shadow: 0 16px 48px rgba(26,26,46,0.1) !important; }
-.app-wrap.day .road-stop-add-btn, .app-wrap.day .activity-dining-add {
-  color: var(--gold-primary) !important;
-  background: rgba(255,210,140,0.15) !important;
-  border-color: rgba(255,210,140,0.45) !important;
+.app-wrap.day .road-stop-add-btn, .app-wrap.day .activity-dining-add, .app-wrap.day .lodging-btn-book {
+  color: var(--color-accent-gold, #8B4513) !important;
+  background: rgba(139, 69, 19, 0.1) !important;
+  border: 1px solid rgba(139, 69, 19, 0.35) !important;
+  font-weight: 700 !important;
+}
+.app-wrap.day .road-stop-card-meta:not(.road-trip-stop-card-meta),
+.app-wrap.day .restaurant-meta-oneline,
+.app-wrap.day .activity-dining-meta:not(.road-trip-stop-card-meta) {
+  color: rgba(42, 24, 10, 0.78) !important;
+}
+.app-wrap.day .road-stop-card-cat-label:not(.road-trip-stop-card-category),
+.app-wrap.day .data-estimated-label {
+  color: rgba(42, 24, 10, 0.58) !important;
 }
 
 /* Float card — night: solid deep violet panel */

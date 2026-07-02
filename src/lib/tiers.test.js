@@ -46,7 +46,7 @@ describe("tiers", () => {
   it("exposes renamed pricing labels", () => {
     expect(getTierLabel(TIERS.VOYAGER)).toBe("Voyager");
     expect(getTierPriceLabel(TIERS.VOYAGER)).toBe("$4.99/mo");
-    expect(getTierPriceLabel(TIERS.TRAILBLAZER)).toBe("$9.99/mo");
+    expect(getTierPriceLabel(TIERS.TRAILBLAZER)).toBe("$7.99/mo");
     expect(getTierPriceLabel(TIERS.VOYAGER, "year")).toBe("$39.99/yr");
     expect(getTierAnnualMonthlyEquivalent(TIERS.TRAILBLAZER)).toBe("6.67");
     expect(getTierLabel(TIERS.FOUNDER)).toBe("Founder");
@@ -59,7 +59,7 @@ describe("tiers", () => {
     expect(voyagerAnnual.showSavings).toBe(true);
 
     const trailblazerMonthly = formatTierPriceBlock(TIERS.TRAILBLAZER, "month");
-    expect(trailblazerMonthly.primary).toBe("$9.99/mo");
+    expect(trailblazerMonthly.primary).toBe("$7.99/mo");
     expect(trailblazerMonthly.billedAnnually).toBeNull();
   });
 

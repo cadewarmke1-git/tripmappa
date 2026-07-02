@@ -1,5 +1,6 @@
 /** Map marker categories, colors, and legend labels. */
 import { getEffectiveVehicle, isRvVehicle } from "./vehicles.js";
+import { buildNeonSignPinIcon } from "./mapNeonPinIcons.js";
 
 export const MARKER_GOLD = "#FFD28C";
 const MARKER_SIZE = 26;
@@ -67,24 +68,8 @@ function mapRoadStopCategory(rs) {
 }
 
 export function buildMarkerIcon(category, isDarkMode = false, { pinNumber = null, pinSize = "normal" } = {}) {
-  const cfg = MARKER_CATEGORIES[category] || MARKER_CATEGORIES.poi;
-  const stroke = isDarkMode ? "#1a1a2e" : "#ffffff";
-  const inner = ICON_PATHS[category] || ICON_PATHS.default;
-  const size = pinSize === "large" ? 34 : (pinNumber != null ? 30 : MARKER_SIZE);
-  const radius = pinSize === "large" ? 14 : (pinNumber != null ? 13 : 12);
-  const numberLabel = pinNumber != null
-    ? `<text x="16" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#1a1a2e">${pinNumber}</text>`
-    : "";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">
-    <circle cx="16" cy="16" r="${radius}" fill="${cfg.color}" stroke="${stroke}" stroke-width="1.5"/>
-    ${pinNumber != null ? numberLabel : inner}
-  </svg>`;
-  if (!window.google?.maps) return { url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}` };
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(size, size),
-    anchor: new window.google.maps.Point(size / 2, size / 2),
-  };
+  void isDarkMode;
+  return buildNeonSignPinIcon(category, { pinNumber, pinSize });
 }
 
 function mapWaypointCategory(w, answers) {
@@ -138,6 +123,8 @@ export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
       website: w.website || stopData.website || stopData.websiteUri,
       bookUrl: w.bookUrl || stopData.bookUrl,
       menuUrl: w.menuUrl || stopData.menuUrl || stopData.menu,
+      rating: stopData.rating ?? w.rating,
+      stopData,
     });
   }
   return markers;

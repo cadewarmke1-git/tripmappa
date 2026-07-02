@@ -14,6 +14,7 @@ export default function QuestionProgress({
   phaseLabel = null,
   compact = false,
   showStepSubtitle = false,
+  trackOnly = false,
 }) {
   if (!phases?.length) return null;
 
@@ -23,31 +24,32 @@ export default function QuestionProgress({
   const resolvedLabel = phaseLabel ?? phases[activeIndex]?.label ?? phases[0].label;
 
   return (
-    <div className={`question-progress${compact ? " question-progress-compact" : ""}`}>
+    <div className={`question-progress${compact ? " question-progress-compact" : ""}${trackOnly ? " question-progress-track-only" : ""}`}>
       {showStepSubtitle && (
         <p className="question-progress-subtitle" aria-live="polite">
           Step {resolvedStep} of {resolvedTotal} · {resolvedLabel}
         </p>
       )}
       <div className="question-progress-track">
-        {/* Drive progress bar via scaleX custom property instead of width (Impeccable optimize). */}
         <div
           className="question-progress-fill"
           style={{ "--progress": `${Math.min(100, Math.max(0, progressPercent)) / 100}` }}
         />
       </div>
-      <div className="question-progress-phases" role="list" aria-label="Planning progress">
-        {phases.map((phase, index) => (
-          <span
-            key={phase.id}
-            role="listitem"
-            aria-current={index === activeIndex ? "step" : undefined}
-            className={`question-progress-phase${index < activeIndex ? " is-done" : ""}${index === activeIndex ? " is-active" : ""}${index > activeIndex ? " is-upcoming" : ""}`}
-          >
-            {phase.label}
-          </span>
-        ))}
-      </div>
+      {!trackOnly && (
+        <div className="question-progress-phases" role="list" aria-label="Planning progress">
+          {phases.map((phase, index) => (
+            <span
+              key={phase.id}
+              role="listitem"
+              aria-current={index === activeIndex ? "step" : undefined}
+              className={`question-progress-phase${index < activeIndex ? " is-done" : ""}${index === activeIndex ? " is-active" : ""}${index > activeIndex ? " is-upcoming" : ""}`}
+            >
+              {phase.label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

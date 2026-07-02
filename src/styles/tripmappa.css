@@ -2389,8 +2389,8 @@
   .ai-msg { display: flex; flex-direction: column; gap: 0; }
   .user-msg { display: flex; justify-content: flex-end; margin-top: 14px; animation: answerSlideIn 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
   .step-active { animation: none; }
-  .step-exit { animation: none; pointer-events: none; opacity: 0; }
-  .step-enter { animation: none; }
+  .step-exit { animation: stepExit 0.32s ease forwards; pointer-events: none; }
+  .step-enter { animation: stepEnter 0.32s ease forwards; }
   .step-exit-fast { animation: none; pointer-events: none; opacity: 0; }
   .step-enter-fast { animation: none; }
 
@@ -4289,7 +4289,7 @@
   .map-legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 3px 0; }
   .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
-  .map-info-card { position: absolute; z-index: 25; width: min(360px, calc(100% - 32px)); padding: 18px 18px 16px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+  .map-info-card { position: absolute; z-index: 240; width: min(360px, calc(100% - 32px)); padding: 18px 18px 16px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
   .map-info-card.map-info-card--popup { border-radius: 8px; }
   /* Visually hidden dialog title for screen readers; sign name remains visible in VintageNeonSignCard. */
   .map-info-card-sr-title {
@@ -4301,7 +4301,7 @@
     right: 16px;
     left: auto;
     bottom: auto;
-    width: min(340px, calc(100vw - 430px));
+    width: min(340px, calc(100vw - 32px));
     max-width: 360px;
     transform: translateX(calc(100% + 24px));
     transition: transform 0.26s var(--ease), opacity 0.26s var(--ease);
@@ -5767,24 +5767,16 @@
   .overnight-card-desc { font-size: 13px; color: var(--muted); line-height: 1.45; margin: 0 0 16px; flex: 1; }
   .overnight-book-btn { margin-top: auto; width: 100%; padding: 14px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 16px rgba(255, 210, 140, 0.22); }
 
-  .results-activities-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  @media (min-width: 520px) { .results-activities-grid { grid-template-columns: repeat(2, 1fr); } }
-  .activity-dining-card {
-    border-radius: 14px; overflow: hidden; background: var(--card);
-    border: 1px solid var(--border); display: flex; flex-direction: column;
+  .results-activities-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .activity-dining-card.road-stop-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    border-radius: 10px;
   }
-  .activity-dining-photo-wrap { position: relative; height: 120px; overflow: hidden; }
-  .activity-dining-photo { width: 100%; height: 100%; object-fit: cover; }
-  .activity-dining-cat { position: absolute; top: 8px; left: 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.5); color: #fff; }
-  .activity-dining-body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; }
-  .activity-dining-name { font-family: "Fraunces", Georgia, serif; font-size: 16px; font-weight: 700; margin: 0 0 6px; color: var(--ink); }
-  .activity-dining-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; display: flex; gap: 10px; }
-  .activity-dining-rating { color: var(--gold, var(--gold-primary)); font-weight: 600; }
-  .activity-dining-no-reviews { color: var(--muted); font-style: italic; }
-  .activity-dining-add {
-    margin-top: auto; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
-    border: 1px solid rgba(255,210,140,0.35); background: rgba(255,210,140,0.08); color: var(--gold-primary); cursor: pointer;
-  }
+  .activity-dining-meta { font-size: 12px; margin-bottom: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .activity-dining-rating { font-weight: 600; }
+  .activity-dining-no-reviews { font-style: italic; opacity: 0.75; }
 
   .trip-summary-footer {
     margin-top: 12px; padding: 20px 0 8px; border-top: 1px solid var(--border);

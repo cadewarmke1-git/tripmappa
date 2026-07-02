@@ -3,15 +3,11 @@ import FoundingSlotsCounter from "./FoundingSlotsCounter.jsx";
 import {
   TIERS,
   TIER_FEATURE_COMPARISON,
-  WANDERER_BENEFITS,
-  VOYAGER_BENEFITS,
-  TRAILBLAZER_BENEFITS,
-  FOUNDER_BENEFITS,
   formatTierPriceBlock,
-  getTierLabel,
   normalizeTier,
   isFounderTier,
 } from "../lib/tiers.js";
+import { PRICING_PLATE_TIERS, getPlatePriceDisplay } from "../lib/pricingTiers.js";
 
 function FeatureCell({ value }) {
   if (value === true) {
@@ -23,24 +19,138 @@ function FeatureCell({ value }) {
   return <span className="pricing-compare-text">{value}</span>;
 }
 
-function TierPrice({ tier, billingInterval }) {
-  const block = formatTierPriceBlock(tier, billingInterval);
+function RoutePinCheck({ accentVar }) {
   return (
-    <div className="pricing-tier-price">
-      <span className="pricing-tier-price-primary">{block.primary}</span>
-      {block.showSavings && (
-        <span className="billing-savings-badge billing-savings-badge--inline">2 months free</span>
+    <svg
+      className="pricing-plate-check"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      style={{ color: `var(${accentVar})` }}
+    >
+      <path
+        d="M3.5 8.2 6.4 11 12.5 4.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PlateRivet({ className = "" }) {
+  return <span className={`pricing-plate-rivet${className ? ` ${className}` : ""}`} aria-hidden="true" />;
+}
+
+function PlateCard({
+  tier,
+  billingInterval,
+  isCurrent,
+  onCta,
+  onGetStarted,
+  onSignIn,
+}) {
+  const { price, per } = getPlatePriceDisplay(tier.id, billingInterval);
+  const accentStyle = { "--plate-accent": `var(${tier.accentVar})` };
+
+  function handleCta() {
+    if (tier.id === TIERS.WANDERER) {
+      (onGetStarted || onSignIn)?.();
+      return;
+    }
+    onCta?.({ billingPeriod: billingInterval });
+  }
+
+  return (
+    <article
+      className={`pricing-plate-card${tier.primary ? " is-primary-tier" : ""}${isCurrent ? " is-current" : ""}`}
+      style={accentStyle}
+    >
+      <span className="pricing-plate-rail" aria-hidden="true" />
+      <PlateRivet className="pricing-plate-rivet--tl" />
+      <PlateRivet className="pricing-plate-rivet--tr" />
+      <PlateRivet className="pricing-plate-rivet--bl" />
+      <PlateRivet className="pricing-plate-rivet--br" />
+
+      {tier.ribbon && (
+        <span className="pricing-plate-ribbon">{tier.ribbon}</span>
       )}
-      {block.billedAnnually && (
-        <>
-          <span className="pricing-tier-price-billed">{block.primary} billed annually</span>
-          <span className="pricing-tier-price-sub">{block.billedAnnually} total per year</span>
-        </>
+
+      <p className="pricing-plate-tag">{tier.tag}</p>
+      <h3 className="pricing-plate-name">{tier.name}</h3>
+
+      <div className="pricing-plate-price-row">
+        <span className="pricing-plate-price">{price}</span>
+        <span className="pricing-plate-per">{per}</span>
+      </div>
+      <p className="pricing-plate-allotment">{tier.allotment}</p>
+
+      <div className="pricing-plate-divider" aria-hidden="true" />
+
+      <ul className="pricing-plate-features">
+        {tier.features.map(feature => (
+          <li key={feature}>
+            <RoutePinCheck accentVar={tier.accentVar} />
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+
+      {isCurrent ? (
+        <span className="pricing-plate-current">Your current plan</span>
+      ) : (
+        <button
+          type="button"
+          className={`pricing-plate-cta${tier.primary ? " pricing-plate-cta--primary" : ""}`}
+          onClick={handleCta}
+        >
+          {tier.cta}
+          {tier.id !== TIERS.WANDERER && billingInterval === "year" && (
+            <> — {formatTierPriceBlock(tier.id, billingInterval).primary}</>
+          )}
+        </button>
       )}
-      {block.secondary && !block.billedAnnually && block.secondary !== block.primary && (
-        <span className="pricing-tier-price-sub">{block.secondary}</span>
-      )}
-    </div>
+    </article>
+  );
+}
+
+function FounderPlate({ isCurrent, onClaim }) {
+  return (
+    <article className={`pricing-plate-founder${isCurrent ? " is-current" : ""}`}>
+      <span className="pricing-plate-rail pricing-plate-rail--gold" aria-hidden="true" />
+      <PlateRivet className="pricing-plate-rivet--tl" />
+      <PlateRivet className="pricing-plate-rivet--tr" />
+      <PlateRivet className="pricing-plate-rivet--bl" />
+      <PlateRivet className="pricing-plate-rivet--br" />
+
+      <div className="pricing-plate-founder-medallion" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17.8 5.8 21.3l2.4-7.4L2 9.4h7.6L12 2z" />
+        </svg>
+      </div>
+
+      <div className="pricing-plate-founder-copy">
+        <p className="pricing-plate-founder-kicker">Founding member</p>
+        <h3 className="pricing-plate-name">Founder</h3>
+        <p className="pricing-plate-founder-desc">
+          First 1,000 travelers get <strong>1 full year of Trailblazer free</strong> plus a permanent gold star badge on your profile.
+        </p>
+      </div>
+
+      <div className="pricing-plate-founder-actions">
+        <FoundingSlotsCounter variant="plate" />
+        {isCurrent ? (
+          <span className="pricing-plate-current">You&apos;re a Founder</span>
+        ) : (
+          <button type="button" className="pricing-plate-cta pricing-plate-cta--primary" onClick={onClaim}>
+            Claim founder spot
+          </button>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -61,32 +171,21 @@ export default function PricingPlans({
   const normalizedCurrent = currentTier ? normalizeTier(currentTier) : null;
   const isCurrentFounder = isFounderTier(currentTier);
 
-  const paidTiers = [
-    {
-      id: TIERS.VOYAGER,
-      label: getTierLabel(TIERS.VOYAGER),
-      benefits: VOYAGER_BENEFITS,
-      cta: "Start Voyager",
-      onCta: onUpgradeVoyager,
-      highlight: false,
-    },
-    {
-      id: TIERS.TRAILBLAZER,
-      label: getTierLabel(TIERS.TRAILBLAZER),
-      benefits: TRAILBLAZER_BENEFITS,
-      cta: "Go Trailblazer",
-      onCta: onUpgradeTrailblazer,
-      highlight: true,
-    },
-  ];
+  const ctaHandlers = {
+    [TIERS.WANDERER]: null,
+    [TIERS.VOYAGER]: onUpgradeVoyager,
+    [TIERS.TRAILBLAZER]: onUpgradeTrailblazer,
+  };
 
   function isCurrentTier(tierId) {
     if (isCurrentFounder && tierId === TIERS.TRAILBLAZER) return false;
     return normalizedCurrent === tierId;
   }
 
+  const visibleTiers = PRICING_PLATE_TIERS.filter(t => showWanderer || t.id !== TIERS.WANDERER);
+
   return (
-    <div className={`pricing-plans${compact ? " pricing-plans--compact" : ""}`}>
+    <div className={`pricing-plates${compact ? " pricing-plates--compact" : ""}`}>
       {showBillingToggle && onBillingChange && (
         <div className="pricing-billing-row">
           <BillingToggle value={billingInterval} onChange={onBillingChange} />
@@ -96,73 +195,26 @@ export default function PricingPlans({
         </div>
       )}
 
-      <div className={`pricing-tier-grid${showWanderer ? "" : " pricing-tier-grid--paid-only"}`}>
-        {showWanderer && (
-          <article className={`pricing-tier-card pricing-tier-card--wanderer${isCurrentTier(TIERS.WANDERER) ? " is-current" : ""}`}>
-            <h3 className="pricing-tier-name">Wanderer</h3>
-            <TierPrice tier={TIERS.WANDERER} billingInterval={billingInterval} />
-            <ul className="pricing-tier-benefits">
-              {WANDERER_BENEFITS.map(item => <li key={item}>{item}</li>)}
-            </ul>
-            {isCurrentTier(TIERS.WANDERER) ? (
-              <span className="pricing-tier-current-pill">Your current plan</span>
-            ) : (
-              <button type="button" className="pricing-cta pricing-cta--secondary" onClick={onGetStarted || onSignIn}>
-                Get started free
-              </button>
-            )}
-          </article>
-        )}
-
-        {paidTiers.map(tier => (
-          <article
+      <div className="pricing-plates-grid">
+        {visibleTiers.map(tier => (
+          <PlateCard
             key={tier.id}
-            className={`pricing-tier-card pricing-tier-card--${tier.id}${tier.highlight ? " is-featured" : ""}${isCurrentTier(tier.id) ? " is-current" : ""}`}
-          >
-            {tier.highlight && <span className="pricing-tier-featured-badge">Most popular</span>}
-            <h3 className={`pricing-tier-name pricing-tier-name--${tier.id}`}>{tier.label}</h3>
-            <TierPrice tier={tier.id} billingInterval={billingInterval} />
-            <ul className="pricing-tier-benefits">
-              {tier.benefits.map(item => <li key={item}>{item}</li>)}
-            </ul>
-            {isCurrentTier(tier.id) ? (
-              <span className="pricing-tier-current-pill">Your current plan</span>
-            ) : (
-              <button
-                type="button"
-                className="pricing-cta pricing-cta--gold"
-                onClick={() => tier.onCta?.({ billingPeriod: billingInterval })}
-              >
-                {tier.cta}
-                {billingInterval === "year" && (
-                  <> — {formatTierPriceBlock(tier.id, billingInterval).primary}</>
-                )}
-                {billingInterval === "month" && (
-                  <> — {formatTierPriceBlock(tier.id, "month").primary}</>
-                )}
-              </button>
-            )}
-          </article>
+            tier={tier}
+            billingInterval={billingInterval}
+            isCurrent={isCurrentTier(tier.id)}
+            onCta={ctaHandlers[tier.id]}
+            onGetStarted={onGetStarted}
+            onSignIn={onSignIn}
+          />
         ))}
-
-        {showFounder && (
-          <article className={`pricing-tier-card pricing-tier-card--founder${isCurrentFounder ? " is-current" : ""}`}>
-            <h3 className="pricing-tier-name pricing-tier-name--founder">Founder</h3>
-            <TierPrice tier={TIERS.FOUNDER} billingInterval={billingInterval} />
-            <FoundingSlotsCounter variant="pricing" />
-            <ul className="pricing-tier-benefits">
-              {FOUNDER_BENEFITS.map(item => <li key={item}>{item}</li>)}
-            </ul>
-            {isCurrentFounder ? (
-              <span className="pricing-tier-current-pill">You&apos;re a Founder</span>
-            ) : (
-              <p className="pricing-founder-cta-note">
-                Sign up while spots remain — Founder status is applied automatically at registration.
-              </p>
-            )}
-          </article>
-        )}
       </div>
+
+      {showFounder && (
+        <FounderPlate
+          isCurrent={isCurrentFounder}
+          onClaim={onGetStarted || onSignIn}
+        />
+      )}
 
       {showComparison && (
         <div className="pricing-compare-wrap">

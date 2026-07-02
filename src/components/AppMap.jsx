@@ -103,6 +103,32 @@ export default function AppMap({
   }
 
   useEffect(() => {
+    if (!mapInstance || !window.google?.maps || activeRoutePath.length < 2) return undefined;
+
+    const bounds = new window.google.maps.LatLngBounds();
+    activeRoutePath.forEach((point) => {
+      if (point?.lat != null && point?.lng != null) bounds.extend(point);
+    });
+    mapMarkers.forEach((marker) => {
+      if (marker?.lat != null && marker?.lng != null) {
+        bounds.extend({ lat: marker.lat, lng: marker.lng });
+      }
+    });
+
+    window.google.maps.event.trigger(mapInstance, "resize");
+    mapInstance.fitBounds(bounds, { padding: 72 });
+
+    const listener = window.google.maps.event.addListenerOnce(mapInstance, "idle", () => {
+      const zoom = mapInstance.getZoom?.();
+      if (typeof zoom === "number" && zoom > 12) mapInstance.setZoom(12);
+    });
+
+    return () => {
+      if (listener) window.google.maps.event.removeListener(listener);
+    };
+  }, [mapInstance, activeRoutePath, mapMarkers]);
+
+  useEffect(() => {
     if (!mapFocusTarget?.lat || !mapRef.current || !window.google) return;
     mapRef.current.panTo({ lat: mapFocusTarget.lat, lng: mapFocusTarget.lng });
     const zoom = mapRef.current.getZoom?.() ?? 4;
@@ -124,6 +150,7 @@ export default function AppMap({
     : (routeInfo?.routePoints || []);
 
   return (
+    <>
     <div className={`map-full${routeFocusMode ? " map-full-route-focus" : ""}`}>
       {isLoaded ? (
         <>
@@ -172,14 +199,6 @@ export default function AppMap({
             />
           </GoogleMap>
           <MapGenerationPulse mapRef={mapRef} routePoints={pulsePoints} active={tripGenerating} />
-          {selectedMarker && (
-            <MapInfoCard
-              marker={selectedMarker}
-              theme={theme}
-              onClose={() => setSelectedMarker(null)}
-              onAction={handleInfoAction}
-            />
-          )}
           {trafficAlert && (
             <div className="traffic-toast" role="status" aria-live="polite">
               <span className="traffic-toast-icon">!</span>
@@ -232,5 +251,14 @@ export default function AppMap({
         />
       )}
     </div>
+    {isLoaded && selectedMarker && (
+      <MapInfoCard
+        marker={selectedMarker}
+        theme={theme}
+        onClose={() => setSelectedMarker(null)}
+        onAction={handleInfoAction}
+      />
+    )}
+    </>
   );
 }

@@ -127,9 +127,7 @@
 
 /* Limelight: map popup sign names only (neon-sign-cards.css) */
 
-/* Motion budget — sky cycle, popup drawer, route draw only */
-.plan-flow-step.step-exit,
-.plan-flow-step.step-enter,
+/* Motion budget — sky cycle, popup drawer, route draw; plan-flow steps use stepEnter/stepExit */
 .results-view,
 .plan-view {
   animation: none !important;

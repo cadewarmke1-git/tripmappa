@@ -126,10 +126,13 @@ import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
+import StopCardDemo from "./components/dev/StopCardDemo.jsx";
 
 const SIGNUP_GENERATE_LEAD = "Create a free account to get started — 3 trips on us.";
 
 export default function App() {
+  const stopCardsDemo = typeof window !== "undefined"
+    && new URLSearchParams(window.location.search).get("stopCards") === "1";
   const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
   const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
   const [appMode, setAppMode] = useState("plan"); // "plan" | "navigate"
@@ -616,6 +619,12 @@ export default function App() {
   useEffect(() => {
     if (authLoading) return;
     if (user?.id && session?.access_token) {
+      if (typeof window !== "undefined" && window.__TRIPMAPPA_E2E_AUTH__) {
+        applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 });
+        setUserProfile({ onboarding_complete: true, tier: "wanderer" });
+        setUserProfileLoaded(true);
+        return;
+      }
       setUserProfileLoaded(false);
       fetchTripCredits(session.access_token)
         .then(applyCreditStatus)
@@ -1505,9 +1514,6 @@ export default function App() {
       legacyId = `overnight-${legacyId.replace("stop-", "")}`;
     }
     highlightStop(legacyId);
-    if (resultsView === "map" && generated) {
-      setResultsView("itinerary");
-    }
   }
 
   const recenterMap = useCallback(() => {
@@ -1614,6 +1620,12 @@ export default function App() {
     fetchDirections();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, isLoaded, mapReady, origin, dest, routeInfo?.origin, routeInfo?.destination, routePath]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapReady || !window.google) return;
+    window.google.maps.event.trigger(mapRef.current, "resize");
+    recenterMap();
+  }, [mapReady, generated, directionsResult, routePath, routeInfo?.routePoints, recenterMap]);
 
   useEffect(() => {
     if (view === "hero") setMapReady(false);
@@ -2133,12 +2145,10 @@ export default function App() {
       const fromAnswers = Array.isArray(newAnswers[question.id]) ? newAnswers[question.id] : [];
       const fromPrefill = Array.isArray(prefillSource[question.id]) ? prefillSource[question.id] : [];
       setPrefDraft(fromAnswers.length ? [...fromAnswers] : (fromPrefill.length ? [...fromPrefill] : []));
-    } else if (question.type === "choice" && prefillSource[question.id]) {
-      setPrefDraft(prefillSource[question.id]);
     } else if (question.type === "party_composition") {
       setPrefDraft({
-        adults: newAnswers.adult_count ?? prefillSource.adult_count ?? 2,
-        children: newAnswers.child_count ?? prefillSource.child_count ?? 0,
+        adults: newAnswers.adult_count ?? prefillSource.adult_count ?? null,
+        children: newAnswers.child_count ?? prefillSource.child_count ?? null,
       });
     } else {
       setPrefDraft(null);
@@ -2148,6 +2158,7 @@ export default function App() {
   function loadNextQuestion(newAnswers, options = {}) {
     if (generateTripInFlightRef.current) return;
     if (convoComplete && !generated) return;
+    setStepAnim(null);
     try {
       const ctx = buildQuestionContext(newAnswers);
       const result = getNextFlowQuestion(newAnswers, ctx);
@@ -3521,6 +3532,10 @@ export default function App() {
     );
   }
 
+  if (stopCardsDemo) {
+    return <StopCardDemo />;
+  }
+
   if (view === "profile" && user) {
     return (
       <>
@@ -4001,7 +4016,7 @@ export default function App() {
             nightSegmentPaths={nightSegmentPaths}
             lowFuelSegmentPaths={lowFuelSegmentPaths}
             mapFocusTarget={mapFocusTarget}
-            onMapReady={() => setMapReady(true)}
+            onMapReady={() => { setMapReady(true); window.setTimeout(() => recenterMap(), 200); }}
             onMapUnmount={() => setMapReady(false)}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
@@ -4074,6 +4089,7 @@ export default function App() {
                   helpButton={planPanelHelpButton}
                   onExpand={() => setCardCollapsed(false)}
                   onCollapse={() => setCardCollapsed(true)}
+                  showProgress={false}
                 />
               ) : (
                 <>

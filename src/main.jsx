@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 
 const App = lazy(() => import("./App.jsx"));
+const NeonPopupShowcase = lazy(() => import("./components/dev/NeonPopupShowcase.jsx"));
 import { initViewportLayout } from "./lib/viewportLayout.js";
 import { syncSkyCycle } from "./lib/surfaceTheme.js";
 import { computeAutoTheme } from "./lib/theme.js";
@@ -25,8 +26,10 @@ import "./styles/hero-desktop.css";
 import "./styles/hero-palette.css";
 import "./styles/hero-surface.css";
 import "./styles/plan-flow-theme.css";
+import "./styles/pricing-plates.css";
 import "./styles/preference-pills.css";
-import "./styles/neon-sign-cards.css";
+import "./styles/neon-sign-popup.css";
+import "./styles/road-trip-stop-card.css";
 
 function syncAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -52,7 +55,11 @@ createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <ThemeProvider>
           <Suspense fallback={<RouteDrawingLoader theme="night" variant="inline" />}>
-            <App />
+            {typeof window !== "undefined" && window.location.search.includes("neon-showcase") ? (
+              <NeonPopupShowcase />
+            ) : (
+              <App />
+            )}
           </Suspense>
           <Analytics />
         </ThemeProvider>

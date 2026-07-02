@@ -524,9 +524,9 @@ html body .app-wrap.night .btn-generate-trip {
 
 .plan-flow-action-dock {
   flex-shrink: 0;
-  padding: 12px 14px 14px;
-  border-top: 1px solid rgba(255, 210, 140, 0.12);
-  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  padding: 10px 14px 12px;
+  border-top: 1px solid rgba(255, 210, 140, 0.08);
+  background: transparent;
 }
 
 .plan-flow-action-dock-row {
@@ -578,4 +578,338 @@ html body .app-wrap.night .btn-generate-trip {
 .plan-choice-selected .plan-choice-row-chevron {
   opacity: 1;
   color: var(--color-answer-selected-text, var(--deep-dark));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   v0 plan flow — compact header, option grid, dock
+   ══════════════════════════════════════════════════════════════ */
+
+.plan-flow-form--active {
+  gap: 0;
+}
+
+.plan-flow-compact-header {
+  margin: -8px -18px 12px;
+  padding: 12px 14px 10px;
+  background: var(--plan-flow-ink, #0D0A1A);
+  color: var(--plan-flow-cream, #FDF3E0);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.plan-flow-compact-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.plan-flow-compact-route {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.plan-flow-compact-city {
+  white-space: nowrap;
+}
+
+.plan-flow-compact-arrow,
+.plan-flow-compact-sep {
+  opacity: 0.55;
+}
+
+.plan-flow-compact-distance {
+  opacity: 0.82;
+  white-space: nowrap;
+}
+
+.plan-flow-edit-trip-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 140, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--plan-flow-cream, #FDF3E0);
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plan-flow-edit-trip-pill:hover {
+  border-color: rgba(255, 210, 140, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.plan-flow-compact-header .question-progress {
+  padding: 8px 0 0;
+}
+
+.plan-flow-compact-header .question-progress-track {
+  height: 3px;
+  margin-bottom: 0;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-radius: 999px;
+}
+
+.plan-flow-compact-header .question-progress-fill {
+  background: var(--plan-flow-orange, #FF8C42) !important;
+}
+
+.question-progress-track-only .question-progress-phases,
+.question-progress-track-only .question-progress-subtitle {
+  display: none;
+}
+
+.plan-flow-step-label {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--plan-flow-orange, #FF8C42) !important;
+  margin: 0 0 8px;
+  opacity: 1 !important;
+}
+
+.plan-flow-question-title {
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+}
+
+.plan-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plan-option-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 12px 12px 16px;
+  border: 1.5px solid var(--plan-flow-card-border);
+  border-radius: 12px;
+  background: var(--plan-flow-card);
+  color: var(--plan-flow-card-fg);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.plan-option-card:hover:not(:disabled):not(.is-disabled) {
+  border-color: var(--plan-flow-gold);
+}
+
+.plan-option-card:focus-visible {
+  outline: 2px solid var(--plan-flow-gold);
+  outline-offset: 2px;
+}
+
+.plan-option-card.is-selected {
+  border-color: var(--plan-flow-selected-border);
+  background: var(--plan-flow-selected-bg);
+  color: var(--plan-flow-selected-fg);
+}
+
+.plan-option-card.is-disabled,
+.plan-option-card:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.plan-option-card-accent {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 6px;
+  border-radius: 12px 0 0 12px;
+  background: var(--plan-flow-gold);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.plan-option-card.is-selected .plan-option-card-accent {
+  opacity: 1;
+}
+
+.plan-option-card-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--plan-flow-icon-tile);
+  color: var(--plan-flow-icon-fg);
+}
+
+.plan-option-card-icon.is-selected,
+.plan-option-card.is-selected .plan-option-card-icon {
+  background: var(--plan-flow-gold);
+  color: var(--plan-flow-ink);
+}
+
+.plan-option-card-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.plan-option-card-label {
+  display: block;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.plan-option-card-desc {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--plan-flow-muted-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-option-card.is-selected .plan-option-card-desc {
+  color: color-mix(in srgb, var(--plan-flow-selected-fg) 72%, transparent);
+}
+
+.plan-option-card-check {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--plan-flow-ink);
+  color: var(--plan-flow-gold);
+}
+
+html body .app-wrap.night .plan-option-card-check {
+  background: var(--plan-flow-gold);
+  color: var(--plan-flow-ink);
+}
+
+.plan-vehicle-types-expander {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 1.5px dashed var(--plan-flow-card-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--plan-flow-muted-fg);
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plan-vehicle-types-expander:hover:not(:disabled) {
+  border-color: var(--plan-flow-gold);
+  color: var(--plan-flow-card-fg);
+}
+
+.choices-frozen .plan-option-card:not(.is-selected) {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.plan-flow-action-dock {
+  flex-shrink: 0;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--plan-flow-divider);
+  background: var(--color-plan-panel-bg);
+}
+
+.plan-flow-dock-back {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 4px;
+  min-height: 40px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.plan-flow-dock-back:hover {
+  opacity: 1;
+}
+
+.plan-flow-dock-continue.btn-generate {
+  min-width: 132px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  background: var(--plan-flow-cta-bg) !important;
+  color: var(--plan-flow-cta-fg) !important;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--plan-flow-gold) 35%, transparent);
+}
+
+.plan-flow-dock-skip {
+  border: none;
+  background: transparent;
+  color: var(--plan-flow-muted-fg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+html body .app-wrap.day .float-card-header--plan-flow {
+  background: var(--plan-flow-ink, #0D0A1A) !important;
+  border-bottom: none !important;
+  padding: 8px 10px !important;
+}
+
+html body .app-wrap.night .float-card-header--plan-flow {
+  background: var(--plan-flow-panel-header, #080612) !important;
+  border-bottom: none !important;
+  padding: 8px 10px !important;
+}
+
+html body .app-wrap.day .chat-wrap-plan-flow .plan-flow-step-label {
+  color: var(--plan-flow-orange, #FF8C42) !important;
+  opacity: 1 !important;
+}
+
+html body .app-wrap.night .chat-wrap-plan-flow .plan-flow-question-title,
+html body .app-wrap.night .chat-wrap-plan-flow .plan-flow-question-hint {
+  color: var(--plan-flow-cream, #FDF3E0) !important;
+}
+
+html body .app-wrap.night .chat-wrap-plan-flow .plan-flow-question-hint {
+  opacity: 0.72 !important;
+}
+
+html body .app-wrap.night .chat-wrap-plan-flow .plan-flow-step-label {
+  color: var(--plan-flow-orange, #FF8C42) !important;
+  opacity: 1 !important;
 }

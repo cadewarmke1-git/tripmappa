@@ -9,8 +9,9 @@ export default function PlanFlowHeaderBar({
   helpButton = null,
   onExpand,
   onCollapse,
+  showProgress = true,
 }) {
-  const showProgress = flowProgress?.phases?.length > 0;
+  const showProgressBar = showProgress && flowProgress?.phases?.length > 0;
 
   function handleBarClick() {
     if (collapsed) onExpand?.();
@@ -34,7 +35,7 @@ export default function PlanFlowHeaderBar({
       aria-expanded={!collapsed}
     >
       <div className="plan-flow-header-bar-main">
-        {showProgress && (
+        {showProgressBar && (
           <div className="plan-flow-header-bar-progress">
             <QuestionProgress {...flowProgress} compact showStepSubtitle />
           </div>

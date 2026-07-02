@@ -1,0 +1,485 @@
+/**
+ * Pricing page — enamel license-plate tier cards + Founder roadside banner.
+ * Uses plan-flow palette tokens (--cat-*, --plan-flow-*, --plate-*).
+ */
+
+/* Plate surface tokens — day */
+html[data-surface-theme="day"],
+.app-wrap.day.pricing-page {
+  --plate-bg: #ffffff;
+  --plate-border: #d9cdb8;
+  --plate-fg: #0d0a1a;
+  --plate-muted: #6b5a42;
+  --plate-divider: #d9cdb8;
+  --plate-cta-bg: #0d0a1a;
+  --plate-cta-fg: #fdf3e0;
+  --plate-cta-shadow: #ffd28c;
+  --plate-page-bg: #fdf3e0;
+  --plate-page-header-border: rgba(13, 10, 26, 0.1);
+}
+
+/* Plate surface tokens — night (#0D0A1A base) */
+html[data-surface-theme="night"],
+.app-wrap.night.pricing-page,
+.app-wrap.twilight.pricing-page {
+  --plate-bg: #1a1528;
+  --plate-border: #2a2438;
+  --plate-fg: #fdf3e0;
+  --plate-muted: #b8a48c;
+  --plate-divider: #2a2438;
+  --plate-cta-bg: #ffd28c;
+  --plate-cta-fg: #0d0a1a;
+  --plate-cta-shadow: #ff8c42;
+  --plate-page-bg: #0d0a1a;
+  --plate-page-header-border: rgba(255, 210, 140, 0.1);
+}
+
+.pricing-page {
+  min-height: 100vh;
+  background: var(--plate-page-bg) !important;
+  color: var(--plate-fg);
+}
+
+.pricing-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--plate-page-header-border);
+}
+
+.pricing-page-home { text-decoration: none; color: inherit; }
+
+.pricing-page-nav {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pricing-page-nav a {
+  color: var(--plan-flow-orange, #ff8c42);
+  text-decoration: none;
+}
+
+.pricing-page-nav a:hover { text-decoration: underline; }
+
+.pricing-page-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.pricing-page-intro {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.pricing-page-eyebrow {
+  margin: 0;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--plan-flow-orange, #ff8c42);
+}
+
+.pricing-page-title {
+  margin: 8px 0 0;
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--plate-fg);
+}
+
+.pricing-page-lead {
+  margin: 8px auto 0;
+  max-width: 520px;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--plate-muted);
+}
+
+.pricing-page-footnote {
+  margin-top: 32px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--plate-muted);
+  max-width: 720px;
+}
+
+.pricing-page-status { margin-top: 16px; font-size: 14px; color: var(--plate-muted); }
+.pricing-page-error { margin-top: 16px; font-size: 14px; color: var(--plan-flow-orange, #ff8c42); }
+
+/* ── Plate grid ── */
+.pricing-plates { width: 100%; }
+
+.pricing-plates-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .pricing-plates-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .pricing-plates-grid { grid-template-columns: 1fr; }
+  .pricing-page-main { padding: 28px 16px 48px; }
+}
+
+/* ── License plate card ── */
+.pricing-plate-card,
+.pricing-plate-founder {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--plate-border);
+  border-radius: 16px;
+  background: var(--plate-bg);
+  color: var(--plate-fg);
+}
+
+.pricing-plate-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 20px;
+}
+
+.pricing-plate-card.is-current,
+.pricing-plate-founder.is-current {
+  box-shadow: inset 0 0 0 1px rgba(107, 203, 119, 0.35);
+}
+
+.pricing-plate-rail {
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 6px;
+  border-radius: 0 0 6px 6px;
+  background: var(--plate-accent, var(--cat-general, #5a9e96));
+}
+
+.pricing-plate-rail--gold {
+  background: var(--plan-flow-gold, #ffd28c);
+}
+
+.pricing-plate-rivet {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.15;
+}
+
+.pricing-plate-rivet--tl { top: 10px; left: 10px; }
+.pricing-plate-rivet--tr { top: 10px; right: 10px; }
+.pricing-plate-rivet--bl { bottom: 10px; left: 10px; }
+.pricing-plate-rivet--br { bottom: 10px; right: 10px; }
+
+.pricing-plate-ribbon {
+  position: absolute;
+  top: 14px;
+  right: -6px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: var(--plate-accent, var(--cat-fuel, #3dd9d0));
+  color: #fff;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.pricing-plate-tag {
+  margin: 0;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--plate-accent, var(--cat-general, #5a9e96));
+}
+
+.pricing-plate-name {
+  margin: 4px 0 0;
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--plate-fg);
+}
+
+.pricing-plate-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.pricing-plate-price {
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--plate-fg);
+}
+
+.pricing-plate-per {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  color: var(--plate-muted);
+}
+
+.pricing-plate-allotment {
+  margin: 4px 0 0;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--plate-fg) 85%, transparent);
+}
+
+.pricing-plate-divider {
+  height: 1px;
+  margin: 16px 0;
+  background: var(--plate-divider);
+}
+
+.pricing-plate-features {
+  flex: 1;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pricing-plate-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--plate-fg);
+}
+
+.pricing-plate-check {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pricing-plate-cta {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 2px solid var(--plate-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--plate-fg);
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pricing-plate-cta:hover { transform: translateY(-1px); }
+
+.pricing-plate-cta--primary {
+  border-color: var(--plate-cta-bg);
+  background: var(--plate-cta-bg);
+  color: var(--plate-cta-fg);
+  box-shadow: 0 5px 0 var(--plate-cta-shadow);
+}
+
+.pricing-plate-cta--primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--plate-cta-shadow);
+}
+
+.pricing-plate-current {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #6bcb77 18%, transparent);
+  border: 1px solid rgba(107, 203, 119, 0.45);
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--plate-fg);
+}
+
+/* ── Founder roadside banner ── */
+.pricing-plate-founder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+  padding: 24px 20px;
+}
+
+@media (min-width: 640px) {
+  .pricing-plate-founder {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.pricing-plate-founder-medallion {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: var(--plan-flow-gold, #ffd28c);
+  color: var(--plan-flow-ink, #0d0a1a);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--plan-flow-gold, #ffd28c) 25%, transparent);
+}
+
+.pricing-plate-founder-copy {
+  flex: 1;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .pricing-plate-founder-copy { text-align: left; }
+}
+
+.pricing-plate-founder-kicker {
+  margin: 0;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--plan-flow-orange, #ff8c42);
+}
+
+.pricing-plate-founder-desc {
+  margin: 6px 0 0;
+  max-width: 28rem;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--plate-muted);
+}
+
+.pricing-plate-founder-desc strong {
+  color: var(--plate-fg);
+  font-weight: 700;
+}
+
+.pricing-plate-founder-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .pricing-plate-founder-actions { align-items: flex-end; }
+}
+
+.pricing-plate-founder-seats {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--plan-flow-orange, #ff8c42);
+}
+
+.pricing-plates--compact .pricing-plates-grid {
+  grid-template-columns: 1fr;
+}
+
+.pricing-plates--compact .pricing-plate-founder {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.pricing-plates--compact .pricing-plate-founder-copy,
+.pricing-plates--compact .pricing-plate-founder-actions {
+  text-align: center;
+  align-items: center;
+}
+
+/* Comparison table (profile embed) */
+.pricing-compare-wrap { margin-top: 32px; }
+
+.pricing-compare-title {
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+  font-size: 1.25rem;
+  margin: 0 0 12px;
+  color: var(--plate-fg);
+}
+
+.pricing-compare-scroll { overflow-x: auto; }
+
+.pricing-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 13px;
+}
+
+.pricing-compare-table th,
+.pricing-compare-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--plate-divider);
+  text-align: center;
+}
+
+.pricing-compare-table th[scope="row"] {
+  text-align: left;
+  font-weight: 600;
+  color: var(--plate-fg);
+}
+
+.pricing-compare-table thead th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--plate-muted);
+}
+
+.pricing-compare-yes { color: #6bcb77; font-weight: 700; }
+.pricing-compare-no { color: var(--plate-muted); }
+.pricing-compare-text { font-weight: 600; color: var(--plate-fg); }
+
+.pricing-billing-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.pricing-billing-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--plate-muted);
+  line-height: 1.45;
+}

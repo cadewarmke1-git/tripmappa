@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { lockHeroSurfaceTheme, syncSkyCycle, unlockHeroSurfaceTheme } from "../lib/surfaceTheme.js";
 import { Autocomplete } from "@react-google-maps/api";
+import HeroHighwayScene from "./HeroHighwayScene.jsx";
 import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import HeroFoundingSlots from "./HeroFoundingSlots.jsx";
@@ -61,6 +62,8 @@ export default function HeroView({
     setSkyHourOverride,
     resetToLive,
   } = useHeroSkyHour();
+
+  const [useMountainFallback, setUseMountainFallback] = useState(false);
 
   const skyPhase = useMemo(() => getSkyPhaseFromHour(skyHour), [skyHour]);
   const heroShellTheme = useMemo(() => getHeroSurfaceTheme(skyHour), [skyHour]);
@@ -125,7 +128,11 @@ export default function HeroView({
         data-surface-theme={heroSurfaceTheme}
         style={heroSurfaceStyle}
       >
-        <HeroMountainScene phase={skyPhase} hour={skyHour} />
+        {useMountainFallback ? (
+          <HeroMountainScene phase={skyPhase} hour={skyHour} />
+        ) : (
+          <HeroHighwayScene onPhotoError={() => setUseMountainFallback(true)} />
+        )}
         <div className="hero-overlay" />
         <div className="hero-palette-vignette" aria-hidden="true" />
         <div className="hero-palette-ridge" aria-hidden="true" />

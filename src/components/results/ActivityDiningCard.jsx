@@ -1,41 +1,57 @@
 import PlacePhotoOrIcon from "./PlacePhotoOrIcon.jsx";
-import PlaceRatingLine from "./PlaceRatingLine.jsx";
-import TripMappaVerifiedBadge from "./TripMappaVerifiedBadge.jsx";
+import RoadTripStopCard from "./RoadTripStopCard.jsx";
 import { hasGooglePlacesData } from "../../lib/placesVerification.js";
+import { parseRating } from "../../lib/ratings.js";
+import { roadStopToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
+import { buildDirectionsUrl, formatOffRouteDistance } from "../../lib/stopCardDistance.js";
 
 export default function ActivityDiningCard({ item, onAdd, added = false, onRoute = false, readOnly = false }) {
+  const signCategory = roadStopToSignCategory(item.category || "food");
+  const categoryLabel = signCategoryLabel(signCategory, item.category || "Activity");
+  const includedOnRoute = onRoute || added;
+  const rating = parseRating(item.rating);
+  const distance = formatOffRouteDistance(item.distanceMiles)
+    || (item.distanceMiles != null ? `${item.distanceMiles} mi from route` : null);
+  const directionsUrl = buildDirectionsUrl(item.lat, item.lng);
+
+  const actions = [];
+  if (directionsUrl) {
+    actions.push({
+      label: "Get directions",
+      variant: "primary",
+      href: directionsUrl,
+    });
+  }
+  if (!readOnly) {
+    actions.push({
+      label: includedOnRoute ? "On your route" : "Add to route",
+      variant: actions.length === 0 ? "primary" : "secondary",
+      disabled: includedOnRoute,
+      onClick: () => { if (!includedOnRoute) onAdd?.(item); },
+    });
+  }
+
   return (
-    <article className="activity-dining-card">
-      <div className="activity-dining-photo-wrap">
+    <RoadTripStopCard
+      signCategory={signCategory}
+      categoryLabel={categoryLabel}
+      name={item.name}
+      className="activity-dining-card"
+      ariaLabel={item.name}
+      rating={rating}
+      distance={distance}
+      verified={hasGooglePlacesData(item)}
+      actions={actions}
+      photo={(
         <PlacePhotoOrIcon
           photoUrl={item.photoUrl}
           name={item.name}
           category={item.category}
-          imgClassName="activity-dining-photo"
-          className="activity-dining-photo-fallback"
+          imgClassName="road-stop-card-photo"
+          className="road-stop-card-photo-fallback"
+          displayPx={64}
         />
-        <span className="activity-dining-cat">{item.category}</span>
-        {hasGooglePlacesData(item) && (
-          <TripMappaVerifiedBadge className="activity-dining-verified-badge" />
-        )}
-      </div>
-      <div className="activity-dining-body">
-        <h4 className="activity-dining-name">{item.name}</h4>
-        <div className="activity-dining-meta">
-          <PlaceRatingLine rating={item.rating} className="activity-dining-rating" emptyClassName="activity-dining-no-reviews" />
-          {item.distanceMiles != null && <span>{item.distanceMiles} mi</span>}
-        </div>
-        {!readOnly && (
-          <button
-            type="button"
-            className={`activity-dining-add${added || onRoute ? " activity-dining-add-on-route" : ""}`}
-            disabled={added || onRoute}
-            onClick={() => { if (!added && !onRoute) onAdd?.(item); }}
-          >
-            {added || onRoute ? "On your route" : "Add to route"}
-          </button>
-        )}
-      </div>
-    </article>
+      )}
+    />
   );
 }

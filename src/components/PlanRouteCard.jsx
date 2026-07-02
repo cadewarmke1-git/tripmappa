@@ -2,6 +2,7 @@ import { isContinuousDrive } from "../lib/driveMode.js";
 import { dedupeQuestionHistoryById, formatFlowAnswer, getAssumedTruckLodgingPill } from "../lib/tripFlow.js";
 import { formatTravelersLabel, isScenicRoute } from "../lib/vehicles.js";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import QuestionProgress from "./QuestionProgress.jsx";
 
 export default function PlanRouteCard({
   origin,
@@ -13,6 +14,9 @@ export default function PlanRouteCard({
   routeError = null,
   onRetryRoute,
   onEditAssumedLodging,
+  flowProgress = null,
+  onEditRoute = null,
+  compact = false,
 }) {
   const ready = Boolean(routeInfo?.distance || routeInfo?.duration);
   const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
@@ -48,13 +52,61 @@ export default function PlanRouteCard({
       text: formatFlowAnswer(entry.question, entry.answer),
     })).filter(chip => chip.text);
 
+  const originCity = origin?.split(",")[0]?.trim() || "Origin";
+  const destCity = dest?.split(",")[0]?.trim() || "Destination";
+  const distanceLabel = routeInfo?.distance || null;
+
+  if (compact) {
+    return (
+      <div className={`plan-flow-compact-header${routePending ? " is-pending" : ""}${routeError ? " is-error" : ""}`}>
+        <div className="plan-flow-compact-header-row">
+          <div className="plan-flow-compact-route">
+            <span className="plan-flow-compact-city">{originCity}</span>
+            <span className="plan-flow-compact-arrow" aria-hidden="true">→</span>
+            <span className="plan-flow-compact-city">{destCity}</span>
+            {distanceLabel && (
+              <>
+                <span className="plan-flow-compact-sep" aria-hidden="true">·</span>
+                <span className="plan-flow-compact-distance">{distanceLabel}</span>
+              </>
+            )}
+            {routePending && !routeError && !distanceLabel && (
+              <span className="plan-flow-compact-loading">
+                <RouteDrawingLoader variant="compact" />
+              </span>
+            )}
+            {routeError && (
+              <span className="plan-flow-compact-error">{routeError}</span>
+            )}
+          </div>
+          {onEditRoute && (
+            <button type="button" className="plan-flow-edit-trip-pill" onClick={onEditRoute}>
+              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M11.5 2.5l2 2L5 13H3v-2l8.5-8.5z" strokeLinejoin="round" />
+              </svg>
+              Edit trip
+            </button>
+          )}
+        </div>
+        {flowProgress?.phases?.length > 0 && (
+          <QuestionProgress {...flowProgress} compact trackOnly />
+        )}
+        {routeError && onRetryRoute && (
+          <button type="button" className="plan-route-retry-btn" onClick={onRetryRoute}>
+            Retry route
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={`plan-route-card${routePending ? " plan-route-card-pending" : ""}${routeError ? " plan-route-card-error" : ""}`}>
       <div className="plan-route-card-row">
         <div className="plan-route-card-endpoints">
-          <span className="plan-route-card-city">{origin?.split(",")[0]?.trim() || "Origin"}</span>
+          <span className="plan-route-card-city">{originCity}</span>
           <span className="plan-route-card-arrow" aria-hidden="true">→</span>
-          <span className="plan-route-card-city">{dest?.split(",")[0]?.trim() || "Destination"}</span>
+          <span className="plan-route-card-city">{destCity}</span>
         </div>
         <div className="plan-route-card-stats">
           {routeError ? (

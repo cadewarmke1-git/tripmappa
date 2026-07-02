@@ -71,7 +71,7 @@ export default function PlanPanel({
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
-  const showFlowSidebar = inQuestionFlow && questionHistory.length > 0 && !convoComplete && !showContinuousConfirm;
+  const showFlowSidebar = false;
   const showReadySidebar = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
   const actionsInDock = inQuestionFlow && !convoComplete;
 
@@ -152,6 +152,9 @@ export default function PlanPanel({
           routeError={routeError}
           onRetryRoute={onRetryRoute}
           onEditAssumedLodging={onEditAssumedLodging}
+          flowProgress={flowProgress}
+          onEditRoute={onResetPlan}
+          compact
         />
       )}
 
@@ -237,11 +240,14 @@ export default function PlanPanel({
                     <div className="plan-flow-question-header">
                       {showProgress && flowProgress && (
                         <p className="plan-flow-step-label">
-                          Step {flowProgress.stepIndex} of {flowProgress.stepTotal} · {flowProgress.phaseLabel}
+                          Step {flowProgress.stepIndex} of {flowProgress.stepTotal}
                         </p>
                       )}
                       {currentQuestion.ask && (
                         <h2 className="plan-flow-question-title">{currentQuestion.ask}</h2>
+                      )}
+                      {currentQuestion.type === "vehicle" && (
+                        <p className="plan-flow-question-hint">Pick your vehicle so we can route around its needs.</p>
                       )}
                       {currentQuestion.hint && (
                         <p className="plan-flow-question-hint">{currentQuestion.hint}</p>

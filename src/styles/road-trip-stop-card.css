@@ -1,0 +1,250 @@
+/* v0 RoadTripStopCard — day cream + night violet stop rows */
+
+.road-trip-stop-card {
+  --rtsc-accent: #5a9e96;
+  --rtsc-accent-rule: #5a9e96;
+  --rtsc-bg: var(--color-results-card-bg, #FDF3E0);
+  --rtsc-border: rgba(160, 64, 16, 0.15);
+  --rtsc-ink: #3a1e0a;
+  --rtsc-muted: rgba(58, 30, 10, 0.55);
+  --rtsc-verified: var(--rtsc-accent);
+  --rtsc-secondary-btn-bg: rgba(160, 64, 16, 0.08);
+  --rtsc-secondary-btn-ink: #3a1e0a;
+  --rtsc-primary-btn-ink: #3a1e0a;
+
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--rtsc-border);
+  border-left: 3px solid var(--rtsc-accent-rule);
+  border-radius: 8px;
+  background: var(--rtsc-bg);
+  box-shadow: none;
+}
+
+.road-trip-stop-card--food {
+  --rtsc-accent: #ff5fa8;
+  --rtsc-accent-rule: #ff5fa8;
+}
+
+.road-trip-stop-card--fuel {
+  --rtsc-accent: #3dd9d0;
+  --rtsc-accent-rule: #3dd9d0;
+}
+
+.road-trip-stop-card--lodging {
+  --rtsc-accent: #FFD28C;
+  --rtsc-accent-rule: #FFD28C;
+}
+
+.road-trip-stop-card--general {
+  --rtsc-accent: #5a9e96;
+  --rtsc-accent-rule: #5a9e96;
+}
+
+/* Night — #1A0D2E cards on #0D0A1A surfaces */
+.app-wrap.night .road-trip-stop-card {
+  --rtsc-bg: #1A0D2E;
+  --rtsc-border: rgba(255, 255, 255, 0.06);
+  --rtsc-ink: #F5E6C8;
+  --rtsc-muted: rgba(245, 230, 200, 0.5);
+  --rtsc-verified: #FFD28C;
+  --rtsc-secondary-btn-bg: rgba(245, 230, 200, 0.08);
+  --rtsc-secondary-btn-ink: #F5E6C8;
+  --rtsc-primary-btn-ink: #1A0D2E;
+}
+
+.app-wrap.night .road-trip-stop-card--food {
+  --rtsc-accent: #ff5fa8;
+  --rtsc-accent-rule: #ff7fbb;
+}
+
+.app-wrap.night .road-trip-stop-card--fuel {
+  --rtsc-accent: #3dd9d0;
+  --rtsc-accent-rule: #5be8e0;
+}
+
+.app-wrap.night .road-trip-stop-card--lodging {
+  --rtsc-accent: #FFD28C;
+  --rtsc-accent-rule: #ffdfa8;
+}
+
+.app-wrap.night .road-trip-stop-card--general {
+  --rtsc-accent: #5a9e96;
+  --rtsc-accent-rule: #7bc0b7;
+}
+
+.road-trip-stop-card-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.road-trip-stop-card-thumb .road-stop-card-photo,
+.road-trip-stop-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.road-trip-stop-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.road-trip-stop-card-category {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--rtsc-accent) !important;
+}
+
+.road-trip-stop-card-name {
+  margin: 2px 0 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--rtsc-ink) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.road-trip-stop-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--rtsc-muted) !important;
+}
+
+.road-trip-stop-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.road-trip-stop-card-distance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.road-trip-stop-card-pin {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.road-trip-stop-card-sep {
+  opacity: 0.65;
+  margin: 0 6px;
+}
+
+.road-trip-stop-card-verified {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rtsc-verified) !important;
+}
+
+.road-trip-stop-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.road-trip-stop-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.14s ease, box-shadow 0.14s ease;
+}
+
+.road-trip-stop-card-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.road-trip-stop-card-btn--primary {
+  background: var(--rtsc-accent);
+  color: var(--rtsc-primary-btn-ink);
+}
+
+.app-wrap.night .road-trip-stop-card-btn--primary {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--rtsc-accent) 40%, transparent);
+}
+
+.road-trip-stop-card-btn--secondary {
+  background: var(--rtsc-secondary-btn-bg);
+  color: var(--rtsc-secondary-btn-ink);
+}
+
+.road-trip-stop-card-btn--disabled,
+.road-trip-stop-card-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+.road-trip-stop-card-btn-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.road-food-stops {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.road-stop-badge-local-inline {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rtsc-accent);
+}
+
+.road-trip-stop-card-meta-extra {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-wrap.night .road-trip-stop-card .road-stop-charging-meta-inline,
+.app-wrap.night .road-trip-stop-card .lodging-card-meta-text,
+.app-wrap.night .road-trip-stop-card .road-stop-amenity-tags {
+  color: var(--rtsc-muted);
+}
+
+.app-wrap.day .road-trip-stop-card .road-stop-charging-meta-inline,
+.app-wrap.day .road-trip-stop-card .road-stop-amenity-tags,
+.app-wrap.day .road-trip-stop-card .lodging-card-meta-text,
+.app-wrap.day .road-trip-stop-card .data-estimated-label {
+  color: var(--rtsc-muted) !important;
+}

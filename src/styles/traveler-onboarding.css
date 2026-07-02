@@ -1,13 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Limelight&display=swap");
+
 .traveler-onboarding {
-  --bg-base: #0d0a1a;
+  --onboarding-cream: #f5e6c8;
+  --onboarding-gold: #ffd28c;
+  --onboarding-orange: #ff8c42;
+  --onboarding-ink: #0d0a1a;
   position: fixed;
   inset: 0;
   z-index: 300;
   display: flex;
   flex-direction: column;
-  background: var(--bg-base);
+  background: var(--onboarding-ink);
   color: var(--color-text-primary, #f4f6fb);
   padding: calc(var(--nav-h, 56px) + env(safe-area-inset-top, 0px) + 16px) 24px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.traveler-onboarding--welcome-screen {
+  padding: 0;
+  background: var(--onboarding-ink);
 }
 
 .traveler-onboarding-dots {
@@ -41,62 +51,225 @@
   flex-direction: column;
 }
 
+/* ── Welcome screen (v0 highway hero) ── */
 .traveler-onboarding-welcome {
+  position: relative;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 16px;
-  padding: 24px 12px;
-  position: relative;
+  justify-content: flex-end;
   overflow: hidden;
 }
 
-.traveler-onboarding-welcome-sky {
+.traveler-onboarding-welcome-bg {
   position: absolute;
-  inset: -20% -10% 0;
-  opacity: 0.2;
-  pointer-events: none;
+  inset: 0;
   z-index: 0;
+  overflow: hidden;
+  background: var(--onboarding-ink);
 }
 
-.traveler-onboarding-welcome-sky .hero-mountain-scene {
+.traveler-onboarding-bg-fallback {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(
+    180deg,
+    #ff8c42 0%,
+    #ffd28c 38%,
+    #f5e6c8 72%,
+    #8a5030 100%
+  );
+  transition: opacity 700ms ease;
+}
+
+.traveler-onboarding--photos-failed .traveler-onboarding-bg-fallback {
+  opacity: 1;
+}
+
+.traveler-onboarding--photos-failed .traveler-onboarding-photo {
+  opacity: 0 !important;
+}
+
+.traveler-onboarding-photo {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  min-height: 280px;
+  object-fit: cover;
+  object-position: center center;
+  transition: opacity 700ms ease;
 }
 
-.traveler-onboarding-welcome .traveler-onboarding-wordmark,
-.traveler-onboarding-welcome .traveler-onboarding-tagline,
-.traveler-onboarding-welcome .traveler-onboarding-get-started {
-  position: relative;
+.traveler-onboarding-photo--night {
+  opacity: 0;
+}
+
+.traveler-onboarding--day .traveler-onboarding-photo--day {
+  opacity: 1;
+}
+
+.traveler-onboarding--day .traveler-onboarding-photo--night {
+  opacity: 0;
+}
+
+.traveler-onboarding--night .traveler-onboarding-photo--day {
+  opacity: 0;
+}
+
+.traveler-onboarding--night .traveler-onboarding-photo--night {
+  opacity: 1;
+}
+
+.traveler-onboarding-scrim {
+  position: absolute;
+  inset: 0;
   z-index: 1;
+  pointer-events: none;
+  transition: background 700ms ease;
+}
+
+.traveler-onboarding--day .traveler-onboarding-scrim {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--onboarding-ink) 62%, transparent) 0%,
+    color-mix(in srgb, var(--onboarding-ink) 18%, transparent) 42%,
+    transparent 100%
+  );
+}
+
+.traveler-onboarding--night .traveler-onboarding-scrim {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--onboarding-ink) 92%, transparent) 0%,
+    color-mix(in srgb, var(--onboarding-ink) 48%, transparent) 42%,
+    transparent 100%
+  );
+}
+
+.traveler-onboarding-welcome-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  width: min(420px, 100%);
+  margin: 0 auto;
+  padding: 0 24px calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+.traveler-onboarding-kicker {
+  margin: 0;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--onboarding-cream);
+}
+
+.traveler-onboarding-road-dash {
+  width: 72px;
+  height: 6px;
+  margin-top: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--onboarding-gold) 0,
+    var(--onboarding-gold) 12px,
+    transparent 12px,
+    transparent 20px
+  );
+  opacity: 0.95;
 }
 
 .traveler-onboarding-wordmark {
-  margin: 0;
-  font-family: "Fraunces", Georgia, serif;
-  font-size: clamp(42px, 11vw, 56px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  color: var(--accent, var(--gold-primary));
+  margin: 4px 0 0;
+  font-family: "Limelight", "Fraunces", Georgia, serif;
+  font-size: clamp(52px, 14vw, 72px);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+}
+
+.traveler-onboarding-wordmark-trip {
+  color: var(--onboarding-cream);
+}
+
+.traveler-onboarding-wordmark-mappa {
+  color: var(--onboarding-gold);
 }
 
 .traveler-onboarding-tagline {
+  margin: 4px 0 0;
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+  font-size: clamp(18px, 4.5vw, 22px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  color: var(--onboarding-cream);
+}
+
+.traveler-onboarding-lead {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--color-text-primary, #fff) 72%, transparent);
+  max-width: 340px;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--onboarding-cream) 78%, transparent);
 }
 
 .traveler-onboarding-get-started {
-  width: min(280px, 100%);
-  margin-top: 28px;
+  width: min(300px, 100%);
+  margin-top: 12px;
+  min-height: 52px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--onboarding-gold);
+  color: var(--onboarding-ink);
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--onboarding-orange);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
+.traveler-onboarding-get-started:hover {
+  transform: translateY(-1px);
+}
+
+.traveler-onboarding-get-started:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--onboarding-orange);
+}
+
+.traveler-onboarding-signin {
+  margin: 8px 0 0;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  color: color-mix(in srgb, var(--onboarding-cream) 72%, transparent);
+}
+
+.traveler-onboarding-signin-link {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--onboarding-gold);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.traveler-onboarding-signin-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Preference steps (unchanged layout) ── */
 .traveler-onboarding-panel-screen {
   flex: 1;
   min-height: 0;
@@ -188,18 +361,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .traveler-onboarding-dot {
+  .traveler-onboarding-dot,
+  .traveler-onboarding-photo,
+  .traveler-onboarding-scrim,
+  .traveler-onboarding-bg-fallback,
+  .traveler-onboarding-get-started {
     transition: none !important;
   }
 }
 
 @media (min-width: 769px) {
-  .traveler-onboarding {
+  .traveler-onboarding:not(.traveler-onboarding--welcome-screen) {
     align-items: center;
   }
 
-  .traveler-onboarding-dots,
-  .traveler-onboarding-stage {
+  .traveler-onboarding:not(.traveler-onboarding--welcome-screen) .traveler-onboarding-dots,
+  .traveler-onboarding:not(.traveler-onboarding--welcome-screen) .traveler-onboarding-stage {
     width: min(560px, 100%);
   }
 }
