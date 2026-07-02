@@ -61,7 +61,7 @@
 }
 
 .hero:has(.hero-highway-scene) {
-  justify-content: flex-end;
+  justify-content: center;
   min-height: max(100vh, 100dvh);
 }
 
@@ -72,7 +72,7 @@
 
 .hero:has(.hero-highway-scene) .hero-content {
   z-index: 15;
-  padding-bottom: clamp(56px, 10vh, 96px);
+  padding-bottom: 0;
   margin-top: 0;
 }
 

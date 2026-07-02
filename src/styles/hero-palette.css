@@ -43,13 +43,14 @@
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo-home .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .nav-logo .brand-wordmark,
 .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
-  background-image: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
+  background-image: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   display: inline-block !important;
+  filter: drop-shadow(0 1px 6px rgba(255, 244, 224, 0.55)) !important;
 }
 
 /* ── Hero headline (inside .hero.night / .hero.day) — superseded by hero-surface.css fit-content rules ── */
@@ -540,15 +541,17 @@
 .hero.night .hero-search .hero-input,
 .hero.day .hero-input,
 .hero.day .hero-search .hero-input {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   background: transparent !important;
 }
 
 .hero.night .hero-search .hero-input::placeholder,
 .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(90, 66, 42, 0.55) !important;
+  -webkit-text-fill-color: rgba(90, 66, 42, 0.55) !important;
   opacity: 1 !important;
+  font-style: italic !important;
   font-weight: 400 !important;
 }
 
@@ -601,7 +604,7 @@ html body .app-nav-bar.transparent.app-nav-bar--night .brand-wordmark {
 }
 
 html body .app-nav-bar.transparent.app-nav-bar--day .brand-wordmark {
-  background: linear-gradient(90deg, #FFD28C 0%, #FF8C42 100%) !important;
+  background: linear-gradient(90deg, #B85410 0%, #7A3208 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -665,5 +668,6 @@ html body .hero .hero-search .hero-input::placeholder {
 
 html body .hero.night .hero-search .hero-input::placeholder,
 html body .hero.day .hero-search .hero-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(90, 66, 42, 0.55) !important;
+  -webkit-text-fill-color: rgba(90, 66, 42, 0.55) !important;
 }
