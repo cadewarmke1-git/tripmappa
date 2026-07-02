@@ -116,7 +116,7 @@ body.theme-twilight,
   --color-banner-bg: rgba(26, 16, 53, 0.85);
   --color-map-surface: #0D0A1A;
   --color-map-panel: #1A1035;
-  --color-hero-title-gradient: linear-gradient(90deg, #5A3A9A, #FFD28C);
+  --color-hero-title-gradient: linear-gradient(90deg, #FFFFFF, #FDF3E0);
   --color-hero-accent-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-subtitle: rgba(255, 255, 255, 0.8);
   --color-tier-voyager: #8A7AAF;
@@ -339,7 +339,7 @@ body.theme-day,
   --color-btn-secondary-border: rgba(255, 255, 255, 0.18);
   --color-btn-secondary-text: #FFFFFF;
   --color-banner-bg: rgba(26, 16, 53, 0.65);
-  --color-hero-title-gradient: linear-gradient(90deg, #5A3A9A, #FFD28C);
+  --color-hero-title-gradient: linear-gradient(90deg, #FFFFFF, #FDF3E0);
   --color-hero-accent-gradient: linear-gradient(90deg, #FFD28C, #FF8C42);
   --color-hero-subtitle: rgba(255, 255, 255, 0.8);
 }

@@ -70,7 +70,7 @@ html body .hero .hero-title-accent {
 }
 
 html body .hero.night .hero-title-line {
-  background-image: var(--color-hero-title-gradient) !important;
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #FDF3E0 100%) !important;
 }
 
 html body .hero.night .hero-title-accent {
@@ -118,8 +118,8 @@ html body .hero.day .hero-title-accent {
 }
 
 .hero[data-surface-theme="day"] .hero-input {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   background: transparent !important;
 }
 
@@ -130,11 +130,11 @@ html body .hero.day .hero-title-accent {
 }
 
 .hero[data-surface-theme="day"] .hero-go-btn:not(:disabled) {
-  background: #1A0D00 !important;
-  color: #FFD28C !important;
-  -webkit-text-fill-color: #FFD28C !important;
+  background: #FF8C42 !important;
+  color: #1A0D00 !important;
+  -webkit-text-fill-color: #1A0D00 !important;
   border: none !important;
-  box-shadow: none !important;
+  box-shadow: 0 4px 0 #C85A10 !important;
 }
 
 .hero[data-surface-theme="day"] .hero-auth-label {
