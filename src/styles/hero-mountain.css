@@ -238,7 +238,7 @@
   transition: opacity 1s ease, background 1s ease;
 }
 
-/* Night — purple theme bleeds through the mountain photo */
+/* Night — warm dark navy veil bleeds through the mountain photo */
 .hero-photo-night-veil {
   position: absolute;
   inset: 0;
@@ -248,7 +248,7 @@
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(42, 26, 74, 0.12) 42%,
+    rgba(26, 18, 40, 0.12) 42%,
     rgba(13, 10, 26, 0.1) 56%,
     transparent 68%
   );

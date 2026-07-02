@@ -31,7 +31,7 @@ html[data-surface-theme="night"] {
 }
 
 html[data-surface-theme="twilight"] {
-  --color-autocomplete-bg: #2A1A35;
+  --color-autocomplete-bg: #2A1E24;
   --color-autocomplete-border: rgba(255, 180, 120, 0.22);
   --color-autocomplete-match: #FFB070;
   --color-autocomplete-text-top: #FFF4E8;
