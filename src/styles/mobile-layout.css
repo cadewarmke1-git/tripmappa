@@ -498,6 +498,48 @@
   html[data-layout="mobile"] .scroll-indicator {
     display: none;
   }
+
+  /* Scenic hero layers must never steal taps from route inputs (iOS Safari). */
+  html[data-layout="mobile"] .hero-overlay,
+  html[data-layout="mobile"] .hero-palette-vignette,
+  html[data-layout="mobile"] .hero-palette-ridge,
+  html[data-layout="mobile"] .hero-photo-layer,
+  html[data-layout="mobile"] .hero-photo-slide,
+  html[data-layout="mobile"] .hero-photo-tint,
+  html[data-layout="mobile"] .hero-sky-celestial,
+  html[data-layout="mobile"] .hero-highway-scene,
+  html[data-layout="mobile"] .hero-highway-scrim,
+  html[data-layout="mobile"] .hero-mountain-scene,
+  html[data-layout="mobile"] .hero-stars {
+    pointer-events: none !important;
+  }
+
+  html[data-layout="mobile"] .hero-content,
+  html[data-layout="mobile"] .hero-search {
+    position: relative;
+    z-index: 15;
+    pointer-events: auto;
+  }
+
+  /* Google Places Autocomplete wrapper — pass touches through to the input on touch devices. */
+  html[data-layout="mobile"] .hero-search .hero-input-box > div,
+  html[data-layout="mobile"] .hero-route-cell .hero-input-box > div {
+    pointer-events: none;
+  }
+
+  html[data-layout="mobile"] .hero-search .hero-input,
+  html[data-layout="mobile"] .hero-route-bar .hero-input {
+    pointer-events: auto;
+  }
+
+  /* Auth modals — full-screen overlay must not block input focus on iOS Safari. */
+  html[data-layout="mobile"] .modal-overlay.auth-modal-overlay {
+    pointer-events: none;
+  }
+
+  html[data-layout="mobile"] .modal-overlay.auth-modal-overlay > .auth-modal {
+    pointer-events: auto;
+  }
 }
 
 @media (max-width: 430px) {

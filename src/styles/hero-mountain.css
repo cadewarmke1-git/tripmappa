@@ -198,6 +198,7 @@
   position: absolute;
   inset: 0;
   z-index: 4;
+  pointer-events: none;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
@@ -219,6 +220,7 @@
 .hero-photo-slide {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background-color: #0a0c14;
   background-size: cover;
   background-repeat: no-repeat;
@@ -232,6 +234,7 @@
 .hero-photo-tint {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background: var(--photo-tint, rgb(18, 22, 52));
   opacity: var(--photo-tint-op, 0);
   mix-blend-mode: color;
