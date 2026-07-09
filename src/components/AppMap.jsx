@@ -1,5 +1,5 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import MapRoutePill from "./MapRoutePill.jsx";
@@ -60,6 +60,7 @@ export default function AppMap({
   const theme = themeProp ?? "night";
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [mapInstance, setMapInstance] = useState(null);
+  const suppressMapClearRef = useRef(false);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
   const activeRoutePath = useMemo(() => {
     if (truckRoutePath?.length > 1) return truckRoutePath;
@@ -137,6 +138,7 @@ export default function AppMap({
   }, [mapFocusTarget, mapRef]);
 
   function handleMarkerClick(marker) {
+    suppressMapClearRef.current = true;
     setSelectedMarker(marker);
     onMarkerSelect?.(marker);
   }
@@ -162,6 +164,10 @@ export default function AppMap({
             onUnmount={handleMapUnmount}
             options={mapOptions}
             onClick={() => {
+              if (suppressMapClearRef.current) {
+                suppressMapClearRef.current = false;
+                return;
+              }
               setSelectedMarker(null);
               onMapBackgroundClick?.();
             }}

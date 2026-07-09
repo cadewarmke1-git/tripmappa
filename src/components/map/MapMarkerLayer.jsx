@@ -10,7 +10,11 @@ export default function MapMarkerLayer({ markers = [], isDarkMode, onMarkerClick
       position={{ lat: m.lat, lng: m.lng }}
       icon={buildMarkerIcon(m.category, isDarkMode, { pinNumber: m.pinNumber, pinSize: m.pinSize })}
       title={m.title}
-      onClick={() => onMarkerClick?.(m)}
+      onClick={(event) => {
+        // Prevent the map's onClick from clearing the selected marker in the same tick.
+        event?.stop?.();
+        onMarkerClick?.(m);
+      }}
       zIndex={m.zIndex}
     />
   ));
