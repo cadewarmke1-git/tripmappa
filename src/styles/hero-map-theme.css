@@ -262,9 +262,11 @@
 .app-wrap.night .map-style-btn,
 .app-wrap.night .map-recenter-btn,
 .app-wrap.night .map-zoom-btn {
-  background: color-mix(in srgb, var(--color-surface) 92%, transparent) !important;
+  background: var(--color-surface, #0D0A1A) !important;
   border-color: var(--color-input-border) !important;
   color: var(--color-accent-gold) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .app-wrap.night .map-style-btn:hover,
@@ -274,8 +276,10 @@
 }
 
 .app-wrap.night .map-style-menu {
-  background: color-mix(in srgb, var(--color-surface) 96%, transparent) !important;
+  background: var(--color-surface, #0D0A1A) !important;
   border-color: var(--color-input-border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .app-wrap.night .map-style-item {
@@ -336,9 +340,11 @@
 .app-wrap.day .map-style-btn,
 .app-wrap.day .map-recenter-btn,
 .app-wrap.day .map-zoom-btn {
-  background: color-mix(in srgb, var(--color-map-surface) 94%, transparent) !important;
+  background: var(--color-map-panel, #FDF3E0) !important;
   border-color: var(--color-input-border) !important;
   color: var(--color-text-primary) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .app-wrap.day .map-style-btn:hover,
@@ -348,8 +354,10 @@
 }
 
 .app-wrap.day .map-style-menu {
-  background: color-mix(in srgb, var(--color-map-panel) 98%, transparent) !important;
+  background: var(--color-map-panel, #FDF3E0) !important;
   border-color: var(--color-input-border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .app-wrap.day .map-style-item {

@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import {
   buildInitialItineraryWaypoints,
-  reorderItineraryWaypoints,
   setWaypointIncluded,
   removeWaypoint,
   addWaypointBeforeDestination,
@@ -167,11 +166,6 @@ export function useItinerarySync({
     if (recalc) scheduleRecalc(nextWaypoints);
   }, [answers, scheduleRecalc, setMapMarkers, setStops, setRoadStops]);
 
-  const handleReorder = useCallback((activeId, overId) => {
-    const next = reorderItineraryWaypoints(waypointsRef.current, activeId, overId);
-    commitWaypoints(next);
-  }, [commitWaypoints]);
-
   const handleToggleIncluded = useCallback((stopId, included) => {
     const next = setWaypointIncluded(waypointsRef.current, stopId, included);
     commitWaypoints(next);
@@ -259,7 +253,6 @@ export function useItinerarySync({
     routeFocusMode,
     setRouteFocusMode,
     initFromTrip,
-    handleReorder,
     handleToggleIncluded,
     handleAddStop,
     handleRemoveStop,

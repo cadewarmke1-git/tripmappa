@@ -77,6 +77,7 @@ export default function TravelerOnboarding({ onComplete }) {
       className={`traveler-onboarding traveler-onboarding--${themeMode}${isWelcome ? " traveler-onboarding--welcome-screen" : ""}${photosFailed ? " traveler-onboarding--photos-failed" : ""}`}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="traveler-onboarding-dialog-title"
     >
       {!isWelcome && (
         <div className="traveler-onboarding-dots" aria-hidden="true">
@@ -114,7 +115,7 @@ export default function TravelerOnboarding({ onComplete }) {
             <div className="traveler-onboarding-welcome-content">
               <p className="traveler-onboarding-kicker">Welcome to</p>
               <div className="traveler-onboarding-road-dash" aria-hidden="true" />
-              <h1 className="traveler-onboarding-wordmark" aria-label="TripMappa">
+              <h1 id="traveler-onboarding-dialog-title" className="traveler-onboarding-wordmark" aria-label="TripMappa">
                 <span className="traveler-onboarding-wordmark-trip">Trip</span>
                 <span className="traveler-onboarding-wordmark-mappa">Mappa</span>
               </h1>
@@ -142,7 +143,7 @@ export default function TravelerOnboarding({ onComplete }) {
         {screen === "dietary" && (
           <div className="traveler-onboarding-panel-screen">
             <header className="traveler-onboarding-screen-header">
-              <h2 id="traveler-onboarding-title" className="traveler-onboarding-title">
+              <h2 id="traveler-onboarding-dialog-title" className="traveler-onboarding-title">
                 What are your food preferences?
               </h2>
               <p className="traveler-onboarding-subtitle">
@@ -190,7 +191,7 @@ export default function TravelerOnboarding({ onComplete }) {
         {screen === "stops_interests" && (
           <div className="traveler-onboarding-panel-screen">
             <header className="traveler-onboarding-screen-header">
-              <h2 className="traveler-onboarding-title">What do you love stopping for?</h2>
+              <h2 id="traveler-onboarding-dialog-title" className="traveler-onboarding-title">What do you love stopping for?</h2>
               <p className="traveler-onboarding-subtitle">
                 We&apos;ll suggest stops that match your style.
               </p>

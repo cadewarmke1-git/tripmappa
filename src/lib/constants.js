@@ -125,8 +125,8 @@ export const LEG_MAP_STYLES = {
   fly: { color: "rgba(59,130,246,0.9)", dashed: true },
   ferry: { color: "rgba(20,184,166,0.9)", dashed: true },
   cruise: { color: "rgba(20,184,166,0.9)", dashed: true },
-  train: { color: "rgba(168,85,247,0.9)", dashed: true },
-  bus: { color: "rgba(168,85,247,0.9)", dashed: true },
+  train: { color: "rgba(255,140,66,0.9)", dashed: true },
+  bus: { color: "rgba(255,140,66,0.9)", dashed: true },
 };
 
 export const TRIP_ROUTE_GOLD = POLYLINE_COLOR;

@@ -12,7 +12,13 @@ const FounderWelcomeOverlay = lazy(() => import("./FounderWelcomeOverlay.jsx"));
 const GenerationStreamOverlay = lazy(() => import("./GenerationStreamOverlay.jsx"));
 
 function ModalFallback() {
-  return null;
+  return (
+    <div className="modal-overlay auth-modal-overlay" role="status" aria-live="polite" aria-label="Loading">
+      <div className="auth-modal" style={{ maxWidth: 280, padding: 28, textAlign: "center" }}>
+        <p className="auth-modal-sub" style={{ margin: 0 }}>Loading…</p>
+      </div>
+    </div>
+  );
 }
 
 function withLazy(Comp) {

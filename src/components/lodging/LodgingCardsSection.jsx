@@ -123,6 +123,12 @@ export default function LodgingCardsSection({
     );
   }
 
+  // Hide lodging entirely when only placeholder/empty hotel data would show —
+  // never put fake hotels next to verified stops.
+  if (!loading && lodgingType === "hotel" && items.length === 0) {
+    return null;
+  }
+
   const sectionLabel = lodgingType === "rv"
     ? "RV parks & campgrounds"
     : lodgingType === "truck"
@@ -141,8 +147,6 @@ export default function LodgingCardsSection({
             <LodgingCardSkeleton key={i} />
           ))}
         </div>
-      ) : items.length === 0 && lodgingType === "hotel" ? (
-        <div className="lodging-empty">No lodging found within budget — try adjusting your trip budget or lodging preference.</div>
       ) : (
         <>
           <div className="lodging-cards-scroll">

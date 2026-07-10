@@ -29,6 +29,10 @@ const TRUCK_PHOTOS = [
   "https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=800&q=80",
 ];
 
+/**
+ * Placeholder hotel catalogs — kept for reference / future Booking.com swap.
+ * Never surface these in the results UI; getHotelsForStop returns [].
+ */
 export const PLACEHOLDER_HOTELS = {
   "amarillo, tx": [
     {
@@ -407,97 +411,18 @@ function applyHotelBadges(hotels, lodgingPref) {
   });
 }
 
-function generateGenericHotels(city) {
-  const label = city.split(",")[0]?.trim() || "Route City";
-  return [
-    {
-      id: `generic-hotel-${label}`,
-      name: `${label} Grand Hotel`,
-      stars: 4,
-      neighborhood: `Downtown ${label}`,
-      pricePerNight: 139,
-      priceLabel: "$139/night",
-      amenities: ["wifi", "parking", "pool", "restaurant"],
-      description: `Well-rated hotel in ${city} with comfortable rooms and easy highway access.`,
-      distanceFromRoute: 1.0,
-      bookUrl: "https://example.com/book/generic-hotel",
-      photo: HOTEL_PHOTOS[0],
-      rating: 4.6,
-      propertyType: "hotel",
-    },
-    {
-      id: `generic-inn-${label}`,
-      name: `${label} Inn & Suites`,
-      stars: 3,
-      rating: 4.0,
-      neighborhood: `${label} Midtown`,
-      pricePerNight: 99,
-      priceLabel: "$99/night",
-      amenities: ["wifi", "parking", "ev"],
-      description: `Reliable 3-star stay near ${city} with complimentary breakfast and EV charging.`,
-      distanceFromRoute: 1.5,
-      bookUrl: "https://example.com/book/generic-inn",
-      photo: HOTEL_PHOTOS[1],
-      propertyType: "hotel",
-    },
-    {
-      id: `generic-rental-${label}`,
-      name: `${label} Vacation Home`,
-      stars: 4,
-      neighborhood: `${label} Residential`,
-      pricePerNight: 125,
-      priceLabel: "$125/night",
-      amenities: ["wifi", "parking", "pet"],
-      description: `Whole-home vacation rental with kitchen and yard — ideal for longer stays in ${city}.`,
-      distanceFromRoute: 2.2,
-      bookUrl: "https://example.com/book/generic-rental",
-      photo: HOTEL_PHOTOS[1],
-      rating: 4.7,
-      propertyType: "vacation_rental",
-    },
-    {
-      id: `generic-motel-${label}`,
-      name: `${label} Motel`,
-      stars: 2,
-      neighborhood: `${label} Highway District`,
-      pricePerNight: 59,
-      priceLabel: "$59/night",
-      amenities: ["wifi", "parking"],
-      description: `Budget-friendly motel along the route through ${city}.`,
-      distanceFromRoute: 2.0,
-      bookUrl: "https://example.com/book/generic-motel",
-      photo: HOTEL_PHOTOS[2],
-      rating: 3.5,
-      propertyType: "hotel",
-    },
-    {
-      id: `generic-campground-${label}`,
-      name: `${label} Riverside Campground`,
-      stars: 2,
-      neighborhood: `${label} Outskirts`,
-      pricePerNight: 32,
-      priceLabel: "$32/night",
-      amenities: ["parking", "pet"],
-      description: `Campground with tent and RV sites near ${city} — fire pits, restrooms, and trail access.`,
-      distanceFromRoute: 3.5,
-      bookUrl: "https://example.com/book/generic-campground",
-      photo: HOTEL_PHOTOS[2],
-      rating: 4.2,
-      propertyType: "campground",
-    },
-  ];
+/** Never used in product UI — returns [] so fake hotels cannot appear in results. */
+function generateGenericHotels(_city) {
+  return [];
 }
 
-export function getHotelsForStop(city, answers) {
-  const key = normalizeCityKey(city);
-  const base = (PLACEHOLDER_HOTELS[key] || generateGenericHotels(city)).map(h => ({
-    propertyType: "hotel",
-    ...h,
-  }));
-  const lodgingPref = answers?.lodging;
-  const filtered = filterHotelsByPreference(base, lodgingPref);
-  const sorted = sortHotels(filtered, lodgingPref).slice(0, 3);
-  return applyHotelBadges(sorted, lodgingPref);
+/**
+ * Hotels for a stop — never returns placeholder/generic hotels.
+ * Live lodging comes from Places via LodgingCardsSection; callers should hide
+ * the lodging section when this is empty rather than showing fake properties.
+ */
+export function getHotelsForStop(_city, _answers) {
+  return [];
 }
 
 export function getRvParksForStop(_city) {

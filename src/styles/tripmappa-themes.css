@@ -518,9 +518,11 @@ body.theme-day,
 .app-wrap.day .timing-menu-fixed-item:hover { background: rgba(255,210,140,0.15) !important; }
 .app-wrap.day .timing-menu-fixed-item.active { background: rgba(255,210,140,0.25) !important; color: var(--gold-primary) !important; }
 .app-wrap.day .map-route-pill {
-  background: color-mix(in srgb, var(--color-plan-panel-bg) 94%, transparent) !important;
+  background: var(--color-plan-panel-bg, #FDF3E0) !important;
   border-color: var(--color-plan-panel-border) !important;
   box-shadow: 0 8px 32px rgba(58, 26, 8, 0.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .app-wrap.day .map-route-pill-label { color: rgba(26, 13, 0, 0.65) !important; }
 .app-wrap.day .map-route-pill-val { color: var(--color-tab-active-bg) !important; }
@@ -933,8 +935,10 @@ body.theme-day,
 .app-wrap.day .profile-view-wrap { background: #FDF3E0; color: var(--deep-dark); }
 .app-wrap.day .profile-card,
 .app-wrap.day .profile-stat-card {
-  background: rgba(255,255,255,0.85);
-  border-color: rgba(0,0,0,0.08);
+  background: #FDF3E0;
+  border-color: rgba(0,0,0,0.1);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .app-wrap.day .profile-stat-card:hover { border-color: rgba(255,180,80,0.4); }
 .app-wrap.day .profile-header-banner {
@@ -942,11 +946,29 @@ body.theme-day,
   border-bottom-color: rgba(0,0,0,0.06);
 }
 .app-wrap.day .profile-back-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
-.app-wrap.day .profile-tier-badge { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.55); border-color: rgba(0,0,0,0.1); }
-.app-wrap.day .profile-benefits-list { color: rgba(0,0,0,0.65); }
-.app-wrap.day .profile-trip-card { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.08); }
-.app-wrap.day .profile-input { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); color: var(--deep-dark); }
+.app-wrap.day .profile-tier-badge { background: rgba(0,0,0,0.08); color: rgba(26,13,0,0.85); border-color: rgba(0,0,0,0.12); }
+.app-wrap.day .profile-benefits-list { color: rgba(26,13,0,0.78); }
+.app-wrap.day .profile-member-since,
+.app-wrap.day .profile-generation-count,
+.app-wrap.day .profile-stat-label,
+.app-wrap.day .profile-plan-usage,
+.app-wrap.day .profile-plan-renewal,
+.app-wrap.day .profile-plan-col-title,
+.app-wrap.day .profile-plan-col-billed,
+.app-wrap.day .profile-plan-founder-note,
+.app-wrap.day .profile-trip-dest,
+.app-wrap.day .profile-trip-card-meta,
+.app-wrap.day .profile-empty-sub,
+.app-wrap.day .profile-empty-inline p,
+.app-wrap.day .profile-home-lead,
+.app-wrap.day .profile-settings-label,
+.app-wrap.day .billing-toggle-btn {
+  color: #6A4A2E !important;
+}
+.app-wrap.day .profile-trip-card { background: #FFF8EC; border-color: rgba(0,0,0,0.1); }
+.app-wrap.day .profile-input { background: #FFF8EC; border-color: rgba(0,0,0,0.12); color: var(--deep-dark); }
 .app-wrap.day .profile-btn-secondary { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
+.app-wrap.day .profile-btn-ghost { color: #6A4A2E; }
 
 .app-wrap.day .user-nav-menu-trigger { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }
 .app-wrap.day .user-nav-menu-dropdown { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); color: var(--deep-dark); }

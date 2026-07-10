@@ -4,9 +4,6 @@
  * See ROADMAP.md for phase status and conventions.
  */
 import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import { useJsApiLoader } from "@react-google-maps/api";
-import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "./lib/constants.js";
-import { applyMapThemeStyles } from "./lib/mapStyles.js";
 import {
   isTruckVehicle,
   isRvVehicle,
@@ -17,93 +14,50 @@ import {
 } from "./lib/vehicles.js";
 import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
-import { buildContinuousDriveTip, isContinuousDrive, OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
-import { generateTripPlan } from "./lib/apiClient.js";
-import {
-  buildClientCreditSnapshot,
-  buildGenerationPrepProgress,
-  createInitialGenerationProgress,
-  decrementCachedCreditStatus,
-} from "./lib/planTripStream.js";
-import { canStartTripGeneration, generationFailureMessage, isTripPlanComplete } from "./lib/generateTripFlow.js";
+import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
-import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
-import { persistAfterSuccessfulGeneration, writeBackPlanPreferencesSilently } from "./lib/postGenerationPersistence.js";
+import { stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
 import { configurePlacesAutocomplete, resolvePlaceFromAutocomplete } from "./lib/places.js";
-import { enrichGeneratedTrip, enrichPlacesLayer } from "./lib/tripEnrichment.js";
-import { createItineraryShareLink, loadSharedItinerary } from "./lib/itineraryShare.js";
-import { applySharePageMeta } from "./lib/itineraryShareApi.js";
 import { getItineraryOverview, isIncludedRoadStop } from "./lib/itineraryDays.js";
-import { copyToClipboard } from "./lib/copyToClipboard.js";
-import { buildPlacesContext, formatPlacesContextForPrompt, shouldPrefetchPlacesContext } from "./lib/placesContext.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
 import { stopsToMapMarkers } from "./lib/mapMarkers.js";
 import { useItinerarySync } from "./hooks/useItinerarySync.js";
-import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "./lib/tripMapSegments.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
-import { describePlanChanges, formatRegenerateDiffBlock } from "./lib/planSnapshotDiff.js";
-import { formatGenerationHints } from "./lib/tripConstraintsSummary.js";
-import { formatActionTipsBlock } from "./lib/tripTips.js";
-import { formatCollaborationHints } from "./lib/collaborationHints.js";
+import { describePlanChanges } from "./lib/planSnapshotDiff.js";
 import CollaborationPanel from "./components/CollaborationPanel.jsx";
-import { fetchTruckRoute, shouldUseTruckRouting, truckRestrictionsToTips, weighStationsToRoadStops } from "./lib/truckRoutingApi.js";
-import { deriveCitiesAlongRoute, parseCityStateFromFormattedAddress } from "./lib/routeCities.js";
-import { createAnswerChangeTracker, recordAnswerChange, formatAnswerConfidenceNotes, buildQuestionLabelMap } from "./lib/answerIntent.js";
+import { createAnswerChangeTracker, recordAnswerChange } from "./lib/answerIntent.js";
 import {
-  buildRecentTripsContext,
-  resolveAnswersWithFallback,
-  detectAnswerGaps,
-  formatGracefulDegradationNotes,
   fetchUserTripPreferences,
   recordUserStopPreferences,
-  buildFlowPrefillFromPreferences,
   mergeDisplayAnswers,
   stripUnconfirmedPrefillFromAnswers,
-  stripAnswersForSonnet,
 } from "./lib/generationContext.js";
 import { formatCreditsDisplay } from "./lib/creditsDisplay.js";
-import {
-  buildUserPatternSummary,
-  buildRecentTripsPreferencesRollup,
-  buildTravelerDossier,
-} from "./lib/tripHistoryAnalysis.js";
-import {
-  fetchIsoline,
-  pointInPolygon,
-  reverseGeocodeLatLng,
-  resolveHeroOriginCoords,
-} from "./lib/heroExplore.js";
+import { resolveHeroOriginCoords } from "./lib/heroExplore.js";
 import { roadStopKey, normalizeRoadStopEntry } from "./lib/roadStopKeys.js";
 import { useLiveTripTips } from "./hooks/useLiveTripTips.js";
 import { usePlanDraft, loadPlanDraft, clearPlanDraft } from "./hooks/usePlanDraft.js";
-import { useAuth } from "./context/AuthContext.jsx";
-import { deleteTrip, fetchTrips, migrateLocalTrips, saveTrip } from "./lib/tripsApi.js";
-import { fetchTripCredits } from "./lib/tripCreditsApi.js";
-import { TIERS, normalizeTier } from "./lib/tiers.js";
-import { runAccountOnboarding } from "./lib/accountOnboardingApi.js";
-import { captureReferralFromUrl, getStoredReferralCode, clearStoredReferralCode } from "./lib/referralCapture.js";
-import { dismissTrialEndedPrompt } from "./lib/trialApi.js";
+import { useShare } from "./hooks/useShare.js";
+import { useAppAuth, SIGNUP_GENERATE_LEAD } from "./hooks/useAppAuth.jsx";
+import { useMapState } from "./hooks/useMapState.js";
+import { useGeneration } from "./hooks/useGeneration.js";
+import { deleteTrip, saveTrip } from "./lib/tripsApi.js";
+import { TIERS } from "./lib/tiers.js";
 import { createPortalSession } from "./lib/stripeApi.js";
-import { fetchPlanPreferencesFull } from "./lib/planPreferencesApi.js";
 import {
-  LazyEmailModal,
   LazyFounderWelcomeOverlay,
   LazyGenerationStreamOverlay,
   LazyHomeAddressModal,
-  LazyOAuthComingSoonModal,
-  LazyPhoneModal,
   LazyReportIssueModal,
-  LazySignInModal,
   LazyUpgradeModal,
   LazyUserPreferencesPage,
 } from "./components/LazyModals.jsx";
 const LazyHeroExploreMap = lazy(() => import("./components/HeroExploreMap.jsx"));
-import { getDisplayName } from "./lib/avatarUtils.js";
 import { useTheme } from "./context/ThemeContext.jsx";
-import { fetchUserProfile, saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress, saveTravelerOnboarding } from "./lib/profileApi.js";
+import { saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
 import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
 import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
@@ -118,22 +72,14 @@ import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import PlanFlowActionDock from "./components/PlanFlowActionDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
-import { parseLiveShareToken } from "./lib/liveShareApi.js";
 import { resolveAppRoute } from "./lib/appRouter.js";
-import { sendSmsOtp, verifySmsOtp } from "./lib/phoneAuthApi.js";
 import Toast from "./components/Toast.jsx";
 import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
-import StopCardDemo from "./components/dev/StopCardDemo.jsx";
-
-const SIGNUP_GENERATE_LEAD = "Create a free account to get started — 3 trips on us.";
 
 export default function App() {
-  const stopCardsDemo = typeof window !== "undefined"
-    && new URLSearchParams(window.location.search).get("stopCards") === "1";
-  const { user, session, signUp, signIn, signOut, resetPassword, signInWithOAuth, setSessionFromTokens, updateEmail, updatePassword, isConfigured: isAuthConfigured, loading: authLoading } = useAuth();
   const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
   const [appMode, setAppMode] = useState("plan"); // "plan" | "navigate"
   const [tab, setTab] = useState("plan");
@@ -144,28 +90,12 @@ export default function App() {
   const [heroOriginError, setHeroOriginError] = useState("");
   const [heroDestError, setHeroDestError] = useState("");
   const [heroLaunching, setHeroLaunching] = useState(false);
-  const [exploreRangeEnabled, setExploreRangeEnabled] = useState(false);
-  const [exploreRangeDriveSeconds, setExploreRangeDriveSeconds] = useState(7200);
-  const [exploreRangePolygon, setExploreRangePolygon] = useState([]);
-  const [exploreRangeLoading, setExploreRangeLoading] = useState(false);
-  const [exploreRangeError, setExploreRangeError] = useState(null);
-  const [exploreOriginCoords, setExploreOriginCoords] = useState(null);
-  const exploreRangeAbortRef = useRef(null);
-  const [heroEmail, setHeroEmail] = useState("");
-  const [authModal, setAuthModal] = useState(null); // signin | signup | phone | oauth-*
-  const [authPhone, setAuthPhone] = useState("");
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [authModalLead, setAuthModalLead] = useState("");
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState(null);
   const [flowDockActions, setFlowDockActions] = useState(null);
-  const [mapStyle, setMapStyle] = useState("standard");
-  const [mapStyleOpen, setMapStyleOpen] = useState(false);
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
   const [reportText, setReportText] = useState("");
-  const [trafficAlert, setTrafficAlert] = useState(false);
   const [answers, setAnswers] = useState({});
   const [flowPrefill, setFlowPrefill] = useState({});
   const [continuousDriveConfirm, setContinuousDriveConfirm] = useState(null);
@@ -176,18 +106,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [lastTripPreview, setLastTripPreview] = useState(null);
-  const [shareViewMode, setShareViewMode] = useState(
-    () => Boolean(new URLSearchParams(window.location.search).get("share")),
-  );
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
   const [personalTouches, setPersonalTouches] = useState([]);
   const [changesMade, setChangesMade] = useState([]);
-  const [enrichingTrip, setEnrichingTrip] = useState(false);
-  const [enrichingPlaces, setEnrichingPlaces] = useState(false);
-  const [enrichmentLimited, setEnrichmentLimited] = useState(false);
-  const [enrichmentNoticeDismissed, setEnrichmentNoticeDismissed] = useState(false);
   const [planDraft, setPlanDraft] = useState(() => loadPlanDraft());
   const [roadStops, setRoadStops] = useState([]);
   const [tripFormat, setTripFormat] = useState(null);
@@ -195,31 +118,13 @@ export default function App() {
   const [selectedLodging, setSelectedLodging] = useState([]);
   const [tripAlerts, setTripAlerts] = useState([]);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
-  const [mapMarkers, setMapMarkers] = useState([]);
   const [customStops, setCustomStops] = useState([]);
   const [activitiesByCity, setActivitiesByCity] = useState({});
   const [restaurantsByCity, setRestaurantsByCity] = useState({});
   const [weatherByCity, setWeatherByCity] = useState({});
   const [routeOptimized, setRouteOptimized] = useState(false);
   const [optionalStopCards, setOptionalStopCards] = useState([]);
-  const [nightSegmentPaths, setNightSegmentPaths] = useState([]);
-  const [lowFuelSegmentPaths, setLowFuelSegmentPaths] = useState([]);
-  const [activeDayIndex, setActiveDayIndex] = useState(0);
-  const [mapFocusTarget, setMapFocusTarget] = useState(null);
   const [tripLegs, setTripLegs] = useState([]);
-  const [savedTrips, setSavedTrips] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
-  });
-  const savedTripsRef = useRef(savedTrips);
-  const [planGenerationCount, setPlanGenerationCount] = useState(0);
-  const [creditStatus, setCreditStatus] = useState(null);
-  const creditStatusRef = useRef(null);
-  const [creditsNeedRefresh, setCreditsNeedRefresh] = useState(0);
-  const [generationStream, setGenerationStream] = useState(null);
-  const foundingClaimAttemptedRef = useRef(false);
-  const trialPromptShownRef = useRef(false);
-  const [userProfile, setUserProfile] = useState(null);
-  const [userProfileLoaded, setUserProfileLoaded] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalReason, setUpgradeModalReason] = useState("trips");
   const [upgradeModalResetDate, setUpgradeModalResetDate] = useState(null);
@@ -229,270 +134,162 @@ export default function App() {
   const [showHomeAddressModal, setShowHomeAddressModal] = useState(false);
   const [navigateHomePending, setNavigateHomePending] = useState(false);
   const [returnedFromResults, setReturnedFromResults] = useState(false);
-  const [highlightedStopId, setHighlightedStopId] = useState(null);
-  const [liveSharingActive, setLiveSharingActive] = useState(false);
-  const [routeError, setRouteError] = useState(null);
-  const [tripUsedFallback, setTripUsedFallback] = useState(false);
-  const [generationError, setGenerationError] = useState(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [confirmDeleteTripId, setConfirmDeleteTripId] = useState(null);
   const [resultsBoundaryKey, setResultsBoundaryKey] = useState(0);
   const [planBoundaryKey, setPlanBoundaryKey] = useState(0);
   const [mapBoundaryKey, setMapBoundaryKey] = useState(0);
   const [savedPlanSnapshot, setSavedPlanSnapshot] = useState(null);
-  const [showCollabPanel, setShowCollabPanel] = useState(false);
-  const [activeCollaboration, setActiveCollaboration] = useState(null);
   const [activeTripId, setActiveTripId] = useState(null);
-  const collaborationHintsRef = useRef("");
-  const actionTipHintsRef = useRef("");
-  const [dismissedActionTipIds, setDismissedActionTipIds] = useState([]);
   const AppRoutePage = useMemo(() => resolveAppRoute(), []);
-  const liveShareToken = useMemo(() => parseLiveShareToken(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
-  const [founderWelcomeName, setFounderWelcomeName] = useState(null);
-  const planPreferencesRef = useRef({});
-  const highlightTimerRef = useRef(null);
+  const { theme } = useTheme();
+  const toastFnRef = useRef(null);
 
-  function applyCreditStatus(next) {
-    creditStatusRef.current = next;
-    setCreditStatus(next);
-  }
+  const {
+    user,
+    session,
+    updateEmail,
+    updatePassword,
+    isAuthConfigured,
+    authLoading,
+    heroEmail,
+    setHeroEmail,
+    authModal,
+    setAuthModal,
+    authModalLead,
+    setAuthModalLead,
+    savedTrips,
+    savedTripsRef,
+    applySavedTrips,
+    prependSavedTrip,
+    planGenerationCount,
+    creditStatus,
+    creditStatusRef,
+    applyCreditStatus,
+    setCreditsNeedRefresh,
+    refreshCredits,
+    userProfile,
+    setUserProfile,
+    userProfileLoaded,
+    founderWelcomeName,
+    setFounderWelcomeName,
+    planPreferencesRef,
+    applyPlanPreferencesSaved,
+    openAuthModal,
+    closeAuthModal,
+    renderAuthModals,
+    handleSignOut,
+    buildFlowPrefillForUser,
+    handleTravelerOnboardingComplete,
+  } = useAppAuth({
+    toastFnRef,
+    theme,
+    view,
+    setView,
+    setHomeAddress,
+    setShowUpgradeModal,
+    setUpgradeModalReason,
+    setFlowPrefill,
+    setActiveTripId,
+    convoComplete,
+    generated,
+    questionHistory,
+  });
 
-  function applySavedTrips(next) {
-    savedTripsRef.current = next;
-    setSavedTrips(next);
-  }
+  const itinerarySyncRef = useRef(null);
 
-  function prependSavedTrip(saved) {
-    if (saved?.id) setActiveTripId(saved.id);
-    applySavedTrips([saved, ...savedTripsRef.current.filter(t => t.id !== saved.id)]);
-  }
-
-  function applyPlanPreferencesSaved(prefs, meta) {
-    planPreferencesRef.current = prefs || {};
-    if (meta?.generation_count != null) {
-      setPlanGenerationCount(Number(meta.generation_count) || 0);
-    }
-  }
-
-  function openAuthModal(mode, { lead } = {}) {
-    setAuthError("");
-    setAuthModalLead(lead || "");
-    setAuthModal(mode);
-  }
-
-  function closeAuthModal() {
-    setAuthModal(null);
-    setAuthModalLead("");
-  }
-
-  async function handleOAuth(provider) {
-    setAuthError("");
-    if (!isAuthConfigured) {
-      openAuthModal(`oauth-${provider}`);
-      return;
-    }
-    setAuthBusy(true);
-    try {
-      await signInWithOAuth(provider);
-    } catch (err) {
-      setAuthBusy(false);
-      setAuthError(err.message || `${provider} sign in failed`);
-      openAuthModal(`oauth-${provider}`);
-    }
-  }
-
-  async function handleEmailSignUp({ email, password }) {
-    if (!email?.trim()) {
-      setAuthError("Enter your email");
-      return;
-    }
-    if (!password || password.length < 8) {
-      setAuthError("Password must be at least 8 characters");
-      return;
-    }
-    if (!isAuthConfigured) {
-      toast_("Auth is not configured — add Supabase env vars");
-      return;
-    }
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      const { session } = await signUp(email, password);
-      if (session) {
-        toast_("Welcome to TripMappa!", true);
-        setAuthModal(null);
-        setAuthModalLead("");
-        refreshCredits();
-      } else {
-        toast_("Check your email to confirm your account", true);
-        setAuthModal(null);
-      }
-    } catch (err) {
-      setAuthError(err.message || "Sign up failed");
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handleSignInSubmit({ email, password }) {
-    if (!email?.trim() || !password) {
-      setAuthError("Enter email and password");
-      return;
-    }
-    if (!isAuthConfigured) {
-      toast_("Auth is not configured — add Supabase env vars");
-      return;
-    }
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      await signIn(email, password);
-      toast_("Signed in", true);
-      setAuthModal(null);
-      setAuthModalLead("");
-      refreshCredits();
-    } catch (err) {
-      setAuthError(err.message || "Sign in failed");
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handleForgotPassword(email) {
-    if (!email?.trim()) {
-      toast_("Enter your email first");
-      return;
-    }
-    if (!isAuthConfigured) {
-      toast_("Auth is not configured — add Supabase env vars");
-      return;
-    }
-    try {
-      await resetPassword(email);
-      toast_("Password reset email sent — check your inbox", true);
-    } catch (err) {
-      toast_(err.message || "Could not send reset email");
-    }
-  }
-
-  async function handlePhoneSendCode(phone) {
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      await sendSmsOtp(phone);
-      setAuthPhone(phone);
-      toast_("Verification code sent", true);
-      return true;
-    } catch (err) {
-      setAuthError(err.message || "Could not send code");
-      return false;
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handlePhoneVerify(phone, code) {
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      const session = await verifySmsOtp(phone, code);
-      await setSessionFromTokens({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-      });
-      toast_("Signed in", true);
-      setAuthModal(null);
-      setAuthPhone("");
-    } catch (err) {
-      setAuthError(err.message || "Could not verify code");
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
-  async function handlePhoneResend(phone) {
-    return handlePhoneSendCode(phone);
-  }
-
-  function openLazyPhoneModal() {
-    setAuthError("");
-    setAuthPhone("");
-    setAuthModal("phone");
-  }
-
-  function renderAuthModals() {
-    return (
-      <>
-        {authModal === "signup" && (
-          <LazyEmailModal
-            email={heroEmail}
-            onEmailChange={setHeroEmail}
-            onClose={closeAuthModal}
-            onSignUp={handleEmailSignUp}
-            onSwitchToSignIn={() => openAuthModal("signin")}
-            onContinueWithPhone={() => { closeAuthModal(); openLazyPhoneModal(); }}
-            onGoogle={() => handleOAuth("google")}
-            onFacebook={() => handleOAuth("facebook")}
-            onApple={() => handleOAuth("apple")}
-            loading={authBusy}
-            error={authError}
-            lead={authModalLead}
-            theme={theme}
-          />
-        )}
-        {authModal === "phone" && (
-          <LazyPhoneModal
-            onClose={() => { setAuthModal(null); setAuthPhone(""); setAuthError(""); }}
-            onSendCode={handlePhoneSendCode}
-            onVerifyCode={handlePhoneVerify}
-            onResendCode={handlePhoneResend}
-            initialPhone={authPhone}
-            loading={authBusy}
-            error={authError}
-            theme={theme}
-          />
-        )}
-        {authModal === "signin" && (
-          <LazySignInModal
-            onClose={() => setAuthModal(null)}
-            onSignIn={handleSignInSubmit}
-            onForgotPassword={handleForgotPassword}
-            onSwitchToSignup={() => openAuthModal("signup")}
-            onContinueWithPhone={() => { setAuthModal(null); openLazyPhoneModal(); }}
-            onGoogle={() => handleOAuth("google")}
-            onFacebook={() => handleOAuth("facebook")}
-            onApple={() => handleOAuth("apple")}
-            loading={authBusy}
-            error={authError}
-            theme={theme}
-          />
-        )}
-        {!isAuthConfigured && authModal?.startsWith("oauth-") && (
-          <LazyOAuthComingSoonModal
-            provider={authModal.replace("oauth-", "")}
-            onClose={() => setAuthModal(null)}
-            onUseEmail={() => openAuthModal("signup")}
-            theme={theme}
-          />
-        )}
-      </>
-    );
-  }
-
-  async function handleSignOut() {
-    intentionalSignOutRef.current = true;
-    try {
-      await signOut();
-      setView("hero");
-      setUserProfile(null);
-      applyCreditStatus(null);
-      toast_("Signed out");
-    } catch (err) {
-      intentionalSignOutRef.current = false;
-      toast_(err.message || "Could not sign out");
-    }
-  }
+  const {
+    isLoaded,
+    exploreRangeEnabled,
+    setExploreRangeEnabled,
+    exploreRangeDriveSeconds,
+    setExploreRangeDriveSeconds,
+    exploreRangePolygon,
+    setExploreRangePolygon,
+    exploreRangeLoading,
+    setExploreRangeLoading,
+    exploreRangeError,
+    setExploreRangeError,
+    exploreOriginCoords,
+    setExploreOriginCoords,
+    exploreRangeAbortRef,
+    mapStyle,
+    setMapStyle,
+    mapStyleOpen,
+    setMapStyleOpen,
+    trafficAlert,
+    setTrafficAlert,
+    mapMarkers,
+    setMapMarkers,
+    nightSegmentPaths,
+    setNightSegmentPaths,
+    lowFuelSegmentPaths,
+    setLowFuelSegmentPaths,
+    activeDayIndex,
+    setActiveDayIndex,
+    mapFocusTarget,
+    setMapFocusTarget,
+    highlightedStopId,
+    setHighlightedStopId,
+    routeError,
+    setRouteError,
+    highlightTimerRef,
+    routeInfo,
+    setRouteInfo,
+    routePath,
+    setRoutePath,
+    truckRoutePath,
+    setTruckRoutePath,
+    directionsResult,
+    setDirectionsResult,
+    routeLoading,
+    setRouteLoading,
+    mapCenter,
+    originRef,
+    destRef,
+    heroOriginRef,
+    heroDestRef,
+    heroOriginAcRef,
+    heroDestAcRef,
+    navigateOriginRef,
+    navigateDestRef,
+    mapRef,
+    polylineRef,
+    polylinesRef,
+    polylineAnimRef,
+    mapReady,
+    setMapReady,
+    fetchDirections,
+    fetchRouteBetween,
+    highlightStop,
+    handleMapMarkerSelect,
+    recenterMap,
+    clearExploreRange,
+    loadExploreRangeIsoline,
+    handleExploreRangeToggle,
+    handleExploreRangeDriveTimeChange,
+    applyExploreRangeDestination,
+    handleExploreRangeMapClick,
+    handleExploreRangePlaceSelect,
+    focusMapOnStop,
+    getDepartureTime,
+  } = useMapState({
+    answers,
+    origin,
+    dest,
+    setOrigin,
+    setDest,
+    timingMode,
+    arriveByDate,
+    theme,
+    toastFnRef,
+    view,
+    tab,
+    generated,
+    tripLegs,
+    itinerarySyncRef,
+  });
 
   function buildTripSavePayload() {
     return {
@@ -551,602 +348,74 @@ export default function App() {
   const [toastIsError, setToastIsError] = useState(false);
   const [toastAction, setToastAction] = useState(null);
   const toastTimerRef = useRef(null);
-  const generateAbortRef = useRef(null);
-  const generateTripInFlightRef = useRef(false);
-  const enrichAbortRef = useRef(null);
-  const placesEnrichAbortRef = useRef(null);
-  const placesEnrichmentPendingRef = useRef(false);
-  const placesEnrichmentContextRef = useRef(null);
-  const hadUserRef = useRef(false);
-  const intentionalSignOutRef = useRef(false);
-  const sessionExpiredNotifiedRef = useRef(false);
   const panelDragStartY = useRef(null);
   const panelDragMoved = useRef(false);
   const [modal, setModal] = useState(null);
-  const { theme } = useTheme();
   const [enterAnim, setEnterAnim] = useState(false);
   const [cardCollapsed, setCardCollapsed] = useState(false);
   const [stepAnim, setStepAnim] = useState(null); // { answer, phase: 'selected' | 'exit' }
   const stepAnimTimer = useRef(null);
   const helpWrapRef = useRef(null);
 
-  useEffect(() => {
-    if (authLoading) return undefined;
-    if (!user) {
-      try {
-        applySavedTrips(JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"));
-      } catch {
-        applySavedTrips([]);
-      }
-      return undefined;
-    }
-
-    setAuthModal(null);
-    setAuthBusy(false);
-
-    let cancelled = false;
-    (async () => {
-      try {
-        await migrateLocalTrips(user.id);
-        const trips = await fetchTrips(user.id);
-        if (!cancelled) applySavedTrips(trips);
-      } catch (err) {
-        console.warn("Could not load saved trips:", err);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [user?.id, authLoading]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (user) {
-      hadUserRef.current = true;
-      sessionExpiredNotifiedRef.current = false;
-      return;
-    }
-    if (hadUserRef.current && !intentionalSignOutRef.current && !sessionExpiredNotifiedRef.current) {
-      sessionExpiredNotifiedRef.current = true;
-      toast_("Your session expired — please sign in again", {
-        actionLabel: "Sign In",
-        onAction: () => openAuthModal("signin"),
-        duration: 8000,
-      });
-    }
-    intentionalSignOutRef.current = false;
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (user?.id && session?.access_token) {
-      if (typeof window !== "undefined" && window.__TRIPMAPPA_E2E_AUTH__) {
-        applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 });
-        setUserProfile({ onboarding_complete: true, tier: "wanderer" });
-        setUserProfileLoaded(true);
-        return;
-      }
-      setUserProfileLoaded(false);
-      fetchTripCredits(session.access_token)
-        .then(applyCreditStatus)
-        .catch(() => applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 }));
-      fetchUserProfile(user.id)
-        .then(profile => {
-          if (profile?.home_address) setHomeAddress(profile.home_address);
-          setUserProfile(profile);
-          setUserProfileLoaded(true);
-        })
-        .catch(() => {
-          setUserProfile(null);
-          setUserProfileLoaded(true);
-        });
-    } else {
-      applyCreditStatus(null);
-      setUserProfile(null);
-      setUserProfileLoaded(true);
-      const guestHome = getGuestHomeAddress();
-      if (guestHome) setHomeAddress(guestHome);
-    }
-  }, [user?.id, session?.access_token, authLoading, creditsNeedRefresh]);
-
-  useEffect(() => {
-    captureReferralFromUrl();
-  }, []);
-
-  useEffect(() => {
-    if (!user?.id || !session?.access_token) {
-      planPreferencesRef.current = {};
-      setPlanGenerationCount(0);
-      return undefined;
-    }
-    let cancelled = false;
-    fetchPlanPreferencesFull(session.access_token)
-      .then(({ preferences, meta }) => {
-        if (!cancelled) {
-          applyPlanPreferencesSaved(preferences, meta);
-          if (userProfileLoaded && userProfile?.onboarding_complete === true
-            && !convoComplete && !generated && questionHistory.length === 0) {
-            buildFlowPrefillForUser().then(setFlowPrefill);
-          }
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          planPreferencesRef.current = {};
-          setPlanGenerationCount(0);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [user?.id, session?.access_token, userProfileLoaded, userProfile?.traveler_profile, userProfile?.onboarding_complete]);
-
-  async function buildFlowPrefillForUser() {
-    let tripPrefs = null;
-    if (user?.id && session?.access_token) {
-      try {
-        tripPrefs = await fetchUserTripPreferences(session.access_token);
-      } catch {
-        tripPrefs = null;
-      }
-    }
-    return buildFlowPrefillFromPreferences(
-      planPreferencesRef.current,
-      tripPrefs,
-      userProfile?.traveler_profile,
-    );
-  }
-
-  async function handleTravelerOnboardingComplete(travelerProfile) {
-    if (!user?.id) return;
-    try {
-      const profile = await saveTravelerOnboarding(user.id, travelerProfile);
-      setUserProfile(profile);
-      if (!convoComplete && !generated && questionHistory.length === 0) {
-        let tripPrefs = null;
-        if (session?.access_token) {
-          try {
-            tripPrefs = await fetchUserTripPreferences(session.access_token);
-          } catch {
-            tripPrefs = null;
-          }
-        }
-        setFlowPrefill(buildFlowPrefillFromPreferences(
-          planPreferencesRef.current,
-          tripPrefs,
-          profile?.traveler_profile,
-        ));
-      }
-    } catch (err) {
-      console.warn("traveler onboarding save failed:", err);
-      toast_("Could not save your preferences — you can set them later in your profile.", { isError: true });
-    }
-  }
-
-  useEffect(() => {
-    foundingClaimAttemptedRef.current = false;
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (authLoading || !user?.id || !session?.access_token) return undefined;
-    if (foundingClaimAttemptedRef.current) return undefined;
-    foundingClaimAttemptedRef.current = true;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const refCode = getStoredReferralCode();
-        const result = await runAccountOnboarding(session.access_token, { refCode });
-        if (cancelled) return;
-        if (result.credits) applyCreditStatus(result.credits);
-        const profile = await fetchUserProfile(user.id);
-        if (!cancelled && profile) setUserProfile(profile);
-
-        if (result.referral?.applied) {
-          clearStoredReferralCode();
-          toast_("Referral applied. You both received one free month of Voyager.", true);
-        }
-        if (
-          result.credits?.tier === "trailblazer"
-          && profile
-          && !profile.founder_expires_at
-          && !profile.trailblazer_trial_ends_at
-          && !result.trialStarted
-        ) {
-          toast_("Admin access enabled. You have permanent Trailblazer.", true);
-        } else if (result.founder?.claimed && !result.founder?.already) {
-          const welcomeName = getDisplayName(user, profile).split(" ")[0] || "Explorer";
-          setFounderWelcomeName(welcomeName);
-        } else if (result.trialStarted) {
-          toast_("Your 7-day Trailblazer trial has started.", true);
-        }
-      } catch {
-        /* onboarding optional when DB or slots unavailable */
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [authLoading, user?.id, session?.access_token]);
-
-  useEffect(() => {
-    trialPromptShownRef.current = false;
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (authLoading || !user?.id || !session?.access_token) return undefined;
-    if (!creditStatus?.showTrialEndedPrompt || trialPromptShownRef.current) return undefined;
-
-    trialPromptShownRef.current = true;
-    setUpgradeModalReason("trial-ended");
-    setShowUpgradeModal(true);
-    dismissTrialEndedPrompt(session.access_token)
-      .then(() => setCreditsNeedRefresh(n => n + 1))
-      .catch(() => {});
-
-    return undefined;
-  }, [authLoading, user?.id, session?.access_token, creditStatus?.showTrialEndedPrompt]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    const params = new URLSearchParams(window.location.search);
-    const success = params.get("success");
-    if (success !== "1" && success !== "true") return undefined;
-
-    params.delete("success");
-    const remainder = params.toString();
-    const cleanUrl = `${window.location.pathname}${remainder ? `?${remainder}` : ""}${window.location.hash}`;
-    window.history.replaceState({}, "", cleanUrl);
-
-    setCreditsNeedRefresh(n => n + 1);
-    setShowUpgradeModal(false);
-
-    if (authLoading) return undefined;
-
-    if (user?.id && session?.access_token) {
-      fetchTripCredits(session.access_token)
-        .then(credits => {
-          applyCreditStatus(credits);
-          const paidTier = normalizeTier(credits?.storedTier ?? credits?.tier);
-          if (paidTier === TIERS.VOYAGER) {
-            toast_("Welcome to TripMappa Voyager.", true);
-          } else if (paidTier === TIERS.TRAILBLAZER) {
-            toast_("Welcome to TripMappa Trailblazer.", true);
-          }
-        })
-        .catch(() => {});
-      fetchUserProfile(user.id)
-        .then(profile => {
-          if (profile) setUserProfile(profile);
-        })
-        .catch(() => {});
-    }
-    return undefined;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, user?.id, session?.access_token]);
-
-  useEffect(() => {
-    if (view === "profile" && !authLoading && !user) {
-      setView("app");
-      openAuthModal("signin");
-    }
-  }, [view, user, authLoading]);
-
-  // ── Google Maps ──
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
-    libraries: GOOGLE_LIBRARIES,
-  });
-  const [routeInfo, setRouteInfo] = useState(null);
-  const [routePath, setRoutePath] = useState(null);
-  const [truckRoutePath, setTruckRoutePath] = useState(null);
-  const [directionsResult, setDirectionsResult] = useState(null);
   const answerChangeCountsRef = useRef(createAnswerChangeTracker());
   const reAnswerFromEditRef = useRef(false);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const mapCenter = { lat: 37.0902, lng: -95.7129 };
-  const originRef = useRef(null);
-  const destRef = useRef(null);
-  const heroOriginRef = useRef(null);
-  const heroDestRef = useRef(null);
-  const heroOriginAcRef = useRef(null);
-  const heroDestAcRef = useRef(null);
-  const navigateOriginRef = useRef(null);
-  const navigateDestRef = useRef(null);
-  const mapRef = useRef(null);
-  const polylineRef = useRef(null);
-  const polylinesRef = useRef([]);
-  const polylineAnimRef = useRef(null);
-  const [mapReady, setMapReady] = useState(false);
-
-  const directionsFetchRef = useRef(null);
   const answersRef = useRef(answers);
   answersRef.current = answers;
   const questionHistoryRef = useRef(questionHistory);
   questionHistoryRef.current = questionHistory;
-  const toastFnRef = useRef(null);
+  const generateTripRef = useRef(null);
+  const openAuthModalRef = useRef(null);
+  openAuthModalRef.current = openAuthModal;
 
-  const fetchDirections = useCallback((vehicleType) => {
-    const originVal = originRef.current?.value?.trim() || origin?.trim();
-    const destVal = destRef.current?.value?.trim() || dest?.trim();
-    if (!originVal || !destVal) return Promise.resolve({ ok: false });
+  const {
+    shareViewMode,
+    setShareViewMode,
+    liveSharingActive,
+    setLiveSharingActive,
+    liveShareToken,
+    showCollabPanel,
+    setShowCollabPanel,
+    activeCollaboration,
+    setActiveCollaboration,
+    collaborationHintsRef,
+    handleShareItinerary,
+    handleOpenCollaborate,
+    handleRegenerateWithGroup,
+    tripCollabSnapshot,
+  } = useShare({
+    user,
+    session,
+    openAuthModal: (mode, opts) => openAuthModalRef.current?.(mode, opts),
+    toastFnRef,
+    generateTripRef,
+    origin,
+    dest,
+    stops,
+    roadStops,
+    tripTips,
+    answers,
+    routeInfo,
+    selectedLodging,
+    personalTouches,
+    changesMade,
+    setView,
+    setOrigin,
+    setDest,
+    setStops,
+    setRoadStops,
+    setTripTips,
+    setPersonalTouches,
+    setChangesMade,
+    setAnswers,
+    setSelectedLodging,
+    setRouteInfo,
+    setGenerated,
+    setResultsView,
+    setConvoComplete,
+    setTab,
+    setMapMarkers,
+  });
 
-    const vehicle = vehicleType || answers.vehicle || "Car";
-
-    if (shouldUseTruckRouting({ ...answers, vehicle })) {
-      setRouteLoading(true);
-      setTrafficAlert(false);
-      const requestKey = `truck|${originVal}|${destVal}|${vehicle}|${answers.truck_height}|${answers.truck_weight}|${answers.truck_hazmat}`;
-      if (directionsFetchRef.current?.key === requestKey) {
-        return directionsFetchRef.current.promise;
-      }
-
-      const promise = fetchTruckRoute(originVal, destVal, { ...answers, vehicle })
-        .then(async (data) => {
-          setRouteLoading(false);
-          setRouteError(null);
-          const restrictions = data.restrictions || [];
-          if (restrictions.some(r => r.severity === "warning" || r.severity === "critical")) {
-            setTrafficAlert(true);
-          }
-
-          const routePoints = data.routePoints || [];
-          const citiesAlongRoute = await deriveCitiesAlongRoute(routePoints, {
-            origin: originVal,
-            destination: destVal,
-            distance: data.distance,
-          });
-          const nextRouteInfo = {
-            distance: data.distance,
-            duration: data.duration,
-            start: originVal.split(",")[0],
-            end: destVal.split(",")[0],
-            origin: originVal,
-            destination: destVal,
-            originLat: routePoints[0]?.lat,
-            originLng: routePoints[0]?.lng,
-            destLat: routePoints[routePoints.length - 1]?.lat,
-            destLng: routePoints[routePoints.length - 1]?.lng,
-            citiesAlongRoute,
-            routePoints,
-            vehicleType: vehicle,
-            timingMode,
-            arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
-            scenic: isScenicRoute(answers),
-            truckSafe: true,
-            rvSafe: false,
-            routeProvider: "here",
-            truckHeight: answers.truck_height,
-            truckWeight: answers.truck_weight,
-            truckHazmat: answers.truck_hazmat,
-            restrictions,
-            weighStations: data.weighStations || [],
-            herePolyline: data.polyline,
-          };
-
-          setRouteInfo(nextRouteInfo);
-          setOrigin(originVal);
-          setDest(destVal);
-          setTruckRoutePath(routePoints);
-          setRoutePath(routePoints);
-          setDirectionsResult(null);
-
-          if (mapRef.current && routePoints.length > 1) {
-            const bounds = new window.google.maps.LatLngBounds();
-            routePoints.forEach(p => bounds.extend(p));
-            mapRef.current.fitBounds(bounds, { padding: 60 });
-          }
-
-          return { ok: true, routeInfo: nextRouteInfo };
-        })
-        .catch((err) => {
-          setRouteLoading(false);
-          const msg = err.message || "Could not calculate truck route. Check addresses and try again.";
-          setRouteError(msg);
-          setRouteInfo(null);
-          setRoutePath(null);
-          setTruckRoutePath(null);
-          setDirectionsResult(null);
-          toast_(msg, { duration: 7000 });
-          return { ok: false };
-        });
-
-      directionsFetchRef.current = { key: requestKey, promise };
-      promise.finally(() => {
-        if (directionsFetchRef.current?.key === requestKey) {
-          directionsFetchRef.current = null;
-        }
-      });
-      return promise;
-    }
-
-    if (!window.google) return Promise.resolve({ ok: false });
-    setRouteLoading(true);
-    setTrafficAlert(false);
-
-    const scenic = isScenicRoute(answers);
-    const routeRequest = {
-      origin: originVal,
-      destination: destVal,
-      travelMode: window.google.maps.TravelMode.DRIVING,
-    };
-
-    if (timingMode === "leave_now") {
-      routeRequest.drivingOptions = {
-        departureTime: new Date(),
-        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
-      };
-    } else if (timingMode === "arrive_by" && arriveByDate) {
-      routeRequest.drivingOptions = {
-        arrivalTime: new Date(arriveByDate),
-        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
-      };
-    }
-
-    if (isTruckVehicle(vehicle)) {
-      routeRequest.avoidFerries = true;
-      routeRequest.provideRouteAlternatives = true;
-    } else if (isRvVehicle(vehicle)) {
-      routeRequest.avoidFerries = true;
-      routeRequest.provideRouteAlternatives = true;
-    }
-
-    if (scenic || hasPref(answers, "Avoid highways")) routeRequest.avoidHighways = true;
-    if (hasPref(answers, "Avoid tolls")) routeRequest.avoidTolls = true;
-    if (isTowingSelected(answers)) {
-      routeRequest.avoidHighways = true;
-      routeRequest.provideRouteAlternatives = true;
-      routeRequest.avoidFerries = true;
-    }
-
-    const service = new window.google.maps.DirectionsService();
-    const requestKey = `${originVal}|${destVal}|${vehicle}|${timingMode}|${arriveByDate || ""}|${scenic}`;
-    if (directionsFetchRef.current?.key === requestKey) {
-      return directionsFetchRef.current.promise;
-    }
-
-    const promise = new Promise((resolve) => {
-      service.route(routeRequest, (result, status) => {
-        setRouteLoading(false);
-        if (status === "OK") {
-          setRouteError(null);
-          const route = result.routes[0];
-          const leg = route.legs[0];
-          const warnings = route.warnings || [];
-          const hasTrafficDelay = warnings.some(w => /traffic|delay|congestion|slow/i.test(w))
-            || route.legs.some(l => l.duration_in_traffic && l.duration_in_traffic.value > l.duration.value * 1.08);
-          if (warnings.length > 0 || hasTrafficDelay) setTrafficAlert(true);
-
-          const citiesAlongRoute = [];
-          route.legs[0].steps.forEach(step => {
-            if (!step.end_address) return;
-            const cityState = parseCityStateFromFormattedAddress(step.end_address);
-            if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
-          });
-
-          const nextRouteInfo = {
-            distance: leg.distance.text,
-            duration: leg.duration.text,
-            start: leg.start_address.split(",")[0],
-            end: leg.end_address.split(",")[0],
-            origin: originVal,
-            destination: destVal,
-            originLat: typeof leg.start_location.lat === "function" ? leg.start_location.lat() : leg.start_location.lat,
-            originLng: typeof leg.start_location.lng === "function" ? leg.start_location.lng() : leg.start_location.lng,
-            destLat: typeof leg.end_location.lat === "function" ? leg.end_location.lat() : leg.end_location.lat,
-            destLng: typeof leg.end_location.lng === "function" ? leg.end_location.lng() : leg.end_location.lng,
-            citiesAlongRoute: citiesAlongRoute.slice(0, 15),
-            routePoints: route.overview_path.map(p => ({
-              lat: typeof p.lat === "function" ? p.lat() : p.lat,
-              lng: typeof p.lng === "function" ? p.lng() : p.lng,
-            })),
-            vehicleType: vehicle,
-            timingMode,
-            arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
-            scenic,
-            truckSafe: isTruckVehicle(vehicle),
-            rvSafe: isRvVehicle(vehicle),
-            truckHeight: answers.truck_height,
-            truckWeight: answers.truck_weight,
-            truckHazmat: answers.truck_hazmat,
-            rvHeight: answers.rv_height,
-            rvWeight: answers.rv_weight,
-            rvTowing: answers.rv_towing,
-          };
-          setRouteInfo(nextRouteInfo);
-          setOrigin(originVal);
-          setDest(destVal);
-          setRoutePath(route.overview_path);
-          setTruckRoutePath(null);
-          setDirectionsResult(result);
-
-          if (mapRef.current) {
-            const bounds = new window.google.maps.LatLngBounds();
-            route.legs[0].steps.forEach(step => {
-              bounds.extend(step.start_location);
-              bounds.extend(step.end_location);
-            });
-            mapRef.current.fitBounds(bounds, { padding: 60 });
-          }
-          resolve({ ok: true, routeInfo: nextRouteInfo });
-        } else {
-          const msg = status === "ZERO_RESULTS"
-            ? "No driving route found between these places."
-            : status === "NOT_FOUND"
-              ? "Could not find one or both addresses."
-              : "Could not calculate route. Check addresses and try again.";
-          setRouteError(msg);
-          setRouteInfo(null);
-          setRoutePath(null);
-          setTruckRoutePath(null);
-          setDirectionsResult(null);
-          toast_(msg, { duration: 7000 });
-          resolve({ ok: false });
-        }
-      });
-    });
-    directionsFetchRef.current = { key: requestKey, promise };
-    promise.finally(() => {
-      if (directionsFetchRef.current?.key === requestKey) {
-        directionsFetchRef.current = null;
-      }
-    });
-    return promise;
-  }, [timingMode, arriveByDate, answers, origin, dest]);
-
-  const fetchRouteBetween = useCallback((originVal, destVal) => {
-    if (!originVal || !destVal || !window.google) return Promise.resolve(false);
-    setRouteLoading(true);
-    setTrafficAlert(false);
-
-    const routeRequest = {
-      origin: originVal,
-      destination: destVal,
-      travelMode: window.google.maps.TravelMode.DRIVING,
-      drivingOptions: {
-        departureTime: new Date(),
-        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
-      },
-    };
-
-    const service = new window.google.maps.DirectionsService();
-    return new Promise((resolve) => {
-      service.route(routeRequest, (result, status) => {
-        setRouteLoading(false);
-        if (status === "OK") {
-          const route = result.routes[0];
-          const leg = route.legs[0];
-          setRouteInfo({
-            distance: leg.distance.text,
-            duration: leg.duration.text,
-            start: leg.start_address.split(",")[0],
-            end: leg.end_address.split(",")[0],
-            origin: originVal,
-            destination: destVal,
-            originLat: typeof leg.start_location.lat === "function" ? leg.start_location.lat() : leg.start_location.lat,
-            originLng: typeof leg.start_location.lng === "function" ? leg.start_location.lng() : leg.start_location.lng,
-            destLat: typeof leg.end_location.lat === "function" ? leg.end_location.lat() : leg.end_location.lat,
-            destLng: typeof leg.end_location.lng === "function" ? leg.end_location.lng() : leg.end_location.lng,
-            routePoints: route.overview_path.map(p => ({
-              lat: typeof p.lat === "function" ? p.lat() : p.lat,
-              lng: typeof p.lng === "function" ? p.lng() : p.lng,
-            })),
-            vehicleType: "Car",
-            timingMode: "leave_now",
-          });
-          setRoutePath(route.overview_path);
-          setDirectionsResult(result);
-          if (mapRef.current) {
-            const bounds = new window.google.maps.LatLngBounds();
-            route.legs[0].steps.forEach(step => {
-              bounds.extend(step.start_location);
-              bounds.extend(step.end_location);
-            });
-            mapRef.current.fitBounds(bounds, { padding: 60 });
-          }
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      });
-    });
-  }, []);
 
   function formatCreditsLabel(status) {
     return formatCreditsDisplay(status).label;
@@ -1246,14 +515,6 @@ export default function App() {
     liveSharingActive,
     fallbackTips: tripTips,
   });
-
-  function refreshCredits() {
-    if (user && session?.access_token) {
-      fetchTripCredits(session.access_token).then(applyCreditStatus).catch(() => {});
-    } else {
-      applyCreditStatus(null);
-    }
-  }
 
   function openPlanPanel() {
     setView("app");
@@ -1494,65 +755,6 @@ export default function App() {
     scrollPlanToTop();
   }
 
-  function highlightStop(stopId) {
-    if (!stopId) return;
-    setHighlightedStopId(stopId);
-    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
-    highlightTimerRef.current = setTimeout(() => setHighlightedStopId(null), 2000);
-  }
-
-  function handleMapMarkerSelect(marker) {
-    if (!marker?.id) return;
-    const stopId = marker.waypointId || marker.id;
-    if (generated && itinerarySync.itineraryWaypoints.length) {
-      itinerarySync.handleMarkerSelect(marker);
-      highlightStop(stopId);
-      return;
-    }
-    let legacyId = stopId;
-    if (legacyId.startsWith("stop-")) {
-      legacyId = `overnight-${legacyId.replace("stop-", "")}`;
-    }
-    highlightStop(legacyId);
-  }
-
-  const recenterMap = useCallback(() => {
-    if (!mapRef.current || !window.google) return;
-    const bounds = new window.google.maps.LatLngBounds();
-    let hasBounds = false;
-
-    if (directionsResult?.routes?.[0]?.legs) {
-      directionsResult.routes[0].legs.forEach(leg => {
-        leg.steps.forEach(step => {
-          bounds.extend(step.start_location);
-          bounds.extend(step.end_location);
-          hasBounds = true;
-        });
-      });
-    } else if (truckRoutePath?.length) {
-      truckRoutePath.forEach(p => { bounds.extend(p); hasBounds = true; });
-    } else if (routePath?.length) {
-      routePath.forEach(p => {
-        bounds.extend(typeof p.lat === "function" ? { lat: p.lat(), lng: p.lng() } : p);
-        hasBounds = true;
-      });
-    } else if (routeInfo?.routePoints?.length) {
-      routeInfo.routePoints.forEach(p => { bounds.extend(p); hasBounds = true; });
-    }
-
-    mapMarkers.forEach(m => {
-      if (m?.lat != null && m?.lng != null) {
-        bounds.extend({ lat: m.lat, lng: m.lng });
-        hasBounds = true;
-      }
-    });
-
-    if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
-  }, [directionsResult, routePath, truckRoutePath, routeInfo, mapMarkers]);
-
-  useEffect(() => () => {
-    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
-  }, []);
 
   async function runNavigateHome(home) {
     if (!home?.trim()) {
@@ -1611,25 +813,6 @@ export default function App() {
     }
   }
 
-  useEffect(() => {
-    if (view !== "app" || !isLoaded || !mapReady || !window.google) return;
-    const o = origin?.trim();
-    const d = dest?.trim();
-    if (!o || !d) return;
-    if (routeInfo?.origin === o && routeInfo?.destination === d && routePath) return;
-    fetchDirections();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, isLoaded, mapReady, origin, dest, routeInfo?.origin, routeInfo?.destination, routePath]);
-
-  useEffect(() => {
-    if (!mapRef.current || !mapReady || !window.google) return;
-    window.google.maps.event.trigger(mapRef.current, "resize");
-    recenterMap();
-  }, [mapReady, generated, directionsResult, routePath, routeInfo?.routePoints, recenterMap]);
-
-  useEffect(() => {
-    if (view === "hero") setMapReady(false);
-  }, [view]);
 
   const convoEndRef = useRef(null);
   const convoScrollRef = useRef(null);
@@ -1675,97 +858,6 @@ export default function App() {
     return () => clearTimeout(t);
   }, [trafficAlert]);
 
-  useEffect(() => {
-    if (!isLoaded || !window.google) return;
-    if (!originRef.current?.value || !destRef.current?.value) return;
-    if (answers.vehicle) fetchDirections(answers.vehicle);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers.preferences, answers.truck_height, answers.truck_weight, answers.rv_height, answers.rv_weight, answers.rv_towing]);
-
-  useEffect(() => {
-    if (!mapRef.current || !window.google) return;
-    const typeId = mapStyle === "satellite"
-      ? window.google.maps.MapTypeId.SATELLITE
-      : window.google.maps.MapTypeId.ROADMAP;
-    mapRef.current.setMapTypeId(typeId);
-    applyMapThemeStyles(mapRef.current, mapStyle, theme);
-  }, [mapStyle, theme, isLoaded, mapReady]);
-
-  useEffect(() => {
-    if (!mapRef.current || !window.google || !isLoaded || !mapReady) return;
-    if (polylineAnimRef.current) {
-      clearInterval(polylineAnimRef.current);
-      polylineAnimRef.current = null;
-    }
-    polylinesRef.current.forEach(p => p.setMap(null));
-    polylinesRef.current = [];
-    if (polylineRef.current) { polylineRef.current.setMap(null); polylineRef.current = null; }
-
-    const bounds = new window.google.maps.LatLngBounds();
-    let hasBounds = false;
-    const ROUTE_GOLD = TRIP_ROUTE_GOLD;
-
-    const drawLine = (path, style) => {
-      if (!path?.length) return;
-      const color = style.dashed ? (style.color || TRIP_ROUTE_GOLD) : TRIP_ROUTE_GOLD;
-      const opts = {
-        path,
-        geodesic: true,
-        strokeColor: color,
-        strokeOpacity: style.dashed ? 0 : 0.9,
-        strokeWeight: 5,
-        map: mapRef.current,
-      };
-      if (style.dashed) {
-        opts.strokeOpacity = 0;
-        opts.icons = [{
-          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: color, scale: 3 },
-          offset: "0",
-          repeat: "16px",
-        }];
-      } else if (style.animate !== false) {
-        opts.strokeOpacity = 0;
-        opts.icons = [{
-          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: color, scale: 4 },
-          offset: "0",
-          repeat: "24px",
-        }];
-      }
-      const pl = new window.google.maps.Polyline(opts);
-      polylinesRef.current.push(pl);
-      path.forEach(pt => { bounds.extend(pt); hasBounds = true; });
-    };
-
-    if (tripLegs.length > 0) {
-      tripLegs.forEach(leg => {
-        if (!leg.path) return;
-        drawLine(leg.path, LEG_MAP_STYLES[leg.type] || LEG_MAP_STYLES.drive);
-      });
-    } else if (truckRoutePath?.length) {
-      drawLine(truckRoutePath, { color: ROUTE_GOLD, dashed: false, animate: true });
-    } else if (routePath && !directionsResult) {
-      drawLine(routePath, { color: ROUTE_GOLD, dashed: false, animate: true });
-    }
-
-    if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
-
-    let dashOffset = 0;
-    polylineAnimRef.current = setInterval(() => {
-      dashOffset = (dashOffset + 2) % 48;
-      polylinesRef.current.forEach(pl => {
-        const icons = pl.get("icons");
-        if (!icons?.length) return;
-        pl.set("icons", icons.map((ic, i) => (i === 0 ? { ...ic, offset: `${dashOffset}px` } : ic)));
-      });
-    }, 50);
-
-    return () => {
-      if (polylineAnimRef.current) {
-        clearInterval(polylineAnimRef.current);
-        polylineAnimRef.current = null;
-      }
-    };
-  }, [tripLegs, routePath, truckRoutePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic]);
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -1825,17 +917,7 @@ export default function App() {
     setMapMarkers,
     toast_: (msg, opts) => toastFnRef.current?.(msg, opts),
   });
-
-  function cancelGenerateTrip() {
-    generateAbortRef.current?.abort();
-    enrichAbortRef.current?.abort();
-  }
-
-  function ensurePayoffScreen() {
-    setConvoComplete(true);
-    setQIndex(-2);
-    setCurrentQuestion(null);
-  }
+  itinerarySyncRef.current = itinerarySync;
 
   function handlePanelTouchStart(e) {
     if (window.innerWidth > 767) return;
@@ -1951,111 +1033,6 @@ export default function App() {
     if (isLoaded && window.google && toVal && fromVal && answers.vehicle) fetchDirections(answers.vehicle);
   }
 
-  function clearExploreRange() {
-    exploreRangeAbortRef.current?.abort();
-    exploreRangeAbortRef.current = null;
-    setExploreRangePolygon([]);
-    setExploreRangeLoading(false);
-    setExploreRangeError(null);
-  }
-
-  const loadExploreRangeIsoline = useCallback(async (coords, driveSeconds) => {
-    if (!coords?.lat || !coords?.lng || !driveSeconds) return;
-    exploreRangeAbortRef.current?.abort();
-    const controller = new AbortController();
-    exploreRangeAbortRef.current = controller;
-    setExploreRangeLoading(true);
-    setExploreRangeError(null);
-    try {
-      const data = await fetchIsoline(coords.lat, coords.lng, driveSeconds, { signal: controller.signal });
-      if (controller.signal.aborted) return;
-      const polygon = data.polygon || [];
-      setExploreRangePolygon(polygon);
-      setExploreOriginCoords({ lat: coords.lat, lng: coords.lng });
-      if (polygon.length < 3) {
-        setExploreRangeError("Could not draw a range for this origin — try another city.");
-      }
-    } catch (err) {
-      if (err.name === "AbortError") return;
-      setExploreRangePolygon([]);
-      setExploreRangeError(err.message || "Could not load explore range");
-    } finally {
-      if (exploreRangeAbortRef.current === controller) {
-        setExploreRangeLoading(false);
-        exploreRangeAbortRef.current = null;
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!exploreRangeEnabled || tab !== "plan" || generated) {
-      clearExploreRange();
-      return undefined;
-    }
-    if (!isLoaded || !window.google) return undefined;
-
-    let cancelled = false;
-    (async () => {
-      const text = originRef.current?.value?.trim() || origin.trim();
-      const routeStart = routeInfo?.routePoints?.[0];
-      const coords = (routeStart?.lat != null && routeStart?.lng != null
-          ? { lat: routeStart.lat, lng: routeStart.lng }
-          : null)
-        || await resolveHeroOriginCoords(text, null);
-      if (cancelled) return;
-      if (!coords) {
-        setExploreRangePolygon([]);
-        setExploreRangeError("Enter a valid origin to explore your range");
-        setExploreRangeLoading(false);
-        return;
-      }
-      setExploreOriginCoords({ lat: coords.lat, lng: coords.lng });
-      await loadExploreRangeIsoline(coords, exploreRangeDriveSeconds);
-    })();
-
-    return () => { cancelled = true; };
-  }, [
-    exploreRangeEnabled,
-    exploreRangeDriveSeconds,
-    origin,
-    routeInfo?.routePoints,
-    tab,
-    generated,
-    isLoaded,
-    loadExploreRangeIsoline,
-  ]);
-
-  function handleExploreRangeToggle(enabled) {
-    setExploreRangeEnabled(enabled);
-    if (!enabled) clearExploreRange();
-  }
-
-  function handleExploreRangeDriveTimeChange(seconds) {
-    setExploreRangeDriveSeconds(seconds);
-  }
-
-  async function applyExploreRangeDestination(label) {
-    const value = label?.trim();
-    if (!value) return;
-    setDest(value);
-    if (destRef.current) destRef.current.value = value;
-    setRouteError(null);
-    setExploreRangeEnabled(false);
-    clearExploreRange();
-    if (isLoaded && window.google) fetchDirections(answers.vehicle);
-  }
-
-  async function handleExploreRangeMapClick({ lat, lng }) {
-    if (!exploreRangePolygon.length || !pointInPolygon(lat, lng, exploreRangePolygon)) return;
-    const address = await reverseGeocodeLatLng(lat, lng);
-    await applyExploreRangeDestination(address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-  }
-
-  async function handleExploreRangePlaceSelect(place) {
-    if (!place) return;
-    const label = place.address ? `${place.name}, ${place.address}` : place.name;
-    await applyExploreRangeDestination(label);
-  }
 
   async function launchFromHero() {
     if (!isLoaded || !window.google) {
@@ -2199,6 +1176,112 @@ export default function App() {
       questionHistory: questionHistoryRef.current,
     };
   }
+
+  const {
+    enrichingTrip,
+    setEnrichingTrip,
+    enrichingPlaces,
+    enrichmentLimited,
+    setEnrichmentLimited,
+    enrichmentNoticeDismissed,
+    setEnrichmentNoticeDismissed,
+    generationStream,
+    tripUsedFallback,
+    setTripUsedFallback,
+    generationError,
+    setGenerationError,
+    dismissedActionTipIds,
+    setDismissedActionTipIds,
+    generateTripInFlightRef,
+    cancelGenerateTrip,
+    ensurePayoffScreen,
+    enrichAndSetTrip,
+    cancelEnrichment,
+    runPlacesEnrichment,
+    capturePlanSnapshot,
+    handleDismissActionTip,
+    handleAcceptActionTip,
+    generateTrip,
+    retryEnrichment,
+  } = useGeneration({
+    loading,
+    setLoading,
+    generated,
+    setGenerated,
+    user,
+    session,
+    openAuthModal,
+    creditStatus,
+    creditStatusRef,
+    applyCreditStatus,
+    setCreditsNeedRefresh,
+    openTripsUpgrade,
+    userProfile,
+    planPreferencesRef,
+    savedTripsRef,
+    prependSavedTrip,
+    applyPlanPreferencesSaved,
+    isLoaded,
+    fetchDirections,
+    routeInfo,
+    setRouteInfo,
+    originRef,
+    destRef,
+    origin,
+    dest,
+    setOrigin,
+    setDest,
+    setMapMarkers,
+    getDepartureTime,
+    answers,
+    setAnswers,
+    convoComplete,
+    setConvoComplete,
+    setQIndex,
+    setCurrentQuestion,
+    questionHistory,
+    answerChangeCountsRef,
+    buildQuestionContext,
+    timingMode,
+    stops,
+    setStops,
+    roadStops,
+    setRoadStops,
+    setTripTips,
+    setPersonalTouches,
+    setChangesMade,
+    customStops,
+    selectedLodging,
+    setSelectedLodging,
+    setTripFormat,
+    setRecommendations,
+    recommendations,
+    setActivitiesByCity,
+    activitiesByCity,
+    setRestaurantsByCity,
+    restaurantsByCity,
+    setWeatherByCity,
+    setRouteOptimized,
+    setOptionalStopCards,
+    optionalStopCards,
+    setTripLegs,
+    setTripAlerts,
+    setActiveDayIndex,
+    setLastTripPreview,
+    setResultsView,
+    setTab,
+    setCardCollapsed,
+    setSavedPlanSnapshot,
+    savedPlanSnapshot,
+    currentPlanSnapshot,
+    tripLegs,
+    itinerarySync,
+    collaborationHintsRef,
+    generateTripRef,
+    toastFnRef,
+    buildHeroTripPreview,
+  });
+
 
   function retryRouteCalculation() {
     setRouteError(null);
@@ -2418,18 +1501,6 @@ export default function App() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [helpMenuOpen]);
 
-  const getDepartureTime = useCallback(() => {
-    if (timingMode === "leave_now") return new Date();
-    if (timingMode === "arrive_by" && arriveByDate && routeInfo?.duration) {
-      const hours = parseHoursFromDuration(routeInfo.duration);
-      const arrive = new Date(arriveByDate);
-      if (!Number.isNaN(arrive.getTime()) && hours) {
-        return new Date(arrive.getTime() - hours * 3600000);
-      }
-    }
-    return new Date();
-  }, [timingMode, arriveByDate, routeInfo]);
-
   const departureTime = useMemo(() => getDepartureTime(), [getDepartureTime]);
 
   const dayRoutePaths = useMemo(() => {
@@ -2438,18 +1509,6 @@ export default function App() {
     return computeDayRoutePaths(routeInfo.routePoints, overnightCount);
   }, [generated, routeInfo, stops]);
 
-  const focusMapOnStop = useCallback((item) => {
-    if (item?.lat == null || item?.lng == null) return;
-    setMapFocusTarget({
-      id: item.id || `focus-${item.lat}-${item.lng}`,
-      lat: item.lat,
-      lng: item.lng,
-      category: item.type === "overnight" ? "lodging" : "poi",
-      title: item.title || item.name,
-      subtitle: item.city || item.description || "",
-      _ts: Date.now(),
-    });
-  }, []);
 
   function handleResultsStopSelect(stop) {
     if (!stop) return;
@@ -2589,504 +1648,6 @@ export default function App() {
     });
   }
 
-  useEffect(() => {
-    if (!routeInfo?.routePoints?.length) {
-      setNightSegmentPaths([]);
-      setLowFuelSegmentPaths([]);
-      return;
-    }
-    const hours = parseHoursFromDuration(routeInfo.duration);
-    const dep = getDepartureTime();
-    const nightBlocks = computeNightDrivingBlocks(dep, hours, routeInfo.routePoints);
-    setNightSegmentPaths(nightBlocks.map(b => b.path).filter(p => p?.length > 1));
-    const totalMiles = parseMilesFromDistance(routeInfo.distance);
-    setLowFuelSegmentPaths(
-      computeLowFuelSegmentPath(routeInfo.routePoints, [], getFuelRangeMiles(answers), totalMiles),
-    );
-  }, [routeInfo, answers, getDepartureTime]);
-
-  async function enrichAndSetTrip(parsedStops, parsedRoadStops, normalizedAnswers, routeInfoOverride = null, placesContextOverride = null) {
-    const activeRouteInfo = routeInfoOverride ?? routeInfo;
-    const mapsReady = isLoaded && !!window.google;
-    enrichAbortRef.current?.abort();
-    const enrichController = new AbortController();
-    enrichAbortRef.current = enrichController;
-    setEnrichingTrip(true);
-    setEnrichmentLimited(false);
-    try {
-      const enriched = await enrichGeneratedTrip({
-        answers: normalizedAnswers,
-        routeInfo: activeRouteInfo,
-        stops: parsedStops,
-        roadStops: parsedRoadStops,
-        customStops,
-        selectedLodging,
-        timingMode,
-        departureTime: getDepartureTime(),
-        origin: originRef.current?.value?.trim() || origin,
-        destination: destRef.current?.value?.trim() || dest,
-        mapsReady,
-        signal: enrichController.signal,
-        placesContext: placesContextOverride,
-        deferPlacesEnrichment: true,
-      });
-      if (enrichController.signal.aborted) return null;
-      placesEnrichmentContextRef.current = {
-        answers: normalizedAnswers,
-        routeInfo: activeRouteInfo,
-        stops: enriched.stops,
-        roadStops: enriched.roadStops,
-        destination: destRef.current?.value?.trim() || dest,
-        mapsReady,
-      };
-      placesEnrichmentPendingRef.current = Boolean(enriched.placesEnrichmentPending);
-      setStops(enriched.stops);
-      setRoadStops(enriched.roadStops);
-      setActivitiesByCity(enriched.activitiesByCity);
-      setRestaurantsByCity(enriched.restaurantsByCity || {});
-      setWeatherByCity(enriched.weatherByCity || {});
-      setRouteOptimized(enriched.routeOptimized || false);
-      if (enriched.routeOptimized) {
-        setRouteInfo(prev => (prev ? { ...prev, routeOptimized: true } : prev));
-      }
-      setOptionalStopCards(enriched.optionalStopCards || []);
-      setTripAlerts(consolidateAndCapAlerts(enriched.tripAlerts));
-      setActiveDayIndex(0);
-      if (generated) {
-        itinerarySync.initFromTrip({
-          origin: originRef.current?.value?.trim() || origin,
-          dest: destRef.current?.value?.trim() || dest,
-          routeInfo: activeRouteInfo,
-          stops: enriched.stops,
-          roadStops: enriched.roadStops,
-          answers: normalizedAnswers,
-          departureTime: getDepartureTime(),
-          optionalStopCards: enriched.optionalStopCards || [],
-          activitiesByCity: enriched.activitiesByCity,
-          restaurantsByCity: enriched.restaurantsByCity || {},
-          recommendations,
-        });
-      } else {
-        setMapMarkers(
-          mapsReady
-            ? enriched.mapMarkers
-            : stopsToMapMarkers(enriched.stops, enriched.roadStops, customStops, [], answers),
-        );
-      }
-      setDismissedAlerts([]);
-      if (!mapsReady) setEnrichmentLimited(true);
-      capturePlanSnapshot();
-      return enriched;
-    } catch (err) {
-      if (err.name === "AbortError") return null;
-      console.warn("Trip enrichment failed:", err);
-      setEnrichmentLimited(true);
-      setMapMarkers(stopsToMapMarkers(parsedStops, parsedRoadStops, customStops, [], answers));
-      return null;
-    } finally {
-      if (enrichAbortRef.current === enrichController) {
-        enrichAbortRef.current = null;
-      }
-      setEnrichingTrip(false);
-    }
-  }
-
-  function cancelEnrichment() {
-    enrichAbortRef.current?.abort();
-    placesEnrichAbortRef.current?.abort();
-    placesEnrichmentPendingRef.current = false;
-    setEnrichingPlaces(false);
-    setEnrichingTrip(false);
-    toast_("Enrichment cancelled — basic trip data is still shown.");
-  }
-
-  const runPlacesEnrichment = useCallback(async () => {
-    if (!placesEnrichmentPendingRef.current || !placesEnrichmentContextRef.current) return;
-    placesEnrichmentPendingRef.current = false;
-    placesEnrichAbortRef.current?.abort();
-    const controller = new AbortController();
-    placesEnrichAbortRef.current = controller;
-    setEnrichingPlaces(true);
-    try {
-      const ctx = placesEnrichmentContextRef.current;
-      const layer = await enrichPlacesLayer({
-        ...ctx,
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      setActivitiesByCity(layer.activitiesByCity || {});
-      setRestaurantsByCity(layer.restaurantsByCity || {});
-      setOptionalStopCards(layer.optionalStopCards || []);
-      if (layer.roadStops?.length) setRoadStops(layer.roadStops);
-      if (layer.poiMarkers?.length && isLoaded && window.google) {
-        setMapMarkers(stopsToMapMarkers(
-          ctx.stops,
-          layer.roadStops || ctx.roadStops,
-          customStops,
-          layer.poiMarkers,
-          ctx.answers,
-        ));
-      }
-    } catch (err) {
-      if (err.name !== "AbortError") console.warn("Places enrichment failed:", err);
-    } finally {
-      if (placesEnrichAbortRef.current === controller) {
-        placesEnrichAbortRef.current = null;
-      }
-      setEnrichingPlaces(false);
-    }
-  }, [customStops, isLoaded]);
-
-  function capturePlanSnapshot() {
-    const snapshot = buildPlanSnapshot({
-      origin: originRef.current?.value?.trim() || origin,
-      dest: destRef.current?.value?.trim() || dest,
-      answers,
-      routeInfo,
-    });
-    setSavedPlanSnapshot(snapshot);
-    return snapshot;
-  }
-
-  function handleDismissActionTip(id) {
-    setDismissedActionTipIds(prev => (prev.includes(id) ? prev : [...prev, id]));
-  }
-
-  function handleAcceptActionTip(tip) {
-    actionTipHintsRef.current = formatActionTipsBlock([tip]);
-    void generateTrip();
-  }
-
-  async function generateTrip() {
-    const tripOrigin = originRef.current?.value?.trim() || origin;
-    const tripDest = destRef.current?.value?.trim() || dest;
-
-    if (!user) {
-      openAuthModal("signup", { lead: SIGNUP_GENERATE_LEAD });
-      return;
-    }
-
-    const status = creditStatusRef.current || creditStatus;
-
-    const guard = canStartTripGeneration({
-      inFlight: generateTripInFlightRef.current,
-      origin: tripOrigin,
-      dest: tripDest,
-      convoComplete,
-      creditsRemaining: status?.remaining,
-      unlimited: status?.unlimited,
-    });
-
-    if (!guard.ok) {
-      if (guard.reason === "in_flight") return;
-      if (guard.reason === "missing_route") {
-        toast_("Enter origin and destination first");
-        return;
-      }
-      if (guard.reason === "incomplete_questions") {
-        toast_("Finish the trip questions first, then generate your plan.");
-        return;
-      }
-      if (guard.reason === "no_credits") {
-        openTripsUpgrade({ limitReached: status?.billingPeriod === "monthly", resetDate: status?.resetDate });
-        return;
-      }
-    }
-
-    void preloadGenerationStreamOverlay();
-
-    setOrigin(tripOrigin);
-    setDest(tripDest);
-    setGenerationStream(createInitialGenerationProgress({
-      cityNames: routeInfo?.citiesAlongRoute || [],
-      routeSummary: routeInfo?.distance
-        ? `${tripOrigin?.split(",")[0]?.trim() || tripOrigin} to ${tripDest?.split(",")[0]?.trim() || tripDest}`
-        : null,
-    }));
-    setLoading(true);
-    setEnrichmentLimited(false);
-    setEnrichmentNoticeDismissed(false);
-    setTripUsedFallback(false);
-    setGenerationError(null);
-    generateTripInFlightRef.current = true;
-
-    const generateController = new AbortController();
-    generateAbortRef.current = generateController;
-
-    let normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
-
-    const applyGeneratedTrip = (parsed, activeRouteInfo, { tips, mergedRoadStops, placesContext: ctxForEnrichment }) => {
-      if (activeRouteInfo) {
-        setRouteInfo(prev => ({ ...(prev || {}), ...activeRouteInfo }));
-      }
-      setStops(parsed.stops);
-      setRoadStops(mergedRoadStops);
-      setTripTips(tips);
-      actionTipHintsRef.current = "";
-      setDismissedActionTipIds([]);
-      setPersonalTouches(parsed.personalTouches || []);
-      setChangesMade(parsed.changesMade || []);
-      setTripFormat(parsed.tripFormat || null);
-      setRecommendations(parsed.recommendations || []);
-      setGenerated(true);
-      const heroPreview = buildHeroTripPreview(parsed.stops, mergedRoadStops, normalizedAnswers);
-      if (heroPreview) setLastTripPreview(heroPreview);
-      setResultsView("itinerary");
-      setTab("plan");
-      setCardCollapsed(false);
-      itinerarySync.initFromTrip({
-        origin: tripOrigin,
-        dest: tripDest,
-        routeInfo: activeRouteInfo,
-        stops: parsed.stops,
-        roadStops: mergedRoadStops,
-        answers: normalizedAnswers,
-        departureTime: getDepartureTime(),
-        optionalStopCards,
-        activitiesByCity,
-        restaurantsByCity,
-        recommendations: parsed.recommendations || [],
-      });
-      void enrichAndSetTrip(parsed.stops, mergedRoadStops, normalizedAnswers, activeRouteInfo, ctxForEnrichment);
-      clearSavedPlanDraft();
-      toast_("Trip planned", true);
-    };
-
-    try {
-      let routeSnapshot = routeInfo;
-      const hasRoute = Boolean(routeSnapshot?.distance && routeSnapshot?.routePoints?.length);
-      if (isLoaded && window.google && !hasRoute) {
-        setGenerationStream(buildGenerationPrepProgress("routing", {
-          cityNames: routeSnapshot?.citiesAlongRoute || [],
-        }));
-        const routeResult = await fetchDirections(getEffectiveVehicle(answers));
-        if (!routeResult?.ok) {
-          toast_("Route could not be calculated — trip planning may be limited.", { isError: true });
-        } else if (routeResult.routeInfo) {
-          routeSnapshot = routeResult.routeInfo;
-        }
-      }
-
-      if (generateController.signal.aborted) {
-        throw new DOMException("Aborted", "AbortError");
-      }
-
-      normalizedAnswers = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
-
-      const userPrefs = user && session?.access_token
-        ? await fetchUserTripPreferences(session.access_token)
-        : null;
-      normalizedAnswers = resolveAnswersWithFallback(normalizedAnswers, userPrefs, {
-        planPrefs: planPreferencesRef.current,
-        travelerProfile: userProfile?.traveler_profile,
-      });
-      normalizedAnswers = stripAnswersForSonnet(normalizedAnswers);
-      const answerGaps = detectAnswerGaps(normalizedAnswers);
-      const tripsForContext = user ? savedTripsRef : [];
-      const recentTripsContext = buildRecentTripsContext(tripsForContext, 3);
-      const userTravelPatterns = buildUserPatternSummary(tripsForContext);
-      const recentTripsPreferencesRollup = buildRecentTripsPreferencesRollup(tripsForContext, 3);
-      const travelerDossier = buildTravelerDossier(tripsForContext, normalizedAnswers);
-      const answerConfidenceNotes = formatAnswerConfidenceNotes(
-        answerChangeCountsRef.current,
-        buildQuestionLabelMap(questionHistory),
-      );
-      const gracefulDegradationNotes = formatGracefulDegradationNotes(
-        normalizedAnswers,
-        userPrefs,
-        answerGaps,
-        user ? savedTripsRef.current.length : null,
-      );
-
-      const activeRouteInfo = {
-        ...(routeSnapshot || {}),
-        origin: tripOrigin,
-        destination: tripDest,
-        scenic: isScenicRoute(answers),
-      };
-
-      let placesContext = null;
-      let placesContextPrompt = "";
-      if (isLoaded && window.google && activeRouteInfo.routePoints?.length
-        && shouldPrefetchPlacesContext(normalizedAnswers, activeRouteInfo)) {
-        setGenerationStream(buildGenerationPrepProgress("places", {
-          cityNames: activeRouteInfo.citiesAlongRoute || [],
-        }));
-        placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
-        placesContextPrompt = formatPlacesContextForPrompt(placesContext);
-      }
-
-      const planPayload = {
-        origin: tripOrigin,
-        destination: tripDest,
-        answers: {
-          ...normalizedAnswers,
-          fuel: inferFuelType(normalizedAnswers, normalizedAnswers.preferences || [], normalizedAnswers),
-        },
-        routeInfo: activeRouteInfo,
-        placesContext,
-        placesContextPrompt,
-        generationHints: formatGenerationHints(
-          normalizedAnswers,
-          activeRouteInfo,
-          {
-            regenerateDiffBlock: savedPlanSnapshot
-              ? formatRegenerateDiffBlock(savedPlanSnapshot, currentPlanSnapshot)
-              : "",
-            collaborationHintsBlock: collaborationHintsRef.current || "",
-            actionTipHintsBlock: actionTipHintsRef.current || "",
-          },
-        ),
-        recentTripsContext,
-        recentTripsPreferencesRollup,
-        travelerDossier,
-        userTravelPatterns,
-        answerConfidenceNotes,
-        gracefulDegradationNotes,
-        fallbackPreferences: userPrefs
-          ? resolveAnswersWithFallback({}, userPrefs, {
-            planPrefs: planPreferencesRef.current,
-            travelerProfile: userProfile?.traveler_profile,
-          })
-          : undefined,
-        legs: tripLegs.length > 0 ? tripLegs : undefined,
-        model: "claude-sonnet-4-6",
-        clientCreditStatus: user ? buildClientCreditSnapshot(creditStatusRef.current || creditStatus) : null,
-      };
-
-      setGenerationStream(buildGenerationPrepProgress("sending", {
-        cityNames: activeRouteInfo.citiesAlongRoute || [],
-      }));
-
-      let lastErr = null;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const data = await generateTripPlan(
-            planPayload,
-            session?.access_token || null,
-            {
-              signal: generateController.signal,
-              onStreamProgress: (progress) => {
-                setGenerationStream(progress);
-              },
-            },
-          );
-
-          if (generateController.signal.aborted) {
-            throw new DOMException("Aborted", "AbortError");
-          }
-
-          const parsed = parseTripApiResponse(data, normalizedAnswers, activeRouteInfo, buildFallbackTripData);
-          if (!isTripPlanComplete(parsed)) {
-            throw new Error("Trip planner returned incomplete results");
-          }
-
-          setGenerationError(null);
-          setTripUsedFallback(Boolean(parsed.usedFallback));
-
-          const restrictionTips = truckRestrictionsToTips(activeRouteInfo?.restrictions || []);
-          const tips = [...restrictionTips, ...(parsed.tripTips || [])];
-          if (isContinuousDrive(normalizedAnswers)) {
-            tips.unshift(buildContinuousDriveTip(activeRouteInfo));
-          }
-          const weighStops = weighStationsToRoadStops(activeRouteInfo?.weighStations || []);
-          const mergedRoadStops = [...(parsed.roadStops || [])];
-          for (const ws of weighStops) {
-            if (!mergedRoadStops.some(s => s.id === ws.id || (s.lat === ws.lat && s.lng === ws.lng))) {
-              mergedRoadStops.push(ws);
-            }
-          }
-
-          applyGeneratedTrip(parsed, activeRouteInfo, { tips, mergedRoadStops, placesContext });
-
-          if (user && session?.access_token) {
-            applyCreditStatus(decrementCachedCreditStatus(creditStatusRef.current || creditStatus));
-            setCreditsNeedRefresh(n => n + 1);
-            void persistAfterSuccessfulGeneration({
-              userId: user.id,
-              accessToken: session.access_token,
-              tripPayload: {
-                origin: tripOrigin,
-                dest: tripDest,
-                date: new Date().toLocaleDateString(),
-                stops: parsed.stops,
-                roadStops: mergedRoadStops,
-                tripTips: tips,
-                personalTouches: parsed.personalTouches || [],
-                changesMade: parsed.changesMade || [],
-                answers: stripSessionOnlyAnswers(normalizedAnswers),
-                routeInfo: activeRouteInfo,
-                selectedLodging,
-              },
-              normalizedAnswers,
-              onTripSaved: prependSavedTrip,
-              onPreferencesSaved: applyPlanPreferencesSaved,
-            });
-          }
-
-          setGenerationStream({
-            phase: "complete",
-            fraction: 1,
-            message: "Your trip is ready",
-            cityNames: activeRouteInfo.citiesAlongRoute || [],
-          });
-          await new Promise(resolve => setTimeout(resolve, 520));
-          return;
-        } catch (err) {
-          lastErr = err;
-          if (err.name === "AbortError" || err.code === "no_credits") throw err;
-          if (attempt === 0) continue;
-          throw lastErr;
-        }
-      }
-    } catch (err) {
-      if (err.name === "AbortError") {
-        setGenerationError(null);
-        ensurePayoffScreen();
-        toast_("Trip generation cancelled.");
-        return;
-      }
-      console.error("Generate trip error:", err);
-      if (err.code === "rate_limited" || err.rateLimited) {
-        const msg = generationFailureMessage(err);
-        setGenerationError(msg);
-        toast_(msg, { isError: true });
-        ensurePayoffScreen();
-        return;
-      }
-      if (err.code === "unauthenticated") {
-        const msg = "Sign in to generate a trip plan.";
-        setGenerationError(msg);
-        toast_(msg, { isError: true });
-        openAuthModal("signup", { lead: SIGNUP_GENERATE_LEAD });
-        ensurePayoffScreen();
-        return;
-      }
-      if (err.code === "no_credits") {
-        const msg = generationFailureMessage(err);
-        setGenerationError(msg);
-        toast_(msg, { isError: true });
-        openTripsUpgrade({
-          limitReached: Boolean(err.limitReached) || err.credits?.billingPeriod === "monthly",
-          resetDate: err.resetDate || err.credits?.resetDate,
-        });
-        if (err.credits) applyCreditStatus(err.credits);
-        ensurePayoffScreen();
-        return;
-      }
-      const msg = generationFailureMessage(err);
-      setGenerationError(msg);
-      ensurePayoffScreen();
-      toast_(msg, { isError: true });
-    } finally {
-      generateTripInFlightRef.current = false;
-      if (generateAbortRef.current === generateController) {
-        generateAbortRef.current = null;
-      }
-      setGenerationStream(null);
-      setLoading(false);
-    }
-  }
 
   function requestResetPlan() {
     setConfirmResetOpen(true);
@@ -3121,98 +1682,6 @@ export default function App() {
     setDismissedAlerts(prev => [...prev, alertId]);
     setMapMarkers(prev => prev.filter(m => m.alertId !== alertId));
   }
-
-  async function handleShareItinerary() {
-    const link = await createItineraryShareLink({
-      origin, dest, stops, roadStops, tripTips, answers, routeInfo, selectedLodging,
-      personalTouches, changesMade,
-    }, session?.access_token || null);
-    if (!link) {
-      toast_("Could not create share link", { isError: true });
-      return;
-    }
-    const { ok } = await copyToClipboard(link);
-    if (ok) toast_("Trip link copied — anyone can view your itinerary", true);
-    else toast_("Could not copy — open Share and copy the link manually.", { isError: true, duration: 8000 });
-  }
-
-  function handleOpenCollaborate() {
-    if (!user) {
-      openAuthModal("signup");
-      return;
-    }
-    setShowCollabPanel(true);
-  }
-
-  function handleRegenerateWithGroup(collaboration) {
-    collaborationHintsRef.current = formatCollaborationHints(collaboration, stops);
-    setShowCollabPanel(false);
-    toast_("Regenerating trip with group input…");
-    void generateTrip().finally(() => {
-      collaborationHintsRef.current = "";
-    });
-  }
-
-  const tripCollabSnapshot = useMemo(() => ({
-    origin,
-    dest,
-    destination: dest,
-    stops,
-    roadStops,
-    tripTips,
-    answers,
-    routeInfo,
-    selectedLodging,
-  }), [origin, dest, stops, roadStops, tripTips, answers, routeInfo, selectedLodging]);
-
-  useEffect(() => {
-    const shareId = new URLSearchParams(window.location.search).get("share");
-    if (!shareId) return;
-
-    let cancelled = false;
-    (async () => {
-      let shared;
-      try {
-        shared = await loadSharedItinerary(shareId);
-      } catch {
-        if (!cancelled) {
-          toast_("Could not load this trip link. It may have expired.", { isError: true, duration: 10000 });
-        }
-        return;
-      }
-      if (cancelled) return;
-      if (!shared) {
-        toast_("This trip link was not found or has expired.", { isError: true, duration: 10000 });
-        return;
-      }
-      setView("app");
-      setOrigin(shared.origin || "");
-      setDest(shared.dest || "");
-      setStops(shared.stops || []);
-      setRoadStops(shared.roadStops || []);
-      setTripTips(shared.tripTips || []);
-      setPersonalTouches(shared.personalTouches || []);
-      setChangesMade(shared.changesMade || []);
-      setAnswers(stripSessionOnlyAnswers(shared.answers || {}));
-      setSelectedLodging(shared.selectedLodging || []);
-      if (shared.routeInfo) setRouteInfo(shared.routeInfo);
-      setShareViewMode(true);
-      setGenerated(true);
-      setResultsView("itinerary");
-      setConvoComplete(true);
-      setTab("plan");
-      setMapMarkers(stopsToMapMarkers(shared.stops || [], shared.roadStops || [], [], [], shared.answers || {}));
-      applySharePageMeta({
-        origin: shared.origin,
-        dest: shared.dest,
-        stopCount: shared.shareMeta?.stopCount ?? ((shared.stops?.length || 0) + (shared.roadStops?.length || 0)),
-        dayCount: shared.shareMeta?.dayCount,
-      });
-    })();
-
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!generated) return;
@@ -3492,13 +1961,6 @@ export default function App() {
     toast_("Trip loaded");
   }
 
-  async function retryEnrichment() {
-    if (!generated) return;
-    const normalized = normalizeTripAnswers(answers, buildQuestionContext(answers), { forGeneration: true });
-    setEnrichmentNoticeDismissed(false);
-    await enrichAndSetTrip(stops, roadStops, normalized);
-  }
-
   if (AppRoutePage) {
     return <AppRoutePage />;
   }
@@ -3530,10 +1992,6 @@ export default function App() {
         />
       </>
     );
-  }
-
-  if (stopCardsDemo) {
-    return <StopCardDemo />;
   }
 
   if (view === "profile" && user) {
@@ -3974,7 +2432,7 @@ export default function App() {
         ) : (
         <div className="app">
           {exploreRangeEnabled && exploreOriginCoords && exploreRangePolygon.length >= 3 && tab === "plan" && !generated && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<div className="plan-explore-map" aria-hidden="true" />}>
               <div className="plan-explore-map">
                 <LazyHeroExploreMap
                   isLoaded={isLoaded}
@@ -4323,3 +2781,4 @@ export default function App() {
     </>
   );
 }
+

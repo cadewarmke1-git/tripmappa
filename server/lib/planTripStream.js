@@ -69,7 +69,6 @@ export async function streamAnthropicMessages({
       "Content-Type": "application/json",
       "x-api-key": process.env.ANTHROPIC_KEY,
       "anthropic-version": "2023-06-01",
-      "anthropic-beta": "prompt-caching-2024-07-31",
     },
     body: JSON.stringify({
       model,

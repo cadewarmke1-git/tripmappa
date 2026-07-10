@@ -3,7 +3,6 @@ import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js
 import { isContinuousDrive } from "../../lib/driveMode.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
-import SimpleTripSection from "./SimpleTripSection.jsx";
 import PlannedForYouSection from "./PlannedForYouSection.jsx";
 import ResultsActionBar from "./ResultsActionBar.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
@@ -204,40 +203,9 @@ export default function TripResultsPanel({
             />
           )}
 
-          {simplified ? (
-            <SimpleTripSection
-              days={days}
-              stops={stops}
-              roadStops={roadStops}
-              recommendations={recommendations}
-              answers={answers}
-              origin={origin}
-              dest={dest}
-              routeInfo={routeInfo}
-              weatherByCity={weatherByCity}
-              restaurantsByCity={restaurantsByCity}
-              selectedLodging={selectedLodging}
-              continuousDrive={continuousDrive}
-              onLodgingSelect={onLodgingSelect}
-              onToast={onToast}
-              onAddRoadStop={onAddRoadStop}
-              onRemoveRoadStop={onRemoveRoadStop}
-              isStopAdded={isStopAdded}
-              isStopOnRoute={isStopOnRoute}
-              readOnly={shareMode}
-              highlightedStopId={highlightedStopId}
-              stopRefs={stopRefs}
-              onStopSelect={onStopSelect}
-              departureTime={departureTime}
-              groceryAllowed={groceryAllowed}
-              accessToken={accessToken}
-              onUpgradeGrocery={onUpgradeGrocery}
-              isGuest={isGuest}
-              onGrocerySignIn={onGrocerySignIn}
-            />
-          ) : activeDay && (
+          {activeDay && (
             <ResultsDaySection
-              key={activeDay.dayNumber}
+              key={simplified ? "simplified" : activeDay.dayNumber}
               day={activeDay}
               answers={answers}
               origin={origin}
@@ -258,14 +226,17 @@ export default function TripResultsPanel({
               stopRefs={stopRefs}
               onStopSelect={onStopSelect}
               sectionRef={el => { dayRefs.current[activeDayIdx] = el; }}
-              showGroceryCard={activeDayIdx === days.length - 1}
+              showGroceryCard={simplified || activeDayIdx === days.length - 1}
               stops={stops}
+              roadStops={roadStops}
+              recommendations={recommendations}
               departureTime={departureTime}
               groceryAllowed={groceryAllowed}
               accessToken={accessToken}
               onUpgradeGrocery={onUpgradeGrocery}
               isGuest={isGuest}
               onGrocerySignIn={onGrocerySignIn}
+              simplified={simplified}
             />
           )}
         </div>

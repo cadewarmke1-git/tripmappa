@@ -171,14 +171,17 @@ html body .app-wrap.day .help-menu,
 html body .app-wrap.day .map-route-pill,
 html body .app-wrap.day .map-style-menu,
 html body .app-wrap.day .map-style-btn,
+html body .app-wrap.day .map-float-pill,
 html body .app-wrap.day .map-recenter-btn,
 html body .app-wrap.day .map-zoom-btn,
 html body .app-wrap.day .float-card-help-btn,
 html body .app-wrap.day .float-card-chevron-btn,
 html body .app-wrap.day .plan-flow-collapse-btn {
-  background: color-mix(in srgb, var(--color-plan-panel-bg) 94%, transparent) !important;
+  background: var(--color-plan-panel-bg, #FDF3E0) !important;
   border-color: var(--color-plan-panel-border) !important;
   color: var(--color-question-text) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html body .app-wrap.day .map-style-item,
@@ -350,14 +353,19 @@ html body .app-wrap.night .help-menu,
 html body .app-wrap.night .map-route-pill,
 html body .app-wrap.night .map-style-menu,
 html body .app-wrap.night .map-style-btn,
+html body .app-wrap.night .map-float-pill,
 html body .app-wrap.night .map-recenter-btn,
 html body .app-wrap.night .map-zoom-btn,
 html body .app-wrap.night .float-card-help-btn,
 html body .app-wrap.night .float-card-chevron-btn,
-html body .app-wrap.night .plan-flow-collapse-btn {
-  background: color-mix(in srgb, var(--color-surface) 92%, transparent) !important;
-  border-color: var(--color-input-border) !important;
+html body .app-wrap.night .plan-flow-collapse-btn,
+html body .app-wrap.night .navigate-home-map,
+html body .app-wrap.night .navigate-home-float {
+  background: var(--color-base, #0D0A1A) !important;
+  border-color: rgba(255, 210, 140, 0.28) !important;
   color: var(--color-accent-gold) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html body .app-wrap.night .map-style-item {
