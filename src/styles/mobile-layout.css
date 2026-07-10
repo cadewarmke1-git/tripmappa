@@ -455,8 +455,10 @@
     bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Three-column nav: logo | mode tabs | profile — prevents wordmark/tab overlap at 375px */
-  html[data-layout="mobile"] .app-nav-bar {
+  /* Narrow viewports: three-column nav — must not require data-layout=mobile.
+     index.html sets data-layout=web when (pointer: fine), so DevTools 375px and
+     narrow desktop windows never matched html[data-layout="mobile"] rules. */
+  .app-nav-bar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
@@ -465,25 +467,31 @@
     justify-content: initial;
   }
 
-  html[data-layout="mobile"] .app-nav-bar-left {
+  nav.app-nav-bar {
+    display: grid !important;
+    justify-content: initial !important;
+    flex-direction: unset !important;
+  }
+
+  .app-nav-bar-left {
     min-width: 0;
   }
 
-  html[data-layout="mobile"] .app-nav-bar .nav-logo-home {
+  .app-nav-bar .nav-logo-home {
     font-size: clamp(15px, 4.1vw, 18px);
     letter-spacing: -0.02em;
     padding-left: 0;
     padding-right: 2px;
   }
 
-  html[data-layout="mobile"] .app-nav-mode-switch {
+  .app-nav-mode-switch {
     justify-self: center;
     min-width: 0;
     max-width: 100%;
     padding: 0;
   }
 
-  html[data-layout="mobile"] .app-nav-mode-btn {
+  .app-nav-mode-btn {
     min-height: 44px;
     padding: 0 clamp(6px, 2vw, 12px);
     font-size: clamp(10px, 2.8vw, 12px);
@@ -497,6 +505,16 @@
   }
 
   html[data-layout="mobile"] .app-nav-mode-btn:not(.is-active) {
+    color: color-mix(in srgb, var(--color-text-secondary, rgba(245, 230, 200, 0.5)) 80%, transparent);
+  }
+
+  .app-nav-mode-btn.is-active {
+    background: var(--accent, var(--gold-primary));
+    color: var(--deep-dark, #1a0d00);
+    box-shadow: none;
+  }
+
+  .app-nav-mode-btn:not(.is-active) {
     color: color-mix(in srgb, var(--color-text-secondary, rgba(245, 230, 200, 0.5)) 80%, transparent);
   }
 

@@ -167,6 +167,142 @@ export default function QuestionChoices({
     setMultiDraft([]);
   }, [currentQ?.id, currentQ?.type, prefDraft, committed, questionConfirmed]);
 
+  useEffect(() => {
+    if (!actionsInDock || !onDockActionsChange) return undefined;
+
+    if (!currentQ?.id || !currentQ?.type) {
+      onDockActionsChange(null);
+      return () => onDockActionsChange(null);
+    }
+
+    const frozen = !!stepAnim;
+    const isTripDetails = currentQ.type === "trip_details";
+    const routePending = Boolean(currentQ.pendingRoute);
+
+    const pickInstant = (value, extraFields) => {
+      onPickAnswer(value, extraFields, { instant: true });
+    };
+
+    const continueWithHaptic = (handler) => () => {
+      triggerPrimaryHaptic();
+      handler();
+    };
+
+    const submitPartyComposition = () => {
+      onPickAnswer(
+        { adults: Number(partyAdults ?? 1), children: Number(partyChildren ?? 0) },
+        {},
+      );
+    };
+
+    const isTripDetailsDraftEmpty = (draft) => {
+      const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
+      const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
+      const accessibility = Array.isArray(draft.accessibility) ? draft.accessibility : [];
+      const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
+      const budget = draft.trip_budget || "No budget limit";
+      return !dietary.length && !stops.length && !accessibility.length && !schedule.length && budget === "No budget limit";
+    };
+
+    const submitTripDetails = () => {
+      const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
+      const empty = isTripDetailsDraftEmpty(draft);
+      pickInstant({
+        dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
+        stops_interests: Array.isArray(draft.stops_interests) ? draft.stops_interests : [],
+        accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
+        schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
+        trip_budget: draft.trip_budget || "No budget limit",
+      }, { trip_details_defaults_confirmed: empty });
+    };
+
+    const skipTripDetails = () => {
+      pickInstant({
+        dietary: [],
+        stops_interests: [],
+        accessibility: [],
+        schedule_restrictions: [],
+        trip_budget: "No budget limit",
+      }, { trip_details_defaults_confirmed: true });
+    };
+
+    const dock = {
+      visible: true,
+      showStartOver: !frozen && Boolean(onResetPlan),
+      showBack: questionHistoryLength > 0 && !frozen,
+      onBack: onGoBack,
+      showContinue: false,
+      showSkip: false,
+    };
+
+    if (currentQ.type === "vehicle") {
+      dock.showContinue = false;
+    } else if (currentQ.type === "party_composition") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(submitPartyComposition);
+    } else if (currentQ.type === "multiselect") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen
+        || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)
+        || (currentQ.id === "kids_ages" && multiDraft.length === 0);
+      dock.onContinue = continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]));
+      if (currentQ.id !== "multi_vehicles" && currentQ.id !== "kids_ages") {
+        dock.showSkip = true;
+        dock.onSkip = () => pickInstant([]);
+      }
+    } else if (isTripDetails) {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(submitTripDetails);
+      dock.showSkip = true;
+      dock.skipLabel = "Defaults are fine";
+      dock.onSkip = skipTripDetails;
+    } else if (currentQ.type === "multiselect_group") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(() => pickInstant({
+        dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
+        stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
+      }));
+      dock.showSkip = true;
+      dock.skipLabel = "Nothing special";
+      dock.onSkip = () => pickInstant({ dietary: [], stops_interests: [] });
+    } else if (currentQ.type === "text") {
+      if (currentQ.id === "food_allergies" || currentQ.id === "schedule_drive_hours") {
+        dock.showSkip = true;
+        dock.onSkip = () => pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours");
+      }
+    } else if (routePending && onSkipRoutePending) {
+      dock.showSkip = true;
+      dock.skipLabel = "Skip for now";
+      dock.onSkip = onSkipRoutePending;
+    }
+
+    onDockActionsChange(dock);
+    return () => onDockActionsChange(null);
+  }, [
+    actionsInDock,
+    onDockActionsChange,
+    currentQ?.id,
+    currentQ?.type,
+    currentQ?.pendingRoute,
+    stepAnim,
+    partyAdults,
+    partyChildren,
+    vehicleDraft,
+    multiDraft,
+    groupDraft,
+    questionHistoryLength,
+    questionConfirmed,
+    prefDraft,
+    committed,
+    onGoBack,
+    onResetPlan,
+    onSkipRoutePending,
+    onPickAnswer,
+  ]);
+
   if (!currentQ?.id || !currentQ?.type) return null;
 
   const frozen = !!stepAnim;
@@ -347,81 +483,6 @@ export default function QuestionChoices({
   }
 
   const actionRowClass = "pref-actions-row plan-flow-actions";
-
-  useEffect(() => {
-    if (!actionsInDock || !onDockActionsChange) return undefined;
-
-    const dock = {
-      visible: true,
-      showStartOver: !frozen && Boolean(onResetPlan),
-      showBack: questionHistoryLength > 0 && !frozen,
-      onBack: onGoBack,
-      showContinue: false,
-      showSkip: false,
-    };
-
-    if (currentQ.type === "vehicle") {
-      dock.showContinue = false;
-    } else if (currentQ.type === "party_composition") {
-      dock.showContinue = true;
-      dock.continueDisabled = frozen;
-      dock.onContinue = continueWithHaptic(submitPartyComposition);
-    } else if (currentQ.type === "multiselect") {
-      dock.showContinue = true;
-      dock.continueDisabled = frozen
-        || (currentQ.id === "multi_vehicles" && multiDraft.length === 0)
-        || (currentQ.id === "kids_ages" && multiDraft.length === 0);
-      dock.onContinue = continueWithHaptic(() => pickInstant([...(Array.isArray(multiDraft) ? multiDraft : [])]));
-      if (currentQ.id !== "multi_vehicles" && currentQ.id !== "kids_ages") {
-        dock.showSkip = true;
-        dock.onSkip = () => pickInstant([]);
-      }
-    } else if (isTripDetails) {
-      dock.showContinue = true;
-      dock.continueDisabled = frozen;
-      dock.onContinue = continueWithHaptic(submitTripDetails);
-      dock.showSkip = true;
-      dock.skipLabel = "Defaults are fine";
-      dock.onSkip = skipTripDetails;
-    } else if (currentQ.type === "multiselect_group") {
-      dock.showContinue = true;
-      dock.continueDisabled = frozen;
-      dock.onContinue = continueWithHaptic(() => pickInstant({
-        dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
-        stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
-      }));
-      dock.showSkip = true;
-      dock.skipLabel = "Nothing special";
-      dock.onSkip = () => pickInstant({ dietary: [], stops_interests: [] });
-    } else if (currentQ.type === "text") {
-      if (currentQ.id === "food_allergies" || currentQ.id === "schedule_drive_hours") {
-        dock.showSkip = true;
-        dock.onSkip = () => pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours");
-      }
-    } else if (routePending && onSkipRoutePending) {
-      dock.showSkip = true;
-      dock.skipLabel = "Skip for now";
-      dock.onSkip = onSkipRoutePending;
-    }
-
-    onDockActionsChange(dock);
-    return () => onDockActionsChange(null);
-  }, [
-    actionsInDock,
-    onDockActionsChange,
-    currentQ?.id,
-    currentQ?.type,
-    frozen,
-    vehicleDraft,
-    multiDraft,
-    groupDraft,
-    questionHistoryLength,
-    routePending,
-    onGoBack,
-    onResetPlan,
-    onSkipRoutePending,
-    isTripDetails,
-  ]);
 
   return (
     <div className={`question-choices-shell${compact ? " question-choices-shell-compact" : ""}`}>

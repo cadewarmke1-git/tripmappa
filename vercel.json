@@ -6,7 +6,10 @@
     { "source": "/pricing", "destination": "/index.html" },
     { "source": "/privacy", "destination": "/index.html" },
     { "source": "/terms", "destination": "/index.html" },
-    { "source": "/auth/callback", "destination": "/index.html" }
+    { "source": "/auth/callback", "destination": "/index.html" },
+    { "source": "/profile", "destination": "/index.html" },
+    { "source": "/profile/:path*", "destination": "/index.html" },
+    { "source": "/((?!api/|assets/|favicon\\.svg|manifest\\.json|og-image\\.png|hero-mountain\\.jpg|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cron/trial-jobs", "schedule": "0 15 * * *" },

@@ -36,7 +36,7 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
         </div>
         <div className="trip-overview-hero-stat">
           <span className="trip-overview-hero-val">{overview.dayCount}</span>
-          <span className="trip-overview-hero-label">Days</span>
+          <span className="trip-overview-hero-label">{overview.dayCount === 1 ? "Day" : "Days"}</span>
         </div>
         <div className="trip-overview-hero-stat">
           <span className="trip-overview-hero-val">{overview.stopCount}</span>

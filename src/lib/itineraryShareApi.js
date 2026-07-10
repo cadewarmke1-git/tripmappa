@@ -56,7 +56,7 @@ export function applySharePageMeta({ origin, dest, stopCount, dayCount } = {}) {
   const to = String(dest || "").split(",")[0].trim();
   const route = from && to ? `${from} → ${to}` : "Road trip";
   const stats = [
-    dayCount > 1 ? `${dayCount} days` : null,
+    dayCount === 1 ? "1 day" : dayCount > 1 ? `${dayCount} days` : null,
     stopCount > 0 ? `${stopCount} stops` : null,
   ].filter(Boolean).join(" · ");
   const title = stats ? `${route} · ${stats} · TripMappa` : `${route} · TripMappa`;

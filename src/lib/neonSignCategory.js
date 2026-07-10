@@ -9,7 +9,8 @@ export const SIGN_LABELS = {
 
 export function roadStopToSignCategory(category) {
   const c = String(category || "").toLowerCase();
-  if (/food|rest|dining/.test(c)) return "food";
+  if (/rest_area|rest area|rest_stop|rest stop|^rest$/.test(c)) return "general";
+  if (/food|restaurant|dining/.test(c)) return "food";
   if (/fuel|gas|charg|diesel|ev|truck/.test(c)) return "fuel";
   if (/lodg|hotel|overnight|camp/.test(c)) return "lodging";
   return "general";
