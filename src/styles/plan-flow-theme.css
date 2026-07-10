@@ -402,7 +402,9 @@ html body .app-wrap.night .btn-generate-trip {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 4px 8px;
+  /* Clearance so last option cards (e.g. Avoid highways) stay above the action dock */
+  padding: 0 4px calc(8px + 72px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
 }
 
 .plan-flow-question-header {
@@ -508,10 +510,16 @@ html body .app-wrap.night .btn-generate-trip {
   border: none;
   background: transparent;
   color: var(--color-accent-gold);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  padding: 0 2px;
+  padding: 10px 12px;
+  min-height: 44px;
+  min-width: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .plan-flow-pick-chip-tag {

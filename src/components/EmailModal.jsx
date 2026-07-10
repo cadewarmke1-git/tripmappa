@@ -75,8 +75,10 @@ export default function EmailModal({
           <p className="auth-modal-footer">
             By continuing you agree to our{" "}
             <a href="/terms" className="auth-modal-link-btn">Terms of Service</a>
-            {" "}and{" "}
-            <a href="/privacy" className="auth-modal-link-btn">Privacy Policy</a>.
+            {" and "}
+            <span className="auth-modal-footer-end">
+              <a href="/privacy" className="auth-modal-link-btn">Privacy Policy</a>.
+            </span>
           </p>
         </form>
 

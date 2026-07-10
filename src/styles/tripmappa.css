@@ -538,9 +538,9 @@
   }
   .hero-route-bar .hero-input {
     width: 100%;
-    min-height: 0;
+    min-height: 44px;
     line-height: 1.4;
-    padding: 0;
+    padding: 10px 0;
   }
   .hero-input-error {
     font-size: 11px;
@@ -787,7 +787,8 @@
     appearance: none;
     -webkit-appearance: none;
     width: 100%;
-    padding: 0;
+    min-height: 44px;
+    padding: 10px 0;
     line-height: 1.4;
     box-sizing: border-box;
     -webkit-text-fill-color: #ffffff;
@@ -963,10 +964,10 @@
   }
   @keyframes trafficToastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
-  /* Float card help — header */
-  .float-card-header { overflow: visible; position: relative; z-index: 200; }
+  /* Float card help — header (keep below map controls so Map/recenter stay clickable) */
+  .float-card-header { overflow: visible; position: relative; z-index: 40; }
   .float-card-header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; position: relative; }
-  .float-card-help-wrap { position: relative; z-index: 201; }
+  .float-card-help-wrap { position: relative; z-index: 41; }
   .float-card-help-btn {
     width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 50%;
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
@@ -1263,7 +1264,7 @@
     transition: max-height 0.45s var(--ease), box-shadow 0.3s var(--ease), transform 0.35s var(--ease), top 0.35s var(--ease), left 0.35s var(--ease), width 0.35s var(--ease), border-radius 0.35s var(--ease);
   }
   .float-card > * { position: relative; z-index: 1; }
-  .float-card > .float-card-header { z-index: 200; }
+  .float-card > .float-card-header { z-index: 40; }
   .float-card.help-open { overflow: visible; }
   .float-card.collapsed { max-height: 62px; }
 
@@ -2451,9 +2452,15 @@
     opacity: 0.75;
   }
   .plan-route-card-chip-edit {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
-    padding: 0;
+    padding: 10px 12px;
+    min-height: 44px;
+    min-width: 44px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     background: none;
     color: inherit;
@@ -2917,6 +2924,10 @@
     border-radius: 12px;
     border: 1px solid rgba(255, 210, 140, 0.28);
     background: rgba(255, 210, 140, 0.08);
+    position: relative;
+    z-index: 1;
+    /* Hint must not paint over option cards below it */
+    flex-shrink: 0;
   }
   .plan-flow-guest-hint-text { flex: 1 1 180px; font-size: 13px; line-height: 1.45; }
   .plan-flow-guest-hint-btn {
@@ -3483,6 +3494,22 @@
 
   /* ── Modal ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  /* Auth overlays must sit above .app-nav-bar (z 210–220) so nav wordmark never paints over modal content */
+  .modal-overlay.auth-modal-overlay {
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    /* Keep modal content below the fixed nav wordmark */
+    padding: max(16px, calc(var(--nav-h, 56px) + 12px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Nav must never paint above auth overlays (beats mobile z-index 220) */
+  body:has(.auth-modal-overlay) .app-nav-bar,
+  html body:has(.auth-modal-overlay) .app-nav-bar {
+    z-index: 100 !important;
+  }
   .modal { background: var(--color-card-bg, #FDF3E0); border-radius: 20px; padding: 24px; max-width: 360px; width: 100%; box-shadow: var(--shadow-lg); }
   .modal-title { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.3px; }
   .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
@@ -3738,10 +3765,18 @@
     width: 100%;
     padding: 32px 28px 28px;
     border-radius: 20px;
-    background: var(--surface);
+    background: #0D0A1A;
     color: var(--text-primary);
     border: 1px solid var(--border);
     box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45);
+    /* Fit inside overlay padding (nav clearance + safe areas) */
+    max-height: min(calc(100vh - var(--nav-h, 56px) - 40px), 920px);
+    max-height: min(calc(100dvh - var(--nav-h, 56px) - 40px), 920px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: auto;
+    flex-shrink: 0;
   }
   .auth-modal-compact { max-width: 380px; text-align: center; }
   .auth-modal-gold-border {
@@ -3769,7 +3804,7 @@
   .auth-modal-compact .auth-modal-headline { font-size: 18px; }
   .auth-modal-sub {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: rgba(245, 230, 200, 0.78);
     text-align: center;
     margin: 0 0 22px;
     line-height: 1.5;
@@ -3780,7 +3815,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--text-secondary);
+    color: rgba(245, 230, 200, 0.78);
     margin-bottom: 6px;
   }
   .auth-field-input {
@@ -3809,7 +3844,7 @@
     gap: 12px;
     margin: 20px 0 16px;
     font-size: 12px;
-    color: var(--text-secondary);
+    color: rgba(245, 230, 200, 0.78);
     text-transform: lowercase;
   }
   .auth-modal-divider::before,
@@ -3836,13 +3871,18 @@
   .auth-social-btns-compact .auth-social-btns-row .auth-social-btn {
     flex: 1;
     justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
     padding: 10px 8px;
-    font-size: 12px;
+    font-size: 13px;
   }
   .auth-social-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    min-height: 44px;
+    min-width: 44px;
     padding: 10px 14px;
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -3851,6 +3891,7 @@
     font-family: "Inter", sans-serif;
     font-size: 13px;
     font-weight: 600;
+    box-sizing: border-box;
     transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
   .auth-social-btn:hover {
@@ -3881,16 +3922,37 @@
   }
   .auth-modal-footer {
     text-align: center;
-    font-size: 13px;
-    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(245, 230, 200, 0.78);
     margin: 18px 0 0;
   }
+  .auth-modal-footer-end {
+    white-space: nowrap;
+  }
+  /* Inline legal links inside footer sentences — no 44px padding (that orphaned the period). */
+  .auth-modal-footer a.auth-modal-link-btn {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+    min-width: 0;
+    font-size: inherit;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    vertical-align: baseline;
+  }
   .auth-modal-link-btn, .auth-forgot-link {
-    background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer;
+    background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer;
     padding: 12px 10px; min-height: 44px; box-sizing: border-box;
     display: inline-flex; align-items: center;
   }
-  .auth-forgot-link { display: flex; justify-content: flex-end; text-align: right; margin: 0 0 8px; font-size: 13px; }
+  .auth-forgot-link { display: flex; justify-content: flex-end; text-align: right; margin: 0 0 8px; font-size: 14px; }
   .auth-modal-form { margin-bottom: 4px; }
   .auth-modal-error { font-size: 13px; color: var(--error); margin: 0 0 12px; line-height: 1.4; }
   .auth-modal-alt-btn {
@@ -6125,7 +6187,7 @@
     position: absolute;
     right: 12px;
     bottom: 24px;
-    z-index: 25;
+    z-index: 60;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -6465,14 +6527,14 @@
   }
 
   .app-nav-mode-btn {
-    min-height: 32px;
-    padding: 6px 14px 8px;
+    min-height: 44px;
+    padding: 10px 14px;
     border: none;
     border-radius: 0;
     background: transparent;
     color: rgba(255, 210, 140, 0.55);
     font-family: var(--font-body, "Inter", sans-serif);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -6481,6 +6543,7 @@
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     white-space: nowrap;
+    box-sizing: border-box;
   }
 
   .app-nav-mode-btn.is-active {
@@ -6554,6 +6617,13 @@
   .navigate-route-input-box > div {
     width: 100%;
     min-width: 0;
+    /* Autocomplete wrapper must not intercept taps meant for the input / Get route */
+    pointer-events: none;
+  }
+
+  .navigate-route-input-box .navigate-route-input,
+  .navigate-route-input {
+    pointer-events: auto;
   }
 
   .navigate-route-input {
@@ -7873,12 +7943,36 @@
     color: var(--color-text-primary);
   }
   .convoy-mode-toggle input {
-    width: 16px;
-    height: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin: 0;
+    border: 2px solid color-mix(in srgb, var(--color-accent-gold) 55%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-card-bg) 88%, transparent);
     accent-color: var(--color-accent-gold);
     cursor: pointer;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .convoy-mode-toggle input:checked {
+    background: var(--color-accent-gold);
+    border-color: var(--color-accent-gold);
+  }
+  .convoy-mode-toggle input:checked::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 8px;
+    width: 10px;
+    height: 18px;
+    border: solid var(--color-btn-primary-text, #1a0d00);
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
   }
   .convoy-mode-toggle span {
     color: var(--color-text-primary);
@@ -8475,6 +8569,14 @@
     text-decoration: none;
     opacity: 0.85;
     transition: color 0.2s ease, opacity 0.2s ease;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    font-size: 14px;
   }
   .hero-footer-nav a:hover {
     color: var(--color-accent-gold);

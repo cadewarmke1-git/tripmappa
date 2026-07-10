@@ -77,3 +77,21 @@ Status: Pre-launch, Phase 11 polish.
 - Sentry error monitoring
 - Live fuel prices
 - Rewards/leaderboard system
+
+## Visual Verification Protocol
+After implementing any UI change, Cursor must:
+1. Run npm run build and confirm clean
+2. Start the preview server if not running
+3. Take a Playwright screenshot at 1280x800 desktop 
+   and 375x812 mobile of every screen that was modified
+4. Review each screenshot and confirm the change 
+   looks correct visually — not just that the code 
+   is correct
+5. If anything looks wrong in the screenshot, fix it 
+   before reporting done
+6. Never report a UI task as complete without 
+   screenshot evidence showing the change looks right
+7. Include the screenshots in the report back
+
+This is mandatory for every UI change. Code inspection 
+alone is not sufficient verification.

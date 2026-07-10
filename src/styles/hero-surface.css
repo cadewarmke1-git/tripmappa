@@ -262,8 +262,11 @@ nav.app-nav-bar.transparent[data-surface-theme] .profile-card-trigger-avatar .us
 
 .hero[data-surface-theme] .hero-search .hero-route-cell .hero-input-box,
 .hero[data-surface-theme] .hero-search .hero-input-box {
-  min-height: 0 !important;
+  min-height: 44px !important;
   padding: 0 !important;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 /* ── From/To as two light rounded pills, no swap button (matches design) ── */
@@ -304,7 +307,9 @@ html body .hero[data-surface-theme] .hero-search .hero-input:hover {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  padding: 10px 0 !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
 }
 
 /* Keep hero UI above scene haze */

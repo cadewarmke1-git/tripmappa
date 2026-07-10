@@ -139,12 +139,7 @@ export default function HeroView({
 
         <div className="hero-content">
           <p className="trip-overview-hero-eyebrow">The open road awaits</p>
-          <h1 className="hero-title">
-            <span className="hero-title-line">Every great trip</span>
-            <span className="hero-title-line hero-title-line--mixed">
-              <span className="hero-title-line-text">starts with a </span><span className="hero-title-accent">plan</span>
-            </span>
-          </h1>
+          <h1 className="hero-title hero-title-line">Your trip, our mission.</h1>
 
           {planDraft?.origin && planDraft?.dest && (
             <div className="hero-draft-resume">

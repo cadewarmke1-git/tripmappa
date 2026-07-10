@@ -1,0 +1,40 @@
+---
+description: TripMappa product context, stack, design system, and integration workflow
+alwaysApply: true
+---
+
+# TripMappa
+
+Road trip planning app — [tripmappa.com](https://tripmappa.com).  
+Founder: Cade Warmke (cadewarmke@gmail.com).
+
+## Stack
+
+React/Vite, Vercel, Supabase, Claude Sonnet, Google Maps/Places, HERE Maps, Stripe, Resend, Twilio, NREL, Weather.gov.
+
+## Tiers
+
+| Tier | Price | Trips |
+|------|-------|-------|
+| Wanderer | free | 3 |
+| Voyager | $4.99/mo | 20 |
+| Trailblazer | $9.99/mo | 100 |
+| Founder | first 1000 users | 1 year free Trailblazer + gold star badge |
+
+## Design
+
+- Gold `#FFD28C`, Orange `#FF8C42`, Night `#0D0A1A`, Day `#FDF3E0`
+- **Fraunces** for UI; **Limelight** for neon signs only
+- No purple. No glass morphism. No Tailwind.
+- No AI language in user-facing copy
+
+## Workflow
+
+- **v0 generates** all UI components; **Cursor integrates only**
+- **One fix per prompt** for shared files
+- **Verify on tripmappa.com** after every deploy
+- **Never break** generation or flow logic
+
+## Admin
+
+`cadewarmke@gmail.com` bypasses all limits.

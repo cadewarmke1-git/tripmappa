@@ -13,6 +13,7 @@ import { syncSkyCycle } from "./lib/surfaceTheme.js";
 import { computeAutoTheme } from "./lib/theme.js";
 import { initPwaInstall } from "./lib/pwaInstall.js";
 import "./index.css";
+import "./components.css";
 import "./styles/tripmappa.css";
 import "./styles/tripmappa-themes.css";
 import "./styles/rebrand.css";

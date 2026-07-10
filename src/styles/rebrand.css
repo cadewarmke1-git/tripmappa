@@ -853,7 +853,7 @@ body {
 /* Auth modal defaults — skip when explicit tm-theme palette is on overlay */
 .auth-modal-overlay:not(.tm-theme-night):not(.tm-theme-day) .auth-modal,
 .app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-modal {
-  background: var(--color-surface);
+  background: #0D0A1A;
   color: #fff;
 }
 
