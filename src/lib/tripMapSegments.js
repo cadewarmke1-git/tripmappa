@@ -48,11 +48,6 @@ export function computeNightDrivingBlocks(departureTime, totalHours, routePoints
   }));
 }
 
-/** @deprecated Use computeNightDrivingBlocks */
-export function computeNightSegments(routePoints, departureTime, totalHours) {
-  return computeNightDrivingBlocks(departureTime, totalHours, routePoints);
-}
-
 export function computeLowFuelSegmentPath(routePoints, fuelStopIndices, rangeMiles, totalMiles) {
   if (!routePoints?.length || !rangeMiles) return [];
   const paths = [];
@@ -67,14 +62,4 @@ export function computeLowFuelSegmentPath(routePoints, fuelStopIndices, rangeMil
     }
   }
   return paths;
-}
-
-export function computeRestBreakPoints(totalHours, intervalMinutes = 90) {
-  if (!totalHours || totalHours <= intervalMinutes / 60) return [];
-  const breaks = [];
-  const intervalHours = intervalMinutes / 60;
-  for (let h = intervalHours; h < totalHours; h += intervalHours) {
-    breaks.push({ hourOffset: h, label: `Rest break at ~${Math.floor(h)}h` });
-  }
-  return breaks;
 }

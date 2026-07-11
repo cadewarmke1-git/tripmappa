@@ -129,6 +129,7 @@ export default function RouteFooter({
             value={arriveByDate}
             min={new Date().toISOString().slice(0, 16)}
             onChange={e => { onSetArriveByDate(e.target.value); if (e.target.value && originRef.current?.value && destRef.current?.value && answers.vehicle) onFetchDirections(answers.vehicle); }}
+            aria-label="Arrive by date and time"
           />
         )}
       </div>

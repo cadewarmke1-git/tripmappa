@@ -80,18 +80,14 @@ Status: Pre-launch, Phase 11 polish.
 
 ## Visual Verification Protocol
 After implementing any UI change, Cursor must:
-1. Run npm run build and confirm clean
-2. Start the preview server if not running
-3. Take a Playwright screenshot at 1280x800 desktop 
-   and 375x812 mobile of every screen that was modified
-4. Review each screenshot and confirm the change 
-   looks correct visually — not just that the code 
-   is correct
-5. If anything looks wrong in the screenshot, fix it 
-   before reporting done
-6. Never report a UI task as complete without 
-   screenshot evidence showing the change looks right
-7. Include the screenshots in the report back
+1. Run `npm run build` and confirm clean
+2. Start the local preview server (`npm run preview`, port 4173) if not already running — the app must be fully running, not a stub page or isolated component render
+3. Take Playwright screenshots at **1280×800 desktop** and **375×812 mobile** of every screen that was modified, captured against the live preview server
+4. **Map-related fixes:** screenshots must show the actual Google Maps instance rendered with a real route loaded — not a placeholder, mock tile, or empty map panel
+5. **Question flow fixes:** screenshots must show the actual plan flow running with a real route already set (e.g. origin + destination entered), stepping through **at least 3 question steps** in sequence
+6. **Describe what you see** in each screenshot in plain language — report what is actually visible, not what the code says should be there
+7. If a screenshot does not match the expected result, fix the issue and re-screenshot before reporting done
+8. Never report a UI task as complete without screenshot evidence showing the change looks correct
+9. Include the screenshots in the report back
 
-This is mandatory for every UI change. Code inspection 
-alone is not sufficient verification.
+A fix is not complete until the screenshot confirms it visually. Code inspection alone is never sufficient verification — including when confirming that earlier work from the same session is actually correct in the running app.

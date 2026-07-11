@@ -1,6 +1,5 @@
 import { parseMilesFromDistance, parseHoursFromDuration } from "./parsing.js";
 import { hasPref, parseTravelerCount } from "./vehicles.js";
-import { countFlowQuestionsAnswered } from "./tripFlow.js";
 import { estimateFoodCostFromRestaurants } from "./restaurantPlaces.js";
 import { estimateTripFuelCost } from "./fuel.js";
 
@@ -47,10 +46,6 @@ export function estimateFuelCost(miles, vehicle, preferences, answers) {
   if (answers) return estimateTripFuelCost(miles, answers);
   if (!miles || miles <= 0) return null;
   return Math.round((miles / 28) * 3.45);
-}
-
-export function countAnsweredQuestions(answers) {
-  return countFlowQuestionsAnswered(answers);
 }
 
 function lodgingNightlyRate(answers, selectedLodging) {
@@ -140,8 +135,4 @@ export function computeBudgetEstimate(answers, routeInfo, tripLegs, options = {}
     addedFuelCost,
     addedFoodCost,
   };
-}
-
-export function estimateRoadStopCost(stop) {
-  return estimateStopCost(stop, stop.category === "charging" ? "ev" : stop.category);
 }

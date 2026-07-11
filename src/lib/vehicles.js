@@ -37,10 +37,6 @@ export function isOversizedVehicle(vehicle) {
   return ["Flatbed", "Tanker"].includes(vehicle);
 }
 
-export function needsVehicleSpecs() {
-  return false;
-}
-
 export function applyAssumedVehicleSpecs(answers) {
   const out = { ...answers };
   if (isTruckVehicle(out.vehicle)) {
@@ -70,22 +66,6 @@ export function skipLodgingQuestion(tripType, vehicle) {
   if (tripType === "Day trip" || tripType === "Driving home") return true;
   if (tripType === "Flying" || tripType === "Ferry or Cruise") return true;
   if (vehicle === "Plane" || isWaterVehicle(vehicle)) return true;
-  return false;
-}
-
-export function skipTravelersQuestion(tripType, vehicle) {
-  if (isWorkDelivery(tripType)) return true;
-  if (tripType === "Flying" || tripType === "Ferry or Cruise") return true;
-  if (vehicle === "Plane") return true;
-  return false;
-}
-
-export function skipPreferencesQuestion(tripType, vehicle) {
-  if (tripType === "Flying" || vehicle === "Plane") return true;
-  return false;
-}
-
-export function hasFamilyKids() {
   return false;
 }
 
@@ -131,10 +111,6 @@ export function needsPartyCompositionBand(travelers) {
 export function isSoloTraveler(travelers) {
   const t = String(travelers ?? "");
   return t === "1" || t === "Just me" || travelers === 1;
-}
-
-export function formatPartySizeLabel(travelers) {
-  return formatTravelersLabel(travelers);
 }
 
 export function isTruckerTrip(answers) {

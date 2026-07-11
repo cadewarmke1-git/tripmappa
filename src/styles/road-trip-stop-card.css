@@ -281,3 +281,24 @@
 .app-wrap.day .road-trip-stop-card .data-estimated-label {
   color: var(--rtsc-muted) !important;
 }
+
+@media (hover: hover) {
+  .road-trip-stop-card--tilt {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transform-style: preserve-3d;
+  }
+
+  .road-trip-stop-card--tilt.is-tilt-hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  }
+
+  .app-wrap.night .road-trip-stop-card--tilt.is-tilt-hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .road-trip-stop-card--tilt {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+}

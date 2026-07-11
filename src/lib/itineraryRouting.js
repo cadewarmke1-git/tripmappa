@@ -175,10 +175,3 @@ export async function fetchItineraryRoute({
     },
   };
 }
-
-export function buildTruckRoutingPayloadWithVia(origin, destination, answers, via = []) {
-  return {
-    ...buildTruckRoutingPayload(origin, destination, answers),
-    via,
-  };
-}

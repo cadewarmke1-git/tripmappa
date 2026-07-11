@@ -130,12 +130,17 @@ export function computeTripAlerts({
       return !pharmacies.length;
     });
     if (missingPharmacy.length) {
-      const cities = missingPharmacy.map(s => s.city).filter(Boolean).slice(0, 3).join(", ");
+      const cities = [];
+      for (const stop of missingPharmacy) {
+        if (stop.city) cities.push(stop.city);
+        if (cities.length >= 3) break;
+      }
+      const cityList = cities.join(", ");
       raw.push(mkAlert(
         "medical",
         "Pharmacy access needed",
         cities
-          ? `Some overnight stops (${cities}) may lack nearby pharmacies for refrigerated medication. Plan backup cooling or an alternate stop.`
+          ? `Some overnight stops (${cityList}) may lack nearby pharmacies for refrigerated medication. Plan backup cooling or an alternate stop.`
           : "Verify pharmacy access at each overnight stop for refrigerated medication.",
         { mapCategory: "medical" },
       ));
@@ -173,19 +178,4 @@ export function computeTripAlerts({
   }
 
   return consolidateAndCapAlerts(raw);
-}
-
-export function alertsToMapMarkers(alerts, dismissedIds = []) {
-  return alerts
-    .filter(a => !dismissedIds.includes(a.id))
-    .filter(a => a.lat != null && a.lng != null)
-    .map(a => ({
-      id: a.markerId || a.id,
-      lat: a.lat,
-      lng: a.lng,
-      category: a.mapCategory || "alert",
-      title: a.title,
-      subtitle: a.message,
-      alertId: a.id,
-    }));
 }

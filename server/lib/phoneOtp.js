@@ -34,12 +34,6 @@ export function validateUsPhone(input) {
   return { ok: true, phone: normalized };
 }
 
-export function formatPhoneDisplay(phone) {
-  const digits = phone.replace(/\D/g, "").slice(-10);
-  if (digits.length !== 10) return phone;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
 export async function countRecentOtpRequests(admin, phone) {
   const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
   const { count, error } = await admin

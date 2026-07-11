@@ -154,20 +154,30 @@ function FounderPlate({ isCurrent, onClaim }) {
   );
 }
 
+export const DEFAULT_PRICING_SECTIONS = {
+  showBillingToggle: true,
+  showComparison: true,
+  showFounder: true,
+  showWanderer: true,
+};
+
 export default function PricingPlans({
   billingInterval = "month",
   onBillingChange,
   currentTier = null,
-  showBillingToggle = true,
-  showComparison = true,
-  showFounder = true,
-  showWanderer = true,
+  sections: sectionsProp = {},
   compact = false,
   onGetStarted,
   onUpgradeVoyager,
   onUpgradeTrailblazer,
   onSignIn,
 }) {
+  const {
+    showBillingToggle,
+    showComparison,
+    showFounder,
+    showWanderer,
+  } = { ...DEFAULT_PRICING_SECTIONS, ...sectionsProp };
   const normalizedCurrent = currentTier ? normalizeTier(currentTier) : null;
   const isCurrentFounder = isFounderTier(currentTier);
 

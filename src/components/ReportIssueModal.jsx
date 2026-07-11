@@ -21,14 +21,13 @@ export default function ReportIssueModal({ reportText, onTextChange, onClose, on
   }
 
   return (
-    <div className="modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        ref={dialogRef}
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="report-issue-title"
-      >
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay"
+      aria-labelledby="report-issue-title"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="modal" onClick={e => e.stopPropagation()}>
         <ModalCloseButton onClose={onClose} />
         <div className="modal-title" id="report-issue-title">Report an issue</div>
         <div className="modal-sub">Tell us what went wrong and we&apos;ll look into it.</div>
@@ -51,6 +50,6 @@ export default function ReportIssueModal({ reportText, onTextChange, onClose, on
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

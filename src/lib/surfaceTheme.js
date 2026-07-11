@@ -67,8 +67,3 @@ export function syncSkyCycle({
   document.documentElement.dataset.surfaceTheme = surfaceTheme;
   document.documentElement.dataset.skyPhase = phase;
 }
-
-/** @deprecated Prefer syncSkyCycle — kept for callers that only pass day/night/twilight. */
-export function syncSurfaceTheme(theme) {
-  syncSkyCycle({ theme });
-}

@@ -3,13 +3,10 @@
 import {
   bboxCacheKey,
   cacheExpiresBefore,
-  fetchOverpassRestStops,
   normalizeBbox,
   parseOverpassElements,
-  roundBboxCoord,
 } from "./restStopOsm.js";
 
-export const DENSE_CORRIDOR_SAMPLE_MI = 30;
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 const OVERPASS_TIMEOUT_MS = 12_000;
 
@@ -24,7 +21,7 @@ export function corridorBboxCacheKey(bbox) {
   return `corridor:v1:${bboxCacheKey(bbox)}`;
 }
 
-export { normalizeBbox, cacheExpiresBefore, roundBboxCoord };
+export { normalizeBbox, cacheExpiresBefore };
 
 function inferFoodCategory(tags = {}) {
   if (tags.amenity === "fast_food") return "restaurant";
@@ -170,6 +167,3 @@ export async function fetchOverpassCorridorPlaces(bbox) {
     clearTimeout(timer);
   }
 }
-
-/** Reuse rest-stop Overpass for segments that only need highway facilities (unchanged path). */
-export { fetchOverpassRestStops };

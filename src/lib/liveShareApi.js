@@ -75,10 +75,6 @@ export async function sendSosAlert({ shareToken, latitude, longitude, accessToke
   return data;
 }
 
-export function getLiveSharePath(token) {
-  return `/live/${token}`;
-}
-
 export function getLiveShareUrl(token) {
   return `${window.location.origin}/live/${token}`;
 }

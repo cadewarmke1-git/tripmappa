@@ -184,8 +184,8 @@ html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
 
 @media (min-width: 1024px) {
   html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
-    width: calc(50vw - 24px) !important;
-    max-width: calc(50vw - 24px) !important;
+    width: min(880px, calc(100vw - 420px)) !important;
+    max-width: min(880px, calc(100vw - 420px)) !important;
     min-width: 500px !important;
     left: 16px !important;
   }

@@ -44,10 +44,6 @@ export function isValidItineraryShareId(id) {
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 }
 
-export function sendGenericServerError(res, status = 500) {
-  return res.status(status).json({ error: "Internal server error" });
-}
-
 export function rejectRateLimited(res, retryAfter) {
   return res.status(429).json({
     error: "Rate limit exceeded",

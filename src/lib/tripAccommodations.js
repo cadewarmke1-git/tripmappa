@@ -149,11 +149,6 @@ export function isPersonalVehicle(vehicle) {
   return PERSONAL.includes(vehicle);
 }
 
-export function isNonCommercial(answers) {
-  const v = getEffectiveVehicle(answers);
-  return isPersonalVehicle(v) || isRvVehicle(v);
-}
-
 const MOTORCYCLE_TOWING_MILES = 80;
 
 export function needsTowingQuestion(answers, context = {}) {
@@ -166,10 +161,6 @@ export function needsTowingQuestion(answers, context = {}) {
     return miles == null || miles >= MOTORCYCLE_TOWING_MILES;
   }
   return false;
-}
-
-export function isMotorcycleTowingQuestion(answers) {
-  return getEffectiveVehicle(answers) === "Motorcycle";
 }
 
 export const MOTORCYCLE_TOWING_CHOICES = [
@@ -256,11 +247,6 @@ export function needsYoungChildrenRest(answers) {
   return hasAccessibility(answers, "Traveling with young children");
 }
 
-/** @deprecated */
-export function needsElderlyOrPregnantRest(answers) {
-  return needsElderlyRest(answers) || needsYoungChildrenRest(answers);
-}
-
 export function needsSafeStopsOnly(answers) {
   const prefs = asArray(answers?.preferences);
   if (prefs.includes("Safe, well-lit stops only")) return true;
@@ -280,10 +266,6 @@ export function needsFoodAllergyDetail(answers) {
 export function isTeslaSuperchargerOnly(answers) {
   const ft = answers?.fuel_type || "";
   return ft === "Electric — Tesla Superchargers" || ft === "Electric — Tesla Superchargers only";
-}
-
-export function isNightDrivingOnly() {
-  return false;
 }
 
 export function getTripBudgetCap(answers) {
@@ -313,14 +295,6 @@ export function getDietarySearchKeywords(answers) {
     keys.push(`${answers.food_allergies.trim()} allergy friendly restaurant`);
   }
   return keys;
-}
-
-/** Primary keyword for a single search (legacy). Prefer search terms from full list. */
-export function getPrimaryRestaurantKeyword(answers) {
-  const keys = getDietarySearchKeywords(answers);
-  const remoteWork = asArray(answers?.stops_interests).some(i => /remote work|wifi/i.test(i));
-  if (remoteWork) return "cafe wifi laptop";
-  return keys[0] || "restaurant";
 }
 
 export function getFuelRangeMiles(answers) {

@@ -12,10 +12,6 @@ export function resetPlacesBudget() {
   capLogged = false;
 }
 
-export function isPlacesBudgetCapped() {
-  return nearbyCount >= MAX_NEARBY_PER_TRIP || detailsCount >= MAX_DETAILS_PER_TRIP;
-}
-
 function logCapHit(kind) {
   if (capLogged) return;
   capLogged = true;
@@ -46,8 +42,4 @@ export function canMakeDetailsCall() {
 export function recordDetailsCall() {
   detailsCount += 1;
   if (detailsCount >= MAX_DETAILS_PER_TRIP) logCapHit("Place Details");
-}
-
-export function getPlacesBudgetSnapshot() {
-  return { nearbyCount, detailsCount, capped: isPlacesBudgetCapped() };
 }

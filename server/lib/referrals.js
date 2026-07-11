@@ -1,5 +1,4 @@
 /** Referral codes, links, and Voyager bonus grants. */
-import { FOUNDING_MEMBER_MAX, countFoundingMembers } from "./foundingMembers.js";
 import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 const REFERRAL_PARAM = "ref";
@@ -117,5 +116,3 @@ export async function processReferralSignup(admin, referredUserId, refCode) {
     referredBonusUntil,
   };
 }
-
-export { FOUNDING_MEMBER_MAX, countFoundingMembers };

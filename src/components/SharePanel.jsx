@@ -26,6 +26,20 @@ const SMS_SHARING_UI_ENABLED = false;
 
 const WARN_KEY = "tripmappa-live-share-warn";
 
+function requestDeviceLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported in this browser"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      err => reject(err),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  });
+}
+
 export default function SharePanel({
   user,
   profile,
@@ -131,20 +145,6 @@ export default function SharePanel({
       },
     });
   }, [shareToken, sharing, user?.id, displayName]);
-
-  function requestDeviceLocation() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported in this browser"));
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        err => reject(err),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
-      );
-    });
-  }
 
   async function startLiveShareWithLocation() {
     setStarting(true);
@@ -352,7 +352,7 @@ export default function SharePanel({
         <div className="live-share-url-block">
           <div className="live-share-url-label">Live link</div>
           <div className="live-share-url-row">
-            <input className="live-share-url-input" readOnly value={shareUrl} onFocus={e => e.target.select()} />
+            <input className="live-share-url-input" readOnly value={shareUrl} onFocus={e => e.target.select()} aria-label="Live link" />
             <button type="button" className="profile-btn profile-btn-gold" onClick={handleCopyLink}>Copy Link</button>
           </div>
           {SMS_SHARING_UI_ENABLED && showSmsInput && (

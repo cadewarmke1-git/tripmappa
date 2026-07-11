@@ -37,18 +37,17 @@ export default function QuestionProgress({
         />
       </div>
       {!trackOnly && (
-        <div className="question-progress-phases" role="list" aria-label="Planning progress">
+        <ol className="question-progress-phases" aria-label="Planning progress">
           {phases.map((phase, index) => (
-            <span
+            <li
               key={phase.id}
-              role="listitem"
               aria-current={index === activeIndex ? "step" : undefined}
               className={`question-progress-phase${index < activeIndex ? " is-done" : ""}${index === activeIndex ? " is-active" : ""}${index > activeIndex ? " is-upcoming" : ""}`}
             >
               {phase.label}
-            </span>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
     </div>
   );

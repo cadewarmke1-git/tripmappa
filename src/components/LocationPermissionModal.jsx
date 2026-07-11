@@ -1,18 +1,23 @@
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
+
 export default function LocationPermissionModal({
   open,
   onAllow,
   onDeny,
   denied = false,
 }) {
+  const dialogRef = useDialogA11y(open, onDeny, "location-permission-title");
   if (!open) return null;
 
   return (
-    <div className="modal-overlay location-permission-overlay" role="presentation" onClick={onDeny}>
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay location-permission-overlay"
+      aria-labelledby="location-permission-title"
+      onClick={onDeny}
+    >
       <div
         className="modal location-permission-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="location-permission-title"
         onClick={e => e.stopPropagation()}
       >
         <h2 id="location-permission-title" className="location-permission-title">
@@ -34,6 +39,6 @@ export default function LocationPermissionModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

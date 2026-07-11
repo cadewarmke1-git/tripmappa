@@ -408,6 +408,8 @@ html body .app-wrap.night .btn-generate-trip {
 .plan-flow-form-body {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   /* Clearance so last option cards (e.g. Avoid highways) stay above the action dock */
@@ -602,6 +604,23 @@ html body .app-wrap.night .btn-generate-trip {
 
 .plan-flow-form--active {
   gap: 0;
+}
+
+.plan-flow-form--active .plan-flow-layout--tall.plan-flow-current,
+.plan-flow-form--active .plan-flow-layout--standard.plan-flow-current {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.plan-flow-form--active .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact,
+.plan-flow-form--active .plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .plan-flow-compact-header {

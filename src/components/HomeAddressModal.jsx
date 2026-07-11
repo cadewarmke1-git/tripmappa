@@ -1,8 +1,10 @@
 import { useRef } from "react";
 import { Autocomplete } from "@react-google-maps/api";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 export default function HomeAddressModal({ isLoaded, initialAddress = "", onSave, onClose }) {
   const inputRef = useRef(null);
+  const dialogRef = useDialogA11y(true, onClose, "home-address-title");
 
   function handleSave() {
     const value = inputRef.current?.value?.trim() || "";
@@ -11,8 +13,13 @@ export default function HomeAddressModal({ isLoaded, initialAddress = "", onSave
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="presentation">
-      <div className="modal home-address-modal" onClick={e => e.stopPropagation()} role="dialog" aria-labelledby="home-address-title">
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay"
+      aria-labelledby="home-address-title"
+      onClick={onClose}
+    >
+      <div className="modal home-address-modal" onClick={e => e.stopPropagation()}>
         <button type="button" className="modal-close" onClick={onClose} aria-label="Close">×</button>
         <h2 id="home-address-title" className="home-address-title">Set your home address</h2>
         <p className="home-address-lead">
@@ -43,6 +50,6 @@ export default function HomeAddressModal({ isLoaded, initialAddress = "", onSave
           Save home address
         </button>
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -1,20 +1,21 @@
-const DRAFT_KEY = "tripmappa-plan-draft";
+import {
+  PLAN_DRAFT_KEY,
+  readLocalStorage,
+  writeLocalStorage,
+  removeLocalStorage,
+} from "./storageKeys.js";
 
 export function savePlanDraft(draft) {
   if (!draft?.origin || !draft?.dest) return;
-  try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({
-      ...draft,
-      savedAt: Date.now(),
-    }));
-  } catch {
-    /* storage full or private mode */
-  }
+  writeLocalStorage(PLAN_DRAFT_KEY, JSON.stringify({
+    ...draft,
+    savedAt: Date.now(),
+  }));
 }
 
 export function loadPlanDraft() {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    const raw = readLocalStorage(PLAN_DRAFT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.origin || !parsed?.dest) return null;
@@ -25,9 +26,5 @@ export function loadPlanDraft() {
 }
 
 export function clearPlanDraft() {
-  try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-}
-
-export function hasPlanDraft() {
-  return loadPlanDraft() != null;
+  removeLocalStorage(PLAN_DRAFT_KEY);
 }

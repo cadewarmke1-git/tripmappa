@@ -433,8 +433,7 @@ export default function ProfilePage({
                 onBillingChange={setBillingPeriod}
                 currentTier={TIERS.WANDERER}
                 compact
-                showComparison
-                showFounder
+                sections={{ showComparison: true, showFounder: true }}
                 onUpgradeVoyager={onUpgradeVoyager}
                 onUpgradeTrailblazer={onUpgrade}
               />
@@ -538,6 +537,7 @@ export default function ProfilePage({
                   value={displayNameDraft}
                   onChange={e => setDisplayNameDraft(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleSaveName(); }}
+                  aria-label="Display name"
                 />
                 <div className="profile-settings-actions">
                   <button type="button" className="profile-btn profile-btn-gold" onClick={handleSaveName} disabled={saving}>Save</button>
@@ -586,6 +586,7 @@ export default function ProfilePage({
                   type="email"
                   value={emailDraft}
                   onChange={e => setEmailDraft(e.target.value)}
+                  aria-label="Email"
                 />
                 <div className="profile-settings-actions">
                   <button type="button" className="profile-btn profile-btn-gold" onClick={handleSaveEmail} disabled={saving}>Save</button>

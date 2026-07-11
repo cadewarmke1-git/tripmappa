@@ -28,21 +28,3 @@ function notifyListeners() {
     }
   });
 }
-
-export function subscribePwaInstall(callback) {
-  listeners.add(callback);
-  callback(Boolean(deferredPrompt));
-  return () => listeners.delete(callback);
-}
-
-export async function promptPwaInstall() {
-  if (!deferredPrompt) return false;
-  deferredPrompt.prompt();
-  try {
-    await deferredPrompt.userChoice;
-  } finally {
-    deferredPrompt = null;
-    notifyListeners();
-  }
-  return true;
-}

@@ -158,7 +158,7 @@ function ActionButton({ icon, label, mode, color, primary, onClick, href }) {
   );
 }
 
-export function NeonSign({
+function NeonSign({
   business,
   mode,
   rating = null,

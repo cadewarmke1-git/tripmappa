@@ -60,6 +60,54 @@ function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false 
   return draft;
 }
 
+function vehicleDisplayLabel(label) {
+  const dash = String(label || "").indexOf("—");
+  if (dash > 0) return String(label).slice(0, dash).trim();
+  return label;
+}
+
+function renderOptionGrid(children) {
+  return <div className="plan-option-grid">{children}</div>;
+}
+
+function renderPlanOptionCard({
+  value,
+  label,
+  description = null,
+  selected: isSelected,
+  onSelect,
+  icon = null,
+  disabled = false,
+}) {
+  return (
+    <PlanOptionCard
+      key={value}
+      label={label}
+      description={description}
+      icon={icon}
+      selected={isSelected}
+      disabled={disabled}
+      onSelect={onSelect}
+    />
+  );
+}
+
+function isTripDetailsDraftEmpty(draft) {
+  const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
+  const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
+  const accessibility = Array.isArray(draft.accessibility) ? draft.accessibility : [];
+  const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
+  const budget = draft.trip_budget || "No budget limit";
+  return !dietary.length && !stops.length && !accessibility.length && !schedule.length && budget === "No budget limit";
+}
+
+function continueWithHaptic(handler) {
+  return () => {
+    triggerPrimaryHaptic();
+    handler();
+  };
+}
+
 export default function QuestionChoices({
   currentQ,
   stepAnim,
@@ -79,36 +127,19 @@ export default function QuestionChoices({
   onSkipRoutePending,
   onRoutePendingTimeout,
 }) {
-  const [vehicleDraft, setVehicleDraft] = useState(null);
-  const [lodgingDraft, setLodgingDraft] = useState(null);
-  const [loyaltyDraft, setLoyaltyDraft] = useState(null);
-  const [groupDraft, setGroupDraft] = useState(null);
-  const [multiDraft, setMultiDraft] = useState([]);
-  const [partyAdults, setPartyAdults] = useState(2);
-  const [partyChildren, setPartyChildren] = useState(0);
-  const [moreOptionsExpanded, setMoreOptionsExpanded] = useState(false);
-  const [vehicleTypesExpanded, setVehicleTypesExpanded] = useState(false);
-  const [routePendingExpired, setRoutePendingExpired] = useState(false);
-  const [budgetTouched, setBudgetTouched] = useState(false);
+  const [loyaltyOverride, setLoyaltyOverride] = useState(null);
+  const [groupOverride, setGroupOverride] = useState(null);
+  const [multiOverride, setMultiOverride] = useState(null);
+  const [partyOverride, setPartyOverride] = useState(null);
+  const [moreOptionsExpandedQId, setMoreOptionsExpandedQId] = useState(null);
+  const [vehicleTypesExpandedQId, setVehicleTypesExpandedQId] = useState(null);
+  const [routeExpiredKey, setRouteExpiredKey] = useState(null);
+  const [budgetTouchedQId, setBudgetTouchedQId] = useState(null);
 
   const partyMax = useMemo(
     () => parseTravelersBandMax(answers?.travelers),
     [answers?.travelers],
   );
-
-  useEffect(() => {
-    if (currentQ?.type === "vehicle") setVehicleTypesExpanded(false);
-  }, [currentQ?.id, currentQ?.type]);
-
-  useEffect(() => {
-    setRoutePendingExpired(false);
-    if (!currentQ?.pendingRoute) return undefined;
-    const timer = setTimeout(() => {
-      setRoutePendingExpired(true);
-      onRoutePendingTimeout?.();
-    }, ROUTE_PENDING_UNLOCK_MS);
-    return () => clearTimeout(timer);
-  }, [currentQ?.id, currentQ?.pendingRoute, onRoutePendingTimeout]);
 
   const committed = committedAnswers ?? answers;
   const questionConfirmed = useMemo(
@@ -116,56 +147,77 @@ export default function QuestionChoices({
     [currentQ?.id, questionHistory],
   );
 
-  useEffect(() => {
-    setVehicleDraft(
-      questionConfirmed && currentQ?.type === "vehicle"
-        ? (committed[currentQ.id] || null)
-        : null,
-    );
-    setLodgingDraft(null);
-    setLoyaltyDraft(
-      questionConfirmed && currentQ?.type === "lodging_stay"
-        ? (committed.loyalty_program || null)
-        : null,
-    );
-    setBudgetTouched(false);
-  }, [currentQ?.id, currentQ?.type, committed.loyalty_program, committed, questionConfirmed]);
+  const routePendingKey = currentQ?.pendingRoute ? `${currentQ.id}:${currentQ.pendingRoute}` : null;
+  const routePendingExpired = routeExpiredKey === routePendingKey && routePendingKey != null;
 
   useEffect(() => {
-    if (currentQ?.type !== "party_composition") return;
+    if (!currentQ?.pendingRoute) return undefined;
+    const key = `${currentQ.id}:${currentQ.pendingRoute}`;
+    const timer = setTimeout(() => {
+      setRouteExpiredKey(key);
+      onRoutePendingTimeout?.();
+    }, ROUTE_PENDING_UNLOCK_MS);
+    return () => clearTimeout(timer);
+  }, [currentQ?.id, currentQ?.pendingRoute, onRoutePendingTimeout]);
+
+  const vehicleDraft = questionConfirmed && currentQ?.type === "vehicle"
+    ? (committed[currentQ.id] || null)
+    : null;
+  const lodgingDraft = null;
+
+  const derivedLoyaltyDraft = questionConfirmed && currentQ?.type === "lodging_stay"
+    ? (committed.loyalty_program || null)
+    : null;
+  const loyaltyDraft = loyaltyOverride?.qId === currentQ?.id
+    ? loyaltyOverride.value
+    : derivedLoyaltyDraft;
+
+  const derivedParty = useMemo(() => {
+    if (currentQ?.type !== "party_composition") return null;
     if (questionConfirmed) {
-      setPartyAdults(committed.adult_count ?? 1);
-      setPartyChildren(committed.child_count ?? 0);
-    } else {
-      setPartyAdults(null);
-      setPartyChildren(null);
+      return { adults: committed.adult_count ?? 1, children: committed.child_count ?? 0 };
     }
-  }, [currentQ?.id, currentQ?.type, questionConfirmed, committed.adult_count, committed.child_count]);
+    return { adults: null, children: null };
+  }, [currentQ?.type, questionConfirmed, committed.adult_count, committed.child_count]);
+  const partyState = partyOverride?.qId === currentQ?.id ? partyOverride : derivedParty;
+  const partyAdults = partyState?.adults ?? null;
+  const partyChildren = partyState?.children ?? null;
 
-  useEffect(() => {
+  const derivedGroupDraft = useMemo(() => {
     if (currentQ?.type === "trip_details" || currentQ?.type === "multiselect_group") {
-      setGroupDraft(buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed }));
-      if (currentQ?.type === "trip_details") {
-        setMoreOptionsExpanded(false);
-      }
-      return;
+      return buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
     }
-    setGroupDraft(null);
-    if (currentQ?.type === "multiselect") {
-      const fromAnswers = Array.isArray(committed[currentQ.id]) ? committed[currentQ.id] : [];
-      if (questionConfirmed) {
-        setMultiDraft([...fromAnswers]);
-      } else if (fromAnswers.length > 0) {
-        setMultiDraft([...fromAnswers]);
-      } else if (Array.isArray(prefDraft) && prefDraft.length > 0) {
-        setMultiDraft([...prefDraft]);
-      } else {
-        setMultiDraft([]);
-      }
-      return;
+    return null;
+  }, [currentQ, prefDraft, committed, questionConfirmed]);
+  const groupDraft = groupOverride?.qId === currentQ?.id ? groupOverride.draft : derivedGroupDraft;
+
+  const derivedMultiDraft = useMemo(() => {
+    if (currentQ?.type !== "multiselect") return [];
+    const fromAnswers = Array.isArray(committed[currentQ.id]) ? committed[currentQ.id] : [];
+    if (questionConfirmed) return [...fromAnswers];
+    if (fromAnswers.length > 0) return [...fromAnswers];
+    if (Array.isArray(prefDraft) && prefDraft.length > 0) return [...prefDraft];
+    return [];
+  }, [currentQ?.type, currentQ?.id, prefDraft, committed, questionConfirmed]);
+  const multiDraft = multiOverride?.qId === currentQ?.id ? multiOverride.value : derivedMultiDraft;
+
+  const multiDraftSet = useMemo(
+    () => new Set(Array.isArray(multiDraft) ? multiDraft : []),
+    [multiDraft],
+  );
+
+  const groupDraftSets = useMemo(() => {
+    if (!isGroupDraft(groupDraft)) return {};
+    const sets = {};
+    for (const [sectionId, values] of Object.entries(groupDraft)) {
+      if (Array.isArray(values)) sets[sectionId] = new Set(values);
     }
-    setMultiDraft([]);
-  }, [currentQ?.id, currentQ?.type, prefDraft, committed, questionConfirmed]);
+    return sets;
+  }, [groupDraft]);
+
+  const moreOptionsExpanded = moreOptionsExpandedQId === currentQ?.id;
+  const vehicleTypesExpanded = vehicleTypesExpandedQId === currentQ?.id;
+  const budgetTouched = budgetTouchedQId === currentQ?.id;
 
   useEffect(() => {
     if (!actionsInDock || !onDockActionsChange) return undefined;
@@ -183,25 +235,11 @@ export default function QuestionChoices({
       onPickAnswer(value, extraFields, { instant: true });
     };
 
-    const continueWithHaptic = (handler) => () => {
-      triggerPrimaryHaptic();
-      handler();
-    };
-
     const submitPartyComposition = () => {
       onPickAnswer(
         { adults: Number(partyAdults ?? 1), children: Number(partyChildren ?? 0) },
         {},
       );
-    };
-
-    const isTripDetailsDraftEmpty = (draft) => {
-      const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
-      const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
-      const accessibility = Array.isArray(draft.accessibility) ? draft.accessibility : [];
-      const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
-      const budget = draft.trip_budget || "No budget limit";
-      return !dietary.length && !stops.length && !accessibility.length && !schedule.length && budget === "No budget limit";
     };
 
     const submitTripDetails = () => {
@@ -284,6 +322,7 @@ export default function QuestionChoices({
   }, [
     actionsInDock,
     onDockActionsChange,
+    currentQ,
     currentQ?.id,
     currentQ?.type,
     currentQ?.pendingRoute,
@@ -321,38 +360,6 @@ export default function QuestionChoices({
       || lodgingDraft === val;
   }
 
-  function vehicleDisplayLabel(label) {
-    const dash = String(label || "").indexOf("—");
-    if (dash > 0) return String(label).slice(0, dash).trim();
-    return label;
-  }
-
-  function renderOptionGrid(children) {
-    return <div className="plan-option-grid">{children}</div>;
-  }
-
-  function renderPlanOptionCard({
-    value,
-    label,
-    description = null,
-    selected: isSelected,
-    onSelect,
-    icon = null,
-    disabled = frozen,
-  }) {
-    return (
-      <PlanOptionCard
-        key={value}
-        label={label}
-        description={description}
-        icon={icon}
-        selected={isSelected}
-        disabled={disabled}
-        onSelect={onSelect}
-      />
-    );
-  }
-
   const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers";
   const isLodgingStay = currentQ.type === "lodging_stay";
   const isTripDetails = currentQ.type === "trip_details";
@@ -369,13 +376,6 @@ export default function QuestionChoices({
     onPickAnswer(value, extraFields);
   }
 
-  function continueWithHaptic(handler) {
-    return () => {
-      triggerPrimaryHaptic();
-      handler();
-    };
-  }
-
   function toggleGroupSection(sectionId, value) {
     const base = groupDraft ?? buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
     const section = Array.isArray(base[sectionId]) ? base[sectionId] : [];
@@ -385,17 +385,8 @@ export default function QuestionChoices({
         ? section.filter(x => x !== value)
         : [...section, value],
     };
-    setGroupDraft(next);
+    setGroupOverride({ qId: currentQ.id, draft: next });
     onSetPrefDraft(next);
-  }
-
-  function isTripDetailsDraftEmpty(draft) {
-    const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
-    const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
-    const accessibility = Array.isArray(draft.accessibility) ? draft.accessibility : [];
-    const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
-    const budget = draft.trip_budget || "No budget limit";
-    return !dietary.length && !stops.length && !accessibility.length && !schedule.length && budget === "No budget limit";
   }
 
   function submitTripDetails() {
@@ -421,11 +412,11 @@ export default function QuestionChoices({
   }
 
   function setBudgetDraft(value) {
-    setBudgetTouched(true);
+    setBudgetTouchedQId(currentQ.id);
     const base = groupDraft ?? buildGroupDraft(currentQ, {}, committed);
     const current = base.trip_budget || "No budget limit";
     const next = { ...base, trip_budget: current === value ? "No budget limit" : value };
-    setGroupDraft(next);
+    setGroupOverride({ qId: currentQ.id, draft: next });
     onSetPrefDraft(next);
   }
 
@@ -438,7 +429,7 @@ export default function QuestionChoices({
   function toggleMultiDraft(value) {
     const list = Array.isArray(multiDraft) ? multiDraft : [];
     const next = list.includes(value) ? list.filter(x => x !== value) : [...list, value];
-    setMultiDraft(next);
+    setMultiOverride({ qId: currentQ.id, value: next });
     onSetPrefDraft(next);
   }
 
@@ -459,8 +450,7 @@ export default function QuestionChoices({
       : childrenBase;
     if (partyMax != null && nextAdults + nextChildren > partyMax) return;
 
-    setPartyAdults(nextAdults);
-    setPartyChildren(nextChildren);
+    setPartyOverride({ qId: currentQ.id, adults: nextAdults, children: nextChildren });
     onSetPrefDraft({ adults: nextAdults, children: nextChildren });
   }
 
@@ -515,6 +505,7 @@ export default function QuestionChoices({
                 label: vehicleDisplayLabel(opt.label),
                 description: vehicleOptionDescription(opt.value, opt.label),
                 selected: isChoiceSelected(opt.value),
+                disabled: frozen,
                 onSelect: () => pickWithAnim(opt.value),
                 icon: <PlanVehicleIcon vehicle={opt.value} />,
               });
@@ -530,7 +521,7 @@ export default function QuestionChoices({
                       className="plan-vehicle-types-expander"
                       aria-expanded={vehicleTypesExpanded}
                       disabled={frozen}
-                      onClick={() => setVehicleTypesExpanded(prev => !prev)}
+                      onClick={() => setVehicleTypesExpandedQId(vehicleTypesExpanded ? null : currentQ.id)}
                     >
                       {vehicleTypesExpanded ? "− Fewer vehicle types" : "+ More vehicle types"}
                     </button>
@@ -592,6 +583,7 @@ export default function QuestionChoices({
                   value,
                   label,
                   selected: isChoiceSelected(value),
+                  disabled: frozen,
                   onSelect: () => pickInstant(value, { loyalty_program: loyaltyDraft || "No preference" }),
                 });
               }))}
@@ -604,7 +596,8 @@ export default function QuestionChoices({
                       value,
                       label,
                       selected: loyaltyDraft === value,
-                      onSelect: () => setLoyaltyDraft(value),
+                      disabled: frozen,
+                      onSelect: () => setLoyaltyOverride({ qId: currentQ.id, value }),
                     });
                   }))}
                 </div>
@@ -616,7 +609,8 @@ export default function QuestionChoices({
             renderOptionGrid(choices.map(c => renderPlanOptionCard({
               value: c,
               label: c,
-              selected: Array.isArray(multiDraft) && multiDraft.includes(c),
+              selected: multiDraftSet.has(c),
+              disabled: frozen,
               onSelect: () => toggleMultiDraft(c),
             })))
           )}
@@ -666,9 +660,9 @@ export default function QuestionChoices({
 
           {isTripDetails && (
             <>
-              {(currentQ.sections || [])
-                .filter(section => section.id === "dietary")
-                .map(section => (
+              {(currentQ.sections || []).flatMap(section => {
+                if (section.id !== "dietary") return [];
+                return [(
                   <div className="question-group-section" key={section.id}>
                     <div className="question-section-label">{section.label}</div>
                     {renderOptionGrid((section.choices || []).map(raw => {
@@ -676,12 +670,14 @@ export default function QuestionChoices({
                       return renderPlanOptionCard({
                         value: `${section.id}:${value}`,
                         label,
-                        selected: (groupDraft?.[section.id] || []).includes(value),
+                        selected: groupDraftSets[section.id]?.has(value) ?? false,
+                        disabled: frozen,
                         onSelect: () => toggleGroupSection(section.id, value),
                       });
                     }))}
                   </div>
-                ))}
+                )];
+              })}
               {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
                 <div className="question-group-section">
                   <div className="question-section-label">Budget</div>
@@ -691,6 +687,7 @@ export default function QuestionChoices({
                       value: `budget:${value}`,
                       label,
                       selected: isBudgetSelected(value),
+                      disabled: frozen,
                       onSelect: () => setBudgetDraft(value),
                     });
                   }))}
@@ -701,7 +698,7 @@ export default function QuestionChoices({
                   <button
                     type="button"
                     className="question-section-toggle question-more-options-toggle"
-                    onClick={() => setMoreOptionsExpanded(prev => !prev)}
+                    onClick={() => setMoreOptionsExpandedQId(moreOptionsExpanded ? null : currentQ.id)}
                     aria-expanded={moreOptionsExpanded}
                   >
                     <span className="question-section-label question-more-options-label">More options</span>
@@ -709,9 +706,9 @@ export default function QuestionChoices({
                   </button>
                   <div className={`question-collapsible-panel${moreOptionsExpanded ? " is-open" : ""}`}>
                     <div className="question-collapsible-inner">
-                      {(currentQ.sections || [])
-                        .filter(section => TRIP_DETAILS_MORE_SECTION_IDS.has(section.id))
-                        .map(section => (
+                      {(currentQ.sections || []).flatMap(section => {
+                        if (!TRIP_DETAILS_MORE_SECTION_IDS.has(section.id)) return [];
+                        return [(
                           <div className="question-more-options-group" key={section.id}>
                             <div className="question-section-label">{section.label}</div>
                             {renderOptionGrid((section.choices || []).map(raw => {
@@ -719,12 +716,14 @@ export default function QuestionChoices({
                               return renderPlanOptionCard({
                                 value: `${section.id}:${value}`,
                                 label,
-                                selected: (groupDraft?.[section.id] || []).includes(value),
+                                selected: groupDraftSets[section.id]?.has(value) ?? false,
+                                disabled: frozen,
                                 onSelect: () => toggleGroupSection(section.id, value),
                               });
                             }))}
                           </div>
-                        ))}
+                        )];
+                      })}
                     </div>
                   </div>
                 </div>
@@ -740,7 +739,8 @@ export default function QuestionChoices({
                   {renderOptionGrid((section.choices || []).map(c => renderPlanOptionCard({
                     value: `${section.id}:${c}`,
                     label: c,
-                    selected: (groupDraft?.[section.id] || []).includes(c),
+                    selected: groupDraftSets[section.id]?.has(c) ?? false,
+                    disabled: frozen,
                     onSelect: () => toggleGroupSection(section.id, c),
                   })))}
                 </div>

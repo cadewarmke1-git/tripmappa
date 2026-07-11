@@ -1,4 +1,3 @@
-import { searchGasStations, searchDieselStations, searchEvChargingStations, searchPropaneStations } from "./placesStations.js";
 import { readPlanTripSseStream } from "./planTripStream.js";
 import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 
@@ -84,23 +83,4 @@ export async function enrichEvCharging(stations, fuelType = "ELEC", options = {}
   const data = await readApiJson(response);
   if (!response.ok) throw new Error(data.error || "EV charging enrichment failed");
   return data;
-}
-
-export async function fetchFuelStations(latitude, longitude, mode = "gas") {
-  const googleStations = mode === "diesel"
-    ? await searchDieselStations(latitude, longitude)
-    : await searchGasStations(latitude, longitude);
-  if (!googleStations.length) return { stations: [], fallback: true };
-  return enrichFuelStations(googleStations, mode);
-}
-
-/** @deprecated Use discoverEvCharging (NREL primary) with searchEvChargingStations gap-fill. */
-export async function fetchEvCharging(latitude, longitude, fuelType = "ELEC", options = {}) {
-  const nrelRes = await discoverEvCharging(latitude, longitude, { ...options, fuelType, radius: 5 });
-  if (nrelRes.stations?.length) return nrelRes;
-  const googleStations = fuelType === "LPG"
-    ? await searchPropaneStations(latitude, longitude)
-    : await searchEvChargingStations(latitude, longitude);
-  if (!googleStations.length) return { stations: [], fallback: true };
-  return enrichEvCharging(googleStations, fuelType, options);
 }

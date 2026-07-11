@@ -52,14 +52,13 @@ export default function PhoneModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        ref={dialogRef}
-        className="auth-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="phone-signin-headline"
-      >
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay auth-modal-overlay"
+      aria-labelledby="phone-signin-headline"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="auth-modal" onClick={e => e.stopPropagation()}>
         <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <BrandWordmark className="auth-modal-logo" as="div" />
@@ -94,7 +93,7 @@ export default function PhoneModal({
           </>
         ) : (
           <>
-            <h2 className="auth-modal-headline">Enter your code.</h2>
+            <h2 className="auth-modal-headline" id="phone-signin-headline">Enter your code.</h2>
             <p className="auth-modal-sub">Sent to +1 {phone.replace(/\D/g, "").slice(-10)}</p>
             <form className="auth-modal-form" onSubmit={handleVerify}>
               <label className="auth-field-label" htmlFor="phone-otp">Verification code</label>
@@ -125,7 +124,7 @@ export default function PhoneModal({
           </>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }
 

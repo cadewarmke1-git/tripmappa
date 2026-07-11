@@ -1,7 +1,6 @@
 export {
   TRAVELER_DIETARY_OPTIONS,
   TRAVELER_STOPS_INTEREST_GROUPS,
-  TRAVELER_STOPS_INTEREST_OPTIONS,
 } from "./travelerPreferenceOptions.js";
 
 export function travelerProfileToFlowPrefill(travelerProfile = {}) {

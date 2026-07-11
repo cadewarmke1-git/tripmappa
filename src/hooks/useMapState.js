@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES, LEG_MAP_STYLES, TRIP_ROUTE_GOLD } from "../lib/constants.js";
 import { applyMapThemeStyles } from "../lib/mapStyles.js";
+import { resolveMapCenter } from "../lib/mapViewport.js";
 import {
   isTruckVehicle,
   isRvVehicle,
@@ -46,14 +47,14 @@ export function useMapState({
   const [exploreRangeLoading, setExploreRangeLoading] = useState(false);
   const [exploreRangeError, setExploreRangeError] = useState(null);
   const [exploreOriginCoords, setExploreOriginCoords] = useState(null);
+  const [exploreSearchQuery, setExploreSearchQuery] = useState("");
   const exploreRangeAbortRef = useRef(null);
 
   const [mapStyle, setMapStyle] = useState("standard");
   const [mapStyleOpen, setMapStyleOpen] = useState(false);
   const [trafficAlert, setTrafficAlert] = useState(false);
   const [mapMarkers, setMapMarkers] = useState([]);
-  const [nightSegmentPaths, setNightSegmentPaths] = useState([]);
-  const [lowFuelSegmentPaths, setLowFuelSegmentPaths] = useState([]);
+  const [segmentsEmptyForRoute, setSegmentsEmptyForRoute] = useState(null);
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [mapFocusTarget, setMapFocusTarget] = useState(null);
   const [highlightedStopId, setHighlightedStopId] = useState(null);
@@ -61,15 +62,20 @@ export function useMapState({
   const highlightTimerRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
+    id: "tripmappa-google-maps",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
     libraries: GOOGLE_LIBRARIES,
+    preventGoogleFontsLoading: true,
   });
   const [routeInfo, setRouteInfo] = useState(null);
   const [routePath, setRoutePath] = useState(null);
   const [truckRoutePath, setTruckRoutePath] = useState(null);
   const [directionsResult, setDirectionsResult] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
-  const mapCenter = { lat: 37.0902, lng: -95.7129 };
+  const mapCenter = useMemo(
+    () => resolveMapCenter(routeInfo, routePath),
+    [routeInfo, routePath],
+  );
   const originRef = useRef(null);
   const destRef = useRef(null);
   const heroOriginRef = useRef(null);
@@ -79,12 +85,50 @@ export function useMapState({
   const navigateOriginRef = useRef(null);
   const navigateDestRef = useRef(null);
   const mapRef = useRef(null);
+  const pendingFitBoundsRef = useRef(null);
   const polylineRef = useRef(null);
   const polylinesRef = useRef([]);
   const polylineAnimRef = useRef(null);
-  const [mapReady, setMapReady] = useState(false);
+  const [mapReadyView, setMapReadyView] = useState(null);
+  const mapReady = mapReadyView === view && view !== "hero";
+  const setMapReady = useCallback((ready) => {
+    if (ready) setMapReadyView(view);
+    else setMapReadyView(null);
+  }, [view]);
 
   const directionsFetchRef = useRef(null);
+
+  const normalizeMapPoint = useCallback((point) => {
+    if (!point) return null;
+    const lat = typeof point.lat === "function" ? point.lat() : point.lat;
+    const lng = typeof point.lng === "function" ? point.lng() : point.lng;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng };
+  }, []);
+
+  const scheduleFitBounds = useCallback((points, padding = 60) => {
+    if (!points?.length || points.length < 2 || !window.google?.maps) return;
+    const normalized = points.map(normalizeMapPoint).filter(Boolean);
+    if (normalized.length < 2) return;
+
+    if (mapRef.current) {
+      const bounds = new window.google.maps.LatLngBounds();
+      normalized.forEach((p) => bounds.extend(p));
+      mapRef.current.fitBounds(bounds, { padding });
+      pendingFitBoundsRef.current = null;
+    } else {
+      pendingFitBoundsRef.current = { points: normalized, padding };
+    }
+  }, [normalizeMapPoint]);
+
+  const flushPendingFitBounds = useCallback(() => {
+    const pending = pendingFitBoundsRef.current;
+    if (!pending || !mapRef.current || !window.google?.maps) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    pending.points.forEach((p) => bounds.extend(p));
+    mapRef.current.fitBounds(bounds, { padding: pending.padding });
+    pendingFitBoundsRef.current = null;
+  }, []);
 
   const fetchDirections = useCallback((vehicleType) => {
     const originVal = originRef.current?.value?.trim() || origin?.trim();
@@ -151,11 +195,7 @@ export function useMapState({
           setRoutePath(routePoints);
           setDirectionsResult(null);
 
-          if (mapRef.current && routePoints.length > 1) {
-            const bounds = new window.google.maps.LatLngBounds();
-            routePoints.forEach(p => bounds.extend(p));
-            mapRef.current.fitBounds(bounds, { padding: 60 });
-          }
+          scheduleFitBounds(routePoints, 60);
 
           return { ok: true, routeInfo: nextRouteInfo };
         })
@@ -238,10 +278,14 @@ export function useMapState({
           if (warnings.length > 0 || hasTrafficDelay) setTrafficAlert(true);
 
           const citiesAlongRoute = [];
+          const seenCities = new Set();
           route.legs[0].steps.forEach(step => {
             if (!step.end_address) return;
             const cityState = parseCityStateFromFormattedAddress(step.end_address);
-            if (cityState && !citiesAlongRoute.includes(cityState)) citiesAlongRoute.push(cityState);
+            if (cityState && !seenCities.has(cityState)) {
+              seenCities.add(cityState);
+              citiesAlongRoute.push(cityState);
+            }
           });
 
           const nextRouteInfo = {
@@ -280,14 +324,7 @@ export function useMapState({
           setTruckRoutePath(null);
           setDirectionsResult(result);
 
-          if (mapRef.current) {
-            const bounds = new window.google.maps.LatLngBounds();
-            route.legs[0].steps.forEach(step => {
-              bounds.extend(step.start_location);
-              bounds.extend(step.end_location);
-            });
-            mapRef.current.fitBounds(bounds, { padding: 60 });
-          }
+          scheduleFitBounds(nextRouteInfo.routePoints, 60);
           resolve({ ok: true, routeInfo: nextRouteInfo });
         } else {
           const msg = status === "ZERO_RESULTS"
@@ -312,7 +349,7 @@ export function useMapState({
       }
     });
     return promise;
-  }, [timingMode, arriveByDate, answers, origin, dest]);
+  }, [timingMode, arriveByDate, answers, origin, dest, setOrigin, setDest, toastFnRef, scheduleFitBounds]);
 
   const fetchRouteBetween = useCallback((originVal, destVal) => {
     if (!originVal || !destVal || !window.google) return Promise.resolve(false);
@@ -356,21 +393,17 @@ export function useMapState({
           });
           setRoutePath(route.overview_path);
           setDirectionsResult(result);
-          if (mapRef.current) {
-            const bounds = new window.google.maps.LatLngBounds();
-            route.legs[0].steps.forEach(step => {
-              bounds.extend(step.start_location);
-              bounds.extend(step.end_location);
-            });
-            mapRef.current.fitBounds(bounds, { padding: 60 });
-          }
+          scheduleFitBounds(route.overview_path.map((p) => ({
+            lat: typeof p.lat === "function" ? p.lat() : p.lat,
+            lng: typeof p.lng === "function" ? p.lng() : p.lng,
+          })), 60);
           resolve(true);
         } else {
           resolve(false);
         }
       });
     });
-  }, []);
+  }, [scheduleFitBounds]);
 
   function highlightStop(stopId) {
     if (!stopId) return;
@@ -395,38 +428,51 @@ export function useMapState({
   }
 
   const recenterMap = useCallback(() => {
-    if (!mapRef.current || !window.google) return;
-    const bounds = new window.google.maps.LatLngBounds();
-    let hasBounds = false;
+    if (!window.google) return;
+    const points = [];
 
     if (directionsResult?.routes?.[0]?.legs) {
-      directionsResult.routes[0].legs.forEach(leg => {
-        leg.steps.forEach(step => {
-          bounds.extend(step.start_location);
-          bounds.extend(step.end_location);
-          hasBounds = true;
+      directionsResult.routes[0].legs.forEach((leg) => {
+        leg.steps.forEach((step) => {
+          const start = normalizeMapPoint(step.start_location);
+          const end = normalizeMapPoint(step.end_location);
+          if (start) points.push(start);
+          if (end) points.push(end);
         });
       });
     } else if (truckRoutePath?.length) {
-      truckRoutePath.forEach(p => { bounds.extend(p); hasBounds = true; });
+      truckRoutePath.forEach((p) => {
+        const pt = normalizeMapPoint(p);
+        if (pt) points.push(pt);
+      });
     } else if (routePath?.length) {
-      routePath.forEach(p => {
-        bounds.extend(typeof p.lat === "function" ? { lat: p.lat(), lng: p.lng() } : p);
-        hasBounds = true;
+      routePath.forEach((p) => {
+        const pt = normalizeMapPoint(p);
+        if (pt) points.push(pt);
       });
     } else if (routeInfo?.routePoints?.length) {
-      routeInfo.routePoints.forEach(p => { bounds.extend(p); hasBounds = true; });
+      routeInfo.routePoints.forEach((p) => {
+        const pt = normalizeMapPoint(p);
+        if (pt) points.push(pt);
+      });
     }
 
-    mapMarkers.forEach(m => {
+    mapMarkers.forEach((m) => {
       if (m?.lat != null && m?.lng != null) {
-        bounds.extend({ lat: m.lat, lng: m.lng });
-        hasBounds = true;
+        points.push({ lat: m.lat, lng: m.lng });
       }
     });
 
-    if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
-  }, [directionsResult, routePath, truckRoutePath, routeInfo, mapMarkers]);
+    if (points.length >= 2) scheduleFitBounds(points, 60);
+  }, [routeInfo, routePath, truckRoutePath, directionsResult, mapMarkers, normalizeMapPoint, scheduleFitBounds]);
+
+  const flushMapLayout = useCallback(() => {
+    requestAnimationFrame(() => {
+      if (!mapRef.current || !window.google) return;
+      window.google.maps.event.trigger(mapRef.current, "resize");
+      recenterMap();
+    });
+  }, [recenterMap]);
 
   useEffect(() => () => {
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
@@ -439,8 +485,7 @@ export function useMapState({
     if (!o || !d) return;
     if (routeInfo?.origin === o && routeInfo?.destination === d && routePath) return;
     fetchDirections();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, isLoaded, mapReady, origin, dest, routeInfo?.origin, routeInfo?.destination, routePath]);
+  }, [view, isLoaded, mapReady, origin, dest, routeInfo?.origin, routeInfo?.destination, routePath, fetchDirections]);
 
   useEffect(() => {
     if (!mapRef.current || !mapReady || !window.google) return;
@@ -449,15 +494,10 @@ export function useMapState({
   }, [mapReady, generated, directionsResult, routePath, routeInfo?.routePoints, recenterMap]);
 
   useEffect(() => {
-    if (view === "hero") setMapReady(false);
-  }, [view]);
-
-  useEffect(() => {
     if (!isLoaded || !window.google) return;
     if (!originRef.current?.value || !destRef.current?.value) return;
     if (answers.vehicle) fetchDirections(answers.vehicle);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers.preferences, answers.truck_height, answers.truck_weight, answers.rv_height, answers.rv_weight, answers.rv_towing]);
+  }, [answers.preferences, answers.truck_height, answers.truck_weight, answers.rv_height, answers.rv_weight, answers.rv_towing, answers.vehicle, isLoaded, fetchDirections]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
@@ -465,8 +505,14 @@ export function useMapState({
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapRef.current.setMapTypeId(typeId);
-    applyMapThemeStyles(mapRef.current, mapStyle, theme);
-  }, [mapStyle, theme, isLoaded, mapReady]);
+    if (mapStyle === "dark") {
+      applyMapThemeStyles(mapRef.current, mapStyle, theme);
+    } else if (mapStyle === "satellite") {
+      mapRef.current.setOptions({ styles: [], backgroundColor: undefined });
+    } else {
+      window.google.maps.event.trigger(mapRef.current, "resize");
+    }
+  }, [mapStyle, isLoaded, mapReady]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google || !isLoaded || !mapReady) return;
@@ -480,6 +526,7 @@ export function useMapState({
 
     const bounds = new window.google.maps.LatLngBounds();
     let hasBounds = false;
+    const fitPoints = [];
     const ROUTE_GOLD = TRIP_ROUTE_GOLD;
 
     const drawLine = (path, style) => {
@@ -510,7 +557,14 @@ export function useMapState({
       }
       const pl = new window.google.maps.Polyline(opts);
       polylinesRef.current.push(pl);
-      path.forEach(pt => { bounds.extend(pt); hasBounds = true; });
+      path.forEach((pt) => {
+        const normalized = normalizeMapPoint(pt);
+        if (normalized) {
+          bounds.extend(normalized);
+          fitPoints.push(normalized);
+          hasBounds = true;
+        }
+      });
     };
 
     if (tripLegs.length > 0) {
@@ -524,7 +578,7 @@ export function useMapState({
       drawLine(routePath, { color: ROUTE_GOLD, dashed: false, animate: true });
     }
 
-    if (hasBounds) mapRef.current.fitBounds(bounds, { padding: 60 });
+    if (hasBounds) scheduleFitBounds(fitPoints, 60);
 
     let dashOffset = 0;
     polylineAnimRef.current = setInterval(() => {
@@ -542,7 +596,7 @@ export function useMapState({
         polylineAnimRef.current = null;
       }
     };
-  }, [tripLegs, routePath, truckRoutePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic]);
+  }, [tripLegs, routePath, truckRoutePath, directionsResult, isLoaded, mapReady, theme, routeInfo?.scenic, normalizeMapPoint, scheduleFitBounds]);
 
   function clearExploreRange() {
     exploreRangeAbortRef.current?.abort();
@@ -650,6 +704,28 @@ export function useMapState({
     await applyExploreRangeDestination(label);
   }
 
+  async function handleExploreRangeSearch(query) {
+    const text = query?.trim();
+    if (!text) return;
+    setExploreSearchQuery(text);
+    if (!exploreRangePolygon.length) {
+      setExploreRangeError("Drive range is still loading");
+      return;
+    }
+    const coords = await resolveHeroOriginCoords(text, null);
+    if (!coords) {
+      setExploreRangeError("Could not find that place");
+      return;
+    }
+    if (!pointInPolygon(coords.lat, coords.lng, exploreRangePolygon)) {
+      setExploreRangeError("That place is outside your drive range");
+      return;
+    }
+    setExploreRangeError(null);
+    await applyExploreRangeDestination(coords.address || text);
+    setExploreSearchQuery("");
+  }
+
   const focusMapOnStop = useCallback((item) => {
     if (item?.lat == null || item?.lng == null) return;
     setMapFocusTarget({
@@ -675,21 +751,44 @@ export function useMapState({
     return new Date();
   }, [timingMode, arriveByDate, routeInfo]);
 
-  useEffect(() => {
+  const routeSegmentKey = routeInfo?.routePoints?.length
+    ? `${routeInfo.origin}|${routeInfo.destination}|${routeInfo.distance}`
+    : null;
+
+  const computedSegmentPaths = useMemo(() => {
     if (!routeInfo?.routePoints?.length) {
-      setNightSegmentPaths([]);
-      setLowFuelSegmentPaths([]);
-      return;
+      return { nightSegmentPaths: [], lowFuelSegmentPaths: [] };
     }
     const hours = parseHoursFromDuration(routeInfo.duration);
     const dep = getDepartureTime();
     const nightBlocks = computeNightDrivingBlocks(dep, hours, routeInfo.routePoints);
-    setNightSegmentPaths(nightBlocks.map(b => b.path).filter(p => p?.length > 1));
     const totalMiles = parseMilesFromDistance(routeInfo.distance);
-    setLowFuelSegmentPaths(
-      computeLowFuelSegmentPath(routeInfo.routePoints, [], getFuelRangeMiles(answers), totalMiles),
-    );
+    return {
+      nightSegmentPaths: nightBlocks.flatMap(b => (b.path?.length > 1 ? [b.path] : [])),
+      lowFuelSegmentPaths: computeLowFuelSegmentPath(
+        routeInfo.routePoints,
+        [],
+        getFuelRangeMiles(answers),
+        totalMiles,
+      ),
+    };
   }, [routeInfo, answers, getDepartureTime]);
+
+  const segmentsForcedEmpty = segmentsEmptyForRoute === routeSegmentKey && routeSegmentKey != null;
+  const nightSegmentPaths = segmentsForcedEmpty ? [] : computedSegmentPaths.nightSegmentPaths;
+  const lowFuelSegmentPaths = segmentsForcedEmpty ? [] : computedSegmentPaths.lowFuelSegmentPaths;
+
+  const setNightSegmentPaths = useCallback((paths) => {
+    if (Array.isArray(paths) && paths.length === 0 && routeSegmentKey) {
+      setSegmentsEmptyForRoute(routeSegmentKey);
+    }
+  }, [routeSegmentKey]);
+
+  const setLowFuelSegmentPaths = useCallback((paths) => {
+    if (Array.isArray(paths) && paths.length === 0 && routeSegmentKey) {
+      setSegmentsEmptyForRoute(routeSegmentKey);
+    }
+  }, [routeSegmentKey]);
 
   return {
     isLoaded,
@@ -705,6 +804,8 @@ export function useMapState({
     setExploreRangeError,
     exploreOriginCoords,
     setExploreOriginCoords,
+    exploreSearchQuery,
+    setExploreSearchQuery,
     exploreRangeAbortRef,
     mapStyle,
     setMapStyle,
@@ -764,7 +865,10 @@ export function useMapState({
     applyExploreRangeDestination,
     handleExploreRangeMapClick,
     handleExploreRangePlaceSelect,
+    handleExploreRangeSearch,
     focusMapOnStop,
     getDepartureTime,
+    flushMapLayout,
+    flushPendingFitBounds,
   };
 }

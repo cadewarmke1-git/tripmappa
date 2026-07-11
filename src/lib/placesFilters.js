@@ -90,12 +90,6 @@ export function filterLodgingCandidates(places = []) {
   return (places || []).filter(p => isLodgingPlace(p));
 }
 
-export const PRICE_BAND_PROMPT = {
-  budget: "under $80/night",
-  mid: "$90–$160/night",
-  luxury: "$200+/night",
-};
-
 export function allowsNationalChains(answers) {
   const dietary = asArray(answers?.dietary);
   if (dietary.includes("Drive-Through Only")) return true;
@@ -110,10 +104,6 @@ export function estimateNightlyFromPlace(place) {
 
 export function filterSafeStopsOnly(places) {
   return places.filter(p => (p.rating ?? 0) >= 4 && (p.userRatingsTotal ?? 0) >= 20);
-}
-
-export function isGenericChainPlace(place) {
-  return isNationalChainPlace(place);
 }
 
 /** Prefer independent/local venues unless the list would be empty. */
@@ -146,10 +136,6 @@ export function filterOpen24Hour(places) {
     const hours = (p.hours || "").toLowerCase();
     return hours.includes("24 hour") || hours.includes("open 24") || hours.includes("24/7");
   });
-}
-
-export function filterOnRouteMiles(places, maxMiles = 1) {
-  return places.filter(p => (p.distanceMiles ?? 99) <= maxMiles);
 }
 
 export function filterLodgingByBudget(places, answers, routeInfo) {
@@ -191,7 +177,7 @@ export function sortLodgingByLoyalty(places, answers) {
   const loyalty = getLoyaltyKeyword(answers);
   if (!loyalty) return places;
   const key = loyalty.toLowerCase();
-  return [...places].sort((a, b) => {
+  return places.toSorted((a, b) => {
     const aMatch = (a.name || "").toLowerCase().includes(key) ? 1 : 0;
     const bMatch = (b.name || "").toLowerCase().includes(key) ? 1 : 0;
     return bMatch - aMatch || (b.rating ?? 0) - (a.rating ?? 0);

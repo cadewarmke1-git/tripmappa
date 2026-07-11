@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 import {
   TRAVELER_DIETARY_OPTIONS,
   TRAVELER_STOPS_INTEREST_GROUPS,
@@ -71,12 +72,12 @@ export default function TravelerOnboarding({ onComplete }) {
 
   const preferenceStepIndex = PREFERENCE_STEPS.indexOf(screen);
   const isWelcome = screen === "welcome";
+  const dialogRef = useDialogA11y(true, undefined, "traveler-onboarding-dialog-title");
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className={`traveler-onboarding traveler-onboarding--${themeMode}${isWelcome ? " traveler-onboarding--welcome-screen" : ""}${photosFailed ? " traveler-onboarding--photos-failed" : ""}`}
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="traveler-onboarding-dialog-title"
     >
       {!isWelcome && (
@@ -224,6 +225,6 @@ export default function TravelerOnboarding({ onComplete }) {
           </div>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -19,17 +19,3 @@ export function getRequestPathname(req) {
     return raw.split("?")[0] || "/";
   }
 }
-
-export function getRequestSearchParams(req) {
-  const raw = req?.url || "/";
-  try {
-    const parsed = raw.startsWith("/")
-      ? new URL(raw, requestUrlBase(req))
-      : new URL(raw);
-    return parsed.searchParams;
-  } catch {
-    const q = raw.indexOf("?");
-    if (q < 0) return new URLSearchParams();
-    return new URLSearchParams(raw.slice(q + 1));
-  }
-}

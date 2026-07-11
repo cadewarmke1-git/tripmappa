@@ -1,5 +1,11 @@
 /** Placeholder lodging data for Phase 3 — replaced by Booking.com API later. */
 
+import {
+  SAVED_LODGING_KEY,
+  readLocalStorage,
+  writeLocalStorage,
+} from "./storageKeys.js";
+
 export const AMENITY_DEFS = {
   wifi: { id: "wifi", label: "Free WiFi" },
   parking: { id: "parking", label: "Free Parking" },
@@ -10,12 +16,6 @@ export const AMENITY_DEFS = {
   truckParking: { id: "truckParking", label: "Truck Parking" },
   rvHookups: { id: "rvHookups", label: "RV Hookups" },
 };
-
-const HOTEL_PHOTOS = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
-];
 
 const RV_PHOTOS = [
   "https://images.unsplash.com/photo-1523987355523-c7b5e0a90be7?w=800&q=80",
@@ -28,152 +28,6 @@ const TRUCK_PHOTOS = [
   "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80",
   "https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=800&q=80",
 ];
-
-/**
- * Placeholder hotel catalogs — kept for reference / future Booking.com swap.
- * Never surface these in the results UI; getHotelsForStop returns [].
- */
-export const PLACEHOLDER_HOTELS = {
-  "amarillo, tx": [
-    {
-      id: "marriott-amarillo-downtown",
-      name: "Marriott Amarillo Downtown",
-      stars: 4,
-      neighborhood: "Downtown Amarillo",
-      pricePerNight: 149,
-      priceLabel: "$149/night",
-      amenities: ["wifi", "parking", "pool", "restaurant"],
-      description: "Modern downtown hotel with skyline views and an on-site bistro near Route 66 landmarks.",
-      distanceFromRoute: 0.8,
-      bookUrl: "https://example.com/book/marriott-amarillo-downtown",
-      photo: HOTEL_PHOTOS[0],
-      kidFriendly: true,
-      rating: 4.5,
-      propertyType: "hotel",
-    },
-    {
-      id: "hampton-inn-amarillo",
-      name: "Hampton Inn Amarillo",
-      stars: 3,
-      rating: 4.2,
-      neighborhood: "West Amarillo",
-      pricePerNight: 89,
-      priceLabel: "$89/night",
-      amenities: ["wifi", "parking", "ev"],
-      description: "Reliable mid-range stay with complimentary hot breakfast and easy I-40 access.",
-      distanceFromRoute: 1.2,
-      bookUrl: "https://example.com/book/hampton-inn-amarillo",
-      photo: HOTEL_PHOTOS[1],
-      propertyType: "hotel",
-    },
-    {
-      id: "budget-inn-amarillo",
-      name: "Budget Inn Amarillo",
-      stars: 2,
-      neighborhood: "East Amarillo",
-      pricePerNight: 52,
-      priceLabel: "$52/night",
-      amenities: ["wifi", "parking"],
-      description: "Affordable overnight stop with clean rooms and truck-friendly parking nearby.",
-      distanceFromRoute: 2.1,
-      bookUrl: "https://example.com/book/budget-inn-amarillo",
-      photo: HOTEL_PHOTOS[2],
-      rating: 3.6,
-      propertyType: "hotel",
-    },
-  ],
-  "albuquerque, nm": [
-    {
-      id: "hyatt-regency-albuquerque",
-      name: "Hyatt Regency Albuquerque",
-      stars: 4,
-      neighborhood: "Downtown Albuquerque",
-      pricePerNight: 189,
-      priceLabel: "$189/night",
-      amenities: ["wifi", "pool", "restaurant", "ev"],
-      description: "Upscale downtown property steps from Old Town with rooftop dining and EV chargers.",
-      distanceFromRoute: 0.6,
-      bookUrl: "https://example.com/book/hyatt-regency-albuquerque",
-      photo: HOTEL_PHOTOS[0],
-      kidFriendly: true,
-      rating: 4.4,
-    },
-    {
-      id: "holiday-inn-express-albuquerque",
-      name: "Holiday Inn Express Albuquerque",
-      stars: 3,
-      neighborhood: "Midtown Albuquerque",
-      pricePerNight: 109,
-      priceLabel: "$109/night",
-      amenities: ["wifi", "parking", "pool"],
-      description: "Comfortable chain hotel with indoor pool and quick access to I-25 and I-40.",
-      distanceFromRoute: 1.4,
-      bookUrl: "https://example.com/book/holiday-inn-express-albuquerque",
-      photo: HOTEL_PHOTOS[1],
-      kidFriendly: true,
-      rating: 4.1,
-    },
-    {
-      id: "motel-6-albuquerque",
-      name: "Motel 6 Albuquerque",
-      stars: 2,
-      neighborhood: "North Valley",
-      pricePerNight: 59,
-      priceLabel: "$59/night",
-      amenities: ["wifi", "parking"],
-      description: "Budget-friendly motel with pet-friendly rooms and straightforward highway access.",
-      distanceFromRoute: 2.3,
-      bookUrl: "https://example.com/book/motel-6-albuquerque",
-      photo: HOTEL_PHOTOS[2],
-      rating: 3.4,
-    },
-  ],
-  "flagstaff, az": [
-    {
-      id: "little-america-flagstaff",
-      name: "Little America Hotel Flagstaff",
-      stars: 4,
-      neighborhood: "East Flagstaff",
-      pricePerNight: 199,
-      priceLabel: "$199/night",
-      amenities: ["wifi", "parking", "pool", "restaurant", "pet"],
-      description: "Sprawling resort-style hotel with ponderosa pines, pool, and family-friendly dining.",
-      distanceFromRoute: 1.0,
-      bookUrl: "https://example.com/book/little-america-flagstaff",
-      photo: HOTEL_PHOTOS[0],
-      kidFriendly: true,
-      rating: 4.6,
-    },
-    {
-      id: "courtyard-flagstaff",
-      name: "Courtyard Flagstaff",
-      stars: 3,
-      neighborhood: "Historic Downtown",
-      pricePerNight: 129,
-      priceLabel: "$129/night",
-      amenities: ["wifi", "parking", "ev"],
-      description: "Contemporary hotel near downtown Flagstaff with EV charging and mountain views.",
-      distanceFromRoute: 0.9,
-      bookUrl: "https://example.com/book/courtyard-flagstaff",
-      photo: HOTEL_PHOTOS[1],
-      rating: 4.3,
-    },
-    {
-      id: "super-8-flagstaff",
-      name: "Super 8 Flagstaff",
-      stars: 2,
-      neighborhood: "West Flagstaff",
-      pricePerNight: 69,
-      priceLabel: "$69/night",
-      amenities: ["wifi", "parking"],
-      description: "Simple, affordable rooms ideal for a one-night stop on the way to the Grand Canyon.",
-      distanceFromRoute: 1.8,
-      bookUrl: "https://example.com/book/super-8-flagstaff",
-      photo: HOTEL_PHOTOS[2],
-      rating: 3.5,
-    },
-  ],
-};
 
 const REST_AREA_PHOTO = "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=80";
 
@@ -316,15 +170,6 @@ function normalizeCityKey(city) {
   return (city || "").trim().toLowerCase();
 }
 
-export function getLodgingSortTier(lodging) {
-  const l = (lodging || "").trim();
-  if (l === "Budget" || l === "Motel" || l === "Camping" || l === "Camping or Outdoors") return "budget";
-  if (l === "Luxury" || l === "Airbnb" || l === "Airbnb or Vacation Rental") return "luxury";
-  if (l === "Mid-Range" || l === "Mid-range" || l === "Hotel") return "mid";
-  if (l === "Doesn't Matter" || l === "Doesn't matter") return "any";
-  return "mid";
-}
-
 function hotelRating(hotel) {
   return hotel.rating ?? hotel.stars ?? 0;
 }
@@ -416,22 +261,13 @@ function generateGenericHotels(_city) {
   return [];
 }
 
-/**
- * Hotels for a stop — never returns placeholder/generic hotels.
- * Live lodging comes from Places via LodgingCardsSection; callers should hide
- * the lodging section when this is empty rather than showing fake properties.
- */
-export function getHotelsForStop(_city, _answers) {
-  return [];
-}
-
 export function getRvParksForStop(_city) {
   const parks = PLACEHOLDER_RV_PARKS.default.map(p => ({ ...p }));
   return parks.sort((a, b) => rvHookupRank(a) - rvHookupRank(b));
 }
 
 export function getTruckStopsForStop(_city, answers) {
-  let stops = [...PLACEHOLDER_TRUCK_STOPS.default].sort(
+  let stops = PLACEHOLDER_TRUCK_STOPS.default.toSorted(
     (a, b) => b.parkingSpaces - a.parkingSpaces,
   );
   const brand = answers?.truck_stop_brand;
@@ -453,7 +289,7 @@ export function getRestAreasForStop(_city) {
 
 export function saveLodgingToTrips(lodging, city, origin, dest) {
   try {
-    const saved = JSON.parse(localStorage.getItem("tripmappa-saved-lodging") || "[]");
+    const saved = JSON.parse(readLocalStorage(SAVED_LODGING_KEY) || "[]");
     saved.unshift({
       id: `${lodging.id}-${Date.now()}`,
       lodging,
@@ -462,7 +298,7 @@ export function saveLodgingToTrips(lodging, city, origin, dest) {
       dest,
       savedAt: new Date().toISOString(),
     });
-    localStorage.setItem("tripmappa-saved-lodging", JSON.stringify(saved.slice(0, 50)));
+    writeLocalStorage(SAVED_LODGING_KEY, JSON.stringify(saved.slice(0, 50)));
     return true;
   } catch {
     return false;

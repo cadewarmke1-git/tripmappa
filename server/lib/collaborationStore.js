@@ -24,10 +24,6 @@ export function sanitizeInviteContact(value) {
   return value.trim().slice(0, 120);
 }
 
-export function findVote(votes, participantId, stopKey) {
-  return (votes || []).find(v => v.participantId === participantId && v.stopKey === stopKey);
-}
-
 export function upsertVote(votes, { participantId, stopKey, vote, displayName }) {
   const list = Array.isArray(votes) ? [...votes] : [];
   const idx = list.findIndex(v => v.participantId === participantId && v.stopKey === stopKey);

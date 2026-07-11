@@ -13,6 +13,13 @@ import { dismissGooglePlacesDropdown } from "../lib/places.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { getHeroSurfaceTheme, getHeroUiThemeFromHour, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
+function prepareLaunch() {
+  dismissGooglePlacesDropdown();
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+}
+
 export default function HeroView({
   isLoaded,
   heroOrigin,
@@ -91,13 +98,6 @@ export default function HeroView({
   function syncHeroInput(field, value) {
     if (field === "origin") onHeroOriginChange(value);
     else onHeroDestChange(value);
-  }
-
-  function prepareLaunch() {
-    dismissGooglePlacesDropdown();
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
   }
 
   return (

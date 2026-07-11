@@ -1,8 +1,5 @@
 import {
-  GOLD_PRIMARY,
-  ORANGE_PRIMARY,
   POLYLINE_COLOR,
-  DEEP_DARK,
   MAP_NIGHT_BASE,
   MAP_NIGHT_LOCAL_ROAD,
   MAP_NIGHT_ARTERIAL,
@@ -24,8 +21,6 @@ import {
   MAP_DAY_WATER,
 } from "./palette.js";
 
-export { GOLD_PRIMARY, ORANGE_PRIMARY, POLYLINE_COLOR, DEEP_DARK };
-
 export const GOOGLE_LIBRARIES = ["places", "routes", "geometry"];
 
 export const STANDARD_MAP_STYLES = [
@@ -33,40 +28,28 @@ export const STANDARD_MAP_STYLES = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-export const HERO_PHOTOS_DAY = [
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80",
-  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80",
-  "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&q=80",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",
-  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80",
-];
-
-export const HERO_PHOTOS_NIGHT = [
-  "https://images.unsplash.com/photo-1475070929565-c985b496cb9f?w=1920&q=80",
-  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80",
-  "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80",
-  "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80",
-];
-
 /** Self-hosted alpine hero photo — sky is animated separately via CSS mask. */
 export const HERO_PHOTO = "/hero-mountain.jpg";
-export const HERO_PHOTO_PRELOAD = HERO_PHOTO;
 
-/** @deprecated Use HERO_PHOTO — kept for legacy imports */
-export const HERO_PHOTO_DAY = HERO_PHOTOS_DAY[0];
-export const HERO_PHOTO_NIGHT = HERO_PHOTOS_NIGHT[0];
+const MAP_LABEL_SIMPLIFY = [
+  { elementType: "labels", stylers: [{ visibility: "simplified" }] },
+  { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+];
 
-
-/** Classic road atlas — day theme with cool land base and warm road hierarchy. */
+/** Warm muted road atlas — day theme (sand terrain, grey-brown roads, soft water). */
 export const DAY_MAP_STYLES = [
+  ...MAP_LABEL_SIMPLIFY,
   { elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { featureType: "landscape.man_made", elementType: "geometry", stylers: [{ color: MAP_DAY_BASE }] },
   { elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: MAP_DAY_BASE }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: MAP_DAY_BASE }, { weight: 2 }] },
   { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: MAP_DAY_ROAD_STROKE }] },
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL_PRIMARY }] },
+  { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
   { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
   { featureType: "poi.school", stylers: [{ visibility: "off" }] },
@@ -81,21 +64,22 @@ export const DAY_MAP_STYLES = [
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: MAP_DAY_HIGHWAY_STROKE }] },
   { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
   { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL_PRIMARY }] },
-  { featureType: "road.highway", elementType: "labels.icon", stylers: [{ visibility: "on" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_DAY_WATER }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: MAP_DAY_LABEL }] },
 ];
 
-/** Deep-space purple palette — night theme with gold highway accents. */
+/** Warm muted night atlas — charcoal sand land, grey-gold roads, subdued water. */
 export const NIGHT_MAP_STYLES = [
+  ...MAP_LABEL_SIMPLIFY,
   { elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
   { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
   { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: MAP_NIGHT_BASE }] },
   { elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: MAP_NIGHT_BASE }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: MAP_NIGHT_BASE }, { weight: 2 }] },
   { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_LOCAL_ROAD }] },
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },
+  { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
   { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
   { featureType: "poi.school", stylers: [{ visibility: "off" }] },
@@ -111,7 +95,6 @@ export const NIGHT_MAP_STYLES = [
   { featureType: "road.highway", elementType: "geometry", stylers: [{ color: MAP_NIGHT_HIGHWAY }] },
   { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: MAP_NIGHT_HIGHWAY_STROKE }] },
   { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL_ACCENT }] },
-  { featureType: "road.highway", elementType: "labels.icon", stylers: [{ visibility: "on" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
   { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_NIGHT_WATER }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: MAP_NIGHT_LABEL }] },

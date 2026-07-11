@@ -62,9 +62,11 @@ export default function PricingPage() {
         <PricingPlans
           billingInterval={billingInterval}
           onBillingChange={setBillingInterval}
-          showBillingToggle={false}
-          showComparison={false}
-          showFounder
+          sections={{
+            showBillingToggle: false,
+            showComparison: false,
+            showFounder: true,
+          }}
           onGetStarted={() => { window.location.href = "/"; }}
           onSignIn={() => { window.location.href = "/"; }}
           onUpgradeVoyager={() => startCheckout(TIERS.VOYAGER)}

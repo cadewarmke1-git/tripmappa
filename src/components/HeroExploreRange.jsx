@@ -1,3 +1,5 @@
+import SearchBarAnimated from "./SearchBarAnimated.jsx";
+
 const DRIVE_TIME_OPTIONS = [
   { label: "1 hour", seconds: 3600 },
   { label: "2 hours", seconds: 7200 },
@@ -10,6 +12,9 @@ export default function HeroExploreRange({
   driveTimeSeconds = 7200,
   loading = false,
   error = null,
+  searchQuery = "",
+  onSearchChange,
+  onSearchSubmit,
   onToggle,
   onDriveTimeChange,
 }) {
@@ -25,7 +30,17 @@ export default function HeroExploreRange({
         <span className="hero-explore-range-label">Explore range</span>
       </label>
       {enabled && (
-        <div className="hero-explore-range-controls">
+        <>
+          <div className="hero-explore-range-search">
+            <SearchBarAnimated
+              value={searchQuery}
+              onChange={onSearchChange}
+              onSubmit={onSearchSubmit}
+              placeholder="Search in range…"
+              ariaLabel="Search for a destination within your drive range"
+            />
+          </div>
+          <div className="hero-explore-range-controls">
           <span className="hero-explore-range-time-label">Drive time</span>
           <select
             className="hero-explore-range-select"
@@ -39,7 +54,8 @@ export default function HeroExploreRange({
           </select>
           {loading && <span className="hero-explore-range-status">Loading range...</span>}
           {!loading && error && <span className="hero-explore-range-error">{error}</span>}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

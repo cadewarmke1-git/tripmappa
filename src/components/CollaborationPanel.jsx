@@ -15,6 +15,8 @@ import {
 } from "../lib/collaborationHints.js";
 import { mapCollaborationFromDb } from "../lib/collaborationApi.js";
 import { copyToClipboard } from "../lib/copyToClipboard.js";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
+import { roadStopKey } from "../lib/roadStopKeys.js";
 
 function VoteButtons({ stopKey, votes, participantId, displayName, inviteToken, onUpdate }) {
   const myVote = votes?.find(v => v.participantId === participantId && v.stopKey === stopKey)?.vote;
@@ -94,6 +96,7 @@ export default function CollaborationPanel({
     () => voteTotalsByStop(collaboration?.votes, stops),
     [collaboration?.votes, stops],
   );
+  const dialogRef = useDialogA11y(open && !embedded, onClose, "collab-panel-title");
 
   useEffect(() => {
     if (!open || !inviteToken) return undefined;
@@ -204,8 +207,6 @@ export default function CollaborationPanel({
       <div
         className={`collab-panel${embedded ? " collab-panel--embedded" : ""}`}
         onClick={embedded ? undefined : e => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="collab-panel-title"
       >
         <header className="collab-panel-header">
           <h2 id="collab-panel-title">Trip collaboration</h2>
@@ -275,11 +276,11 @@ export default function CollaborationPanel({
               <div className="collab-vote-dashboard">
                 <h4 className="collab-panel-subtitle">Stop votes</h4>
                 <ul className="collab-vote-dashboard-list">
-                  {voteDashboard.filter(v => v.up || v.down).map(v => (
+                  {voteDashboard.flatMap(v => (v.up || v.down ? [(
                     <li key={v.stopKey}>
                       {v.label}: 👍 {v.up} · 👎 {v.down}
                     </li>
-                  ))}
+                  )] : []))}
                 </ul>
               </div>
             )}
@@ -304,7 +305,7 @@ export default function CollaborationPanel({
           <h3 className="collab-panel-subtitle">Vote on stops</h3>
           <ul className="collab-stop-list">
             {stops.map((stop, i) => (
-              <li key={`${stop?.name || "stop"}-${i}`} className="collab-stop-item">
+              <li key={roadStopKey(stop) || `stop-${stop?.name || stop?.city || i}`} className="collab-stop-item">
                 <span className="collab-stop-name">{stop?.name || stop?.city || `Stop ${i + 1}`}</span>
                 {inviteToken && (
                   <VoteButtons
@@ -334,7 +335,7 @@ export default function CollaborationPanel({
                 >
                   <option value="">Anywhere on the route</option>
                   {stops.map((stop, i) => (
-                    <option key={`${stop?.name || "stop"}-${i}`} value={String(i)}>
+                    <option key={roadStopKey(stop) || `stop-${stop?.name || stop?.city || i}`} value={String(i)}>
                       {stop?.name || stop?.city || `Stop ${i + 1}`}
                     </option>
                   ))}
@@ -388,8 +389,13 @@ export default function CollaborationPanel({
   if (embedded) return panelBody;
 
   return (
-    <div className="collab-panel-overlay" onClick={onClose} role="presentation">
+    <dialog
+      ref={dialogRef}
+      className="collab-panel-overlay"
+      aria-labelledby="collab-panel-title"
+      onClick={onClose}
+    >
       {panelBody}
-    </div>
+    </dialog>
   );
 }

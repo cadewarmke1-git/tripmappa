@@ -1,4 +1,5 @@
 import { useTheme } from "../context/ThemeContext.jsx";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 /** Lightweight confirm modal for destructive or irreversible actions. */
 export default function ConfirmDialog({
@@ -12,20 +13,20 @@ export default function ConfirmDialog({
   onCancel,
 }) {
   const { theme } = useTheme();
+  const dialogRef = useDialogA11y(open, onCancel, "confirm-dialog-title");
   if (!open) return null;
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className={`modal-overlay confirm-dialog-overlay tm-theme-${theme}`}
-      role="presentation"
+      role="alertdialog"
+      aria-labelledby="confirm-dialog-title"
+      aria-describedby="confirm-dialog-message"
       onClick={onCancel}
     >
       <div
         className="modal confirm-dialog"
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-message"
         onClick={e => e.stopPropagation()}
       >
         <h2 id="confirm-dialog-title" className="confirm-dialog-title">{title}</h2>
@@ -41,6 +42,6 @@ export default function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

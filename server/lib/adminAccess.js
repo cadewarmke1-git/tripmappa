@@ -16,11 +16,6 @@ export function getAdminEmails() {
   return [...emails];
 }
 
-/** @deprecated Prefer getAdminEmails(); kept for single-email callers. */
-export function getAdminEmail() {
-  return getAdminEmails()[0] || "";
-}
-
 export function isAdminEmail(email) {
   if (!email) return false;
   const normalized = normalizeEmail(email);

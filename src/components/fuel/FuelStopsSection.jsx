@@ -31,8 +31,8 @@ export default function FuelStopsSection({
       <div className="stops-section-label">
         {mode === "ev" || mode === "hybrid" ? "Fuel & charging stops" : mode === "diesel" ? "Diesel stops" : mode === "rv" ? "Fuel & propane stops" : "Fuel stops"}
       </div>
-      {intervalPoints.map((point, i) => {
-        const miles = computeSegmentMiles(totalMiles, point.segmentIndex ?? i, intervalPoints.length);
+      {intervalPoints.map(point => {
+        const miles = computeSegmentMiles(totalMiles, point.segmentIndex ?? 0, intervalPoints.length);
         const label = point.required
           ? `Required charge · ~${miles ?? "—"} mi from start`
           : miles != null
@@ -40,7 +40,7 @@ export default function FuelStopsSection({
             : "Along route";
         return (
           <FuelStopsRow
-            key={`fuel-${i}-${point.lat}-${point.lng}`}
+            key={`fuel-${point.segmentIndex ?? 0}-${point.lat}-${point.lng}`}
             point={point}
             answers={answers}
             segmentLabel={label}

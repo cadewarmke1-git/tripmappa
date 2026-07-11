@@ -10,8 +10,8 @@ export default function PlannedForYouSection({ touches = [] }) {
       <div className="planned-for-you-accent" aria-hidden="true" />
       <h3 className="planned-for-you-title">Planned for you</h3>
       <ul className="planned-for-you-list planned-for-you-highlights">
-        {highlights.map((item, i) => (
-          <li key={`planned-${i}-${item.text.slice(0, 20)}`} className="planned-for-you-highlight">
+        {highlights.map(item => (
+          <li key={item.text} className="planned-for-you-highlight">
             <PersonalTouchIcon type={item.iconType} />
             <span className="planned-for-you-text">{item.text}</span>
           </li>

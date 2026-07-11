@@ -2,33 +2,6 @@
 import { getEffectiveVehicle, isRvVehicle } from "./vehicles.js";
 import { buildNeonSignPinIcon } from "./mapNeonPinIcons.js";
 
-export const MARKER_GOLD = "#FFD28C";
-const MARKER_SIZE = 26;
-
-export const MARKER_CATEGORIES = {
-  destination: { label: "Destination", color: MARKER_GOLD, zIndex: 20 },
-  hotel: { label: "Overnight stop", color: MARKER_GOLD, zIndex: 10 },
-  rv: { label: "RV / campground", color: MARKER_GOLD, zIndex: 10 },
-  fuel: { label: "Fuel stop", color: MARKER_GOLD, zIndex: 9 },
-  restaurant: { label: "Restaurant", color: MARKER_GOLD, zIndex: 8 },
-  rest: { label: "Rest stop", color: MARKER_GOLD, zIndex: 8 },
-  ev: { label: "EV charging", color: MARKER_GOLD, zIndex: 9 },
-  truck: { label: "Truck stop", color: MARKER_GOLD, zIndex: 8 },
-  park: { label: "Nature & parks", color: MARKER_GOLD, zIndex: 7 },
-  poi: { label: "Point of interest", color: MARKER_GOLD, zIndex: 6 },
-  medical: { label: "Emergency services", color: MARKER_GOLD, zIndex: 5 },
-  vet: { label: "Veterinary", color: MARKER_GOLD, zIndex: 5 },
-  playground: { label: "Park / playground", color: MARKER_GOLD, zIndex: 6 },
-  entertainment: { label: "Entertainment", color: MARKER_GOLD, zIndex: 6 },
-  wifi: { label: "WiFi stop", color: MARKER_GOLD, zIndex: 6 },
-  religious: { label: "Prayer facility", color: MARKER_GOLD, zIndex: 5 },
-  safety: { label: "Safety flagged", color: MARKER_GOLD, zIndex: 8 },
-  budget: { label: "Budget alert", color: MARKER_GOLD, zIndex: 11 },
-  alert: { label: "Trip alert", color: MARKER_GOLD, zIndex: 12 },
-  custom: { label: "Custom stop", color: MARKER_GOLD, zIndex: 13 },
-  repair: { label: "Auto repair", color: MARKER_GOLD, zIndex: 4 },
-};
-
 const ICON_PATHS = {
   hotel: '<path d="M7 22V13a2 2 0 012-2h10a2 2 0 012 2v9M7 17h14M10 22v-3M18 22v-3" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
   rv: '<path d="M16 7L8 21h16L16 7z" stroke="#fff" stroke-width="1.5" fill="none" stroke-linejoin="round"/><path d="M16 13v5M13 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>',
@@ -175,10 +148,4 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
   extraMarkers.forEach(a => markers.push(a));
 
   return markers;
-}
-
-export function getLegendItems() {
-  return [
-    "hotel", "rv", "fuel", "restaurant", "rest", "ev", "truck", "park", "poi", "medical",
-  ].map(key => ({ id: key, ...MARKER_CATEGORIES[key] }));
 }

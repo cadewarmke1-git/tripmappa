@@ -313,6 +313,9 @@
     gap: 8px;
     flex-wrap: wrap;
   }
+  .hero-explore-range-search {
+    margin: 10px 0 8px;
+  }
   .hero-explore-range-time-label {
     font-family: 'Inter', sans-serif;
     font-size: 11px;
@@ -3493,6 +3496,44 @@
   .dot-pending { background: #f5a623; }
 
   /* ── Modal ── */
+  dialog:not([open]) { display: none !important; }
+  dialog.modal-overlay,
+  dialog.confirm-dialog-overlay,
+  dialog.collab-panel-overlay,
+  dialog.live-sos-dialog-overlay {
+    border: none;
+    max-width: none;
+    max-height: none;
+    color: inherit;
+    background: transparent;
+  }
+  dialog.modal-overlay::backdrop,
+  dialog.confirm-dialog-overlay::backdrop,
+  dialog.collab-panel-overlay::backdrop,
+  dialog.live-sos-dialog-overlay::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  dialog.founder-welcome-overlay::backdrop {
+    background: rgba(13, 10, 26, 0.88);
+  }
+  dialog.profile-card-dropdown,
+  dialog.map-info-card {
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+  }
+  dialog.traveler-onboarding {
+    border: none;
+    padding: calc(var(--nav-h, 56px) + env(safe-area-inset-top, 0px) + 16px) 24px calc(20px + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    max-width: none;
+    max-height: none;
+    color: inherit;
+  }
+  dialog.traveler-onboarding--welcome-screen {
+    padding: 0;
+  }
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
   /* Auth overlays must sit above .app-nav-bar (z 210–220) so nav wordmark never paints over modal content */
   .modal-overlay.auth-modal-overlay {
@@ -8368,6 +8409,7 @@
     font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; margin: 0 0 4px; color: #fff;
   }
   .trips-panel-sub { margin: 0; font-size: 13px; color: rgba(255,255,255,0.55); }
+  .trips-panel-filter { margin-top: 12px; }
   .trips-saved-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
   .trips-saved-card {
     padding: 14px 16px; border-radius: 14px;

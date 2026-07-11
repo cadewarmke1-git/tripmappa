@@ -43,12 +43,3 @@ export function resolveEnrichedRating(entity, lookup) {
   const hit = lookup.get(normalizeName(name));
   return hit?.rating ?? null;
 }
-
-export function resolveNestedRestaurantRating(stop, restaurantName, lookup) {
-  const nested = (stop?.restaurants || []).find(
-    r => normalizeName(r?.name) === normalizeName(restaurantName),
-  );
-  const nestedRating = parseRating(nested?.rating);
-  if (nestedRating != null) return nestedRating;
-  return lookup?.get(normalizeName(restaurantName))?.rating ?? null;
-}

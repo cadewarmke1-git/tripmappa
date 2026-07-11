@@ -114,6 +114,18 @@ function classifyTrip(answers, vehicle, rawVehicle) {
   return "personal";
 }
 
+function pickPlanTripContextBody(body, mergedAnswers) {
+  return {
+    origin: body.origin,
+    destination: body.destination,
+    answers: mergedAnswers,
+    routeInfo: body.routeInfo,
+    legs: body.legs,
+    departureTime: body.departureTime,
+    timingMode: body.timingMode,
+  };
+}
+
 function buildTripContext(reqBody) {
   const { origin, destination, answers = {}, routeInfo = {}, legs, departureTime, timingMode } = reqBody;
   const rawVehicle = answers.vehicle || "Car";
@@ -1010,7 +1022,7 @@ export default async function handler(req, res) {
     ? { ...fallbackPreferences, ...(answers || {}) }
     : (answers || {});
 
-  const ctx = buildTripContext({ ...req.body, answers: mergedAnswers });
+  const ctx = buildTripContext(pickPlanTripContextBody(req.body, mergedAnswers));
 
   const effectivePlacesPrompt = buildCorridorPlacesFallback(routeInfo, placesContextPrompt);
   const corridorDegradationNote = !placesContextPrompt?.trim() && effectivePlacesPrompt
@@ -1083,7 +1095,7 @@ export default async function handler(req, res) {
 
     try {
       const segmentPromises = tripSegments.map((segment) => {
-        const segmentCtx = buildSegmentTripContext({ ...req.body, answers: mergedAnswers }, segment);
+        const segmentCtx = buildSegmentTripContext(pickPlanTripContextBody(req.body, mergedAnswers), segment);
         const segmentPrompt = buildUserPrompt(
           segmentCtx,
           effectivePlacesPrompt,

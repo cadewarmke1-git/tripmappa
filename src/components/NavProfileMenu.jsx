@@ -3,6 +3,7 @@ import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
 import { getTierCssClass } from "../lib/tiers.js";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 export default function NavProfileMenu({
   user,
@@ -23,7 +24,6 @@ export default function NavProfileMenu({
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
   const closeTimerRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -48,6 +48,9 @@ export default function NavProfileMenu({
     setClosing(false);
     setOpen(true);
   }, []);
+
+  const showDropdown = open || closing;
+  const dialogRef = useDialogA11y(showDropdown, closeMenu, "nav-profile-menu-title", { modal: false });
 
   const run = useCallback((action) => {
     closeMenu();
@@ -82,7 +85,7 @@ export default function NavProfileMenu({
     const onPointerDown = (e) => {
       const target = e.target instanceof Node ? e.target : null;
       if (triggerRef.current?.contains(target)) return;
-      if (dropdownRef.current?.contains(target)) {
+      if (dialogRef.current?.contains(target)) {
         if (isPointerOverPlanFlow(e)) closeMenu();
         return;
       }
@@ -126,7 +129,6 @@ export default function NavProfileMenu({
     { id: "share", label: "Share", action: onOpenShare },
   ];
 
-  const showDropdown = open || closing;
   const triggerLabel = isSignedIn ? `Profile menu for ${displayName}` : "Open menu";
 
   return (
@@ -180,12 +182,12 @@ export default function NavProfileMenu({
       </div>
 
       {showDropdown && (
-        <div
-          ref={dropdownRef}
+        <dialog
+          ref={dialogRef}
           className={`profile-card-dropdown${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
-          role="dialog"
-          aria-label="Navigation menu"
+          aria-labelledby="nav-profile-menu-title"
         >
+          <h2 id="nav-profile-menu-title" className="map-info-card-sr-title">Navigation menu</h2>
           <div className="profile-card-dropdown-glow" aria-hidden="true" />
 
           <div className="profile-card-identity profile-card-identity--static">
@@ -285,7 +287,7 @@ export default function NavProfileMenu({
             <a href="/privacy" onClick={closeMenu}>Privacy Policy</a>
             <a href="/terms" onClick={closeMenu}>Terms of Service</a>
           </nav>
-        </div>
+        </dialog>
       )}
     </div>
   );

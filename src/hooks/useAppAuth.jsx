@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { fetchTrips, migrateLocalTrips } from "../lib/tripsApi.js";
+import { SAVED_TRIPS_KEY, readLocalStorage } from "../lib/storageKeys.js";
 import { fetchTripCredits } from "../lib/tripCreditsApi.js";
 import { TIERS, normalizeTier } from "../lib/tiers.js";
 import { runAccountOnboarding } from "../lib/accountOnboardingApi.js";
@@ -64,7 +65,7 @@ export function useAppAuth({
   const [authModalLead, setAuthModalLead] = useState("");
 
   const [savedTrips, setSavedTrips] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"); } catch { return []; }
+    try { return JSON.parse(readLocalStorage(SAVED_TRIPS_KEY) || "[]"); } catch { return []; }
   });
   const savedTripsRef = useRef(savedTrips);
   const [planGenerationCount, setPlanGenerationCount] = useState(0);
@@ -82,9 +83,9 @@ export function useAppAuth({
   const intentionalSignOutRef = useRef(false);
   const sessionExpiredNotifiedRef = useRef(false);
 
-  function toast_(msg, options) {
+  const toast_ = useCallback((msg, options) => {
     return toastFnRef.current?.(msg, options);
-  }
+  }, [toastFnRef]);
 
   function applyCreditStatus(next) {
     creditStatusRef.current = next;
@@ -108,11 +109,11 @@ export function useAppAuth({
     }
   }
 
-  function openAuthModal(mode, { lead } = {}) {
+  const openAuthModal = useCallback((mode, { lead } = {}) => {
     setAuthError("");
     setAuthModalLead(lead || "");
     setAuthModal(mode);
-  }
+  }, []);
 
   function closeAuthModal() {
     setAuthModal(null);
@@ -335,7 +336,7 @@ export function useAppAuth({
     }
   }
 
-  async function buildFlowPrefillForUser() {
+  const buildFlowPrefillForUser = useCallback(async () => {
     let tripPrefs = null;
     if (user?.id && session?.access_token) {
       try {
@@ -349,12 +350,12 @@ export function useAppAuth({
       tripPrefs,
       userProfile?.traveler_profile,
     );
-  }
+  }, [user?.id, session?.access_token, userProfile?.traveler_profile]);
 
   async function handleTravelerOnboardingComplete(travelerProfile) {
     if (!user?.id) return;
     try {
-      const profile = await saveTravelerOnboarding(user.id, travelerProfile);
+      const profile = await saveTravelerOnboarding(travelerProfile);
       setUserProfile(profile);
       if (!convoComplete && !generated && questionHistory.length === 0) {
         let tripPrefs = null;
@@ -381,7 +382,7 @@ export function useAppAuth({
     if (authLoading) return undefined;
     if (!user) {
       try {
-        applySavedTrips(JSON.parse(localStorage.getItem("tripmappa-saved") || "[]"));
+        applySavedTrips(JSON.parse(readLocalStorage(SAVED_TRIPS_KEY) || "[]"));
       } catch {
         applySavedTrips([]);
       }
@@ -403,7 +404,7 @@ export function useAppAuth({
     })();
 
     return () => { cancelled = true; };
-  }, [user?.id, authLoading]);
+  }, [user, user?.id, authLoading]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -421,7 +422,7 @@ export function useAppAuth({
       });
     }
     intentionalSignOutRef.current = false;
-  }, [user, authLoading]);
+  }, [user, authLoading, toast_, openAuthModal]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -453,7 +454,7 @@ export function useAppAuth({
       const guestHome = getGuestHomeAddress();
       if (guestHome) setHomeAddress(guestHome);
     }
-  }, [user?.id, session?.access_token, authLoading, creditsNeedRefresh]);
+  }, [user?.id, session?.access_token, authLoading, creditsNeedRefresh, setHomeAddress]);
 
   useEffect(() => {
     captureReferralFromUrl();
@@ -483,7 +484,18 @@ export function useAppAuth({
         }
       });
     return () => { cancelled = true; };
-  }, [user?.id, session?.access_token, userProfileLoaded, userProfile?.traveler_profile, userProfile?.onboarding_complete]);
+  }, [
+    user?.id,
+    session?.access_token,
+    userProfileLoaded,
+    userProfile?.traveler_profile,
+    userProfile?.onboarding_complete,
+    buildFlowPrefillForUser,
+    convoComplete,
+    generated,
+    questionHistory.length,
+    setFlowPrefill,
+  ]);
 
   useEffect(() => {
     foundingClaimAttemptedRef.current = false;
@@ -528,7 +540,7 @@ export function useAppAuth({
     })();
 
     return () => { cancelled = true; };
-  }, [authLoading, user?.id, session?.access_token]);
+  }, [authLoading, user, user?.id, session?.access_token, toast_]);
 
   useEffect(() => {
     trialPromptShownRef.current = false;
@@ -546,7 +558,7 @@ export function useAppAuth({
       .catch(() => {});
 
     return undefined;
-  }, [authLoading, user?.id, session?.access_token, creditStatus?.showTrialEndedPrompt]);
+  }, [authLoading, user?.id, session?.access_token, creditStatus?.showTrialEndedPrompt, setShowUpgradeModal, setUpgradeModalReason]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -591,7 +603,7 @@ export function useAppAuth({
       setView("app");
       openAuthModal("signin");
     }
-  }, [view, user, authLoading]);
+  }, [view, user, authLoading, setView, openAuthModal]);
 
   return {
     user,

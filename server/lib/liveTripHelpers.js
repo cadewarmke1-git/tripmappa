@@ -49,12 +49,6 @@ export function mphFromSpeedMps(speedMps) {
   return Math.round(speedMps * 2.23694);
 }
 
-export function extractDestinationCity(destination) {
-  if (!destination) return "your destination";
-  const parts = destination.split(",");
-  return parts[0]?.trim() || destination;
-}
-
 export function checkEtaNotifications({
   nextStopEta,
   nextStopName,

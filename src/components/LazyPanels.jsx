@@ -6,7 +6,7 @@ const LiveViewPage = lazy(() => import("./live/LiveViewPage.jsx"));
 const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const SharePanel = lazy(() => import("./SharePanel.jsx"));
 
-export function PanelLoadingFallback({ theme = "night" }) {
+function PanelLoadingFallback({ theme = "night" }) {
   return (
     <div className="panel-loading-fallback" aria-busy="true">
       <RouteDrawingLoader theme={theme} variant="inline" />

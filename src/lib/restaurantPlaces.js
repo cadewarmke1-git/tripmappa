@@ -85,9 +85,3 @@ export function estimateFoodCostFromRestaurants(restaurantsByCity, answers, nigh
 function parsePartySize(travelers) {
   return parseTravelerCount(travelers) ?? 2;
 }
-
-export function openStatusLabel(openNow) {
-  if (openNow === true) return { label: "Open", className: "open" };
-  if (openNow === false) return { label: "Closed", className: "closed" };
-  return { label: "Hours vary", className: "unknown" };
-}

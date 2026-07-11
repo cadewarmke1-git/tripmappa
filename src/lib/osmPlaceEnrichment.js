@@ -89,13 +89,3 @@ export async function ensureNamedEnrichedPlace(place, displayCategory) {
 
   return mergeDetailsIntoPlace(working, details);
 }
-
-/** Enrich a list of places for display; drops any that cannot be verified. */
-export async function enrichPlacesForDisplay(places, category) {
-  const out = [];
-  for (const place of places || []) {
-    const enriched = await ensureNamedEnrichedPlace(place, category || place.category);
-    if (enriched) out.push(enriched);
-  }
-  return out;
-}

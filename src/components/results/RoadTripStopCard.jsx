@@ -1,5 +1,7 @@
 /** Unified v0-spec stop card — food, fuel, lodging, and general results rows. */
 
+import { useCardTilt } from "../../hooks/useCardTilt.js";
+
 const ACTION_ICONS = {
   "Get directions": "navigation",
   Navigate: "navigation",
@@ -66,6 +68,55 @@ function MapPinIcon() {
   );
 }
 
+function renderStopCardAction(action) {
+  const iconKey = ACTION_ICONS[action.label];
+  const isPrimary = action.variant === "primary";
+  const classNames = [
+    "road-trip-stop-card-btn",
+    isPrimary ? "road-trip-stop-card-btn--primary" : "road-trip-stop-card-btn--secondary",
+    action.disabled ? "road-trip-stop-card-btn--disabled" : "",
+  ].filter(Boolean).join(" ");
+
+  const content = (
+    <>
+      {iconKey ? <StopCardIcon name={iconKey} /> : null}
+      {action.label}
+    </>
+  );
+
+  if (action.href && !action.disabled) {
+    return (
+      <a
+        key={action.label}
+        href={action.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={classNames}
+        title={action.title}
+        onClick={e => e.stopPropagation()}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      key={action.label}
+      type="button"
+      className={classNames}
+      disabled={action.disabled}
+      title={action.title}
+      onClick={e => {
+        e.stopPropagation();
+        action.onClick?.(e);
+      }}
+    >
+      {content}
+    </button>
+  );
+}
+
 /**
  * @typedef {Object} StopCardAction
  * @property {string} label
@@ -94,55 +145,15 @@ export default function RoadTripStopCard({
   ariaLabel = null,
 }) {
   const catClass = `road-trip-stop-card--${signCategory}`;
-
-  function renderAction(action) {
-    const iconKey = ACTION_ICONS[action.label];
-    const isPrimary = action.variant === "primary";
-    const classNames = [
-      "road-trip-stop-card-btn",
-      isPrimary ? "road-trip-stop-card-btn--primary" : "road-trip-stop-card-btn--secondary",
-      action.disabled ? "road-trip-stop-card-btn--disabled" : "",
-    ].filter(Boolean).join(" ");
-
-    const content = (
-      <>
-        {iconKey ? <StopCardIcon name={iconKey} /> : null}
-        {action.label}
-      </>
-    );
-
-    if (action.href && !action.disabled) {
-      return (
-        <a
-          key={action.label}
-          href={action.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={classNames}
-          title={action.title}
-          onClick={e => e.stopPropagation()}
-        >
-          {content}
-        </a>
-      );
-    }
-
-    return (
-      <button
-        key={action.label}
-        type="button"
-        className={classNames}
-        disabled={action.disabled}
-        title={action.title}
-        onClick={e => {
-          e.stopPropagation();
-          action.onClick?.(e);
-        }}
-      >
-        {content}
-      </button>
-    );
-  }
+  const {
+    ref: tiltRef,
+    style: tiltStyle,
+    hovering: tiltHovering,
+    tiltEnabled,
+    onPointerEnter,
+    onPointerMove,
+    onPointerLeave,
+  } = useCardTilt(cardRef);
 
   const hasMeta = rating != null || distance || verified || metaExtra;
 
@@ -175,10 +186,14 @@ export default function RoadTripStopCard({
 
   return (
     <article
-      ref={cardRef}
-      className={`road-trip-stop-card road-stop-card results-place-card ${catClass}${highlighted ? " stop-highlighted" : ""}${className ? ` ${className}` : ""}`}
+      ref={tiltRef}
+      style={tiltStyle}
+      className={`road-trip-stop-card road-stop-card results-place-card ${catClass}${highlighted ? " stop-highlighted" : ""}${tiltEnabled ? " road-trip-stop-card--tilt" : ""}${tiltHovering ? " is-tilt-hover" : ""}${className ? ` ${className}` : ""}`}
       onClick={onCardClick}
       onKeyDown={e => { if (e.key === "Enter") onCardClick?.(); }}
+      onPointerEnter={onPointerEnter}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
       role={onCardClick ? "button" : undefined}
       tabIndex={onCardClick ? 0 : undefined}
       aria-label={ariaLabel || name}
@@ -207,7 +222,7 @@ export default function RoadTripStopCard({
 
         {actions.length > 0 && (
           <div className="road-trip-stop-card-actions road-stop-card-actions">
-            {actions.map(renderAction)}
+            {actions.map(renderStopCardAction)}
           </div>
         )}
 

@@ -32,9 +32,6 @@ export function respondStripeError(res, err, logLabel = "stripe") {
   return res.status(500).json({ error: "Billing request failed" });
 }
 
-export const VOYAGER_PRODUCT_NAME = "TripMappa Voyager";
-export const PREMIUM_PRODUCT_NAME = "TripMappa Trailblazer";
-
 /** Monthly Voyager — $4.99/mo (sandbox price ID). */
 export function getStripeVoyagerPriceId() {
   return process.env.STRIPE_VOYAGER_PRICE_ID?.trim() || null;

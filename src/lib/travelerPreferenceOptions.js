@@ -47,7 +47,3 @@ export const TRAVELER_STOPS_INTEREST_GROUPS = [
     ],
   },
 ];
-
-export const TRAVELER_STOPS_INTEREST_OPTIONS = TRAVELER_STOPS_INTEREST_GROUPS.flatMap(
-  group => group.options,
-);

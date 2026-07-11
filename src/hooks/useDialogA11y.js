@@ -1,8 +1,49 @@
 import { useEffect, useRef } from "react";
 
-/** Focus first control, trap Tab, and close on Escape for modal dialogs. */
-export function useDialogA11y(open, onClose, titleId) {
+/** Focus first control, trap Tab, and open/close native `<dialog>` with a11y. */
+export function useDialogA11y(open, onClose, titleId, { modal = true } = {}) {
   const dialogRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const programmaticCloseRef = useRef(false);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return undefined;
+
+    if (open) {
+      if (!dialog.open) {
+        if (modal) dialog.showModal();
+        else dialog.show();
+      }
+    } else if (dialog.open) {
+      programmaticCloseRef.current = true;
+      dialog.close();
+      programmaticCloseRef.current = false;
+    }
+
+    function handleCancel(e) {
+      e.preventDefault();
+      onCloseRef.current?.();
+    }
+
+    function handleClose() {
+      if (programmaticCloseRef.current) return;
+      onCloseRef.current?.();
+    }
+
+    dialog.addEventListener("cancel", handleCancel);
+    dialog.addEventListener("close", handleClose);
+    return () => {
+      dialog.removeEventListener("cancel", handleCancel);
+      dialog.removeEventListener("close", handleClose);
+      if (dialog.open) {
+        programmaticCloseRef.current = true;
+        dialog.close();
+        programmaticCloseRef.current = false;
+      }
+    };
+  }, [open, modal]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -22,12 +63,6 @@ export function useDialogA11y(open, onClose, titleId) {
     }
 
     function onKeyDown(e) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose?.();
-        return;
-      }
-      // Trap Tab focus inside the dialog so keyboard users cannot tab onto the map behind it.
       if (e.key !== "Tab") return;
       const focusable = getFocusableElements();
       if (!focusable.length) return;

@@ -16,6 +16,7 @@ describe("mapStyles", () => {
   it("resolves day and night palettes for standard map style", () => {
     expect(resolveMapStyles("standard", "day")).toBe(DAY_MAP_STYLES);
     expect(resolveMapStyles("standard", "night")).toBe(NIGHT_MAP_STYLES);
+    expect(resolveMapStyles("standard", "twilight")).toBe(NIGHT_MAP_STYLES);
   });
 
   it("day styles distinguish land, highway, local roads, and water", () => {
@@ -26,11 +27,11 @@ describe("mapStyles", () => {
     expect(colors).toContain(MAP_DAY_HIGHWAY);
     expect(colors).toContain(MAP_DAY_LOCAL_ROAD);
     expect(colors).toContain(MAP_DAY_WATER);
-    expect(MAP_DAY_BASE).toBe("#F0EDE8");
-    expect(MAP_DAY_HIGHWAY).toBe("#E06820");
-    expect(MAP_DAY_HIGHWAY_STROKE).toBe("#5A2A10");
-    expect(MAP_DAY_WATER).toBe("#4A8AB8");
-    expect(MAP_DAY_PARK).toBe("#6B8F5E");
+    expect(MAP_DAY_BASE).toBe("#F5E6C8");
+    expect(MAP_DAY_HIGHWAY).toBe("#C8956A");
+    expect(MAP_DAY_HIGHWAY_STROKE).toBe("#8A6848");
+    expect(MAP_DAY_WATER).toBe("#8A9EA8");
+    expect(MAP_DAY_PARK).toBe("#D4C8B0");
   });
 
   it("night styles use deep land and darker water", () => {
@@ -44,6 +45,9 @@ describe("mapStyles", () => {
   it("applyMapThemeStyles updates a map instance", () => {
     const map = { setOptions: vi.fn() };
     applyMapThemeStyles(map, "standard", "day");
-    expect(map.setOptions).toHaveBeenCalledWith({ styles: DAY_MAP_STYLES ?? [] });
+    expect(map.setOptions).toHaveBeenCalledWith({
+      styles: DAY_MAP_STYLES ?? [],
+      backgroundColor: MAP_DAY_BASE,
+    });
   });
 });

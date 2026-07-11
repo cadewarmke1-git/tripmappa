@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import { Marker } from "@react-google-maps/api";
 import { buildMarkerIcon } from "../../lib/mapMarkers.js";
 
 export default function MapMarkerLayer({ markers = [], isDarkMode, onMarkerClick, dismissedAlertIds = [] }) {
-  const visible = markers.filter(m => !m.alertId || !dismissedAlertIds.includes(m.alertId));
+  const dismissedAlertSet = useMemo(() => new Set(dismissedAlertIds), [dismissedAlertIds]);
+  const visible = markers.filter(m => !m.alertId || !dismissedAlertSet.has(m.alertId));
 
   return visible.map(m => (
     <Marker

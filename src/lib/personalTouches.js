@@ -16,14 +16,15 @@ export function getPersonalTouchIconType(text) {
   return "default";
 }
 
-/** @deprecated Use getPersonalTouchIconType — kept for tests migrating off emoji. */
-export function getPersonalTouchIcon(text) {
-  return getPersonalTouchIconType(text);
-}
-
 export function normalizePersonalTouches(touches) {
   if (!Array.isArray(touches)) return [];
-  return touches.map(t => (typeof t === "string" ? t.trim() : "")).filter(Boolean).slice(0, 4);
+  const out = [];
+  for (const t of touches) {
+    const trimmed = typeof t === "string" ? t.trim() : "";
+    if (trimmed) out.push(trimmed);
+    if (out.length >= 4) break;
+  }
+  return out;
 }
 
 const HIGHLIGHT_FOOD_RE = /\b(food|dining|restaurant|lunch|dinner|breakfast|dietary|gluten|vegan|vegetarian|halal|kosher|allerg|bbq|meal|coffee|cafe)\b/i;
@@ -69,15 +70,21 @@ export function shortenPlannedHighlight(line, maxWords = 12) {
  */
 export function buildPlannedHighlights(touches, max = 3) {
   if (!Array.isArray(touches)) return [];
-  const lines = touches.map(t => (typeof t === "string" ? t.trim() : "")).filter(Boolean);
-  return lines
-    .map(line => ({
-      text: shortenPlannedHighlight(line, 12),
-      iconType: getPlannedHighlightIconType(line),
-      specificity: highlightSpecificityScore(line),
-    }))
-    .filter(item => item.text)
-    .sort((a, b) => b.specificity - a.specificity)
+  const items = [];
+  for (const t of touches) {
+    const line = typeof t === "string" ? t.trim() : "";
+    if (!line) continue;
+    const text = shortenPlannedHighlight(line, 12);
+    if (text) {
+      items.push({
+        text,
+        iconType: getPlannedHighlightIconType(line),
+        specificity: highlightSpecificityScore(line),
+      });
+    }
+  }
+  return items
+    .toSorted((a, b) => b.specificity - a.specificity)
     .slice(0, max)
     .map(({ text, iconType }) => ({ text, iconType }));
 }

@@ -116,9 +116,3 @@ export async function getHereAccessToken() {
 
   return inflight;
 }
-
-export function clearHereAccessTokenCache() {
-  cache.token = null;
-  cache.expiresAt = 0;
-  inflight = null;
-}

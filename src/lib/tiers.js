@@ -53,12 +53,6 @@ export const TIER_PRICING = {
 
 export const FOUNDER_MEMBER_LIMIT = 1000;
 
-export const WANDERER_BENEFITS = [
-  "3 trip generations total (lifetime)",
-  "Saved trips & Navigate Home",
-  "Full maps, routing & budget estimates",
-];
-
 export const VOYAGER_BENEFITS = [
   "20 trip generations per month",
   "Live location sharing",
@@ -71,13 +65,6 @@ export const TRAILBLAZER_BENEFITS = [
   "Grocery delivery to your hotel",
   "Priority generation queue",
   "Voice-to-list grocery ordering",
-];
-
-export const FOUNDER_BENEFITS = [
-  "1 year of Trailblazer — free",
-  "Limited to the first 1,000 members",
-  "Permanent Founder badge on your profile",
-  "All Trailblazer features while active",
 ];
 
 /** Rows for the tier comparison table — single source for pricing UI. */
@@ -122,13 +109,6 @@ export function formatTierPriceBlock(tier, billingInterval = "month") {
     billedAnnually: null,
   };
 }
-
-/** @deprecated use WANDERER_BENEFITS */
-export const FREE_BENEFITS = WANDERER_BENEFITS;
-/** @deprecated use TRAILBLAZER_BENEFITS */
-export const PREMIUM_BENEFITS = TRAILBLAZER_BENEFITS;
-/** @deprecated use TRAILBLAZER_BENEFITS */
-export const TRAVELER_BENEFITS = TRAILBLAZER_BENEFITS;
 
 export function normalizeTier(tier) {
   if (tier === "guest") return TIERS.WANDERER;

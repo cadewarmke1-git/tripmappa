@@ -11,13 +11,6 @@ export const FREE_LIFETIME_LIMIT = 3;
 export const VOYAGER_MONTHLY_LIMIT = 20;
 export const TRAILBLAZER_MONTHLY_LIMIT = 100;
 
-/** @deprecated use FREE_LIFETIME_LIMIT */
-export const FREE_MONTHLY_LIMIT = FREE_LIFETIME_LIMIT;
-
-export function currentMonthKey(date = new Date()) {
-  return date.toISOString().slice(0, 7);
-}
-
 export function firstOfNextMonthIso(date = new Date()) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
 }

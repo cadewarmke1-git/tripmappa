@@ -30,14 +30,13 @@ export default function EmailModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        ref={dialogRef}
-        className="auth-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="signup-headline"
-      >
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay auth-modal-overlay"
+      aria-labelledby="signup-headline"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="auth-modal" onClick={e => e.stopPropagation()}>
         <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <BrandWordmark className="auth-modal-logo" as="div" />
@@ -99,6 +98,6 @@ export default function EmailModal({
           <button type="button" className="auth-modal-link-btn" onClick={onSwitchToSignIn} disabled={loading}>Sign in.</button>
         </p>
       </div>
-    </div>
+    </dialog>
   );
 }

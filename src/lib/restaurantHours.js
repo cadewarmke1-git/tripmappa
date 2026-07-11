@@ -84,7 +84,7 @@ export function sortRestaurantsForDinner(restaurants = [], arrival = new Date())
     if (s.kind === "unknown") return 2;
     return 3;
   };
-  return [...restaurants].sort((a, b) => rank(a) - rank(b) || (b.rating ?? 0) - (a.rating ?? 0));
+  return restaurants.toSorted((a, b) => rank(a) - rank(b) || (b.rating ?? 0) - (a.rating ?? 0));
 }
 
 export function filterDinnerRestaurants(restaurants = [], arrival = new Date()) {

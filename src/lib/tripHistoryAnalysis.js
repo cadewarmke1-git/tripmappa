@@ -69,6 +69,24 @@ function mostCommon(values = []) {
   return bestCount > 0 ? { value: best, count: bestCount } : null;
 }
 
+function collectTruthy(items, getValue) {
+  const out = [];
+  for (const item of items) {
+    const value = getValue(item);
+    if (value) out.push(value);
+  }
+  return out;
+}
+
+function collectTripBudgets(trips) {
+  const out = [];
+  for (const t of trips) {
+    const budget = t.answers?.trip_budget;
+    if (budget && budget !== "No budget limit") out.push(budget);
+  }
+  return out;
+}
+
 /** Roll up dietary, lodging, budget, and pet signals from recent trips for the server preferences block. */
 export function buildRecentTripsPreferencesRollup(tripsOrRef = [], limit = 3) {
   const recent = resolveTripsForContext(tripsOrRef).slice(0, limit);
@@ -83,21 +101,19 @@ export function buildRecentTripsPreferencesRollup(tripsOrRef = [], limit = 3) {
     lines.push(`Pet-friendly trips: ${petCount} of last ${recent.length}`);
   }
 
-  const diets = recent.map(t => dietarySignature(t.answers || {})).filter(Boolean);
+  const diets = collectTruthy(recent, t => dietarySignature(t.answers || {}));
   const topDiet = mostCommon(diets);
   if (topDiet && topDiet.count >= 2) {
     lines.push(`Common dietary pattern: ${topDiet.value.split("|").join(", ")} (${topDiet.count}/${recent.length} trips)`);
   }
 
-  const budgets = recent
-    .map(t => t.answers?.trip_budget)
-    .filter(b => b && b !== "No budget limit");
+  const budgets = collectTripBudgets(recent);
   const topBudget = mostCommon(budgets);
   if (topBudget && topBudget.count >= 2) {
     lines.push(`Typical budget tier: ${topBudget.value} (${topBudget.count}/${recent.length} trips)`);
   }
 
-  const lodgings = recent.map(t => t.answers?.lodging).filter(Boolean);
+  const lodgings = collectTruthy(recent, t => t.answers?.lodging);
   const topLodging = mostCommon(lodgings);
   if (topLodging && topLodging.count >= 2) {
     lines.push(`Typical lodging tier: ${topLodging.value} (${topLodging.count}/${recent.length} trips)`);
@@ -136,7 +152,7 @@ export function buildUserPatternSummary(tripsOrRef = []) {
     );
   }
 
-  const lodgings = recent.map(t => t.answers?.lodging).filter(Boolean);
+  const lodgings = collectTruthy(recent, t => t.answers?.lodging);
   const topLodging = mostCommon(lodgings);
   if (topLodging) {
     const lodgingMatches = recent.filter(t => t.answers?.lodging === topLodging.value).length;
@@ -145,9 +161,7 @@ export function buildUserPatternSummary(tripsOrRef = []) {
     }
   }
 
-  const budgets = recent
-    .map(t => t.answers?.trip_budget)
-    .filter(b => b && b !== "No budget limit");
+  const budgets = collectTripBudgets(recent);
   const topBudget = mostCommon(budgets);
   if (topBudget) {
     const withinTier = recent.filter(t => {
@@ -159,20 +173,20 @@ export function buildUserPatternSummary(tripsOrRef = []) {
     }
   }
 
-  const diets = recent.map(t => dietarySignature(t.answers || {})).filter(Boolean);
+  const diets = collectTruthy(recent, t => dietarySignature(t.answers || {}));
   const topDiet = mostCommon(diets);
   // Dietary at 3/5: health/safety — unlike budget/lodging, do not wait for 4/5 (rollup already flags at 3/3).
   if (topDiet && topDiet.count >= DIETARY_PATTERN_MIN) {
     patterns.push(`Consistent dietary restriction: ${topDiet.value.split("|").join(", ")}`);
   }
 
-  const vehicles = recent.map(t => t.answers?.vehicle || t.routeInfo?.vehicleType).filter(Boolean);
+  const vehicles = collectTruthy(recent, t => t.answers?.vehicle || t.routeInfo?.vehicleType);
   const topVehicle = mostCommon(vehicles);
   if (topVehicle && topVehicle.count >= CONSTRAINT_PATTERN_MIN) {
     patterns.push(`Consistent vehicle type: ${topVehicle.value}`);
   }
 
-  const schedules = recent.map(t => scheduleSignature(t.answers || {})).filter(Boolean);
+  const schedules = collectTruthy(recent, t => scheduleSignature(t.answers || {}));
   const topSchedule = mostCommon(schedules);
   if (topSchedule && topSchedule.count >= BEHAVIORAL_PATTERN_MIN) {
     patterns.push(`Consistent schedule pattern: ${topSchedule.value.split("|").join(", ")}`);
@@ -230,7 +244,7 @@ export function buildTravelerDossier(tripsOrRef = [], currentAnswers = {}) {
   const scenicNow = asArray(currentAnswers.preferences).includes("Scenic route");
   const scenicHistory = recent.filter(t => asArray(t.answers?.preferences).includes("Scenic route")).length;
   const lodgingNow = currentAnswers.lodging;
-  const topLodging = mostCommon(recent.map(t => t.answers?.lodging).filter(Boolean));
+  const topLodging = mostCommon(collectTruthy(recent, t => t.answers?.lodging));
 
   const habitParts = [];
   if (scenicNow || scenicHistory >= 2) {
@@ -256,7 +270,7 @@ export function buildTravelerDossier(tripsOrRef = [], currentAnswers = {}) {
     sentences.push(`They have not selected seafood on any of their last ${recent.length} trips.`);
   }
 
-  const diets = recent.map(t => dietarySignature(t.answers || {})).filter(Boolean);
+  const diets = collectTruthy(recent, t => dietarySignature(t.answers || {}));
   const topDiet = mostCommon(diets);
   if (!currentDiet.length && topDiet && topDiet.count >= 2) {
     sentences.push(`Past trips show a ${topDiet.value.split("|").join(" and ")} pattern (${topDiet.count} of ${recent.length} trips).`);

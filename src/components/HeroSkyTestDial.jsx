@@ -46,6 +46,7 @@ export default function HeroSkyTestDial({
         value={hour}
         disabled={isUrlLocked}
         onChange={e => onHourChange(Number(e.target.value))}
+        aria-label="Sky test hour"
         aria-valuetext={`${formatSkyHour(hour)}, ${PHASE_LABELS[phase] || phase}`}
       />
       <div className="hero-sky-test-dial-ticks" aria-hidden="true">

@@ -21,6 +21,14 @@ export function setGuestHomeAddress(address) {
   }
 }
 
+async function requireAuthenticatedUser() {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user?.id) throw new Error("Not signed in");
+  return user;
+}
+
 export async function fetchUserProfile() {
   if (!supabase) return null;
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -35,47 +43,47 @@ export async function fetchUserProfile() {
   return data;
 }
 
-export async function upsertUserProfile(userId, patch) {
-  if (!supabase) throw new Error("Supabase is not configured");
+export async function upsertUserProfile(patch) {
+  const user = await requireAuthenticatedUser();
   const { data, error } = await supabase
     .from("user_profiles")
-    .upsert({ user_id: userId, ...patch }, { onConflict: "user_id" })
+    .upsert({ ...patch, user_id: user.id }, { onConflict: "user_id" })
     .select(PROFILE_FIELDS)
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function saveHomeAddress(userId, homeAddress) {
-  return upsertUserProfile(userId, { home_address: homeAddress.trim() });
+export async function saveHomeAddress(homeAddress) {
+  return upsertUserProfile({ home_address: homeAddress.trim() });
 }
 
-export async function saveEmergencyContact(userId, phone) {
-  return upsertUserProfile(userId, { emergency_contact_phone: phone.trim() });
+export async function saveEmergencyContact(phone) {
+  return upsertUserProfile({ emergency_contact_phone: phone.trim() });
 }
 
-export async function saveDisplayName(userId, displayName) {
-  return upsertUserProfile(userId, { display_name: displayName.trim() });
+export async function saveDisplayName(displayName) {
+  return upsertUserProfile({ display_name: displayName.trim() });
 }
 
-export async function saveNotificationPrefs(userId, prefs) {
-  return upsertUserProfile(userId, {
+export async function saveNotificationPrefs(prefs) {
+  return upsertUserProfile({
     notify_trip_reminders: prefs.notifyTripReminders,
     notify_new_features: prefs.notifyNewFeatures,
   });
 }
 
-export async function saveTravelerOnboarding(userId, travelerProfile) {
-  return upsertUserProfile(userId, {
+export async function saveTravelerOnboarding(travelerProfile) {
+  return upsertUserProfile({
     traveler_profile: travelerProfile || {},
     onboarding_complete: true,
   });
 }
 
-export async function uploadAvatar(userId, file) {
-  if (!supabase) throw new Error("Supabase is not configured");
+export async function uploadAvatar(file) {
+  const user = await requireAuthenticatedUser();
   const blob = await resizeImageToSquare(file, 200);
-  const path = `${userId}/avatar.jpg`;
+  const path = `${user.id}/avatar.jpg`;
 
   const { error: uploadError } = await supabase.storage
     .from("avatars")
@@ -86,6 +94,6 @@ export async function uploadAvatar(userId, file) {
   const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
   const avatarUrl = `${urlData.publicUrl}?v=${Date.now()}`;
 
-  const profile = await upsertUserProfile(userId, { avatar_url: avatarUrl });
+  const profile = await upsertUserProfile({ avatar_url: avatarUrl });
   return profile;
 }

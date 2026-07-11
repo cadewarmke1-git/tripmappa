@@ -45,6 +45,7 @@ import { useAppAuth, SIGNUP_GENERATE_LEAD } from "./hooks/useAppAuth.jsx";
 import { useMapState } from "./hooks/useMapState.js";
 import { useGeneration } from "./hooks/useGeneration.js";
 import { deleteTrip, saveTrip } from "./lib/tripsApi.js";
+import { SAVED_TRIPS_KEY, writeLocalStorage } from "./lib/storageKeys.js";
 import { TIERS } from "./lib/tiers.js";
 import { createPortalSession } from "./lib/stripeApi.js";
 import {
@@ -78,6 +79,93 @@ import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
+
+function formatCreditsLabel(status) {
+  return formatCreditsDisplay(status).label;
+}
+
+function buildHeroTripPreview(tripStops, tripRoadStops, tripAnswers) {
+  const overview = getItineraryOverview({
+    stops: tripStops,
+    roadStops: tripRoadStops,
+    answers: tripAnswers || {},
+  });
+  const stopCount = overview.stopCount ?? 0;
+  if (!stopCount && !(tripStops?.length || tripRoadStops?.length)) return null;
+  return {
+    stopCount,
+    dayCount: overview.straightThrough ? 1 : Math.max(1, overview.dayCount || 1),
+  };
+}
+
+function revertAnswerForHistoryEntry(newAnswers, entry) {
+  const out = { ...newAnswers };
+  const q = entry.question;
+  delete out[q.id];
+  if (q.id === "travelers") {
+    delete out.kids_ages;
+    delete out.adult_count;
+    delete out.child_count;
+  }
+  if (q.id === "party_composition") {
+    delete out.adult_count;
+    delete out.child_count;
+  }
+  if (q.id === "vehicle") {
+    delete out.fuel_type;
+    delete out.towing;
+    delete out.truck_height;
+    delete out.truck_weight;
+    delete out.truck_hazmat;
+    delete out.hos_compliance;
+    delete out.rv_height;
+    delete out.rv_weight;
+    delete out.rv_towing;
+    delete out.multi_vehicles;
+    delete out.primary_vehicle;
+    delete out.coordination_needs;
+    delete out.effective_vehicle;
+    delete out.overnight_preference;
+    delete out.continuous_drive;
+    delete out.lodging;
+    delete out.loyalty_program;
+    delete out.trip_details;
+    delete out.trip_details_defaults_confirmed;
+    delete out.food_allergies;
+    delete out.kids_ages;
+    delete out.schedule_drive_hours;
+  }
+  if (q.id === "overnight_preference") {
+    delete out.continuous_drive;
+    delete out.lodging;
+    delete out.loyalty_program;
+    delete out.trip_nights;
+  }
+  if (q.id === "lodging" || q.type === "lodging_stay") {
+    delete out.lodging;
+    delete out.loyalty_program;
+    delete out.trip_nights;
+  }
+  if (q.id === "sleeper_cab") {
+    delete out.lodging;
+  }
+  if (q.type === "multiselect_group" || q.type === "trip_details") {
+    for (const sec of q.sections || []) {
+      delete out[sec.id];
+    }
+    if (q.type === "trip_details") {
+      delete out.trip_budget;
+      delete out.trip_details_defaults_confirmed;
+      delete out.food_allergies;
+      delete out.kids_ages;
+      delete out.schedule_drive_hours;
+    }
+  }
+  if (q.id === "kids_ages") {
+    delete out.kids_ages;
+  }
+  return out;
+}
 
 export default function App() {
   const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
@@ -213,6 +301,8 @@ export default function App() {
     setExploreRangeError,
     exploreOriginCoords,
     setExploreOriginCoords,
+    exploreSearchQuery,
+    setExploreSearchQuery,
     exploreRangeAbortRef,
     mapStyle,
     setMapStyle,
@@ -272,8 +362,11 @@ export default function App() {
     applyExploreRangeDestination,
     handleExploreRangeMapClick,
     handleExploreRangePlaceSelect,
+    handleExploreRangeSearch,
     focusMapOnStop,
     getDepartureTime,
+    flushMapLayout,
+    flushPendingFitBounds,
   } = useMapState({
     answers,
     origin,
@@ -335,7 +428,7 @@ export default function App() {
     const updated = savedTripsRef.current.filter(t => t.id !== id);
     applySavedTrips(updated);
     if (!user) {
-      try { localStorage.setItem("tripmappa-saved", JSON.stringify(updated)); } catch { /* quota / private mode */ }
+      writeLocalStorage(SAVED_TRIPS_KEY, JSON.stringify(updated));
     }
     toast_("Trip removed");
   }
@@ -357,12 +450,29 @@ export default function App() {
   const stepAnimTimer = useRef(null);
   const helpWrapRef = useRef(null);
 
-  const answerChangeCountsRef = useRef(createAnswerChangeTracker());
+  const answerChangeCountsRef = useRef(null);
+  if (!answerChangeCountsRef.current) {
+    answerChangeCountsRef.current = createAnswerChangeTracker();
+  }
   const reAnswerFromEditRef = useRef(false);
   const answersRef = useRef(answers);
   answersRef.current = answers;
   const questionHistoryRef = useRef(questionHistory);
   questionHistoryRef.current = questionHistory;
+
+  const buildQuestionContext = useCallback((newAnswers) => ({
+    origin: origin?.trim() || routeInfo?.origin || "",
+    destination: dest?.trim() || routeInfo?.destination || "",
+    vehicle: newAnswers?.vehicle || routeInfo?.vehicleType || "Car",
+    routeDistance: routeInfo?.distance,
+    routeDuration: routeInfo?.duration,
+    routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
+    routeDurationHours: parseHoursFromDuration(routeInfo?.duration),
+    routeFailed: Boolean(routeError),
+    routeErrorMessage: routeError || null,
+    questionHistory: questionHistoryRef.current,
+  }), [origin, dest, routeInfo, routeError]);
+
   const generateTripRef = useRef(null);
   const openAuthModalRef = useRef(null);
   openAuthModalRef.current = openAuthModal;
@@ -417,10 +527,6 @@ export default function App() {
   });
 
 
-  function formatCreditsLabel(status) {
-    return formatCreditsDisplay(status).label;
-  }
-
   const creditsNudge = useMemo(
     () => formatCreditsDisplay(creditStatus).nudge,
     [creditStatus],
@@ -429,7 +535,7 @@ export default function App() {
   const flowProgress = useMemo(() => getFlowProgress(answers, buildQuestionContext(answers), {
     convoComplete,
     currentQuestionId: convoComplete ? "done" : (currentQuestion?.id || "vehicle"),
-  }), [answers, convoComplete, currentQuestion?.id, origin, dest, routeInfo]);
+  }), [answers, buildQuestionContext, convoComplete, currentQuestion?.id]);
 
   const displayAnswers = useMemo(
     () => mergeDisplayAnswers(answers, flowPrefill, questionHistory),
@@ -447,7 +553,7 @@ export default function App() {
     dest: destRef.current?.value?.trim() || dest,
     answers,
     routeInfo,
-  }), [origin, dest, answers, routeInfo]);
+  }), [origin, dest, originRef, destRef, answers, routeInfo]);
 
   const planOutOfDate = useMemo(
     () => generated && isPlanOutOfDate(savedPlanSnapshot, currentPlanSnapshot),
@@ -486,6 +592,13 @@ export default function App() {
   );
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
   const showPlanFlowActionDock = tab === "plan" && !cardCollapsed && inQuestionFlow && !convoComplete;
+
+  // Float-card width/height transitions run ~350ms; resize map after panel settles so tiles fill the viewport.
+  useEffect(() => {
+    if (view !== "app" || tab !== "plan" || !mapReady || cardCollapsed) return undefined;
+    const timer = window.setTimeout(() => flushMapLayout(), 400);
+    return () => window.clearTimeout(timer);
+  }, [view, tab, inQuestionFlow, cardCollapsed, mapReady, flushMapLayout]);
   const creditsExhausted = useMemo(() => {
     if (!user || !creditStatus) return false;
     return !creditStatus.unlimited && (creditStatus.remaining ?? 0) <= 0;
@@ -609,17 +722,17 @@ export default function App() {
   }
 
   async function handleProfileUploadAvatar(file) {
-    const profile = await uploadAvatar(user.id, file);
+    const profile = await uploadAvatar(file);
     setUserProfile(profile);
   }
 
   async function handleProfileSaveDisplayName(name) {
-    const profile = await saveDisplayName(user.id, name);
+    const profile = await saveDisplayName(name);
     setUserProfile(profile);
   }
 
   async function handleProfileSaveNotifications(prefs) {
-    const profile = await saveNotificationPrefs(user.id, prefs);
+    const profile = await saveNotificationPrefs(prefs);
     setUserProfile(profile);
   }
 
@@ -662,20 +775,6 @@ export default function App() {
   function openGroceryUpgrade() {
     setUpgradeModalReason("grocery");
     setShowUpgradeModal(true);
-  }
-
-  function buildHeroTripPreview(tripStops, tripRoadStops, tripAnswers) {
-    const overview = getItineraryOverview({
-      stops: tripStops,
-      roadStops: tripRoadStops,
-      answers: tripAnswers || {},
-    });
-    const stopCount = overview.stopCount ?? 0;
-    if (!stopCount && !(tripStops?.length || tripRoadStops?.length)) return null;
-    return {
-      stopCount,
-      dayCount: overview.straightThrough ? 1 : Math.max(1, overview.dayCount || 1),
-    };
   }
 
   function goHome() {
@@ -800,7 +899,7 @@ export default function App() {
     setShowHomeAddressModal(false);
     if (user?.id) {
       try {
-        await saveHomeAddress(user.id, trimmed);
+        await saveHomeAddress(trimmed);
       } catch (err) {
         console.warn("Could not save home address:", err);
       }
@@ -835,7 +934,7 @@ export default function App() {
       const t = setTimeout(() => setEnterAnim(false), 320);
       return () => clearTimeout(t);
     }
-  }, [currentQuestion?.id, stepAnim]);
+  }, [currentQuestion, stepAnim]);
 
   useEffect(() => {
     if (!currentQuestion?.id && !convoComplete) return;
@@ -856,7 +955,7 @@ export default function App() {
     if (!trafficAlert) return;
     const t = setTimeout(() => setTrafficAlert(false), 5000);
     return () => clearTimeout(t);
-  }, [trafficAlert]);
+  }, [trafficAlert, setTrafficAlert]);
 
 
   useEffect(() => () => {
@@ -1101,7 +1200,7 @@ export default function App() {
     fetchDirections("Car");
   }
 
-  function applyPrefDraftForQuestion(question, newAnswers, prefillOverride) {
+  const applyPrefDraftForQuestion = useCallback((question, newAnswers, prefillOverride) => {
     const prefillSource = prefillOverride || flowPrefill;
     if (!question) {
       setPrefDraft(null);
@@ -1130,52 +1229,7 @@ export default function App() {
     } else {
       setPrefDraft(null);
     }
-  }
-
-  function loadNextQuestion(newAnswers, options = {}) {
-    if (generateTripInFlightRef.current) return;
-    if (convoComplete && !generated) return;
-    setStepAnim(null);
-    try {
-      const ctx = buildQuestionContext(newAnswers);
-      const result = getNextFlowQuestion(newAnswers, ctx);
-      if (!result || result.done) {
-        setCurrentQuestion(null);
-        setQIndex(-2);
-        setConvoComplete(true);
-        reAnswerFromEditRef.current = false;
-        setAnswers(normalizeTripAnswers(newAnswers, ctx, { forGeneration: true }));
-        return;
-      }
-      if (!result.id || !result.type) {
-        console.error("loadNextQuestion: invalid question payload", result);
-        toast_("Could not load the next question");
-        return;
-      }
-      setCurrentQuestion(result);
-      setQIndex(0);
-      setConvoComplete(false);
-      applyPrefDraftForQuestion(result, newAnswers, options.flowPrefill);
-    } catch (err) {
-      console.error("loadNextQuestion failed:", err);
-      toast_(err.message || "Could not load the next question");
-    }
-  }
-
-  function buildQuestionContext(newAnswers) {
-    return {
-      origin: origin?.trim() || routeInfo?.origin || "",
-      destination: dest?.trim() || routeInfo?.destination || "",
-      vehicle: newAnswers?.vehicle || routeInfo?.vehicleType || "Car",
-      routeDistance: routeInfo?.distance,
-      routeDuration: routeInfo?.duration,
-      routeDistanceMiles: parseMilesFromDistance(routeInfo?.distance),
-      routeDurationHours: parseHoursFromDuration(routeInfo?.duration),
-      routeFailed: Boolean(routeError),
-      routeErrorMessage: routeError || null,
-      questionHistory: questionHistoryRef.current,
-    };
-  }
+  }, [flowPrefill]);
 
   const {
     enrichingTrip,
@@ -1283,6 +1337,42 @@ export default function App() {
   });
 
 
+  const loadNextQuestion = useCallback((newAnswers, options = {}) => {
+    if (generateTripInFlightRef.current) return;
+    if (convoComplete && !generated) return;
+    setStepAnim(null);
+    try {
+      const ctx = buildQuestionContext(newAnswers);
+      const result = getNextFlowQuestion(newAnswers, ctx);
+      if (!result || result.done) {
+        setCurrentQuestion(null);
+        setQIndex(-2);
+        setConvoComplete(true);
+        reAnswerFromEditRef.current = false;
+        setAnswers(normalizeTripAnswers(newAnswers, ctx, { forGeneration: true }));
+        return;
+      }
+      if (!result.id || !result.type) {
+        console.error("loadNextQuestion: invalid question payload", result);
+        toast_("Could not load the next question");
+        return;
+      }
+      setCurrentQuestion(result);
+      setQIndex(0);
+      setConvoComplete(false);
+      applyPrefDraftForQuestion(result, newAnswers, options.flowPrefill);
+    } catch (err) {
+      console.error("loadNextQuestion failed:", err);
+      toast_(err.message || "Could not load the next question");
+    }
+  }, [
+    generateTripInFlightRef,
+    convoComplete,
+    generated,
+    buildQuestionContext,
+    applyPrefDraftForQuestion,
+  ]);
+
   function retryRouteCalculation() {
     setRouteError(null);
     fetchDirections(getEffectiveVehicle(answers));
@@ -1325,21 +1415,29 @@ export default function App() {
     if (isRouteContextReady(ctx) || ctx.routeFailed) {
       loadNextQuestion(answersRef.current);
     }
-  }, [routeInfo?.distance, routeInfo?.duration, routeError, currentQuestion?.pendingRoute, currentQuestion?.id]);
+  }, [
+    routeInfo?.distance,
+    routeInfo?.duration,
+    routeError,
+    currentQuestion?.pendingRoute,
+    currentQuestion?.id,
+    convoComplete,
+    buildQuestionContext,
+    generateTripInFlightRef,
+    loadNextQuestion,
+  ]);
 
   useEffect(() => {
     if (convoComplete || generated || !origin?.trim() || !dest?.trim()) return;
     if (answers.vehicle && routeInfo?.distance) return;
     fetchDirections(answers.vehicle || "Car");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [origin, dest, answers.vehicle, generated, convoComplete]);
+  }, [origin, dest, answers.vehicle, generated, convoComplete, fetchDirections, routeInfo?.distance]);
 
   useEffect(() => {
     if (view !== "app" || generated || convoComplete || qIndex !== -1) return;
     if (!origin?.trim() || !dest?.trim()) return;
     loadNextQuestion({});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, origin, dest, generated, convoComplete, qIndex]);
+  }, [view, origin, dest, generated, convoComplete, qIndex, loadNextQuestion]);
 
   function getStepMessage() {
     if (qIndex === -2) {
@@ -1757,75 +1855,6 @@ export default function App() {
     fetchDirections(draft.answers?.vehicle || "Car");
   }
 
-  function revertAnswerForHistoryEntry(newAnswers, entry) {
-    const out = { ...newAnswers };
-    const q = entry.question;
-    delete out[q.id];
-    if (q.id === "travelers") {
-      delete out.kids_ages;
-      delete out.adult_count;
-      delete out.child_count;
-    }
-    if (q.id === "party_composition") {
-      delete out.adult_count;
-      delete out.child_count;
-    }
-    if (q.id === "vehicle") {
-      delete out.fuel_type;
-      delete out.towing;
-      delete out.truck_height;
-      delete out.truck_weight;
-      delete out.truck_hazmat;
-      delete out.hos_compliance;
-      delete out.rv_height;
-      delete out.rv_weight;
-      delete out.rv_towing;
-      delete out.multi_vehicles;
-      delete out.primary_vehicle;
-      delete out.coordination_needs;
-      delete out.effective_vehicle;
-      delete out.overnight_preference;
-      delete out.continuous_drive;
-      delete out.lodging;
-      delete out.loyalty_program;
-      delete out.trip_details;
-      delete out.trip_details_defaults_confirmed;
-      delete out.food_allergies;
-      delete out.kids_ages;
-      delete out.schedule_drive_hours;
-    }
-    if (q.id === "overnight_preference") {
-      delete out.continuous_drive;
-      delete out.lodging;
-      delete out.loyalty_program;
-      delete out.trip_nights;
-    }
-    if (q.id === "lodging" || q.type === "lodging_stay") {
-      delete out.lodging;
-      delete out.loyalty_program;
-      delete out.trip_nights;
-    }
-    if (q.id === "sleeper_cab") {
-      delete out.lodging;
-    }
-    if (q.type === "multiselect_group" || q.type === "trip_details") {
-      for (const sec of q.sections || []) {
-        delete out[sec.id];
-      }
-      if (q.type === "trip_details") {
-        delete out.trip_budget;
-        delete out.trip_details_defaults_confirmed;
-        delete out.food_allergies;
-        delete out.kids_ages;
-        delete out.schedule_drive_hours;
-      }
-    }
-    if (q.id === "kids_ages") {
-      delete out.kids_ages;
-    }
-    return out;
-  }
-
   function jumpToAssumedTruckLodging() {
     if (stepAnim) return;
     reAnswerFromEditRef.current = true;
@@ -2018,12 +2047,12 @@ export default function App() {
             onDeleteTrip={requestDeleteSavedTrip}
             onSaveDisplayName={handleProfileSaveDisplayName}
             onSaveHomeAddress={async (addr) => {
-              const profile = await saveHomeAddress(user.id, addr);
+              const profile = await saveHomeAddress(addr);
               setUserProfile(profile);
               setHomeAddress(addr);
             }}
             onSaveEmergencyContact={async (phone) => {
-              const profile = await saveEmergencyContact(user.id, phone);
+              const profile = await saveEmergencyContact(phone);
               setUserProfile(profile);
             }}
             onSaveNotifications={handleProfileSaveNotifications}
@@ -2106,7 +2135,11 @@ export default function App() {
               onRetry={() => setMapBoundaryKey(k => k + 1)}
             >
               <AppMap
-                isLoaded={isLoaded}
+                display={{
+                  isLoaded,
+                  isDarkMode: theme === "night" || theme === "twilight",
+                  showNavigationCar: true,
+                }}
                 mapCenter={mapCenter}
                 mapStyle={mapStyle}
                 mapStyleOpen={mapStyleOpen}
@@ -2114,7 +2147,6 @@ export default function App() {
                 onDismissTrafficAlert={() => setTrafficAlert(false)}
                 routeLoading={routeLoading}
                 tripGenerating={loading}
-                isDarkMode={theme === "night" || theme === "twilight"}
                 theme={theme}
                 mapRef={mapRef}
                 directions={directionsResult}
@@ -2128,8 +2160,9 @@ export default function App() {
                 nightSegmentPaths={nightSegmentPaths}
                 lowFuelSegmentPaths={lowFuelSegmentPaths}
                 mapFocusTarget={mapFocusTarget}
-                onMapReady={() => { setMapReady(true); window.setTimeout(() => recenterMap(), 200); }}
+                onMapReady={() => { setMapReady(true); flushMapLayout(); }}
                 onMapUnmount={() => setMapReady(false)}
+                onFlushPendingFitBounds={flushPendingFitBounds}
                 onMapStyleOpenChange={setMapStyleOpen}
                 onMapStyleChange={setMapStyle}
                 onRecenter={recenterMap}
@@ -2149,7 +2182,6 @@ export default function App() {
                 truckRoutePath={truckRoutePath}
                 highlightedLegPath={[]}
                 inAppNavigationOnly
-                showNavigationCar
               />
             </ErrorBoundary>
           </div>
@@ -2307,7 +2339,7 @@ export default function App() {
             onViewMap={() => {
               itinerarySync.setRouteFocusMode(false);
               setResultsView("map");
-              window.setTimeout(() => recenterMap(), 250);
+              window.setTimeout(() => flushMapLayout(), 250);
             }}
             onStartNavigation={() => {
               if (itinerarySync.itineraryWaypoints.length) {
@@ -2316,7 +2348,7 @@ export default function App() {
                 recenterMap();
               }
               setResultsView("map");
-              window.setTimeout(() => recenterMap(), 250);
+              window.setTimeout(() => flushMapLayout(), 250);
             }}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
@@ -2357,7 +2389,11 @@ export default function App() {
               onRetry={() => setMapBoundaryKey(k => k + 1)}
             >
             <AppMap
-              isLoaded={isLoaded}
+              display={{
+                isLoaded,
+                isDarkMode: theme === "night" || theme === "twilight",
+                showNavigationCar: true,
+              }}
               mapCenter={mapCenter}
               mapStyle={mapStyle}
               mapStyleOpen={mapStyleOpen}
@@ -2365,7 +2401,6 @@ export default function App() {
               onDismissTrafficAlert={() => setTrafficAlert(false)}
               routeLoading={routeLoading}
               tripGenerating={loading}
-              isDarkMode={theme === "night" || theme === "twilight"}
               theme={theme}
               mapRef={mapRef}
               directions={directionsResult}
@@ -2379,8 +2414,9 @@ export default function App() {
               nightSegmentPaths={nightSegmentPaths}
               lowFuelSegmentPaths={lowFuelSegmentPaths}
               mapFocusTarget={mapFocusTarget}
-              onMapReady={() => { setMapReady(true); window.setTimeout(() => recenterMap(), 200); }}
+              onMapReady={() => { setMapReady(true); flushMapLayout(); }}
               onMapUnmount={() => setMapReady(false)}
+              onFlushPendingFitBounds={flushPendingFitBounds}
               onMapStyleOpenChange={setMapStyleOpen}
               onMapStyleChange={setMapStyle}
               onRecenter={recenterMap}
@@ -2393,7 +2429,6 @@ export default function App() {
               highlightedLegPath={itinerarySync.highlightedLegPath}
               inAppNavigationOnly
               routeFocusMode={itinerarySync.routeFocusMode}
-              showNavigationCar
               onMarkerAction={(action, marker) => {
                 if (action === "add") {
                   addRoadStopToTrip({
@@ -2452,7 +2487,11 @@ export default function App() {
             onRetry={() => setMapBoundaryKey(k => k + 1)}
           >
           <AppMap
-            isLoaded={isLoaded}
+            display={{
+              isLoaded,
+              isDarkMode: theme === "night" || theme === "twilight",
+              showRoutePill: false,
+            }}
             mapCenter={mapCenter}
             mapStyle={mapStyle}
             mapStyleOpen={mapStyleOpen}
@@ -2460,7 +2499,6 @@ export default function App() {
             onDismissTrafficAlert={() => setTrafficAlert(false)}
             routeLoading={routeLoading}
             tripGenerating={loading}
-            isDarkMode={theme === "night" || theme === "twilight"}
             theme={theme}
             mapRef={mapRef}
             directions={directionsResult}
@@ -2474,15 +2512,15 @@ export default function App() {
             nightSegmentPaths={nightSegmentPaths}
             lowFuelSegmentPaths={lowFuelSegmentPaths}
             mapFocusTarget={mapFocusTarget}
-            onMapReady={() => { setMapReady(true); window.setTimeout(() => recenterMap(), 200); }}
+            onMapReady={() => { setMapReady(true); flushMapLayout(); }}
             onMapUnmount={() => setMapReady(false)}
+            onFlushPendingFitBounds={flushPendingFitBounds}
             onMapStyleOpenChange={setMapStyleOpen}
             onMapStyleChange={setMapStyle}
             onRecenter={recenterMap}
             onMarkerSelect={handleMapMarkerSelect}
             onMapBackgroundClick={handleMapBackgroundClick}
             truckRoutePath={truckRoutePath}
-            showRoutePill={false}
             onMarkerAction={(action, marker) => {
               if (action === "add") {
                 addRoadStopToTrip({
@@ -2687,6 +2725,9 @@ export default function App() {
                   exploreRangeDriveSeconds={exploreRangeDriveSeconds}
                   exploreRangeLoading={exploreRangeLoading}
                   exploreRangeError={exploreRangeError}
+                  exploreSearchQuery={exploreSearchQuery}
+                  onExploreSearchChange={setExploreSearchQuery}
+                  onExploreSearchSubmit={handleExploreRangeSearch}
                   onExploreRangeToggle={handleExploreRangeToggle}
                   onExploreRangeDriveTimeChange={handleExploreRangeDriveTimeChange}
                 />

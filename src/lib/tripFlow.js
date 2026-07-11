@@ -45,26 +45,6 @@ export const PLANE_SKIP_MESSAGE =
   "Your airline handles the route — we'll help with airport transfers, layovers, and ideas at your destination.";
 export const ROUTE_PENDING_UNLOCK_MS = 8000;
 
-export const SUMMARY_EDIT_QUESTION_BY_ROW = {
-  "Vehicle": "vehicle",
-  "Primary vehicle": "primary_vehicle",
-  "Vehicles on trip": "multi_vehicles",
-  "Party size": "travelers",
-  "Party composition": "party_composition",
-  "Overnight nights": "trip_nights",
-  "Lodging": "lodging",
-  "Fuel": "fuel_type",
-  "Hauling": "hauling_type",
-  "Sleeper cab": "sleeper_cab",
-  "Truck stops": "truck_stop_brand",
-  "Route restrictions": "route_restrictions",
-  "Coordination": "coordination_needs",
-  "Preferences": "preferences",
-  "Stop count": "stop_count",
-  "Drive mode": "overnight_preference",
-  "Fuel type": "fuel_type",
-};
-
 export const FLOW_QUESTION_IDS = [
   "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
   "party_composition", "adult_count", "child_count",
@@ -644,10 +624,6 @@ export function dedupeQuestionHistoryById(questionHistory = []) {
   return order.map(id => byId.get(id));
 }
 
-export function hasKidsToddlers(answers) {
-  return asArray(answers?.kids_ages).some(a => /Infants \(under 2\)|Toddlers \(2-4\)/.test(a));
-}
-
 export function getRouteDistanceMiles(context) {
   if (context?.routeDistanceMiles != null) return context.routeDistanceMiles;
   return parseMilesFromDistance(context?.routeDistance);
@@ -1063,14 +1039,6 @@ export function getNextFlowQuestion(answers, context = {}) {
   return { done: true };
 }
 
-export function fetchNextQuestion(answers, context = {}) {
-  return getNextFlowQuestion(answers, context);
-}
-
-export function countFlowQuestionsAnswered(answers) {
-  return FLOW_QUESTION_IDS.filter(id => isAnswered(id, answers)).length;
-}
-
 function applyDummyAnswer(sim, q) {
   if (!q || q.type === "loading") return;
   if (q.type === "trip_details") {
@@ -1130,10 +1098,6 @@ export function getFlowProgress(answers, context = {}, options = {}) {
     stepIndex: safeIndex + 1,
     stepTotal: FLOW_PHASES.length,
   };
-}
-
-export function pruneSkippedAnswers(answers, context = {}) {
-  return normalizeTripAnswers(answers, context);
 }
 
 /** Drop answers from branches that no longer apply after vehicle or route changes. */
@@ -1215,23 +1179,6 @@ export function warnContinuousDriveFeasibility(context) {
     return `This route is about ${Math.round(miles)} miles. Driving straight through may not be realistic without rest stops.`;
   }
   return null;
-}
-
-export function flowQuestionSkipped() {
-  return false;
-}
-
-export function countApplicableFlowQuestions() {
-  return 12;
-}
-
-export function isFlowQuestionComplete(id, answers) {
-  return isAnswered(id, answers);
-}
-
-export function buildFlowQuestion(id, answers, context = {}) {
-  if (id === "vehicle") return buildVehicleQuestion();
-  return getNextFlowQuestion(answers, context);
 }
 
 /** sparse = shrink panel to content; tall = scroll options, pin actions at bottom */

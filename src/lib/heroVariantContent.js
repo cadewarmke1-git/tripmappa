@@ -40,19 +40,6 @@ export function countFuelAndWeighStops(roadStops = []) {
   return { fuel, weigh, total: fuel + weigh };
 }
 
-export function findTruckParkingWarning({ tips = [], timingMode, arriveByDate }) {
-  for (const tip of tips) {
-    const text = `${tip?.title || ""} ${tip?.detail || ""}`.trim();
-    if (/parking.*(fill|full|early)|corridor.*(fill|full)|lot.*(fill|full)/i.test(text)) {
-      return text;
-    }
-  }
-  if (timingMode === "arrive_by" && arriveByDate) {
-    return "Arrive by your target time — overnight truck parking fills early along this corridor.";
-  }
-  return null;
-}
-
 export function collectRouteHighlights({ days = [], roadStops = [], recommendations = [] }) {
   const out = [];
   const push = (label) => {
@@ -73,35 +60,6 @@ export function collectRouteHighlights({ days = [], roadStops = [], recommendati
   }
   for (const rec of recommendations) push(rec.name);
   return out.slice(0, 6);
-}
-
-export function formatPriceBandLabel(hotel) {
-  if (!hotel) return null;
-  if (hotel.pricePerNight != null && hotel.priceSource === "affiliate") {
-    return `$${hotel.pricePerNight}/night`;
-  }
-  if (hotel.priceLabel && !/^\$\d+\/night$/.test(hotel.priceLabel)) return hotel.priceLabel;
-  const band = hotel.price_band || hotel.priceBand;
-  if (band) {
-    const labels = { budget: "Budget", mid: "Mid-range", luxury: "Luxury" };
-    return labels[band] || band;
-  }
-  return null;
-}
-
-export function resolveOvernightHotel(stops, selectedLodging = []) {
-  const overnight = stops.find(s => s?.city);
-  if (!overnight) return { city: null, hotel: null };
-  const cityKey = overnight.city.split(",")[0].trim().toLowerCase();
-  const fromSelected = selectedLodging.find(l => {
-    const c = String(l.city || l.neighborhood || "").split(",")[0].trim().toLowerCase();
-    return c && cityKey.includes(c) || c.includes(cityKey);
-  });
-  const fromStop = overnight.hotels?.[0] || overnight.motel || overnight.truckStop;
-  return {
-    city: cityLabel(overnight.city),
-    hotel: fromSelected || fromStop || null,
-  };
 }
 
 export function buildMultiDayChips(days, dest) {
@@ -134,12 +92,4 @@ export function dayTripHeroStats({ routeInfo, stops, roadStops, days, recommenda
     duration,
     firstHighlight: highlights[0] || null,
   };
-}
-
-export function formatArriveByTime(departureTime, drivingSummary) {
-  const base = departureTime instanceof Date ? new Date(departureTime) : new Date();
-  const hours = parseHoursFromDuration(drivingSummary?.duration);
-  if (hours) base.setMinutes(base.getMinutes() + Math.round(hours * 60));
-  else base.setHours(18, 0, 0, 0);
-  return base.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }

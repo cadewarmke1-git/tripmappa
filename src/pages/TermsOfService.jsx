@@ -121,8 +121,8 @@ export default function TermsOfService() {
           {DOCUMENT.sections.map(section => (
             <section key={section.heading} className="legal-page-section">
               <h2 className="legal-page-section-title">{section.heading}</h2>
-              {section.paragraphs.map((text, i) => (
-                <p key={i} className="legal-page-body">{text}</p>
+              {section.paragraphs.map(text => (
+                <p key={text} className="legal-page-body">{text}</p>
               ))}
             </section>
           ))}

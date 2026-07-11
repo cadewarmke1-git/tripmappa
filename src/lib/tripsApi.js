@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient.js";
+import { SAVED_TRIPS_KEY, readLocalStorage, removeLocalStorage } from "./storageKeys.js";
 
 function rowToTrip(row) {
   return {
@@ -71,7 +72,7 @@ export async function deleteTrip(userId, tripId) {
 export async function migrateLocalTrips(userId) {
   let local = [];
   try {
-    local = JSON.parse(localStorage.getItem("tripmappa-saved") || "[]");
+    local = JSON.parse(readLocalStorage(SAVED_TRIPS_KEY) || "[]");
   } catch {
     local = [];
   }
@@ -86,8 +87,6 @@ export async function migrateLocalTrips(userId) {
       console.warn("Could not migrate local trip:", err);
     }
   }
-  try {
-    localStorage.removeItem("tripmappa-saved");
-  } catch {}
+  removeLocalStorage(SAVED_TRIPS_KEY);
   return migrated;
 }

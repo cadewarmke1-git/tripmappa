@@ -412,7 +412,7 @@ function GroceryCardActive({
           <li className="grocery-item grocery-item-empty">No items yet — hold the mic or type below.</li>
         )}
         {items.map((item, index) => (
-          <li className="grocery-item grocery-item-row" key={`${item}-${index}`}>
+          <li className="grocery-item grocery-item-row" key={item}>
             <span className="grocery-item-name">{item}</span>
             <button
               type="button"

@@ -28,7 +28,7 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
     setTimeout(() => onClose?.(), 200);
   }, [onClose]);
 
-  const dialogRef = useDialogA11y(Boolean(marker), handleClose, "map-info-card-title");
+  const dialogRef = useDialogA11y(Boolean(marker), handleClose, "map-info-card-title", { modal: false });
 
   if (!marker) return null;
 
@@ -61,11 +61,9 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
   }
 
   return (
-    <div
+    <dialog
       ref={dialogRef}
       className={`map-info-card map-info-card-drawer map-info-card--neon map-info-card--${signCategory} ${mode}${visible ? " is-open" : ""}`}
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="map-info-card-title"
     >
       <h2 id="map-info-card-title" className="map-info-card-sr-title">{marker.title}</h2>
@@ -81,6 +79,6 @@ export default function MapInfoCard({ marker, theme = "night", onClose, onAction
         onNavigate={handleNavigate}
         onChooseStay={handleChooseStay}
       />
-    </div>
+    </dialog>
   );
 }

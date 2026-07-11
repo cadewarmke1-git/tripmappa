@@ -275,7 +275,7 @@ export default function PlanPanel({
                   {currentQuestion && !showContinuousConfirm && (
                     <ErrorBoundary label="question-choices" title="Could not show choices">
                       <div
-                        className={`plan-flow-step plan-flow-layout--${planFlowLayout}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
+                        className={`plan-flow-step plan-flow-current plan-flow-layout--${planFlowLayout}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                       >
                         <QuestionChoices
                           currentQ={currentQuestion}

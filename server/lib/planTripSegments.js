@@ -246,7 +246,3 @@ export function stitchTripSegments(segmentResults) {
     road_condition_warnings,
   };
 }
-
-/** Fixed token tier for each parallel segment call. */
-export const PARALLEL_SEGMENT_MAX_TOKENS = 3072;
-export const PARALLEL_SEGMENT_TIER = "medium_1_overnight";

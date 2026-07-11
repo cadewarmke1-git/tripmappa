@@ -23,8 +23,6 @@ export function cacheExpiresBefore() {
   return new Date(Date.now() - CACHE_TTL_MS).toISOString();
 }
 
-export const PLACE_DETAIL_FIELDS = "name,geometry,photos,rating,price_level,place_id";
-
 export function mapNearbyResult(place, originLat, originLng) {
   const lat = place.geometry?.location?.lat;
   const lng = place.geometry?.location?.lng;

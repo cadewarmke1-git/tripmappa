@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 
 /** Emergency SOS — hidden until Twilio SMS alerts are live. */
 export const SOS_UI_ENABLED = false;
@@ -6,6 +7,7 @@ export const SOS_UI_ENABLED = false;
 export default function SosButton({ onConfirm, className = "", comingSoon = false }) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const dialogRef = useDialogA11y(open && !comingSoon, () => !sending && setOpen(false), "sos-title");
 
   if (!SOS_UI_ENABLED || comingSoon) return null;
 
@@ -17,6 +19,10 @@ export default function SosButton({ onConfirm, className = "", comingSoon = fals
     } finally {
       setSending(false);
     }
+  }
+
+  function handleClose() {
+    if (!sending) setOpen(false);
   }
 
   return (
@@ -35,12 +41,17 @@ export default function SosButton({ onConfirm, className = "", comingSoon = fals
         {comingSoon ? "SOS (soon)" : "SOS"}
       </button>
       {open && !comingSoon && (
-        <div className="live-sos-dialog-overlay" onClick={() => !sending && setOpen(false)} role="presentation">
-          <div className="live-sos-dialog" onClick={e => e.stopPropagation()} role="dialog" aria-labelledby="sos-title">
+        <dialog
+          ref={dialogRef}
+          className="live-sos-dialog-overlay"
+          aria-labelledby="sos-title"
+          onClick={handleClose}
+        >
+          <div className="live-sos-dialog" onClick={e => e.stopPropagation()}>
             <h3 id="sos-title" className="live-sos-dialog-title">Send emergency alert?</h3>
             <p className="live-sos-dialog-text">Send your exact location to your emergency contact?</p>
             <div className="live-sos-dialog-actions">
-              <button type="button" className="profile-btn profile-btn-ghost" onClick={() => setOpen(false)} disabled={sending}>
+              <button type="button" className="profile-btn profile-btn-ghost" onClick={handleClose} disabled={sending}>
                 Cancel
               </button>
               <button type="button" className="live-sos-confirm-btn" onClick={handleConfirm} disabled={sending}>
@@ -48,7 +59,7 @@ export default function SosButton({ onConfirm, className = "", comingSoon = fals
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   );

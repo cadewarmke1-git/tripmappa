@@ -29,7 +29,6 @@ export const FUEL_PRICES = {
   evPerMile: 0.15,
 };
 
-export const EV_RANGE_MILES = 250;
 export const EV_CHARGE_INTERVAL_MILES = 200;
 
 export function getVehicleMpg(vehicle) {
@@ -191,7 +190,7 @@ export function computeSegmentMiles(totalMiles, intervalIndex, intervalCount) {
 }
 
 export function sortByDistance(stations) {
-  return [...stations].sort((a, b) => (a.distanceMiles ?? 99) - (b.distanceMiles ?? 99));
+  return stations.toSorted((a, b) => (a.distanceMiles ?? 99) - (b.distanceMiles ?? 99));
 }
 
 export function takeClosest(stations, max = 3) {

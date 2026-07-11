@@ -41,10 +41,6 @@ export function isFounderTier(tier) {
   return tier === TIERS.FOUNDER || normalizeTier(tier) === TIERS.FOUNDER;
 }
 
-export function hasUnlimitedTripGenerations(tier) {
-  return isFounderTier(tier) || isAtLeastTier(tier, TIERS.VOYAGER);
-}
-
 export function canUseGroceryDelivery(tier) {
   return isFounderTier(tier) || isAtLeastTier(tier, TIERS.TRAILBLAZER);
 }

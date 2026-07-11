@@ -16,7 +16,7 @@ export default function NavigateRoutePanel({
   theme = "night",
 }) {
   return (
-    <div className={`navigate-route-panel navigate-route-panel--${theme}`} role="search" aria-label="Route directions">
+    <search className={`navigate-route-panel navigate-route-panel--${theme}`} aria-label="Route directions">
       <div className="navigate-route-grid">
         <div className="navigate-route-cell">
           <label className="navigate-route-label" htmlFor="navigate-origin">From</label>
@@ -112,6 +112,6 @@ export default function NavigateRoutePanel({
           {routeLoading ? <RouteDrawingLoader variant="button" /> : "Get route"}
         </button>
       </div>
-    </div>
+    </search>
   );
 }

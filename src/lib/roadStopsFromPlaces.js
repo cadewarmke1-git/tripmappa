@@ -81,8 +81,14 @@ function compactPlaceToCandidate(compact, category) {
 function fuelCandidatesFromSegment(segment, answers) {
   if (!segment) return [];
   const brand = getPreferredFuelBrand(answers);
-  const gas = (segment.gasStations || []).map(g => compactPlaceToCandidate(g, "fuel")).filter(Boolean);
-  const ev = (segment.evStations || []).map(e => compactPlaceToCandidate(e, "fuel")).filter(Boolean);
+  const gas = (segment.gasStations || []).flatMap(g => {
+    const candidate = compactPlaceToCandidate(g, "fuel");
+    return candidate ? [candidate] : [];
+  });
+  const ev = (segment.evStations || []).flatMap(e => {
+    const candidate = compactPlaceToCandidate(e, "fuel");
+    return candidate ? [candidate] : [];
+  });
   let combined = [...gas, ...ev];
   if (brand) {
     const named = combined.filter(g => g.name && matchesPreferredFuelBrand(g.name, brand));
@@ -93,9 +99,10 @@ function fuelCandidatesFromSegment(segment, answers) {
 
 function foodCandidatesFromSegment(segment) {
   if (!segment) return [];
-  return (segment.restaurants || [])
-    .map(r => compactPlaceToCandidate(r, "food"))
-    .filter(p => p && (p.distanceMiles ?? 99) <= PLACES_ROUTE_MILES);
+  return (segment.restaurants || []).flatMap(r => {
+    const place = compactPlaceToCandidate(r, "food");
+    return place && (place.distanceMiles ?? 99) <= PLACES_ROUTE_MILES ? [place] : [];
+  });
 }
 
 function truckCandidatesFromOsm(osmPlaces, lat, lng) {

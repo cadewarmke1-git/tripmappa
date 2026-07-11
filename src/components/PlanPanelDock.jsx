@@ -21,6 +21,9 @@ export default function PlanPanelDock({
   exploreRangeDriveSeconds = 7200,
   exploreRangeLoading = false,
   exploreRangeError = null,
+  exploreSearchQuery = "",
+  onExploreSearchChange,
+  onExploreSearchSubmit,
   onExploreRangeToggle,
   onExploreRangeDriveTimeChange,
 }) {
@@ -48,6 +51,9 @@ export default function PlanPanelDock({
           driveTimeSeconds={exploreRangeDriveSeconds}
           loading={exploreRangeLoading}
           error={exploreRangeError}
+          searchQuery={exploreSearchQuery}
+          onSearchChange={onExploreSearchChange}
+          onSearchSubmit={onExploreSearchSubmit}
           onToggle={onExploreRangeToggle}
           onDriveTimeChange={onExploreRangeDriveTimeChange}
         />

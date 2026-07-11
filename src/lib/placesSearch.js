@@ -25,16 +25,6 @@ const RADIUS_2MI = 3219;
 const RADIUS_5MI = 8047;
 const RADIUS_10MI = 16093;
 
-/** Minimal Place Details fields — avoids Atmosphere + Contact SKU billing. */
-export const PLACE_DETAIL_FIELDS = [
-  "name",
-  "geometry",
-  "photos",
-  "rating",
-  "price_level",
-  "place_id",
-];
-
 /** Pause between sequential Places API calls to reduce rate-limit bursts. */
 export const PLACES_API_CALL_DELAY_MS = 250;
 
@@ -220,57 +210,6 @@ export async function searchNearbyCategory(lat, lng, { type, keyword, radius = R
   return results.slice(0, maxResults).map(p => mapPlace(p, lat, lng, type || keyword || "poi"));
 }
 
-export async function searchRestaurants(lat, lng, answers, { maxDetourMiles = 5, nightOnly = false } = {}) {
-  const remoteWork = asArray(answers?.stops_interests).some(i => /remote work|wifi/i.test(i));
-  const dietaryKeywords = getDietarySearchKeywords(answers);
-  const searchTerms = remoteWork
-    ? ["cafe wifi laptop"]
-    : (dietaryKeywords.length ? dietaryKeywords.slice(0, 4) : ["restaurant"]);
-
-  const onRouteMap = new Map();
-  const detourMap = new Map();
-
-  for (const keyword of searchTerms) {
-    await placesApiDelay();
-    const onRoute = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_1MI, maxResults: 6 });
-    await placesApiDelay();
-    const detour = await searchNearbyCategory(lat, lng, { type: "restaurant", keyword, radius: RADIUS_5MI, maxResults: 10 });
-    onRoute.forEach(r => { if (r.placeId) onRouteMap.set(r.placeId, r); });
-    detour.forEach(r => { if (r.placeId && !onRouteMap.has(r.placeId)) detourMap.set(r.placeId, r); });
-  }
-
-  let onRoute = applyStopFilters([...onRouteMap.values()], answers, { nightOnly });
-  let detour = applyStopFilters([...detourMap.values()], answers, { nightOnly });
-  onRoute = filterFoodCandidates(onRoute);
-  detour = filterFoodCandidates(detour);
-
-  onRoute = onRoute.filter(r => dietaryMatchesRestaurant(r, answers));
-  detour = detour.filter(r => dietaryMatchesRestaurant(r, answers));
-
-  if (prefIncludes(answers, "Fast food only")) {
-    const isFast = r => /mcdonald|burger|wendy|taco|subway|chipotle|drive|quick|fast food/i.test(`${r.name} ${r.address}`);
-    const fastOn = onRoute.filter(isFast);
-    const fastDet = detour.filter(isFast);
-    if (fastOn.length) onRoute = fastOn;
-    if (fastDet.length) detour = fastDet;
-  } else if (prefIncludes(answers, "Sit down restaurants only")) {
-    const isSitDown = r => !/mcdonald|burger king|taco bell|subway|chipotle|fast food|drive.thru/i.test(`${r.name}`);
-    const sitOn = onRoute.filter(isSitDown);
-    const sitDet = detour.filter(isSitDown);
-    if (sitOn.length) onRoute = sitOn;
-    if (sitDet.length) detour = sitDet;
-  }
-
-  const detourOnly = detour
-    .filter(r => (r.rating ?? 0) >= 4.5 && (r.distanceMiles ?? 99) <= maxDetourMiles)
-    .map(r => ({ ...r, isDetour: true, detourMiles: r.distanceMiles }));
-  const merged = [...onRoute.map(r => ({ ...r, isDetour: false })), ...detourOnly];
-  return merged.map(r => ({
-    ...r,
-    wifiAvailable: remoteWork || /wifi|coffee|cafe|starbucks|panera|library/i.test(`${r.name} ${r.address}`),
-  }));
-}
-
 export async function searchLodging(lat, lng, answers, routeInfo = null) {
   const lodging = answers?.lodging || "";
   const wheelchairLodging = needsWheelchairLodgingFilter(answers);
@@ -385,4 +324,4 @@ export async function searchInterestPOIs(lat, lng, interest, radius = RADIUS_10M
   });
 }
 
-export { getPlaceDetails, geocodeCity as geocodeAddress, RADIUS_1MI, RADIUS_2MI, RADIUS_5MI, RADIUS_10MI };
+export { RADIUS_2MI };

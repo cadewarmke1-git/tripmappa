@@ -1,10 +1,12 @@
 import { useEffect, useMemo } from "react";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 export default function FounderWelcomeOverlay({ firstName, onDismiss }) {
   const displayName = useMemo(() => {
     const trimmed = (firstName || "").trim();
     return trimmed || "Explorer";
   }, [firstName]);
+  const dialogRef = useDialogA11y(true, onDismiss, "founder-welcome-title");
 
   useEffect(() => {
     const timer = window.setTimeout(() => onDismiss?.(), 4000);
@@ -12,22 +14,18 @@ export default function FounderWelcomeOverlay({ firstName, onDismiss }) {
   }, [onDismiss]);
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="founder-welcome-overlay"
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="founder-welcome-title"
       onClick={() => onDismiss?.()}
-      onKeyDown={e => {
-        if (e.key === "Escape") onDismiss?.();
-      }}
     >
       <div className="founder-welcome-particles" aria-hidden="true">
         {Array.from({ length: 28 }, (_, i) => (
           <span key={i} className="founder-welcome-particle" style={{ "--i": i }} />
         ))}
       </div>
-      <div className="founder-welcome-card">
+      <div className="founder-welcome-card" onClick={e => e.stopPropagation()}>
         <p className="founder-welcome-eyebrow">Founding Member</p>
         <h1 id="founder-welcome-title" className="founder-welcome-title">
           Welcome, {displayName}
@@ -38,6 +36,6 @@ export default function FounderWelcomeOverlay({ firstName, onDismiss }) {
         </p>
         <p className="founder-welcome-hint">Tap anywhere to continue</p>
       </div>
-    </div>
+    </dialog>
   );
 }

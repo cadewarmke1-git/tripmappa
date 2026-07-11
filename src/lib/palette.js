@@ -21,39 +21,30 @@ function blendHex(fg, bg, fgOpacity) {
 
 const MAP_NIGHT_HIGHWAY_GOLD = "#C8A060";
 
-/** Google Maps tile colors — night (warm desert-at-night charcoal + gold accents). */
+/** Google Maps tile colors — night (warm charcoal land + muted gold highways). */
 export const MAP_NIGHT_BASE = "#15120C";
-export const MAP_NIGHT_SURFACE = "#211B12";
-export const MAP_NIGHT_LOCAL_ROAD = "#2A2116";
-export const MAP_NIGHT_ARTERIAL = "#2A2116";
+export const MAP_NIGHT_LOCAL_ROAD = "#3A3228";
+export const MAP_NIGHT_ARTERIAL = "#4A4034";
 /** #C8A060 at 30% over land base */
 export const MAP_NIGHT_HIGHWAY = blendHex(MAP_NIGHT_HIGHWAY_GOLD, MAP_NIGHT_BASE, 0.3);
 /** #C8A060 at 50% over land base */
 export const MAP_NIGHT_HIGHWAY_STROKE = blendHex(MAP_NIGHT_HIGHWAY_GOLD, MAP_NIGHT_BASE, 0.5);
-export const MAP_NIGHT_LABEL = "#C8B48C";
+export const MAP_NIGHT_LABEL = "#B8A48C";
 export const MAP_NIGHT_LABEL_ACCENT = "#FFD28C";
-export const MAP_NIGHT_WATER = "#0C1216";
-export const MAP_NIGHT_PARK = "#1A2414";
+export const MAP_NIGHT_WATER = "#141C22";
+export const MAP_NIGHT_PARK = "#1C1812";
 
-/** @deprecated Use MAP_NIGHT_LOCAL_ROAD */
-export const MAP_NIGHT_ELEVATED = MAP_NIGHT_LOCAL_ROAD;
-
-/** Google Maps tile colors — day (classic road atlas: cool base, warm roads). */
-export const MAP_DAY_BASE = "#F0EDE8";
-export const MAP_DAY_LOCAL_ROAD = "#C8956A";
-export const MAP_DAY_ARTERIAL = "#C8956A";
-export const MAP_DAY_HIGHWAY = "#E06820";
-export const MAP_DAY_ROAD_STROKE = "#A87048";
-export const MAP_DAY_HIGHWAY_STROKE = "#5A2A10";
-export const MAP_DAY_LABEL = "#3A1A08";
-export const MAP_DAY_LABEL_PRIMARY = "#3A1A08";
-export const MAP_DAY_PARK = "#6B8F5E";
-export const MAP_DAY_WATER = "#4A8AB8";
-
-/** @deprecated Use MAP_DAY_LOCAL_ROAD */
-export const MAP_DAY_PANEL = MAP_DAY_LOCAL_ROAD;
-/** @deprecated Use MAP_DAY_HIGHWAY */
-export const MAP_DAY_CARD = MAP_DAY_HIGHWAY;
+/** Google Maps tile colors — day (muted sand land + warm grey roads). */
+export const MAP_DAY_BASE = "#F5E6C8";
+export const MAP_DAY_LOCAL_ROAD = "#B8AEA0";
+export const MAP_DAY_ARTERIAL = "#C4B8A8";
+export const MAP_DAY_HIGHWAY = "#C8956A";
+export const MAP_DAY_ROAD_STROKE = "#9A8878";
+export const MAP_DAY_HIGHWAY_STROKE = "#8A6848";
+export const MAP_DAY_LABEL = "#5A4030";
+export const MAP_DAY_LABEL_PRIMARY = "#3A2818";
+export const MAP_DAY_PARK = "#D4C8B0";
+export const MAP_DAY_WATER = "#8A9EA8";
 
 /**
  * Hero landing chrome — canonical palette (follows sky day/night cycle).

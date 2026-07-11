@@ -14,10 +14,75 @@ import AnimatedRoutePath from "./map/AnimatedRoutePath.jsx";
 import HighlightRouteLeg from "./map/HighlightRouteLeg.jsx";
 import NavigationCarMarker from "./map/NavigationCarMarker.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
-import { resolveMapStyles, applyMapThemeStyles } from "../lib/mapStyles.js";
+import { getRouteMapViewport } from "../lib/mapViewport.js";
+import { DARK_MAP_STYLES } from "../lib/constants.js";
+
+/** Warm road-trip atlas — sandy terrain, grey water, orange-brown highways. Same for day & night. */
+const TRIPMAPPA_WARM_MAP_STYLES = [
+  { elementType: "labels", stylers: [{ visibility: "simplified" }] },
+  { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.school", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.government", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] },
+  { elementType: "geometry", stylers: [{ color: "#EDE4D0" }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#EDE4D0" }] },
+  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#E8DCC4" }] },
+  { featureType: "landscape.man_made", elementType: "geometry", stylers: [{ color: "#EDE4D0" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#6B5744" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#EDE4D0" }, { weight: 2 }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#C4B8A8" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#4A3828" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#DDD0B4" }] },
+  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6B5744" }] },
+  { featureType: "road.local", elementType: "geometry", stylers: [{ color: "#D9CEB8" }] },
+  { featureType: "road.local", elementType: "geometry.stroke", stylers: [{ color: "#C4B8A8" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#CDB896" }] },
+  { featureType: "road.arterial", elementType: "geometry.stroke", stylers: [{ color: "#B8A888" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#B87333" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#8B5A2B" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#6B5744" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#4A3828" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#A8A49C" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#7A756E" }] },
+];
+
+const TRIPMAPPA_WARM_MAP_BACKGROUND = "#EDE4D0";
+const TRIPMAPPA_DARK_MAP_BACKGROUND = "#15120C";
+
+function resolveRoadmapStyles(mapStyle) {
+  if (mapStyle === "satellite") return [];
+  if (mapStyle === "dark") return DARK_MAP_STYLES;
+  return TRIPMAPPA_WARM_MAP_STYLES;
+}
+
+function resolveRoadmapBackground(mapStyle) {
+  if (mapStyle === "satellite") return undefined;
+  if (mapStyle === "dark") return TRIPMAPPA_DARK_MAP_BACKGROUND;
+  return TRIPMAPPA_WARM_MAP_BACKGROUND;
+}
+
+function applyRoadmapOptions(map, mapStyle) {
+  if (!map?.setOptions) return;
+  map.setOptions({
+    styles: resolveRoadmapStyles(mapStyle),
+    ...(resolveRoadmapBackground(mapStyle) ? { backgroundColor: resolveRoadmapBackground(mapStyle) } : { backgroundColor: undefined }),
+  });
+}
+
+export const DEFAULT_APP_MAP_DISPLAY = {
+  isLoaded: false,
+  isDarkMode: false,
+  showRoutePill: true,
+  showNavigationCar: false,
+};
 
 export default function AppMap({
-  isLoaded,
+  display: displayProp = {},
   mapCenter,
   mapStyle,
   mapStyleOpen,
@@ -25,7 +90,6 @@ export default function AppMap({
   onDismissTrafficAlert = null,
   routeLoading,
   tripGenerating = false,
-  isDarkMode,
   mapRef,
   directions,
   routeInfo,
@@ -40,6 +104,7 @@ export default function AppMap({
   mapFocusTarget = null,
   onMapReady,
   onMapUnmount,
+  onFlushPendingFitBounds = null,
   onMapStyleOpenChange,
   onMapStyleChange,
   onMarkerAction,
@@ -49,17 +114,23 @@ export default function AppMap({
   theme: themeProp,
   onNavigateHome = null,
   navigateHomePending = false,
-  showRoutePill = true,
   onMapBackgroundClick = null,
   truckRoutePath = null,
   highlightedLegPath = [],
   inAppNavigationOnly = false,
   routeFocusMode = false,
-  showNavigationCar = false,
 }) {
+  const {
+    isLoaded,
+    isDarkMode,
+    showRoutePill,
+    showNavigationCar,
+  } = { ...DEFAULT_APP_MAP_DISPLAY, ...displayProp };
   const theme = themeProp ?? "night";
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [mapInstance, setMapInstance] = useState(null);
+  const [mapHostReady, setMapHostReady] = useState(false);
+  const mapHostRef = useRef(null);
   const suppressMapClearRef = useRef(false);
   const directionsPath = useMemo(() => getDirectionsPath(directions), [directions]);
   const activeRoutePath = useMemo(() => {
@@ -69,7 +140,11 @@ export default function AppMap({
     if (routeInfo?.routePoints?.length > 1) return routeInfo.routePoints;
     return [];
   }, [truckRoutePath, directionsPath, routePoints, routeInfo?.routePoints]);
-  const mapStyles = useMemo(() => resolveMapStyles(mapStyle, theme), [mapStyle, theme]);
+  const mapStyles = useMemo(() => resolveRoadmapStyles(mapStyle), [mapStyle]);
+  const routeViewport = useMemo(() => getRouteMapViewport(activeRoutePath), [activeRoutePath]);
+  const mapBackgroundColor = useMemo(() => resolveRoadmapBackground(mapStyle), [mapStyle]);
+  const initialCenter = routeViewport?.center ?? mapCenter;
+  const initialZoom = routeViewport?.zoom ?? 4;
   const mapOptions = useMemo(() => ({
     disableDefaultUI: false,
     zoomControl: false,
@@ -79,7 +154,26 @@ export default function AppMap({
     keyboardShortcuts: false,
     mapTypeId: mapStyle === "satellite" ? "satellite" : "roadmap",
     styles: mapStyles,
-  }), [mapStyle, mapStyles]);
+    ...(mapBackgroundColor ? { backgroundColor: mapBackgroundColor } : {}),
+  }), [mapStyle, mapStyles, mapBackgroundColor]);
+
+  useEffect(() => {
+    const host = mapHostRef.current;
+    if (!host || !isLoaded) {
+      setMapHostReady(false);
+      return undefined;
+    }
+
+    const syncHostReady = () => {
+      const { width, height } = host.getBoundingClientRect();
+      setMapHostReady(width > 0 && height > 0);
+    };
+
+    syncHostReady();
+    const observer = new ResizeObserver(syncHostReady);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [isLoaded]);
 
   useEffect(() => {
     if (!mapInstance || !window.google?.maps) return;
@@ -87,13 +181,37 @@ export default function AppMap({
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapInstance.setMapTypeId(typeId);
-    applyMapThemeStyles(mapInstance, mapStyle, theme);
-  }, [mapInstance, mapStyle, theme]);
+    applyRoadmapOptions(mapInstance, mapStyle);
+    window.google.maps.event.trigger(mapInstance, "resize");
+  }, [mapInstance, mapStyle]);
+
+  useEffect(() => {
+    if (!mapInstance || !window.google?.maps) return undefined;
+    const host = mapHostRef.current;
+    if (!host) return undefined;
+
+    const observer = new ResizeObserver(() => {
+      window.google.maps.event.trigger(mapInstance, "resize");
+    });
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [mapInstance]);
 
   function handleMapLoad(map) {
     mapRef.current = map;
     setMapInstance(map);
-    applyMapThemeStyles(map, mapStyle, theme);
+    applyRoadmapOptions(map, mapStyle);
+    if (window.google?.maps) {
+      window.google.maps.event.trigger(map, "resize");
+      onFlushPendingFitBounds?.();
+      if (activeRoutePath.length >= 2) {
+        const bounds = new window.google.maps.LatLngBounds();
+        activeRoutePath.forEach((point) => {
+          if (point?.lat != null && point?.lng != null) bounds.extend(point);
+        });
+        map.fitBounds(bounds, { padding: 72 });
+      }
+    }
     onMapReady?.();
   }
 
@@ -153,13 +271,14 @@ export default function AppMap({
 
   return (
     <>
-    <div className={`map-full${routeFocusMode ? " map-full-route-focus" : ""}`}>
-      {isLoaded ? (
+    <div ref={mapHostRef} className={`map-full${routeFocusMode ? " map-full-route-focus" : ""}`}>
+      {isLoaded && mapHostReady ? (
         <>
           <GoogleMap
             mapContainerClassName="gmap-wrap"
-            center={mapCenter}
-            zoom={4}
+            mapContainerStyle={{ width: "100%", height: "100%" }}
+            center={initialCenter}
+            zoom={initialZoom}
             onLoad={handleMapLoad}
             onUnmount={handleMapUnmount}
             options={mapOptions}

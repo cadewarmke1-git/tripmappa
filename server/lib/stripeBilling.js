@@ -269,24 +269,3 @@ export async function downgradeUserToFree(admin, subscription) {
 
   if (error) throw error;
 }
-
-export async function verifyProfileOwnsCustomer(admin, userId, customerId) {
-  const { data, error } = await admin
-    .from("user_profiles")
-    .select("stripe_customer_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data?.stripe_customer_id === customerId;
-}
-
-export function getStripeOrThrow() {
-  const stripe = getStripe();
-  if (!stripe) {
-    const err = new Error("Stripe not configured");
-    err.code = "stripe_not_configured";
-    throw err;
-  }
-  return stripe;
-}

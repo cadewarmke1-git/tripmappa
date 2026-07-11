@@ -53,20 +53,6 @@ export function cuisineFromTypes(types = []) {
   return "Restaurant";
 }
 
-export function cuisineFromFoursquareCategories(categories = []) {
-  const names = categories.map(c => (c.name || "").toLowerCase());
-  if (names.some(n => /fast food|quick service/i.test(n))) return "Fast Food";
-  if (names.some(n => /pizza/i.test(n))) return "Pizza";
-  if (names.some(n => /mexican/i.test(n))) return "Mexican";
-  if (names.some(n => /italian/i.test(n))) return "Italian";
-  if (names.some(n => /sushi|japanese/i.test(n))) return "Japanese";
-  if (names.some(n => /steak/i.test(n))) return "Steakhouse";
-  if (names.some(n => /seafood/i.test(n))) return "Seafood";
-  if (names.some(n => /cafe|coffee/i.test(n))) return "Café";
-  const primary = categories[0]?.name;
-  return primary || "Restaurant";
-}
-
 export function descriptionFromTypes(types = [], name = "") {
   const cuisine = cuisineFromTypes(types);
   if (/play/i.test(name)) return `${cuisine} with a play area — great for families.`;

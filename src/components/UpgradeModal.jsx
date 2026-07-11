@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import BillingToggle from "./BillingToggle.jsx";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 import {
   TRAILBLAZER_BENEFITS,
   VOYAGER_BENEFITS,
@@ -30,6 +31,7 @@ export default function UpgradeModal({
   const [billingInterval, setBillingInterval] = useState(initialBillingInterval);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const dialogRef = useDialogA11y(true, onClose, "upgrade-title");
 
   useEffect(() => {
     if (isGrocery) setSelectedPlan(TIERS.TRAILBLAZER);
@@ -135,12 +137,15 @@ export default function UpgradeModal({
     : selectedPrice.primary;
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="presentation">
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay"
+      aria-labelledby="upgrade-title"
+      onClick={onClose}
+    >
       <div
         className="modal upgrade-modal"
         onClick={e => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="upgrade-title"
       >
         <button type="button" className="modal-close" onClick={onClose} aria-label="Close">×</button>
         {!isMonthlyLimit && <div className="upgrade-modal-badge">Upgrade your plan</div>}
@@ -258,6 +263,6 @@ export default function UpgradeModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

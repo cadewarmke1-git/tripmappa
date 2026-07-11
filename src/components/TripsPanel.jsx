@@ -1,3 +1,6 @@
+import { useMemo, useState } from "react";
+import SearchBarAnimated from "./SearchBarAnimated.jsx";
+
 function shortCity(value) {
   if (!value) return "";
   return value.split(",")[0].trim();
@@ -8,17 +11,49 @@ function formatTripDate(date) {
   return date;
 }
 
+function tripMatchesFilter(trip, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const haystack = [
+    trip.origin,
+    trip.dest,
+    shortCity(trip.origin),
+    shortCity(trip.dest),
+    trip.date,
+    trip.routeInfo?.distance,
+  ].filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes(q);
+}
+
 export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPlanTrip }) {
+  const [filterQuery, setFilterQuery] = useState("");
+
+  const filteredTrips = useMemo(
+    () => savedTrips.filter(trip => tripMatchesFilter(trip, filterQuery)),
+    [savedTrips, filterQuery],
+  );
+
   return (
     <div className="trips-panel">
       <div className="trips-panel-head">
         <h2 className="trips-panel-title">Trips</h2>
         <p className="trips-panel-sub">Saved routes you can reopen anytime.</p>
+        {savedTrips.length > 0 && (
+          <div className="trips-panel-filter">
+            <SearchBarAnimated
+              value={filterQuery}
+              onChange={setFilterQuery}
+              placeholder="Filter trips…"
+              ariaLabel="Filter saved trips"
+            />
+          </div>
+        )}
       </div>
 
       {savedTrips.length > 0 ? (
+        filteredTrips.length > 0 ? (
         <ul className="trips-saved-list">
-          {savedTrips.map(trip => {
+          {filteredTrips.map(trip => {
             const stopCount = trip.stops?.length || 0;
             const from = shortCity(trip.origin);
             const to = shortCity(trip.dest);
@@ -46,6 +81,12 @@ export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPla
             );
           })}
         </ul>
+        ) : (
+          <div className="trips-empty-state">
+            <div className="trips-empty-title">No trips match your filter</div>
+            <p className="trips-empty-sub">Try a different city name or clear the search.</p>
+          </div>
+        )
       ) : (
         <div className="trips-empty-state">
           <div className="trips-empty-mark" aria-hidden="true">TM</div>

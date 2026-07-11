@@ -29,14 +29,13 @@ export default function SignInModal({
   }
 
   return (
-    <div className="modal-overlay auth-modal-overlay" role="presentation" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        ref={dialogRef}
-        className="auth-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="signin-headline"
-      >
+    <dialog
+      ref={dialogRef}
+      className="modal-overlay auth-modal-overlay"
+      aria-labelledby="signin-headline"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="auth-modal" onClick={e => e.stopPropagation()}>
         <ModalCloseButton onClose={onClose} />
         <div className="auth-modal-gold-border" aria-hidden="true"/>
         <BrandWordmark className="auth-modal-logo" as="div" />
@@ -99,6 +98,6 @@ export default function SignInModal({
           <button type="button" className="auth-modal-link-btn" onClick={onSwitchToSignup} disabled={loading}>Create an account</button>
         </p>
       </div>
-    </div>
+    </dialog>
   );
 }
