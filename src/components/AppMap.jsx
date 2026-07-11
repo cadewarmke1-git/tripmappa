@@ -1,6 +1,6 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
 import { useState, useEffect, useMemo, useRef } from "react";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import MapRoutePill from "./MapRoutePill.jsx";
 import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
@@ -143,8 +143,12 @@ export default function AppMap({
   const mapStyles = useMemo(() => resolveRoadmapStyles(mapStyle), [mapStyle]);
   const routeViewport = useMemo(() => getRouteMapViewport(activeRoutePath), [activeRoutePath]);
   const mapBackgroundColor = useMemo(() => resolveRoadmapBackground(mapStyle), [mapStyle]);
-  const initialCenter = routeViewport?.center ?? mapCenter;
-  const initialZoom = routeViewport?.zoom ?? 4;
+  const bootViewportRef = useRef(null);
+  if (!mapInstance) {
+    bootViewportRef.current = routeViewport ?? { center: mapCenter, zoom: 4 };
+  }
+  const initialCenter = bootViewportRef.current?.center ?? mapCenter;
+  const initialZoom = bootViewportRef.current?.zoom ?? 4;
   const mapOptions = useMemo(() => ({
     disableDefaultUI: false,
     zoomControl: false,
@@ -224,18 +228,25 @@ export default function AppMap({
   useEffect(() => {
     if (!mapInstance || !window.google?.maps || activeRoutePath.length < 2) return undefined;
 
-    const bounds = new window.google.maps.LatLngBounds();
-    activeRoutePath.forEach((point) => {
-      if (point?.lat != null && point?.lng != null) bounds.extend(point);
-    });
-    mapMarkers.forEach((marker) => {
-      if (marker?.lat != null && marker?.lng != null) {
-        bounds.extend({ lat: marker.lat, lng: marker.lng });
-      }
-    });
+    let cancelled = false;
+    const fitRoute = () => {
+      if (cancelled || !mapInstance || !window.google?.maps) return;
+      const bounds = new window.google.maps.LatLngBounds();
+      activeRoutePath.forEach((point) => {
+        if (point?.lat != null && point?.lng != null) bounds.extend(point);
+      });
+      mapMarkers.forEach((marker) => {
+        if (marker?.lat != null && marker?.lng != null) {
+          bounds.extend({ lat: marker.lat, lng: marker.lng });
+        }
+      });
+      window.google.maps.event.trigger(mapInstance, "resize");
+      mapInstance.fitBounds(bounds, { padding: 72 });
+    };
 
-    window.google.maps.event.trigger(mapInstance, "resize");
-    mapInstance.fitBounds(bounds, { padding: 72 });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(fitRoute);
+    });
 
     const listener = window.google.maps.event.addListenerOnce(mapInstance, "idle", () => {
       const zoom = mapInstance.getZoom?.();
@@ -243,6 +254,7 @@ export default function AppMap({
     });
 
     return () => {
+      cancelled = true;
       if (listener) window.google.maps.event.removeListener(listener);
     };
   }, [mapInstance, activeRoutePath, mapMarkers]);
@@ -357,12 +369,12 @@ export default function AppMap({
         </>
       ) : (
         <div className="map-loading">
-          <RouteDrawingLoader theme={theme} variant="inline" />
+          <GoldSpinner size="lg" />
         </div>
       )}
       {isLoaded && routeLoading && !tripGenerating && (
         <div className="route-loading-pill route-loading-pill--loader">
-          <RouteDrawingLoader theme={theme} variant="compact" />
+          <GoldSpinner size="md" />
         </div>
       )}
       {showRoutePill && (

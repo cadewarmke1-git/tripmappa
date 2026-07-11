@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 
 const TripResultsPanel = lazy(() => import("./results/TripResultsPanel.jsx"));
 const LiveViewPage = lazy(() => import("./live/LiveViewPage.jsx"));
@@ -9,7 +9,7 @@ const SharePanel = lazy(() => import("./SharePanel.jsx"));
 function PanelLoadingFallback({ theme = "night" }) {
   return (
     <div className="panel-loading-fallback" aria-busy="true">
-      <RouteDrawingLoader theme={theme} variant="inline" />
+      <GoldSpinner size="lg" />
     </div>
   );
 }

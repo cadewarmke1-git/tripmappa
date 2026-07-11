@@ -1,0 +1,189 @@
+/* TripMappa micro-interaction animations — CSS only, token colors */
+
+/* ── 1. Profile avatar click pulse + dropdown entrance + menu stagger ── */
+@keyframes profileAvatarRingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 210, 140, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(255, 210, 140, 0);
+  }
+}
+
+.profile-card-trigger-avatar.is-click-pulse {
+  animation: profileAvatarRingPulse 300ms ease-out;
+}
+
+.profile-card-dropdown {
+  transform-origin: top right;
+  transform: scale(0.95);
+}
+
+.profile-card-dropdown.is-open {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+  transition: opacity 200ms var(--ease), transform 200ms var(--ease);
+  animation: profileDropdownEnter 200ms var(--ease) forwards;
+}
+
+@keyframes profileDropdownEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.profile-card-dropdown.is-closing {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+  transition: opacity 200ms var(--ease), transform 200ms var(--ease);
+  animation: profileDropdownExit 200ms var(--ease) forwards;
+}
+
+@keyframes profileDropdownExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.profile-card-dropdown.is-open .profile-card-stagger-item {
+  opacity: 0;
+  animation: profileMenuItemStagger 200ms var(--ease) forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 30ms);
+}
+
+@keyframes profileMenuItemStagger {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 2. Generate button hover shimmer ── */
+.btn-generate-trip {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-generate-trip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 35%,
+    rgba(255, 210, 140, 0.15) 50%,
+    transparent 65%,
+    transparent 100%
+  );
+  transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.btn-generate-trip:hover:not(:disabled)::after {
+  animation: generateBtnShimmer 600ms ease-out forwards;
+}
+
+@keyframes generateBtnShimmer {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.15;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* ── 3. Start navigation breathing pulse ── */
+.results-action-bar-primary.results-nav-pulse {
+  animation: resultsNavPulse 2s ease-in-out infinite;
+}
+
+.results-action-bar-primary.results-nav-pulse:hover:not(:disabled) {
+  transform: none;
+  box-shadow: 0 10px 32px rgba(255, 210, 140, 0.35);
+}
+
+@keyframes resultsNavPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* ── 4. Neon sign popup entrance ── */
+.map-info-card.map-info-card--neon.is-open .neon-sign-popup-card {
+  animation: neonSignPopupEnter 200ms var(--ease) forwards;
+}
+
+@keyframes neonSignPopupEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── 5. Results stop cards stagger ── */
+.trip-results-panel.view-panel-animate .road-trip-stop-card.results-stop-card-enter {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: resultsStopCardEnter 200ms ease-out forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 60ms);
+}
+
+@keyframes resultsStopCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .profile-card-trigger-avatar.is-click-pulse,
+  .profile-card-dropdown.is-open,
+  .profile-card-dropdown.is-closing,
+  .profile-card-dropdown.is-open .profile-card-stagger-item,
+  .btn-generate-trip::after,
+  .results-action-bar-primary.results-nav-pulse,
+  .map-info-card.map-info-card--neon.is-open .neon-sign-popup-card,
+  .trip-results-panel.view-panel-animate .road-trip-stop-card.results-stop-card-enter {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

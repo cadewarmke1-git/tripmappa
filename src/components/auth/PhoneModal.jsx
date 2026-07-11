@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDialogA11y } from "../../hooks/useDialogA11y.js";
 import ModalCloseButton from "../ModalCloseButton.jsx";
-import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
+import GoldSpinner from "../GoldSpinner.jsx";
 import BrandWordmark from "../BrandWordmark.jsx";
 
 function PhoneIcon() {
@@ -87,7 +87,7 @@ export default function PhoneModal({
               </div>
               {error && <p className="auth-modal-error">{error}</p>}
               <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
-                {loading ? <RouteDrawingLoader variant="button" /> : "Send Code →"}
+                {loading ? <GoldSpinner size="button" /> : "Send Code →"}
               </button>
             </form>
           </>
@@ -112,7 +112,7 @@ export default function PhoneModal({
               />
               {error && <p className="auth-modal-error">{error}</p>}
               <button type="submit" className="btn-generate auth-modal-submit" disabled={loading || code.length !== 6}>
-                {loading ? <RouteDrawingLoader variant="button" /> : "Verify & Sign In →"}
+                {loading ? <GoldSpinner size="button" /> : "Verify & Sign In →"}
               </button>
               <button type="button" className="auth-modal-link-btn auth-resend-btn" onClick={handleResend} disabled={loading}>
                 Resend Code

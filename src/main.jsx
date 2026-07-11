@@ -4,7 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
+import GoldSpinner from "./components/GoldSpinner.jsx";
 
 const App = lazy(() => import("./App.jsx"));
 const NeonPopupShowcase = lazy(() => import("./components/dev/NeonPopupShowcase.jsx"));
@@ -32,6 +32,7 @@ import "./styles/pricing-plates.css";
 import "./styles/preference-pills.css";
 import "./styles/neon-sign-popup.css";
 import "./styles/road-trip-stop-card.css";
+import "./styles/micro-animations.css";
 
 function syncAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -56,7 +57,7 @@ createRoot(document.getElementById("root")).render(
     <ErrorBoundary label="app-root" title="TripMappa ran into a problem">
       <AuthProvider>
         <ThemeProvider>
-          <Suspense fallback={<RouteDrawingLoader theme="night" variant="inline" />}>
+          <Suspense fallback={<GoldSpinner size="lg" />}>
             {typeof window !== "undefined" && window.location.search.includes("neon-showcase") ? (
               <NeonPopupShowcase />
             ) : (

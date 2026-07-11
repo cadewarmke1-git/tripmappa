@@ -23,6 +23,7 @@ export default function NavProfileMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [avatarPulse, setAvatarPulse] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const triggerRef = useRef(null);
   const closeTimerRef = useRef(null);
@@ -48,6 +49,17 @@ export default function NavProfileMenu({
     setClosing(false);
     setOpen(true);
   }, []);
+
+  const pulseAvatar = useCallback(() => {
+    setAvatarPulse(true);
+    window.setTimeout(() => setAvatarPulse(false), 300);
+  }, []);
+
+  const handleTriggerClick = useCallback(() => {
+    pulseAvatar();
+    if (open) closeMenu();
+    else openMenu();
+  }, [open, closeMenu, openMenu, pulseAvatar]);
 
   const showDropdown = open || closing;
   const dialogRef = useDialogA11y(showDropdown, closeMenu, "nav-profile-menu-title", { modal: false });
@@ -148,7 +160,7 @@ export default function NavProfileMenu({
         <button
           type="button"
           className={`profile-card-trigger${open ? " is-active" : ""}`}
-          onClick={() => (open ? closeMenu() : openMenu())}
+          onClick={handleTriggerClick}
           aria-expanded={open}
           aria-haspopup="dialog"
           aria-label={triggerLabel}
@@ -158,7 +170,7 @@ export default function NavProfileMenu({
             profile={profile}
             size="md"
             tierRing={tierRing}
-            className="profile-card-trigger-avatar"
+            className={`profile-card-trigger-avatar${avatarPulse ? " is-click-pulse" : ""}`}
             heroPalette={heroPalette}
           />
         </button>
@@ -229,11 +241,12 @@ export default function NavProfileMenu({
           <hr className="profile-card-dropdown-divider" />
 
           <nav className="profile-card-nav" aria-label="Main navigation">
-            {navItems.map(item => (
+            {navItems.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
-                className={`profile-card-nav-link${activeNav === item.id ? " is-active" : ""}`}
+                className={`profile-card-nav-link profile-card-stagger-item${activeNav === item.id ? " is-active" : ""}`}
+                style={{ "--stagger-index": index }}
                 onClick={() => run(item.action)}
               >
                 {item.label}
@@ -248,14 +261,16 @@ export default function NavProfileMenu({
               <>
                 <button
                   type="button"
-                  className="profile-card-nav-link profile-card-nav-link--account"
+                  className="profile-card-nav-link profile-card-nav-link--account profile-card-stagger-item"
+                  style={{ "--stagger-index": navItems.length }}
                   onClick={() => run(onOpenProfile)}
                 >
                   View profile
                 </button>
                 <button
                   type="button"
-                  className="profile-card-signout"
+                  className="profile-card-signout profile-card-stagger-item"
+                  style={{ "--stagger-index": navItems.length + 1 }}
                   onClick={() => void handleSignOutClick()}
                 >
                   Sign Out
@@ -265,14 +280,16 @@ export default function NavProfileMenu({
               <>
                 <button
                   type="button"
-                  className="profile-card-nav-link profile-card-nav-link--cta"
+                  className="profile-card-nav-link profile-card-nav-link--cta profile-card-stagger-item"
+                  style={{ "--stagger-index": navItems.length }}
                   onClick={() => run(onGetStarted)}
                 >
                   Get Started
                 </button>
                 <button
                   type="button"
-                  className="profile-card-nav-link profile-card-nav-link--account"
+                  className="profile-card-nav-link profile-card-nav-link--account profile-card-stagger-item"
+                  style={{ "--stagger-index": navItems.length + 1 }}
                   onClick={() => run(onSignIn)}
                 >
                   Sign In

@@ -1,7 +1,7 @@
 import { isContinuousDrive } from "../lib/driveMode.js";
 import { dedupeQuestionHistoryById, formatFlowAnswer, getAssumedTruckLodgingPill } from "../lib/tripFlow.js";
 import { formatTravelersLabel, isScenicRoute } from "../lib/vehicles.js";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 
 export default function PlanRouteCard({
@@ -17,6 +17,7 @@ export default function PlanRouteCard({
   flowProgress = null,
   onEditRoute = null,
   compact = false,
+  hideHistoryChips = false,
 }) {
   const ready = Boolean(routeInfo?.distance || routeInfo?.duration);
   const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
@@ -72,7 +73,7 @@ export default function PlanRouteCard({
             )}
             {routePending && !routeError && !distanceLabel && (
               <span className="plan-flow-compact-loading">
-                <RouteDrawingLoader variant="compact" />
+                <GoldSpinner size="md" />
               </span>
             )}
             {routeError && (
@@ -113,7 +114,7 @@ export default function PlanRouteCard({
             <span className="plan-route-card-error-text">{routeError}</span>
           ) : routePending || !ready ? (
             <span className="plan-route-card-loading">
-              <RouteDrawingLoader variant="compact" />
+              <GoldSpinner size="md" />
             </span>
           ) : (
             <>
@@ -129,7 +130,7 @@ export default function PlanRouteCard({
           Retry route
         </button>
       )}
-      {historyChips.length > 0 && (
+      {historyChips.length > 0 && !hideHistoryChips && (
         <div className="plan-route-card-chips plan-route-card-chips--history" aria-label="Answers so far">
           {historyChips.map(chip => (
             <span className="plan-route-card-chip" key={chip.key}>{chip.text}</span>

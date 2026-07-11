@@ -169,14 +169,27 @@ html[data-layout="web"] .scroll-indicator {
   display: block;
 }
 
-html[data-layout="web"] .float-card,
-html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
+html[data-layout="web"] .float-card:not(.float-card--plan-flow):not(.collapsed) {
   top: calc(var(--nav-h) + 16px) !important;
   left: 16px !important;
   right: auto !important;
   bottom: auto !important;
   width: 390px !important;
   max-width: 390px !important;
+  height: auto !important;
+  max-height: calc(100dvh - var(--nav-h) - 32px) !important;
+  border-radius: 22px !important;
+}
+
+/* Authoritative plan-flow panel width (web desktop) */
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
+  top: calc(var(--nav-h) + 16px) !important;
+  left: 16px !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(880px, calc(100vw - 420px)) !important;
+  max-width: min(880px, calc(100vw - 420px)) !important;
+  min-width: min(500px, calc(100vw - 48px)) !important;
   height: auto !important;
   max-height: calc(100dvh - var(--nav-h) - 32px) !important;
   border-radius: 22px !important;
@@ -206,7 +219,11 @@ html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
     width: 100%;
   }
   html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .question-options-scroll {
-    max-height: min(58vh, 520px);
+    flex: 1 1 0;
+    min-height: 120px;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   html[data-layout="web"] .float-card--plan-flow:not(.collapsed) .plan-generate-sticky {
     padding: 12px 0 4px;
@@ -215,6 +232,11 @@ html[data-layout="web"] .float-card--plan-flow:not(.collapsed) {
 
 html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall),
 html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) {
+  height: calc(100dvh - var(--nav-h) - 32px) !important;
+  max-height: calc(100dvh - var(--nav-h) - 32px) !important;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-stack-payoff) {
   height: calc(100dvh - var(--nav-h) - 32px) !important;
   max-height: calc(100dvh - var(--nav-h) - 32px) !important;
 }

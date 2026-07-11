@@ -143,6 +143,8 @@ export default function RoadTripStopCard({
   cardRef = null,
   className = "",
   ariaLabel = null,
+  staggerIndex = null,
+  cardEnter = false,
 }) {
   const catClass = `road-trip-stop-card--${signCategory}`;
   const {
@@ -187,8 +189,11 @@ export default function RoadTripStopCard({
   return (
     <article
       ref={tiltRef}
-      style={tiltStyle}
-      className={`road-trip-stop-card road-stop-card results-place-card ${catClass}${highlighted ? " stop-highlighted" : ""}${tiltEnabled ? " road-trip-stop-card--tilt" : ""}${tiltHovering ? " is-tilt-hover" : ""}${className ? ` ${className}` : ""}`}
+      style={{
+        ...tiltStyle,
+        ...(staggerIndex != null ? { "--stagger-index": staggerIndex } : {}),
+      }}
+      className={`road-trip-stop-card road-stop-card results-place-card ${catClass}${highlighted ? " stop-highlighted" : ""}${tiltEnabled ? " road-trip-stop-card--tilt" : ""}${tiltHovering ? " is-tilt-hover" : ""}${cardEnter ? " results-stop-card-enter" : ""}${className ? ` ${className}` : ""}`}
       onClick={onCardClick}
       onKeyDown={e => { if (e.key === "Enter") onCardClick?.(); }}
       onPointerEnter={onPointerEnter}

@@ -1,5 +1,5 @@
 /** Banner when plan inputs changed after the last generation. */
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 
 export default function StalePlanNotice({ onRegenerate, loading = false, changes = [] }) {
   return (
@@ -20,7 +20,7 @@ export default function StalePlanNotice({ onRegenerate, loading = false, changes
         onClick={onRegenerate}
         disabled={loading}
       >
-        {loading ? <RouteDrawingLoader variant="button" /> : "Regenerate trip"}
+        {loading ? <GoldSpinner size="button" /> : "Regenerate trip"}
       </button>
     </div>
   );

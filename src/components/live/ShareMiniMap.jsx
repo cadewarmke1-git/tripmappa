@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
+import GoldSpinner from "../GoldSpinner.jsx";
 import { GoogleMap, Polyline } from "@react-google-maps/api";
 import { TRIP_ROUTE_GOLD } from "../../lib/constants.js";
 import { OWNER_COLOR } from "../../lib/convoyConstants.js";
@@ -31,7 +31,7 @@ export default function ShareMiniMap({
   if (!isLoaded) {
     return (
       <div className="share-mini-map share-mini-map-loading">
-        <RouteDrawingLoader theme={theme} variant="compact" />
+        <GoldSpinner size="md" />
       </div>
     );
   }

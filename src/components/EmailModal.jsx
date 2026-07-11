@@ -3,7 +3,7 @@ import { useDialogA11y } from "../hooks/useDialogA11y.js";
 import AuthSocialButtons, { SOCIAL_AUTH_UI_ENABLED } from "./auth/AuthSocialButtons.jsx";
 import { PhoneIcon } from "./auth/PhoneModal.jsx";
 import ModalCloseButton from "./ModalCloseButton.jsx";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import BrandWordmark from "./BrandWordmark.jsx";
 
 export default function EmailModal({
@@ -69,7 +69,7 @@ export default function EmailModal({
           />
           {error && <p className="auth-modal-error">{error}</p>}
           <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
-            {loading ? <RouteDrawingLoader variant="button" /> : "Create My Account →"}
+            {loading ? <GoldSpinner size="button" /> : "Create My Account →"}
           </button>
           <p className="auth-modal-footer">
             By continuing you agree to our{" "}

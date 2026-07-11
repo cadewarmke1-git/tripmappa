@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
 import { isContinuousDrive } from "../../lib/driveMode.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
@@ -80,6 +80,7 @@ export default function TripResultsPanel({
   const dayRefs = useRef([]);
   const stopRefs = useRef({});
   const scrollRef = useRef(null);
+  const [cardEnter, setCardEnter] = useState(true);
 
   const simplified = useMemo(
     () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),
@@ -113,6 +114,13 @@ export default function TripResultsPanel({
   useEffect(() => {
     onEnrichPlacesOnMount?.();
   }, [onEnrichPlacesOnMount]);
+
+  useEffect(() => {
+    const stopCount = Math.max(roadStops?.length || 0, stops?.length || 0, 6);
+    const duration = 200 + stopCount * 60;
+    const t = window.setTimeout(() => setCardEnter(false), duration);
+    return () => window.clearTimeout(t);
+  }, [roadStops?.length, stops?.length]);
 
   useEffect(() => {
     if (!highlightedStopId) return;
@@ -236,6 +244,7 @@ export default function TripResultsPanel({
               onUpgradeGrocery={onUpgradeGrocery}
               isGuest={isGuest}
               onGrocerySignIn={onGrocerySignIn}
+              cardEnter={cardEnter}
               simplified={simplified}
             />
           )}

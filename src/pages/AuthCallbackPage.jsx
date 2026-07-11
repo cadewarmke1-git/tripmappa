@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import RouteDrawingLoader from "../components/RouteDrawingLoader.jsx";
+import GoldSpinner from "../components/GoldSpinner.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
 
@@ -95,7 +95,7 @@ export default function AuthCallbackPage() {
       aria-busy="true"
       aria-label="Signing you in"
     >
-      <RouteDrawingLoader theme={theme} variant="inline" />
+      <GoldSpinner size="lg" />
     </div>
   );
 }

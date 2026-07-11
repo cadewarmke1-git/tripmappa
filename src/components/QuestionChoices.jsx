@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import PlanOptionCard from "./plan/PlanOptionCard.jsx";
 import PlanVehicleIcon from "./plan/PlanVehicleIcon.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
@@ -462,7 +462,7 @@ export default function QuestionChoices({
   }
 
   const scrollOptions = compact
-    && planFlowLayout !== "sparse"
+    && planFlowLayout === "tall"
     && currentQ.type !== "loading"
     && currentQ.type !== "text"
     && currentQ.type !== "party_composition";
@@ -479,7 +479,7 @@ export default function QuestionChoices({
     <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}${isTripDetails ? " question-choices-trip-details" : ""}`}>
       {currentQ.type === "loading" && (
         <div className="question-loading" aria-live="polite">
-          <RouteDrawingLoader variant="inline" />
+          <GoldSpinner size="lg" />
         </div>
       )}
 
@@ -536,7 +536,7 @@ export default function QuestionChoices({
             <>
               {routePending && routeLocked && (
                 <p className="question-pending-note question-pending-note--loading">
-                  <RouteDrawingLoader variant="inline" />
+                  <GoldSpinner size="lg" />
                   <span>Calculating your route — choices unlock in a moment.</span>
                 </p>
               )}

@@ -90,7 +90,7 @@ export function useMapState({
   const polylinesRef = useRef([]);
   const polylineAnimRef = useRef(null);
   const [mapReadyView, setMapReadyView] = useState(null);
-  const mapReady = mapReadyView === view && view !== "hero";
+  const mapReady = mapReadyView === view;
   const setMapReady = useCallback((ready) => {
     if (ready) setMapReadyView(view);
     else setMapReadyView(null);
@@ -111,23 +111,30 @@ export function useMapState({
     const normalized = points.map(normalizeMapPoint).filter(Boolean);
     if (normalized.length < 2) return;
 
-    if (mapRef.current) {
+    const applyFitBounds = () => {
+      if (!mapRef.current) return false;
       const bounds = new window.google.maps.LatLngBounds();
       normalized.forEach((p) => bounds.extend(p));
       mapRef.current.fitBounds(bounds, { padding });
       pendingFitBoundsRef.current = null;
-    } else {
-      pendingFitBoundsRef.current = { points: normalized, padding };
-    }
+      return true;
+    };
+
+    if (applyFitBounds()) return;
+    pendingFitBoundsRef.current = { points: normalized, padding };
   }, [normalizeMapPoint]);
 
   const flushPendingFitBounds = useCallback(() => {
     const pending = pendingFitBoundsRef.current;
     if (!pending || !mapRef.current || !window.google?.maps) return;
-    const bounds = new window.google.maps.LatLngBounds();
-    pending.points.forEach((p) => bounds.extend(p));
-    mapRef.current.fitBounds(bounds, { padding: pending.padding });
-    pendingFitBoundsRef.current = null;
+    requestAnimationFrame(() => {
+      if (!mapRef.current || !window.google?.maps) return;
+      window.google.maps.event.trigger(mapRef.current, "resize");
+      const bounds = new window.google.maps.LatLngBounds();
+      pending.points.forEach((p) => bounds.extend(p));
+      mapRef.current.fitBounds(bounds, { padding: pending.padding });
+      pendingFitBoundsRef.current = null;
+    });
   }, []);
 
   const fetchDirections = useCallback((vehicleType) => {

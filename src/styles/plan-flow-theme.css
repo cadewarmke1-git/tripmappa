@@ -410,7 +410,7 @@ html body .app-wrap.night .btn-generate-trip {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   -webkit-overflow-scrolling: touch;
   /* Clearance so last option cards (e.g. Avoid highways) stay above the action dock */
   padding: 0 4px calc(8px + 72px + env(safe-area-inset-bottom, 0px));
@@ -428,6 +428,10 @@ html body .app-wrap.night .btn-generate-trip {
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 0 0 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .plan-flow-question-hint {
@@ -606,12 +610,19 @@ html body .app-wrap.night .btn-generate-trip {
   gap: 0;
 }
 
-.plan-flow-form--active .plan-flow-layout--tall.plan-flow-current,
+.plan-flow-form--active .plan-flow-layout--tall.plan-flow-current {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: min(360px, 42vh);
+  overflow: hidden;
+}
+
 .plan-flow-form--active .plan-flow-layout--standard.plan-flow-current {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 120px;
   overflow: hidden;
 }
 
@@ -621,6 +632,114 @@ html body .app-wrap.night .btn-generate-trip {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* Tall/standard multiselect — parent-agnostic (no chat-wrap-plan-flow required) */
+.float-card--plan-flow .plan-flow-form {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-form-body,
+.float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) .plan-flow-form-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-stack,
+.float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) .plan-flow-stack {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.plan-flow-layout--tall.plan-flow-current {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: min(360px, 42vh);
+  overflow: hidden;
+}
+
+.plan-flow-layout--standard.plan-flow-current,
+.plan-flow-layout--sparse.plan-flow-current {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.plan-flow-layout--sparse.plan-flow-current {
+  flex: 0 1 auto;
+  min-height: auto;
+  overflow: visible;
+}
+
+.plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact,
+.plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact {
+  flex: 1 1 auto;
+  min-height: 80px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact .question-choices-compact,
+.plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact .question-choices-compact {
+  flex: 1 1 auto;
+  min-height: 80px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.plan-flow-layout--tall.plan-flow-current .question-choices-compact .question-options-scroll,
+.plan-flow-layout--standard.plan-flow-current .question-choices-compact .question-options-scroll {
+  flex: 1 1 0;
+  min-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.plan-flow-layout--tall .question-choices-compact > :not(.question-options-scroll),
+.plan-flow-layout--standard .question-choices-compact > :not(.question-options-scroll) {
+  flex-shrink: 0;
+}
+
+/* Any active step — guarantee choices region receives height */
+.plan-flow-current .question-choices-shell-compact {
+  flex: 1 1 auto;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.plan-flow-current .question-choices-shell-compact .question-choices-compact {
+  flex: 1 1 auto;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.plan-flow-layout--tall.plan-flow-current .question-options-scroll {
+  flex: 1 1 0;
+  min-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.plan-flow-layout--tall.plan-flow-current .question-choices-trip-details .question-options-scroll {
+  flex: 1 1 0;
+  min-height: 140px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .plan-flow-compact-header {
@@ -652,7 +771,10 @@ html body .app-wrap.night .btn-generate-trip {
 }
 
 .plan-flow-compact-city {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .plan-flow-compact-arrow,
@@ -725,6 +847,181 @@ html body .app-wrap.night .btn-generate-trip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+html[data-layout="web"] .plan-flow-layout--standard.plan-flow-current {
+  overflow: visible;
+  min-height: auto;
+  flex: 0 1 auto;
+}
+
+html[data-layout="web"] .plan-flow-layout--standard.plan-flow-current .question-choices-shell-compact,
+html[data-layout="web"] .plan-flow-layout--standard.plan-flow-current .question-choices-compact {
+  overflow: visible;
+  min-height: auto;
+  flex: 0 1 auto;
+}
+
+html[data-layout="web"] .plan-flow-layout--standard .plan-option-grid {
+  gap: 8px;
+}
+
+html[data-layout="web"] .plan-flow-layout--standard .plan-option-card {
+  min-height: 56px;
+  padding: 10px 12px 10px 14px;
+}
+
+html[data-layout="web"] .plan-flow-layout--standard .plan-vehicle-types-expander {
+  margin-top: 4px;
+}
+
+/* 5 options on standard steps — shorter grid (e.g. stop count) */
+html[data-layout="web"] .plan-flow-layout--standard .plan-option-grid:has(.plan-option-card:nth-child(5):last-child) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Vehicle step — 6 primary cards stay 2×3; do not inherit the 5+ three-column rule */
+html[data-layout="web"] .plan-flow-layout--standard .question-choices-compact:has(.plan-vehicle-types-expander) .plan-option-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* 7 preference options — fit all rows above dock on ~860px web panel */
+html[data-layout="web"] .plan-flow-layout--tall .plan-option-grid:has(.plan-option-card:nth-child(7):last-child) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+html[data-layout="web"] .plan-flow-layout--tall .plan-option-grid:has(.plan-option-card:nth-child(7):last-child) .plan-option-card {
+  min-height: 56px;
+  padding: 10px 12px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .plan-option-card {
+  min-height: 40px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .plan-option-card-label {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.question-choices-trip-details) .plan-route-card-chips--history {
+  gap: 6px;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.question-choices-trip-details) .plan-route-card-chip {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .question-group-section {
+  margin-top: 8px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .question-group-section .plan-option-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .question-section-label {
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .question-more-options-toggle {
+  margin-top: 4px;
+}
+
+html[data-layout="web"] .question-choices-trip-details .question-options-scroll {
+  flex: 1 1 0;
+  min-height: 140px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-layout--tall.plan-flow-current .question-choices-shell-compact {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+html[data-layout="web"] .plan-flow-main:has(.question-choices-trip-details) > .plan-flow-question-header {
+  display: none;
+}
+
+html[data-layout="web"] .plan-flow-main:has(.question-choices-trip-details) .question-page-header {
+  margin-bottom: 4px;
+}
+
+html[data-layout="web"] .plan-flow-main:has(.question-choices-trip-details) .question-page-title {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+html[data-layout="web"] .plan-flow-main:has(.question-choices-trip-details) .question-page-subtitle {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+html[data-layout="web"] .plan-flow-main:has(.question-choices-trip-details) {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+html[data-layout="web"] .plan-flow-main:has(.question-choices-trip-details) > .plan-flow-current {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-layout="web"] .plan-flow-layout--tall.plan-flow-current:has(.question-choices-trip-details) .question-choices-shell-compact {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-layout="web"] .plan-flow-layout--tall.plan-flow-current:has(.question-choices-trip-details) .question-choices-compact {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+html[data-layout="web"] .plan-flow-layout--tall.plan-flow-current:has(.question-choices-trip-details) .question-choices-trip-details .question-page-header {
+  flex-shrink: 0;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.question-choices-trip-details) .plan-flow-form-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-form {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--tall) .plan-flow-form-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .plan-option-card {

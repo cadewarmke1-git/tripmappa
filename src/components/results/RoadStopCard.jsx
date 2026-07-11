@@ -28,6 +28,8 @@ export default function RoadStopCard({
   onRoute = false,
   showTruckWarnings = false,
   readOnly = false,
+  staggerIndex = null,
+  cardEnter = false,
 }) {
   const isCharging = String(stop.category || "").toLowerCase() === "charging";
   const charging = stop.charging || stop.stopData;
@@ -128,6 +130,8 @@ export default function RoadStopCard({
       cardRef={cardRef}
       className={`road-stop-card--${signCategory}`}
       ariaLabel={`${stop.title || "Stop"}${stop.category ? `, ${stop.category}` : ""}`}
+      staggerIndex={staggerIndex}
+      cardEnter={cardEnter}
       onCardClick={() => onSelect?.(stop)}
       rating={rating}
       distance={distance}

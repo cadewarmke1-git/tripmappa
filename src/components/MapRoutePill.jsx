@@ -1,4 +1,4 @@
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import { getRouteTypeLabel, isScenicRoute } from "../lib/vehicles.js";
 
 export default function MapRoutePill({
@@ -22,7 +22,7 @@ export default function MapRoutePill({
           disabled={navigateHomePending}
         >
           {navigateHomePending ? (
-            <RouteDrawingLoader theme={theme} variant="button" />
+            <GoldSpinner size="button" />
           ) : (
             "Navigate Home"
           )}

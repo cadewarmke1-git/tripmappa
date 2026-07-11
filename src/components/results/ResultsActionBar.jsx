@@ -1,10 +1,19 @@
+import { useState } from "react";
+
 export default function ResultsActionBar({ onStartNavigation, onShare, onEditTrip }) {
+  const [navClicked, setNavClicked] = useState(false);
+
+  function handleStartNavigation() {
+    setNavClicked(true);
+    onStartNavigation?.();
+  }
+
   return (
     <footer className="results-action-bar" aria-label="Trip actions">
       <button
         type="button"
-        className="results-action-bar-primary btn-generate"
-        onClick={onStartNavigation}
+        className={`results-action-bar-primary btn-generate${navClicked ? "" : " results-nav-pulse"}`}
+        onClick={handleStartNavigation}
         data-testid="results-start-navigation"
       >
         Start navigation

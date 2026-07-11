@@ -1,6 +1,6 @@
 import { Autocomplete } from "@react-google-maps/api";
 import { configurePlacesAutocomplete } from "../../lib/places.js";
-import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
+import GoldSpinner from "../GoldSpinner.jsx";
 
 export default function NavigateRoutePanel({
   isLoaded,
@@ -109,7 +109,7 @@ export default function NavigateRoutePanel({
           onClick={onGetRoute}
           disabled={routeLoading}
         >
-          {routeLoading ? <RouteDrawingLoader variant="button" /> : "Get route"}
+          {routeLoading ? <GoldSpinner size="button" /> : "Get route"}
         </button>
       </div>
     </search>

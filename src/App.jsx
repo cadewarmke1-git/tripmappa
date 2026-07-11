@@ -75,7 +75,7 @@ import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { resolveAppRoute } from "./lib/appRouter.js";
 import Toast from "./components/Toast.jsx";
-import RouteDrawingLoader from "./components/RouteDrawingLoader.jsx";
+import GoldSpinner from "./components/GoldSpinner.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
@@ -595,10 +595,11 @@ export default function App() {
 
   // Float-card width/height transitions run ~350ms; resize map after panel settles so tiles fill the viewport.
   useEffect(() => {
-    if (view !== "app" || tab !== "plan" || !mapReady || cardCollapsed) return undefined;
+    if ((view !== "app" && !(view === "hero" && appMode === "navigate")) || !mapReady) return undefined;
+    if (view === "app" && (tab !== "plan" || cardCollapsed)) return undefined;
     const timer = window.setTimeout(() => flushMapLayout(), 400);
     return () => window.clearTimeout(timer);
-  }, [view, tab, inQuestionFlow, cardCollapsed, mapReady, flushMapLayout]);
+  }, [view, appMode, tab, inQuestionFlow, cardCollapsed, mapReady, flushMapLayout]);
   const creditsExhausted = useMemo(() => {
     if (!user || !creditStatus) return false;
     return !creditStatus.unlimited && (creditStatus.remaining ?? 0) <= 0;
@@ -938,10 +939,14 @@ export default function App() {
 
   useEffect(() => {
     if (!currentQuestion?.id && !convoComplete) return;
+    if (inQuestionFlow && !convoComplete) {
+      scrollPlanToTop();
+      return;
+    }
     requestAnimationFrame(() => {
       convoEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     });
-  }, [currentQuestion?.id, questionHistory.length, convoComplete]);
+  }, [currentQuestion?.id, questionHistory.length, convoComplete, inQuestionFlow, scrollPlanToTop]);
 
   useEffect(() => {
     if (!shouldPreloadGenerationLoader({
@@ -2097,7 +2102,7 @@ export default function App() {
       <div className={`app-wrap ${theme}`}>
         {renderAppNavBar("app")}
         <div className="profile-loading-shell" role="status" aria-busy="true" aria-label="Loading your profile">
-          <RouteDrawingLoader theme={theme} variant="inline" />
+          <GoldSpinner size="lg" />
         </div>
       </div>
     );

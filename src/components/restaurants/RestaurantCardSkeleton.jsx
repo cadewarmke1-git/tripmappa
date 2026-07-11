@@ -1,9 +1,9 @@
-import RouteDrawingLoader from "../RouteDrawingLoader.jsx";
+import GoldSpinner from "../GoldSpinner.jsx";
 
 export default function RestaurantCardSkeleton({ theme = "night" }) {
   return (
     <article className="restaurant-card-loader" aria-hidden="true">
-      <RouteDrawingLoader theme={theme} variant="compact" />
+      <GoldSpinner size="md" />
     </article>
   );
 }

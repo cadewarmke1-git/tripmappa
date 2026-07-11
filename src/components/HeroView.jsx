@@ -6,7 +6,7 @@ import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import HeroFoundingSlots from "./HeroFoundingSlots.jsx";
 import AppNavBar from "./AppNavBar.jsx";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
 import { dismissGooglePlacesDropdown } from "../lib/places.js";
@@ -229,7 +229,7 @@ export default function HeroView({
               onClick={() => { triggerPrimaryHaptic(); onLaunch?.(); }}
               disabled={launchDisabled}
             >
-              {heroLaunching ? <RouteDrawingLoader theme={heroTheme} variant="button" /> : "Plan my trip →"}
+              {heroLaunching ? <GoldSpinner size="button" /> : "Plan my trip →"}
             </button>
           </div>
 

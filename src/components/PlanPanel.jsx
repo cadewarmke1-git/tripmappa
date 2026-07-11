@@ -8,7 +8,7 @@ import PlanRouteCard from "./PlanRouteCard.jsx";
 import PlanFuelEstimateFooter from "./PlanFuelEstimateFooter.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import StalePlanNotice from "./StalePlanNotice.jsx";
-import RouteDrawingLoader from "./RouteDrawingLoader.jsx";
+import GoldSpinner from "./GoldSpinner.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { preloadGenerationStreamOverlay } from "../lib/preloadGenerationLoader.js";
 import { getAssumedTruckLodgingPill, getPlanFlowLayoutClass } from "../lib/tripFlow.js";
@@ -71,7 +71,7 @@ export default function PlanPanel({
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
-  const showFlowSidebar = inQuestionFlow && questionHistory.length > 0;
+  const showFlowSidebar = inQuestionFlow && questionHistory.length > 0 && !convoComplete;
   const showReadySidebar = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
   const actionsInDock = inQuestionFlow && !convoComplete;
 
@@ -119,7 +119,7 @@ export default function PlanPanel({
         disabled={loading}
       >
         {loading ? (
-          <RouteDrawingLoader variant="button" />
+          <GoldSpinner size="button" />
         ) : (
           <>
             Generate My Trip →
@@ -155,6 +155,7 @@ export default function PlanPanel({
           flowProgress={flowProgress}
           onEditRoute={onResetPlan}
           compact
+          hideHistoryChips={convoComplete}
         />
       )}
 

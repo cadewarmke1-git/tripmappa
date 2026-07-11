@@ -82,6 +82,7 @@ export default function ResultsDaySection({
   isGuest = false,
   onGrocerySignIn,
   simplified = false,
+  cardEnter = false,
 }) {
   const sectionEl = useRef(null);
 
@@ -185,6 +186,8 @@ export default function ResultsDaySection({
                 <RoadStopCard
                   key={item.stop.id || `${item.kind}-${index}`}
                   stop={item.stop}
+                  staggerIndex={index}
+                  cardEnter={cardEnter}
                   onAdd={onAddRoadStop}
                   onRemove={onRemoveRoadStop}
                   onToast={onToast}
@@ -204,6 +207,8 @@ export default function ResultsDaySection({
                   {index > 0 && <RouteLegConnector label={legLabel(item.stop) || "Continue driving"} />}
                   <RoadStopCard
                     stop={item.stop}
+                    staggerIndex={index}
+                    cardEnter={cardEnter}
                     onAdd={onAddRoadStop}
                     onRemove={onRemoveRoadStop}
                     onToast={onToast}

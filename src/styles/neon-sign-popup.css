@@ -145,16 +145,16 @@
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  transform: translateX(calc(100% + 24px));
-  transition: transform 0.26s var(--ease), opacity 0.26s var(--ease);
   opacity: 0;
   pointer-events: none;
+  transform: none;
+  transition: opacity 200ms var(--ease);
 }
 
 .map-info-card.map-info-card--neon.is-open {
-  transform: translateX(0);
   opacity: 1;
   pointer-events: auto;
+  transform: none;
 }
 
 @media (max-width: 900px) {
@@ -162,11 +162,11 @@
     top: auto;
     bottom: 88px;
     right: 16px;
-    transform: translateY(calc(100% + 20px));
+    transform: none;
   }
 
   .map-info-card.map-info-card--neon.is-open {
-    transform: translateY(0);
+    transform: none;
   }
 }
 
