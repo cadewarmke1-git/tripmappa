@@ -14,14 +14,13 @@ export async function fetchLiveTripByToken(shareToken) {
   return data.liveTrip || null;
 }
 
-/** Stop sharing — owner only (RLS). */
-export async function stopLiveShare(shareToken, userId) {
+/** Stop sharing — owner only (RLS enforces auth.uid() = user_id). */
+export async function stopLiveShare(shareToken) {
   if (!supabase) throw new Error("Supabase is not configured");
   const { error } = await supabase
     .from("live_trips")
     .update({ is_active: false })
-    .eq("share_token", shareToken)
-    .eq("user_id", userId);
+    .eq("share_token", shareToken);
   if (error) throw error;
 }
 

@@ -21,12 +21,15 @@ export function setGuestHomeAddress(address) {
   }
 }
 
-export async function fetchUserProfile(userId) {
+export async function fetchUserProfile() {
   if (!supabase) return null;
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user?.id) return null;
   const { data, error } = await supabase
     .from("user_profiles")
     .select(PROFILE_FIELDS)
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw error;
   return data;

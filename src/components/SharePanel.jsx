@@ -220,7 +220,7 @@ export default function SharePanel({
   async function handleStopSharing() {
     if (!shareToken || !user?.id) return;
     try {
-      await stopLiveShare(shareToken, user.id);
+      await stopLiveShare(shareToken);
       setSharing(false);
       setShareUrl("");
       setShareToken("");

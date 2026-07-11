@@ -436,7 +436,7 @@ export function useAppAuth({
       fetchTripCredits(session.access_token)
         .then(applyCreditStatus)
         .catch(() => applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 }));
-      fetchUserProfile(user.id)
+      fetchUserProfile()
         .then(profile => {
           if (profile?.home_address) setHomeAddress(profile.home_address);
           setUserProfile(profile);
@@ -501,7 +501,7 @@ export function useAppAuth({
         const result = await runAccountOnboarding(session.access_token, { refCode });
         if (cancelled) return;
         if (result.credits) applyCreditStatus(result.credits);
-        const profile = await fetchUserProfile(user.id);
+        const profile = await fetchUserProfile();
         if (!cancelled && profile) setUserProfile(profile);
 
         if (result.referral?.applied) {
@@ -576,7 +576,7 @@ export function useAppAuth({
           }
         })
         .catch(() => {});
-      fetchUserProfile(user.id)
+      fetchUserProfile()
         .then(profile => {
           if (profile) setUserProfile(profile);
         })
