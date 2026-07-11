@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { FOUNDING_MEMBER_MAX, countFoundingMembers } from "../lib/foundingMembers.js";
 
 /** GET /api/founding-slots — public Founder spot counter for hero page. */
@@ -22,6 +23,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("founding-slots error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not load founding slots" });
   }
 }

@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { googleMapsLink } from "../lib/liveTripHelpers.js";
 import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
@@ -80,6 +81,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, sent: true });
   } catch (err) {
     console.error("sos-alert error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not send SOS alert" });
   }
 }

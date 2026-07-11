@@ -1,4 +1,5 @@
 import { getGoogleMapsKey } from "../lib/googleKey.js";
+import { captureServerException } from "../lib/sentry.js";
 import { guardProxyRoute } from "../lib/apiSecurity.js";
 
 /** POST /api/distance-matrix — ETA from coordinates to one or more destinations. */
@@ -58,6 +59,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ results });
   } catch (err) {
     console.error("distance-matrix error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not calculate ETA" });
   }
 }

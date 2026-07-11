@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import {
   appendInvitee,
@@ -215,6 +216,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Unknown action" });
   } catch (err) {
     console.error("collaboration error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Collaboration request failed" });
   }
 }

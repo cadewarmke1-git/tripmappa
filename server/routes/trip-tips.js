@@ -1,5 +1,6 @@
 /** Live Trip Tips — Weather.gov conditions and Google traffic along the route. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import {
   fetchCurrentConditions,
@@ -160,6 +161,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("trip-tips API error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Failed to fetch trip tips" });
   }
 }

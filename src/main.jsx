@@ -1,3 +1,9 @@
+import * as Sentry from "@sentry/react";
+
+Sentry.init({
+  dsn: "https://1c6a3daa0e336e04d6aa20824b1d08a4@o4511719041794048.ingest.us.sentry.io/4511719050051584",
+});
+
 import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { Analytics } from "@vercel/analytics/react";
@@ -34,6 +40,18 @@ import "./styles/neon-sign-popup.css";
 import "./styles/road-trip-stop-card.css";
 import "./styles/micro-animations.css";
 
+function SentryAppFallback({ error, resetError }) {
+  return (
+    <div className="error-boundary-fallback" role="alert">
+      <p className="error-boundary-title">TripMappa ran into a problem</p>
+      <p className="error-boundary-msg">{error?.message || "An unexpected error occurred."}</p>
+      <button type="button" className="error-boundary-retry" onClick={resetError}>
+        Try again
+      </button>
+    </div>
+  );
+}
+
 function syncAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
 }
@@ -61,7 +79,9 @@ createRoot(document.getElementById("root")).render(
             {typeof window !== "undefined" && window.location.search.includes("neon-showcase") ? (
               <NeonPopupShowcase />
             ) : (
-              <App />
+              <Sentry.ErrorBoundary fallback={SentryAppFallback}>
+                <App />
+              </Sentry.ErrorBoundary>
             )}
           </Suspense>
           <Analytics />

@@ -1,4 +1,5 @@
 import { runAllTrialJobs } from "../../lib/trialJobs.js";
+import { captureServerException } from "../../lib/sentry.js";
 
 /** GET /api/cron/trial-jobs — day-6 reminder emails and day-7 trial expiry (Vercel cron). */
 export default async function handler(req, res) {
@@ -20,6 +21,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, ...result });
   } catch (err) {
     console.error("cron/trial-jobs error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Trial jobs failed" });
   }
 }

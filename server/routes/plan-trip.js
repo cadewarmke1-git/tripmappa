@@ -49,6 +49,7 @@ import {
   recordPlanTripRateLimitHit,
 } from "../lib/planTripRateLimit.js";
 import { parseJsonFromLlm } from "../lib/parseJsonFromLlm.js";
+import { initServerSentry, Sentry } from "../lib/sentry.js";
 
 function tripResponseHasContent(parsed) {
   const stops = Array.isArray(parsed?.stops)
@@ -894,7 +895,8 @@ function finalizeSuccessfulGeneration({
         }
         await consumeCredit(admin, user.id, user.email);
       } catch (creditErr) {
-        console.error("Credit consumption after success failed:", creditErr);
+    console.error("Credit consumption after success failed:", creditErr);
+        Sentry.captureException(creditErr);
       }
       logGenerationUsage(admin, buildGenerationLogRow({
         userId: user.id,
@@ -922,6 +924,7 @@ export {
 };
 
 export default async function handler(req, res) {
+  initServerSentry();
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -983,6 +986,7 @@ export default async function handler(req, res) {
     }
   } catch (creditErr) {
     console.error("Credit check failed:", creditErr);
+    Sentry.captureException(creditErr);
     return res.status(500).json({ error: "Could not verify trip credits" });
   }
 
@@ -1135,6 +1139,7 @@ export default async function handler(req, res) {
       try {
         parsed = normalizeTripResponse(stitched, { placesContext: rawPlacesContext });
       } catch (stitchErr) {
+        Sentry.captureException(stitchErr);
         writePlanTripSse(res, "error", {
           error: "Trip planner returned invalid data",
           code: "parse_failed",
@@ -1171,6 +1176,7 @@ export default async function handler(req, res) {
       });
     } catch (err) {
       console.error("Parallel plan trip error:", err);
+      Sentry.captureException(err);
       await sseWriter.wait();
       writePlanTripSse(res, "error", {
         error: err?.message || "Failed to generate trip plan",
@@ -1230,6 +1236,7 @@ export default async function handler(req, res) {
         parsed = normalizeTripResponse(parseJsonFromLlm(text), { placesContext: rawPlacesContext });
       } catch (parseErr) {
         if (attempt === 0) continue;
+        Sentry.captureException(parseErr);
         writePlanTripSse(res, "error", {
           error: "Trip planner returned invalid data",
           code: "parse_failed",
@@ -1268,6 +1275,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("Plan trip error:", err);
+    Sentry.captureException(err);
     if (!res.headersSent) {
       return res.status(500).json({ error: "Failed to generate trip plan" });
     }

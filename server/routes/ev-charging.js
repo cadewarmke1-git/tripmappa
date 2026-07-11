@@ -1,5 +1,6 @@
 /** NREL primary EV/LPG discovery with optional Google-station enrichment. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import { isPlausibleEvChargingStation } from "../../src/lib/roadStopCategory.js";
 import {
   fetchNrelNearest,
@@ -121,6 +122,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ stations: mapped, source: "nrel", fallback: false });
     } catch (err) {
       console.error("NREL discover error:", err);
+    captureServerException(err);
       return res.status(200).json({ stations: [], source: "nrel", fallback: true, error: "Failed to discover charging stations" });
     }
   }
@@ -160,6 +162,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ stations: filtered, source: "google", fallback: false });
   } catch (err) {
     console.error("NREL enrich error:", err);
+    captureServerException(err);
     return res.status(200).json({
       stations: stations.map(s => enrichGoogleStation(s, null, fuelType)),
       source: "google",

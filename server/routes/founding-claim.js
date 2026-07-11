@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { tryClaimFoundingSlot } from "../lib/foundingMembers.js";
 import { fetchCreditStatus } from "../lib/tripCredits.js";
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ...result, credits: status });
   } catch (err) {
     console.error("founding-claim error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not process founding membership" });
   }
 }

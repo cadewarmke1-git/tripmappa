@@ -888,11 +888,13 @@ html[data-layout="web"] .plan-flow-layout--standard .question-choices-compact:ha
 }
 
 /* 7 preference options — fit all rows above dock on ~860px web panel */
+html[data-layout="web"] .plan-flow-layout--standard .plan-option-grid:has(.plan-option-card:nth-child(7):last-child),
 html[data-layout="web"] .plan-flow-layout--tall .plan-option-grid:has(.plan-option-card:nth-child(7):last-child) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
+html[data-layout="web"] .plan-flow-layout--standard .plan-option-grid:has(.plan-option-card:nth-child(7):last-child) .plan-option-card,
 html[data-layout="web"] .plan-flow-layout--tall .plan-option-grid:has(.plan-option-card:nth-child(7):last-child) .plan-option-card {
   min-height: 56px;
   padding: 10px 12px;

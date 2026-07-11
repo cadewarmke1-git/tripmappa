@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../../lib/supabaseAdmin.js";
+import { captureServerException } from "../../lib/sentry.js";
 import { readRawBody } from "../../lib/readRawBody.js";
 import { getStripe, stripeNotConfiguredResponse } from "../../lib/stripe.js";
 import {
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     console.error("stripe webhook signature:", err.message);
+    captureServerException(err);
     return res.status(400).json({ error: "Invalid webhook signature" });
   }
 
@@ -103,6 +105,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true });
   } catch (err) {
     console.error("stripe webhook handler:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Webhook processing failed" });
   }
 }

@@ -1,5 +1,6 @@
 /** Fuel price enrichment for Google-found gas stations (EIA regional averages). */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 
 const EIA_DATA_URL = "https://api.eia.gov/v2/petroleum/pri/gnd/data";
 const EIA_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -161,6 +162,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("fuel-stations enrich error:", err);
+    captureServerException(err);
     const eia = await fetchEIAFuelPrices();
     return res.status(200).json({
       stations: stations.map(s => enrichStation(s, mode, eia)),

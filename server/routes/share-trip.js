@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { captureServerException } from "../lib/sentry.js";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 
@@ -106,6 +107,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ shareUrl, shareToken: data.share_token, liveTrip: data });
   } catch (err) {
     console.error("share-trip error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not create share link" });
   }
 }

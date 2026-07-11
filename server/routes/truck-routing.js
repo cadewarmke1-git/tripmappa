@@ -1,5 +1,6 @@
 /** POST /api/truck-routing — HERE truck routes with weigh stations along corridor. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import { geocodeAddress } from "../lib/geocode.js";
 import { getHereAccessToken } from "../lib/hereAuth.js";
 import { hasHereCredentials } from "../lib/hereApiKey.js";
@@ -262,6 +263,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("truck-routing error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Truck routing failed" });
   }
 }

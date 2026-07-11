@@ -1,5 +1,6 @@
 /** Stripe SDK singleton and safe API error mapping for clients. */
 import Stripe from "stripe";
+import { captureServerException } from "./sentry.js";
 
 let stripeClient = null;
 
@@ -19,6 +20,7 @@ export function stripeNotConfiguredResponse(res) {
 /** Log Stripe errors server-side; return a generic message to the client. */
 export function respondStripeError(res, err, logLabel = "stripe") {
   console.error(`${logLabel}:`, err);
+  captureServerException(err, { tags: { route: logLabel } });
   const status = err?.statusCode && err.statusCode >= 400 && err.statusCode < 600
     ? err.statusCode
     : 500;

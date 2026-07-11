@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { validateUsPhone, verifyStoredOtp } from "../lib/phoneOtp.js";
 import { createPhoneSignInSession } from "../lib/phoneAuth.js";
 import { guardProxyRoute } from "../lib/apiSecurity.js";
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("verify-sms-otp error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not verify code" });
   }
 }

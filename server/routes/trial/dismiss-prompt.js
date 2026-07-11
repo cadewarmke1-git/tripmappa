@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../../lib/supabaseAdmin.js";
+import { captureServerException } from "../../lib/sentry.js";
 import { getUserFromRequest } from "../../lib/authFromRequest.js";
 
 /** POST /api/trial/dismiss-prompt — clear trial-ended upgrade prompt after user sees it. */
@@ -27,6 +28,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("trial/dismiss-prompt error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not dismiss prompt" });
   }
 }

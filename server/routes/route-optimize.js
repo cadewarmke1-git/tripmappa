@@ -1,5 +1,6 @@
 /** Optimize multi-stop route order via Google Directions API (server-side). */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import { geocodeAddress } from "../lib/geocode.js";
 
@@ -95,6 +96,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("route-optimize API error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Route optimization failed" });
   }
 }

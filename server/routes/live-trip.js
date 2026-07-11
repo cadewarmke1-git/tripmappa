@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { guardProxyRoute, isValidShareToken } from "../lib/apiSecurity.js";
 
 function publicLiveTripRow(row) {
@@ -44,6 +45,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ liveTrip: publicLiveTripRow(data) });
   } catch (err) {
     console.error("live-trip error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not load live trip" });
   }
 }

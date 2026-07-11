@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import { mphFromSpeedMps } from "../lib/liveTripHelpers.js";
 import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
@@ -82,6 +83,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ liveTrip: data });
   } catch (err) {
     console.error("update-convoy-location error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not update convoy location" });
   }
 }

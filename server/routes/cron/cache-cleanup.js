@@ -1,4 +1,5 @@
 import { runCacheCleanupJob } from "../../lib/cacheCleanup.js";
+import { captureServerException } from "../../lib/sentry.js";
 
 /** GET /api/cron/cache-cleanup — weekly purge of expired Supabase cache rows. */
 export default async function handler(req, res) {
@@ -20,6 +21,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, ...result });
   } catch (err) {
     console.error("cron/cache-cleanup error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Cache cleanup failed" });
   }
 }

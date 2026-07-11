@@ -167,6 +167,37 @@ function revertAnswerForHistoryEntry(newAnswers, entry) {
   return out;
 }
 
+/** Temporary — remove after Sentry dashboard verification. DEV only. */
+function DevSentryTestButton() {
+  if (!import.meta.env.DEV) return null;
+  return (
+    <button
+      type="button"
+      className="dev-sentry-test-btn"
+      onClick={() => { throw new Error("Sentry test error — TripMappa dev"); }}
+      aria-label="Throw test error for Sentry"
+      style={{
+        position: "fixed",
+        bottom: "12px",
+        right: "12px",
+        zIndex: 100000,
+        padding: "8px 12px",
+        borderRadius: "8px",
+        border: "2px solid #FF8C42",
+        background: "#0D0A1A",
+        color: "#FFD28C",
+        fontFamily: "Inter, sans-serif",
+        fontSize: "12px",
+        fontWeight: 700,
+        cursor: "pointer",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+      }}
+    >
+      Test Sentry
+    </button>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
   const [appMode, setAppMode] = useState("plan"); // "plan" | "navigate"
@@ -2273,6 +2304,7 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction ? runToastAction : undefined}
       />
+      <DevSentryTestButton />
     </>
   );
 
@@ -2824,6 +2856,7 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction ? runToastAction : undefined}
       />
+      <DevSentryTestButton />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import twilio from "twilio";
+import { captureServerException } from "../lib/sentry.js";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import {
   generateOtp,
@@ -56,6 +57,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, phone, expiresAt });
   } catch (err) {
     console.error("send-sms-otp error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not send verification code" });
   }
 }

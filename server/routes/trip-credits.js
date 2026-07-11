@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { fetchCreditStatus } from "../lib/tripCredits.js";
 import { ensureReferralCode } from "../lib/referrals.js";
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
     return res.status(200).json(status);
   } catch (err) {
     console.error("trip-credits error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not load credits" });
   }
 }

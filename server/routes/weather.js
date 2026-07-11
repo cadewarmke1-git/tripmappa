@@ -1,5 +1,6 @@
 /** Weather.gov (NWS) — conditions for overnight stop cities. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import {
   fetchActiveAlerts,
   fetchCurrentConditions,
@@ -104,6 +105,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ weatherByCity, severeAlerts });
   } catch (err) {
     console.error("weather API error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Failed to fetch weather" });
   }
 }

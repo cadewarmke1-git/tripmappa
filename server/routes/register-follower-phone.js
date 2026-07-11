@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { validateUsPhone } from "../lib/phoneOtp.js";
 import { guardTokenWriteRoute, isValidShareToken, MAX_FOLLOWER_PHONES } from "../lib/apiSecurity.js";
 
@@ -54,6 +55,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, phone: validation.phone });
   } catch (err) {
     console.error("register-follower-phone error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not register phone" });
   }
 }

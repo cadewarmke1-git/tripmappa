@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { captureServerException } from "../lib/sentry.js";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import {
@@ -81,6 +82,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ trip: publicShareRow(data) });
     } catch (err) {
       console.error("itinerary-share GET error:", err);
+    captureServerException(err);
       return res.status(500).json({ error: "Could not load shared trip" });
     }
   }
@@ -154,6 +156,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("itinerary-share POST error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not create share link" });
   }
 }

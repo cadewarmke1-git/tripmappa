@@ -4,6 +4,7 @@ import {
   guardProxyRoute,
   resolveAllowedModel,
 } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 
 /** Haiku proxy — authenticated TripMappa clients only. */
 export default async function handler(req, res) {
@@ -43,7 +44,8 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: "Upstream request failed" });
     }
     res.status(200).json(data);
-  } catch {
+  } catch (err) {
+    captureServerException(err);
     res.status(500).json({ error: "Request failed" });
   }
 }

@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { tryClaimFoundingSlot } from "../lib/foundingMembers.js";
 import {
@@ -60,6 +61,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("account-onboarding error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Could not complete account setup" });
   }
 }

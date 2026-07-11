@@ -1188,6 +1188,8 @@ export function getPlanFlowLayoutClass(question, convoComplete = false) {
   const sparseIds = new Set(["party_composition", "sleeper_cab", "overnight_preference"]);
   if (sparseIds.has(question.id)) return "sparse";
   if (question.type === "party_composition") return "sparse";
+  // Fixed-size preference pickers (7 options) fit above the dock — avoid tall flex chain collapse.
+  if (question.id === "preferences") return "standard";
   if (question.type === "trip_details") return "tall";
   const tallTypes = new Set(["lodging_stay", "multiselect", "multiselect_group"]);
   if (tallTypes.has(question.type)) return "tall";

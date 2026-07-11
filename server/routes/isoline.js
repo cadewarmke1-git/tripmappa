@@ -1,5 +1,6 @@
 /** POST /api/isoline — HERE drive-time reach polygon from an origin. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getHereAccessToken } from "../lib/hereAuth.js";
 import { hasHereCredentials } from "../lib/hereApiKey.js";
 import { decodeFlexiblePolyline } from "../lib/hereFlexiblePolyline.js";
@@ -102,6 +103,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("isoline error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Isoline request failed" });
   }
 }

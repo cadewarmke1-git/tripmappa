@@ -1,5 +1,6 @@
 /** Geocode a city or address server-side. */
 import { geocodeAddress } from "../lib/geocode.js";
+import { captureServerException } from "../lib/sentry.js";
 import { reverseGeocodeCached } from "../lib/geocodeCache.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
 import { clampString, guardProxyRoute } from "../lib/apiSecurity.js";
@@ -22,6 +23,7 @@ export default async function handler(req, res) {
       return res.status(200).json(result);
     } catch (err) {
       console.error("reverse geocode API error:", err);
+    captureServerException(err);
       return res.status(500).json({ error: "Reverse geocoding failed" });
     }
   }
@@ -35,6 +37,7 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     console.error("geocode API error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Geocoding failed" });
   }
 }

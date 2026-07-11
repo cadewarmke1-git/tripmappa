@@ -1,5 +1,6 @@
 /** Google Places — restaurant search near a route stop; OSM-first with Google gap-fill. */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
+import { captureServerException } from "../lib/sentry.js";
 import { getGoogleMapsKey, photoUrl } from "../lib/googleKey.js";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { nearbySearchCached } from "../lib/placesCorridor.js";
@@ -291,6 +292,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ restaurants: verified, city: city || null, empty: verified.length === 0 });
   } catch (err) {
     console.error("restaurants API error:", err);
+    captureServerException(err);
     return res.status(500).json({ error: "Failed to fetch restaurants" });
   }
 }
