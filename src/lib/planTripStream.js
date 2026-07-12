@@ -121,6 +121,9 @@ function parseSseFrames(buffer) {
   return { frames, rest };
 }
 
+/** Max wait for plan-trip SSE `complete` before treating as Anthropic timeout. */
+export const GENERATION_SSE_TIMEOUT_MS = 90_000;
+
 /**
  * Read plan-trip SSE stream; returns final parsed trip on `complete`.
  * @param {Response} response
@@ -129,7 +132,9 @@ function parseSseFrames(buffer) {
  */
 export async function readPlanTripSseStream(response, signal, onProgress) {
   if (!response.body) {
-    throw new Error("Trip planning failed. Please try again in a moment.");
+    const err = new Error("We hit a snag planning your route");
+    err.code = "api_error";
+    throw err;
   }
 
   const reader = response.body.getReader();
@@ -140,6 +145,12 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
   let streamError = null;
   let parallelMode = false;
   let parallelLegProgress = null;
+
+  let timedOut = false;
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    reader.cancel().catch(() => undefined);
+  }, GENERATION_SSE_TIMEOUT_MS);
 
   const abortOnSignal = () => {
     reader.cancel().catch(() => undefined);
@@ -216,12 +227,19 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
       }
     }
   } finally {
+    window.clearTimeout(timeoutId);
     signal?.removeEventListener("abort", abortOnSignal);
+  }
+
+  if (timedOut && !completePayload) {
+    const err = new Error("Your route is taking longer than expected");
+    err.code = "generation_timeout";
+    throw err;
   }
 
   if (streamError) {
     const err = new Error(streamError.error || "Failed to generate trip plan");
-    err.code = streamError.code;
+    err.code = streamError.code || "api_error";
     err.credits = streamError.credits;
     err.limitReached = streamError.limitReached;
     err.resetDate = streamError.resetDate;
@@ -230,7 +248,9 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
   }
 
   if (!completePayload) {
-    throw new Error("Trip planning failed. Please try again in a moment.");
+    const err = new Error("We hit a snag planning your route");
+    err.code = "api_error";
+    throw err;
   }
 
   return completePayload;

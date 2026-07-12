@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import SearchBarAnimated from "./SearchBarAnimated.jsx";
+import RouteMapThumbnail from "./RouteMapThumbnail.jsx";
 
 function shortCity(value) {
   if (!value) return "";
@@ -9,6 +10,17 @@ function shortCity(value) {
 function formatTripDate(date) {
   if (!date) return "";
   return date;
+}
+
+function tripRouteName(trip) {
+  const from = shortCity(trip.origin);
+  const to = shortCity(trip.dest);
+  if (from && to) return `${from} → ${to}`;
+  return trip.origin || trip.dest || "Saved route";
+}
+
+function tripStopCount(trip) {
+  return (trip.stops?.length || 0) + (trip.roadStops?.length || 0);
 }
 
 function tripMatchesFilter(trip, query) {
@@ -37,7 +49,7 @@ export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPla
     <div className="trips-panel">
       <div className="trips-panel-head">
         <h2 className="trips-panel-title">Trips</h2>
-        <p className="trips-panel-sub">Saved routes you can reopen anytime.</p>
+        <p className="trips-panel-sub">Your trip history — resume any route without regenerating.</p>
         {savedTrips.length > 0 && (
           <div className="trips-panel-filter">
             <SearchBarAnimated
@@ -54,28 +66,28 @@ export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPla
         filteredTrips.length > 0 ? (
         <ul className="trips-saved-list">
           {filteredTrips.map(trip => {
-            const stopCount = trip.stops?.length || 0;
-            const from = shortCity(trip.origin);
-            const to = shortCity(trip.dest);
+            const stopCount = tripStopCount(trip);
+            const routeName = tripRouteName(trip);
             return (
               <li key={trip.id} className="trips-saved-card">
-                <div className="trips-saved-card-route">
-                  <span className="trips-saved-card-city">{from || "Origin"}</span>
-                  <span className="trips-saved-card-arrow" aria-hidden="true">→</span>
-                  <span className="trips-saved-card-city">{to || "Destination"}</span>
-                </div>
-                <div className="trips-saved-card-meta">
-                  {formatTripDate(trip.date) && <span>{formatTripDate(trip.date)}</span>}
-                  <span>{stopCount} stop{stopCount !== 1 ? "s" : ""}</span>
-                  {trip.routeInfo?.distance && <span>{trip.routeInfo.distance}</span>}
-                </div>
-                <div className="trips-saved-card-actions">
-                  <button type="button" className="trips-saved-btn trips-saved-btn-primary" onClick={() => onViewTrip(trip)}>
-                    View trip
-                  </button>
-                  <button type="button" className="trips-saved-btn trips-saved-btn-danger" onClick={() => onDeleteTrip(trip.id)}>
-                    Delete
-                  </button>
+                <RouteMapThumbnail routePoints={trip.routeInfo?.routePoints} className="trips-saved-card-thumb" />
+                <div className="trips-saved-card-body">
+                  <div className="trips-saved-card-route">
+                    <span className="trips-saved-card-name">{routeName}</span>
+                  </div>
+                  <div className="trips-saved-card-meta">
+                    {formatTripDate(trip.date) && <span>{formatTripDate(trip.date)}</span>}
+                    <span>{stopCount} stop{stopCount !== 1 ? "s" : ""}</span>
+                    {trip.routeInfo?.distance && <span>{trip.routeInfo.distance}</span>}
+                  </div>
+                  <div className="trips-saved-card-actions">
+                    <button type="button" className="trips-saved-btn trips-saved-btn-primary" onClick={() => onViewTrip(trip)}>
+                      Resume trip
+                    </button>
+                    <button type="button" className="trips-saved-btn trips-saved-btn-danger" onClick={() => onDeleteTrip(trip.id)}>
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </li>
             );

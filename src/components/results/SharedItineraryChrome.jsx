@@ -23,6 +23,7 @@ export function SharedItineraryFooter() {
       <a href="/" className="shared-itinerary-cta btn-generate">
         Plan your own trip →
       </a>
+      <p className="shared-itinerary-cta-sub">Get your own verified route in seconds</p>
     </footer>
   );
 }

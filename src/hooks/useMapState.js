@@ -20,6 +20,12 @@ import {
   resolveHeroOriginCoords,
 } from "../lib/heroExplore.js";
 import { isTowingSelected, getFuelRangeMiles } from "../lib/tripAccommodations.js";
+import {
+  buildRouteSignature,
+  getCachedDirections,
+  setCachedDirections,
+  buildDirectionsCacheEntry,
+} from "../lib/directionsCache.js";
 
 /**
  * Map / routing state and effects for App.
@@ -228,10 +234,39 @@ export function useMapState({
     }
 
     if (!window.google) return Promise.resolve({ ok: false });
+
+    const scenic = isScenicRoute(answers);
+    const signature = buildRouteSignature({ origin: originVal, destination: destVal });
+    const cached = getCachedDirections(signature);
+    if (cached) {
+      setRouteError(null);
+      setRouteInfo({
+        ...cached.routeInfo,
+        vehicleType: vehicle,
+        timingMode,
+        arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
+        scenic,
+        truckSafe: isTruckVehicle(vehicle),
+        rvSafe: isRvVehicle(vehicle),
+        truckHeight: answers.truck_height,
+        truckWeight: answers.truck_weight,
+        truckHazmat: answers.truck_hazmat,
+        rvHeight: answers.rv_height,
+        rvWeight: answers.rv_weight,
+        rvTowing: answers.rv_towing,
+      });
+      setOrigin(originVal);
+      setDest(destVal);
+      setRoutePath(cached.routePath);
+      setTruckRoutePath(null);
+      setDirectionsResult(cached.directionsResult);
+      scheduleFitBounds(cached.routePoints, 60);
+      return Promise.resolve({ ok: true, routeInfo: cached.routeInfo, fromCache: true });
+    }
+
     setRouteLoading(true);
     setTrafficAlert(false);
 
-    const scenic = isScenicRoute(answers);
     const routeRequest = {
       origin: originVal,
       destination: destVal,
@@ -331,6 +366,25 @@ export function useMapState({
           setTruckRoutePath(null);
           setDirectionsResult(result);
 
+          setCachedDirections(signature, buildDirectionsCacheEntry(result, {
+            originVal,
+            destVal,
+            routeInfoExtras: {
+              vehicleType: vehicle,
+              timingMode,
+              arriveBy: timingMode === "arrive_by" ? arriveByDate : null,
+              scenic,
+              truckSafe: isTruckVehicle(vehicle),
+              rvSafe: isRvVehicle(vehicle),
+              truckHeight: answers.truck_height,
+              truckWeight: answers.truck_weight,
+              truckHazmat: answers.truck_hazmat,
+              rvHeight: answers.rv_height,
+              rvWeight: answers.rv_weight,
+              rvTowing: answers.rv_towing,
+            },
+          }));
+
           scheduleFitBounds(nextRouteInfo.routePoints, 60);
           resolve({ ok: true, routeInfo: nextRouteInfo });
         } else {
@@ -360,6 +414,17 @@ export function useMapState({
 
   const fetchRouteBetween = useCallback((originVal, destVal) => {
     if (!originVal || !destVal || !window.google) return Promise.resolve(false);
+
+    const signature = buildRouteSignature({ origin: originVal, destination: destVal });
+    const cached = getCachedDirections(signature);
+    if (cached) {
+      setRouteInfo(cached.routeInfo);
+      setRoutePath(cached.routePath);
+      setDirectionsResult(cached.directionsResult);
+      scheduleFitBounds(cached.routePoints, 60);
+      return Promise.resolve(true);
+    }
+
     setRouteLoading(true);
     setTrafficAlert(false);
 
@@ -380,7 +445,7 @@ export function useMapState({
         if (status === "OK") {
           const route = result.routes[0];
           const leg = route.legs[0];
-          setRouteInfo({
+          const routeInfo = {
             distance: leg.distance.text,
             duration: leg.duration.text,
             start: leg.start_address.split(",")[0],
@@ -397,13 +462,16 @@ export function useMapState({
             })),
             vehicleType: "Car",
             timingMode: "leave_now",
-          });
+          };
+          setRouteInfo(routeInfo);
           setRoutePath(route.overview_path);
           setDirectionsResult(result);
-          scheduleFitBounds(route.overview_path.map((p) => ({
-            lat: typeof p.lat === "function" ? p.lat() : p.lat,
-            lng: typeof p.lng === "function" ? p.lng() : p.lng,
-          })), 60);
+          setCachedDirections(signature, buildDirectionsCacheEntry(result, {
+            originVal,
+            destVal,
+            routeInfoExtras: { vehicleType: "Car", timingMode: "leave_now" },
+          }));
+          scheduleFitBounds(routeInfo.routePoints, 60);
           resolve(true);
         } else {
           resolve(false);

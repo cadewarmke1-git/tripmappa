@@ -119,6 +119,8 @@ export default function AppMap({
   highlightedLegPath = [],
   inAppNavigationOnly = false,
   routeFocusMode = false,
+  navigationPosition = null,
+  navigationHeading = null,
 }) {
   const {
     isLoaded,
@@ -317,6 +319,8 @@ export default function AppMap({
             )}
             <NavigationCarMarker
               path={activeRoutePath}
+              position={navigationPosition}
+              heading={navigationHeading}
               visible={showNavigationCar || routeFocusMode}
             />
             {highlightedLegPath.length > 1 && (

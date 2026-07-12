@@ -10,6 +10,7 @@ import EnrichmentNotice from "./EnrichmentNotice.jsx";
 import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
 import { SharedItineraryHeader, SharedItineraryFooter } from "./SharedItineraryChrome.jsx";
+import { detectPartialTripResults } from "../../lib/partialTripResults.js";
 
 export default function TripResultsPanel({
   panelClassName = "",
@@ -107,6 +108,16 @@ export default function TripResultsPanel({
   const activeDay = days[Math.min(activeDayIndex, Math.max(0, days.length - 1))] ?? days[0];
   const activeDayIdx = days.indexOf(activeDay);
 
+  const showPartialResultsWarning = useMemo(() => detectPartialTripResults({
+    stops,
+    roadStops,
+    answers,
+    days,
+    restaurantsByCity,
+    enrichingTrip,
+    enrichingPlaces: false,
+  }), [stops, roadStops, answers, days, restaurantsByCity, enrichingTrip]);
+
   function selectDay(index) {
     onDaySelect?.(index);
   }
@@ -183,6 +194,12 @@ export default function TripResultsPanel({
           {tripUsedFallback && (
             <div className="trip-fallback-notice" role="status">
               This trip uses estimated route data from an earlier session.
+            </div>
+          )}
+
+          {showPartialResultsWarning && (
+            <div className="trip-partial-results-notice" role="status">
+              Some stops along your route couldn&apos;t be verified — results may be incomplete
             </div>
           )}
 

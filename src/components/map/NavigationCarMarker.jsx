@@ -85,14 +85,17 @@ function CarSVG() {
   );
 }
 
-export default function NavigationCarMarker({ path = [], visible = false }) {
+export default function NavigationCarMarker({ path = [], position = null, heading: headingProp = null, visible = false }) {
   const containerRef = useRef(null);
-  const position = path?.[0];
+  const routePosition = path?.[0];
+  const activePosition = position || routePosition;
 
-  const heading = useMemo(
+  const pathHeading = useMemo(
     () => (visible && path?.length >= 2 ? computePathHeadingDegrees(path) : 0),
     [visible, path],
   );
+
+  const heading = headingProp != null && Number.isFinite(headingProp) ? headingProp : pathHeading;
 
   // Apply rotation + smooth transition to the inner car element.
   // The SVG art faces east (right), so we subtract 90° to make 0° = north.
@@ -104,11 +107,11 @@ export default function NavigationCarMarker({ path = [], visible = false }) {
     }
   }, [heading]);
 
-  if (!visible || !position) return null;
+  if (!visible || !activePosition) return null;
 
   return (
     <OverlayView
-      position={{ lat: position.lat, lng: position.lng }}
+      position={{ lat: activePosition.lat, lng: activePosition.lng }}
       mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
     >
       <div

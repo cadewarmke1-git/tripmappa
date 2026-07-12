@@ -25,7 +25,13 @@ export function isTripPlanComplete(parsed) {
   return Boolean(parsed.stops?.length || parsed.roadStops?.length);
 }
 
+export const GENERATION_TIMEOUT_MESSAGE = "Your route is taking longer than expected";
+export const GENERATION_API_ERROR_MESSAGE = "We hit a snag planning your route";
+
 export function generationFailureMessage(err) {
+  if (err?.code === "generation_timeout") {
+    return GENERATION_TIMEOUT_MESSAGE;
+  }
   if (err?.code === "rate_limited" || err?.rateLimited) {
     return "Please wait a moment before generating another trip.";
   }
@@ -35,10 +41,13 @@ export function generationFailureMessage(err) {
     }
     return "No trip generations remaining.";
   }
+  if (err?.code === "api_error" || (err?.httpStatus != null && err.httpStatus >= 400)) {
+    return GENERATION_API_ERROR_MESSAGE;
+  }
   if (err?.message?.includes("incomplete")) {
     return "We couldn't build a complete trip plan. Please try again in a moment.";
   }
-  return "Trip planning failed. Please try again in a moment.";
+  return GENERATION_API_ERROR_MESSAGE;
 }
 
 /** @deprecated use isTripPlanComplete */

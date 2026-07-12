@@ -5866,9 +5866,10 @@
     background: rgba(13, 10, 26, 0.92);
   }
   .shared-itinerary-wordmark {
-    font-family: "Fraunces", Georgia, serif; font-size: 26px; font-weight: 700;
+    font-family: "Fraunces", Georgia, serif; font-size: 32px; font-weight: 700;
     background: linear-gradient(90deg, #ffd28c, #ff8c42);
     -webkit-background-clip: text; background-clip: text; color: transparent;
+    letter-spacing: 0.02em;
   }
   .shared-itinerary-tagline {
     margin: 4px 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.72);
@@ -5887,8 +5888,12 @@
   }
   .shared-itinerary-cta {
     display: inline-flex; align-items: center; justify-content: center;
-    min-height: 44px; padding: 12px 22px; text-decoration: none;
-    font-size: 14px; font-weight: 700;
+    min-height: 52px; padding: 14px 28px; text-decoration: none;
+    font-size: 17px; font-weight: 700; width: min(100%, 320px);
+  }
+  .shared-itinerary-cta-sub {
+    margin: 10px 0 0; font-size: 13px; line-height: 1.4;
+    color: rgba(255, 210, 140, 0.85);
   }
   .road-stop-card-name { font-family: "Fraunces", Georgia, serif; font-size: 14px; font-weight: 700; margin: 0 0 6px; line-height: 1.2; color: var(--ink); }
   /* Raise road-stop card metadata contrast on dark surfaces (Impeccable colorize). */
@@ -8509,12 +8514,13 @@
   .trips-panel-filter { margin-top: 12px; }
   .trips-saved-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
   .trips-saved-card {
+    display: flex; gap: 12px; align-items: flex-start;
     padding: 14px 16px; border-radius: 14px;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,210,140,0.2);
   }
-  .trips-saved-card-route {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
-  }
+  .trips-saved-card-body { flex: 1; min-width: 0; }
+  .trips-saved-card-route { margin-bottom: 8px; }
+  .trips-saved-card-name { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3; }
   .trips-saved-card-city { font-size: 15px; font-weight: 700; color: #fff; }
   .trips-saved-card-arrow { color: var(--gold-primary); font-size: 14px; }
   .trips-saved-card-meta {
@@ -8529,6 +8535,427 @@
   }
   .trips-saved-btn-danger {
     background: transparent; border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.65);
+  }
+  .trip-map-fullscreen > .navigate-route-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(13, 10, 26, 0.94);
+    border-bottom: 1px solid rgba(255, 210, 140, 0.22);
+  }
+
+  /* Turn-by-turn navigation cockpit */
+  .nav-cockpit {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 55;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 14px 16px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 210, 140, 0.35);
+    background: #0D0A1A;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    font-family: Inter, system-ui, sans-serif;
+  }
+  .navigate-map-fullscreen .nav-cockpit,
+  .trip-map-fullscreen .nav-cockpit {
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .nav-cockpit--day {
+    background: #FDF3E0;
+    border-color: rgba(201, 146, 46, 0.4);
+    color: #0D0A1A;
+  }
+  .nav-cockpit-offroute {
+    margin: -4px -4px 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 140, 66, 0.18);
+    border: 1px solid rgba(255, 140, 66, 0.45);
+    font-size: 12px;
+    font-weight: 600;
+    color: #FF8C42;
+    text-align: center;
+  }
+  .nav-cockpit-arrival {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 210, 140, 0.14);
+    border: 1px solid rgba(255, 210, 140, 0.4);
+  }
+  .nav-cockpit-arrival-label { font-size: 11px; color: rgba(255, 210, 140, 0.85); width: 100%; }
+  .nav-cockpit-arrival-name {
+    font-family: Fraunces, Georgia, serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #FFD28C;
+    flex: 1;
+  }
+  .nav-cockpit-arrival-dismiss {
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 210, 140, 0.4);
+    background: transparent;
+    color: #FFD28C;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .nav-cockpit-gps-warn {
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: rgba(255, 210, 140, 0.75);
+    text-align: center;
+  }
+  .nav-cockpit-primary {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .nav-cockpit-maneuver {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 140, 66, 0.15);
+    color: #FF8C42;
+  }
+  .nav-maneuver-icon { width: 28px; height: 28px; }
+  .nav-cockpit-instruction-block { flex: 1; min-width: 0; }
+  .nav-cockpit-distance {
+    font-family: Fraunces, Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: #FFD28C;
+    margin-bottom: 4px;
+  }
+  .nav-cockpit--day .nav-cockpit-distance { color: #E06820; }
+  .nav-cockpit-instruction {
+    margin: 0;
+    font-family: Fraunces, Georgia, serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #FDF3E0;
+  }
+  .nav-cockpit--day .nav-cockpit-instruction { color: #0D0A1A; }
+  .nav-cockpit-road {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: rgba(255, 210, 140, 0.7);
+  }
+  .nav-cockpit--day .nav-cockpit-road { color: rgba(13, 10, 26, 0.55); }
+  .nav-cockpit-speed {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 210, 140, 0.2);
+  }
+  .nav-cockpit-speed-val { display: block; font-size: 18px; font-weight: 700; color: #FFD28C; line-height: 1; }
+  .nav-cockpit-speed-unit { font-size: 9px; color: rgba(255, 210, 140, 0.6); text-transform: uppercase; }
+  .nav-cockpit-then {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 210, 140, 0.15);
+    font-size: 12px;
+    color: rgba(255, 210, 140, 0.75);
+  }
+  .nav-cockpit-then-label { font-weight: 700; margin-right: 6px; color: #FF8C42; }
+  .nav-cockpit-legs { margin-top: 12px; }
+  .nav-cockpit-legs-label { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .nav-cockpit-legs-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255, 210, 140, 0.55); }
+  .nav-cockpit-legs-stop { font-size: 11px; font-weight: 600; color: #FFD28C; }
+  .nav-cockpit-legs-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 210, 140, 0.15);
+    overflow: hidden;
+  }
+  .nav-cockpit-legs-fill {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #FFD28C, #FF8C42);
+    transition: width 0.4s ease;
+  }
+  .nav-cockpit-legs-count { display: block; margin-top: 4px; font-size: 10px; color: rgba(255, 210, 140, 0.5); }
+  .nav-cockpit-eta-row {
+    display: flex;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 210, 140, 0.15);
+  }
+  .nav-cockpit-eta-cell { flex: 1; text-align: center; }
+  .nav-cockpit-eta-divider { width: 1px; background: rgba(255, 210, 140, 0.15); margin: 0 8px; }
+  .nav-cockpit-eta-label { display: block; font-size: 10px; color: rgba(255, 210, 140, 0.55); margin-bottom: 2px; }
+  .nav-cockpit-eta-val { display: block; font-family: Fraunces, Georgia, serif; font-size: 18px; font-weight: 700; color: #FFD28C; }
+  .nav-cockpit-eta-sub { display: block; font-size: 11px; color: rgba(255, 210, 140, 0.6); margin-top: 2px; }
+  .nav-cockpit-queue { margin-top: 10px; }
+  .nav-cockpit-queue-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255, 210, 140, 0.5); }
+  .nav-cockpit-queue-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .nav-cockpit-queue-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(253, 243, 224, 0.85);
+  }
+  .nav-cockpit-queue-item--passed { opacity: 0.45; text-decoration: line-through; }
+  .nav-cockpit-queue-item--current .nav-cockpit-queue-name { color: #FFD28C; font-weight: 600; }
+  .nav-cockpit-queue-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 210, 140, 0.4);
+    flex-shrink: 0;
+  }
+  .nav-cockpit-queue-item--current .nav-cockpit-queue-dot { background: #FF8C42; }
+  .nav-cockpit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .nav-cockpit-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .nav-cockpit-btn-secondary {
+    background: rgba(255, 210, 140, 0.1);
+    border-color: rgba(255, 210, 140, 0.3);
+    color: #FFD28C;
+  }
+  .nav-cockpit-btn-end {
+    background: rgba(255, 140, 66, 0.15);
+    border-color: rgba(255, 140, 66, 0.4);
+    color: #FF8C42;
+  }
+
+  .nav-cockpit-live {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #3dd9d0;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(61, 217, 208, 0.1);
+    border: 1px solid rgba(61, 217, 208, 0.25);
+  }
+  .nav-cockpit-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3dd9d0;
+    flex-shrink: 0;
+    animation: nav-live-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes nav-live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .nav-cockpit-corridor {
+    position: relative;
+    margin-bottom: 10px;
+    padding: 10px 32px 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    border: 1px solid rgba(255, 140, 66, 0.35);
+    background: rgba(255, 140, 66, 0.12);
+  }
+  .nav-cockpit-corridor--weather {
+    border-color: rgba(255, 95, 168, 0.35);
+    background: rgba(255, 95, 168, 0.1);
+  }
+  .nav-cockpit-corridor--construction {
+    border-color: rgba(255, 210, 140, 0.4);
+    background: rgba(255, 210, 140, 0.08);
+  }
+  .nav-cockpit-corridor-title { font-weight: 700; color: #FFD28C; display: block; }
+  .nav-cockpit-corridor-text { margin: 4px 0 0; color: rgba(253, 243, 224, 0.8); }
+  .nav-cockpit-corridor-dismiss {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255, 210, 140, 0.7);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+  }
+
+  .nav-cockpit-fuel {
+    position: relative;
+    margin-bottom: 10px;
+    padding: 10px 32px 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    border: 1px solid rgba(61, 217, 208, 0.3);
+    background: rgba(61, 217, 208, 0.08);
+  }
+  .nav-cockpit-fuel--caution {
+    border-color: rgba(255, 210, 140, 0.4);
+    background: rgba(255, 210, 140, 0.1);
+  }
+  .nav-cockpit-fuel--warn {
+    border-color: rgba(255, 140, 66, 0.55);
+    background: rgba(255, 140, 66, 0.15);
+    padding-right: 12px;
+  }
+  .nav-cockpit-fuel-label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 210, 140, 0.65);
+    margin-bottom: 4px;
+  }
+  .nav-cockpit-fuel--warn .nav-cockpit-fuel-label { color: #FF8C42; }
+  .nav-cockpit-fuel-text { margin: 0; color: rgba(253, 243, 224, 0.9); line-height: 1.45; }
+  .nav-cockpit-fuel-dismiss {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255, 210, 140, 0.6);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .nav-cockpit-planned {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 210, 140, 0.06);
+    border: 1px solid rgba(255, 210, 140, 0.18);
+  }
+  .nav-cockpit-planned-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .nav-cockpit-planned-kind {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: #FF8C42;
+  }
+  .nav-cockpit-planned-weather {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #FFD28C;
+  }
+  .nav-cockpit-planned-title {
+    font-family: Fraunces, Georgia, serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #FFD28C;
+    line-height: 1.25;
+  }
+  .nav-cockpit-planned-city {
+    font-size: 11px;
+    color: rgba(255, 210, 140, 0.55);
+    margin-top: 2px;
+  }
+  .nav-cockpit-planned-lines {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav-cockpit-planned-line {
+    font-size: 12px;
+    color: rgba(253, 243, 224, 0.85);
+    line-height: 1.35;
+  }
+  .nav-cockpit-planned-line--meal { color: #ff5fa8; }
+  .nav-cockpit-planned-line--lodging { color: #FFD28C; }
+
+  .nav-cockpit-arrival-sub {
+    display: block;
+    width: 100%;
+    font-size: 12px;
+    color: rgba(253, 243, 224, 0.8);
+    margin-top: 4px;
+    line-height: 1.35;
+  }
+  .nav-cockpit-arrival-weather {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #FFD28C;
+    margin-top: 4px;
+  }
+
+  .nav-cockpit--day .nav-cockpit-live { color: #2a9d8f; background: rgba(42, 157, 143, 0.1); }
+  .nav-cockpit--day .nav-cockpit-planned { background: rgba(13, 10, 26, 0.04); border-color: rgba(13, 10, 26, 0.1); }
+  .nav-cockpit--day .nav-cockpit-planned-title { color: #0D0A1A; }
+  .nav-cockpit--day .nav-cockpit-planned-line { color: rgba(13, 10, 26, 0.75); }
+  .nav-cockpit--day .nav-cockpit-fuel-text { color: rgba(13, 10, 26, 0.85); }
+
+  .route-map-thumbnail {
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .route-map-thumbnail-bg { fill: rgba(13, 10, 26, 0.85); }
+  .route-map-thumbnail-line {
+    stroke: #ff8c42;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .route-map-thumbnail-dot-start { fill: #ffd28c; }
+  .route-map-thumbnail-dot-end { fill: #ff8c42; }
+  .route-map-thumbnail--empty {
+    width: 120px; height: 72px; display: flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 210, 140, 0.2); border-radius: 8px;
+  }
+  .route-map-thumbnail-fallback { font-size: 11px; font-weight: 600; color: rgba(255, 210, 140, 0.65); }
+  .profile-trip-card {
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .profile-trip-card-content { flex: 1; min-width: 0; }
+  .profile-trip-card-name {
+    font-family: "Fraunces", Georgia, serif; font-size: 15px; font-weight: 700; margin-bottom: 6px;
   }
   .trips-empty-state {
     text-align: center; padding: 32px 16px; border-radius: 14px;
@@ -8565,6 +8992,11 @@
     margin: 0 0 14px; padding: 10px 14px; border-radius: 10px;
     border: 1px solid rgba(255,180,100,0.35); background: rgba(255,140,60,0.12);
     font-size: 12px; line-height: 1.45; color: rgba(255,220,180,0.95);
+  }
+  .trip-partial-results-notice {
+    margin: 0 0 14px; padding: 10px 14px; border-radius: 10px;
+    border: 1px solid rgba(255,210,140,0.28); background: rgba(255,210,140,0.08);
+    font-size: 12px; line-height: 1.45; color: rgba(255,230,200,0.88);
   }
 
   .plan-generation-error {

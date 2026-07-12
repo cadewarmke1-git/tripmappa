@@ -4,6 +4,12 @@ import { shouldUseTruckRouting } from "./truckRoutingApi.js";
 import { isScenicRoute, hasPref, isTruckVehicle, isRvVehicle } from "./vehicles.js";
 import { isTowingSelected } from "./tripAccommodations.js";
 import { getIncludedStops, routingPointsFromWaypoints } from "./itineraryWaypoints.js";
+import {
+  buildRouteSignature,
+  getCachedDirections,
+  setCachedDirections,
+  buildDirectionsCacheEntry,
+} from "./directionsCache.js";
 
 export function buildGoogleRouteRequest({
   origin,
@@ -125,6 +131,20 @@ export async function fetchItineraryRoute({
 
   if (!window.google?.maps) return { ok: false, error: "Map not ready" };
 
+  const signature = buildRouteSignature({ origin, destination, waypoints });
+  const cached = getCachedDirections(signature);
+  if (cached) {
+    return {
+      ok: true,
+      provider: "google",
+      directionsResult: cached.directionsResult,
+      routePoints: cached.routePoints,
+      routeLegs: cached.routeLegs,
+      routeInfo: cached.routeInfo,
+      fromCache: true,
+    };
+  }
+
   const routeRequest = buildGoogleRouteRequest({
     origin,
     destination,
@@ -141,37 +161,18 @@ export async function fetchItineraryRoute({
   }
 
   const route = result.routes[0];
-  const leg = route.legs[0];
-  const totalDistance = route.legs.reduce((s, l) => s + (l.distance?.value || 0), 0);
-  const totalDuration = route.legs.reduce((s, l) => s + (l.duration?.value || 0), 0);
-
-  const formatMi = (m) => {
-    const miles = m / 1609.344;
-    return miles >= 10 ? `${Math.round(miles)} mi` : `${miles.toFixed(1)} mi`;
-  };
-  const formatDur = (sec) => {
-    const h = Math.floor(sec / 3600);
-    const m = Math.round((sec % 3600) / 60);
-    if (h <= 0) return `${m} min`;
-    return m > 0 ? `${h} hr ${m} min` : `${h} hr`;
-  };
-
-  const routePoints = route.overview_path.map(p => ({
-    lat: typeof p.lat === "function" ? p.lat() : p.lat,
-    lng: typeof p.lng === "function" ? p.lng() : p.lng,
-  }));
+  const cacheEntry = buildDirectionsCacheEntry(result, {
+    originVal: origin,
+    destVal: destination,
+  });
+  setCachedDirections(signature, cacheEntry);
 
   return {
     ok: true,
     provider: "google",
-    directionsResult: result,
-    routePoints,
-    routeLegs: extractRouteLegsFromDirections(route),
-    routeInfo: {
-      distance: totalDistance ? formatMi(totalDistance) : leg.distance?.text,
-      duration: totalDuration ? formatDur(totalDuration) : leg.duration?.text,
-      routePoints,
-      routeLegs: extractRouteLegsFromDirections(route),
-    },
+    directionsResult: cacheEntry.directionsResult,
+    routePoints: cacheEntry.routePoints,
+    routeLegs: cacheEntry.routeLegs,
+    routeInfo: cacheEntry.routeInfo,
   };
 }

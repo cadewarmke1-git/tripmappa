@@ -32,7 +32,7 @@ import {
   buildTravelerDossier,
 } from "../lib/tripHistoryAnalysis.js";
 import { stopsToMapMarkers } from "../lib/mapMarkers.js";
-import { getEffectiveVehicle, inferFuelType } from "../lib/vehicles.js";
+import { getEffectiveVehicle, inferFuelType, isScenicRoute } from "../lib/vehicles.js";
 import { normalizeTripAnswers } from "../lib/tripFlow.js";
 import { buildContinuousDriveTip, isContinuousDrive } from "../lib/driveMode.js";
 import { consolidateAndCapAlerts } from "../lib/tripAlerts.js";
@@ -112,6 +112,7 @@ export function useGeneration({
   setTripLegs,
   setTripAlerts,
   setActiveDayIndex,
+  setDismissedAlerts,
   setLastTripPreview,
   setResultsView,
   setTab,
@@ -589,7 +590,7 @@ export function useGeneration({
           return;
         } catch (err) {
           lastErr = err;
-          if (err.name === "AbortError" || err.code === "no_credits") throw err;
+          if (err.name === "AbortError" || err.code === "no_credits" || err.code === "generation_timeout") throw err;
           if (attempt === 0) continue;
           throw lastErr;
         }

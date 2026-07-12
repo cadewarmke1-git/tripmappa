@@ -151,7 +151,7 @@ export default function LodgingCardsSection({
         <>
           <div className="lodging-cards-scroll">
             {lodgingType === "hotel" && items.map(hotel => (
-              <HotelCard key={hotel.id} hotel={hotel} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
+              <HotelCard key={hotel.id} hotel={hotel} city={city} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
             ))}
             {lodgingType === "rv" && items.map(park => (
               <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} readOnly={readOnly} />

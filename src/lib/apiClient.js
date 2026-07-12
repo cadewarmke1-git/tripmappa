@@ -13,7 +13,8 @@ async function readApiJson(response) {
 
 function throwPlanTripError(response, data) {
   const err = new Error(data.error || "Failed to generate trip");
-  err.code = data.code;
+  err.code = data.code || (response.ok ? undefined : "api_error");
+  err.httpStatus = response.status;
   err.credits = data.credits;
   err.limitReached = data.limitReached;
   err.resetDate = data.resetDate;

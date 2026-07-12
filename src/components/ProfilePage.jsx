@@ -4,6 +4,7 @@ import UserAvatar from "./UserAvatar.jsx";
 import { getDisplayName } from "../lib/avatarUtils.js";
 import { computeTripStats, getTripVehicle } from "../lib/tripStats.js";
 import DecorMark from "./icons/DecorMark.jsx";
+import RouteMapThumbnail from "./RouteMapThumbnail.jsx";
 import {
   TRAILBLAZER_BENEFITS,
   VOYAGER_BENEFITS,
@@ -71,31 +72,32 @@ function StatCard({ value, label }) {
 
 function SavedTripCard({ trip, onLoad, onDelete }) {
   const vehicle = getTripVehicle(trip);
+  const stopCount = (trip.stops?.length || 0) + (trip.roadStops?.length || 0);
+  const from = trip.origin?.split(",")[0]?.trim() || trip.origin;
+  const to = trip.dest?.split(",")[0]?.trim() || trip.dest;
+  const routeName = from && to ? `${from} → ${to}` : (trip.origin || trip.dest || "Saved route");
+
   return (
     <div className="profile-trip-card">
-      <div className="profile-trip-card-route">
-        <div className="profile-trip-card-line" aria-hidden="true">
-          <span className="profile-trip-dot profile-trip-dot-start" />
-          <span className="profile-trip-line-seg" />
-          <span className="profile-trip-dot profile-trip-dot-end" />
+      <RouteMapThumbnail routePoints={trip.routeInfo?.routePoints} className="profile-trip-card-thumb" />
+      <div className="profile-trip-card-content">
+        <div className="profile-trip-card-route">
+          <div className="profile-trip-card-name">{routeName}</div>
         </div>
-        <div className="profile-trip-card-cities">
-          <div className="profile-trip-origin">{trip.origin}</div>
-          <div className="profile-trip-dest">{trip.dest}</div>
+        <div className="profile-trip-card-meta">
+          <span>{trip.date || "—"}</span>
+          <span>{stopCount} stop{stopCount !== 1 ? "s" : ""}</span>
+          <span className="profile-trip-card-vehicle">{vehicle}</span>
+          {trip.routeInfo?.distance && <span>{trip.routeInfo.distance}</span>}
         </div>
-      </div>
-      <div className="profile-trip-card-meta">
-        <span>{trip.date || "—"}</span>
-        <span className="profile-trip-card-vehicle">{vehicle}</span>
-        {trip.routeInfo?.distance && <span>{trip.routeInfo.distance}</span>}
-      </div>
-      <div className="profile-trip-card-actions">
-        <button type="button" className="profile-btn profile-btn-secondary" onClick={() => onLoad(trip)}>
-          Load Trip
-        </button>
-        <button type="button" className="profile-btn profile-btn-danger" onClick={() => onDelete(trip.id)}>
-          Delete
-        </button>
+        <div className="profile-trip-card-actions">
+          <button type="button" className="profile-btn profile-btn-secondary" onClick={() => onLoad(trip)}>
+            Resume trip
+          </button>
+          <button type="button" className="profile-btn profile-btn-danger" onClick={() => onDelete(trip.id)}>
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );

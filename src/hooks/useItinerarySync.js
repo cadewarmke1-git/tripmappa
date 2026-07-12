@@ -229,9 +229,18 @@ export function useItinerarySync({
   const handleStartNavigation = useCallback(() => {
     setRouteFocusMode(true);
     setHighlightedLegIndex(null);
-    fitMapToRoute(routeInfo?.routePoints, itineraryWaypoints);
+    const firstStop = itineraryWaypoints.find((w) => w.kind === "stop" && w.included !== false)
+      || itineraryWaypoints.find((w) => w.kind === "origin")
+      || itineraryWaypoints[0];
+    if (firstStop?.lat != null && firstStop?.lng != null && mapRef.current) {
+      mapRef.current.panTo({ lat: firstStop.lat, lng: firstStop.lng });
+      const zoom = mapRef.current.getZoom?.() ?? 8;
+      if (zoom < 12) mapRef.current.setZoom(12);
+    } else {
+      fitMapToRoute(routeInfo?.routePoints, itineraryWaypoints);
+    }
     return true;
-  }, [fitMapToRoute, routeInfo, itineraryWaypoints]);
+  }, [fitMapToRoute, routeInfo, itineraryWaypoints, mapRef]);
 
   const resetItinerary = useCallback(() => {
     setItineraryWaypoints([]);

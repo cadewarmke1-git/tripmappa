@@ -64,6 +64,9 @@ import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
 import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
+import TurnByTurnPanel from "./components/navigate/TurnByTurnPanel.jsx";
+import { useTurnByTurnNavigation } from "./hooks/useTurnByTurnNavigation.js";
+import { useNavigationTripContext } from "./hooks/useNavigationTripContext.js";
 import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
 import AppNavBar from "./components/AppNavBar.jsx";
 import AppMap from "./components/AppMap.jsx";
@@ -165,37 +168,6 @@ function revertAnswerForHistoryEntry(newAnswers, entry) {
     delete out.kids_ages;
   }
   return out;
-}
-
-/** Temporary — remove after Sentry dashboard verification. DEV only. */
-function DevSentryTestButton() {
-  if (!import.meta.env.DEV) return null;
-  return (
-    <button
-      type="button"
-      className="dev-sentry-test-btn"
-      onClick={() => { throw new Error("Sentry test error — TripMappa dev"); }}
-      aria-label="Throw test error for Sentry"
-      style={{
-        position: "fixed",
-        bottom: "12px",
-        right: "12px",
-        zIndex: 100000,
-        padding: "8px 12px",
-        borderRadius: "8px",
-        border: "2px solid #FF8C42",
-        background: "#0D0A1A",
-        color: "#FFD28C",
-        fontFamily: "Inter, sans-serif",
-        fontSize: "12px",
-        fontWeight: 700,
-        cursor: "pointer",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-      }}
-    >
-      Test Sentry
-    </button>
-  );
 }
 
 export default function App() {
@@ -1054,6 +1026,93 @@ export default function App() {
   });
   itinerarySyncRef.current = itinerarySync;
 
+  const navigationActive = useMemo(() => {
+    const hasRoute = Boolean(
+      routeInfo?.routePoints?.length
+      || truckRoutePath?.length
+      || directionsResult?.routes?.[0],
+    );
+    if (!hasRoute) return false;
+    if (view === "hero" && appMode === "navigate") return true;
+    if (generated && resultsView === "map" && itinerarySync.routeFocusMode) return true;
+    return false;
+  }, [
+    view, appMode, routeInfo?.routePoints?.length, truckRoutePath?.length,
+    directionsResult, generated, resultsView, itinerarySync.routeFocusMode,
+  ]);
+
+  const turnByTurn = useTurnByTurnNavigation({
+    active: navigationActive,
+    directionsResult,
+    routePoints: routeInfo?.routePoints || truckRoutePath || [],
+    itineraryWaypoints: itinerarySync.itineraryWaypoints,
+    destination: dest,
+    mapRef,
+    onToast: toast_,
+    followMap: navigationActive,
+  });
+
+  const navTripContext = useNavigationTripContext({
+    active: navigationActive,
+    userPosition: turnByTurn.userPosition,
+    nextWaypoint: turnByTurn.legTargets[turnByTurn.navDisplay?.currentLegIndex ?? 0] || null,
+    arrivingStop: turnByTurn.arrivingStop,
+    passedStopIds: turnByTurn.passedStopIds,
+    answers,
+    roadStops,
+    routePoints: routeInfo?.routePoints || truckRoutePath || [],
+    routeInfo,
+    selectedLodging,
+    weatherByCity,
+    restaurantsByCity,
+    tripTips,
+    liveTripTips: displayLiveTips,
+    tripAlerts: tripAlerts.filter((a) => !dismissedAlerts.includes(a.id)),
+    liveSharingActive,
+  });
+
+  function handleEndNavigation() {
+    itinerarySync.setRouteFocusMode(false);
+    turnByTurn.resetNavigation();
+    navTripContext.resetTripContext();
+  }
+
+  function handleNavRecenter() {
+    if (turnByTurn.userPosition && mapRef.current) {
+      mapRef.current.panTo(turnByTurn.userPosition);
+      const zoom = mapRef.current.getZoom?.() ?? 12;
+      if (zoom < 14) mapRef.current.setZoom(15);
+      return;
+    }
+    recenterMap();
+  }
+
+  const navMapProps = {
+    navigationPosition: navigationActive ? turnByTurn.carPosition : null,
+    navigationHeading: navigationActive ? turnByTurn.carHeading : null,
+  };
+
+  const turnByTurnPanel = navigationActive ? (
+    <TurnByTurnPanel
+      navDisplay={turnByTurn.navDisplay}
+      theme={theme}
+      arrivingStop={turnByTurn.arrivingStop}
+      arrivalContext={navTripContext.arrivalContext}
+      onDismissArrival={turnByTurn.dismissArrival}
+      onEndNavigation={generated ? handleEndNavigation : undefined}
+      onRecenter={handleNavRecenter}
+      tripStops={turnByTurn.legTargets}
+      passedStopIds={turnByTurn.passedStopIds}
+      gpsWaiting={navigationActive && !turnByTurn.userPosition}
+      nextStopContext={navTripContext.nextStopContext}
+      fuelAdvisory={navTripContext.fuelAdvisory}
+      corridorAlert={navTripContext.corridorAlert}
+      onDismissCorridorAlert={navTripContext.dismissCorridorAlert}
+      onDismissFuelAdvisory={navTripContext.dismissFuelAdvisory}
+      liveSharingActive={navTripContext.liveSharingActive}
+    />
+  ) : null;
+
   function handlePanelTouchStart(e) {
     if (window.innerWidth > 767) return;
     panelDragStartY.current = e.touches[0].clientY;
@@ -1127,7 +1186,7 @@ export default function App() {
     setDest(fromVal);
   }
 
-  async function handleNavigateGetRoute() {
+  async function handleNavigateGetRoute({ skipIfLoaded = false } = {}) {
     const fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
     const toVal = navigateDestRef.current?.value?.trim() || dest.trim();
     if (!fromVal || !toVal) {
@@ -1140,6 +1199,10 @@ export default function App() {
     }
     setOrigin(fromVal);
     setDest(toVal);
+    if (skipIfLoaded && routeInfo?.routePoints?.length) {
+      recenterMap();
+      return;
+    }
     const ok = await fetchRouteBetween(fromVal, toVal);
     if (ok) toast_("Route ready", true);
     else toast_("Could not calculate route — check addresses and try again", { isError: true });
@@ -1357,6 +1420,7 @@ export default function App() {
     setTripLegs,
     setTripAlerts,
     setActiveDayIndex,
+    setDismissedAlerts,
     setLastTripPreview,
     setResultsView,
     setTab,
@@ -2175,6 +2239,7 @@ export default function App() {
                   isLoaded,
                   isDarkMode: theme === "night" || theme === "twilight",
                   showNavigationCar: true,
+                  showRoutePill: !navigationActive,
                 }}
                 mapCenter={mapCenter}
                 mapStyle={mapStyle}
@@ -2218,8 +2283,11 @@ export default function App() {
                 truckRoutePath={truckRoutePath}
                 highlightedLegPath={[]}
                 inAppNavigationOnly
+                routeFocusMode={navigationActive}
+                {...navMapProps}
               />
             </ErrorBoundary>
+            {turnByTurnPanel}
           </div>
         </div>
         {renderAuthModals()}
@@ -2304,7 +2372,6 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction ? runToastAction : undefined}
       />
-      <DevSentryTestButton />
     </>
   );
 
@@ -2379,6 +2446,8 @@ export default function App() {
               window.setTimeout(() => flushMapLayout(), 250);
             }}
             onStartNavigation={() => {
+              if (navigateOriginRef.current) navigateOriginRef.current.value = origin;
+              if (navigateDestRef.current) navigateDestRef.current.value = dest;
               if (itinerarySync.itineraryWaypoints.length) {
                 itinerarySync.handleStartNavigation();
               } else {
@@ -2407,11 +2476,26 @@ export default function App() {
           </ErrorBoundary>
         ) : generated && resultsView === "map" ? (
           <div className="trip-map-fullscreen view-panel-animate">
+            {itinerarySync.routeFocusMode && (
+              <NavigateRoutePanel
+                isLoaded={isLoaded}
+                origin={origin}
+                dest={dest}
+                originRef={navigateOriginRef}
+                destRef={navigateDestRef}
+                onOriginChange={setOrigin}
+                onDestChange={setDest}
+                onSwap={swapNavigateRoute}
+                onGetRoute={() => handleNavigateGetRoute({ skipIfLoaded: true })}
+                routeLoading={routeLoading}
+                theme={theme}
+              />
+            )}
             <div className="map-float-nav map-float-nav--edit-only">
               <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit plan</button>
             </div>
             <ProximityTripTipAlert
-              active={itinerarySync.routeFocusMode}
+              active={itinerarySync.routeFocusMode && !navigationActive}
               tripTips={tripTips}
               liveTripTips={displayLiveTips}
               tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
@@ -2430,6 +2514,7 @@ export default function App() {
                 isLoaded,
                 isDarkMode: theme === "night" || theme === "twilight",
                 showNavigationCar: true,
+                showRoutePill: !navigationActive,
               }}
               mapCenter={mapCenter}
               mapStyle={mapStyle}
@@ -2466,6 +2551,7 @@ export default function App() {
               highlightedLegPath={itinerarySync.highlightedLegPath}
               inAppNavigationOnly
               routeFocusMode={itinerarySync.routeFocusMode}
+              {...navMapProps}
               onMarkerAction={(action, marker) => {
                 if (action === "add") {
                   addRoadStopToTrip({
@@ -2500,6 +2586,7 @@ export default function App() {
               }}
             />
             </ErrorBoundary>
+            {turnByTurnPanel}
           </div>
         ) : (
         <div className="app">
@@ -2856,7 +2943,6 @@ export default function App() {
         actionLabel={toastAction?.label}
         onAction={toastAction ? runToastAction : undefined}
       />
-      <DevSentryTestButton />
     </>
   );
 }

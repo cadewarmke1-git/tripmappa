@@ -8,7 +8,7 @@ import { resolveHotelListingUrl } from "../../lib/lodgingBookingLinks.js";
 import { parseRating } from "../../lib/ratings.js";
 import { buildDirectionsUrl, formatOffRouteDistance } from "../../lib/stopCardDistance.js";
 
-export default function HotelCard({ hotel, onSave, onToast, readOnly = false }) {
+export default function HotelCard({ hotel, city, onSave, onToast, readOnly = false }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const [photoRef, photoVisible] = useOnScreen();
   const photoSrc = photoFailed
@@ -26,7 +26,15 @@ export default function HotelCard({ hotel, onSave, onToast, readOnly = false }) 
     window.open(listingUrl, "_blank", "noopener,noreferrer");
   }
 
-  function handleSave() {
+  function handleChooseStay() {
+    const hotelName = hotel.name?.trim();
+    const cityName = city?.split(",")[0]?.trim() || city?.trim();
+    if (hotelName && cityName) {
+      // BOOKING_COM_PLACEHOLDER — replace with affiliate API when ready
+      const ss = `${hotelName}+${cityName}`.replace(/\s+/g, "+");
+      const bookingUrl = `https://www.booking.com/search.html?ss=${ss}`;
+      window.open(bookingUrl, "_blank", "noopener,noreferrer");
+    }
     onSave?.(hotel);
     onToast?.(`Saved ${hotel.name}`);
   }
@@ -56,7 +64,7 @@ export default function HotelCard({ hotel, onSave, onToast, readOnly = false }) 
     actions.push({
       label: "Choose stay",
       variant: "primary",
-      onClick: handleSave,
+      onClick: handleChooseStay,
     });
   }
   if (listingUrl) {
