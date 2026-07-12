@@ -71,8 +71,7 @@ export default function PlanPanel({
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
-  const showFlowSidebar = inQuestionFlow && questionHistory.length > 0 && !convoComplete;
-  const showReadySidebar = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
+  const showReadySummary = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
   const actionsInDock = inQuestionFlow && !convoComplete;
 
   useEffect(() => {
@@ -170,14 +169,6 @@ export default function PlanPanel({
         <StalePlanNotice onRegenerate={onGenerateTrip} loading={loading} changes={planChanges} />
       )}
 
-      {showFlowSidebar && (
-        <QuestionAnswerSidebar
-          history={questionHistory}
-          variant="flow"
-          onEditQuestion={onEditQuestion}
-        />
-      )}
-
       <div className="plan-flow-form-body" ref={convoScrollRef}>
         {(currentQuestion || qIndex === -2) && (
           <div className={`plan-flow-stack${convoComplete ? " plan-flow-stack-payoff" : ""}${planFlowLayout === "sparse" ? " plan-flow-stack--sparse" : ""}`}>
@@ -192,6 +183,15 @@ export default function PlanPanel({
                     </p>
                     {routeScoutLine && (
                       <p className="plan-ready-scout" role="status">{routeScoutLine}</p>
+                    )}
+                    {showReadySummary && (
+                      <QuestionAnswerSidebar
+                        history={questionHistory}
+                        variant="summary"
+                        onEditQuestion={onEditQuestion}
+                        assumedLodging={assumedLodging}
+                        onEditAssumedLodging={onEditAssumedLodging}
+                      />
                     )}
                     {generationError ? (
                       <div className="plan-generation-error plan-generation-error--ready" role="alert">
@@ -216,15 +216,6 @@ export default function PlanPanel({
                       <button type="button" className="btn-cancel-generate" onClick={onCancelGenerate}>
                         Cancel
                       </button>
-                    )}
-                    {showReadySidebar && (
-                      <QuestionAnswerSidebar
-                        history={questionHistory}
-                        variant="ready"
-                        onEditQuestion={onEditQuestion}
-                        assumedLodging={assumedLodging}
-                        onEditAssumedLodging={onEditAssumedLodging}
-                      />
                     )}
                   </div>
                 </div>

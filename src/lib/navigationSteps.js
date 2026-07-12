@@ -104,12 +104,80 @@ export function buildRoutePolyline(directionsResult, routePoints = []) {
   return routePoints.map(normalizePoint).filter(Boolean);
 }
 
+const THEN_MANEUVER_LABELS = {
+  left: "Turn left",
+  right: "Turn right",
+  "slight-left": "Keep left",
+  "slight-right": "Keep right",
+  "sharp-left": "Sharp left",
+  "sharp-right": "Sharp right",
+  "u-turn-left": "U-turn left",
+  "u-turn-right": "U-turn right",
+  roundabout: "Roundabout",
+  merge: "Merge",
+  fork: "At fork",
+  ramp: "Take ramp",
+  straight: "Continue",
+};
+
+function extractRoadFromText(text = "") {
+  const m = String(text).match(/\b((?:I-|US |SR |HWY |Highway |Hwy\.? |State Hwy )[\w\s-]+)/i);
+  return m ? m[1].trim().replace(/,\s*$/, "") : "";
+}
+
+function roadInText(text = "", roadName = "") {
+  const blob = String(text).toLowerCase();
+  const rn = String(roadName || "").split(",")[0].trim().toLowerCase();
+  if (!rn) return false;
+  return blob.includes(rn);
+}
+
+/** Strip verbose Google Directions text to a glanceable maneuver + road. */
+export function simplifyNavigationInstruction(raw = "", roadName = "") {
+  let text = String(raw).trim();
+  text = text.replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+
+  const cutPatterns = [
+    /\s*,\s*follow signs\b/i,
+    /\s*,\s*pass by\b/i,
+    /\s*,\s*toward\b/i,
+    /\s*,\s*then\b/i,
+    /\s+pass by\b/i,
+    /\s+toward\b/i,
+    /\s+on the (left|right)\b/i,
+  ];
+  for (const re of cutPatterns) {
+    const idx = text.search(re);
+    if (idx > 0) text = text.slice(0, idx).trim();
+  }
+  text = text.replace(/,\s*$/, "").trim();
+  text = text.replace(/\bto stay on\b/i, "on");
+
+  const rn = String(roadName || "").split(",")[0].trim();
+  if (rn && !roadInText(text, rn)) {
+    const hasRoad = /\b(I-|US |SR |State Hwy|Highway |Hwy |Rd\.?|Blvd|Ave|St\.?|Route )\b/i.test(text);
+    if (!hasRoad) text = `${text} on ${rn}`;
+  }
+
+  return text || "Continue";
+}
+
+/** Short "Then" preview — maneuver type and road name only. */
+export function simplifyThenPreview(raw = "", roadName = "", maneuver = null) {
+  const rn = String(roadName || extractRoadFromText(raw) || "").split(",")[0].trim();
+  const key = maneuverIconKey(maneuver);
+  const label = THEN_MANEUVER_LABELS[key] || "Continue";
+  return rn ? `${label} · ${rn}` : label;
+}
+
 /** Maneuver icon key from Google maneuver string. */
 export function maneuverIconKey(maneuver) {
   if (!maneuver) return "straight";
   const m = String(maneuver).toLowerCase();
-  if (m.includes("left") && m.includes("u")) return "u-turn-left";
-  if (m.includes("right") && m.includes("u")) return "u-turn-right";
+  if (m.includes("u-turn")) {
+    if (m.includes("left")) return "u-turn-left";
+    if (m.includes("right")) return "u-turn-right";
+  }
   if (m.includes("sharp-left")) return "sharp-left";
   if (m.includes("sharp-right")) return "sharp-right";
   if (m.includes("slight-left") || m.includes("bear-left")) return "slight-left";

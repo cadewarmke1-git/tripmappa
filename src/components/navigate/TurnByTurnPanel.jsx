@@ -44,32 +44,6 @@ function LegProgress({ current, total, nextName }) {
   );
 }
 
-function CorridorAlertStrip({ alert, onDismiss }) {
-  if (!alert) return null;
-  return (
-    <div className={`nav-cockpit-corridor nav-cockpit-corridor--${alert.type}`} role="alert">
-      <span className="nav-cockpit-corridor-title">{alert.title}</span>
-      {alert.text && alert.text !== alert.title && (
-        <p className="nav-cockpit-corridor-text">{alert.text}</p>
-      )}
-      <button type="button" className="nav-cockpit-corridor-dismiss" onClick={() => onDismiss?.(alert.id)} aria-label="Dismiss alert">×</button>
-    </div>
-  );
-}
-
-function FuelAdvisory({ advisory, onDismiss }) {
-  if (!advisory) return null;
-  return (
-    <div className={`nav-cockpit-fuel nav-cockpit-fuel--${advisory.level}`} role="status">
-      <span className="nav-cockpit-fuel-label">{advisory.level === "warn" ? "Range alert" : "Fuel range"}</span>
-      <p className="nav-cockpit-fuel-text">{advisory.message}</p>
-      {advisory.level !== "warn" && (
-        <button type="button" className="nav-cockpit-fuel-dismiss" onClick={onDismiss} aria-label="Dismiss">×</button>
-      )}
-    </div>
-  );
-}
-
 function NextStopCard({ context }) {
   if (!context) return null;
   return (
@@ -110,17 +84,12 @@ export default function TurnByTurnPanel({
   passedStopIds = new Set(),
   gpsWaiting = false,
   nextStopContext = null,
-  fuelAdvisory = null,
-  corridorAlert = null,
-  onDismissCorridorAlert,
-  onDismissFuelAdvisory,
   liveSharingActive = false,
 }) {
   if (!navDisplay) return null;
 
   const {
     instruction,
-    roadName,
     distanceToTurn,
     nextInstruction,
     maneuver,
@@ -135,6 +104,7 @@ export default function TurnByTurnPanel({
     offRoute,
     gpsError,
     hasGps,
+    showDualEta,
   } = navDisplay;
 
   return (
@@ -145,9 +115,6 @@ export default function TurnByTurnPanel({
           Live location shared with your group
         </div>
       )}
-
-      <CorridorAlertStrip alert={corridorAlert} onDismiss={onDismissCorridorAlert} />
-      <FuelAdvisory advisory={fuelAdvisory} onDismiss={onDismissFuelAdvisory} />
 
       {offRoute && (
         <div className="nav-cockpit-offroute" role="status">
@@ -189,7 +156,6 @@ export default function TurnByTurnPanel({
         <div className="nav-cockpit-instruction-block">
           <div className="nav-cockpit-distance">{distanceToTurn}</div>
           <p className="nav-cockpit-instruction">{instruction}</p>
-          {roadName && <p className="nav-cockpit-road">{roadName}</p>}
         </div>
         {speedMph != null && speedMph > 0 && (
           <div className="nav-cockpit-speed" aria-label={`${speedMph} miles per hour`}>
@@ -210,18 +176,28 @@ export default function TurnByTurnPanel({
 
       <NextStopCard context={nextStopContext} />
 
-      <div className="nav-cockpit-eta-row">
-        <div className="nav-cockpit-eta-cell">
-          <span className="nav-cockpit-eta-label">To {nextStopName}</span>
-          <span className="nav-cockpit-eta-val">{etaNextStop}</span>
-          <span className="nav-cockpit-eta-sub">{distanceToNextStop}</span>
-        </div>
-        <div className="nav-cockpit-eta-divider" aria-hidden="true" />
-        <div className="nav-cockpit-eta-cell">
-          <span className="nav-cockpit-eta-label">Destination</span>
-          <span className="nav-cockpit-eta-val">{etaDestination}</span>
-          <span className="nav-cockpit-eta-sub">{distanceRemaining}</span>
-        </div>
+      <div className={`nav-cockpit-eta-row${showDualEta ? "" : " nav-cockpit-eta-row--single"}`}>
+        {showDualEta ? (
+          <>
+            <div className="nav-cockpit-eta-cell">
+              <span className="nav-cockpit-eta-label">To {nextStopName}</span>
+              <span className="nav-cockpit-eta-val">{etaNextStop}</span>
+              <span className="nav-cockpit-eta-sub">{distanceToNextStop}</span>
+            </div>
+            <div className="nav-cockpit-eta-divider" aria-hidden="true" />
+            <div className="nav-cockpit-eta-cell">
+              <span className="nav-cockpit-eta-label">Destination</span>
+              <span className="nav-cockpit-eta-val">{etaDestination}</span>
+              <span className="nav-cockpit-eta-sub">{distanceRemaining}</span>
+            </div>
+          </>
+        ) : (
+          <div className="nav-cockpit-eta-cell nav-cockpit-eta-cell--solo">
+            <span className="nav-cockpit-eta-label">Destination</span>
+            <span className="nav-cockpit-eta-val">{etaDestination}</span>
+            <span className="nav-cockpit-eta-sub">{distanceRemaining}</span>
+          </div>
+        )}
       </div>
 
       {tripStops.length > 0 && (

@@ -1,7 +1,7 @@
 import { isContinuousDrive } from "../lib/driveMode.js";
 import { dedupeQuestionHistoryById, formatFlowAnswer, getAssumedTruckLodgingPill } from "../lib/tripFlow.js";
 import { formatTravelersLabel, isScenicRoute } from "../lib/vehicles.js";
-import GoldSpinner from "./GoldSpinner.jsx";
+import PulsingWordmark from "./PulsingWordmark.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 
 export default function PlanRouteCard({
@@ -73,7 +73,7 @@ export default function PlanRouteCard({
             )}
             {routePending && !routeError && !distanceLabel && (
               <span className="plan-flow-compact-loading">
-                <GoldSpinner size="md" />
+                <PulsingWordmark size="md" />
               </span>
             )}
             {routeError && (
@@ -114,7 +114,7 @@ export default function PlanRouteCard({
             <span className="plan-route-card-error-text">{routeError}</span>
           ) : routePending || !ready ? (
             <span className="plan-route-card-loading">
-              <GoldSpinner size="md" />
+              <PulsingWordmark size="md" />
             </span>
           ) : (
             <>

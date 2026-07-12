@@ -21,12 +21,12 @@ import { applyStopFilters } from "../../lib/placesFilters.js";
 import { isPlausibleEvChargingStation } from "../../lib/roadStopCategory.js";
 import FuelStopCard from "./FuelStopCard.jsx";
 
-import GoldSpinner from "../GoldSpinner.jsx";
+import PulsingWordmark from "../PulsingWordmark.jsx";
 
 function FuelSkeleton() {
   return (
     <div className="fuel-stop-card fuel-stop-loader" aria-hidden="true">
-      <GoldSpinner size="md" />
+      <PulsingWordmark size="md" />
     </div>
   );
 }

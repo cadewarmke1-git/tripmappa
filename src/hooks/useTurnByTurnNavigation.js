@@ -3,6 +3,8 @@ import {
   parseDirectionsSteps,
   buildPolylineSteps,
   buildRoutePolyline,
+  simplifyNavigationInstruction,
+  simplifyThenPreview,
 } from "../lib/navigationSteps.js";
 import {
   closestPointOnPolyline,
@@ -17,6 +19,7 @@ const OFF_ROUTE_THRESHOLD_M = 500;
 const OFF_ROUTE_DURATION_MS = 10_000;
 const STOP_ARRIVAL_THRESHOLD_M = 200;
 const STEP_ADVANCE_THRESHOLD_M = 35;
+const NAV_FOLLOW_ZOOM = 15;
 const GPS_OPTIONS = { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 };
 
 function normalizeWaypoint(w) {
@@ -73,6 +76,7 @@ export function useTurnByTurnNavigation({
   mapRef = null,
   onToast = null,
   followMap = true,
+  routePointsForOverview = [],
 }) {
   const [userPosition, setUserPosition] = useState(null);
   const [heading, setHeading] = useState(0);
@@ -82,6 +86,7 @@ export function useTurnByTurnNavigation({
   const [passedStopIds, setPassedStopIds] = useState(() => new Set());
   const [arrivingStop, setArrivingStop] = useState(null);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
+  const [mapViewMode, setMapViewMode] = useState("follow");
 
   const offRouteSinceRef = useRef(null);
   const announcedArrivalRef = useRef(new Set());
@@ -152,38 +157,87 @@ export function useTurnByTurnNavigation({
   const etaNextStopSeconds = distanceToNextStopMeters / avgSpeedMps;
   const etaDestinationSeconds = remainingRouteMeters / avgSpeedMps;
 
-  const navDisplay = useMemo(() => ({
-    instruction: currentStep?.instruction || "Follow route",
-    roadName: currentStep?.roadName || "",
-    distanceToTurn: formatDistanceShort(distanceToTurnMeters),
-    distanceToTurnMeters,
-    nextInstruction: nextStep?.instruction || null,
-    nextRoadName: nextStep?.roadName || "",
-    maneuver: currentStep?.maneuver || null,
-    etaNextStop: formatDurationShort(etaNextStopSeconds),
-    etaDestination: formatDurationShort(etaDestinationSeconds),
-    distanceRemaining: formatDistanceShort(remainingRouteMeters),
-    distanceToNextStop: formatDistanceShort(distanceToNextStopMeters),
-    currentLegIndex,
-    totalLegs: legTargets.length,
-    nextStopName: nextLegTarget?.title || destination?.split(",")[0]?.trim() || "Destination",
-    speedMph: speedMps != null && speedMps > 0 ? Math.round(speedMps * 2.237) : null,
-    stepIndex: currentStepIndex,
-    stepCount: steps.length,
-    offRoute,
-    gpsError,
-    hasGps: Boolean(userPosition),
-  }), [
+  const navDisplay = useMemo(() => {
+    const rawInstruction = currentStep?.instruction || "Follow route";
+    const road = currentStep?.roadName || "";
+    const instruction = simplifyNavigationInstruction(rawInstruction, road);
+    const nextRaw = nextStep?.instruction || null;
+    const nextRoad = nextStep?.roadName || "";
+    const nextPreview = nextRaw
+      ? simplifyThenPreview(nextRaw, nextRoad, nextStep?.maneuver)
+      : null;
+
+    const includedStops = (itineraryWaypoints || []).filter(
+      (w) => w.kind === "stop" && w.included !== false,
+    ).length;
+    const showDualEta = includedStops > 0 && legTargets.length > 1;
+
+    return {
+      instruction,
+      roadName: road,
+      distanceToTurn: formatDistanceShort(distanceToTurnMeters),
+      distanceToTurnMeters,
+      nextInstruction: nextPreview,
+      nextRoadName: nextRoad,
+      maneuver: currentStep?.maneuver || null,
+      etaNextStop: formatDurationShort(etaNextStopSeconds),
+      etaDestination: formatDurationShort(etaDestinationSeconds),
+      distanceRemaining: formatDistanceShort(remainingRouteMeters),
+      distanceToNextStop: formatDistanceShort(distanceToNextStopMeters),
+      currentLegIndex,
+      totalLegs: legTargets.length,
+      nextStopName: nextLegTarget?.title || destination?.split(",")[0]?.trim() || "Destination",
+      speedMph: speedMps != null && speedMps > 0 ? Math.round(speedMps * 2.237) : null,
+      stepIndex: currentStepIndex,
+      stepCount: steps.length,
+      offRoute,
+      gpsError,
+      hasGps: Boolean(userPosition),
+      showDualEta,
+    };
+  }, [
     currentStep, nextStep, distanceToTurnMeters, etaNextStopSeconds, etaDestinationSeconds,
     remainingRouteMeters, distanceToNextStopMeters, currentLegIndex, legTargets.length,
     nextLegTarget, destination, speedMps, currentStepIndex, steps.length, offRoute, gpsError, userPosition,
+    itineraryWaypoints,
   ]);
+
+  const snapToFollowView = useCallback((position) => {
+    if (!mapRef?.current || !position) return;
+    mapRef.current.panTo({ lat: position.lat, lng: position.lng });
+    mapRef.current.setZoom(NAV_FOLLOW_ZOOM);
+  }, [mapRef]);
+
+  const showRouteOverview = useCallback(() => {
+    setMapViewMode("overview");
+    const path = routePointsForOverview?.length > 1 ? routePointsForOverview : polyline;
+    if (!mapRef?.current || !window.google?.maps || path.length < 2) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    path.forEach((point) => {
+      if (point?.lat != null && point?.lng != null) bounds.extend(point);
+    });
+    mapRef.current.fitBounds(bounds, { padding: 72 });
+    const listener = window.google.maps.event.addListenerOnce(mapRef.current, "idle", () => {
+      const zoom = mapRef.current.getZoom?.();
+      if (typeof zoom === "number" && zoom > 12) mapRef.current.setZoom(12);
+    });
+    return () => {
+      if (listener) window.google.maps.event.removeListener(listener);
+    };
+  }, [mapRef, routePointsForOverview, polyline]);
+
+  const resumeFollowing = useCallback(() => {
+    setMapViewMode("follow");
+    const pos = userPosition || polyline[0];
+    if (pos) snapToFollowView(pos);
+  }, [userPosition, polyline, snapToFollowView]);
 
   useEffect(() => {
     if (!active) {
       setUserPosition(null);
       setGpsError(null);
       setOffRoute(false);
+      setMapViewMode("follow");
       offRouteSinceRef.current = null;
       if (watchIdRef.current != null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
@@ -221,6 +275,12 @@ export function useTurnByTurnNavigation({
       }
     };
   }, [active]);
+
+  useEffect(() => {
+    if (!active || mapViewMode !== "follow" || !followMap || !mapRef?.current) return;
+    const pos = userPosition || polyline[0];
+    if (pos) snapToFollowView(pos);
+  }, [active, mapViewMode, followMap, userPosition, polyline, snapToFollowView, mapRef]);
 
   useEffect(() => {
     if (!userPosition || !polyline.length || !active) {
@@ -264,13 +324,6 @@ export function useTurnByTurnNavigation({
   }, [active, userPosition, legTargets, currentLegIndex, onToast]);
 
   useEffect(() => {
-    if (!active || !followMap || !userPosition || !mapRef?.current) return;
-    mapRef.current.panTo({ lat: userPosition.lat, lng: userPosition.lng });
-    const zoom = mapRef.current.getZoom?.() ?? 12;
-    if (zoom < 14) mapRef.current.setZoom(15);
-  }, [active, followMap, userPosition, mapRef]);
-
-  useEffect(() => {
     if (!userPosition || !polyline.length) return;
     const close = closestPointOnPolyline(userPosition, polyline);
     const segEnd = polyline[Math.min(close.segmentIndex + 1, polyline.length - 1)];
@@ -288,6 +341,7 @@ export function useTurnByTurnNavigation({
     announcedArrivalRef.current = new Set();
     offRouteSinceRef.current = null;
     setOffRoute(false);
+    setMapViewMode("follow");
   }, []);
 
   return {
@@ -303,5 +357,8 @@ export function useTurnByTurnNavigation({
     resetNavigation,
     carPosition: userPosition || (polyline[0] ?? null),
     carHeading: heading,
+    mapViewMode,
+    showRouteOverview,
+    resumeFollowing,
   };
 }

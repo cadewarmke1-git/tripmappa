@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import GoldSpinner from "../GoldSpinner.jsx";
+import PulsingWordmark from "../PulsingWordmark.jsx";
 import { GoogleMap } from "@react-google-maps/api";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { GOOGLE_LIBRARIES } from "../../lib/constants.js";
@@ -215,7 +215,7 @@ export default function LiveViewPage({ shareToken, toast }) {
   if (loading) {
     return (
       <div className={`app-wrap ${theme} live-view-page live-view-page-${theme}`}>
-        <GoldSpinner size="lg" />
+        <PulsingWordmark size="lg" />
       </div>
     );
   }

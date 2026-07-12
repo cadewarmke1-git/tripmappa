@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import GoldSpinner from "../components/GoldSpinner.jsx";
+import PulsingWordmark from "../components/PulsingWordmark.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
 
@@ -95,7 +95,7 @@ export default function AuthCallbackPage() {
       aria-busy="true"
       aria-label="Signing you in"
     >
-      <GoldSpinner size="lg" />
+      <PulsingWordmark size="lg" />
     </div>
   );
 }

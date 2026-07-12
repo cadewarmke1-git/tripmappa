@@ -412,7 +412,7 @@ export function useMapState({
     return promise;
   }, [timingMode, arriveByDate, answers, origin, dest, setOrigin, setDest, toastFnRef, scheduleFitBounds]);
 
-  const fetchRouteBetween = useCallback((originVal, destVal) => {
+  const fetchRouteBetween = useCallback((originVal, destVal, { skipFitBounds = false } = {}) => {
     if (!originVal || !destVal || !window.google) return Promise.resolve(false);
 
     const signature = buildRouteSignature({ origin: originVal, destination: destVal });
@@ -421,7 +421,7 @@ export function useMapState({
       setRouteInfo(cached.routeInfo);
       setRoutePath(cached.routePath);
       setDirectionsResult(cached.directionsResult);
-      scheduleFitBounds(cached.routePoints, 60);
+      if (!skipFitBounds) scheduleFitBounds(cached.routePoints, 60);
       return Promise.resolve(true);
     }
 
@@ -471,7 +471,7 @@ export function useMapState({
             destVal,
             routeInfoExtras: { vehicleType: "Car", timingMode: "leave_now" },
           }));
-          scheduleFitBounds(routeInfo.routePoints, 60);
+          if (!skipFitBounds) scheduleFitBounds(routeInfo.routePoints, 60);
           resolve(true);
         } else {
           resolve(false);

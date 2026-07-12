@@ -408,13 +408,54 @@ html body .app-wrap.night .btn-generate-trip {
 .plan-flow-form-body {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
   /* Clearance so last option cards (e.g. Avoid highways) stay above the action dock */
-  padding: 0 4px calc(8px + 72px + env(safe-area-inset-bottom, 0px));
+  padding: 0 0 calc(8px + 72px + env(safe-area-inset-bottom, 0px));
   scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  scrollbar-width: thin;
+  scrollbar-color: #FFD28C #0D0A1A;
+}
+
+.plan-flow-form-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.plan-flow-form-body::-webkit-scrollbar-track {
+  background: #0D0A1A;
+}
+
+.plan-flow-form-body::-webkit-scrollbar-thumb {
+  background: #FFD28C;
+  border-radius: 4px;
+}
+
+.plan-flow-form-body .question-options-scroll,
+.plan-flow-form-body .question-choices-shell-compact {
+  scrollbar-width: thin;
+  scrollbar-color: #FFD28C #0D0A1A;
+}
+
+.plan-flow-form-body .question-options-scroll::-webkit-scrollbar,
+.plan-flow-form-body .question-choices-shell-compact::-webkit-scrollbar {
+  width: 4px;
+}
+
+.plan-flow-form-body .question-options-scroll::-webkit-scrollbar-track,
+.plan-flow-form-body .question-choices-shell-compact::-webkit-scrollbar-track {
+  background: #0D0A1A;
+}
+
+.plan-flow-form-body .question-options-scroll::-webkit-scrollbar-thumb,
+.plan-flow-form-body .question-choices-shell-compact::-webkit-scrollbar-thumb {
+  background: #FFD28C;
+  border-radius: 4px;
 }
 
 .plan-flow-question-header {
@@ -481,6 +522,87 @@ html body .app-wrap.night .btn-generate-trip {
   flex-shrink: 0;
   width: 100%;
   margin: 0;
+}
+
+.plan-flow-answer-summary {
+  margin: 4px 0 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 210, 140, 0.22);
+  background: color-mix(in srgb, var(--color-card-bg) 94%, var(--color-accent-gold));
+}
+
+.plan-flow-answer-summary-heading {
+  margin: 0 0 12px;
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--plan-flow-orange, #FF8C42);
+}
+
+.plan-flow-answer-summary-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-flow-answer-summary-item {
+  display: grid;
+  grid-template-columns: minmax(88px, 34%) minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: start;
+  min-width: 0;
+}
+
+.plan-flow-answer-summary-label {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  opacity: 0.72;
+}
+
+.plan-flow-answer-summary-value {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.plan-flow-answer-summary-edit {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--plan-flow-orange, #FF8C42);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  vertical-align: baseline;
+}
+
+.plan-flow-answer-summary-tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  vertical-align: middle;
 }
 
 .plan-flow-picks-strip-scroll {
@@ -606,8 +728,19 @@ html body .app-wrap.night .btn-generate-trip {
    v0 plan flow — compact header, option grid, dock
    ══════════════════════════════════════════════════════════════ */
 
+.plan-flow-form--active .plan-flow-body,
+.plan-flow-form--active .plan-flow-main,
+.plan-flow-form--active .plan-flow-question-header,
+.plan-flow-form--active .plan-option-grid {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .plan-flow-form--active {
   gap: 0;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .plan-flow-form--active .plan-flow-layout--tall.plan-flow-current {
@@ -644,7 +777,8 @@ html body .app-wrap.night .btn-generate-trip {
 .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard) .plan-flow-form-body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -743,8 +877,8 @@ html body .app-wrap.night .btn-generate-trip {
 }
 
 .plan-flow-compact-header {
-  margin: -8px -18px 12px;
-  padding: 12px 14px 10px;
+  margin: 0 -16px 12px;
+  padding: 12px 16px 10px;
   background: var(--plan-flow-ink, #0D0A1A);
   color: var(--plan-flow-cream, #FDF3E0);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);

@@ -65,6 +65,7 @@ import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TurnByTurnPanel from "./components/navigate/TurnByTurnPanel.jsx";
+import NavigationAlertToasts from "./components/navigate/NavigationAlertToasts.jsx";
 import { useTurnByTurnNavigation } from "./hooks/useTurnByTurnNavigation.js";
 import { useNavigationTripContext } from "./hooks/useNavigationTripContext.js";
 import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
@@ -78,7 +79,7 @@ import TripsPanel from "./components/TripsPanel.jsx";
 import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
 import { resolveAppRoute } from "./lib/appRouter.js";
 import Toast from "./components/Toast.jsx";
-import GoldSpinner from "./components/GoldSpinner.jsx";
+import PulsingWordmark from "./components/PulsingWordmark.jsx";
 import ConfirmDialog from "./components/ConfirmDialog.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ConfigWarningBanner from "./components/ConfigWarningBanner.jsx";
@@ -1050,6 +1051,7 @@ export default function App() {
     mapRef,
     onToast: toast_,
     followMap: navigationActive,
+    routePointsForOverview: routeInfo?.routePoints || truckRoutePath || [],
   });
 
   const navTripContext = useNavigationTripContext({
@@ -1079,6 +1081,10 @@ export default function App() {
 
   function handleNavRecenter() {
     if (turnByTurn.userPosition && mapRef.current) {
+      if (turnByTurn.mapViewMode === "overview") {
+        turnByTurn.resumeFollowing();
+        return;
+      }
       mapRef.current.panTo(turnByTurn.userPosition);
       const zoom = mapRef.current.getZoom?.() ?? 12;
       if (zoom < 14) mapRef.current.setZoom(15);
@@ -1090,7 +1096,20 @@ export default function App() {
   const navMapProps = {
     navigationPosition: navigationActive ? turnByTurn.carPosition : null,
     navigationHeading: navigationActive ? turnByTurn.carHeading : null,
+    navigationMapViewMode: turnByTurn.mapViewMode,
+    onNavShowOverview: turnByTurn.showRouteOverview,
+    onNavResumeFollowing: turnByTurn.resumeFollowing,
   };
+
+  const navAlertToasts = navigationActive ? (
+    <NavigationAlertToasts
+      fuelAdvisory={navTripContext.fuelAdvisory}
+      corridorAlert={navTripContext.corridorAlert}
+      onDismissFuel={navTripContext.dismissFuelAdvisory}
+      onDismissCorridor={navTripContext.dismissCorridorAlert}
+      theme={theme}
+    />
+  ) : null;
 
   const turnByTurnPanel = navigationActive ? (
     <TurnByTurnPanel
@@ -1105,10 +1124,6 @@ export default function App() {
       passedStopIds={turnByTurn.passedStopIds}
       gpsWaiting={navigationActive && !turnByTurn.userPosition}
       nextStopContext={navTripContext.nextStopContext}
-      fuelAdvisory={navTripContext.fuelAdvisory}
-      corridorAlert={navTripContext.corridorAlert}
-      onDismissCorridorAlert={navTripContext.dismissCorridorAlert}
-      onDismissFuelAdvisory={navTripContext.dismissFuelAdvisory}
       liveSharingActive={navTripContext.liveSharingActive}
     />
   ) : null;
@@ -1200,11 +1215,15 @@ export default function App() {
     setOrigin(fromVal);
     setDest(toVal);
     if (skipIfLoaded && routeInfo?.routePoints?.length) {
-      recenterMap();
+      if (navigationActive) turnByTurn.resumeFollowing();
+      else recenterMap();
       return;
     }
-    const ok = await fetchRouteBetween(fromVal, toVal);
-    if (ok) toast_("Route ready", true);
+    const ok = await fetchRouteBetween(fromVal, toVal, { skipFitBounds: true });
+    if (ok) {
+      turnByTurn.resumeFollowing();
+      toast_("Route ready", true);
+    }
     else toast_("Could not calculate route — check addresses and try again", { isError: true });
   }
 
@@ -2197,7 +2216,7 @@ export default function App() {
       <div className={`app-wrap ${theme}`}>
         {renderAppNavBar("app")}
         <div className="profile-loading-shell" role="status" aria-busy="true" aria-label="Loading your profile">
-          <GoldSpinner size="lg" />
+          <PulsingWordmark size="lg" />
         </div>
       </div>
     );
@@ -2287,6 +2306,7 @@ export default function App() {
                 {...navMapProps}
               />
             </ErrorBoundary>
+            {navAlertToasts}
             {turnByTurnPanel}
           </div>
         </div>
@@ -2586,6 +2606,7 @@ export default function App() {
               }}
             />
             </ErrorBoundary>
+            {navAlertToasts}
             {turnByTurnPanel}
           </div>
         ) : (

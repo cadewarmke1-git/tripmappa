@@ -1,4 +1,4 @@
-/** Simple gold loading spinner — use instead of RouteDrawingLoader outside generation. */
+/** Small gold inline spinner — buttons and form submits only. Use PulsingWordmark for page/section loaders. */
 export default function GoldSpinner({ size = "md", className = "" }) {
   return (
     <span

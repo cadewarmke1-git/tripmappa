@@ -24,6 +24,51 @@ export default function QuestionAnswerSidebar({
     })
     .filter(Boolean);
 
+  if (variant === "summary") {
+    return (
+      <section className="plan-flow-answer-summary" aria-label="Your trip answers">
+        <h3 className="plan-flow-answer-summary-heading">Your answers</h3>
+        <ul className="plan-flow-answer-summary-list">
+          {items.map(({ key, qId, label, value }) => (
+            <li className="plan-flow-answer-summary-item" key={key}>
+              <span className="plan-flow-answer-summary-label">{label}</span>
+              <span className="plan-flow-answer-summary-value">
+                {value}
+                {onEditQuestion && qId && (
+                  <button
+                    type="button"
+                    className="plan-flow-answer-summary-edit"
+                    onClick={() => onEditQuestion(qId)}
+                  >
+                    Edit
+                  </button>
+                )}
+              </span>
+            </li>
+          ))}
+          {assumedLodging && (
+            <li className="plan-flow-answer-summary-item plan-flow-answer-summary-item--assumed">
+              <span className="plan-flow-answer-summary-label">Lodging</span>
+              <span className="plan-flow-answer-summary-value">
+                {assumedLodging.lodging}
+                <span className="plan-flow-answer-summary-tag">assumed</span>
+                {onEditAssumedLodging && (
+                  <button
+                    type="button"
+                    className="plan-flow-answer-summary-edit"
+                    onClick={onEditAssumedLodging}
+                  >
+                    Edit
+                  </button>
+                )}
+              </span>
+            </li>
+          )}
+        </ul>
+      </section>
+    );
+  }
+
   return (
     <div
       className={`plan-flow-picks-strip plan-flow-picks-strip--${variant}`}

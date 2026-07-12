@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import GoldSpinner from "../GoldSpinner.jsx";
+import PulsingWordmark from "../PulsingWordmark.jsx";
 import { GoogleMap, Polyline } from "@react-google-maps/api";
 import { TRIP_ROUTE_GOLD } from "../../lib/constants.js";
 import { OWNER_COLOR } from "../../lib/convoyConstants.js";
@@ -31,7 +31,7 @@ export default function ShareMiniMap({
   if (!isLoaded) {
     return (
       <div className="share-mini-map share-mini-map-loading">
-        <GoldSpinner size="md" />
+        <PulsingWordmark size="md" />
       </div>
     );
   }

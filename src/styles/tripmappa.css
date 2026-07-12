@@ -2682,7 +2682,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 4px 12px 12px 0;
+    padding: 4px 0 12px;
   }
   .plan-ready-eyebrow {
     margin: 0;
@@ -3395,6 +3395,42 @@
   .spinner-gold--lg { width: 20px; height: 20px; }
   .spinner-gold--button { width: 18px; height: 18px; margin: 0 auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .pulsing-wordmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .pulsing-wordmark-inner {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    animation: pulsingWordmarkBreath 1.5s ease-in-out infinite;
+    transform-origin: center center;
+  }
+  .pulsing-wordmark-trip { color: #F5E6C8; }
+  .pulsing-wordmark-mappa { color: #FFD28C; }
+  .pulsing-wordmark--lg .pulsing-wordmark-inner {
+    font-size: clamp(28px, 4vw, 40px);
+    letter-spacing: -0.02em;
+  }
+  .pulsing-wordmark--md .pulsing-wordmark-inner { font-size: 22px; letter-spacing: -0.01em; }
+  .pulsing-wordmark--sm .pulsing-wordmark-inner { font-size: 15px; letter-spacing: -0.01em; }
+  @keyframes pulsingWordmarkBreath {
+    0%, 100% { opacity: 0.6; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulsing-wordmark-inner {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
 
   /* ── Stops panel ── */
   .stops-wrap { padding: 16px 16px 24px; }
@@ -8635,23 +8671,24 @@
     background: rgba(255, 140, 66, 0.15);
     color: #FF8C42;
   }
-  .nav-maneuver-icon { width: 28px; height: 28px; }
+  .nav-maneuver-icon { width: 32px; height: 32px; }
   .nav-cockpit-instruction-block { flex: 1; min-width: 0; }
   .nav-cockpit-distance {
     font-family: Fraunces, Georgia, serif;
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
     line-height: 1;
     color: #FFD28C;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
   }
   .nav-cockpit--day .nav-cockpit-distance { color: #E06820; }
   .nav-cockpit-instruction {
     margin: 0;
     font-family: Fraunces, Georgia, serif;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
     color: #FDF3E0;
   }
   .nav-cockpit--day .nav-cockpit-instruction { color: #0D0A1A; }
@@ -8747,6 +8784,79 @@
     border-color: rgba(255, 210, 140, 0.3);
     color: #FFD28C;
   }
+  .nav-cockpit-eta-row--single { justify-content: center; }
+  .nav-cockpit-eta-cell--solo { max-width: 100%; }
+
+  .map-nav-view-btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 210, 140, 0.35);
+    background: rgba(13, 10, 26, 0.88);
+    color: #FFD28C;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+  .map-nav-view-btn:hover { background: rgba(13, 10, 26, 0.95); }
+
+  .nav-alert-toasts {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: min(320px, calc(100vw - 32px));
+    pointer-events: none;
+  }
+  .nav-alert-toast {
+    position: relative;
+    pointer-events: auto;
+    padding: 12px 36px 12px 14px;
+    border-radius: 12px;
+    background: rgba(13, 10, 26, 0.94);
+    border: 1px solid rgba(255, 210, 140, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    animation: navAlertIn 0.35s ease-out, navAlertOut 0.4s ease-in 7.6s forwards;
+  }
+  .nav-alert-toast--fuel { border-color: rgba(61, 217, 208, 0.4); }
+  .nav-alert-toast--fuel.nav-alert-toast--warn { border-color: rgba(255, 140, 66, 0.55); background: rgba(40, 18, 8, 0.96); }
+  .nav-alert-toast--weather { border-color: rgba(255, 95, 168, 0.4); }
+  .nav-alert-toast-title { display: block; font-size: 13px; font-weight: 700; color: #FFD28C; margin-bottom: 2px; }
+  .nav-alert-toast-text { margin: 0; font-size: 12px; line-height: 1.4; color: rgba(253, 243, 224, 0.85); }
+  .nav-alert-toast-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: rgba(255, 210, 140, 0.7);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+  }
+  @keyframes navAlertIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes navAlertOut {
+    from { opacity: 1; }
+    to { opacity: 0; transform: translateX(12px); }
+  }
+  .nav-alert-toasts--day .nav-alert-toast {
+    background: rgba(253, 243, 224, 0.97);
+    border-color: rgba(13, 10, 26, 0.12);
+  }
+  .nav-alert-toasts--day .nav-alert-toast-title { color: #0D0A1A; }
+  .nav-alert-toasts--day .nav-alert-toast-text { color: rgba(13, 10, 26, 0.75); }
+
   .nav-cockpit-btn-end {
     background: rgba(255, 140, 66, 0.15);
     border-color: rgba(255, 140, 66, 0.4);

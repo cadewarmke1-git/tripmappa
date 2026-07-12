@@ -1,9 +1,9 @@
-import GoldSpinner from "../GoldSpinner.jsx";
+import PulsingWordmark from "../PulsingWordmark.jsx";
 
 export default function LodgingCardSkeleton({ theme = "night" }) {
   return (
     <div className="lodging-card-loader" aria-hidden="true">
-      <GoldSpinner size="md" />
+      <PulsingWordmark size="md" />
     </div>
   );
 }

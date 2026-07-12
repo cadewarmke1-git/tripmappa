@@ -1,6 +1,6 @@
 /** Full-screen Google Map with live trip markers, route highlights, and info cards. */
 import { useState, useEffect, useMemo, useRef } from "react";
-import GoldSpinner from "./GoldSpinner.jsx";
+import PulsingWordmark from "./PulsingWordmark.jsx";
 import { GoogleMap, DirectionsRenderer } from "@react-google-maps/api";
 import MapRoutePill from "./MapRoutePill.jsx";
 import MapMarkerLayer from "./map/MapMarkerLayer.jsx";
@@ -121,6 +121,9 @@ export default function AppMap({
   routeFocusMode = false,
   navigationPosition = null,
   navigationHeading = null,
+  navigationMapViewMode = "follow",
+  onNavShowOverview = null,
+  onNavResumeFollowing = null,
 }) {
   const {
     isLoaded,
@@ -210,7 +213,7 @@ export default function AppMap({
     if (window.google?.maps) {
       window.google.maps.event.trigger(map, "resize");
       onFlushPendingFitBounds?.();
-      if (activeRoutePath.length >= 2) {
+      if (activeRoutePath.length >= 2 && !routeFocusMode) {
         const bounds = new window.google.maps.LatLngBounds();
         activeRoutePath.forEach((point) => {
           if (point?.lat != null && point?.lng != null) bounds.extend(point);
@@ -229,6 +232,7 @@ export default function AppMap({
 
   useEffect(() => {
     if (!mapInstance || !window.google?.maps || activeRoutePath.length < 2) return undefined;
+    if (routeFocusMode) return undefined;
 
     let cancelled = false;
     const fitRoute = () => {
@@ -259,7 +263,14 @@ export default function AppMap({
       cancelled = true;
       if (listener) window.google.maps.event.removeListener(listener);
     };
-  }, [mapInstance, activeRoutePath, mapMarkers]);
+  }, [mapInstance, activeRoutePath, mapMarkers, routeFocusMode]);
+
+  useEffect(() => {
+    if (!routeFocusMode || navigationMapViewMode !== "follow") return;
+    if (!mapInstance || !navigationPosition) return;
+    mapInstance.panTo({ lat: navigationPosition.lat, lng: navigationPosition.lng });
+    mapInstance.setZoom(15);
+  }, [routeFocusMode, navigationMapViewMode, mapInstance, navigationPosition]);
 
   useEffect(() => {
     if (!mapFocusTarget?.lat || !mapRef.current || !window.google) return;
@@ -364,6 +375,16 @@ export default function AppMap({
             </div>
           </div>
           <div className="map-controls-stack">
+            {routeFocusMode && onNavShowOverview && (
+              <button
+                type="button"
+                className="map-nav-view-btn"
+                onClick={navigationMapViewMode === "overview" ? onNavResumeFollowing : onNavShowOverview}
+                aria-label={navigationMapViewMode === "overview" ? "Return to navigation" : "Show route overview"}
+              >
+                {navigationMapViewMode === "overview" ? "Return to nav" : "Route overview"}
+              </button>
+            )}
             <MapZoomControls mapRef={mapRef} />
             <MapRecenterButton onRecenter={onRecenter} />
           </div>
@@ -373,12 +394,12 @@ export default function AppMap({
         </>
       ) : (
         <div className="map-loading">
-          <GoldSpinner size="lg" />
+          <PulsingWordmark size="lg" />
         </div>
       )}
       {isLoaded && routeLoading && !tripGenerating && (
         <div className="route-loading-pill route-loading-pill--loader">
-          <GoldSpinner size="md" />
+          <PulsingWordmark size="sm" />
         </div>
       )}
       {showRoutePill && (

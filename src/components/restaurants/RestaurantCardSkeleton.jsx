@@ -1,9 +1,9 @@
-import GoldSpinner from "../GoldSpinner.jsx";
+import PulsingWordmark from "../PulsingWordmark.jsx";
 
 export default function RestaurantCardSkeleton({ theme = "night" }) {
   return (
     <article className="restaurant-card-loader" aria-hidden="true">
-      <GoldSpinner size="md" />
+      <PulsingWordmark size="md" />
     </article>
   );
 }

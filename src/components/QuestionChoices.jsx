@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import GoldSpinner from "./GoldSpinner.jsx";
+import PulsingWordmark from "./PulsingWordmark.jsx";
 import PlanOptionCard from "./plan/PlanOptionCard.jsx";
 import PlanVehicleIcon from "./plan/PlanVehicleIcon.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
@@ -479,7 +479,7 @@ export default function QuestionChoices({
     <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}${isTripDetails ? " question-choices-trip-details" : ""}`}>
       {currentQ.type === "loading" && (
         <div className="question-loading" aria-live="polite">
-          <GoldSpinner size="lg" />
+          <PulsingWordmark size="lg" />
         </div>
       )}
 
@@ -536,7 +536,7 @@ export default function QuestionChoices({
             <>
               {routePending && routeLocked && (
                 <p className="question-pending-note question-pending-note--loading">
-                  <GoldSpinner size="lg" />
+                  <PulsingWordmark size="lg" />
                   <span>Calculating your route — choices unlock in a moment.</span>
                 </p>
               )}

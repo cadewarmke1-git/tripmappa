@@ -10,7 +10,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import GoldSpinner from "./components/GoldSpinner.jsx";
+import PulsingWordmark from "./components/PulsingWordmark.jsx";
 
 const App = lazy(() => import("./App.jsx"));
 const NeonPopupShowcase = lazy(() => import("./components/dev/NeonPopupShowcase.jsx"));
@@ -75,7 +75,7 @@ createRoot(document.getElementById("root")).render(
     <ErrorBoundary label="app-root" title="TripMappa ran into a problem">
       <AuthProvider>
         <ThemeProvider>
-          <Suspense fallback={<GoldSpinner size="lg" />}>
+          <Suspense fallback={<PulsingWordmark size="lg" />}>
             {typeof window !== "undefined" && window.location.search.includes("neon-showcase") ? (
               <NeonPopupShowcase />
             ) : (
