@@ -41,6 +41,8 @@ export default function NavigationAlertToasts({
       });
     }
 
+    const effectTimers = [];
+
     for (const alert of incoming) {
       const key = toastKey(alert);
       if (!key || seenRef.current.has(key)) continue;
@@ -48,13 +50,23 @@ export default function NavigationAlertToasts({
       setVisible((prev) => [...prev, { ...alert, key, enteredAt: Date.now() }]);
 
       if (timersRef.current.has(key)) clearTimeout(timersRef.current.get(key));
-      const timer = setTimeout(() => {
+      const timerId = setTimeout(() => {
         setVisible((prev) => prev.filter((t) => t.key !== key));
         timersRef.current.delete(key);
         alert.onDismiss?.();
       }, TOAST_DURATION_MS);
-      timersRef.current.set(key, timer);
+      timersRef.current.set(key, timerId);
+      effectTimers.push({ key, timerId });
     }
+
+    return () => {
+      for (const { key, timerId } of effectTimers) {
+        clearTimeout(timerId);
+        if (timersRef.current.get(key) === timerId) {
+          timersRef.current.delete(key);
+        }
+      }
+    };
   }, [fuelAdvisory, corridorAlert, onDismissFuel, onDismissCorridor]);
 
   useEffect(() => () => {

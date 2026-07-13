@@ -1027,7 +1027,7 @@ export default function App() {
   });
   itinerarySyncRef.current = itinerarySync;
 
-  const navigationActive = useMemo(() => {
+  const navContextActive = useMemo(() => {
     const hasRoute = Boolean(
       routeInfo?.routePoints?.length
       || truckRoutePath?.length
@@ -1043,19 +1043,21 @@ export default function App() {
   ]);
 
   const turnByTurn = useTurnByTurnNavigation({
-    active: navigationActive,
+    active: navContextActive,
     directionsResult,
     routePoints: routeInfo?.routePoints || truckRoutePath || [],
     itineraryWaypoints: itinerarySync.itineraryWaypoints,
     destination: dest,
     mapRef,
     onToast: toast_,
-    followMap: navigationActive,
+    followMap: true,
     routePointsForOverview: routeInfo?.routePoints || truckRoutePath || [],
   });
 
+  const isNavigating = turnByTurn.isNavigating;
+
   const navTripContext = useNavigationTripContext({
-    active: navigationActive,
+    active: isNavigating,
     userPosition: turnByTurn.userPosition,
     nextWaypoint: turnByTurn.legTargets[turnByTurn.navDisplay?.currentLegIndex ?? 0] || null,
     arrivingStop: turnByTurn.arrivingStop,
@@ -1075,7 +1077,7 @@ export default function App() {
 
   function handleEndNavigation() {
     itinerarySync.setRouteFocusMode(false);
-    turnByTurn.resetNavigation();
+    turnByTurn.stopNavigation();
     navTripContext.resetTripContext();
   }
 
@@ -1094,14 +1096,14 @@ export default function App() {
   }
 
   const navMapProps = {
-    navigationPosition: navigationActive ? turnByTurn.carPosition : null,
-    navigationHeading: navigationActive ? turnByTurn.carHeading : null,
+    navigationPosition: isNavigating ? turnByTurn.carPosition : null,
+    navigationHeading: isNavigating ? turnByTurn.carHeading : null,
     navigationMapViewMode: turnByTurn.mapViewMode,
-    onNavShowOverview: turnByTurn.showRouteOverview,
-    onNavResumeFollowing: turnByTurn.resumeFollowing,
+    onNavShowOverview: isNavigating ? turnByTurn.showRouteOverview : null,
+    onNavResumeFollowing: isNavigating ? turnByTurn.resumeFollowing : null,
   };
 
-  const navAlertToasts = navigationActive ? (
+  const navAlertToasts = isNavigating ? (
     <NavigationAlertToasts
       fuelAdvisory={navTripContext.fuelAdvisory}
       corridorAlert={navTripContext.corridorAlert}
@@ -1111,8 +1113,9 @@ export default function App() {
     />
   ) : null;
 
-  const turnByTurnPanel = navigationActive ? (
+  const turnByTurnPanel = isNavigating ? (
     <TurnByTurnPanel
+      isNavigating={isNavigating}
       navDisplay={turnByTurn.navDisplay}
       theme={theme}
       arrivingStop={turnByTurn.arrivingStop}
@@ -1120,9 +1123,7 @@ export default function App() {
       onDismissArrival={turnByTurn.dismissArrival}
       onEndNavigation={generated ? handleEndNavigation : undefined}
       onRecenter={handleNavRecenter}
-      tripStops={turnByTurn.legTargets}
-      passedStopIds={turnByTurn.passedStopIds}
-      gpsWaiting={navigationActive && !turnByTurn.userPosition}
+      gpsWaiting={isNavigating && !turnByTurn.userPosition}
       nextStopContext={navTripContext.nextStopContext}
       liveSharingActive={navTripContext.liveSharingActive}
     />
@@ -1215,14 +1216,14 @@ export default function App() {
     setOrigin(fromVal);
     setDest(toVal);
     if (skipIfLoaded && routeInfo?.routePoints?.length) {
-      if (navigationActive) turnByTurn.resumeFollowing();
+      if (isNavigating) turnByTurn.resumeFollowing();
       else recenterMap();
       return;
     }
     const ok = await fetchRouteBetween(fromVal, toVal, { skipFitBounds: true });
     if (ok) {
-      turnByTurn.resumeFollowing();
-      toast_("Route ready", true);
+      turnByTurn.startNavigation({ awaitMovement: true });
+      toast_("Route ready — start driving to begin turn-by-turn", true);
     }
     else toast_("Could not calculate route — check addresses and try again", { isError: true });
   }
@@ -2258,7 +2259,7 @@ export default function App() {
                   isLoaded,
                   isDarkMode: theme === "night" || theme === "twilight",
                   showNavigationCar: true,
-                  showRoutePill: !navigationActive,
+                  showRoutePill: !isNavigating,
                 }}
                 mapCenter={mapCenter}
                 mapStyle={mapStyle}
@@ -2302,7 +2303,7 @@ export default function App() {
                 truckRoutePath={truckRoutePath}
                 highlightedLegPath={[]}
                 inAppNavigationOnly
-                routeFocusMode={navigationActive}
+                routeFocusMode={isNavigating}
                 {...navMapProps}
               />
             </ErrorBoundary>
@@ -2473,6 +2474,7 @@ export default function App() {
               } else {
                 recenterMap();
               }
+              turnByTurn.startNavigation();
               setResultsView("map");
               window.setTimeout(() => flushMapLayout(), 250);
             }}
@@ -2515,7 +2517,7 @@ export default function App() {
               <button type="button" className="map-float-pill" onClick={handleEditTrip}>Edit plan</button>
             </div>
             <ProximityTripTipAlert
-              active={itinerarySync.routeFocusMode && !navigationActive}
+              active={itinerarySync.routeFocusMode && !isNavigating}
               tripTips={tripTips}
               liveTripTips={displayLiveTips}
               tripAlerts={tripAlerts.filter(a => !dismissedAlerts.includes(a.id))}
@@ -2534,7 +2536,7 @@ export default function App() {
                 isLoaded,
                 isDarkMode: theme === "night" || theme === "twilight",
                 showNavigationCar: true,
-                showRoutePill: !navigationActive,
+                showRoutePill: !isNavigating,
               }}
               mapCenter={mapCenter}
               mapStyle={mapStyle}
@@ -2570,7 +2572,7 @@ export default function App() {
               truckRoutePath={truckRoutePath}
               highlightedLegPath={itinerarySync.highlightedLegPath}
               inAppNavigationOnly
-              routeFocusMode={itinerarySync.routeFocusMode}
+              routeFocusMode={isNavigating}
               {...navMapProps}
               onMarkerAction={(action, marker) => {
                 if (action === "add") {
@@ -2699,7 +2701,7 @@ export default function App() {
               }
             }}
             highlightedLegPath={generated ? itinerarySync.highlightedLegPath : []}
-            routeFocusMode={generated ? itinerarySync.routeFocusMode : false}
+            routeFocusMode={generated ? isNavigating : false}
             inAppNavigationOnly={generated}
           />
           </ErrorBoundary>

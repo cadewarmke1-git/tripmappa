@@ -21,6 +21,8 @@ const STOP_ARRIVAL_THRESHOLD_M = 200;
 const STEP_ADVANCE_THRESHOLD_M = 35;
 const NAV_FOLLOW_ZOOM = 15;
 const GPS_OPTIONS = { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 };
+const MOVEMENT_SPEED_THRESHOLD_MPS = 1;
+const MOVEMENT_DISTANCE_THRESHOLD_M = 25;
 
 function normalizeWaypoint(w) {
   if (!w || w.lat == null || w.lng == null) return null;
@@ -87,10 +89,13 @@ export function useTurnByTurnNavigation({
   const [arrivingStop, setArrivingStop] = useState(null);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
   const [mapViewMode, setMapViewMode] = useState("follow");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [awaitingMovement, setAwaitingMovement] = useState(false);
 
   const offRouteSinceRef = useRef(null);
   const announcedArrivalRef = useRef(new Set());
   const watchIdRef = useRef(null);
+  const movementBaselineRef = useRef(null);
 
   const steps = useMemo(() => {
     const parsed = parseDirectionsSteps(directionsResult);
@@ -158,6 +163,8 @@ export function useTurnByTurnNavigation({
   const etaDestinationSeconds = remainingRouteMeters / avgSpeedMps;
 
   const navDisplay = useMemo(() => {
+    if (!isNavigating) return null;
+
     const rawInstruction = currentStep?.instruction || "Follow route";
     const road = currentStep?.roadName || "";
     const instruction = simplifyNavigationInstruction(rawInstruction, road);
@@ -200,7 +207,19 @@ export function useTurnByTurnNavigation({
     remainingRouteMeters, distanceToNextStopMeters, currentLegIndex, legTargets.length,
     nextLegTarget, destination, speedMps, currentStepIndex, steps.length, offRoute, gpsError, userPosition,
     itineraryWaypoints,
+    isNavigating,
   ]);
+
+  const startNavigation = useCallback(({ awaitMovement = false } = {}) => {
+    if (awaitMovement) {
+      setAwaitingMovement(true);
+      setIsNavigating(false);
+      movementBaselineRef.current = null;
+      return;
+    }
+    setAwaitingMovement(false);
+    setIsNavigating(true);
+  }, []);
 
   const snapToFollowView = useCallback((position) => {
     if (!mapRef?.current || !position) return;
@@ -234,6 +253,9 @@ export function useTurnByTurnNavigation({
 
   useEffect(() => {
     if (!active) {
+      setIsNavigating(false);
+      setAwaitingMovement(false);
+      movementBaselineRef.current = null;
       setUserPosition(null);
       setGpsError(null);
       setOffRoute(false);
@@ -277,13 +299,37 @@ export function useTurnByTurnNavigation({
   }, [active]);
 
   useEffect(() => {
-    if (!active || mapViewMode !== "follow" || !followMap || !mapRef?.current) return;
+    if (!active || !isNavigating || mapViewMode !== "follow" || !followMap || !mapRef?.current) return;
     const pos = userPosition || polyline[0];
     if (pos) snapToFollowView(pos);
-  }, [active, mapViewMode, followMap, userPosition, polyline, snapToFollowView, mapRef]);
+  }, [active, isNavigating, mapViewMode, followMap, userPosition, polyline, snapToFollowView, mapRef]);
 
   useEffect(() => {
-    if (!userPosition || !polyline.length || !active) {
+    if (!active || !awaitingMovement || isNavigating || !userPosition) return;
+
+    if (speedMps != null && speedMps >= MOVEMENT_SPEED_THRESHOLD_MPS) {
+      setIsNavigating(true);
+      setAwaitingMovement(false);
+      movementBaselineRef.current = null;
+      return;
+    }
+
+    const baseline = movementBaselineRef.current;
+    if (!baseline) {
+      movementBaselineRef.current = userPosition;
+      return;
+    }
+
+    const moved = haversineMeters(baseline.lat, baseline.lng, userPosition.lat, userPosition.lng);
+    if (moved >= MOVEMENT_DISTANCE_THRESHOLD_M) {
+      setIsNavigating(true);
+      setAwaitingMovement(false);
+      movementBaselineRef.current = null;
+    }
+  }, [active, awaitingMovement, isNavigating, userPosition, speedMps]);
+
+  useEffect(() => {
+    if (!userPosition || !polyline.length || !active || !isNavigating) {
       setOffRoute(false);
       offRouteSinceRef.current = null;
       return;
@@ -298,10 +344,10 @@ export function useTurnByTurnNavigation({
       offRouteSinceRef.current = null;
       setOffRoute(false);
     }
-  }, [userPosition, polyline, active]);
+  }, [userPosition, polyline, active, isNavigating]);
 
   useEffect(() => {
-    if (!active || !userPosition || !legTargets.length) return;
+    if (!active || !isNavigating || !userPosition || !legTargets.length) return;
 
     for (let i = currentLegIndex; i < legTargets.length; i++) {
       const stop = legTargets[i];
@@ -321,16 +367,16 @@ export function useTurnByTurnNavigation({
         }
       }
     }
-  }, [active, userPosition, legTargets, currentLegIndex, onToast]);
+  }, [active, isNavigating, userPosition, legTargets, currentLegIndex, onToast]);
 
   useEffect(() => {
-    if (!userPosition || !polyline.length) return;
+    if (!isNavigating || !userPosition || !polyline.length) return;
     const close = closestPointOnPolyline(userPosition, polyline);
     const segEnd = polyline[Math.min(close.segmentIndex + 1, polyline.length - 1)];
     if (segEnd && (speedMps == null || speedMps < 1)) {
       setHeading(bearingDegrees(userPosition, segEnd));
     }
-  }, [userPosition, polyline, speedMps]);
+  }, [isNavigating, userPosition, polyline, speedMps]);
 
   const dismissArrival = useCallback(() => setArrivingStop(null), []);
 
@@ -342,7 +388,14 @@ export function useTurnByTurnNavigation({
     offRouteSinceRef.current = null;
     setOffRoute(false);
     setMapViewMode("follow");
+    movementBaselineRef.current = null;
   }, []);
+
+  const stopNavigation = useCallback(() => {
+    setIsNavigating(false);
+    setAwaitingMovement(false);
+    resetNavigation();
+  }, [resetNavigation]);
 
   return {
     userPosition,
@@ -350,13 +403,17 @@ export function useTurnByTurnNavigation({
     steps,
     polyline,
     navDisplay,
+    isNavigating,
+    awaitingMovement,
     arrivingStop,
     passedStopIds,
     legTargets,
     dismissArrival,
     resetNavigation,
-    carPosition: userPosition || (polyline[0] ?? null),
-    carHeading: heading,
+    startNavigation,
+    stopNavigation,
+    carPosition: isNavigating ? (userPosition || (polyline[0] ?? null)) : null,
+    carHeading: isNavigating ? heading : null,
     mapViewMode,
     showRouteOverview,
     resumeFollowing,

@@ -27,52 +27,8 @@ function ManeuverIcon({ maneuver, className = "" }) {
   );
 }
 
-function LegProgress({ current, total, nextName }) {
-  if (total <= 1) return null;
-  const pct = Math.round(((current) / Math.max(total - 1, 1)) * 100);
-  return (
-    <div className="nav-cockpit-legs" aria-label={`Stop ${current + 1} of ${total}`}>
-      <div className="nav-cockpit-legs-label">
-        <span className="nav-cockpit-legs-eyebrow">Trip progress</span>
-        <span className="nav-cockpit-legs-stop">Next: {nextName}</span>
-      </div>
-      <div className="nav-cockpit-legs-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <span className="nav-cockpit-legs-fill" style={{ width: `${Math.min(100, pct)}%` }} />
-      </div>
-      <span className="nav-cockpit-legs-count">{current + 1} / {total} stops</span>
-    </div>
-  );
-}
-
-function NextStopCard({ context }) {
-  if (!context) return null;
-  return (
-    <div className="nav-cockpit-planned" aria-label={`Planned ${context.kind}: ${context.title}`}>
-      <div className="nav-cockpit-planned-head">
-        <span className="nav-cockpit-planned-kind">{context.kind}</span>
-        {context.weather && (
-          <span className="nav-cockpit-planned-weather" title={context.weather.condition}>
-            <WeatherIcon type={resolveWeatherIconType(context.weather.condition)} />
-            {context.weather.temp}
-          </span>
-        )}
-      </div>
-      <div className="nav-cockpit-planned-title">{context.title}</div>
-      {context.city && <div className="nav-cockpit-planned-city">{context.city}</div>}
-      {context.lines?.length > 0 && (
-        <ul className="nav-cockpit-planned-lines">
-          {context.lines.map((line) => (
-            <li key={`${line.type}-${line.text}`} className={`nav-cockpit-planned-line nav-cockpit-planned-line--${line.type}`}>
-              {line.text}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export default function TurnByTurnPanel({
+  isNavigating = false,
   navDisplay,
   theme = "night",
   arrivingStop = null,
@@ -80,13 +36,11 @@ export default function TurnByTurnPanel({
   onDismissArrival,
   onEndNavigation,
   onRecenter,
-  tripStops = [],
-  passedStopIds = new Set(),
   gpsWaiting = false,
   nextStopContext = null,
   liveSharingActive = false,
 }) {
-  if (!navDisplay) return null;
+  if (!isNavigating || !navDisplay) return null;
 
   const {
     instruction,
@@ -98,8 +52,6 @@ export default function TurnByTurnPanel({
     distanceRemaining,
     distanceToNextStop,
     nextStopName,
-    currentLegIndex,
-    totalLegs,
     speedMph,
     offRoute,
     gpsError,
@@ -108,131 +60,111 @@ export default function TurnByTurnPanel({
   } = navDisplay;
 
   return (
-    <aside className={`nav-cockpit nav-cockpit--${theme}`} aria-label="Turn-by-turn navigation">
+    <aside className={`nav-cockpit nav-cockpit--compact nav-cockpit--${theme}`} aria-label="Turn-by-turn navigation">
       {liveSharingActive && (
-        <div className="nav-cockpit-live" role="status">
+        <div className="nav-cockpit-live nav-cockpit-live--compact" role="status">
           <span className="nav-cockpit-live-dot" aria-hidden="true" />
-          Live location shared with your group
+          Live
         </div>
       )}
 
       {offRoute && (
-        <div className="nav-cockpit-offroute" role="status">
-          You may be off route — check your heading
+        <div className="nav-cockpit-offroute nav-cockpit-offroute--compact" role="status">
+          Off route — check heading
         </div>
       )}
 
       {arrivingStop && (
-        <div className="nav-cockpit-arrival" role="status">
+        <div className="nav-cockpit-arrival nav-cockpit-arrival--compact" role="status">
           <span className="nav-cockpit-arrival-label">
-            {arrivalContext?.kind ? `Arriving — ${arrivalContext.kind}` : "Arriving at"}
+            {arrivalContext?.kind ? `Arriving — ${arrivalContext.kind}` : "Arriving"}
           </span>
           <span className="nav-cockpit-arrival-name">{arrivalContext?.title || arrivingStop.title}</span>
-          {arrivalContext?.subtitle && (
-            <span className="nav-cockpit-arrival-sub">{arrivalContext.subtitle}</span>
-          )}
           {arrivalContext?.weather && (
             <span className="nav-cockpit-arrival-weather">
               <WeatherIcon type={resolveWeatherIconType(arrivalContext.weather.condition)} />
               {arrivalContext.weather.temp}
             </span>
           )}
-          <button type="button" className="nav-cockpit-arrival-dismiss" onClick={onDismissArrival}>Got it</button>
+          <button type="button" className="nav-cockpit-arrival-dismiss" onClick={onDismissArrival}>OK</button>
         </div>
       )}
 
       {gpsError && (
-        <div className="nav-cockpit-gps-warn" role="alert">{gpsError}</div>
+        <div className="nav-cockpit-gps-warn nav-cockpit-gps-warn--compact" role="alert">{gpsError}</div>
       )}
 
       {gpsWaiting && !hasGps && !gpsError && (
-        <div className="nav-cockpit-gps-warn" role="status">Acquiring GPS signal…</div>
+        <div className="nav-cockpit-gps-warn nav-cockpit-gps-warn--compact" role="status">Acquiring GPS…</div>
       )}
 
-      <div className="nav-cockpit-primary">
-        <div className="nav-cockpit-maneuver">
+      <div className="nav-cockpit-primary nav-cockpit-primary--compact">
+        <div className="nav-cockpit-maneuver nav-cockpit-maneuver--compact">
           <ManeuverIcon maneuver={maneuver} />
         </div>
         <div className="nav-cockpit-instruction-block">
-          <div className="nav-cockpit-distance">{distanceToTurn}</div>
-          <p className="nav-cockpit-instruction">{instruction}</p>
+          <div className="nav-cockpit-distance nav-cockpit-distance--compact">{distanceToTurn}</div>
+          <p className="nav-cockpit-instruction nav-cockpit-instruction--compact">{instruction}</p>
+          {nextInstruction && (
+            <p className="nav-cockpit-then nav-cockpit-then--inline">
+              <span className="nav-cockpit-then-label">Then</span>
+              {nextInstruction}
+            </p>
+          )}
         </div>
         {speedMph != null && speedMph > 0 && (
-          <div className="nav-cockpit-speed" aria-label={`${speedMph} miles per hour`}>
+          <div className="nav-cockpit-speed nav-cockpit-speed--compact" aria-label={`${speedMph} miles per hour`}>
             <span className="nav-cockpit-speed-val">{speedMph}</span>
             <span className="nav-cockpit-speed-unit">mph</span>
           </div>
         )}
       </div>
 
-      {nextInstruction && (
-        <div className="nav-cockpit-then">
-          <span className="nav-cockpit-then-label">Then</span>
-          <span className="nav-cockpit-then-text">{nextInstruction}</span>
-        </div>
-      )}
-
-      <LegProgress current={currentLegIndex} total={totalLegs} nextName={nextStopName} />
-
-      <NextStopCard context={nextStopContext} />
-
-      <div className={`nav-cockpit-eta-row${showDualEta ? "" : " nav-cockpit-eta-row--single"}`}>
-        {showDualEta ? (
-          <>
-            <div className="nav-cockpit-eta-cell">
-              <span className="nav-cockpit-eta-label">To {nextStopName}</span>
-              <span className="nav-cockpit-eta-val">{etaNextStop}</span>
-              <span className="nav-cockpit-eta-sub">{distanceToNextStop}</span>
-            </div>
-            <div className="nav-cockpit-eta-divider" aria-hidden="true" />
-            <div className="nav-cockpit-eta-cell">
-              <span className="nav-cockpit-eta-label">Destination</span>
+      <div className="nav-cockpit-footer nav-cockpit-footer--compact">
+        <div className={`nav-cockpit-eta-row nav-cockpit-eta-row--compact${showDualEta ? "" : " nav-cockpit-eta-row--single"}`}>
+          {showDualEta ? (
+            <>
+              <div className="nav-cockpit-eta-cell">
+                <span className="nav-cockpit-eta-val">{etaNextStop}</span>
+                <span className="nav-cockpit-eta-sub">{nextStopName} · {distanceToNextStop}</span>
+              </div>
+              <div className="nav-cockpit-eta-divider" aria-hidden="true" />
+              <div className="nav-cockpit-eta-cell">
+                <span className="nav-cockpit-eta-val">{etaDestination}</span>
+                <span className="nav-cockpit-eta-sub">Dest · {distanceRemaining}</span>
+              </div>
+            </>
+          ) : (
+            <div className="nav-cockpit-eta-cell nav-cockpit-eta-cell--solo">
               <span className="nav-cockpit-eta-val">{etaDestination}</span>
-              <span className="nav-cockpit-eta-sub">{distanceRemaining}</span>
+              <span className="nav-cockpit-eta-sub">{distanceRemaining} remaining</span>
             </div>
-          </>
-        ) : (
-          <div className="nav-cockpit-eta-cell nav-cockpit-eta-cell--solo">
-            <span className="nav-cockpit-eta-label">Destination</span>
-            <span className="nav-cockpit-eta-val">{etaDestination}</span>
-            <span className="nav-cockpit-eta-sub">{distanceRemaining}</span>
-          </div>
-        )}
+          )}
+        </div>
+
+        <div className="nav-cockpit-actions nav-cockpit-actions--compact">
+          {onRecenter && (
+            <button type="button" className="nav-cockpit-btn nav-cockpit-btn-icon" onClick={onRecenter} aria-label="Center on me">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+          {onEndNavigation && (
+            <button type="button" className="nav-cockpit-btn nav-cockpit-btn-end nav-cockpit-btn-end--compact" onClick={onEndNavigation}>
+              End
+            </button>
+          )}
+        </div>
       </div>
 
-      {tripStops.length > 0 && (
-        <div className="nav-cockpit-queue" aria-label="Upcoming stops">
-          <span className="nav-cockpit-queue-title">Your corridor</span>
-          <ul className="nav-cockpit-queue-list">
-            {tripStops.slice(0, 5).map((stop, i) => {
-              const passed = passedStopIds.has(stop.id);
-              const current = i === currentLegIndex && !passed;
-              return (
-                <li
-                  key={stop.id}
-                  className={`nav-cockpit-queue-item${passed ? " nav-cockpit-queue-item--passed" : ""}${current ? " nav-cockpit-queue-item--current" : ""}`}
-                >
-                  <span className="nav-cockpit-queue-dot" aria-hidden="true" />
-                  <span className="nav-cockpit-queue-name">{stop.title}</span>
-                </li>
-              );
-            })}
-          </ul>
+      {nextStopContext?.title && (
+        <div className="nav-cockpit-planned nav-cockpit-planned--compact" aria-label={`Next planned stop: ${nextStopContext.title}`}>
+          <span className="nav-cockpit-planned-kind">{nextStopContext.kind}</span>
+          <span className="nav-cockpit-planned-title">{nextStopContext.title}</span>
         </div>
       )}
-
-      <div className="nav-cockpit-actions">
-        {onRecenter && (
-          <button type="button" className="nav-cockpit-btn nav-cockpit-btn-secondary" onClick={onRecenter}>
-            Center on me
-          </button>
-        )}
-        {onEndNavigation && (
-          <button type="button" className="nav-cockpit-btn nav-cockpit-btn-end" onClick={onEndNavigation}>
-            End navigation
-          </button>
-        )}
-      </div>
     </aside>
   );
 }
