@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import PulsingWordmark from "./PulsingWordmark.jsx";
 import PlanOptionCard from "./plan/PlanOptionCard.jsx";
 import PlanVehicleIcon from "./plan/PlanVehicleIcon.jsx";
+import QuestionRouteSetup from "./plan/QuestionRouteSetup.jsx";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { isQuestionConfirmedInHistory } from "../lib/generationContext.js";
 import { ROUTE_PENDING_UNLOCK_MS } from "../lib/tripFlow.js";
@@ -126,6 +127,19 @@ export default function QuestionChoices({
   onSetPrefDraft,
   onSkipRoutePending,
   onRoutePendingTimeout,
+  isLoaded = false,
+  routeSetupOrigin = "",
+  routeSetupDest = "",
+  routeSetupOriginRef,
+  routeSetupDestRef,
+  routeSetupOriginAcRef,
+  routeSetupDestAcRef,
+  routeSetupOriginError = "",
+  routeSetupDestError = "",
+  onRouteSetupOriginChange,
+  onRouteSetupDestChange,
+  onRouteSetupSwap,
+  onRouteSetupContinue,
 }) {
   const [loyaltyOverride, setLoyaltyOverride] = useState(null);
   const [groupOverride, setGroupOverride] = useState(null);
@@ -275,6 +289,10 @@ export default function QuestionChoices({
 
     if (currentQ.type === "vehicle") {
       dock.showContinue = false;
+    } else if (currentQ.type === "route_setup") {
+      dock.showContinue = true;
+      dock.continueDisabled = frozen;
+      dock.onContinue = continueWithHaptic(() => onRouteSetupContinue?.());
     } else if (currentQ.type === "party_composition") {
       dock.showContinue = true;
       dock.continueDisabled = frozen;
@@ -340,6 +358,7 @@ export default function QuestionChoices({
     onResetPlan,
     onSkipRoutePending,
     onPickAnswer,
+    onRouteSetupContinue,
   ]);
 
   if (!currentQ?.id || !currentQ?.type) return null;
@@ -481,6 +500,24 @@ export default function QuestionChoices({
         <div className="question-loading" aria-live="polite">
           <PulsingWordmark size="lg" />
         </div>
+      )}
+
+      {currentQ.type === "route_setup" && (
+        <QuestionRouteSetup
+          isLoaded={isLoaded}
+          origin={routeSetupOrigin}
+          dest={routeSetupDest}
+          originRef={routeSetupOriginRef}
+          destRef={routeSetupDestRef}
+          originAcRef={routeSetupOriginAcRef}
+          destAcRef={routeSetupDestAcRef}
+          originError={routeSetupOriginError}
+          destError={routeSetupDestError}
+          frozen={frozen}
+          onOriginChange={onRouteSetupOriginChange}
+          onDestChange={onRouteSetupDestChange}
+          onSwap={onRouteSetupSwap}
+        />
       )}
 
       {isTripDetails && currentQ.pageTitle && (
@@ -792,6 +829,19 @@ export default function QuestionChoices({
         </div>
       )}
     </div>
+
+      {!actionsInDock && currentQ.type === "route_setup" && (
+        <div className={actionRowClass}>
+          <button
+            type="button"
+            className="btn-generate btn-generate-inline"
+            disabled={frozen}
+            onClick={continueWithHaptic(() => onRouteSetupContinue?.())}
+          >
+            Continue
+          </button>
+        </div>
+      )}
 
       {!actionsInDock && currentQ.type === "party_composition" && (
         <div className={actionRowClass}>

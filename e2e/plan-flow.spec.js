@@ -10,12 +10,14 @@ async function closeAutocomplete(page) {
 async function startPlanFlow(page) {
   await page.goto("/?skyHour=12&skyTest=0");
   await page.waitForTimeout(1000);
-  await page.locator(".hero-input").first().fill("Dallas, TX");
-  await closeAutocomplete(page);
-  await page.locator(".hero-input").nth(1).fill("Austin, TX");
-  await closeAutocomplete(page);
-  await page.locator(".hero-go-btn").click();
+  await page.locator(".hero-plan-cta, .returning-user-action--plan").first().click();
   await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
+  await page.locator("#plan-route-origin").fill("Dallas, TX");
+  await closeAutocomplete(page);
+  await page.locator("#plan-route-dest").fill("Austin, TX");
+  await closeAutocomplete(page);
+  await page.locator(".plan-flow-dock-continue, .btn-generate-inline").first().click();
+  await expect(page.locator(".plan-flow-question-title")).toContainText("How are you traveling", { timeout: 20_000 });
 }
 
 test.describe("plan flow UX", () => {

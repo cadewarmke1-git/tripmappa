@@ -14,12 +14,26 @@ import { OVERNIGHT_PREFERENCE_OVERNIGHT } from "./driveMode.js";
 import { DIETARY_CHOICES } from "./tripAccommodations.js";
 
 describe("tripFlow UX", () => {
+  const routeEndpoints = { origin: "Dallas, TX", destination: "Los Angeles, CA" };
+
   const longTripContext = {
+    ...routeEndpoints,
     routeDistance: "520 mi",
     routeDuration: "8 hours 15 mins",
     routeDistanceMiles: 520,
     routeDurationHours: 8.25,
   };
+
+  it("asks route setup before vehicle when endpoints are missing", () => {
+    const next = getNextFlowQuestion({}, {});
+    expect(next.id).toBe("route_setup");
+    expect(next.type).toBe("route_setup");
+  });
+
+  it("asks vehicle after route endpoints exist", () => {
+    const next = getNextFlowQuestion({}, routeEndpoints);
+    expect(next.id).toBe("vehicle");
+  });
 
   it("detects when route context is ready", () => {
     expect(isRouteContextReady({ routeDistanceMiles: 200 })).toBe(true);
@@ -45,6 +59,7 @@ describe("tripFlow UX", () => {
 
   it("skips towing and route preferences on day trips", () => {
     const dayContext = {
+      ...routeEndpoints,
       routeDistance: "80 mi",
       routeDuration: "1 hour 30 mins",
       routeDistanceMiles: 80,
@@ -88,7 +103,7 @@ describe("tripFlow UX", () => {
 
   it("shows overnight with pending route when drive time is unknown", () => {
     const answers = { ...basePersonal, preferences: [] };
-    const next = getNextFlowQuestion(answers, {});
+    const next = getNextFlowQuestion(answers, { origin: "Dallas, TX", destination: "Los Angeles, CA" });
     expect(next.id).toBe("overnight_preference");
     expect(next.pendingRoute).toBe(true);
   });
@@ -136,6 +151,7 @@ describe("tripFlow UX", () => {
 
   it("asks overnight before lodging on medium trips", () => {
     const mediumContext = {
+      ...routeEndpoints,
       routeDistance: "220 mi",
       routeDuration: "4 hours 30 mins",
       routeDistanceMiles: 220,
@@ -155,6 +171,7 @@ describe("tripFlow UX", () => {
 
   it("skips lodging when overnight preference was not selected", () => {
     const mediumContext = {
+      ...routeEndpoints,
       routeDistance: "220 mi",
       routeDuration: "4 hours 30 mins",
       routeDistanceMiles: 220,
@@ -222,13 +239,14 @@ describe("tripFlow UX", () => {
       preferences: [],
       route_context_unavailable: true,
     };
-    const next = getNextFlowQuestion(answers, {});
+    const next = getNextFlowQuestion(answers, { origin: "Dallas, TX", destination: "Los Angeles, CA" });
     expect(next.id).toBe("overnight_preference");
     expect(next.pendingRoute).toBeFalsy();
   });
 
   it("shows medium-trip hint on overnight question for 3.5–6 hr routes", () => {
     const mediumContext = {
+      ...routeEndpoints,
       routeDistance: "220 mi",
       routeDuration: "4 hours 30 mins",
       routeDistanceMiles: 220,
@@ -331,6 +349,7 @@ describe("tripFlow UX", () => {
 
   it("skips trip_nights on day-trip RV routes", () => {
     const dayContext = {
+      ...routeEndpoints,
       routeDistance: "80 mi",
       routeDuration: "1 hour 30 mins",
       routeDistanceMiles: 80,

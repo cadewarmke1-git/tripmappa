@@ -35,6 +35,17 @@ export default function PlanPanel({
   questionHistoryLength,
   flowProgress,
   inQuestionFlow = false,
+  isLoaded = false,
+  routeSetupOriginError = "",
+  routeSetupDestError = "",
+  onRouteSetupOriginChange,
+  onRouteSetupDestChange,
+  onRouteSetupSwap,
+  onRouteSetupContinue,
+  routeSetupOriginRef,
+  routeSetupDestRef,
+  routeSetupOriginAcRef,
+  routeSetupDestAcRef,
   routeError = null,
   onRetryRoute,
   planOutOfDate = false,
@@ -69,6 +80,7 @@ export default function PlanPanel({
   const planFlowLayout = getPlanFlowLayoutClass(currentQuestion, convoComplete);
   const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
   const routePending = Boolean(currentQuestion?.pendingRoute);
+  const isRouteSetupStep = currentQuestion?.id === "route_setup";
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
   const showReadySummary = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
@@ -140,7 +152,7 @@ export default function PlanPanel({
         </div>
       )}
 
-      {inQuestionFlow && (origin || dest) && (
+      {inQuestionFlow && (origin || dest) && !isRouteSetupStep && (
         <PlanRouteCard
           origin={origin}
           dest={dest}
@@ -287,6 +299,19 @@ export default function PlanPanel({
                           onSetPrefDraft={onSetPrefDraft}
                           onSkipRoutePending={onSkipRoutePending}
                           onRoutePendingTimeout={onRoutePendingTimeout}
+                          isLoaded={isLoaded}
+                          routeSetupOrigin={origin}
+                          routeSetupDest={dest}
+                          routeSetupOriginRef={routeSetupOriginRef}
+                          routeSetupDestRef={routeSetupDestRef}
+                          routeSetupOriginAcRef={routeSetupOriginAcRef}
+                          routeSetupDestAcRef={routeSetupDestAcRef}
+                          routeSetupOriginError={routeSetupOriginError}
+                          routeSetupDestError={routeSetupDestError}
+                          onRouteSetupOriginChange={onRouteSetupOriginChange}
+                          onRouteSetupDestChange={onRouteSetupDestChange}
+                          onRouteSetupSwap={onRouteSetupSwap}
+                          onRouteSetupContinue={onRouteSetupContinue}
                         />
                       </div>
                     </ErrorBoundary>

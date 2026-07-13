@@ -17,7 +17,7 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js
 import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
 import { stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
-import { configurePlacesAutocomplete, resolvePlaceFromAutocomplete } from "./lib/places.js";
+import { resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { getItineraryOverview, isIncludedRoadStop } from "./lib/itineraryDays.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
@@ -63,6 +63,7 @@ import { saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyC
 import PlanFlowHeaderBar from "./components/PlanFlowHeaderBar.jsx";
 import PlanPanelHelpButton from "./components/PlanPanelHelpButton.jsx";
 import HeroView from "./components/HeroView.jsx";
+import ReturningUserView from "./components/ReturningUserView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TurnByTurnPanel from "./components/navigate/TurnByTurnPanel.jsx";
 import NavigationAlertToasts from "./components/navigate/NavigationAlertToasts.jsx";
@@ -177,11 +178,10 @@ export default function App() {
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
-  const [heroOrigin, setHeroOrigin] = useState("");
-  const [heroDest, setHeroDest] = useState("");
-  const [heroOriginError, setHeroOriginError] = useState("");
-  const [heroDestError, setHeroDestError] = useState("");
-  const [heroLaunching, setHeroLaunching] = useState(false);
+  const [routeSetupOriginError, setRouteSetupOriginError] = useState("");
+  const [routeSetupDestError, setRouteSetupDestError] = useState("");
+  const [planLaunching, setPlanLaunching] = useState(false);
+  const [navigateLaunching, setNavigateLaunching] = useState(false);
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState(null);
@@ -673,6 +673,10 @@ export default function App() {
   }
 
   function handleNavOpenPlan() {
+    if (view === "hero" && user) {
+      startPlanFromHero();
+      return;
+    }
     openPlanPanel();
   }
 
@@ -692,12 +696,38 @@ export default function App() {
     return null;
   }, [view, tab]);
 
+  const recentTrip = useMemo(
+    () => (user && savedTrips.length > 0 ? savedTrips[0] : null),
+    [user, savedTrips],
+  );
+
+  function primeNavigateOriginLabel(lat, lng) {
+    if (!isLoaded || !window.google?.maps?.Geocoder) return;
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results?.[0]?.formatted_address) {
+        const addr = results[0].formatted_address;
+        setOrigin(addr);
+        if (navigateOriginRef.current) navigateOriginRef.current.value = addr;
+      }
+    });
+  }
+
+  useEffect(() => {
+    if (appMode !== "navigate" || view !== "hero") return undefined;
+    const match = origin.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (!match) return undefined;
+    primeNavigateOriginLabel(Number(match[1]), Number(match[2]));
+    return undefined;
+  }, [appMode, view, origin, isLoaded]);
+
   function handleAppModeChange(mode) {
     if (mode === appMode) return;
-    setAppMode(mode);
-    if (mode === "navigate" && view !== "hero") {
-      setView("hero");
+    if (mode === "navigate") {
+      startNavigateFromDashboard();
+      return;
     }
+    setAppMode("plan");
   }
 
   function renderAppNavBar(variant = "app") {
@@ -793,13 +823,12 @@ export default function App() {
     setLoading(false);
     setAuthModalLead("");
     setView("hero");
+    setAppMode("plan");
     setTab("plan");
     setOrigin("");
     setDest("");
-    setHeroOrigin("");
-    setHeroDest("");
-    setHeroOriginError("");
-    setHeroDestError("");
+    setRouteSetupOriginError("");
+    setRouteSetupDestError("");
     setAnswers({});
     setFlowPrefill({});
     setQIndex(-1);
@@ -840,8 +869,6 @@ export default function App() {
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     if (originRef.current) originRef.current.value = "";
     if (destRef.current) destRef.current.value = "";
-    if (heroOriginRef.current) heroOriginRef.current.value = "";
-    if (heroDestRef.current) heroDestRef.current.value = "";
     setPlanDraft(loadPlanDraft());
     window.scrollTo(0, 0);
   }
@@ -1222,21 +1249,11 @@ export default function App() {
     }
     const ok = await fetchRouteBetween(fromVal, toVal, { skipFitBounds: true });
     if (ok) {
-      turnByTurn.startNavigation({ awaitMovement: true });
-      toast_("Route ready — start driving to begin turn-by-turn", true);
+      turnByTurn.startNavigation();
+      turnByTurn.resumeFollowing();
+      toast_("Route ready", true);
     }
     else toast_("Could not calculate route — check addresses and try again", { isError: true });
-  }
-
-  function swapHeroCities() {
-    const fromVal = heroOriginRef.current?.value ?? heroOrigin;
-    const toVal = heroDestRef.current?.value ?? heroDest;
-    if (heroOriginRef.current) heroOriginRef.current.value = toVal;
-    if (heroDestRef.current) heroDestRef.current.value = fromVal;
-    setHeroOrigin(toVal);
-    setHeroDest(fromVal);
-    setHeroOriginError("");
-    setHeroDestError("");
   }
 
   function swapRouteCities() {
@@ -1247,59 +1264,13 @@ export default function App() {
     setOrigin(toVal);
     setDest(fromVal);
     setRouteError(null);
+    setRouteSetupOriginError("");
+    setRouteSetupDestError("");
     setAnswers(prev => pruneRouteDependentAnswers(prev, buildQuestionContext(prev)));
     if (isLoaded && window.google && toVal && fromVal && answers.vehicle) fetchDirections(answers.vehicle);
   }
 
-
-  async function launchFromHero() {
-    if (!isLoaded || !window.google) {
-      toast_("Map is still loading — try again in a moment");
-      return;
-    }
-
-    const from = heroOriginRef.current?.value?.trim() || heroOrigin.trim();
-    const to = heroDestRef.current?.value?.trim() || heroDest.trim();
-    if (!from || !to) return;
-
-    setHeroLaunching(true);
-    setHeroOriginError("");
-    setHeroDestError("");
-
-    const [fromPlace, toPlace] = await Promise.all([
-      resolvePlaceFromAutocomplete(from, heroOriginAcRef.current),
-      resolvePlaceFromAutocomplete(to, heroDestAcRef.current),
-    ]);
-
-    let invalid = false;
-    if (!fromPlace) {
-      setHeroOriginError("Please enter a valid city, address, or landmark");
-      invalid = true;
-    }
-    if (!toPlace) {
-      setHeroDestError("Please enter a valid city, address, or landmark");
-      invalid = true;
-    }
-    if (invalid) {
-      setHeroLaunching(false);
-      return;
-    }
-
-    const fromAddr = fromPlace.formattedAddress;
-    const toAddr = toPlace.formattedAddress;
-    setHeroOrigin(fromAddr);
-    setHeroDest(toAddr);
-    setOrigin(fromAddr);
-    setDest(toAddr);
-    if (heroOriginRef.current) heroOriginRef.current.value = fromAddr;
-    if (heroDestRef.current) heroDestRef.current.value = toAddr;
-
-    setView("app");
-    window.scrollTo(0, 0);
-
-    if (originRef.current) originRef.current.value = fromAddr;
-    if (destRef.current) destRef.current.value = toAddr;
-
+  async function resetPlanFlowState() {
     const prefill = await buildFlowPrefillForUser();
     setFlowPrefill(prefill);
     setAnswers({});
@@ -1312,11 +1283,180 @@ export default function App() {
     setPrefDraft(null);
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
-    loadNextQuestion({}, { flowPrefill: prefill });
-    setHeroLaunching(false);
-    requestAnimationFrame(() => scrollPlanToTop());
+    return prefill;
+  }
 
+  async function startNavigateFromDashboard(destPreset = "") {
+    setNavigateLaunching(true);
+    setAppMode("navigate");
+    setView("hero");
+    const destVal = destPreset?.trim() || "";
+    setDest(destVal);
+    if (navigateDestRef.current) navigateDestRef.current.value = destVal;
+    window.scrollTo(0, 0);
+
+    if (!navigator.geolocation) {
+      setNavigateLaunching(false);
+      toast_("Enable location to use Navigate", { isError: true });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const coords = `${latitude},${longitude}`;
+        setOrigin(coords);
+        if (navigateOriginRef.current) navigateOriginRef.current.value = coords;
+        primeNavigateOriginLabel(latitude, longitude);
+        setNavigateLaunching(false);
+      },
+      () => {
+        setNavigateLaunching(false);
+        toast_("Enable location to use Navigate", { isError: true });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  function startNavigateHome() {
+    const home = (homeAddress || userProfile?.home_address || "").trim();
+    if (!home) {
+      toast_("Add your home address in Profile to use Head home");
+      openProfile();
+      return;
+    }
+    startNavigateFromDashboard(home);
+  }
+
+  function startNavigateToDestination(destAddress) {
+    const dest = destAddress?.trim();
+    if (!dest) return;
+    startNavigateFromDashboard(dest);
+  }
+
+  async function startReturnTrip(trip) {
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+    if (!trip?.origin || !trip?.dest) return;
+
+    setPlanLaunching(true);
+    const swappedOrigin = trip.dest;
+    const swappedDest = trip.origin;
+    setRouteSetupOriginError("");
+    setRouteSetupDestError("");
+    setOrigin(swappedOrigin);
+    setDest(swappedDest);
+    if (originRef.current) originRef.current.value = swappedOrigin;
+    if (destRef.current) destRef.current.value = swappedDest;
+    setRouteInfo(null);
+    setRoutePath(null);
+    setRouteError(null);
+
+    setView("app");
+    setTab("plan");
+    setCardCollapsed(false);
+    window.scrollTo(0, 0);
+
+    await resetPlanFlowState();
+    setCurrentQuestion({
+      done: false,
+      id: "route_setup",
+      ask: "Where are you headed?",
+      hint: "Enter your start and destination — we'll map the drive and tailor every stop.",
+      type: "route_setup",
+    });
+    setQIndex(0);
+    setConvoComplete(false);
+    setPlanLaunching(false);
+    requestAnimationFrame(() => scrollPlanToTop());
+    fetchDirections(getEffectiveVehicle(trip.answers || {}) || "Car");
+  }
+
+  async function startPlanFromHero() {
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+
+    setPlanLaunching(true);
+    setRouteSetupOriginError("");
+    setRouteSetupDestError("");
+    setOrigin("");
+    setDest("");
+    if (originRef.current) originRef.current.value = "";
+    if (destRef.current) destRef.current.value = "";
+    setRouteInfo(null);
+    setRoutePath(null);
+    setRouteError(null);
+
+    setView("app");
+    setTab("plan");
+    setCardCollapsed(false);
+    window.scrollTo(0, 0);
+
+    const prefill = await resetPlanFlowState();
+    loadNextQuestion({}, { flowPrefill: prefill });
+    setPlanLaunching(false);
+    requestAnimationFrame(() => scrollPlanToTop());
+  }
+
+  async function handleRouteSetupContinue() {
+    if (!isLoaded || !window.google || !currentQuestion || currentQuestion.id !== "route_setup") return;
+
+    const from = originRef.current?.value?.trim() || origin.trim();
+    const to = destRef.current?.value?.trim() || dest.trim();
+    if (!from || !to) {
+      if (!from) setRouteSetupOriginError("Enter where you're starting from");
+      if (!to) setRouteSetupDestError("Enter where you're headed");
+      return;
+    }
+
+    setRouteSetupOriginError("");
+    setRouteSetupDestError("");
+
+    const [fromPlace, toPlace] = await Promise.all([
+      resolvePlaceFromAutocomplete(from, heroOriginAcRef.current),
+      resolvePlaceFromAutocomplete(to, heroDestAcRef.current),
+    ]);
+
+    let invalid = false;
+    if (!fromPlace) {
+      setRouteSetupOriginError("Please enter a valid city, address, or landmark");
+      invalid = true;
+    }
+    if (!toPlace) {
+      setRouteSetupDestError("Please enter a valid city, address, or landmark");
+      invalid = true;
+    }
+    if (invalid) return;
+
+    const fromAddr = fromPlace.formattedAddress;
+    const toAddr = toPlace.formattedAddress;
+    setOrigin(fromAddr);
+    setDest(toAddr);
+    if (originRef.current) originRef.current.value = fromAddr;
+    if (destRef.current) destRef.current.value = toAddr;
+
+    const fromCity = fromAddr.split(",")[0]?.trim() || fromAddr;
+    const toCity = toAddr.split(",")[0]?.trim() || toAddr;
+    setQuestionHistory(h => [...h, {
+      question: currentQuestion,
+      answer: `${fromCity} → ${toCity}`,
+    }]);
+    loadNextQuestion(answers);
     fetchDirections("Car");
+  }
+
+  function handleRouteSetupOriginChange(value) {
+    setOrigin(value);
+    setRouteSetupOriginError("");
+  }
+
+  function handleRouteSetupDestChange(value) {
+    setDest(value);
+    setRouteSetupDestError("");
   }
 
   const applyPrefDraftForQuestion = useCallback((question, newAnswers, prefillOverride) => {
@@ -2110,12 +2250,59 @@ export default function App() {
     toast_("Trip loaded");
   }
 
+  const returningUserViewProps = (overrides = {}) => ({
+    user,
+    userProfile,
+    creditStatus,
+    homeAddress,
+    planDraft,
+    recentTrip,
+    savedTripsCount: savedTrips.length,
+    liveSharingActive,
+    planLaunching,
+    navigateLaunching,
+    onStartPlan: startPlanFromHero,
+    onStartNavigate: () => startNavigateFromDashboard(),
+    onNavigateHome: startNavigateHome,
+    onNavigateToDestination: startNavigateToDestination,
+    onResumeDraft: resumePlanDraft,
+    onDismissDraft: clearSavedPlanDraft,
+    onResumeTrip: handleViewTrip,
+    onPlanReturnTrip: startReturnTrip,
+    onGoHome: goHome,
+    appMode,
+    onAppModeChange: handleAppModeChange,
+    onOpenPlan: handleNavOpenPlan,
+    onOpenTrips: handleNavOpenTrips,
+    onOpenShare: handleNavOpenShare,
+    onOpenProfile: openProfile,
+    onRefreshCredits: refreshCredits,
+    onUploadAvatar: handleProfileUploadAvatar,
+    onSignOut: handleSignOut,
+    ...overrides,
+  });
+
   if (AppRoutePage) {
     return <AppRoutePage />;
   }
 
   if (liveShareToken) {
     return <LazyLiveViewPage shareToken={liveShareToken} toast={toast_} />;
+  }
+
+  if (authLoading) {
+    return (
+      <>
+        <ReturningUserView {...returningUserViewProps({ loading: true })} />
+        <Toast
+          message={toast}
+          isGold={toastIsGold}
+          isError={toastIsError}
+          actionLabel={toastAction?.label}
+          onAction={toastAction ? runToastAction : undefined}
+        />
+      </>
+    );
   }
 
   if (view === "preferences" && user) {
@@ -2214,12 +2401,17 @@ export default function App() {
 
   if (user && !userProfileLoaded) {
     return (
-      <div className={`app-wrap ${theme}`}>
-        {renderAppNavBar("app")}
-        <div className="profile-loading-shell" role="status" aria-busy="true" aria-label="Loading your profile">
-          <PulsingWordmark size="lg" />
-        </div>
-      </div>
+      <>
+        <ReturningUserView {...returningUserViewProps({ loading: true })} />
+        {renderAuthModals()}
+        <Toast
+          message={toast}
+          isGold={toastIsGold}
+          isError={toastIsError}
+          actionLabel={toastAction?.label}
+          onAction={toastAction ? runToastAction : undefined}
+        />
+      </>
     );
   }
 
@@ -2331,33 +2523,33 @@ export default function App() {
     );
   }
 
+  if (view === "hero" && user) return (
+    <>
+      <ReturningUserView {...returningUserViewProps()} />
+      {founderWelcomeName && (
+        <LazyFounderWelcomeOverlay
+          firstName={founderWelcomeName}
+          onDismiss={() => setFounderWelcomeName(null)}
+        />
+      )}
+      {renderAuthModals()}
+      <Toast
+        message={toast}
+        isGold={toastIsGold}
+        isError={toastIsError}
+        actionLabel={toastAction?.label}
+        onAction={toastAction ? runToastAction : undefined}
+      />
+    </>
+  );
+
   if (view === "hero") return (
     <>
       <HeroView
-        isLoaded={isLoaded}
-        heroOrigin={heroOrigin}
-        heroDest={heroDest}
-        heroOriginError={heroOriginError}
-        heroDestError={heroDestError}
-        heroLaunching={heroLaunching}
-        launchDisabled={!heroOrigin.trim() || !heroDest.trim() || !isLoaded || heroLaunching}
-        heroOriginRef={heroOriginRef}
-        heroDestRef={heroDestRef}
+        planLaunching={planLaunching}
+        launchDisabled={!isLoaded || planLaunching}
         user={user}
-        onSwap={swapHeroCities}
-        onHeroOriginAcLoad={ac => { heroOriginAcRef.current = ac; configurePlacesAutocomplete(ac); }}
-        onHeroDestAcLoad={ac => { heroDestAcRef.current = ac; configurePlacesAutocomplete(ac); }}
-        onHeroOriginPlaceChanged={() => {
-          if (heroOriginRef.current) setHeroOrigin(heroOriginRef.current.value);
-          setHeroOriginError("");
-        }}
-        onHeroDestPlaceChanged={() => {
-          if (heroDestRef.current) setHeroDest(heroDestRef.current.value);
-          setHeroDestError("");
-        }}
-        onHeroOriginChange={v => { setHeroOrigin(v); setHeroOriginError(""); }}
-        onHeroDestChange={v => { setHeroDest(v); setHeroDestError(""); }}
-        onLaunch={launchFromHero}
+        onStartPlan={startPlanFromHero}
         onGoHome={goHome}
         activeNav={null}
         appMode={appMode}
@@ -2376,7 +2568,6 @@ export default function App() {
         planDraft={planDraft}
         onResumeDraft={resumePlanDraft}
         onDismissDraft={clearSavedPlanDraft}
-        lastTripPreview={lastTripPreview}
         heroTheme={theme}
       />
       {founderWelcomeName && (
@@ -2793,6 +2984,17 @@ export default function App() {
                       onUpgrade={openTripsUpgrade}
                       flowProgress={flowProgress}
                       inQuestionFlow={inQuestionFlow}
+                      isLoaded={isLoaded}
+                      routeSetupOriginError={routeSetupOriginError}
+                      routeSetupDestError={routeSetupDestError}
+                      onRouteSetupOriginChange={handleRouteSetupOriginChange}
+                      onRouteSetupDestChange={handleRouteSetupDestChange}
+                      onRouteSetupSwap={swapRouteCities}
+                      onRouteSetupContinue={handleRouteSetupContinue}
+                      routeSetupOriginRef={originRef}
+                      routeSetupDestRef={destRef}
+                      routeSetupOriginAcRef={heroOriginAcRef}
+                      routeSetupDestAcRef={heroDestAcRef}
                       routeError={routeError}
                       onRetryRoute={retryRouteCalculation}
                       planOutOfDate={planOutOfDate}

@@ -428,8 +428,11 @@ export function useAppAuth({
     if (authLoading) return;
     if (user?.id && session?.access_token) {
       if (typeof window !== "undefined" && window.__TRIPMAPPA_E2E_AUTH__) {
-        applyCreditStatus({ tier: "wanderer", unlimited: false, remaining: 3, limit: 3 });
-        setUserProfile({ onboarding_complete: true, tier: "wanderer" });
+        const mockProfile = window.__TRIPMAPPA_E2E_PROFILE__ || { onboarding_complete: true, tier: "wanderer" };
+        const mockCredits = window.__TRIPMAPPA_E2E_CREDITS__ || { tier: "wanderer", unlimited: false, remaining: 3, limit: 3 };
+        applyCreditStatus(mockCredits);
+        setUserProfile(mockProfile);
+        if (mockProfile?.home_address) setHomeAddress(mockProfile.home_address);
         setUserProfileLoaded(true);
         return;
       }

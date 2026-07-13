@@ -14,14 +14,16 @@ import { needsScheduleHoursDetail } from "../src/lib/scheduleRestrictions.js";
 import { isContinuousDrive, OVERNIGHT_PREFERENCE_OVERNIGHT, requiresMultipleDays } from "../src/lib/driveMode.js";
 import { getEffectiveVehicle } from "../src/lib/vehicles.js";
 
+const DEFAULT_ROUTE = { origin: "Dallas, TX", destination: "Los Angeles, CA" };
+
 const ROUTE_CONTEXTS = {
-  none: {},
-  dayTrip: { routeDistance: "80 mi", routeDuration: "1 hour 30 mins", routeDistanceMiles: 80, routeDurationHours: 1.5 },
-  medium: { routeDistance: "220 mi", routeDuration: "4 hours 30 mins", routeDistanceMiles: 220, routeDurationHours: 4.5 },
-  long: { routeDistance: "520 mi", routeDuration: "8 hours 15 mins", routeDistanceMiles: 520, routeDurationHours: 8.25 },
-  veryLong: { routeDistance: "1200 mi", routeDuration: "18 hours", routeDistanceMiles: 1200, routeDurationHours: 18 },
-  routeFailed: { routeFailed: true },
-  milesOnly: { routeDistance: "400 mi", routeDistanceMiles: 400 },
+  none: { ...DEFAULT_ROUTE },
+  dayTrip: { ...DEFAULT_ROUTE, routeDistance: "80 mi", routeDuration: "1 hour 30 mins", routeDistanceMiles: 80, routeDurationHours: 1.5 },
+  medium: { ...DEFAULT_ROUTE, routeDistance: "220 mi", routeDuration: "4 hours 30 mins", routeDistanceMiles: 220, routeDurationHours: 4.5 },
+  long: { ...DEFAULT_ROUTE, routeDistance: "520 mi", routeDuration: "8 hours 15 mins", routeDistanceMiles: 520, routeDurationHours: 8.25 },
+  veryLong: { ...DEFAULT_ROUTE, routeDistance: "1200 mi", routeDuration: "18 hours", routeDistanceMiles: 1200, routeDurationHours: 18 },
+  routeFailed: { ...DEFAULT_ROUTE, routeFailed: true },
+  milesOnly: { ...DEFAULT_ROUTE, routeDistance: "400 mi", routeDistanceMiles: 400 },
 };
 
 const THIN_TRANSPORT = ["Boat", "Ferry", "Plane"];
@@ -104,6 +106,7 @@ function applyAnswer(q, answers, options) {
   if (q.id === "schedule_drive_hours") return { ...answers, schedule_drive_hours: "8am-6pm" };
   if (q.type === "multiselect") return { ...answers, [q.id]: q.choices?.length ? [q.choices[0]] : [] };
   if (q.type === "text") return { ...answers, [q.id]: "peanuts, shellfish" };
+  if (q.type === "route_setup") return answers;
   if (q.type === "vehicle") return { ...answers, vehicle: q.choices?.[0] || "Car" };
   if (Array.isArray(q.choices) && q.choices.length) {
     const first = q.choices[0];

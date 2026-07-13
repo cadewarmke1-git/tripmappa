@@ -46,7 +46,7 @@ export const PLANE_SKIP_MESSAGE =
 export const ROUTE_PENDING_UNLOCK_MS = 8000;
 
 export const FLOW_QUESTION_IDS = [
-  "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
+  "route_setup", "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
   "party_composition", "adult_count", "child_count",
   "overnight_preference", "lodging", "trip_nights", "loyalty_program", "dietary", "food_allergies", "accessibility",
   "stops_interests", "trip_budget", "schedule_restrictions", "schedule_drive_hours", "preferences",
@@ -149,7 +149,7 @@ export const FLOW_PHASES = [
 ];
 
 const ABOUT_QUESTION_IDS = new Set([
-  "vehicle", "fuel_type", "towing", "travelers", "party_composition", "stop_count", "multi_vehicles", "primary_vehicle",
+  "route_setup", "vehicle", "fuel_type", "towing", "travelers", "party_composition", "stop_count", "multi_vehicles", "primary_vehicle",
   "hauling_type", "sleeper_cab", "truck_stop_brand",
 ]);
 const ROUTE_QUESTION_IDS = new Set([
@@ -172,6 +172,7 @@ export function getFlowPhaseId(questionId, convoComplete = false) {
 export function formatFlowAnswer(question, answer) {
   if (!question) return "";
   if (answer == null) return "—";
+  if (question.id === "route_setup" && typeof answer === "string") return answer;
   if (question.type === "trip_details" || question.type === "multiselect_group") {
     const parts = [];
     const payload = answer && typeof answer === "object" ? answer : {};
@@ -744,6 +745,20 @@ function buildVehicleQuestion() {
   return { done: false, id: "vehicle", ask: "How are you traveling?", type: "vehicle", groups: VEHICLE_GROUPS, choices: VEHICLE_CHOICES };
 }
 
+function buildRouteSetupQuestion() {
+  return {
+    done: false,
+    id: "route_setup",
+    ask: "Where are you headed?",
+    hint: "Enter your start and destination — we'll map the drive and tailor every stop.",
+    type: "route_setup",
+  };
+}
+
+function hasRouteEndpoints(context = {}) {
+  return Boolean(context?.origin?.trim() && context?.destination?.trim());
+}
+
 function buildPrimaryVehicleQuestion(selectedVehicles) {
   const choices = (Array.isArray(selectedVehicles) ? selectedVehicles : []).filter(Boolean);
   return {
@@ -1021,6 +1036,7 @@ export function getFlowCompleteMessage(answers, context = {}) {
 }
 
 export function getNextFlowQuestion(answers, context = {}) {
+  if (!hasRouteEndpoints(context)) return buildRouteSetupQuestion();
   if (!answers?.vehicle) return buildVehicleQuestion();
 
   if (answers.vehicle === MULTI_VEHICLE_TRIP) {
@@ -1185,6 +1201,7 @@ export function warnContinuousDriveFeasibility(context) {
 export function getPlanFlowLayoutClass(question, convoComplete = false) {
   if (convoComplete) return "sparse";
   if (!question) return "standard";
+  if (question.id === "route_setup") return "standard";
   const sparseIds = new Set(["party_composition", "sleeper_cab", "overnight_preference"]);
   if (sparseIds.has(question.id)) return "sparse";
   if (question.type === "party_composition") return "sparse";

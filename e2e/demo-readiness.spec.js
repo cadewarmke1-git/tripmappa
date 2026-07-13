@@ -142,15 +142,17 @@ async function startDemoPlanFlow(page) {
     await dismissBlockingOverlays(page);
   }
 
-  await page.locator(".hero-input").first().fill("Dallas, TX");
+  await page.locator(".hero-plan-cta").click();
+  await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
+  await page.locator("#plan-route-origin").fill("Dallas, TX");
   await closeAutocomplete(page);
-  await page.locator(".hero-input").nth(1).fill("Austin, TX");
+  await page.locator("#plan-route-dest").fill("Austin, TX");
   await closeAutocomplete(page);
-  const goBtn = page.locator(".hero-go-btn");
+  const goBtn = page.locator(".plan-flow-dock-continue, .btn-generate-inline").first();
   await expect(goBtn).toBeEnabled({ timeout: 90_000 });
   await dismissBlockingOverlays(page);
   await goBtn.click();
-  await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator(".plan-flow-question-title")).toContainText("How are you traveling", { timeout: 20_000 });
 
   const startOver = page.locator(".plan-flow-dock-start-over, .plan-flow-start-over").first();
   if (await startOver.isVisible({ timeout: 2_000 }).catch(() => false)) {
