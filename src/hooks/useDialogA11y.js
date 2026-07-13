@@ -10,16 +10,19 @@ export function useDialogA11y(open, onClose, titleId, { modal = true } = {}) {
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return undefined;
+    const isNativeDialog = typeof dialog.show === "function" && dialog.tagName === "DIALOG";
 
-    if (open) {
-      if (!dialog.open) {
-        if (modal) dialog.showModal();
-        else dialog.show();
+    if (isNativeDialog) {
+      if (open) {
+        if (!dialog.open) {
+          if (modal) dialog.showModal();
+          else dialog.show();
+        }
+      } else if (dialog.open) {
+        programmaticCloseRef.current = true;
+        dialog.close();
+        programmaticCloseRef.current = false;
       }
-    } else if (dialog.open) {
-      programmaticCloseRef.current = true;
-      dialog.close();
-      programmaticCloseRef.current = false;
     }
 
     function handleCancel(e) {
@@ -32,15 +35,19 @@ export function useDialogA11y(open, onClose, titleId, { modal = true } = {}) {
       onCloseRef.current?.();
     }
 
-    dialog.addEventListener("cancel", handleCancel);
-    dialog.addEventListener("close", handleClose);
+    if (isNativeDialog) {
+      dialog.addEventListener("cancel", handleCancel);
+      dialog.addEventListener("close", handleClose);
+    }
     return () => {
-      dialog.removeEventListener("cancel", handleCancel);
-      dialog.removeEventListener("close", handleClose);
-      if (dialog.open) {
-        programmaticCloseRef.current = true;
-        dialog.close();
-        programmaticCloseRef.current = false;
+      if (isNativeDialog) {
+        dialog.removeEventListener("cancel", handleCancel);
+        dialog.removeEventListener("close", handleClose);
+        if (dialog.open) {
+          programmaticCloseRef.current = true;
+          dialog.close();
+          programmaticCloseRef.current = false;
+        }
       }
     };
   }, [open, modal]);

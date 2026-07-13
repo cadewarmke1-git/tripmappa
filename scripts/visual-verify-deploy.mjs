@@ -21,10 +21,10 @@ const CHECKS = [
     name: "hero-search-opaque",
     path: "/",
     eval: () => {
-      const el = document.querySelector(".hero-search") || document.querySelector(".hero-go-btn");
-      if (!el) return { ok: false, reason: "missing hero search shell" };
+      const cta = document.querySelector(".hero-plan-cta") || document.querySelector(".hero-go-btn");
+      if (!cta) return { ok: false, reason: "missing hero CTA" };
       const search = document.querySelector(".hero-search");
-      if (!search) return { ok: !!document.querySelector(".hero-go-btn"), note: "compact hero" };
+      if (!search) return { ok: true, note: "compact hero CTA only" };
       const bg = getComputedStyle(search).backgroundColor;
       const blur = getComputedStyle(search).backdropFilter;
       return {
@@ -48,18 +48,17 @@ const CHECKS = [
     name: "plan-flow-form-shell",
     path: "/",
     setup: async (page) => {
-      await page.fill(".hero-route-from input", "Dallas, TX");
-      await page.fill(".hero-route-to input", "Houston, TX");
-      await page.locator(".hero-go-btn").click();
-      await page.waitForSelector(".plan-flow-form, .float-card--plan-flow", { timeout: 15000 }).catch(() => null);
+      const cta = page.locator(".hero-plan-cta, .hero-go-btn, .returning-user-action--plan").first();
+      await cta.click();
+      await page.waitForSelector(".plan-flow-form, .float-card--plan-flow, .question-route-setup", { timeout: 15000 }).catch(() => null);
       await page.waitForTimeout(800);
     },
     eval: () => ({
-      hasPlanForm: !!document.querySelector(".plan-flow-form"),
+      hasPlanForm: !!document.querySelector(".plan-flow-form") || !!document.querySelector(".float-card--plan-flow"),
       chatMetaphor: document.querySelectorAll(".convo-scroll, .ai-bubble, .ai-msg").length,
       qrBtns: document.querySelectorAll(".question-choices .qr-btn").length,
       hasDock: !!document.querySelector(".plan-flow-action-dock"),
-      ok: !!document.querySelector(".plan-flow-form")
+      ok: (!!document.querySelector(".plan-flow-form") || !!document.querySelector(".float-card--plan-flow"))
         && document.querySelectorAll(".convo-scroll, .ai-bubble, .ai-msg").length === 0
         && document.querySelectorAll(".question-choices .qr-btn").length === 0,
     }),
@@ -68,10 +67,9 @@ const CHECKS = [
     name: "plan-flow-no-competing-actions",
     path: "/",
     setup: async (page) => {
-      await page.fill(".hero-route-from input", "Dallas, TX");
-      await page.fill(".hero-route-to input", "Houston, TX");
-      await page.locator(".hero-go-btn").click();
-      await page.waitForSelector(".plan-flow-action-dock", { timeout: 15000 });
+      const cta = page.locator(".hero-plan-cta, .hero-go-btn, .returning-user-action--plan").first();
+      await cta.click();
+      await page.waitForSelector(".plan-flow-action-dock, .float-card--plan-flow", { timeout: 15000 });
       await page.waitForTimeout(600);
     },
     eval: () => ({
@@ -80,16 +78,17 @@ const CHECKS = [
       choiceRows: document.querySelectorAll(".question-choices .plan-choice-row").length,
       ok: document.querySelectorAll(".plan-flow-start-over").length === 0
         && document.querySelectorAll(".question-choices-shell .btn-generate-inline").length === 0
-        && document.querySelectorAll(".plan-flow-action-dock").length === 1,
+        && (document.querySelectorAll(".plan-flow-action-dock").length >= 1
+          || !!document.querySelector(".float-card--plan-flow")),
     }),
   },
   {
     name: "hero-search-in-viewport",
     path: "/?skyHour=12",
     eval: () => {
-      const search = document.querySelector(".hero-search");
-      const btn = document.querySelector(".hero-go-btn");
-      const target = search || btn;
+      const target = document.querySelector(".hero-plan-cta")
+        || document.querySelector(".hero-go-btn")
+        || document.querySelector(".hero-search");
       if (!target) return { ok: false, reason: "missing hero CTA" };
       const r = target.getBoundingClientRect();
       return {

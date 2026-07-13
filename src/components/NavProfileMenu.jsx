@@ -63,11 +63,35 @@ export default function NavProfileMenu({
 
   const showDropdown = open || closing;
   const dialogRef = useDialogA11y(showDropdown, closeMenu, "nav-profile-menu-title", { modal: false });
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 16 });
 
   const run = useCallback((action) => {
     closeMenu();
     action?.();
   }, [closeMenu]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const updatePos = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = 280;
+      const right = Math.max(12, window.innerWidth - rect.right);
+      const top = Math.min(rect.bottom + 10, Math.max(12, window.innerHeight - 360));
+      setMenuPos({
+        top: Math.max(12, top),
+        right: Math.min(right, window.innerWidth - width - 12),
+      });
+    };
+    updatePos();
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, [open]);
 
   const handleSignOutClick = useCallback(async () => {
     closeMenu();
@@ -135,11 +159,19 @@ export default function NavProfileMenu({
     photoInputRef.current?.click();
   }
 
-  const navItems = [
-    { id: "plan", label: "Plan", action: onOpenPlan },
-    { id: "trips", label: "Trips", action: onOpenTrips },
-    { id: "share", label: "Share", action: onOpenShare },
+  const signedOutItems = [
+    { id: "signin", label: "Sign in", action: onSignIn },
+    { id: "signup", label: "Create account", action: onGetStarted },
+    { id: "pricing", label: "Plans and pricing", action: () => { window.location.assign("/pricing"); } },
   ];
+
+  const signedInItems = [
+    { id: "profile", label: "Profile", action: onOpenProfile },
+    { id: "trips", label: "My trips", action: onOpenTrips },
+    { id: "pricing", label: "Plans and pricing", action: () => { window.location.assign("/pricing"); } },
+  ];
+
+  const navItems = isSignedIn ? signedInItems : signedOutItems;
 
   const triggerLabel = isSignedIn ? `Profile menu for ${displayName}` : "Open menu";
 
@@ -194,12 +226,14 @@ export default function NavProfileMenu({
       </div>
 
       {showDropdown && (
-        <dialog
+        <div
           ref={dialogRef}
+          role="dialog"
           className={`profile-card-dropdown${open && !closing ? " is-open" : ""}${closing ? " is-closing" : ""}`}
           aria-labelledby="nav-profile-menu-title"
+          style={{ position: "fixed", top: menuPos.top, right: menuPos.right, left: "auto", bottom: "auto" }}
         >
-          <h2 id="nav-profile-menu-title" className="map-info-card-sr-title">Navigation menu</h2>
+          <h2 id="nav-profile-menu-title" className="map-info-card-sr-title">Account menu</h2>
           <div className="profile-card-dropdown-glow" aria-hidden="true" />
 
           <div className="profile-card-identity profile-card-identity--static">
@@ -240,7 +274,7 @@ export default function NavProfileMenu({
 
           <hr className="profile-card-dropdown-divider" />
 
-          <nav className="profile-card-nav" aria-label="Main navigation">
+          <nav className="profile-card-nav" aria-label="Account">
             {navItems.map((item, index) => (
               <button
                 key={item.id}
@@ -252,51 +286,17 @@ export default function NavProfileMenu({
                 {item.label}
               </button>
             ))}
-          </nav>
-
-          <hr className="profile-card-dropdown-divider" />
-
-          <div className="profile-card-account-actions">
-            {isSignedIn ? (
-              <>
-                <button
-                  type="button"
-                  className="profile-card-nav-link profile-card-nav-link--account profile-card-stagger-item"
-                  style={{ "--stagger-index": navItems.length }}
-                  onClick={() => run(onOpenProfile)}
-                >
-                  View profile
-                </button>
-                <button
-                  type="button"
-                  className="profile-card-signout profile-card-stagger-item"
-                  style={{ "--stagger-index": navItems.length + 1 }}
-                  onClick={() => void handleSignOutClick()}
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="profile-card-nav-link profile-card-nav-link--cta profile-card-stagger-item"
-                  style={{ "--stagger-index": navItems.length }}
-                  onClick={() => run(onGetStarted)}
-                >
-                  Get Started
-                </button>
-                <button
-                  type="button"
-                  className="profile-card-nav-link profile-card-nav-link--account profile-card-stagger-item"
-                  style={{ "--stagger-index": navItems.length + 1 }}
-                  onClick={() => run(onSignIn)}
-                >
-                  Sign In
-                </button>
-              </>
+            {isSignedIn && (
+              <button
+                type="button"
+                className="profile-card-signout profile-card-stagger-item"
+                style={{ "--stagger-index": navItems.length }}
+                onClick={() => void handleSignOutClick()}
+              >
+                Sign out
+              </button>
             )}
-          </div>
+          </nav>
 
           <hr className="profile-card-dropdown-divider" />
 
@@ -304,7 +304,7 @@ export default function NavProfileMenu({
             <a href="/privacy" onClick={closeMenu}>Privacy Policy</a>
             <a href="/terms" onClick={closeMenu}>Terms of Service</a>
           </nav>
-        </dialog>
+        </div>
       )}
     </div>
   );

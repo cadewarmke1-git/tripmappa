@@ -10,6 +10,8 @@ import {
   formatTravelersContextLines,
   formatTripNightsLine,
   formatStopCountLine,
+  formatStopFrequencyLine,
+  formatLuxuryLevelLine,
   formatPetConstraintLine,
   formatScheduleConstraintForHints,
 } from "./generationContext.js";
@@ -64,6 +66,25 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
   }
 
   if (answers.fuel_type) items.push({ id: "fuel", label: "Fuel", value: answers.fuel_type });
+
+  if (answers.stop_frequency) {
+    items.push({ id: "stop_frequency", label: "Stop frequency", value: answers.stop_frequency });
+  }
+
+  if (answers.luxury_level) {
+    const luxuryLabels = {
+      1: "1★ Budget",
+      2: "2★ Economy",
+      3: "3★ Mid-range",
+      4: "4★ Upscale",
+      5: "5★ Luxury",
+    };
+    items.push({
+      id: "luxury_level",
+      label: "Hotel & dining level",
+      value: luxuryLabels[String(answers.luxury_level)] || String(answers.luxury_level),
+    });
+  }
 
   const fuelBrand = answers.truck_stop_brand || answers.fuel_brand_preference;
   if (fuelBrand && fuelBrand !== "No preference") {
@@ -126,6 +147,12 @@ export function formatGenerationHints(answers = {}, routeInfo = null, options = 
 
   const stopCountLine = formatStopCountLine(answers);
   if (stopCountLine) lines.push(stopCountLine);
+
+  const stopFrequencyLine = formatStopFrequencyLine(answers);
+  if (stopFrequencyLine) lines.push(stopFrequencyLine);
+
+  const luxuryLine = formatLuxuryLevelLine(answers);
+  if (luxuryLine) lines.push(luxuryLine);
 
   const petLine = formatPetConstraintLine(answers);
   if (petLine) lines.push(petLine);

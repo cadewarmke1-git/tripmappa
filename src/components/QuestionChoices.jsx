@@ -23,9 +23,20 @@ function normalizeChoice(choice) {
       value: choice.value,
       label: choice.label ?? choice.value,
       description: choice.description ?? null,
+      stars: choice.stars ?? null,
     };
   }
-  return { value: choice, label: choice, description: null };
+  return { value: choice, label: choice, description: null, stars: null };
+}
+
+function StarGlyphs({ count = 0 }) {
+  return (
+    <span className="plan-star-glyphs" aria-hidden="true">
+      {Array.from({ length: 5 }, (_, i) => (
+        <span key={i} className={`plan-star-glyph${i < count ? " is-filled" : ""}`}>★</span>
+      ))}
+    </span>
+  );
 }
 
 function isGroupDraft(prefDraft) {
@@ -569,7 +580,33 @@ export default function QuestionChoices({
             );
           })()}
 
-          {!vehicleGroups && isSingleSelect && (
+          {!vehicleGroups && isSingleSelect && currentQ.display === "star_rating" && (
+            <div className="plan-star-rating" role="listbox" aria-label={currentQ.ask}>
+              {choices.map(raw => {
+                const { value, label, description, stars } = normalizeChoice(raw);
+                const selectedChoice = isChoiceSelected(value);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="option"
+                    aria-selected={selectedChoice}
+                    className={`plan-star-rating-option${selectedChoice ? " is-selected" : ""}`}
+                    disabled={frozen || routeLocked}
+                    onClick={() => pickWithAnim(value)}
+                  >
+                    <StarGlyphs count={Number(stars) || Number(value) || 0} />
+                    <span className="plan-star-rating-copy">
+                      <span className="plan-star-rating-label">{label}</span>
+                      {description && <span className="plan-star-rating-detail">{description}</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {!vehicleGroups && isSingleSelect && currentQ.display !== "star_rating" && (
             <>
               {routePending && routeLocked && (
                 <p className="question-pending-note question-pending-note--loading">

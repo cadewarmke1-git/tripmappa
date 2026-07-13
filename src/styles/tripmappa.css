@@ -193,7 +193,7 @@
     font-family: 'Fraunces', serif; font-weight: 700;
     font-size: clamp(48px, 8.5vw, 96px);
     line-height: 1.12; letter-spacing: -0.02em;
-    margin: 24px 0 36px;
+    margin: 24px 0 16px;
     overflow: visible;
     padding-bottom: 0.1em;
   }
@@ -201,7 +201,7 @@
   .hero-sub {
     font-family: 'Inter', sans-serif;
     font-size: 17px; color: var(--tm-hero-tagline-color, rgba(255,255,255,0.8)); max-width: 440px;
-    margin: 0 auto 52px; line-height: 1.65; font-weight: 400;
+    margin: 0 auto 36px; line-height: 1.65; font-weight: 400;
   }
 
   .hero-trip-preview {
@@ -2778,6 +2778,82 @@
     line-height: 1.4;
     color: var(--text-secondary);
   }
+
+  .plan-star-rating {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .plan-star-rating-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 210, 140, 0.28);
+    background: rgba(13, 10, 26, 0.55);
+    color: #FDF3E0;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+
+  .plan-star-rating-option:hover:not(:disabled) {
+    border-color: rgba(255, 210, 140, 0.55);
+    transform: translateY(-1px);
+  }
+
+  .plan-star-rating-option.is-selected {
+    border-color: #FF8C42;
+    background: rgba(255, 140, 66, 0.12);
+    box-shadow: 0 0 0 1px rgba(255, 140, 66, 0.25);
+  }
+
+  .plan-star-rating-option:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .plan-star-glyphs {
+    display: inline-flex;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+
+  .plan-star-glyph {
+    color: rgba(255, 210, 140, 0.28);
+  }
+
+  .plan-star-glyph.is-filled {
+    color: #FFD28C;
+  }
+
+  .plan-star-rating-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .plan-star-rating-label {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #FDF3E0;
+  }
+
+  .plan-star-rating-detail {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    color: rgba(253, 243, 224, 0.68);
+  }
   .chat-wrap-plan-flow .question-choices-trip-details {
     gap: 6px;
     margin-top: 0;
@@ -4285,6 +4361,11 @@
     padding: 0;
     margin: 0;
     color: inherit;
+    max-width: none;
+  }
+  dialog.profile-card-dropdown {
+    inset: unset;
+    position: absolute;
   }
   dialog.traveler-onboarding {
     border: none;
@@ -7822,21 +7903,24 @@
     box-shadow: 0 0 0 2px rgba(255,210,140,0.9), 0 0 16px rgba(255,210,140,0.35);
   }
   .profile-card-dropdown {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
+    position: fixed;
+    top: calc(var(--nav-h, 56px) + 10px);
+    right: 16px;
+    left: auto;
+    bottom: auto;
     width: 280px;
-    z-index: 140;
+    max-width: min(280px, calc(100vw - 24px));
+    z-index: 240;
     padding: 20px 18px 16px;
     border-radius: 20px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border: 1px solid rgba(255, 210, 140, 0.28);
+    background: #0D0A1A;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     box-shadow:
-      0 20px 50px rgba(0, 0, 0, 0.35),
-      0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent) inset;
-    color: var(--text-primary);
+      0 20px 50px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(255, 210, 140, 0.08) inset;
+    color: #FDF3E0;
     opacity: 0;
     transform: translateY(6px) scale(0.96);
     pointer-events: none;

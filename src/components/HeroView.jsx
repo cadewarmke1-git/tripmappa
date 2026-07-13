@@ -4,7 +4,6 @@ import HeroHighwayScene from "./HeroHighwayScene.jsx";
 import HeroMountainScene from "./HeroMountainScene.jsx";
 import HeroSkyTestDial from "./HeroSkyTestDial.jsx";
 import HeroFoundingSlots from "./HeroFoundingSlots.jsx";
-import HeroValueShowcase from "./HeroValueShowcase.jsx";
 import AppNavBar from "./AppNavBar.jsx";
 import GoldSpinner from "./GoldSpinner.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
@@ -108,6 +107,9 @@ export default function HeroView({
         <div className="hero-content">
           <p className="trip-overview-hero-eyebrow">The open road awaits</p>
           <h1 className="hero-title hero-title-line">Your trip, our mission.</h1>
+          <p className="hero-sub">
+            Fuel, food, and lodging planned around how you travel — one clear route from here to there.
+          </p>
 
           {planDraft?.origin && planDraft?.dest && (
             <div className="hero-draft-resume">
@@ -133,8 +135,6 @@ export default function HeroView({
               </button>
             </div>
           )}
-
-          <HeroValueShowcase />
 
           <button
             type="button"

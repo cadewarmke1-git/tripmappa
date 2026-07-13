@@ -178,6 +178,8 @@ export default function App() {
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
+  const planRouteSnapshotRef = useRef(null);
+  const navigateRouteSnapshotRef = useRef(null);
   const [routeSetupOriginError, setRouteSetupOriginError] = useState("");
   const [routeSetupDestError, setRouteSetupDestError] = useState("");
   const [planLaunching, setPlanLaunching] = useState(false);
@@ -721,13 +723,87 @@ export default function App() {
     return undefined;
   }, [appMode, view, origin, isLoaded]);
 
+  function captureRouteSession() {
+    return {
+      origin,
+      dest,
+      routeInfo,
+      routePath,
+      truckRoutePath,
+      directionsResult,
+      routeError,
+      originInput: (appMode === "navigate" ? navigateOriginRef.current?.value : originRef.current?.value) || origin,
+      destInput: (appMode === "navigate" ? navigateDestRef.current?.value : destRef.current?.value) || dest,
+    };
+  }
+
+  function restoreRouteSession(snapshot) {
+    if (!snapshot) return;
+    const nextOrigin = snapshot.originInput || snapshot.origin || "";
+    const nextDest = snapshot.destInput || snapshot.dest || "";
+    setOrigin(nextOrigin);
+    setDest(nextDest);
+    setRouteInfo(snapshot.routeInfo || null);
+    setRoutePath(snapshot.routePath || null);
+    setTruckRoutePath(snapshot.truckRoutePath || null);
+    setDirectionsResult(snapshot.directionsResult || null);
+    setRouteError(snapshot.routeError || null);
+    requestAnimationFrame(() => {
+      if (originRef.current) originRef.current.value = nextOrigin;
+      if (destRef.current) destRef.current.value = nextDest;
+      if (navigateOriginRef.current) navigateOriginRef.current.value = nextOrigin;
+      if (navigateDestRef.current) navigateDestRef.current.value = nextDest;
+    });
+  }
+
   function handleAppModeChange(mode) {
     if (mode === appMode) return;
+
+    if (appMode === "navigate") {
+      navigateRouteSnapshotRef.current = captureRouteSession();
+    } else {
+      planRouteSnapshotRef.current = captureRouteSession();
+    }
+
     if (mode === "navigate") {
-      startNavigateFromDashboard();
+      setAppMode("navigate");
+      setView("hero");
+      window.scrollTo(0, 0);
+      if (navigateRouteSnapshotRef.current) {
+        restoreRouteSession(navigateRouteSnapshotRef.current);
+        return;
+      }
+      // First visit to Navigate — start GPS origin without reusing the plan route.
+      setDest("");
+      setRouteInfo(null);
+      setRoutePath(null);
+      setTruckRoutePath(null);
+      setDirectionsResult(null);
+      setRouteError(null);
+      if (navigateDestRef.current) navigateDestRef.current.value = "";
+      startNavigateFromDashboard("", { soft: false });
       return;
     }
+
     setAppMode("plan");
+    if (planRouteSnapshotRef.current) {
+      restoreRouteSession(planRouteSnapshotRef.current);
+    }
+    const hasPlanProgress = Boolean(
+      currentQuestion
+      || questionHistory.length > 0
+      || Object.keys(answers).length > 0
+      || convoComplete
+      || generated,
+    );
+    if (hasPlanProgress) {
+      setView("app");
+      setTab("plan");
+      setCardCollapsed(false);
+    } else {
+      setView("hero");
+    }
+    window.scrollTo(0, 0);
   }
 
   function renderAppNavBar(variant = "app") {
@@ -869,6 +945,10 @@ export default function App() {
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     if (originRef.current) originRef.current.value = "";
     if (destRef.current) destRef.current.value = "";
+    if (navigateOriginRef.current) navigateOriginRef.current.value = "";
+    if (navigateDestRef.current) navigateDestRef.current.value = "";
+    planRouteSnapshotRef.current = null;
+    navigateRouteSnapshotRef.current = null;
     setPlanDraft(loadPlanDraft());
     window.scrollTo(0, 0);
   }
@@ -1286,14 +1366,38 @@ export default function App() {
     return prefill;
   }
 
-  async function startNavigateFromDashboard(destPreset = "") {
+  async function startNavigateFromDashboard(destPreset = "", { soft = false } = {}) {
     setNavigateLaunching(true);
-    setAppMode("navigate");
+    if (appMode !== "navigate") {
+      if (appMode === "plan") {
+        planRouteSnapshotRef.current = captureRouteSession();
+      }
+      setAppMode("navigate");
+    }
     setView("hero");
+
     const destVal = destPreset?.trim() || "";
-    setDest(destVal);
-    if (navigateDestRef.current) navigateDestRef.current.value = destVal;
+    if (destVal) {
+      setDest(destVal);
+      if (navigateDestRef.current) navigateDestRef.current.value = destVal;
+    } else if (!soft) {
+      // Explicit fresh navigate from dashboard CTAs with no preset keeps destination empty.
+      // Soft tab-switch keeps whatever destination is already set.
+    }
+
     window.scrollTo(0, 0);
+
+    const existingOrigin = (
+      soft
+        ? (navigateOriginRef.current?.value?.trim() || origin.trim() || navigateRouteSnapshotRef.current?.originInput || "")
+        : ""
+    );
+    if (soft && existingOrigin) {
+      setOrigin(existingOrigin);
+      if (navigateOriginRef.current) navigateOriginRef.current.value = existingOrigin;
+      setNavigateLaunching(false);
+      return;
+    }
 
     if (!navigator.geolocation) {
       setNavigateLaunching(false);
@@ -2034,6 +2138,7 @@ export default function App() {
     setStepAnim(null);
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     clearSavedPlanDraft();
+    planRouteSnapshotRef.current = null;
   }
 
   function dismissTripAlert(alertId) {

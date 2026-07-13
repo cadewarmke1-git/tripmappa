@@ -148,6 +148,30 @@ export function formatStopCountLine(answers = {}) {
   return `Preferred stop count: ${answers.stop_count}`;
 }
 
+export function formatStopFrequencyLine(answers = {}) {
+  if (!answers.stop_frequency) return "";
+  const guidance = {
+    Minimal: "Include only essential fuel/rest stops — keep optional detours sparse.",
+    Moderate: "Include a few breaks plus one or two optional points of interest.",
+    Frequent: "Favor lots of optional stops — take it slow and explore along the route.",
+  };
+  const tip = guidance[answers.stop_frequency] || "Match optional stop density to this preference.";
+  return `Stop frequency: ${answers.stop_frequency}. ${tip}`;
+}
+
+export function formatLuxuryLevelLine(answers = {}) {
+  if (!answers.luxury_level) return "";
+  const tiers = {
+    1: "1-star Budget (under $80/night hotels, casual dining)",
+    2: "2-star Economy ($80–120/night, sit-down restaurants)",
+    3: "3-star Mid-range ($120–180/night, quality dining)",
+    4: "4-star Upscale ($180–250/night, fine dining)",
+    5: "5-star Luxury ($250+/night, premium lodging and dining)",
+  };
+  const label = tiers[String(answers.luxury_level)] || `${answers.luxury_level}-star`;
+  return `Hotel & restaurant budget level: ${label}. Use this luxury_level when selecting hotels and restaurants.`;
+}
+
 export function formatPetConstraintLine(answers = {}) {
   if (!asArray(answers.preferences).includes("Pet friendly")) return "";
   return "Traveling with a pet — all stop and lodging recommendations must be pet-friendly";

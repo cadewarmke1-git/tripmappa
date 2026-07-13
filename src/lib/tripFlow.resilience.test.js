@@ -6,6 +6,8 @@ import {
 
 describe("tripFlow resilience", () => {
   const longTripContext = {
+    origin: "Dallas, TX",
+    destination: "Los Angeles, CA",
     routeDistance: "520 mi",
     routeDuration: "8 hours 15 mins",
     routeDistanceMiles: 520,
@@ -41,6 +43,8 @@ describe("tripFlow resilience", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_frequency: "Moderate",
+      luxury_level: "3",
       stop_count: "A few (2-3)",
       preferences: [],
     };

@@ -10,6 +10,8 @@ export const QUESTION_SIDEBAR_LABELS = {
   adult_count: "ADULTS",
   child_count: "CHILDREN",
   stop_count: "STOPS",
+  stop_frequency: "PACE",
+  luxury_level: "BUDGET",
   overnight_preference: "DRIVE",
   lodging: "LODGING",
   trip_nights: "NIGHTS",

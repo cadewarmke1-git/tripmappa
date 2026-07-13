@@ -48,6 +48,8 @@ describe("tripFlow UX", () => {
     travelers: "2",
     adult_count: 2,
     child_count: 0,
+    stop_frequency: "Moderate",
+    luxury_level: "3",
     stop_count: "A few (2-3)",
   };
 
@@ -72,9 +74,43 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_frequency: "Moderate",
+      luxury_level: "3",
       stop_count: "A few (2-3)",
     };
     expect(getNextFlowQuestion(withTravelers, dayContext).id).toBe("trip_details");
+  });
+
+  it("asks stop frequency after travelers and party details", () => {
+    const next = getNextFlowQuestion(
+      {
+        vehicle: "Car",
+        fuel_type: "Gasoline",
+        towing: "No",
+        travelers: "2",
+        adult_count: 2,
+        child_count: 0,
+      },
+      longTripContext,
+    );
+    expect(next.id).toBe("stop_frequency");
+  });
+
+  it("asks luxury level after stop frequency", () => {
+    const next = getNextFlowQuestion(
+      {
+        vehicle: "Car",
+        fuel_type: "Gasoline",
+        towing: "No",
+        travelers: "2",
+        adult_count: 2,
+        child_count: 0,
+        stop_frequency: "Moderate",
+      },
+      longTripContext,
+    );
+    expect(next.id).toBe("luxury_level");
+    expect(next.display).toBe("star_rating");
   });
 
   it("asks party composition after 2 travelers", () => {
@@ -274,6 +310,8 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_frequency: "Moderate",
+      luxury_level: "3",
       stop_count: "A few (2-3)",
       preferences: ["Scenic route"],
     };
@@ -341,6 +379,8 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_frequency: "Moderate",
+      luxury_level: "3",
       stop_count: "A few (2-3)",
       preferences: ["Pet friendly"],
     };
@@ -361,6 +401,8 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stop_frequency: "Moderate",
+      luxury_level: "3",
       stop_count: "A few (2-3)",
       preferences: ["Pet friendly"],
     };

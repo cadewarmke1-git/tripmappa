@@ -47,7 +47,7 @@ export const ROUTE_PENDING_UNLOCK_MS = 8000;
 
 export const FLOW_QUESTION_IDS = [
   "route_setup", "vehicle", "fuel_type", "towing", "multi_vehicles", "primary_vehicle", "travelers",
-  "party_composition", "adult_count", "child_count",
+  "party_composition", "adult_count", "child_count", "stop_frequency", "luxury_level",
   "overnight_preference", "lodging", "trip_nights", "loyalty_program", "dietary", "food_allergies", "accessibility",
   "stops_interests", "trip_budget", "schedule_restrictions", "schedule_drive_hours", "preferences",
   "hauling_type", "sleeper_cab", "truck_stop_brand", "route_restrictions", "coordination_needs", "kids_ages",
@@ -149,7 +149,8 @@ export const FLOW_PHASES = [
 ];
 
 const ABOUT_QUESTION_IDS = new Set([
-  "route_setup", "vehicle", "fuel_type", "towing", "travelers", "party_composition", "stop_count", "multi_vehicles", "primary_vehicle",
+  "route_setup", "vehicle", "fuel_type", "towing", "travelers", "party_composition",
+  "stop_frequency", "luxury_level", "stop_count", "multi_vehicles", "primary_vehicle",
   "hauling_type", "sleeper_cab", "truck_stop_brand",
 ]);
 const ROUTE_QUESTION_IDS = new Set([
@@ -192,6 +193,9 @@ export function formatFlowAnswer(question, answer) {
   }
   if (question.id === "travelers" || question.type === "travelers") {
     return formatTravelersLabel(answer) || "—";
+  }
+  if (question.id === "luxury_level" || question.display === "star_rating") {
+    return formatLuxuryLevelLabel(answer) || "—";
   }
   if (question.id === "party_composition" || question.type === "party_composition") {
     const payload = answer && typeof answer === "object" ? answer : {};
@@ -252,6 +256,72 @@ const PARTY_COMPOSITION_QUESTION = {
   childRange: [0, 6],
 };
 
+const STOP_FREQUENCY_QUESTION = {
+  id: "stop_frequency",
+  ask: "How often do you want to stop?",
+  hint: "We'll pace breaks and optional points of interest to match.",
+  type: "choice",
+  choices: [
+    {
+      value: "Minimal",
+      label: "Minimal",
+      description: "Drive straight through with only essential stops",
+    },
+    {
+      value: "Moderate",
+      label: "Moderate",
+      description: "A few breaks and one or two points of interest",
+    },
+    {
+      value: "Frequent",
+      label: "Frequent",
+      description: "Lots of stops — take it slow and explore",
+    },
+  ],
+};
+
+export const LUXURY_LEVEL_CHOICES = [
+  {
+    value: "1",
+    label: "Budget",
+    stars: 1,
+    description: "Under $80/night hotels and casual dining",
+  },
+  {
+    value: "2",
+    label: "Economy",
+    stars: 2,
+    description: "$80–120/night and sit-down restaurants",
+  },
+  {
+    value: "3",
+    label: "Mid-range",
+    stars: 3,
+    description: "$120–180/night and quality dining",
+  },
+  {
+    value: "4",
+    label: "Upscale",
+    stars: 4,
+    description: "$180–250/night and fine dining",
+  },
+  {
+    value: "5",
+    label: "Luxury",
+    stars: 5,
+    description: "$250+/night and premium everything",
+  },
+];
+
+const LUXURY_LEVEL_QUESTION = {
+  id: "luxury_level",
+  ask: "What's your budget level for hotels and restaurants?",
+  hint: "We'll match lodging and dining to your comfort range.",
+  type: "choice",
+  display: "star_rating",
+  choices: LUXURY_LEVEL_CHOICES,
+};
+
 const STOP_COUNT_CHOICES = [
   "Just one stop",
   "A few (2-3)",
@@ -267,6 +337,27 @@ const STOP_COUNT_QUESTION = {
   type: "choice",
   choices: STOP_COUNT_CHOICES,
 };
+
+function needsStopFrequencyQuestion(answers, context = {}) {
+  const effective = getEffectiveVehicle(answers);
+  if (isTruckVehicle(effective) || isThinTransportVehicle(effective)) return false;
+  if (!isPersonalVehicle(effective) && !isRvVehicle(effective)) return false;
+  return !isQuestionDone("stop_frequency", answers, context);
+}
+
+function needsLuxuryLevelQuestion(answers, context = {}) {
+  const effective = getEffectiveVehicle(answers);
+  if (isTruckVehicle(effective) || isThinTransportVehicle(effective)) return false;
+  if (!isPersonalVehicle(effective) && !isRvVehicle(effective)) return false;
+  return !isQuestionDone("luxury_level", answers, context);
+}
+
+export function formatLuxuryLevelLabel(value) {
+  const choice = LUXURY_LEVEL_CHOICES.find(c => String(c.value) === String(value));
+  if (!choice) return value ? String(value) : "";
+  const stars = "★".repeat(choice.stars);
+  return `${stars} ${choice.label} — ${choice.description}`;
+}
 
 function needsStopCountQuestion(answers, context = {}) {
   const effective = getEffectiveVehicle(answers);
@@ -811,6 +902,8 @@ function getNextPersonalBranchQuestion(answers, context) {
   if (!isQuestionDone("travelers", answers, context)) return { done: false, ...TRAVELERS_QUESTION };
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
+  if (needsStopFrequencyQuestion(answers, context)) return { done: false, ...STOP_FREQUENCY_QUESTION };
+  if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...LUXURY_LEVEL_QUESTION };
   if (needsStopCountQuestion(answers, context)) return { done: false, ...STOP_COUNT_QUESTION };
   if (needsPersonalPreferencesQuestion(answers, context) && !isQuestionDone("preferences", answers, context)) {
     return { done: false, ...buildPersonalPreferencesQuestion(context) };
@@ -850,6 +943,8 @@ function getNextRvBranchQuestion(answers, context) {
   if (!isQuestionDone("travelers", answers, context)) return { done: false, ...TRAVELERS_QUESTION };
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
+  if (needsStopFrequencyQuestion(answers, context)) return { done: false, ...STOP_FREQUENCY_QUESTION };
+  if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...LUXURY_LEVEL_QUESTION };
   if (needsStopCountQuestion(answers, context)) return { done: false, ...STOP_COUNT_QUESTION };
   if (!isQuestionDone("preferences", answers, context)) return { done: false, ...buildRvPreferencesQuestion(context) };
   if (needsRvTripNightsQuestion(answers, context) && !isQuestionDone("trip_nights", answers, context)) {
