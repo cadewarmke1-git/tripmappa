@@ -75,7 +75,7 @@ createRoot(document.getElementById("root")).render(
     <ErrorBoundary label="app-root" title="TripMappa ran into a problem">
       <AuthProvider>
         <ThemeProvider>
-          <Suspense fallback={<PulsingWordmark size="lg" />}>
+          <Suspense fallback={<PulsingWordmark size="lg" centered />}>
             {typeof window !== "undefined" && window.location.search.includes("neon-showcase") ? (
               <NeonPopupShowcase />
             ) : (

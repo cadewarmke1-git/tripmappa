@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PulsingWordmark from "./PulsingWordmark.jsx";
 import PlanOptionCard from "./plan/PlanOptionCard.jsx";
 import PlanVehicleIcon from "./plan/PlanVehicleIcon.jsx";
@@ -29,13 +29,140 @@ function normalizeChoice(choice) {
   return { value: choice, label: choice, description: null, stars: null };
 }
 
-function StarGlyphs({ count = 0 }) {
+function StarRatingSlider({
+  ask,
+  choices,
+  selectedValue,
+  disabled,
+  onSelect,
+}) {
+  const trackRef = useRef(null);
+  const draggingRef = useRef(false);
+  const [preview, setPreview] = useState(null);
+
+  const normalized = useMemo(
+    () => choices.map(normalizeChoice),
+    [choices],
+  );
+
+  const activeValue = preview ?? selectedValue ?? null;
+  const activeChoice = normalized.find(c => String(c.value) === String(activeValue))
+    || (activeValue != null ? normalized[Math.max(0, Number(activeValue) - 1)] : null);
+
+  function valueFromClientX(clientX) {
+    const el = trackRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0) return null;
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const index = Math.min(4, Math.max(0, Math.floor(ratio * 5)));
+    return normalized[index]?.value ?? String(index + 1);
+  }
+
+  function commitValue(value) {
+    if (value == null || disabled) return;
+    setPreview(null);
+    onSelect(value);
+  }
+
+  function handlePointerDown(e) {
+    if (disabled) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    draggingRef.current = true;
+    const next = valueFromClientX(e.clientX);
+    if (next != null) setPreview(next);
+  }
+
+  function handlePointerMove(e) {
+    if (!draggingRef.current || disabled) return;
+    const next = valueFromClientX(e.clientX);
+    if (next != null) setPreview(next);
+  }
+
+  function handlePointerUp(e) {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    } catch {
+      /* already released */
+    }
+    const next = valueFromClientX(e.clientX) ?? preview;
+    commitValue(next);
+  }
+
+  function handlePointerCancel() {
+    draggingRef.current = false;
+    setPreview(null);
+  }
+
+  const filledCount = activeChoice
+    ? (Number(activeChoice.stars) || Number(activeChoice.value) || 0)
+    : 0;
+
   return (
-    <span className="plan-star-glyphs" aria-hidden="true">
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={`plan-star-glyph${i < count ? " is-filled" : ""}`}>★</span>
-      ))}
-    </span>
+    <div className="plan-star-slider">
+      <div
+        ref={trackRef}
+        className={`plan-star-slider-track${disabled ? " is-disabled" : ""}`}
+        role="slider"
+        aria-label={ask}
+        aria-valuemin={1}
+        aria-valuemax={5}
+        aria-valuenow={filledCount || undefined}
+        aria-valuetext={activeChoice ? `${activeChoice.label}. ${activeChoice.description || ""}`.trim() : undefined}
+        aria-disabled={disabled || undefined}
+        tabIndex={disabled ? -1 : 0}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onKeyDown={(e) => {
+          if (disabled) return;
+          const current = filledCount || 0;
+          if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const next = Math.min(5, Math.max(1, current + 1));
+            commitValue(String(next));
+          } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = Math.min(5, Math.max(1, current - 1 || 1));
+            commitValue(String(next));
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            commitValue("1");
+          } else if (e.key === "End") {
+            e.preventDefault();
+            commitValue("5");
+          }
+        }}
+      >
+        {Array.from({ length: 5 }, (_, i) => {
+          const filled = i < filledCount;
+          return (
+            <span
+              key={i}
+              className={`plan-star-slider-star${filled ? " is-filled" : ""}`}
+              aria-hidden="true"
+            >
+              <span className="plan-star-slider-glyph">{filled ? "★" : "☆"}</span>
+            </span>
+          );
+        })}
+      </div>
+      <div className="plan-star-slider-meta" aria-live="polite">
+        {activeChoice ? (
+          <>
+            <p className="plan-star-slider-label">{activeChoice.label}</p>
+            {activeChoice.description && (
+              <p className="plan-star-slider-detail">{activeChoice.description}</p>
+            )}
+          </>
+        ) : (
+          <p className="plan-star-slider-hint">Tap or drag to rate</p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -509,7 +636,7 @@ export default function QuestionChoices({
     <div className={`question-choices${frozen ? " choices-frozen" : ""}${compact ? " question-choices-compact" : ""}${isTripDetails ? " question-choices-trip-details" : ""}`}>
       {currentQ.type === "loading" && (
         <div className="question-loading" aria-live="polite">
-          <PulsingWordmark size="lg" />
+          <PulsingWordmark size="lg" centered={false} />
         </div>
       )}
 
@@ -581,36 +708,20 @@ export default function QuestionChoices({
           })()}
 
           {!vehicleGroups && isSingleSelect && currentQ.display === "star_rating" && (
-            <div className="plan-star-rating" role="listbox" aria-label={currentQ.ask}>
-              {choices.map(raw => {
-                const { value, label, description, stars } = normalizeChoice(raw);
-                const selectedChoice = isChoiceSelected(value);
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    role="option"
-                    aria-selected={selectedChoice}
-                    className={`plan-star-rating-option${selectedChoice ? " is-selected" : ""}`}
-                    disabled={frozen || routeLocked}
-                    onClick={() => pickWithAnim(value)}
-                  >
-                    <StarGlyphs count={Number(stars) || Number(value) || 0} />
-                    <span className="plan-star-rating-copy">
-                      <span className="plan-star-rating-label">{label}</span>
-                      {description && <span className="plan-star-rating-detail">{description}</span>}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <StarRatingSlider
+              ask={currentQ.ask}
+              choices={choices}
+              selectedValue={committed?.[currentQ.id] ?? null}
+              disabled={frozen || routeLocked}
+              onSelect={pickWithAnim}
+            />
           )}
 
           {!vehicleGroups && isSingleSelect && currentQ.display !== "star_rating" && (
             <>
               {routePending && routeLocked && (
                 <p className="question-pending-note question-pending-note--loading">
-                  <PulsingWordmark size="lg" />
+                  <PulsingWordmark size="lg" centered={false} />
                   <span>Calculating your route — choices unlock in a moment.</span>
                 </p>
               )}

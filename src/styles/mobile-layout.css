@@ -484,38 +484,9 @@
     padding-right: 2px;
   }
 
-  .app-nav-mode-switch {
-    justify-self: center;
-    min-width: 0;
-    max-width: 100%;
-    padding: 0;
-  }
-
+  .app-nav-mode-switch,
   .app-nav-mode-btn {
-    min-height: 44px;
-    padding: 0 clamp(6px, 2vw, 12px);
-    font-size: clamp(10px, 2.8vw, 12px);
-    letter-spacing: 0.06em;
-  }
-
-  html[data-layout="mobile"] .app-nav-mode-btn.is-active {
-    background: var(--accent, var(--gold-primary));
-    color: var(--deep-dark, #1a0d00);
-    box-shadow: none;
-  }
-
-  html[data-layout="mobile"] .app-nav-mode-btn:not(.is-active) {
-    color: color-mix(in srgb, var(--color-text-secondary, rgba(245, 230, 200, 0.5)) 80%, transparent);
-  }
-
-  .app-nav-mode-btn.is-active {
-    background: var(--accent, var(--gold-primary));
-    color: var(--deep-dark, #1a0d00);
-    box-shadow: none;
-  }
-
-  .app-nav-mode-btn:not(.is-active) {
-    color: color-mix(in srgb, var(--color-text-secondary, rgba(245, 230, 200, 0.5)) 80%, transparent);
+    display: none !important;
   }
 
   html[data-layout="mobile"] .chat-wrap-plan-flow .question-choices-compact .vehicle-group-options .qr-btn {

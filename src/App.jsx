@@ -637,6 +637,10 @@ export default function App() {
   });
 
   function openPlanPanel() {
+    if (appMode === "navigate") {
+      navigateRouteSnapshotRef.current = captureRouteSession();
+      setAppMode("plan");
+    }
     setView("app");
     setTab("plan");
     setCardCollapsed(false);
@@ -675,6 +679,10 @@ export default function App() {
   }
 
   function handleNavOpenPlan() {
+    if (appMode === "navigate") {
+      navigateRouteSnapshotRef.current = captureRouteSession();
+      setAppMode("plan");
+    }
     if (view === "hero" && user) {
       startPlanFromHero();
       return;
@@ -756,56 +764,6 @@ export default function App() {
     });
   }
 
-  function handleAppModeChange(mode) {
-    if (mode === appMode) return;
-
-    if (appMode === "navigate") {
-      navigateRouteSnapshotRef.current = captureRouteSession();
-    } else {
-      planRouteSnapshotRef.current = captureRouteSession();
-    }
-
-    if (mode === "navigate") {
-      setAppMode("navigate");
-      setView("hero");
-      window.scrollTo(0, 0);
-      if (navigateRouteSnapshotRef.current) {
-        restoreRouteSession(navigateRouteSnapshotRef.current);
-        return;
-      }
-      // First visit to Navigate — start GPS origin without reusing the plan route.
-      setDest("");
-      setRouteInfo(null);
-      setRoutePath(null);
-      setTruckRoutePath(null);
-      setDirectionsResult(null);
-      setRouteError(null);
-      if (navigateDestRef.current) navigateDestRef.current.value = "";
-      startNavigateFromDashboard("", { soft: false });
-      return;
-    }
-
-    setAppMode("plan");
-    if (planRouteSnapshotRef.current) {
-      restoreRouteSession(planRouteSnapshotRef.current);
-    }
-    const hasPlanProgress = Boolean(
-      currentQuestion
-      || questionHistory.length > 0
-      || Object.keys(answers).length > 0
-      || convoComplete
-      || generated,
-    );
-    if (hasPlanProgress) {
-      setView("app");
-      setTab("plan");
-      setCardCollapsed(false);
-    } else {
-      setView("hero");
-    }
-    window.scrollTo(0, 0);
-  }
-
   function renderAppNavBar(variant = "app") {
     return (
       <AppNavBar
@@ -816,8 +774,6 @@ export default function App() {
         userProfile={userProfile}
         creditStatus={creditStatus}
         activeNav={navActiveTab}
-        appMode={appMode}
-        onAppModeChange={handleAppModeChange}
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
@@ -1483,6 +1439,11 @@ export default function App() {
       toast_("Map is still loading — try again in a moment");
       return;
     }
+
+    if (appMode === "navigate") {
+      navigateRouteSnapshotRef.current = captureRouteSession();
+    }
+    setAppMode("plan");
 
     setPlanLaunching(true);
     setRouteSetupOriginError("");
@@ -2375,8 +2336,6 @@ export default function App() {
     onResumeTrip: handleViewTrip,
     onPlanReturnTrip: startReturnTrip,
     onGoHome: goHome,
-    appMode,
-    onAppModeChange: handleAppModeChange,
     onOpenPlan: handleNavOpenPlan,
     onOpenTrips: handleNavOpenTrips,
     onOpenShare: handleNavOpenShare,
@@ -2454,7 +2413,15 @@ export default function App() {
             onUpgrade={openTripsUpgrade}
             onUpgradeVoyager={openVoyagerUpgrade}
             onUpgradeTraveler={openGroceryUpgrade}
-            onPlanTrip={() => { setView("app"); setTab("plan"); setCardCollapsed(false); }}
+            onPlanTrip={() => {
+              if (appMode === "navigate") {
+                navigateRouteSnapshotRef.current = captureRouteSession();
+                setAppMode("plan");
+              }
+              setView("app");
+              setTab("plan");
+              setCardCollapsed(false);
+            }}
             onLoadTrip={handleViewTrip}
             onDeleteTrip={requestDeleteSavedTrip}
             onSaveDisplayName={handleProfileSaveDisplayName}
@@ -2541,6 +2508,7 @@ export default function App() {
             onDestChange={setDest}
             onSwap={swapNavigateRoute}
             onGetRoute={handleNavigateGetRoute}
+            onBack={goHome}
             routeLoading={routeLoading}
             theme={theme}
           />
@@ -2657,8 +2625,6 @@ export default function App() {
         onStartPlan={startPlanFromHero}
         onGoHome={goHome}
         activeNav={null}
-        appMode={appMode}
-        onAppModeChange={handleAppModeChange}
         onOpenPlan={handleNavOpenPlan}
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}

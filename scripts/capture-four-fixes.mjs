@@ -80,23 +80,32 @@ async function main() {
 
   await pickLabel(page, "Moderate");
   await waitAsk(page, /budget level for hotels/i);
-  await page.waitForSelector(".plan-star-rating", { timeout: 15000 }).catch(() => null);
+  await page.waitForSelector(".plan-star-slider", { timeout: 15000 }).catch(() => null);
   await page.waitForTimeout(500);
   await page.screenshot({ path: path.join(OUT, "03b-luxury-level.png"), fullPage: false });
 
-  // --- Navigate with filled route ---
-  await page.locator(".app-nav-mode-btn", { hasText: "Navigate" }).click();
-  await page.waitForSelector(".navigate-route-panel", { timeout: 15000 });
+  // --- Navigate via signed-in dashboard CTA when available; otherwise logo home ---
+  await page.locator(".nav-logo-home, .brand-wordmark, a.nav-logo-home").first().click().catch(() => {});
+  await page.waitForTimeout(800);
+  const openNavigate = page.locator(".returning-user-action--navigate").first();
+  if (await openNavigate.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await openNavigate.click();
+  } else {
+    // Signed-out: skip navigate panel capture
+    console.log("skip navigate — no returning-user navigate CTA");
+  }
+  await page.waitForSelector(".navigate-route-panel", { timeout: 15000 }).catch(() => null);
   await page.waitForTimeout(1500);
-  await page.locator("#navigate-origin").fill("Dallas, TX");
-  await page.locator("#navigate-dest").fill("Austin, TX");
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: path.join(OUT, "04-navigate-route.png"), fullPage: false });
+  if (await page.locator("#navigate-origin").isVisible().catch(() => false)) {
+    await page.locator("#navigate-origin").fill("Dallas, TX");
+    await page.locator("#navigate-dest").fill("Austin, TX");
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(OUT, "04-navigate-route.png"), fullPage: false });
 
-  // Try get route — may render polyline if Maps available
-  await page.locator("button.navigate-route-go, button:has-text('Get route')").click().catch(() => {});
-  await page.waitForTimeout(5000);
-  await page.screenshot({ path: path.join(OUT, "04b-navigate-routed.png"), fullPage: false });
+    await page.locator("button.navigate-route-go, button:has-text('Get route')").click().catch(() => {});
+    await page.waitForTimeout(5000);
+    await page.screenshot({ path: path.join(OUT, "04b-navigate-routed.png"), fullPage: false });
+  }
   await page.close();
 
   // --- Signed-in profile ---

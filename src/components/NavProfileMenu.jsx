@@ -5,6 +5,8 @@ import { HERO_SURFACE_PALETTE } from "../lib/palette.js";
 import { getTierCssClass } from "../lib/tiers.js";
 import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
+const HELP_URL = "https://tripmappa.com/help";
+
 export default function NavProfileMenu({
   user,
   profile,
@@ -25,6 +27,7 @@ export default function NavProfileMenu({
   const [closing, setClosing] = useState(false);
   const [avatarPulse, setAvatarPulse] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const triggerRef = useRef(null);
   const closeTimerRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -39,6 +42,7 @@ export default function NavProfileMenu({
     if (!open || closing) return;
     setClosing(true);
     setOpen(false);
+    setSupportOpen(false);
     closeTimerRef.current = window.setTimeout(() => {
       setClosing(false);
     }, 220);
@@ -47,6 +51,7 @@ export default function NavProfileMenu({
   const openMenu = useCallback(() => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setClosing(false);
+    setSupportOpen(false);
     setOpen(true);
   }, []);
 
@@ -78,7 +83,7 @@ export default function NavProfileMenu({
       const rect = trigger.getBoundingClientRect();
       const width = 280;
       const right = Math.max(12, window.innerWidth - rect.right);
-      const top = Math.min(rect.bottom + 10, Math.max(12, window.innerHeight - 360));
+      const top = Math.min(rect.bottom + 10, Math.max(12, window.innerHeight - 480));
       setMenuPos({
         top: Math.max(12, top),
         right: Math.min(right, window.innerWidth - width - 12),
@@ -107,7 +112,7 @@ export default function NavProfileMenu({
     if (isSignedIn) onRefreshCredits?.();
 
     const isPointerOverPlanFlow = (event) => {
-      const planFlow = document.querySelector(".float-card--plan-flow:not(.collapsed)");
+      const planFlow = document.querySelector(".float-card--plan-flow:not(.hidden)");
       if (!planFlow) return false;
       const rect = planFlow.getBoundingClientRect();
       return (
@@ -159,21 +164,66 @@ export default function NavProfileMenu({
     photoInputRef.current?.click();
   }
 
-  const signedOutItems = [
-    { id: "signin", label: "Sign in", action: onSignIn },
-    { id: "signup", label: "Create account", action: onGetStarted },
-    { id: "pricing", label: "Plans and pricing", action: () => { window.location.assign("/pricing"); } },
-  ];
+  const openBilling = () => { window.location.assign("/pricing"); };
+  const openHelp = () => { window.open(HELP_URL, "_blank", "noopener,noreferrer"); };
 
-  const signedInItems = [
-    { id: "profile", label: "Profile", action: onOpenProfile },
-    { id: "trips", label: "My trips", action: onOpenTrips },
-    { id: "pricing", label: "Plans and pricing", action: () => { window.location.assign("/pricing"); } },
-  ];
+  const primaryItems = isSignedIn
+    ? [
+        { id: "trips", label: "My trips", action: onOpenTrips },
+        { id: "plan", label: "Plan a new trip", action: onOpenPlan },
+      ]
+    : [
+        { id: "signin", label: "Sign in", action: onSignIn },
+        { id: "signup", label: "Create account", action: onGetStarted },
+      ];
 
-  const navItems = isSignedIn ? signedInItems : signedOutItems;
+  const accountItems = isSignedIn
+    ? [
+        { id: "profile", label: "Profile", action: onOpenProfile },
+        { id: "billing", label: "Subscription and billing", action: openBilling },
+      ]
+    : [
+        { id: "billing", label: "Subscription and billing", action: openBilling },
+      ];
+
+  const supportItems = [
+    { id: "help", label: "Help", action: openHelp },
+    { id: "privacy", label: "Privacy Policy", href: "/privacy" },
+    { id: "terms", label: "Terms of Service", href: "/terms" },
+  ];
 
   const triggerLabel = isSignedIn ? `Profile menu for ${displayName}` : "Open menu";
+
+  function renderNavGroup(items, { keyPrefix = "", startIndex = 0 } = {}) {
+    return items.map((item, index) => {
+      const className = `profile-card-nav-link profile-card-stagger-item${activeNav === item.id ? " is-active" : ""}`;
+      const style = { "--stagger-index": startIndex + index };
+      if (item.href) {
+        return (
+          <a
+            key={`${keyPrefix}${item.id}`}
+            href={item.href}
+            className={className}
+            style={style}
+            onClick={closeMenu}
+          >
+            {item.label}
+          </a>
+        );
+      }
+      return (
+        <button
+          key={`${keyPrefix}${item.id}`}
+          type="button"
+          className={className}
+          style={style}
+          onClick={() => run(item.action)}
+        >
+          {item.label}
+        </button>
+      );
+    });
+  }
 
   return (
     <div className="profile-card-menu">
@@ -234,35 +284,17 @@ export default function NavProfileMenu({
           style={{ position: "fixed", top: menuPos.top, right: menuPos.right, left: "auto", bottom: "auto" }}
         >
           <h2 id="nav-profile-menu-title" className="map-info-card-sr-title">Account menu</h2>
-          <div className="profile-card-dropdown-glow" aria-hidden="true" />
 
           <div className="profile-card-identity profile-card-identity--static">
             <div className="profile-card-identity-avatar-wrap">
               <UserAvatar
                 user={user}
                 profile={profile}
-                size={72}
+                size={56}
                 tierRing={tierRing}
                 className="profile-card-dropdown-avatar profile-card-dropdown-avatar--large"
                 heroPalette={heroPalette}
               />
-              {isSignedIn && (
-                <button
-                  type="button"
-                  className="profile-card-avatar-edit profile-card-avatar-edit--large"
-                  disabled={uploadingPhoto}
-                  onClick={openPhotoPicker}
-                  aria-label="Change profile photo"
-                  title="Change profile photo"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                    <path
-                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-              )}
             </div>
             <div className="profile-card-name">{displayName}</div>
             {isSignedIn ? (
@@ -272,38 +304,55 @@ export default function NavProfileMenu({
             )}
           </div>
 
-          <hr className="profile-card-dropdown-divider" />
+          <div className="profile-card-menu-body">
+            <nav className="profile-card-nav profile-card-nav-group" aria-label="Primary">
+              {renderNavGroup(primaryItems, { startIndex: 0 })}
+            </nav>
 
-          <nav className="profile-card-nav" aria-label="Account">
-            {navItems.map((item, index) => (
+            <hr className="profile-card-dropdown-divider" />
+
+            <nav className="profile-card-nav profile-card-nav-group" aria-label="Account">
+              {renderNavGroup(accountItems, { startIndex: primaryItems.length })}
+            </nav>
+
+            <hr className="profile-card-dropdown-divider" />
+
+            <div className="profile-card-support">
               <button
-                key={item.id}
                 type="button"
-                className={`profile-card-nav-link profile-card-stagger-item${activeNav === item.id ? " is-active" : ""}`}
-                style={{ "--stagger-index": index }}
-                onClick={() => run(item.action)}
+                className="profile-card-support-toggle"
+                aria-expanded={supportOpen}
+                onClick={() => setSupportOpen(v => !v)}
               >
-                {item.label}
+                Support & legal
+                <span className={`profile-card-support-chevron${supportOpen ? " is-open" : ""}`} aria-hidden="true">
+                  ▾
+                </span>
               </button>
-            ))}
+              {supportOpen && (
+                <nav className="profile-card-nav profile-card-nav-group profile-card-nav-group--support" aria-label="Support and legal">
+                  {renderNavGroup(supportItems, {
+                    keyPrefix: "support-",
+                    startIndex: primaryItems.length + accountItems.length,
+                  })}
+                </nav>
+              )}
+            </div>
+
             {isSignedIn && (
-              <button
-                type="button"
-                className="profile-card-signout profile-card-stagger-item"
-                style={{ "--stagger-index": navItems.length }}
-                onClick={() => void handleSignOutClick()}
-              >
-                Sign out
-              </button>
+              <>
+                <hr className="profile-card-dropdown-divider" />
+                <button
+                  type="button"
+                  className="profile-card-signout profile-card-stagger-item"
+                  style={{ "--stagger-index": primaryItems.length + accountItems.length + 1 }}
+                  onClick={() => void handleSignOutClick()}
+                >
+                  Sign out
+                </button>
+              </>
             )}
-          </nav>
-
-          <hr className="profile-card-dropdown-divider" />
-
-          <nav className="profile-card-dropdown-legal" aria-label="Legal">
-            <a href="/privacy" onClick={closeMenu}>Privacy Policy</a>
-            <a href="/terms" onClick={closeMenu}>Terms of Service</a>
-          </nav>
+          </div>
         </div>
       )}
     </div>

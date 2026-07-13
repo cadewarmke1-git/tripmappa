@@ -1,8 +1,10 @@
 /** Breathing TripMappa wordmark loader — full loading states only. */
-export default function PulsingWordmark({ size = "lg", className = "" }) {
+export default function PulsingWordmark({ size = "lg", className = "", centered }) {
+  const isCentered = centered ?? size === "lg";
+  const centerClass = isCentered ? " pulsing-wordmark--centered" : "";
   return (
     <div
-      className={`pulsing-wordmark pulsing-wordmark--${size}${className ? ` ${className}` : ""}`}
+      className={`pulsing-wordmark pulsing-wordmark--${size}${centerClass}${className ? ` ${className}` : ""}`}
       role="status"
       aria-busy="true"
       aria-label="Loading"

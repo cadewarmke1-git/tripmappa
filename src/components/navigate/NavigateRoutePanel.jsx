@@ -12,11 +12,22 @@ export default function NavigateRoutePanel({
   onDestChange,
   onSwap,
   onGetRoute,
+  onBack = null,
   routeLoading = false,
   theme = "night",
 }) {
   return (
     <search className={`navigate-route-panel navigate-route-panel--${theme}`} aria-label="Route directions">
+      {typeof onBack === "function" && (
+        <div className="navigate-route-toolbar">
+          <button type="button" className="navigate-route-back" onClick={onBack}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Home
+          </button>
+        </div>
+      )}
       <div className="navigate-route-grid">
         <div className="navigate-route-cell">
           <label className="navigate-route-label" htmlFor="navigate-origin">From</label>

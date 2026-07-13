@@ -179,7 +179,8 @@ async function auditScreen(page, screen, viewportId) {
         ".hero-go-btn",
         ".profile-card-trigger",
         ".nav-btn",
-        ".app-nav-mode-btn",
+        ".returning-user-action",
+        ".navigate-route-back",
       ].join(",");
 
       const interactives = [...document.querySelectorAll(interactiveSel)].filter(isVisible);
@@ -205,7 +206,8 @@ async function auditScreen(page, screen, viewportId) {
           el.classList.contains("plan-option-card") ||
           el.classList.contains("plan-choice-row") ||
           el.classList.contains("nav-btn") ||
-          el.classList.contains("app-nav-mode-btn") ||
+          el.classList.contains("returning-user-action") ||
+          el.classList.contains("navigate-route-back") ||
           el.classList.contains("auth-modal-submit") ||
           el.classList.contains("auth-modal-alt-btn") ||
           el.classList.contains("auth-social-btn");
@@ -790,15 +792,18 @@ async function runViewport(viewport) {
     });
   }
 
-  // —— Navigate tab ——
+  // —— Navigate mode (returning dashboard CTA) ——
   try {
     await page.goto(`${BASE}/?skyHour=12`, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.waitForTimeout(600);
-    const navMode = page.locator(".app-nav-mode-btn", { hasText: /Navigate/i }).first();
-    if (await navMode.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await navMode.click();
+    const openNavigate = page.locator(".returning-user-action--navigate").first();
+    const heroPlan = page.locator(".hero-plan-cta").first();
+    if (await openNavigate.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      await openNavigate.click();
       await page.waitForTimeout(1000);
       await record("navigate-tab");
+    } else if (await heroPlan.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      console.log(`[${viewport.id}] skip navigate-tab (signed-out hero)`);
     } else {
       console.log(`[${viewport.id}] skip navigate-tab`);
     }

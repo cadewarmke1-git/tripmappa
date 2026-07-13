@@ -95,7 +95,7 @@ export default function AuthCallbackPage() {
       aria-busy="true"
       aria-label="Signing you in"
     >
-      <PulsingWordmark size="lg" />
+      <PulsingWordmark size="lg" centered />
     </div>
   );
 }

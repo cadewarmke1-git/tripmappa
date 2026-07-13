@@ -114,8 +114,6 @@ export default function ReturningUserView({
   onOpenTrips,
   onOpenShare,
   onGoHome,
-  appMode = "plan",
-  onAppModeChange,
   onOpenPlan,
   onOpenProfile,
   onRefreshCredits,
@@ -144,7 +142,6 @@ export default function ReturningUserView({
   const firstName = displayName.split(/\s+/)[0] || "Traveler";
   const hasPlanDraft = Boolean(planDraft?.origin && planDraft?.dest);
   const hasRecentTrip = Boolean(recentTrip?.origin && recentTrip?.dest);
-  const showPrimaryActions = !hasPlanDraft && !hasRecentTrip;
   const homeLabel = shortCity(homeAddress || userProfile?.home_address) || "Home";
   const lastDestLabel = shortCity(recentTrip?.dest);
   const hasHome = Boolean((homeAddress || userProfile?.home_address || "").trim());
@@ -224,8 +221,6 @@ export default function ReturningUserView({
         userProfile={userProfile}
         creditStatus={creditStatus}
         activeNav={null}
-        appMode={appMode}
-        onAppModeChange={onAppModeChange}
         onOpenPlan={onOpenPlan}
         onOpenTrips={onOpenTrips}
         onOpenShare={onOpenShare}
@@ -260,6 +255,42 @@ export default function ReturningUserView({
             <>
               <p className="returning-user-eyebrow">Welcome back</p>
               <h1 className="hero-title hero-title-line returning-user-greeting">{greeting}</h1>
+
+              <div className="returning-user-actions" role="group" aria-label="Start planning or navigating">
+                <button
+                  type="button"
+                  className="returning-user-action returning-user-action--plan"
+                  onClick={withHaptic(onStartPlan)}
+                  disabled={planLaunching}
+                >
+                  <span className="returning-user-action-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.75">
+                      <path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="returning-user-action-title">Plan a new trip</span>
+                  <span className="returning-user-action-detail">Route, vehicle, and stops tailored to you</span>
+                  {planLaunching && <GoldSpinner size="button" />}
+                </button>
+
+                <button
+                  type="button"
+                  className="returning-user-action returning-user-action--navigate"
+                  onClick={withHaptic(onStartNavigate)}
+                  disabled={navigateLaunching}
+                >
+                  <span className="returning-user-action-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.75">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
+                      <path d="M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                  <span className="returning-user-action-title">Open navigate</span>
+                  <span className="returning-user-action-detail">Turn-by-turn from your current location</span>
+                  {navigateLaunching && <GoldSpinner size="button" />}
+                </button>
+              </div>
 
               {hasPlanDraft && (
                 <div className="returning-user-draft">
@@ -320,9 +351,11 @@ export default function ReturningUserView({
                       </p>
                     )}
                     <div className="returning-user-recent-actions">
-                      <button type="button" className="returning-user-resume-btn" onClick={withHaptic(() => onResumeTrip?.(recentTrip))}>
-                        Resume trip
-                      </button>
+                      {!hasPlanDraft && (
+                        <button type="button" className="returning-user-resume-btn" onClick={withHaptic(() => onResumeTrip?.(recentTrip))}>
+                          Resume trip
+                        </button>
+                      )}
                       <button type="button" className="returning-user-return-btn" onClick={withHaptic(() => onPlanReturnTrip?.(recentTrip))}>
                         Plan return trip
                       </button>
@@ -335,63 +368,6 @@ export default function ReturningUserView({
                 <button type="button" className="returning-user-all-trips" onClick={withHaptic(onOpenTrips)}>
                   See all trips →
                 </button>
-              )}
-
-              {showPrimaryActions ? (
-                <div className="returning-user-actions">
-                  <button
-                    type="button"
-                    className="returning-user-action returning-user-action--plan"
-                    onClick={withHaptic(onStartPlan)}
-                    disabled={planLaunching}
-                  >
-                    <span className="returning-user-action-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.75">
-                        <path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span className="returning-user-action-title">Plan a trip</span>
-                    <span className="returning-user-action-detail">Route, vehicle, and stops tailored to you</span>
-                    {planLaunching && <GoldSpinner size="button" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="returning-user-action returning-user-action--navigate"
-                    onClick={withHaptic(onStartNavigate)}
-                    disabled={navigateLaunching}
-                  >
-                    <span className="returning-user-action-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.75">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
-                        <path d="M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" strokeLinecap="round" />
-                      </svg>
-                    </span>
-                    <span className="returning-user-action-title">Navigate</span>
-                    <span className="returning-user-action-detail">Turn-by-turn from your current location</span>
-                    {navigateLaunching && <GoldSpinner size="button" />}
-                  </button>
-                </div>
-              ) : (
-                <div className="returning-user-compact-actions">
-                  <button
-                    type="button"
-                    className="returning-user-compact-btn returning-user-compact-btn--plan"
-                    onClick={withHaptic(onStartPlan)}
-                    disabled={planLaunching}
-                  >
-                    {planLaunching ? <GoldSpinner size="button" /> : "Plan a new trip"}
-                  </button>
-                  <button
-                    type="button"
-                    className="returning-user-compact-btn returning-user-compact-btn--navigate"
-                    onClick={withHaptic(onStartNavigate)}
-                    disabled={navigateLaunching}
-                  >
-                    {navigateLaunching ? <GoldSpinner size="button" /> : "Open navigate"}
-                  </button>
-                </div>
               )}
 
               {destinationChips.length > 0 && (

@@ -8,8 +8,6 @@ export default function AppNavBar({
   userProfile,
   creditStatus = null,
   activeNav = null,
-  appMode = "plan",
-  onAppModeChange,
   onOpenPlan,
   onOpenTrips,
   onOpenShare,
@@ -34,26 +32,6 @@ export default function AppNavBar({
       <div className="app-nav-bar-left">
         <NavLogo onClick={onGoHome} theme={isHero ? theme : undefined} />
       </div>
-      {typeof onAppModeChange === "function" && (
-        <div className="app-nav-mode-switch" role="group" aria-label="App mode">
-          <button
-            type="button"
-            className={`app-nav-mode-btn${appMode === "plan" ? " is-active" : ""}`}
-            aria-pressed={appMode === "plan"}
-            onClick={() => onAppModeChange("plan")}
-          >
-            Plan a Trip
-          </button>
-          <button
-            type="button"
-            className={`app-nav-mode-btn${appMode === "navigate" ? " is-active" : ""}`}
-            aria-pressed={appMode === "navigate"}
-            onClick={() => onAppModeChange("navigate")}
-          >
-            Navigate
-          </button>
-        </div>
-      )}
       <div className="app-nav-bar-right">
         {liveSharingActive && (
           <span className="nav-live-badge" title="Live location sharing active">

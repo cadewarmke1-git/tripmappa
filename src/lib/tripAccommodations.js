@@ -6,9 +6,7 @@ export const FUEL_TYPE_CHOICES = [
   "Gasoline",
   "Diesel",
   "Electric",
-  "Electric — Tesla Superchargers",
   "Hybrid",
-  "Propane",
 ];
 
 export const TOWING_CHOICES = [
