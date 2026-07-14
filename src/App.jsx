@@ -1283,8 +1283,12 @@ export default function App() {
   async function handleNavigateGetRoute({ skipIfLoaded = false } = {}) {
     const fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
     const toVal = navigateDestRef.current?.value?.trim() || dest.trim();
-    if (!fromVal || !toVal) {
-      toast_("Enter a start and destination");
+    if (!toVal) {
+      toast_("Enter a destination");
+      return;
+    }
+    if (!fromVal) {
+      toast_("Waiting for your current location — try again in a moment");
       return;
     }
     if (!isLoaded || !window.google) {
@@ -2566,13 +2570,9 @@ export default function App() {
           {renderAppNavBar("hero")}
           <NavigateRoutePanel
             isLoaded={isLoaded}
-            origin={origin}
             dest={dest}
-            originRef={navigateOriginRef}
             destRef={navigateDestRef}
-            onOriginChange={setOrigin}
             onDestChange={setDest}
-            onSwap={swapNavigateRoute}
             onGetRoute={handleNavigateGetRoute}
             onBack={goHome}
             routeLoading={routeLoading}
@@ -2838,13 +2838,9 @@ export default function App() {
             {itinerarySync.routeFocusMode && (
               <NavigateRoutePanel
                 isLoaded={isLoaded}
-                origin={origin}
                 dest={dest}
-                originRef={navigateOriginRef}
                 destRef={navigateDestRef}
-                onOriginChange={setOrigin}
                 onDestChange={setDest}
-                onSwap={swapNavigateRoute}
                 onGetRoute={() => handleNavigateGetRoute({ skipIfLoaded: true })}
                 routeLoading={routeLoading}
                 theme={theme}

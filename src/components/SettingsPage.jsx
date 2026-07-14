@@ -3,38 +3,66 @@ import { Autocomplete } from "@react-google-maps/api";
 import { configurePlacesAutocomplete } from "../lib/places.js";
 import { getTierLabel, TIERS } from "../lib/tiers.js";
 
-const SETTINGS_ITEMS = [
+const SETTINGS_GROUPS = [
   {
-    id: "notifications",
-    label: "Notification preferences",
-    detail: "Trip reminders and product updates",
+    id: "trip",
+    label: "Trip preferences",
+    items: [
+      {
+        id: "vehicle",
+        label: "Vehicle defaults",
+        detail: "Default vehicle, fuel, and towing for new plans",
+        openPreferences: true,
+      },
+      {
+        id: "dietary",
+        label: "Dietary preferences",
+        detail: "Food and stop defaults for the planner",
+        openPreferences: true,
+      },
+      {
+        id: "stops",
+        label: "Stop preferences",
+        detail: "Fun stops and interests along the route",
+        openPreferences: true,
+      },
+    ],
   },
   {
-    id: "vehicle",
-    label: "Vehicle defaults",
-    detail: "Default vehicle, fuel, and towing for new plans",
-  },
-  {
-    id: "dietary",
-    label: "Dietary preferences",
-    detail: "Food and stop defaults for the planner",
-  },
-  {
-    id: "home",
-    label: "Home address",
-    detail: "Used for Head home and Navigate Home",
+    id: "account",
+    label: "Account",
+    items: [
+      {
+        id: "home",
+        label: "Home address",
+        detail: "Used for Head home and Navigate Home",
+      },
+      {
+        id: "notifications",
+        label: "Notification preferences",
+        detail: "Trip reminders and product updates",
+      },
+      {
+        id: "accounts",
+        label: "Connected accounts",
+        detail: "Sign-in methods linked to TripMappa",
+      },
+    ],
   },
   {
     id: "billing",
-    label: "Subscription and billing",
-    detail: "Plan, renewals, and payment method",
-  },
-  {
-    id: "accounts",
-    label: "Connected accounts",
-    detail: "Sign-in methods linked to TripMappa",
+    label: "Billing",
+    items: [
+      {
+        id: "billing",
+        label: "Subscription and billing",
+        detail: "Plan, renewals, and payment method",
+      },
+    ],
   },
 ];
+
+const ALL_SETTINGS_ITEMS = SETTINGS_GROUPS.flatMap(group => group.items);
 
 export default function SettingsPage({
   user,
@@ -71,7 +99,7 @@ export default function SettingsPage({
   }, [profile?.notify_trip_reminders, profile?.notify_new_features]);
 
   const tierName = getTierLabel(creditStatus?.tier || profile?.tier || TIERS.WANDERER);
-  const activeItem = SETTINGS_ITEMS.find(item => item.id === panel) || null;
+  const activeItem = ALL_SETTINGS_ITEMS.find(item => item.id === panel) || null;
 
   async function handleNotifyChange(tripReminders, newFeatures) {
     setNotifyTripReminders(tripReminders);
@@ -101,8 +129,13 @@ export default function SettingsPage({
     }
   }
 
-  function openPreferencesPanel() {
-    onOpenPreferences?.();
+  function handleHubItem(item) {
+    if (item.openPreferences) {
+      onOpenPreferences?.();
+      return;
+    }
+    setPanel(item.id);
+    setEditingHome(false);
   }
 
   return (
@@ -123,26 +156,27 @@ export default function SettingsPage({
 
       {!panel && (
         <nav className="settings-hub" aria-label="Settings">
-          {SETTINGS_ITEMS.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              className="settings-hub-row"
-              onClick={() => {
-                if (item.id === "vehicle" || item.id === "dietary") {
-                  openPreferencesPanel();
-                  return;
-                }
-                setPanel(item.id);
-                setEditingHome(false);
-              }}
-            >
-              <span className="settings-hub-copy">
-                <span className="settings-hub-label">{item.label}</span>
-                <span className="settings-hub-detail">{item.detail}</span>
-              </span>
-              <span className="settings-hub-chevron" aria-hidden="true">›</span>
-            </button>
+          {SETTINGS_GROUPS.map((group, groupIndex) => (
+            <div key={group.id} className="settings-hub-group">
+              {groupIndex > 0 && <div className="settings-hub-divider" aria-hidden="true" />}
+              <p className="settings-hub-group-label">{group.label}</p>
+              <div className="settings-hub-group-rows">
+                {group.items.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="settings-hub-row"
+                    onClick={() => handleHubItem(item)}
+                  >
+                    <span className="settings-hub-copy">
+                      <span className="settings-hub-label">{item.label}</span>
+                      <span className="settings-hub-detail">{item.detail}</span>
+                    </span>
+                    <span className="settings-hub-chevron" aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
       )}

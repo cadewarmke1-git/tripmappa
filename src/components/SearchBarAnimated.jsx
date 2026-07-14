@@ -17,6 +17,12 @@ function SearchIcon() {
   );
 }
 
+function assignRef(ref, node) {
+  if (!ref) return;
+  if (typeof ref === "function") ref(node);
+  else ref.current = node;
+}
+
 export default function SearchBarAnimated({
   value = "",
   onChange,
@@ -27,12 +33,19 @@ export default function SearchBarAnimated({
   name,
   className = "",
   disabled = false,
+  inputRef: inputRefProp = null,
+  defaultExpanded = false,
 }) {
   const autoId = useId();
   const inputId = idProp || autoId;
   const rootRef = useRef(null);
   const inputRef = useRef(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() => defaultExpanded || Boolean(value));
+
+  const setInputNode = useCallback((node) => {
+    inputRef.current = node;
+    assignRef(inputRefProp, node);
+  }, [inputRefProp]);
 
   const collapse = useCallback(() => {
     setExpanded(false);
@@ -80,7 +93,7 @@ export default function SearchBarAnimated({
         <SearchIcon />
       </button>
       <input
-        ref={inputRef}
+        ref={setInputNode}
         id={inputId}
         name={name}
         type="search"

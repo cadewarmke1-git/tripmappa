@@ -1,21 +1,33 @@
-import { Autocomplete } from "@react-google-maps/api";
+import { useEffect } from "react";
 import { configurePlacesAutocomplete } from "../../lib/places.js";
 import GoldSpinner from "../GoldSpinner.jsx";
+import SearchBarAnimated from "../SearchBarAnimated.jsx";
 
 export default function NavigateRoutePanel({
   isLoaded,
-  origin,
   dest,
-  originRef,
   destRef,
-  onOriginChange,
   onDestChange,
-  onSwap,
   onGetRoute,
   onBack = null,
   routeLoading = false,
   theme = "night",
 }) {
+  useEffect(() => {
+    if (!isLoaded || !window.google?.maps?.places || !destRef?.current) return undefined;
+    const ac = new window.google.maps.places.Autocomplete(destRef.current, {
+      types: ["geocode", "establishment"],
+    });
+    configurePlacesAutocomplete(ac);
+    const listener = ac.addListener("place_changed", () => {
+      const next = destRef.current?.value || "";
+      onDestChange?.(next);
+    });
+    return () => {
+      window.google?.maps?.event?.removeListener?.(listener);
+    };
+  }, [isLoaded, destRef, onDestChange]);
+
   return (
     <search className={`navigate-route-panel navigate-route-panel--${theme}`} aria-label="Route directions">
       {typeof onBack === "function" && (
@@ -28,90 +40,19 @@ export default function NavigateRoutePanel({
           </button>
         </div>
       )}
-      <div className="navigate-route-grid">
-        <div className="navigate-route-cell">
-          <label className="navigate-route-label" htmlFor="navigate-origin">From</label>
-          <div className="navigate-route-input-box">
-            {isLoaded ? (
-              <Autocomplete
-                onLoad={ac => configurePlacesAutocomplete(ac)}
-                onPlaceChanged={() => {
-                  if (originRef.current) onOriginChange?.(originRef.current.value);
-                }}
-                options={{ types: ["geocode", "establishment"] }}
-              >
-                <input
-                  id="navigate-origin"
-                  ref={originRef}
-                  className="navigate-route-input"
-                  placeholder="Start location"
-                  defaultValue={origin}
-                  onChange={e => onOriginChange?.(e.target.value)}
-                  autoComplete="off"
-                  aria-label="Route start"
-                />
-              </Autocomplete>
-            ) : (
-              <input
-                id="navigate-origin"
-                ref={originRef}
-                className="navigate-route-input"
-                placeholder="Start location"
-                value={origin}
-                onChange={e => onOriginChange?.(e.target.value)}
-                autoComplete="off"
-                aria-label="Route start"
-              />
-            )}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="navigate-route-swap"
-          onClick={onSwap}
-          aria-label="Swap origin and destination"
-        >
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 2.5v11M5.5 5l2.5-2.5L10.5 5M5.5 11l2.5 2.5L10.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-
-        <div className="navigate-route-cell">
-          <label className="navigate-route-label" htmlFor="navigate-dest">To</label>
-          <div className="navigate-route-input-box">
-            {isLoaded ? (
-              <Autocomplete
-                onLoad={ac => configurePlacesAutocomplete(ac)}
-                onPlaceChanged={() => {
-                  if (destRef.current) onDestChange?.(destRef.current.value);
-                }}
-                options={{ types: ["geocode", "establishment"] }}
-              >
-                <input
-                  id="navigate-dest"
-                  ref={destRef}
-                  className="navigate-route-input"
-                  placeholder="Destination"
-                  defaultValue={dest}
-                  onChange={e => onDestChange?.(e.target.value)}
-                  autoComplete="off"
-                  aria-label="Route destination"
-                />
-              </Autocomplete>
-            ) : (
-              <input
-                id="navigate-dest"
-                ref={destRef}
-                className="navigate-route-input"
-                placeholder="Destination"
-                value={dest}
-                onChange={e => onDestChange?.(e.target.value)}
-                autoComplete="off"
-                aria-label="Route destination"
-              />
-            )}
-          </div>
+      <div className="navigate-route-grid navigate-route-grid--dest-only">
+        <div className="navigate-route-dest-search">
+          <SearchBarAnimated
+            id="navigate-dest"
+            inputRef={destRef}
+            value={dest || ""}
+            onChange={onDestChange}
+            onSubmit={() => onGetRoute?.()}
+            placeholder="Where to?"
+            ariaLabel="Where to?"
+            className="navigate-where-search"
+            defaultExpanded={Boolean(dest)}
+          />
         </div>
 
         <button
