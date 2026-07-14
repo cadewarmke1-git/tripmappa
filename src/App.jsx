@@ -77,7 +77,7 @@ import PlanPanel from "./components/PlanPanel.jsx";
 import PlanPanelDock from "./components/PlanPanelDock.jsx";
 import PlanFlowActionDock from "./components/PlanFlowActionDock.jsx";
 import TripsPanel from "./components/TripsPanel.jsx";
-import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel } from "./components/LazyPanels.jsx";
+import { LazyTripResultsPanel, LazyLiveViewPage, LazyProfilePage, LazySharePanel, LazySettingsPage } from "./components/LazyPanels.jsx";
 import { resolveAppRoute } from "./lib/appRouter.js";
 import Toast from "./components/Toast.jsx";
 import PulsingWordmark from "./components/PulsingWordmark.jsx";
@@ -173,7 +173,7 @@ function revertAnswerForHistoryEntry(newAnswers, entry) {
 }
 
 export default function App() {
-  const [view, setView] = useState("hero"); // "hero" | "app" | "profile"
+  const [view, setView] = useState("hero"); // "hero" | "app" | "profile" | "settings" | "preferences"
   const [appMode, setAppMode] = useState("plan"); // "plan" | "navigate"
   const [tab, setTab] = useState("plan");
   const [origin, setOrigin] = useState("");
@@ -237,6 +237,7 @@ export default function App() {
   const [activeTripId, setActiveTripId] = useState(null);
   const AppRoutePage = useMemo(() => resolveAppRoute(), []);
   const [profileScrollTo, setProfileScrollTo] = useState(null);
+  const [preferencesReturnTo, setPreferencesReturnTo] = useState("profile");
   const { theme } = useTheme();
   const toastFnRef = useRef(null);
 
@@ -653,6 +654,11 @@ export default function App() {
     window.scrollTo(0, 0);
   }
 
+  function openSettings() {
+    setView("settings");
+    window.scrollTo(0, 0);
+  }
+
   function openMyTrips() {
     setView("app");
     setTab("trips");
@@ -668,12 +674,18 @@ export default function App() {
   }
 
   function openProfileSettings() {
-    setProfileScrollTo("settings");
-    setView("profile");
+    setView("settings");
     window.scrollTo(0, 0);
   }
 
   function openProfilePreferences() {
+    setPreferencesReturnTo("profile");
+    setView("preferences");
+    window.scrollTo(0, 0);
+  }
+
+  function openSettingsPreferences() {
+    setPreferencesReturnTo("settings");
     setView("preferences");
     window.scrollTo(0, 0);
   }
@@ -699,6 +711,8 @@ export default function App() {
   }
 
   const navActiveTab = useMemo(() => {
+    if (view === "profile") return "profile";
+    if (view === "settings") return "settings";
     if (view !== "app") return null;
     if (tab === "plan") return "plan";
     if (tab === "trips") return "trips";
@@ -778,6 +792,7 @@ export default function App() {
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
         onOpenProfile={openProfile}
+        onOpenSettings={openSettings}
         onRefreshCredits={refreshCredits}
         onUploadAvatar={handleProfileUploadAvatar}
         onGetStarted={() => openAuthModal("signup")}
@@ -2333,13 +2348,12 @@ export default function App() {
     onNavigateToDestination: startNavigateToDestination,
     onResumeDraft: resumePlanDraft,
     onDismissDraft: clearSavedPlanDraft,
-    onResumeTrip: handleViewTrip,
-    onPlanReturnTrip: startReturnTrip,
     onGoHome: goHome,
     onOpenPlan: handleNavOpenPlan,
     onOpenTrips: handleNavOpenTrips,
     onOpenShare: handleNavOpenShare,
     onOpenProfile: openProfile,
+    onOpenSettings: openSettings,
     onRefreshCredits: refreshCredits,
     onUploadAvatar: handleProfileUploadAvatar,
     onSignOut: handleSignOut,
@@ -2377,12 +2391,64 @@ export default function App() {
           <ErrorBoundary label="preferences" title="Could not show preferences">
             <LazyUserPreferencesPage
               accessToken={session?.access_token}
-              onBack={() => setView("profile")}
+              onBack={() => setView(preferencesReturnTo === "settings" ? "settings" : "profile")}
               onToast={toast_}
               onSaved={(prefs, meta) => applyPlanPreferencesSaved(prefs, meta)}
             />
           </ErrorBoundary>
         </div>
+        <Toast
+          message={toast}
+          isGold={toastIsGold}
+          isError={toastIsError}
+          actionLabel={toastAction?.label}
+          onAction={toastAction ? runToastAction : undefined}
+        />
+      </>
+    );
+  }
+
+  if (view === "settings" && user) {
+    return (
+      <>
+        <div className={`app-wrap ${theme} profile-view-wrap`}>
+          {renderAppNavBar("app")}
+          <ErrorBoundary label="settings" title="Could not show settings">
+            <LazySettingsPage
+              theme={theme}
+              user={user}
+              profile={userProfile}
+              creditStatus={creditStatus}
+              isLoaded={isLoaded}
+              onBack={() => setView("app")}
+              onOpenPreferences={openSettingsPreferences}
+              onSaveHomeAddress={async (addr) => {
+                const profile = await saveHomeAddress(addr);
+                setUserProfile(profile);
+                setHomeAddress(addr);
+              }}
+              onSaveNotifications={handleProfileSaveNotifications}
+              onManageSubscription={handleManageSubscription}
+              onOpenPricing={openPricingPage}
+              toast={toast_}
+            />
+          </ErrorBoundary>
+        </div>
+        {showUpgradeModal && (
+          <LazyUpgradeModal
+            onClose={() => setShowUpgradeModal(false)}
+            onOpenPricing={openPricingPage}
+            user={user}
+            accessToken={session?.access_token}
+            creditStatus={creditStatus}
+            reason={upgradeModalReason}
+            resetDate={upgradeModalResetDate}
+            initialPlan={upgradeModalInitialPlan ?? TIERS.TRAILBLAZER}
+            initialBillingInterval={upgradeModalBillingInterval}
+            onSignUp={() => { setShowUpgradeModal(false); openAuthModal("signup"); }}
+            onCheckoutError={msg => toast_(msg, { isError: true })}
+          />
+        )}
         <Toast
           message={toast}
           isGold={toastIsGold}
@@ -2568,6 +2634,14 @@ export default function App() {
                 truckRoutePath={truckRoutePath}
                 highlightedLegPath={[]}
                 inAppNavigationOnly
+                autoLocateUser={!isNavigating}
+                onUserLocated={(coords) => {
+                  if (!coords) return;
+                  const labeled = `${coords.lat},${coords.lng}`;
+                  setOrigin(labeled);
+                  if (navigateOriginRef.current) navigateOriginRef.current.value = labeled;
+                  primeNavigateOriginLabel(coords.lat, coords.lng);
+                }}
                 routeFocusMode={isNavigating}
                 {...navMapProps}
               />
@@ -2629,6 +2703,7 @@ export default function App() {
         onOpenTrips={handleNavOpenTrips}
         onOpenShare={handleNavOpenShare}
         onOpenProfile={openProfile}
+        onOpenSettings={openSettings}
         onRefreshCredits={refreshCredits}
         onUploadAvatar={handleProfileUploadAvatar}
         onGetStarted={() => openAuthModal("signup")}
@@ -3092,9 +3167,11 @@ export default function App() {
                   {tab === "trips" && (
                     <TripsPanel
                       savedTrips={savedTrips}
+                      planDraft={planDraft}
                       onViewTrip={handleViewTrip}
                       onDeleteTrip={requestDeleteSavedTrip}
                       onPlanTrip={() => { setTab("plan"); setCardCollapsed(false); }}
+                      onResumeDraft={resumePlanDraft}
                     />
                   )}
                   {tab === "share" && (

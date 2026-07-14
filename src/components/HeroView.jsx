@@ -11,6 +11,19 @@ import { getHeroSurfaceCssVars } from "../lib/palette.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { getHeroSurfaceTheme, getHeroUiThemeFromHour, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
+const HERO_WELCOME_SESSION_KEY = "tm-hero-welcome-played";
+
+function shouldPlayHeroWelcome() {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return false;
+  try {
+    if (sessionStorage.getItem(HERO_WELCOME_SESSION_KEY) === "1") return false;
+  } catch {
+    return true;
+  }
+  return true;
+}
+
 export default function HeroView({
   planLaunching = false,
   launchDisabled = false,
@@ -22,6 +35,7 @@ export default function HeroView({
   onOpenTrips,
   onOpenShare,
   onOpenProfile,
+  onOpenSettings,
   onRefreshCredits,
   onUploadAvatar,
   onGetStarted,
@@ -45,6 +59,8 @@ export default function HeroView({
   } = useHeroSkyHour();
 
   const [useMountainFallback, setUseMountainFallback] = useState(false);
+  const [welcomeReady, setWelcomeReady] = useState(false);
+  const [playWelcome] = useState(() => shouldPlayHeroWelcome());
 
   const skyPhase = useMemo(() => getSkyPhaseFromHour(skyHour), [skyHour]);
   const heroShellTheme = useMemo(() => getHeroSurfaceTheme(skyHour), [skyHour]);
@@ -65,6 +81,24 @@ export default function HeroView({
     };
   }, [heroSurfaceTheme, skyPhase, skyHour]);
 
+  useEffect(() => {
+    if (!playWelcome) {
+      setWelcomeReady(true);
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => setWelcomeReady(true));
+    try {
+      sessionStorage.setItem(HERO_WELCOME_SESSION_KEY, "1");
+    } catch {
+      /* ignore quota / private mode */
+    }
+    return () => cancelAnimationFrame(frame);
+  }, [playWelcome]);
+
+  const welcomeClass = playWelcome
+    ? ` hero-welcome${welcomeReady ? " is-welcome-ready" : ""}`
+    : " hero-welcome-instant";
+
   return (
     <>
       <AppNavBar
@@ -79,6 +113,7 @@ export default function HeroView({
         onOpenTrips={onOpenTrips}
         onOpenShare={onOpenShare}
         onOpenProfile={onOpenProfile}
+        onOpenSettings={onOpenSettings}
         onRefreshCredits={onRefreshCredits}
         onUploadAvatar={onUploadAvatar}
         onGetStarted={onGetStarted}
@@ -87,28 +122,30 @@ export default function HeroView({
       />
 
       <div
-        className={`hero ${heroTheme}`}
+        className={`hero ${heroTheme}${welcomeClass}`}
         data-surface-theme={heroSurfaceTheme}
         style={heroSurfaceStyle}
       >
-        {useMountainFallback ? (
-          <HeroMountainScene phase={skyPhase} hour={skyHour} />
-        ) : (
-          <HeroHighwayScene onPhotoError={() => setUseMountainFallback(true)} />
-        )}
-        <div className="hero-overlay" />
-        <div className="hero-palette-vignette" aria-hidden="true" />
-        <div className="hero-palette-ridge" aria-hidden="true" />
+        <div className="hero-welcome-scene">
+          {useMountainFallback ? (
+            <HeroMountainScene phase={skyPhase} hour={skyHour} />
+          ) : (
+            <HeroHighwayScene onPhotoError={() => setUseMountainFallback(true)} />
+          )}
+          <div className="hero-overlay" />
+          <div className="hero-palette-vignette" aria-hidden="true" />
+          <div className="hero-palette-ridge" aria-hidden="true" />
+        </div>
 
         <div className="hero-content">
-          <p className="trip-overview-hero-eyebrow">The open road awaits</p>
-          <h1 className="hero-title hero-title-line">Your trip, our mission.</h1>
-          <p className="hero-sub">
+          <p className="trip-overview-hero-eyebrow hero-welcome-eyebrow">The open road awaits</p>
+          <h1 className="hero-title hero-title-line hero-welcome-headline">Your trip, our mission.</h1>
+          <p className="hero-sub hero-welcome-sub">
             Fuel, food, and lodging planned around how you travel — one clear route from here to there.
           </p>
 
           {planDraft?.origin && planDraft?.dest && (
-            <div className="hero-draft-resume">
+            <div className="hero-draft-resume hero-welcome-cta">
               <div className="hero-draft-resume-body">
                 <p className="hero-draft-resume-text">
                   Continue planning{" "}
@@ -134,7 +171,7 @@ export default function HeroView({
 
           <button
             type="button"
-            className="hero-plan-cta"
+            className="hero-plan-cta hero-welcome-cta"
             onClick={() => { triggerPrimaryHaptic(); onStartPlan?.(); }}
             disabled={launchDisabled}
           >
@@ -142,7 +179,7 @@ export default function HeroView({
           </button>
         </div>
 
-        <footer className="hero-footer">
+        <footer className="hero-footer hero-welcome-footer">
           <HeroFoundingSlots />
           <nav className="hero-footer-nav" aria-label="Legal and pricing">
             <a href="/pricing">Plans & pricing</a>

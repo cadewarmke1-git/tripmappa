@@ -5,6 +5,7 @@ const TripResultsPanel = lazy(() => import("./results/TripResultsPanel.jsx"));
 const LiveViewPage = lazy(() => import("./live/LiveViewPage.jsx"));
 const ProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const SharePanel = lazy(() => import("./SharePanel.jsx"));
+const SettingsPage = lazy(() => import("./SettingsPage.jsx"));
 
 function PanelLoadingFallback({ theme = "night" }) {
   return (
@@ -42,6 +43,14 @@ export function LazySharePanel({ theme, ...props }) {
   return (
     <Suspense fallback={<PanelLoadingFallback theme={theme} />}>
       <SharePanel {...props} />
+    </Suspense>
+  );
+}
+
+export function LazySettingsPage({ theme, ...props }) {
+  return (
+    <Suspense fallback={<PanelLoadingFallback theme={theme} />}>
+      <SettingsPage {...props} />
     </Suspense>
   );
 }

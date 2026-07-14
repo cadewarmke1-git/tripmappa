@@ -12,6 +12,7 @@ export default function AppNavBar({
   onOpenTrips,
   onOpenShare,
   onOpenProfile,
+  onOpenSettings,
   onRefreshCredits,
   onUploadAvatar,
   onGetStarted,
@@ -50,6 +51,7 @@ export default function AppNavBar({
             onOpenTrips={onOpenTrips}
             onOpenShare={onOpenShare}
             onOpenProfile={onOpenProfile}
+            onOpenSettings={onOpenSettings}
             onRefreshCredits={onRefreshCredits}
             onUploadAvatar={onUploadAvatar}
             onGetStarted={onGetStarted}

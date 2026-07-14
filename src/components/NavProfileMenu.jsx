@@ -17,6 +17,7 @@ export default function NavProfileMenu({
   onOpenTrips,
   onOpenShare,
   onOpenProfile,
+  onOpenSettings,
   onRefreshCredits,
   onUploadAvatar,
   onGetStarted,
@@ -164,7 +165,6 @@ export default function NavProfileMenu({
     photoInputRef.current?.click();
   }
 
-  const openBilling = () => { window.location.assign("/pricing"); };
   const openHelp = () => { window.open(HELP_URL, "_blank", "noopener,noreferrer"); };
 
   const primaryItems = isSignedIn
@@ -180,11 +180,9 @@ export default function NavProfileMenu({
   const accountItems = isSignedIn
     ? [
         { id: "profile", label: "Profile", action: onOpenProfile },
-        { id: "billing", label: "Subscription and billing", action: openBilling },
+        { id: "settings", label: "Settings", action: onOpenSettings },
       ]
-    : [
-        { id: "billing", label: "Subscription and billing", action: openBilling },
-      ];
+    : [];
 
   const supportItems = [
     { id: "help", label: "Help", action: openHelp },
@@ -309,11 +307,14 @@ export default function NavProfileMenu({
               {renderNavGroup(primaryItems, { startIndex: 0 })}
             </nav>
 
-            <hr className="profile-card-dropdown-divider" />
-
-            <nav className="profile-card-nav profile-card-nav-group" aria-label="Account">
-              {renderNavGroup(accountItems, { startIndex: primaryItems.length })}
-            </nav>
+            {accountItems.length > 0 && (
+              <>
+                <hr className="profile-card-dropdown-divider" />
+                <nav className="profile-card-nav profile-card-nav-group" aria-label="Account">
+                  {renderNavGroup(accountItems, { startIndex: primaryItems.length })}
+                </nav>
+              </>
+            )}
 
             <hr className="profile-card-dropdown-divider" />
 

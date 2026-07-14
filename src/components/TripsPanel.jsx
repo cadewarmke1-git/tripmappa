@@ -1,15 +1,12 @@
 import { useMemo, useState } from "react";
 import SearchBarAnimated from "./SearchBarAnimated.jsx";
 import RouteMapThumbnail from "./RouteMapThumbnail.jsx";
+import { getTripVehicle } from "../lib/tripStats.js";
+import { getEffectiveVehicle } from "../lib/vehicles.js";
 
 function shortCity(value) {
   if (!value) return "";
   return value.split(",")[0].trim();
-}
-
-function formatTripDate(date) {
-  if (!date) return "";
-  return date;
 }
 
 function tripRouteName(trip) {
@@ -23,6 +20,27 @@ function tripStopCount(trip) {
   return (trip.stops?.length || 0) + (trip.roadStops?.length || 0);
 }
 
+function collectStopPoints(trip) {
+  const fromStops = (trip?.stops || [])
+    .filter(s => s?.lat != null && s?.lng != null)
+    .map(s => ({ lat: s.lat, lng: s.lng }));
+  const fromRoad = (trip?.roadStops || [])
+    .filter(s => s?.lat != null && s?.lng != null)
+    .map(s => ({ lat: s.lat, lng: s.lng }));
+  return [...fromStops, ...fromRoad];
+}
+
+function vehicleLabel(answersOrTrip) {
+  const raw = typeof answersOrTrip?.answers === "object"
+    ? (getEffectiveVehicle(answersOrTrip.answers) || getTripVehicle(answersOrTrip))
+    : (getEffectiveVehicle(answersOrTrip || {}) || answersOrTrip?.vehicle);
+  if (!raw) return null;
+  const dash = String(raw).indexOf("—");
+  if (dash > 0) return String(raw).slice(0, dash).trim();
+  if (raw === "Semi Truck (18-wheeler)") return "Semi truck";
+  return raw;
+}
+
 function tripMatchesFilter(trip, query) {
   const q = query.trim().toLowerCase();
   if (!q) return true;
@@ -33,24 +51,88 @@ function tripMatchesFilter(trip, query) {
     shortCity(trip.dest),
     trip.date,
     trip.routeInfo?.distance,
+    vehicleLabel(trip),
   ].filter(Boolean).join(" ").toLowerCase();
   return haystack.includes(q);
 }
 
-export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPlanTrip }) {
+function TripMiniCard({
+  routeName,
+  vehicle,
+  stopCount,
+  distance,
+  routePoints,
+  stopPoints,
+  badge = null,
+  isDraft = false,
+  primaryLabel,
+  onPrimary,
+  onDelete = null,
+}) {
+  return (
+    <li className={`trips-saved-card${isDraft ? " trips-saved-card--draft" : ""}`}>
+      <RouteMapThumbnail
+        routePoints={routePoints}
+        stopPoints={stopPoints}
+        className="trips-saved-card-thumb"
+      />
+      <div className="trips-saved-card-body">
+        <div className="trips-saved-card-route">
+          {badge && <span className="trips-saved-card-badge">{badge}</span>}
+          <span className="trips-saved-card-name">{routeName}</span>
+        </div>
+        <div className="trips-saved-card-meta">
+          {vehicle && <span className="trips-saved-card-vehicle">{vehicle}</span>}
+          {stopCount != null && (
+            <span>{stopCount} stop{stopCount !== 1 ? "s" : ""}</span>
+          )}
+          {distance && <span>{distance}</span>}
+        </div>
+        <div className="trips-saved-card-actions">
+          <button type="button" className="trips-saved-btn trips-saved-btn-primary" onClick={onPrimary}>
+            {primaryLabel}
+          </button>
+          {onDelete && (
+            <button type="button" className="trips-saved-btn trips-saved-btn-danger" onClick={onDelete}>
+              Delete
+            </button>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export default function TripsPanel({
+  savedTrips,
+  planDraft = null,
+  onViewTrip,
+  onDeleteTrip,
+  onPlanTrip,
+  onResumeDraft,
+}) {
   const [filterQuery, setFilterQuery] = useState("");
+
+  const hasDraft = Boolean(planDraft?.origin && planDraft?.dest);
+  const draftMatches = hasDraft && tripMatchesFilter(
+    { origin: planDraft.origin, dest: planDraft.dest, answers: planDraft.answers },
+    filterQuery,
+  );
 
   const filteredTrips = useMemo(
     () => savedTrips.filter(trip => tripMatchesFilter(trip, filterQuery)),
     [savedTrips, filterQuery],
   );
 
+  const hasAnyTrips = hasDraft || savedTrips.length > 0;
+  const hasVisible = (draftMatches && hasDraft) || filteredTrips.length > 0;
+
   return (
     <div className="trips-panel">
       <div className="trips-panel-head">
         <h2 className="trips-panel-title">Trips</h2>
         <p className="trips-panel-sub">Your trip history — resume any route without regenerating.</p>
-        {savedTrips.length > 0 && (
+        {hasAnyTrips && (
           <div className="trips-panel-filter">
             <SearchBarAnimated
               value={filterQuery}
@@ -62,37 +144,42 @@ export default function TripsPanel({ savedTrips, onViewTrip, onDeleteTrip, onPla
         )}
       </div>
 
-      {savedTrips.length > 0 ? (
-        filteredTrips.length > 0 ? (
-        <ul className="trips-saved-list">
-          {filteredTrips.map(trip => {
-            const stopCount = tripStopCount(trip);
-            const routeName = tripRouteName(trip);
-            return (
-              <li key={trip.id} className="trips-saved-card">
-                <RouteMapThumbnail routePoints={trip.routeInfo?.routePoints} className="trips-saved-card-thumb" />
-                <div className="trips-saved-card-body">
-                  <div className="trips-saved-card-route">
-                    <span className="trips-saved-card-name">{routeName}</span>
-                  </div>
-                  <div className="trips-saved-card-meta">
-                    {formatTripDate(trip.date) && <span>{formatTripDate(trip.date)}</span>}
-                    <span>{stopCount} stop{stopCount !== 1 ? "s" : ""}</span>
-                    {trip.routeInfo?.distance && <span>{trip.routeInfo.distance}</span>}
-                  </div>
-                  <div className="trips-saved-card-actions">
-                    <button type="button" className="trips-saved-btn trips-saved-btn-primary" onClick={() => onViewTrip(trip)}>
-                      Resume trip
-                    </button>
-                    <button type="button" className="trips-saved-btn trips-saved-btn-danger" onClick={() => onDeleteTrip(trip.id)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+      {hasAnyTrips ? (
+        hasVisible ? (
+          <ul className="trips-saved-list trips-saved-list--rail">
+            {draftMatches && (
+              <TripMiniCard
+                key="plan-draft"
+                routeName={tripRouteName(planDraft)}
+                vehicle={vehicleLabel(planDraft.answers)}
+                stopCount={null}
+                distance={null}
+                routePoints={planDraft.routeInfo?.routePoints || planDraft.routePoints}
+                stopPoints={[]}
+                badge="Draft"
+                isDraft
+                primaryLabel="Continue"
+                onPrimary={() => onResumeDraft?.()}
+              />
+            )}
+            {filteredTrips.map(trip => {
+              const stopCount = tripStopCount(trip);
+              return (
+                <TripMiniCard
+                  key={trip.id}
+                  routeName={tripRouteName(trip)}
+                  vehicle={vehicleLabel(trip)}
+                  stopCount={stopCount}
+                  distance={trip.routeInfo?.distance || null}
+                  routePoints={trip.routeInfo?.routePoints}
+                  stopPoints={collectStopPoints(trip)}
+                  primaryLabel="Resume trip"
+                  onPrimary={() => onViewTrip(trip)}
+                  onDelete={() => onDeleteTrip(trip.id)}
+                />
+              );
+            })}
+          </ul>
         ) : (
           <div className="trips-empty-state">
             <div className="trips-empty-title">No trips match your filter</div>
