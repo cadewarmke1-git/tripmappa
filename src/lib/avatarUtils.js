@@ -1,10 +1,50 @@
 /** Client-side avatar helpers — resize before upload, initials fallback. */
 
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    const trimmed = String(value || "").trim();
+    if (trimmed) return trimmed;
+  }
+  return "";
+}
+
+function firstNameToken(value) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return "";
+  return trimmed.split(/\s+/).filter(Boolean)[0] || "";
+}
+
+/**
+ * Resolve account name for greetings / avatar.
+ * Prefer profile.display_name, then full_name (profile or auth metadata), then email prefix.
+ */
 export function getDisplayName(user, profile) {
-  return profile?.display_name
-    || user?.user_metadata?.full_name
-    || user?.email?.split("@")[0]
-    || "Traveler";
+  const displayName = firstNonEmpty(profile?.display_name);
+  if (displayName) return displayName;
+
+  const fullName = firstNonEmpty(
+    profile?.full_name,
+    user?.user_metadata?.full_name,
+    user?.user_metadata?.name,
+  );
+  if (fullName) return fullName;
+
+  return firstNonEmpty(user?.email?.split("@")[0]) || "Traveler";
+}
+
+/** Greeting-ready first name using the same priority as getDisplayName. */
+export function getGreetingFirstName(user, profile) {
+  const displayName = firstNonEmpty(profile?.display_name);
+  if (displayName) return firstNameToken(displayName);
+
+  const fullName = firstNonEmpty(
+    profile?.full_name,
+    user?.user_metadata?.full_name,
+    user?.user_metadata?.name,
+  );
+  if (fullName) return firstNameToken(fullName);
+
+  return firstNonEmpty(user?.email?.split("@")[0]) || "Traveler";
 }
 
 export function getInitials(name) {

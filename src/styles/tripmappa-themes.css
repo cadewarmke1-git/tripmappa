@@ -278,12 +278,13 @@ body.theme-day,
   --plan-flow-sand: #F5E6C8;
   --plan-flow-gold: #FFD28C;
   --plan-flow-orange: #FF8C42;
-  --plan-flow-card: #FDF3E0;
-  --plan-flow-card-border: rgba(160, 64, 16, 0.15);
+  /* Cards must not match cream panel — sand fill + ink border for readable day contrast */
+  --plan-flow-card: #E6D4A8;
+  --plan-flow-card-border: rgba(26, 13, 0, 0.62);
   --plan-flow-card-fg: #0D0A1A;
-  --plan-flow-icon-tile: #F5E6C8;
+  --plan-flow-icon-tile: #D9C48E;
   --plan-flow-icon-fg: #0D0A1A;
-  --plan-flow-muted-fg: #6B5A42;
+  --plan-flow-muted-fg: #3A1A08;
   --plan-flow-selected-bg: #FFD28C;
   --plan-flow-selected-border: #0D0A1A;
   --plan-flow-selected-fg: #0D0A1A;

@@ -7702,6 +7702,78 @@
     align-items: center;
   }
 
+  .navigate-route-panel--manual-origin .navigate-route-grid {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .navigate-route-panel--manual-origin .navigate-route-cell--from {
+    grid-column: 1 / -1;
+  }
+
+  .navigate-route-panel--manual-origin .navigate-route-dest-search--paired {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .navigate-route-panel--manual-origin .navigate-where-search.search-bar-animated,
+  .navigate-route-panel--manual-origin .navigate-where-search.search-bar-animated.is-expanded {
+    width: 100%;
+  }
+
+  .navigate-route-panel--manual-origin .navigate-route-go {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .navigate-route-location-hint {
+    max-width: 920px;
+    margin: 0 auto 10px;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    color: rgba(253, 243, 224, 0.72);
+  }
+
+  .navigate-route-home-row {
+    max-width: 920px;
+    margin: 10px auto 0;
+    width: 100%;
+  }
+
+  .navigate-route-home-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 210, 140, 0.45);
+    background: rgba(255, 210, 140, 0.1);
+    color: #FFD28C;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease);
+  }
+
+  .navigate-route-home-btn:hover:not(:disabled) {
+    background: rgba(255, 140, 66, 0.18);
+    border-color: #FF8C42;
+    color: #FF8C42;
+  }
+
+  .navigate-route-home-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
   .navigate-route-dest-search {
     min-width: 0;
     display: flex;
@@ -8398,6 +8470,34 @@
   .profile-card-signout:hover {
     background: rgba(253, 243, 224, 0.05);
     color: rgba(253, 243, 224, 0.72);
+  }
+
+  /* Settings full-bleed night — ignore day sky-cycle cream shell */
+  html:has(.settings-view-wrap),
+  html:has(.settings-view-wrap) body,
+  body:has(.settings-view-wrap),
+  body.theme-day:has(.settings-view-wrap),
+  body.theme-twilight:has(.settings-view-wrap) {
+    background: #0D0A1A !important;
+  }
+  .app-wrap.settings-view-wrap,
+  .app-wrap.night.settings-view-wrap.profile-view-wrap,
+  html body .app-wrap.settings-view-wrap {
+    background: #0D0A1A !important;
+    color: #FDF3E0 !important;
+  }
+  .app-wrap.settings-view-wrap .settings-page {
+    width: 100%;
+    max-width: none;
+    min-height: calc(100vh - var(--nav-h, 56px));
+    background: #0D0A1A;
+  }
+  .app-wrap.settings-view-wrap .settings-page-header,
+  .app-wrap.settings-view-wrap .settings-hub,
+  .app-wrap.settings-view-wrap .settings-panel {
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* ── Settings page ── */
@@ -9764,6 +9864,31 @@
   }
   .generation-stream-overlay {
     background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(58, 34, 24, 0.55), #0D0A1A 70%);
+  }
+  .generation-stream-overlay--wordmark {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+    padding: 24px 20px;
+    background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(58, 34, 24, 0.55), #0D0A1A 70%) !important;
+  }
+  .generation-stream-overlay--wordmark .generation-pulsing-wordmark {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+  }
+  .generation-stream-overlay--wordmark .generation-loader-subtitle {
+    color: rgba(253, 243, 224, 0.82);
+    font-weight: 500;
+  }
+  .generation-stream-overlay--wordmark .generation-loader-status {
+    color: rgba(253, 243, 224, 0.55);
+  }
+  .generation-stream-overlay--wordmark .generation-loader-progress-wrap {
+    width: min(280px, 70vw);
   }
   .generation-loader-route-drawing.route-drawing-loader--fullscreen {
     position: relative;

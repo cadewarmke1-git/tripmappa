@@ -184,6 +184,7 @@ export default function App() {
   const [routeSetupDestError, setRouteSetupDestError] = useState("");
   const [planLaunching, setPlanLaunching] = useState(false);
   const [navigateLaunching, setNavigateLaunching] = useState(false);
+  const [navigateLocationDenied, setNavigateLocationDenied] = useState(false);
   const [timingMode, setTimingMode] = useState("leave_now");
   const [arriveByDate, setArriveByDate] = useState("");
   const [prefDraft, setPrefDraft] = useState(null);
@@ -958,17 +959,32 @@ export default function App() {
       },
       () => {
         setNavigateHomePending(false);
-        toast_("Enable location access to navigate home");
+        setNavigateLocationDenied(true);
+        setDest(home.trim());
+        if (navigateDestRef.current) navigateDestRef.current.value = home.trim();
+        toast_("Location is off — enter a start point for Navigate Home");
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
   }
 
   function handleNavigateHome() {
-    const home = homeAddress || getGuestHomeAddress();
+    const home = homeAddress || userProfile?.home_address || getGuestHomeAddress();
     if (!home) {
       setNavigateHomePending(true);
       setShowHomeAddressModal(true);
+      return;
+    }
+    if (navigateLocationDenied) {
+      const trimmed = home.trim();
+      setDest(trimmed);
+      if (navigateDestRef.current) navigateDestRef.current.value = trimmed;
+      const fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
+      if (fromVal) {
+        void handleNavigateGetRoute();
+      } else {
+        toast_("Enter your starting location, then Get route");
+      }
       return;
     }
     runNavigateHome(home);
@@ -1375,8 +1391,8 @@ export default function App() {
     }
 
     if (!navigator.geolocation) {
+      setNavigateLocationDenied(true);
       setNavigateLaunching(false);
-      toast_("Enable location to use Navigate", { isError: true });
       return;
     }
 
@@ -1384,14 +1400,15 @@ export default function App() {
       (pos) => {
         const { latitude, longitude } = pos.coords;
         const coords = `${latitude},${longitude}`;
+        setNavigateLocationDenied(false);
         setOrigin(coords);
         if (navigateOriginRef.current) navigateOriginRef.current.value = coords;
         primeNavigateOriginLabel(latitude, longitude);
         setNavigateLaunching(false);
       },
       () => {
+        setNavigateLocationDenied(true);
         setNavigateLaunching(false);
-        toast_("Enable location to use Navigate", { isError: true });
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
@@ -2415,11 +2432,11 @@ export default function App() {
   if (view === "settings" && user) {
     return (
       <>
-        <div className={`app-wrap ${theme} profile-view-wrap`}>
+        <div className="app-wrap night profile-view-wrap settings-view-wrap">
           {renderAppNavBar("app")}
           <ErrorBoundary label="settings" title="Could not show settings">
             <LazySettingsPage
-              theme={theme}
+              theme="night"
               user={user}
               profile={userProfile}
               creditStatus={creditStatus}
@@ -2577,6 +2594,13 @@ export default function App() {
             onBack={goHome}
             routeLoading={routeLoading}
             theme={theme}
+            locationDenied={navigateLocationDenied}
+            origin={origin}
+            originRef={navigateOriginRef}
+            onOriginChange={setOrigin}
+            onNavigateHome={handleNavigateHome}
+            homeAddress={homeAddress || userProfile?.home_address || ""}
+            navigateHomePending={navigateHomePending}
           />
           <div className="trip-map-fullscreen navigate-map-fullscreen view-panel-animate">
             <ErrorBoundary
@@ -2637,11 +2661,13 @@ export default function App() {
                 autoLocateUser={!isNavigating}
                 onUserLocated={(coords) => {
                   if (!coords) return;
+                  setNavigateLocationDenied(false);
                   const labeled = `${coords.lat},${coords.lng}`;
                   setOrigin(labeled);
                   if (navigateOriginRef.current) navigateOriginRef.current.value = labeled;
                   primeNavigateOriginLabel(coords.lat, coords.lng);
                 }}
+                onLocateDenied={() => setNavigateLocationDenied(true)}
                 routeFocusMode={isNavigating}
                 {...navMapProps}
               />

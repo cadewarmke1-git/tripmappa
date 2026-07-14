@@ -1277,6 +1277,47 @@ html body .app-wrap.night .plan-option-card-check {
   color: var(--plan-flow-ink);
 }
 
+/* Day mode: option cards + star slider contrast on cream panel */
+html body .app-wrap.day .plan-option-card {
+  background: var(--plan-flow-card) !important;
+  border: 1.5px solid var(--plan-flow-card-border) !important;
+  color: var(--plan-flow-card-fg) !important;
+  box-shadow: 0 1px 0 rgba(26, 13, 0, 0.08);
+}
+
+html body .app-wrap.day .plan-option-card-label {
+  color: #0D0A1A !important;
+}
+
+html body .app-wrap.day .plan-option-card-desc {
+  color: #3A1A08 !important;
+}
+
+html body .app-wrap.day .plan-option-card:hover:not(:disabled):not(.is-disabled) {
+  border-color: #C87010 !important;
+}
+
+html body .app-wrap.day .plan-star-slider-glyph {
+  color: transparent !important;
+  -webkit-text-stroke: 2px #5A3A1A !important;
+  filter: none !important;
+}
+
+html body .app-wrap.day .plan-star-slider-star.is-filled .plan-star-slider-glyph {
+  color: #C87010 !important;
+  -webkit-text-stroke: 1.5px #C87010 !important;
+  filter: none !important;
+}
+
+html body .app-wrap.day .plan-star-slider-label {
+  color: #1A0D00 !important;
+}
+
+html body .app-wrap.day .plan-star-slider-detail,
+html body .app-wrap.day .plan-star-slider-hint {
+  color: rgba(26, 13, 0, 0.72) !important;
+}
+
 .plan-vehicle-types-expander {
   display: flex;
   align-items: center;

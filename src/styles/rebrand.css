@@ -660,8 +660,8 @@ body {
 }
 
 /* ── Profile page ── */
-.app-wrap.day.profile-view-wrap,
-.app-wrap.day .profile-view-wrap {
+.app-wrap.day.profile-view-wrap:not(.settings-view-wrap),
+.app-wrap.day .profile-view-wrap:not(.settings-view-wrap) {
   background: var(--color-map-surface) !important;
   color: var(--deep-dark) !important;
 }

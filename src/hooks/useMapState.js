@@ -580,14 +580,12 @@ export function useMapState({
       ? window.google.maps.MapTypeId.SATELLITE
       : window.google.maps.MapTypeId.ROADMAP;
     mapRef.current.setMapTypeId(typeId);
-    if (mapStyle === "dark") {
-      applyMapThemeStyles(mapRef.current, mapStyle, theme);
-    } else if (mapStyle === "satellite") {
+    if (mapStyle === "satellite") {
       mapRef.current.setOptions({ styles: [], backgroundColor: undefined });
     } else {
-      window.google.maps.event.trigger(mapRef.current, "resize");
+      applyMapThemeStyles(mapRef.current, mapStyle, theme);
     }
-  }, [mapStyle, isLoaded, mapReady]);
+  }, [mapStyle, theme, isLoaded, mapReady]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google || !isLoaded || !mapReady) return;

@@ -21,8 +21,6 @@ const STOP_ARRIVAL_THRESHOLD_M = 200;
 const STEP_ADVANCE_THRESHOLD_M = 35;
 const NAV_FOLLOW_ZOOM = 15;
 const GPS_OPTIONS = { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 };
-const MOVEMENT_SPEED_THRESHOLD_MPS = 1;
-const MOVEMENT_DISTANCE_THRESHOLD_M = 25;
 
 function normalizeWaypoint(w) {
   if (!w || w.lat == null || w.lng == null) return null;
@@ -90,12 +88,10 @@ export function useTurnByTurnNavigation({
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
   const [mapViewMode, setMapViewMode] = useState("follow");
   const [isNavigating, setIsNavigating] = useState(false);
-  const [awaitingMovement, setAwaitingMovement] = useState(false);
 
   const offRouteSinceRef = useRef(null);
   const announcedArrivalRef = useRef(new Set());
   const watchIdRef = useRef(null);
-  const movementBaselineRef = useRef(null);
 
   const steps = useMemo(() => {
     const parsed = parseDirectionsSteps(directionsResult);
@@ -210,14 +206,7 @@ export function useTurnByTurnNavigation({
     isNavigating,
   ]);
 
-  const startNavigation = useCallback(({ awaitMovement = false } = {}) => {
-    if (awaitMovement) {
-      setAwaitingMovement(true);
-      setIsNavigating(false);
-      movementBaselineRef.current = null;
-      return;
-    }
-    setAwaitingMovement(false);
+  const startNavigation = useCallback(() => {
     setIsNavigating(true);
   }, []);
 
@@ -254,8 +243,6 @@ export function useTurnByTurnNavigation({
   useEffect(() => {
     if (!active) {
       setIsNavigating(false);
-      setAwaitingMovement(false);
-      movementBaselineRef.current = null;
       setUserPosition(null);
       setGpsError(null);
       setOffRoute(false);
@@ -303,30 +290,6 @@ export function useTurnByTurnNavigation({
     const pos = userPosition || polyline[0];
     if (pos) snapToFollowView(pos);
   }, [active, isNavigating, mapViewMode, followMap, userPosition, polyline, snapToFollowView, mapRef]);
-
-  useEffect(() => {
-    if (!active || !awaitingMovement || isNavigating || !userPosition) return;
-
-    if (speedMps != null && speedMps >= MOVEMENT_SPEED_THRESHOLD_MPS) {
-      setIsNavigating(true);
-      setAwaitingMovement(false);
-      movementBaselineRef.current = null;
-      return;
-    }
-
-    const baseline = movementBaselineRef.current;
-    if (!baseline) {
-      movementBaselineRef.current = userPosition;
-      return;
-    }
-
-    const moved = haversineMeters(baseline.lat, baseline.lng, userPosition.lat, userPosition.lng);
-    if (moved >= MOVEMENT_DISTANCE_THRESHOLD_M) {
-      setIsNavigating(true);
-      setAwaitingMovement(false);
-      movementBaselineRef.current = null;
-    }
-  }, [active, awaitingMovement, isNavigating, userPosition, speedMps]);
 
   useEffect(() => {
     if (!userPosition || !polyline.length || !active || !isNavigating) {
@@ -388,12 +351,10 @@ export function useTurnByTurnNavigation({
     offRouteSinceRef.current = null;
     setOffRoute(false);
     setMapViewMode("follow");
-    movementBaselineRef.current = null;
   }, []);
 
   const stopNavigation = useCallback(() => {
     setIsNavigating(false);
-    setAwaitingMovement(false);
     resetNavigation();
   }, [resetNavigation]);
 
@@ -404,7 +365,6 @@ export function useTurnByTurnNavigation({
     polyline,
     navDisplay,
     isNavigating,
-    awaitingMovement,
     arrivingStop,
     passedStopIds,
     legTargets,

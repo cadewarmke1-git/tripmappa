@@ -1,5 +1,7 @@
 /** Real-time generation progress overlay during SSE streaming. */
 import { useEffect, useMemo, useState } from "react";
+import PulsingWordmark from "./PulsingWordmark.jsx";
+// GenerationCinematicLoader kept available for optional / future use — not primary.
 import GenerationCinematicLoader from "./GenerationCinematicLoader.jsx";
 import {
   computeGenerationProgressFraction,
@@ -23,6 +25,8 @@ export default function GenerationStreamOverlay({
   vehicleType = "Car",
   theme = "night",
   routeCities = [],
+  /** Use cinematic car/sky loader instead of centered PulsingWordmark. Default off. */
+  useCinematicLoader = false,
 }) {
   const stream = progress || createInitialGenerationProgress({ cityNames: routeCities });
 
@@ -70,17 +74,44 @@ export default function GenerationStreamOverlay({
     return stream.routeSummary?.trim() || stream.message || "Mapping your route";
   }, [origin, dest, stream.routeSummary, stream.message]);
 
+  const pct = Math.round(Math.min(1, Math.max(0, displayFraction)) * 100);
+
+  if (useCinematicLoader) {
+    return (
+      <div className="generation-stream-overlay" aria-live="polite" aria-busy="true">
+        <GenerationCinematicLoader
+          progress={displayFraction}
+          vehicleType={vehicleType}
+          skyPhase={themeToSkyPhase(theme)}
+          cityBeats={cityBeats}
+          subtitle={routeSubtitle}
+          destination={dest}
+          statusMessage={stream.message}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="generation-stream-overlay" aria-live="polite" aria-busy="true">
-      <GenerationCinematicLoader
-        progress={displayFraction}
-        vehicleType={vehicleType}
-        skyPhase={themeToSkyPhase(theme)}
-        cityBeats={cityBeats}
-        subtitle={routeSubtitle}
-        destination={dest}
-        statusMessage={stream.message}
-      />
+    <div
+      className="generation-stream-overlay generation-stream-overlay--wordmark"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <PulsingWordmark size="lg" centered={false} className="generation-pulsing-wordmark" />
+      <p className="generation-loader-subtitle">{routeSubtitle}</p>
+      {stream.message ? (
+        <p className="generation-loader-status">{stream.message}</p>
+      ) : null}
+      <div className="generation-loader-progress-wrap" aria-hidden="true">
+        <div className="generation-loader-progress-bar">
+          <div
+            className="generation-loader-progress-fill"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="generation-loader-progress-pct">{pct}%</span>
+      </div>
     </div>
   );
 }

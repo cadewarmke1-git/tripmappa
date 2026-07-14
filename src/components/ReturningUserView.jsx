@@ -7,7 +7,7 @@ import AppNavBar from "./AppNavBar.jsx";
 import GoldSpinner from "./GoldSpinner.jsx";
 import useHeroSkyHour from "../hooks/useHeroSkyHour.js";
 import { getHeroSurfaceCssVars } from "../lib/palette.js";
-import { getDisplayName } from "../lib/avatarUtils.js";
+import { getGreetingFirstName } from "../lib/avatarUtils.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 import { getHeroSurfaceTheme, getHeroUiThemeFromHour, getSkyPhaseFromHour } from "../lib/skyTime.js";
 
@@ -94,8 +94,8 @@ export default function ReturningUserView({
   const heroTheme = heroShellTheme;
   const heroSurfaceStyle = getHeroSurfaceCssVars(heroShellTheme);
 
-  const displayName = getDisplayName(user, userProfile);
-  const firstName = displayName.split(/\s+/)[0] || "Traveler";
+  // display_name → first part of full_name → email prefix (last resort)
+  const firstName = getGreetingFirstName(user, userProfile) || "Traveler";
   const hasPlanDraft = Boolean(planDraft?.origin && planDraft?.dest);
   const hasContinueTrips = hasPlanDraft || savedTripsCount > 0;
   const homeLabel = shortCity(homeAddress || userProfile?.home_address) || "Home";
