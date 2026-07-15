@@ -177,12 +177,6 @@ export default function HeroView({
           >
             {planLaunching ? <GoldSpinner size="button" /> : "Plan your trip →"}
           </button>
-
-          <ul className="hero-value-lines hero-welcome-values" aria-label="What TripMappa offers">
-            <li>Verified stops along your actual route</li>
-            <li>Vehicle-specific routing for cars, trucks, and RVs</li>
-            <li>Ready to drive in seconds.</li>
-          </ul>
         </div>
 
         <footer className="hero-footer hero-welcome-footer">

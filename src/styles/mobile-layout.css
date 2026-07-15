@@ -19,6 +19,32 @@
 
   html[data-layout="mobile"] .app-nav-bar {
     z-index: 220;
+    pointer-events: auto;
+  }
+
+  html[data-layout="mobile"] .app-nav-bar .profile-card-menu,
+  html[data-layout="mobile"] .app-nav-bar .profile-card-trigger-wrap,
+  html[data-layout="mobile"] .app-nav-bar .profile-card-trigger,
+  html[data-layout="mobile"] .app-nav-bar .profile-card-dropdown,
+  html[data-layout="mobile"] .app-nav-bar .profile-card-nav-link {
+    pointer-events: auto !important;
+    z-index: 221;
+  }
+
+  /* Scene stack under the nav must never steal avatar / Sign in taps */
+  html[data-layout="mobile"] .hero-welcome-scene,
+  html[data-layout="mobile"] .hero-overlay,
+  html[data-layout="mobile"] .hero-palette-vignette,
+  html[data-layout="mobile"] .hero-palette-ridge,
+  html[data-layout="mobile"] .hero-photo-layer,
+  html[data-layout="mobile"] .hero-photo-slide,
+  html[data-layout="mobile"] .hero-photo-tint,
+  html[data-layout="mobile"] .hero-sky-celestial,
+  html[data-layout="mobile"] .hero-highway-scene,
+  html[data-layout="mobile"] .hero-highway-scrim,
+  html[data-layout="mobile"] .hero-mountain-scene,
+  html[data-layout="mobile"] .hero-stars {
+    pointer-events: none !important;
   }
 
   html[data-layout="mobile"] body:has(.auth-modal-overlay) .app-nav-bar {

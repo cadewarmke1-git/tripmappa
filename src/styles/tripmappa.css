@@ -151,6 +151,7 @@
     position: absolute;
     inset: 0;
     z-index: 0;
+    pointer-events: none;
   }
   .hero-welcome .hero-welcome-scene,
   .hero-welcome .hero-welcome-eyebrow,
@@ -7576,11 +7577,11 @@
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-bottom: 1px solid rgba(255, 210, 140, 0.22);
-    overflow: hidden;
+    overflow: visible;
     max-width: 100vw;
     box-sizing: border-box;
-    /* Only interactive children receive clicks — never block the page below */
-    pointer-events: none;
+    /* Auto required — none on the shell breaks mobile taps on avatar / Sign in */
+    pointer-events: auto;
   }
 
   /* Never inherit full-page hero layout onto the nav shell */
@@ -7601,9 +7602,15 @@
   .app-nav-bar .nav-logo-home,
   .app-nav-bar .nav-btn,
   .app-nav-bar .profile-card-menu,
+  .app-nav-bar .profile-card-trigger-wrap,
   .app-nav-bar .profile-card-trigger,
-  .app-nav-bar .profile-card-dropdown.is-open {
+  .app-nav-bar .profile-card-dropdown,
+  .app-nav-bar .profile-card-dropdown.is-open,
+  .app-nav-bar .profile-card-nav-link,
+  .app-nav-bar .profile-card-signout {
     pointer-events: auto;
+    position: relative;
+    z-index: 1;
   }
 
   .app-nav-mode-switch {

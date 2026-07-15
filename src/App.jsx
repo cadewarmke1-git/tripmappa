@@ -484,6 +484,7 @@ export default function App() {
   const generateTripRef = useRef(null);
   const openAuthModalRef = useRef(null);
   openAuthModalRef.current = openAuthModal;
+  const pendingPlanAfterAuthRef = useRef(false);
 
   const {
     shareViewMode,
@@ -1470,7 +1471,7 @@ export default function App() {
     fetchDirections(getEffectiveVehicle(trip.answers || {}) || "Car");
   }
 
-  async function startPlanFromHero() {
+  async function enterPlanFlowFromHero() {
     if (!isLoaded || !window.google) {
       toast_("Map is still loading — try again in a moment");
       return;
@@ -1502,6 +1503,38 @@ export default function App() {
     setPlanLaunching(false);
     requestAnimationFrame(() => scrollPlanToTop());
   }
+
+  async function startPlanFromHero() {
+    // Guests must create an account before the question / route-setup flow.
+    if (!user) {
+      pendingPlanAfterAuthRef.current = true;
+      openAuthModal("signup", {
+        lead: "Create your free account to plan your route — then we'll set your start and destination.",
+      });
+      return;
+    }
+    await enterPlanFlowFromHero();
+  }
+
+  // After signup/sign-in from the Plan your trip CTA, continue into route setup.
+  useEffect(() => {
+    if (!user?.id || !pendingPlanAfterAuthRef.current) return;
+    pendingPlanAfterAuthRef.current = false;
+    void enterPlanFlowFromHero();
+  }, [user?.id]);
+
+  // If auth is dismissed without a session, cancel the pending resume (debounce
+  // so we don't clear while Supabase is still hydrating the new session).
+  useEffect(() => {
+    if (authModal || user) return;
+    if (!pendingPlanAfterAuthRef.current) return;
+    const timer = window.setTimeout(() => {
+      if (!user && !authModal && pendingPlanAfterAuthRef.current) {
+        pendingPlanAfterAuthRef.current = false;
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [authModal, user]);
 
   async function handleRouteSetupContinue() {
     if (!isLoaded || !window.google || !currentQuestion || currentQuestion.id !== "route_setup") return;
