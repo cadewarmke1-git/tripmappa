@@ -54,8 +54,10 @@ export default function NavigateRoutePanel({
 
       {locationDenied && (
         <p className="navigate-route-location-hint" role="status">
-          Location is off — turn it on so we can start from where you are
-          {showNavigateHome ? ", or head home in one tap." : "."}
+          {hasHome
+            ? "Location is off — routes start from your home address until you turn it on."
+            : "Location is off — turn it on so we can start from where you are."}
+          {showNavigateHome ? " Or head home in one tap." : ""}
         </p>
       )}
 

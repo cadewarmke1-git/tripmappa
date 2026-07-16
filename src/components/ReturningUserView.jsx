@@ -66,6 +66,7 @@ export default function ReturningUserView({
   onNavigateHome,
   onNavigateToDestination,
   onOpenTrips,
+  onContinueTrips = null,
   onOpenShare,
   onGoHome,
   onOpenPlan,
@@ -233,7 +234,7 @@ export default function ReturningUserView({
                 <button
                   type="button"
                   className="returning-user-continue-trips"
-                  onClick={withHaptic(onOpenTrips)}
+                  onClick={withHaptic(onContinueTrips || onOpenTrips)}
                 >
                   Continue trips →
                 </button>

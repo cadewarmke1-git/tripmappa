@@ -618,11 +618,14 @@ export default function QuestionChoices({
     );
   }
 
+  // tall + standard both need an inner scrollport on mobile/desktop flex layouts;
+  // without .question-options-scroll, overflow:hidden ancestors clip cards and leave an empty gap.
   const scrollOptions = compact
-    && planFlowLayout === "tall"
+    && (planFlowLayout === "tall" || planFlowLayout === "standard")
     && currentQ.type !== "loading"
     && currentQ.type !== "text"
-    && currentQ.type !== "party_composition";
+    && currentQ.type !== "party_composition"
+    && currentQ.type !== "route_setup";
 
   function wrapScrollable(content) {
     if (!scrollOptions) return content;

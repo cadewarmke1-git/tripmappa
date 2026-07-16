@@ -177,10 +177,13 @@ export default function HeroView({
           >
             {planLaunching ? <GoldSpinner size="button" /> : "Plan your trip →"}
           </button>
+
+          <div className="hero-welcome-founder">
+            <HeroFoundingSlots />
+          </div>
         </div>
 
         <footer className="hero-footer hero-welcome-footer">
-          <HeroFoundingSlots />
           <nav className="hero-footer-nav" aria-label="Legal and pricing">
             <a href="/pricing">Plans & pricing</a>
             <a href="/privacy">Privacy Policy</a>

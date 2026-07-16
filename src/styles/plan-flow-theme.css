@@ -688,8 +688,8 @@ html body .app-wrap.night .btn-generate-trip {
 }
 
 .plan-flow-dock-btn {
-  min-height: 40px;
-  padding: 8px 14px;
+  min-height: 44px;
+  padding: 10px 14px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -837,9 +837,14 @@ html body .app-wrap.night .btn-generate-trip {
 .plan-flow-layout--tall.plan-flow-current .question-choices-compact .question-options-scroll,
 .plan-flow-layout--standard.plan-flow-current .question-choices-compact .question-options-scroll {
   flex: 1 1 0;
-  min-height: 120px;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Keep last cards clear of the pinned action dock */
+  padding-bottom: 8px;
+  scroll-padding-bottom: 12px;
 }
 
 .plan-flow-layout--tall .question-choices-compact > :not(.question-options-scroll),
@@ -978,6 +983,18 @@ html body .app-wrap.night .btn-generate-trip {
 
 .plan-flow-question-title {
   font-family: var(--font-heading, "Fraunces", Georgia, serif);
+}
+
+/* Day cream surface — titles must clear 4.5:1 (chat-wrap-plan-flow overrides no longer apply). */
+html body .app-wrap.day .float-card--plan-flow .plan-flow-question-title,
+html body .app-wrap.day .plan-flow-form .plan-flow-question-title {
+  color: #5A2208 !important;
+}
+
+html body .app-wrap.day .float-card--plan-flow .plan-flow-step-label,
+html body .app-wrap.day .plan-flow-form .plan-flow-step-label {
+  color: #8B3A0A !important;
+  opacity: 1 !important;
 }
 
 .plan-option-grid {
@@ -1362,8 +1379,8 @@ html body .app-wrap.day .plan-star-slider-hint {
   font-family: var(--font-body, "Inter", sans-serif);
   font-size: 14px;
   font-weight: 600;
-  padding: 8px 4px;
-  min-height: 40px;
+  padding: 10px 8px;
+  min-height: 44px;
   cursor: pointer;
   opacity: 0.85;
 }

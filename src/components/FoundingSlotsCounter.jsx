@@ -28,16 +28,16 @@ export default function FoundingSlotsCounter({ variant = "hero", className = "" 
     };
   }, []);
 
-  if (remaining == null) return null;
-
-  const claimed = Math.max(0, FOUNDER_MEMBER_LIMIT - remaining);
+  const spots = remaining == null ? null : remaining;
+  const claimed = spots == null ? null : Math.max(0, FOUNDER_MEMBER_LIMIT - spots);
 
   if (variant === "pricing") {
+    if (spots == null) return null;
     return (
       <div className={`pricing-founder-counter${className ? ` ${className}` : ""}`} aria-live="polite">
         <span className="pricing-founder-counter-label">Limited-time Founder offer</span>
         <span className="pricing-founder-counter-spots">
-          <strong>{remaining.toLocaleString()}</strong> of {FOUNDER_MEMBER_LIMIT.toLocaleString()} spots left
+          <strong>{spots.toLocaleString()}</strong> of {FOUNDER_MEMBER_LIMIT.toLocaleString()} spots left
         </span>
         <span className="pricing-founder-counter-sub">
           {claimed.toLocaleString()} founding members joined · 1 year Trailblazer free
@@ -47,19 +47,22 @@ export default function FoundingSlotsCounter({ variant = "hero", className = "" 
   }
 
   if (variant === "plate") {
+    if (spots == null) return null;
     return (
       <span className={`pricing-plate-founder-seats${className ? ` ${className}` : ""}`} aria-live="polite">
-        {remaining.toLocaleString()} of {FOUNDER_MEMBER_LIMIT.toLocaleString()} spots left
+        {spots.toLocaleString()} of {FOUNDER_MEMBER_LIMIT.toLocaleString()} spots left
       </span>
     );
   }
 
   return (
-    <div className={`hero-founding-badge${className ? ` ${className}` : ""}`} aria-live="polite">
+    <div className={`hero-founding-badge hero-founder founder-strip${className ? ` ${className}` : ""}`} aria-live="polite">
       <span className="hero-founding-badge-label">Founder — first {FOUNDER_MEMBER_LIMIT.toLocaleString()} users</span>
       <span className="hero-founding-badge-sep" aria-hidden="true">·</span>
       <span className="hero-founding-badge-count">
-        {remaining.toLocaleString()} spots remaining
+        {spots == null
+          ? `${FOUNDER_MEMBER_LIMIT.toLocaleString()} spots`
+          : `${spots.toLocaleString()} spots remaining`}
       </span>
     </div>
   );

@@ -474,6 +474,14 @@
     font-size: 12px;
     letter-spacing: 0.02em;
   }
+  .hero-welcome-founder {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+  }
+  .hero-welcome-founder .hero-founding-badge {
+    margin-top: 0;
+  }
   .hero-founding-badge-label {
     font-family: var(--font-heading);
     font-weight: 700;
@@ -1354,13 +1362,16 @@
   }
 
   .returning-user-action--navigate {
-    border-color: rgba(255, 210, 140, 0.45);
+    border-color: rgba(255, 210, 140, 0.55);
     color: #FFD28C;
+    background: rgba(13, 10, 26, 0.72);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
   }
 
   .returning-user-action--navigate:hover:not(:disabled) {
-    border-color: rgba(255, 210, 140, 0.75);
-    background: rgba(255, 210, 140, 0.08);
+    border-color: rgba(255, 210, 140, 0.85);
+    background: rgba(13, 10, 26, 0.88);
+    color: #FFE2A8;
   }
 
   .returning-user-recent {
@@ -2184,44 +2195,68 @@
       max-height: calc(var(--app-height) - var(--nav-h)) !important;
     }
 
-    /* Full-height plan flow: grow scroll region so question choices stay visible */
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow {
-      flex: 1 1 0;
-      min-height: 0;
-    }
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow .float-card-scroll {
-      flex: 1 1 0;
-      min-height: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-stage,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-scroll,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-stack,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-body,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-main,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-main > .plan-flow-current {
-      flex: 1 1 0;
-      min-height: 0;
-    }
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-scroll {
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact,
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact .question-choices-compact {
-      flex: 1 1 0;
-      min-height: 0;
-      overflow: hidden;
-    }
-    html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-options-scroll {
-      flex: 1 1 0;
-      min-height: 0;
-      max-height: none;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
+    /* Full-height plan flow (mobile): pin dock, scroll content above it.
+     Avoid nested overflow:hidden flex chains that collapse .question-options-scroll. */
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow .float-card-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+  }
+  /* Short/standard steps: pack content + dock at top (no cream gap between options and Continue). */
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard):not(:has(.plan-flow-layout--tall)) .float-card-body--plan-flow {
+    justify-content: flex-start;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard):not(:has(.plan-flow-layout--tall)) .float-card-body--plan-flow .float-card-scroll {
+    flex: 0 1 auto;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard):not(:has(.plan-flow-layout--tall)) .float-card-body--plan-flow .plan-flow-action-dock,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--standard):not(:has(.plan-flow-layout--tall)) .float-card-body--plan-flow .plan-panel-dock {
+    margin-top: 12px;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow .plan-flow-action-dock,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow .plan-panel-dock {
+    flex-shrink: 0;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-scroll .sidebar-inner,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-scroll .sidebar-inner > .error-boundary-content,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form-body,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-stack,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-body,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-main,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-main > .plan-flow-current,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--standard.plan-flow-current,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-layout--tall.plan-flow-current,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact .question-choices-compact,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .question-options-scroll {
+    display: block !important;
+    flex: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form-body {
+    padding-bottom: 12px;
+  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-stage,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .chat-wrap-plan-flow .convo-scroll {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
 
     .float-card-body {
       flex: 1;
@@ -3485,7 +3520,7 @@
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: -0.02em;
-    color: var(--accent);
+    color: var(--color-question-text, var(--accent));
     min-width: 0;
     max-width: 100%;
     overflow-wrap: anywhere;
@@ -7910,6 +7945,7 @@
 
   .plan-route-setup-input {
     width: 100%;
+    min-height: 44px;
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--gold-primary) 28%, transparent);
@@ -7917,6 +7953,7 @@
     color: inherit;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
+    box-sizing: border-box;
   }
 
   .plan-route-setup-input:focus {
@@ -7926,8 +7963,10 @@
   }
 
   .plan-route-setup-swap {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     margin-bottom: 2px;
     padding: 0;
     border-radius: 50%;
@@ -7954,12 +7993,25 @@
   }
 
   @media (max-width: 560px) {
+    /* Keep FROM + swap + TO on one row at 390px so both fields show on first paint */
     .plan-route-setup-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: end;
     }
     .plan-route-setup-swap {
       justify-self: center;
-      margin: 0;
+      margin: 0 0 2px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+    .plan-route-setup-input {
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 13px;
+      box-sizing: border-box;
     }
   }
 
@@ -8328,7 +8380,8 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 8px;
+    min-height: 44px;
+    padding: 10px 8px;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -8339,6 +8392,7 @@
     letter-spacing: 0.02em;
     text-align: left;
     cursor: pointer;
+    box-sizing: border-box;
   }
   .profile-card-support-toggle:hover {
     background: rgba(253, 243, 224, 0.05);

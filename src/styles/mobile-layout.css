@@ -286,9 +286,11 @@
     min-height: 44px;
   }
 
-  html[data-layout="mobile"] .question-options-scroll {
-    max-height: min(42vh, 320px);
-  }
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form > .plan-route-card,
+html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form > .plan-flow-guest-hint,
+html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form > .stale-plan-notice {
+  flex-shrink: 0;
+}
 
   html[data-layout="mobile"] .trip-overview-hero-stats {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -874,6 +876,20 @@
     padding: 10px 12px;
     font-size: 12px;
     white-space: nowrap;
+  }
+
+  html[data-layout="mobile"] .plan-flow-dock-btn,
+  html[data-layout="mobile"] .plan-flow-dock-back,
+  html[data-layout="mobile"] .plan-flow-dock-start-over,
+  html[data-layout="mobile"] .plan-flow-start-over {
+    min-height: 44px;
+  }
+
+  html[data-layout="mobile"] .plan-route-setup-swap {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   html[data-layout="mobile"] .app-nav-bar-actions {

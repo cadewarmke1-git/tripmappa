@@ -708,6 +708,20 @@ export default function App() {
     openMyTrips();
   }
 
+  /** Continue trips → load most recent saved trip into results (not Navigate / empty trips tab). */
+  function handleContinueTrips() {
+    const trip = savedTrips?.[0] || recentTrip;
+    if (trip?.origin && trip?.dest) {
+      handleViewTrip(trip);
+      return;
+    }
+    if (planDraft?.origin && planDraft?.dest) {
+      resumePlanDraft();
+      return;
+    }
+    openMyTrips();
+  }
+
   function handleNavOpenShare() {
     openSharePanel();
   }
@@ -1286,16 +1300,33 @@ export default function App() {
     setDest(fromVal);
   }
 
+  function resolveNavigateHomeOrigin() {
+    return (homeAddress || userProfile?.home_address || getGuestHomeAddress() || "").trim();
+  }
+
+  function applyHomeAsNavigateOrigin() {
+    const home = resolveNavigateHomeOrigin();
+    if (!home) return "";
+    setOrigin(home);
+    if (navigateOriginRef.current) navigateOriginRef.current.value = home;
+    return home;
+  }
+
   async function handleNavigateGetRoute({ skipIfLoaded = false } = {}) {
-    const fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
+    let fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
     const toVal = navigateDestRef.current?.value?.trim() || dest.trim();
     if (!toVal) {
       toast_("Enter a destination");
       return;
     }
     if (!fromVal) {
-      toast_("Waiting for your current location — try again in a moment");
-      return;
+      fromVal = applyHomeAsNavigateOrigin();
+      if (!fromVal) {
+        toast_(navigateLocationDenied
+          ? "Add a home address in Profile, or turn on Location to start from where you are"
+          : "Waiting for your current location — try again in a moment");
+        return;
+      }
     }
     if (!isLoaded || !window.google) {
       toast_("Map is still loading — try again in a moment");
@@ -1382,6 +1413,7 @@ export default function App() {
 
     if (!navigator.geolocation) {
       setNavigateLocationDenied(true);
+      applyHomeAsNavigateOrigin();
       setNavigateLaunching(false);
       return;
     }
@@ -1398,6 +1430,7 @@ export default function App() {
       },
       () => {
         setNavigateLocationDenied(true);
+        applyHomeAsNavigateOrigin();
         setNavigateLaunching(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
@@ -2408,6 +2441,7 @@ export default function App() {
     onGoHome: goHome,
     onOpenPlan: handleNavOpenPlan,
     onOpenTrips: handleNavOpenTrips,
+    onContinueTrips: handleContinueTrips,
     onOpenShare: handleNavOpenShare,
     onOpenProfile: openProfile,
     onOpenSettings: openSettings,
@@ -2632,7 +2666,7 @@ export default function App() {
             theme={theme}
             locationDenied={navigateLocationDenied}
             onNavigateHome={handleNavigateHome}
-            homeAddress={homeAddress || userProfile?.home_address || ""}
+            homeAddress={homeAddress || userProfile?.home_address || getGuestHomeAddress() || ""}
             navigateHomePending={navigateHomePending}
           />
           <div className="trip-map-fullscreen navigate-map-fullscreen view-panel-animate">
