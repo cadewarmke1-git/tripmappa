@@ -955,7 +955,10 @@
   .float-card--plan-flow:not(.collapsed) .plan-option-card,
   .float-card--plan-flow:not(.collapsed) .plan-option-grid,
   .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .btn-generate-inline,
-  .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn {
+  .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn,
+  .float-card--plan-flow:not(.collapsed) .plan-flow-action-dock,
+  .float-card--plan-flow:not(.collapsed) .plan-flow-dock-continue,
+  .float-card--plan-flow:not(.collapsed) .plan-flow-dock-btn {
     pointer-events: auto;
   }
 

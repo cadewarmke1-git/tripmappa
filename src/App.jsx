@@ -17,7 +17,7 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js
 import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
 import { stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
-import { resolvePlaceFromAutocomplete } from "./lib/places.js";
+import { dismissGooglePlacesDropdown, resolvePlaceFromAutocomplete } from "./lib/places.js";
 import { getItineraryOverview, isIncludedRoadStop } from "./lib/itineraryDays.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
@@ -963,7 +963,7 @@ export default function App() {
         setNavigateLocationDenied(true);
         setDest(home.trim());
         if (navigateDestRef.current) navigateDestRef.current.value = home.trim();
-        toast_("Location is off — enter a start point for Navigate Home");
+        toast_("Location is off — turn it on to navigate from where you are");
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
@@ -976,18 +976,7 @@ export default function App() {
       setShowHomeAddressModal(true);
       return;
     }
-    if (navigateLocationDenied) {
-      const trimmed = home.trim();
-      setDest(trimmed);
-      if (navigateDestRef.current) navigateDestRef.current.value = trimmed;
-      const fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
-      if (fromVal) {
-        void handleNavigateGetRoute();
-      } else {
-        toast_("Enter your starting location, then Get route");
-      }
-      return;
-    }
+    // Origin is always the device location — no manual From field on Navigate.
     runNavigateHome(home);
   }
 
@@ -1537,7 +1526,15 @@ export default function App() {
   }, [authModal, user]);
 
   async function handleRouteSetupContinue() {
-    if (!isLoaded || !window.google || !currentQuestion || currentQuestion.id !== "route_setup") return;
+    dismissGooglePlacesDropdown();
+    originRef.current?.blur?.();
+    destRef.current?.blur?.();
+
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+    if (!currentQuestion || currentQuestion.id !== "route_setup") return;
 
     const from = originRef.current?.value?.trim() || origin.trim();
     const to = destRef.current?.value?.trim() || dest.trim();
@@ -1579,7 +1576,9 @@ export default function App() {
       question: currentQuestion,
       answer: `${fromCity} → ${toCity}`,
     }]);
-    loadNextQuestion(answers);
+    // Pass overrides — React state origin/dest are still stale until next render,
+    // and getNextFlowQuestion stays on route_setup until endpoints exist in context.
+    loadNextQuestion(answers, { originOverride: fromAddr, destOverride: toAddr });
     fetchDirections("Car");
   }
 
@@ -1736,7 +1735,11 @@ export default function App() {
     if (convoComplete && !generated) return;
     setStepAnim(null);
     try {
-      const ctx = buildQuestionContext(newAnswers);
+      const ctx = {
+        ...buildQuestionContext(newAnswers),
+        ...(options.originOverride != null ? { origin: String(options.originOverride).trim() } : {}),
+        ...(options.destOverride != null ? { destination: String(options.destOverride).trim() } : {}),
+      };
       const result = getNextFlowQuestion(newAnswers, ctx);
       if (!result || result.done) {
         setCurrentQuestion(null);
@@ -2628,9 +2631,6 @@ export default function App() {
             routeLoading={routeLoading}
             theme={theme}
             locationDenied={navigateLocationDenied}
-            origin={origin}
-            originRef={navigateOriginRef}
-            onOriginChange={setOrigin}
             onNavigateHome={handleNavigateHome}
             homeAddress={homeAddress || userProfile?.home_address || ""}
             navigateHomePending={navigateHomePending}

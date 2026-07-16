@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Autocomplete } from "@react-google-maps/api";
 import { configurePlacesAutocomplete } from "../../lib/places.js";
 import GoldSpinner from "../GoldSpinner.jsx";
 import SearchBarAnimated from "../SearchBarAnimated.jsx";
@@ -13,18 +12,14 @@ export default function NavigateRoutePanel({
   onBack = null,
   routeLoading = false,
   theme = "night",
-  /** When GPS is denied/unavailable, show manual From + Navigate Home. */
+  /** When GPS is denied/unavailable — keep dest-only; optional Navigate Home. */
   locationDenied = false,
-  origin = "",
-  originRef = null,
-  onOriginChange = null,
   onNavigateHome = null,
   homeAddress = "",
   navigateHomePending = false,
 }) {
-  const showManualOrigin = Boolean(locationDenied);
   const hasHome = Boolean(String(homeAddress || "").trim());
-  const showNavigateHome = showManualOrigin && typeof onNavigateHome === "function" && hasHome;
+  const showNavigateHome = locationDenied && typeof onNavigateHome === "function" && hasHome;
 
   useEffect(() => {
     if (!isLoaded || !window.google?.maps?.places || !destRef?.current) return undefined;
@@ -43,7 +38,7 @@ export default function NavigateRoutePanel({
 
   return (
     <search
-      className={`navigate-route-panel navigate-route-panel--${theme}${showManualOrigin ? " navigate-route-panel--manual-origin" : ""}`}
+      className={`navigate-route-panel navigate-route-panel--${theme}`}
       aria-label="Route directions"
     >
       {typeof onBack === "function" && (
@@ -57,56 +52,15 @@ export default function NavigateRoutePanel({
         </div>
       )}
 
-      {showManualOrigin && (
+      {locationDenied && (
         <p className="navigate-route-location-hint" role="status">
-          Location is off — enter a start point below, or head home in one tap.
+          Location is off — turn it on so we can start from where you are
+          {showNavigateHome ? ", or head home in one tap." : "."}
         </p>
       )}
 
-      <div className={`navigate-route-grid${showManualOrigin ? "" : " navigate-route-grid--dest-only"}`}>
-        {showManualOrigin && (
-          <div className="navigate-route-cell navigate-route-cell--from">
-            <label className="navigate-route-label" htmlFor="navigate-origin">From</label>
-            <div className="navigate-route-input-box">
-              {isLoaded && originRef ? (
-                <Autocomplete
-                  onLoad={ac => configurePlacesAutocomplete(ac)}
-                  onPlaceChanged={() => {
-                    if (originRef.current) onOriginChange?.(originRef.current.value);
-                  }}
-                  options={{ types: ["geocode", "establishment"] }}
-                >
-                  <input
-                    id="navigate-origin"
-                    ref={originRef}
-                    className="navigate-route-input"
-                    placeholder="Start location"
-                    defaultValue={origin}
-                    onChange={e => onOriginChange?.(e.target.value)}
-                    autoComplete="off"
-                    aria-label="Route start"
-                  />
-                </Autocomplete>
-              ) : (
-                <input
-                  id="navigate-origin"
-                  ref={originRef}
-                  className="navigate-route-input"
-                  placeholder="Start location"
-                  value={origin}
-                  onChange={e => onOriginChange?.(e.target.value)}
-                  autoComplete="off"
-                  aria-label="Route start"
-                />
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className={`navigate-route-dest-search${showManualOrigin ? " navigate-route-dest-search--paired" : ""}`}>
-          {showManualOrigin && (
-            <label className="navigate-route-label" htmlFor="navigate-dest">To</label>
-          )}
+      <div className="navigate-route-grid navigate-route-grid--dest-only">
+        <div className="navigate-route-dest-search">
           <SearchBarAnimated
             id="navigate-dest"
             inputRef={destRef}
@@ -116,7 +70,7 @@ export default function NavigateRoutePanel({
             placeholder="Where to?"
             ariaLabel="Where to?"
             className="navigate-where-search"
-            defaultExpanded={Boolean(dest) || showManualOrigin}
+            defaultExpanded={Boolean(dest) || locationDenied}
           />
         </div>
 

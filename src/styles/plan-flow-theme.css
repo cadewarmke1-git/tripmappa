@@ -701,6 +701,9 @@ html body .app-wrap.night .btn-generate-trip {
 
 .plan-flow-dock-continue {
   min-width: 120px;
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
 }
 
 .plan-choice-selected {
