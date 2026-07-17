@@ -7918,6 +7918,8 @@
 
   .plan-route-setup {
     width: 100%;
+    min-width: 0;
+    overflow: visible;
   }
 
   .plan-route-setup-grid {
@@ -7925,6 +7927,12 @@
     grid-template-columns: 1fr auto 1fr;
     gap: 10px 12px;
     align-items: end;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .plan-route-setup-cell {
+    min-width: 0;
   }
 
   .plan-route-setup-label {
@@ -7995,7 +8003,7 @@
   @media (max-width: 560px) {
     /* Keep FROM + swap + TO on one row at 390px so both fields show on first paint */
     .plan-route-setup-grid {
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
       gap: 8px;
       align-items: end;
     }

@@ -6,6 +6,7 @@ import {
   getFlowPhaseId,
   getFlowProgress,
   getNextFlowQuestion,
+  getPlanFlowLayoutClass,
   isRouteContextReady,
   normalizeTripAnswers,
   TRUCK_LODGING_CHOICES,
@@ -28,6 +29,10 @@ describe("tripFlow UX", () => {
     const next = getNextFlowQuestion({}, {});
     expect(next.id).toBe("route_setup");
     expect(next.type).toBe("route_setup");
+  });
+
+  it("uses sparse layout for route setup so FROM/TO are not clipped", () => {
+    expect(getPlanFlowLayoutClass({ id: "route_setup", type: "route_setup" })).toBe("sparse");
   });
 
   it("asks vehicle after route endpoints exist", () => {

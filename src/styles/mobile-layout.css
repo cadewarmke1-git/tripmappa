@@ -885,11 +885,28 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
     min-height: 44px;
   }
 
+  html[data-layout="mobile"] .plan-route-setup,
+  html[data-layout="mobile"] .plan-route-setup-grid,
+  html[data-layout="mobile"] .plan-flow-layout--sparse.plan-flow-current:has(.plan-route-setup),
+  html[data-layout="mobile"] .plan-flow-layout--sparse.plan-flow-current:has(.plan-route-setup) .question-choices-shell-compact,
+  html[data-layout="mobile"] .plan-flow-layout--sparse.plan-flow-current:has(.plan-route-setup) .question-choices-compact {
+    overflow: visible !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  html[data-layout="mobile"] .plan-route-setup-grid {
+    grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+    gap: 8px;
+    align-items: end;
+  }
+
   html[data-layout="mobile"] .plan-route-setup-swap {
     width: 44px;
     height: 44px;
     min-width: 44px;
     min-height: 44px;
+    justify-self: center;
   }
 
   html[data-layout="mobile"] .app-nav-bar-actions {

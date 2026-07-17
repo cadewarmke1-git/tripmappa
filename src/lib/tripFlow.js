@@ -1296,7 +1296,9 @@ export function warnContinuousDriveFeasibility(context) {
 export function getPlanFlowLayoutClass(question, convoComplete = false) {
   if (convoComplete) return "sparse";
   if (!question) return "standard";
-  if (question.id === "route_setup") return "standard";
+  // Route setup is a compact form, not an option list; keep it out of
+  // standard-question overflow rules so the TO input cannot be clipped.
+  if (question.id === "route_setup") return "sparse";
   const sparseIds = new Set(["party_composition", "sleeper_cab", "overnight_preference"]);
   if (sparseIds.has(question.id)) return "sparse";
   if (question.type === "party_composition") return "sparse";
