@@ -236,6 +236,18 @@ html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-la
   max-height: calc(100dvh - var(--nav-h) - 32px) !important;
 }
 
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--sparse) {
+  height: auto !important;
+  max-height: calc(100dvh - var(--nav-h) - 32px) !important;
+}
+
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--sparse) .float-card-body--plan-flow,
+html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--sparse) .float-card-body--plan-flow .float-card-scroll {
+  flex: 0 1 auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
 html[data-layout="web"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-stack-payoff) {
   height: calc(100dvh - var(--nav-h) - 32px) !important;
   max-height: calc(100dvh - var(--nav-h) - 32px) !important;

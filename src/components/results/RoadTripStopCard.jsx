@@ -1,5 +1,6 @@
 /** Unified v0-spec stop card — food, fuel, lodging, and general results rows. */
 
+import { useState } from "react";
 import { useCardTilt } from "../../hooks/useCardTilt.js";
 
 const ACTION_ICONS = {
@@ -117,6 +118,63 @@ function renderStopCardAction(action) {
   );
 }
 
+export function ResultCardRemoveControl({
+  onRemove,
+  label = "Remove stop",
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (!onRemove) return null;
+
+  if (confirming) {
+    return (
+      <div
+        className="result-card-remove-confirm"
+        role="group"
+        aria-label="Confirm stop removal"
+        onClick={event => event.stopPropagation()}
+        onKeyDown={event => event.stopPropagation()}
+      >
+        <span className="result-card-remove-confirm-label">Remove this stop?</span>
+        <button
+          type="button"
+          className="result-card-remove-confirm-btn result-card-remove-confirm-btn--danger"
+          onClick={() => {
+            setConfirming(false);
+            onRemove();
+          }}
+        >
+          Confirm
+        </button>
+        <button
+          type="button"
+          className="result-card-remove-confirm-btn"
+          onClick={() => setConfirming(false)}
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="result-card-remove-trigger"
+      aria-label={label}
+      title={label}
+      onClick={event => {
+        event.stopPropagation();
+        setConfirming(true);
+      }}
+    >
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M5 5l10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+}
+
 /**
  * @typedef {Object} StopCardAction
  * @property {string} label
@@ -145,6 +203,8 @@ export default function RoadTripStopCard({
   ariaLabel = null,
   staggerIndex = null,
   cardEnter = false,
+  onRemove = null,
+  removeLabel = "Remove stop",
 }) {
   const catClass = `road-trip-stop-card--${signCategory}`;
   const {
@@ -203,6 +263,8 @@ export default function RoadTripStopCard({
       tabIndex={onCardClick ? 0 : undefined}
       aria-label={ariaLabel || name}
     >
+      <ResultCardRemoveControl onRemove={onRemove} label={removeLabel} />
+
       <div className="road-trip-stop-card-thumb road-stop-card-photo-wrap road-stop-card-photo-thumb">
         {photo}
       </div>

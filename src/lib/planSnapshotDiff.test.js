@@ -3,7 +3,7 @@ import { buildPlanSnapshot } from "./planSnapshot.js";
 import { describePlanChanges, formatRegenerateDiffBlock, describeRegenerateChanges } from "./planSnapshotDiff.js";
 
 describe("planSnapshotDiff", () => {
-  it("lists origin and dietary changes", () => {
+  it("lists origin and vehicle changes only", () => {
     const saved = buildPlanSnapshot({
       origin: "Austin, TX",
       dest: "Denver, CO",
@@ -18,7 +18,7 @@ describe("planSnapshotDiff", () => {
     });
     const changes = describePlanChanges(saved, current);
     expect(changes.some(c => c.startsWith("Origin:"))).toBe(true);
-    expect(changes.some(c => c.includes("dietary") || c.includes("Vegetarian"))).toBe(true);
+    expect(changes.some(c => c.includes("dietary") || c.includes("Vegetarian"))).toBe(false);
   });
 
   it("formats plain-English regenerate changes", () => {

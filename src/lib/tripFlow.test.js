@@ -58,13 +58,14 @@ describe("tripFlow UX", () => {
     stop_count: "A few (2-3)",
   };
 
-  it("asks route preferences before overnight on personal trips", () => {
+  it("asks what matters before overnight on personal trips", () => {
     const next = getNextFlowQuestion(basePersonal, longTripContext);
-    expect(next.id).toBe("preferences");
+    expect(next.id).toBe("what_matters");
+    expect(next.type).toBe("multiselect_group");
     expect(getFlowPhaseId(next.id)).toBe("route");
   });
 
-  it("skips towing and route preferences on day trips", () => {
+  it("skips towing on day trips and asks party next", () => {
     const dayContext = {
       ...routeEndpoints,
       routeDistance: "80 mi",
@@ -72,8 +73,8 @@ describe("tripFlow UX", () => {
       routeDistanceMiles: 80,
       routeDurationHours: 1.5,
     };
-    expect(getNextFlowQuestion({ vehicle: "Car", fuel_type: "Gasoline" }, dayContext).id).toBe("travelers");
-    const withTravelers = {
+    expect(getNextFlowQuestion({ vehicle: "Car", fuel_type: "Gasoline" }, dayContext).id).toBe("party_composition");
+    const withPartyAndPace = {
       vehicle: "Car",
       fuel_type: "Gasoline",
       travelers: "2",
@@ -81,12 +82,13 @@ describe("tripFlow UX", () => {
       child_count: 0,
       stop_frequency: "Moderate",
       luxury_level: "3",
-      stop_count: "A few (2-3)",
+      preferences: [],
+      stops_interests: [],
     };
-    expect(getNextFlowQuestion(withTravelers, dayContext).id).toBe("trip_details");
+    expect(getNextFlowQuestion(withPartyAndPace, dayContext).id).toBe("trip_details");
   });
 
-  it("asks stop frequency after travelers and party details", () => {
+  it("asks trip pace after party details", () => {
     const next = getNextFlowQuestion(
       {
         vehicle: "Car",
@@ -99,6 +101,7 @@ describe("tripFlow UX", () => {
       longTripContext,
     );
     expect(next.id).toBe("stop_frequency");
+    expect(next.ask).toMatch(/pace/i);
   });
 
   it("asks luxury level after stop frequency", () => {
@@ -118,9 +121,9 @@ describe("tripFlow UX", () => {
     expect(next.display).toBe("star_rating");
   });
 
-  it("asks party composition after 2 travelers", () => {
+  it("asks party composition before pace (no travelers band)", () => {
     const next = getNextFlowQuestion(
-      { vehicle: "Car", fuel_type: "Gasoline", towing: "No", travelers: "2 travelers" },
+      { vehicle: "Car", fuel_type: "Gasoline", towing: "No" },
       longTripContext,
     );
     expect(next.id).toBe("party_composition");
@@ -134,7 +137,7 @@ describe("tripFlow UX", () => {
     expect(next.id).toBe("kids_ages");
   });
 
-  it("asks kids ages after 2 travelers when party includes a child", () => {
+  it("asks kids ages when party includes a child", () => {
     const next = getNextFlowQuestion(
       { ...basePersonal, travelers: "2 travelers", adult_count: 1, child_count: 1 },
       longTripContext,
@@ -143,14 +146,14 @@ describe("tripFlow UX", () => {
   });
 
   it("shows overnight with pending route when drive time is unknown", () => {
-    const answers = { ...basePersonal, preferences: [] };
+    const answers = { ...basePersonal, preferences: [], stops_interests: [] };
     const next = getNextFlowQuestion(answers, { origin: "Dallas, TX", destination: "Los Angeles, CA" });
     expect(next.id).toBe("overnight_preference");
     expect(next.pendingRoute).toBe(true);
   });
 
   it("includes route snapshot in overnight question copy", () => {
-    const answers = { ...basePersonal, preferences: [] };
+    const answers = { ...basePersonal, preferences: [], stops_interests: [] };
     const next = getNextFlowQuestion(answers, longTripContext);
     expect(next.id).toBe("overnight_preference");
     expect(next.ask).toMatch(/520 mi/);
@@ -161,6 +164,7 @@ describe("tripFlow UX", () => {
     const answers = {
       ...basePersonal,
       preferences: [],
+      stops_interests: [],
       overnight_preference: "Stop overnight along the way",
     };
     const next = getNextFlowQuestion(answers, longTripContext);
@@ -174,6 +178,7 @@ describe("tripFlow UX", () => {
     };
     expect(getNextFlowQuestion(afterLodging, longTripContext).id).toBe("trip_details");
     expect(getNextFlowQuestion(afterLodging, longTripContext).type).toBe("trip_details");
+    expect(getNextFlowQuestion(afterLodging, longTripContext).layout).toBe("constraints_panel");
   });
 
   it("skips lodging when driving straight through", () => {
@@ -181,6 +186,7 @@ describe("tripFlow UX", () => {
       {
         ...basePersonal,
         preferences: [],
+        stops_interests: [],
         overnight_preference: "Drive straight through",
       },
       longTripContext,
@@ -201,6 +207,7 @@ describe("tripFlow UX", () => {
     const answers = {
       ...basePersonal,
       preferences: [],
+      stops_interests: [],
     };
     expect(getNextFlowQuestion(answers, mediumContext).id).toBe("overnight_preference");
     const afterOvernight = {
@@ -221,12 +228,13 @@ describe("tripFlow UX", () => {
     const answers = {
       ...basePersonal,
       preferences: [],
+      stops_interests: [],
     };
     expect(getNextFlowQuestion(answers, mediumContext).id).toBe("overnight_preference");
   });
 
   it("uses phase-based progress labels", () => {
-    const progress = getFlowProgress({}, {}, { currentQuestionId: "travelers" });
+    const progress = getFlowProgress({}, {}, { currentQuestionId: "party_composition" });
     expect(progress.phases).toHaveLength(4);
     expect(progress.currentPhaseId).toBe("about");
     expect(progress.phaseLabel).toBe("Your trip");
@@ -235,16 +243,16 @@ describe("tripFlow UX", () => {
   });
 
   it("shows pending overnight instead of skipping before drive time is known", () => {
-    const answers = { ...basePersonal, preferences: [] };
+    const answers = { ...basePersonal, preferences: [], stops_interests: [] };
     const ctx = { origin: "A", destination: "B" };
     const next = getNextFlowQuestion(answers, ctx);
     expect(next.id).toBe("overnight_preference");
     expect(next.pendingRoute).toBe(true);
   });
 
-  it("plane path collects travelers before completing", () => {
+  it("plane path collects party before completing", () => {
     const next = getNextFlowQuestion({ vehicle: "Plane" }, longTripContext);
-    expect(next.id).toBe("travelers");
+    expect(next.id).toBe("party_composition");
     expect(next.done).toBeFalsy();
   });
 
@@ -254,23 +262,23 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
-      dietary: [],
+      preferences: [],
       stops_interests: ["Cities and culture"],
+      dietary: [],
       accessibility: [],
       schedule_restrictions: [],
-      trip_budget: "No budget limit",
     };
     const next = getNextFlowQuestion(answers, longTripContext);
     expect(next.done).toBe(true);
     expect(next.skipMessage).toMatch(/airport/i);
   });
 
-  it("boat path includes destination interests in trip details", () => {
+  it("boat path includes destination interests in what matters", () => {
     const next = getNextFlowQuestion(
       { vehicle: "Boat", travelers: "2", adult_count: 2, child_count: 0 },
       longTripContext,
     );
-    expect(next.id).toBe("trip_details");
+    expect(next.id).toBe("what_matters");
     expect(next.sections.some((s) => s.id === "stops_interests")).toBe(true);
   });
 
@@ -278,6 +286,7 @@ describe("tripFlow UX", () => {
     const answers = {
       ...basePersonal,
       preferences: [],
+      stops_interests: [],
       route_context_unavailable: true,
     };
     const next = getNextFlowQuestion(answers, { origin: "Dallas, TX", destination: "Los Angeles, CA" });
@@ -293,12 +302,12 @@ describe("tripFlow UX", () => {
       routeDistanceMiles: 220,
       routeDurationHours: 4.5,
     };
-    const next = getNextFlowQuestion({ ...basePersonal, preferences: [] }, mediumContext);
+    const next = getNextFlowQuestion({ ...basePersonal, preferences: [], stops_interests: [] }, mediumContext);
     expect(next.mediumTripHint).toMatch(/one day/i);
   });
 
   it("omits medium-trip hint on long routes over 6 hours", () => {
-    const next = getNextFlowQuestion({ ...basePersonal, preferences: [] }, longTripContext);
+    const next = getNextFlowQuestion({ ...basePersonal, preferences: [], stops_interests: [] }, longTripContext);
     expect(next.mediumTripHint).toBeFalsy();
   });
 
@@ -317,8 +326,8 @@ describe("tripFlow UX", () => {
       child_count: 0,
       stop_frequency: "Moderate",
       luxury_level: "3",
-      stop_count: "A few (2-3)",
       preferences: ["Scenic route"],
+      stops_interests: [],
     };
     expect(getNextFlowQuestion(afterRv, longTripContext).id).toBe("trip_nights");
     const afterNights = { ...afterRv, trip_nights: "2 nights" };
@@ -326,10 +335,8 @@ describe("tripFlow UX", () => {
     const afterDetails = {
       ...afterNights,
       dietary: [],
-      stops_interests: [],
       accessibility: [],
       schedule_restrictions: [],
-      trip_budget: "No budget limit",
     };
     expect(getNextFlowQuestion(afterDetails, longTripContext).id).toBe("coordination_needs");
   });
@@ -348,10 +355,8 @@ describe("tripFlow UX", () => {
       truck_stop_brand: "No preference",
       route_restrictions: ["No restrictions"],
       dietary: [],
-      stops_interests: [],
       accessibility: [],
       schedule_restrictions: [],
-      trip_budget: "No budget limit",
     };
     const next = getNextFlowQuestion(afterTruck, longTripContext);
     expect(next.id).toBe("coordination_needs");
@@ -363,9 +368,9 @@ describe("tripFlow UX", () => {
     expect(next.ask).toBe("How are you traveling?");
   });
 
-  it("asks party composition after larger traveler buckets", () => {
+  it("asks party composition for plane without a travelers band", () => {
     const next = getNextFlowQuestion(
-      { vehicle: "Plane", travelers: "3 to 5" },
+      { vehicle: "Plane" },
       longTripContext,
     );
     expect(next.id).toBe("party_composition");
@@ -377,7 +382,7 @@ describe("tripFlow UX", () => {
     expect(DIETARY_CHOICES).not.toContain("Kosher");
   });
 
-  it("asks trip_nights on long RV routes after preferences", () => {
+  it("asks trip_nights on long RV routes after what matters", () => {
     const answers = {
       vehicle: "RV",
       fuel_type: "Gasoline",
@@ -386,8 +391,8 @@ describe("tripFlow UX", () => {
       child_count: 0,
       stop_frequency: "Moderate",
       luxury_level: "3",
-      stop_count: "A few (2-3)",
       preferences: ["Pet friendly"],
+      stops_interests: [],
     };
     expect(getNextFlowQuestion(answers, longTripContext).id).toBe("trip_nights");
   });
@@ -408,8 +413,8 @@ describe("tripFlow UX", () => {
       child_count: 0,
       stop_frequency: "Moderate",
       luxury_level: "3",
-      stop_count: "A few (2-3)",
       preferences: ["Pet friendly"],
+      stops_interests: [],
     };
     expect(getNextFlowQuestion(answers, dayContext).id).toBe("trip_details");
   });
@@ -419,6 +424,7 @@ describe("tripFlow UX", () => {
       { vehicle: "Plane", travelers: "2", adult_count: 2, child_count: 0 },
       longTripContext,
     );
+    expect(next.id).toBe("what_matters");
     const destSection = next.sections?.find(s => s.id === "stops_interests");
     const musicChoice = destSection?.choices?.find(c => c?.value === "music_nightlife");
     expect(musicChoice?.label).toBe("Music and nightlife");
@@ -429,8 +435,9 @@ describe("tripFlow UX", () => {
       { vehicle: "Boat", travelers: "2", adult_count: 2, child_count: 0 },
       longTripContext,
     );
+    expect(next.id).toBe("what_matters");
     const destSection = next.sections?.find(s => s.id === "stops_interests");
-    expect(destSection?.label).toBe("Destination interests");
+    expect(destSection?.label).toBe("At your destination");
   });
 
   it("normalizes plane schedule restrictions to travel wording", () => {
@@ -447,11 +454,12 @@ describe("tripFlow UX", () => {
     const answers = {
       ...basePersonal,
       preferences: [],
+      stops_interests: [],
       overnight_preference: "Drive straight through",
     };
     const history = [{
       question: { id: "trip_details", type: "trip_details" },
-      answer: { dietary: ["Local food"], trip_budget: "No budget limit" },
+      answer: { dietary: ["Local food"] },
     }];
     const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
     expect(next.id).not.toBe("trip_details");
@@ -475,6 +483,7 @@ describe("tripFlow UX", () => {
       travelers: "2",
       adult_count: 2,
       child_count: 0,
+      stops_interests: [],
     };
     const history = [{ question: { id: "trip_details", type: "trip_details" }, answer: {} }];
     const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
@@ -486,12 +495,29 @@ describe("tripFlow UX", () => {
     const answers = {
       ...basePersonal,
       preferences: [],
+      stops_interests: [],
     };
     const history = [
       { question: { id: "overnight_preference" }, answer: OVERNIGHT_PREFERENCE_OVERNIGHT },
     ];
     const next = getNextFlowQuestion(answers, { ...longTripContext, questionHistory: history });
     expect(next.id).not.toBe("overnight_preference");
+  });
+
+  it("derives travelers and stop_count during normalize", () => {
+    const normalized = normalizeTripAnswers(
+      {
+        vehicle: "Car",
+        adult_count: 2,
+        child_count: 1,
+        stop_frequency: "Moderate",
+        luxury_level: "3",
+      },
+      longTripContext,
+    );
+    expect(normalized.travelers).toBe("3 to 5 travelers");
+    expect(normalized.stop_count).toBe("Several (4-6)");
+    expect(normalized.trip_budget).toBe("$500 to $1000");
   });
 
   it("asks truck lodging with motel tiers before trip_details for no-sleeper routes", () => {

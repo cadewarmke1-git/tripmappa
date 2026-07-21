@@ -1,27 +1,5 @@
 /** Human-readable diff when plan inputs change after generation. */
 
-const LABELS = {
-  origin: "Origin",
-  dest: "Destination",
-  vehicle: "Vehicle",
-  effective_vehicle: "Routing vehicle",
-  primary_vehicle: "Primary vehicle",
-  fuel_type: "Fuel type",
-  towing: "Towing",
-  travelers: "Travelers",
-  overnight_preference: "Overnight plan",
-  lodging: "Lodging",
-  loyalty_program: "Hotel loyalty",
-  trip_budget: "Budget",
-  food_allergies: "Allergies",
-  schedule_drive_hours: "Drive hours",
-};
-
-const ARRAY_KEYS = [
-  "dietary", "accessibility", "preferences", "stops_interests",
-  "schedule_restrictions", "multi_vehicles", "route_restrictions", "coordination_needs",
-];
-
 function parseSnapshot(raw) {
   if (!raw) return null;
   try {
@@ -44,6 +22,10 @@ function diffField(label, before, after) {
   return `${label}: ${b} → ${a}`;
 }
 
+/**
+ * UI change list for stale banner (kept for tests / tooling).
+ * Snapshots only carry origin, dest, and vehicle.
+ */
 export function describePlanChanges(savedSnapshot, currentSnapshot, max = 4) {
   const saved = parseSnapshot(savedSnapshot);
   const current = parseSnapshot(currentSnapshot);
@@ -56,20 +38,11 @@ export function describePlanChanges(savedSnapshot, currentSnapshot, max = 4) {
   if (saved.dest !== current.dest) {
     changes.push(diffField("Destination", saved.dest, current.dest));
   }
-  if (saved.routeDistance !== current.routeDistance || saved.routeDuration !== current.routeDuration) {
-    changes.push(`Route: ${saved.routeDistance || "?"} / ${saved.routeDuration || "?"} → ${current.routeDistance || "?"} / ${current.routeDuration || "?"}`);
+  const savedVehicle = saved.vehicle ?? saved.answers?.effective_vehicle ?? saved.answers?.vehicle;
+  const currentVehicle = current.vehicle ?? current.answers?.effective_vehicle ?? current.answers?.vehicle;
+  if (String(savedVehicle || "").toLowerCase() !== String(currentVehicle || "").toLowerCase()) {
+    changes.push(diffField("Vehicle", savedVehicle, currentVehicle));
   }
-
-  const sa = saved.answers || {};
-  const ca = current.answers || {};
-  Object.keys(LABELS).forEach((key) => {
-    const line = diffField(LABELS[key], sa[key], ca[key]);
-    if (line) changes.push(line);
-  });
-  ARRAY_KEYS.forEach((key) => {
-    const line = diffField(LABELS[key] || key.replace(/_/g, " "), sa[key], ca[key]);
-    if (line) changes.push(line);
-  });
 
   return changes.filter(Boolean).slice(0, max);
 }
@@ -96,6 +69,11 @@ const REGENERATE_PHRASES = {
   route_restrictions: "Route restrictions",
   coordination_needs: "Coordination",
 };
+
+const ARRAY_KEYS = [
+  "dietary", "accessibility", "preferences", "stops_interests",
+  "schedule_restrictions", "multi_vehicles", "route_restrictions", "coordination_needs",
+];
 
 function asStringList(val) {
   if (val == null || val === "") return [];
@@ -150,15 +128,25 @@ export function describeRegenerateChanges(savedSnapshot, currentSnapshot, max = 
     changes.push(describeScalarRegenerateChange("dest", saved.dest, current.dest));
   }
 
+  const savedVehicle = saved.vehicle ?? saved.answers?.effective_vehicle ?? saved.answers?.vehicle;
+  const currentVehicle = current.vehicle ?? current.answers?.effective_vehicle ?? current.answers?.vehicle;
+  if (String(savedVehicle || "").toLowerCase() !== String(currentVehicle || "").toLowerCase()) {
+    changes.push(describeScalarRegenerateChange("vehicle", savedVehicle, currentVehicle));
+  }
+
+  // Legacy full-answer snapshots (pre-tighten) still carry answers for regenerate hints.
   const sa = saved.answers || {};
   const ca = current.answers || {};
-  Object.keys(REGENERATE_PHRASES).forEach((key) => {
-    if (ARRAY_KEYS.includes(key)) {
-      changes.push(...describeArrayRegenerateChanges(key, sa[key], ca[key]));
-    } else {
-      changes.push(describeScalarRegenerateChange(key, sa[key], ca[key]));
-    }
-  });
+  if (Object.keys(sa).length || Object.keys(ca).length) {
+    Object.keys(REGENERATE_PHRASES).forEach((key) => {
+      if (key === "vehicle" || key === "effective_vehicle" || key === "primary_vehicle") return;
+      if (ARRAY_KEYS.includes(key)) {
+        changes.push(...describeArrayRegenerateChanges(key, sa[key], ca[key]));
+      } else {
+        changes.push(describeScalarRegenerateChange(key, sa[key], ca[key]));
+      }
+    });
+  }
 
   return changes.filter(Boolean).slice(0, max);
 }

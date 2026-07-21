@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import { buildItineraryDays, isSimplifiedTrip } from "../../lib/itineraryDays.js";
 import { isContinuousDrive } from "../../lib/driveMode.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
@@ -11,6 +11,14 @@ import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
 import { SharedItineraryHeader, SharedItineraryFooter } from "./SharedItineraryChrome.jsx";
 import { detectPartialTripResults } from "../../lib/partialTripResults.js";
+
+function resultCardIdentity(kind, item, context = "") {
+  const id = item?.placeId
+    || item?.place_id
+    || item?.id
+    || `${item?.name || item?.title || "stop"}-${item?.lat ?? ""}-${item?.lng ?? ""}`;
+  return `${kind}:${context}:${id}`;
+}
 
 export default function TripResultsPanel({
   panelClassName = "",
@@ -30,7 +38,6 @@ export default function TripResultsPanel({
   enrichingTrip = false,
   enrichmentLimited = false,
   planOutOfDate = false,
-  planChanges = [],
   onRegenerateTrip,
   generateLoading = false,
   onCancelEnrichment,
@@ -82,6 +89,32 @@ export default function TripResultsPanel({
   const stopRefs = useRef({});
   const scrollRef = useRef(null);
   const [cardEnter, setCardEnter] = useState(true);
+  const [hiddenResultCardIds, setHiddenResultCardIds] = useState(() => new Set());
+
+  const isResultCardHidden = useCallback((kind, item, context = "") => (
+    hiddenResultCardIds.has(resultCardIdentity(kind, item, context))
+  ), [hiddenResultCardIds]);
+
+  const removeResultCard = useCallback((kind, item, context = "", options = {}) => {
+    const key = resultCardIdentity(kind, item, context);
+    setHiddenResultCardIds(previous => {
+      const next = new Set(previous);
+      next.add(key);
+      return next;
+    });
+    onToast?.("Stop removed —", {
+      actionLabel: "Undo",
+      duration: 8000,
+      onAction: () => {
+        setHiddenResultCardIds(previous => {
+          const next = new Set(previous);
+          next.delete(key);
+          return next;
+        });
+        options.onUndo?.();
+      },
+    });
+  }, [onToast]);
 
   const simplified = useMemo(
     () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),
@@ -90,7 +123,7 @@ export default function TripResultsPanel({
 
   const continuousDrive = useMemo(() => isContinuousDrive(answers), [answers]);
 
-  const days = useMemo(() => buildItineraryDays({
+  const rawDays = useMemo(() => buildItineraryDays({
     origin,
     dest,
     stops,
@@ -103,6 +136,25 @@ export default function TripResultsPanel({
     restaurantsByCity,
     recommendations,
   }), [origin, dest, stops, roadStops, routeInfo, departureTime, answers, optionalStopCards, activitiesByCity, restaurantsByCity, recommendations]);
+
+  const days = useMemo(() => rawDays
+    .map(day => {
+      const context = day.overnightCity || dest;
+      return {
+        ...day,
+        roadStops: (day.roadStops || []).filter(
+          item => !isResultCardHidden("road", item, context),
+        ),
+        activities: (day.activities || []).filter(
+          item => !isResultCardHidden("activity", item, context),
+        ),
+      };
+    })
+    .filter(day => Boolean(day.overnight || day.roadStops.length || day.activities.length)), [
+    rawDays,
+    dest,
+    isResultCardHidden,
+  ]);
 
   const isMultiDay = !simplified && days.length > 1;
   const activeDay = days[Math.min(activeDayIndex, Math.max(0, days.length - 1))] ?? days[0];
@@ -197,15 +249,13 @@ export default function TripResultsPanel({
             </div>
           )}
 
-          {showPartialResultsWarning && (
+          {planOutOfDate ? (
+            <StalePlanNotice onRegenerate={onRegenerateTrip} loading={generateLoading} />
+          ) : showPartialResultsWarning ? (
             <div className="trip-partial-results-notice" role="status">
               Some stops along your route couldn&apos;t be verified — results may be incomplete
             </div>
-          )}
-
-          {planOutOfDate && (
-            <StalePlanNotice onRegenerate={onRegenerateTrip} loading={generateLoading} changes={planChanges} />
-          )}
+          ) : null}
 
           <EnrichmentNotice
             limited={enrichmentLimited}
@@ -246,6 +296,8 @@ export default function TripResultsPanel({
               onRemoveRoadStop={onRemoveRoadStop}
               isStopAdded={isStopAdded}
               isStopOnRoute={isStopOnRoute}
+              isResultCardHidden={isResultCardHidden}
+              onRemoveResultCard={removeResultCard}
               readOnly={shareMode}
               highlightedStopId={highlightedStopId}
               stopRefs={stopRefs}

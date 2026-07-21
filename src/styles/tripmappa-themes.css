@@ -826,8 +826,8 @@ body.theme-day,
 /* Trip results panel — night: dark premium cards */
 .app-wrap.night {
   --results-bg: #0D0A1A;
-  --results-topbar-bg: #1A1228;
-  --results-card-bg: #1A1228;
+  --results-topbar-bg: #1A0D2E;
+  --results-card-bg: #1A0D2E;
   --results-card-border: rgba(255, 210, 140, 0.1);
   --gold: var(--gold-primary);
 }

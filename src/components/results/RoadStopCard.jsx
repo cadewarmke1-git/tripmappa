@@ -138,6 +138,7 @@ export default function RoadStopCard({
       verified={verified}
       metaExtra={metaExtra}
       actions={actions}
+      onRemove={!readOnly && onRemove ? () => onRemove(stop) : null}
       photo={(
         <PlacePhotoOrIcon
           photoUrl={stop.photoUrl}

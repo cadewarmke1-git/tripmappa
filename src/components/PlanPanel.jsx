@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { isScenicRoute } from "../lib/vehicles.js";
 import QuestionChoices from "./QuestionChoices.jsx";
+import TripDraftPanel from "./TripDraftPanel.jsx";
 import QuestionProgress from "./QuestionProgress.jsx";
 import QuestionAnswerSidebar from "./QuestionAnswerSidebar.jsx";
 import PlanRouteCard from "./PlanRouteCard.jsx";
@@ -42,6 +43,13 @@ export default function PlanPanel({
   onRouteSetupDestChange,
   onRouteSetupSwap,
   onRouteSetupContinue,
+  routeSetupCustomize = false,
+  onRouteSetupCustomize,
+  routeSetupDefaultsSummary = "",
+  routeSetupVehicle = "Car",
+  onRouteSetupVehicleChange,
+  onDraftGenerate,
+  onDraftTuneAnswer,
   routeSetupOriginRef,
   routeSetupDestRef,
   routeSetupOriginAcRef,
@@ -49,7 +57,6 @@ export default function PlanPanel({
   routeError = null,
   onRetryRoute,
   planOutOfDate = false,
-  planChanges = [],
   generationError = null,
   convoEndRef,
   convoScrollRef,
@@ -78,9 +85,12 @@ export default function PlanPanel({
   const assumedLodging = getAssumedTruckLodgingPill(answers, questionHistory);
   const frozen = !!stepAnim;
   const planFlowLayout = getPlanFlowLayoutClass(currentQuestion, convoComplete);
-  const showProgress = (currentQuestion || convoComplete) && flowProgress?.phases?.length > 0;
   const routePending = Boolean(currentQuestion?.pendingRoute);
   const isRouteSetupStep = currentQuestion?.id === "route_setup";
+  const isTripDraftStep = currentQuestion?.id === "trip_draft" || currentQuestion?.type === "trip_draft";
+  const showProgress = (currentQuestion || convoComplete)
+    && flowProgress?.phases?.length > 0
+    && !isTripDraftStep;
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
   const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
   const showReadySummary = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
@@ -102,11 +112,16 @@ export default function PlanPanel({
       });
       return () => onDockActionsChange(null);
     }
+    if (isTripDraftStep) {
+      onDockActionsChange(null);
+      return () => onDockActionsChange(null);
+    }
     return undefined;
   }, [
     actionsInDock,
     onDockActionsChange,
     showContinuousConfirm,
+    isTripDraftStep,
     frozen,
     onCancelContinuousDrive,
     onConfirmContinuousDrive,
@@ -178,7 +193,7 @@ export default function PlanPanel({
       )}
 
       {planOutOfDate && (
-        <StalePlanNotice onRegenerate={onGenerateTrip} loading={loading} changes={planChanges} />
+        <StalePlanNotice onRegenerate={onGenerateTrip} loading={loading} />
       )}
 
       <div className="plan-flow-form-body" ref={convoScrollRef}>
@@ -242,12 +257,12 @@ export default function PlanPanel({
                 <div className="plan-flow-main">
                   {showQuestionHeader && (
                     <div className="plan-flow-question-header">
-                      {showProgress && flowProgress && (
+                      {showProgress && flowProgress && !isTripDraftStep && (
                         <p className="plan-flow-step-label">
                           Step {flowProgress.stepIndex} of {flowProgress.stepTotal}
                         </p>
                       )}
-                      {currentQuestion.ask && (
+                      {currentQuestion.ask && !isTripDraftStep && (
                         <h2 className="plan-flow-question-title">{currentQuestion.ask}</h2>
                       )}
                       {currentQuestion.type === "vehicle" && (
@@ -281,38 +296,59 @@ export default function PlanPanel({
                       <div
                         className={`plan-flow-step plan-flow-current plan-flow-layout--${planFlowLayout}${stepAnim?.phase === "exit" ? " step-exit" : ""}${enterAnim && !stepAnim ? " step-enter" : ""}`}
                       >
-                        <QuestionChoices
-                          currentQ={currentQuestion}
-                          stepAnim={stepAnim}
-                          answers={answers}
-                          committedAnswers={committedAnswers}
-                          prefDraft={prefDraft}
-                          questionHistory={questionHistory}
-                          questionHistoryLength={questionHistoryLength}
-                          compact={inQuestionFlow}
-                          planFlowLayout={planFlowLayout}
-                          actionsInDock={actionsInDock}
-                          onDockActionsChange={showContinuousConfirm ? undefined : onDockActionsChange}
-                          onResetPlan={onResetPlan}
-                          onGoBack={onGoBack}
-                          onPickAnswer={onPickAnswer}
-                          onSetPrefDraft={onSetPrefDraft}
-                          onSkipRoutePending={onSkipRoutePending}
-                          onRoutePendingTimeout={onRoutePendingTimeout}
-                          isLoaded={isLoaded}
-                          routeSetupOrigin={origin}
-                          routeSetupDest={dest}
-                          routeSetupOriginRef={routeSetupOriginRef}
-                          routeSetupDestRef={routeSetupDestRef}
-                          routeSetupOriginAcRef={routeSetupOriginAcRef}
-                          routeSetupDestAcRef={routeSetupDestAcRef}
-                          routeSetupOriginError={routeSetupOriginError}
-                          routeSetupDestError={routeSetupDestError}
-                          onRouteSetupOriginChange={onRouteSetupOriginChange}
-                          onRouteSetupDestChange={onRouteSetupDestChange}
-                          onRouteSetupSwap={onRouteSetupSwap}
-                          onRouteSetupContinue={onRouteSetupContinue}
-                        />
+                        {isTripDraftStep ? (
+                          <TripDraftPanel
+                            currentQ={currentQuestion}
+                            answers={answers}
+                            committedAnswers={committedAnswers}
+                            routeInfo={routeInfo}
+                            prefDraft={prefDraft}
+                            questionHistory={questionHistory}
+                            frozen={false}
+                            onSetPrefDraft={onSetPrefDraft}
+                            onApplyTuneAnswer={onDraftTuneAnswer}
+                            onGenerateTrip={onDraftGenerate}
+                          />
+                        ) : (
+                          <QuestionChoices
+                            currentQ={currentQuestion}
+                            stepAnim={stepAnim}
+                            answers={answers}
+                            committedAnswers={committedAnswers}
+                            prefDraft={prefDraft}
+                            questionHistory={questionHistory}
+                            questionHistoryLength={questionHistoryLength}
+                            compact={inQuestionFlow}
+                            planFlowLayout={planFlowLayout}
+                            actionsInDock={actionsInDock}
+                            onDockActionsChange={showContinuousConfirm ? undefined : onDockActionsChange}
+                            onResetPlan={onResetPlan}
+                            onGoBack={onGoBack}
+                            onPickAnswer={onPickAnswer}
+                            onSetPrefDraft={onSetPrefDraft}
+                            onSkipRoutePending={onSkipRoutePending}
+                            onRoutePendingTimeout={onRoutePendingTimeout}
+                            isLoaded={isLoaded}
+                            routeSetupOrigin={origin}
+                            routeSetupDest={dest}
+                            routeSetupOriginRef={routeSetupOriginRef}
+                            routeSetupDestRef={routeSetupDestRef}
+                            routeSetupOriginAcRef={routeSetupOriginAcRef}
+                            routeSetupDestAcRef={routeSetupDestAcRef}
+                            routeSetupOriginError={routeSetupOriginError}
+                            routeSetupDestError={routeSetupDestError}
+                            onRouteSetupOriginChange={onRouteSetupOriginChange}
+                            onRouteSetupDestChange={onRouteSetupDestChange}
+                            onRouteSetupSwap={onRouteSetupSwap}
+                            onRouteSetupContinue={onRouteSetupContinue}
+                            routeSetupCustomize={routeSetupCustomize}
+                            onRouteSetupCustomize={onRouteSetupCustomize}
+                            routeSetupDefaultsSummary={routeSetupDefaultsSummary}
+                            routeSetupVehicle={routeSetupVehicle}
+                            onRouteSetupVehicleChange={onRouteSetupVehicleChange}
+                            routeInfo={routeInfo}
+                          />
+                        )}
                       </div>
                     </ErrorBoundary>
                   )}

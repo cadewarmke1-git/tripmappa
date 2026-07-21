@@ -55,7 +55,17 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
   }
 
   const cap = getTripBudgetCap(answers);
-  if (cap != null) items.push({ id: "budget", label: "Budget cap", value: `$${cap} total` });
+  const hasOvernight = !isContinuousDrive(answers)
+    && answers.lodging !== "No overnight stay"
+    && answers.overnight_preference !== "Drive straight through"
+    && Boolean(
+      answers.lodging
+      || answers.trip_nights
+      || answers.overnight_preference === "Stop overnight along the way",
+    );
+  if (cap != null && hasOvernight) {
+    items.push({ id: "budget", label: "Budget cap", value: `$${cap} total` });
+  }
 
   if (answers.lodging && !isContinuousDrive(answers)) {
     items.push({ id: "lodging", label: "Lodging", value: answers.lodging });
@@ -81,7 +91,7 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
     };
     items.push({
       id: "luxury_level",
-      label: "Hotel & dining level",
+      label: hasOvernight ? "Hotel & dining level" : "Dining level",
       value: luxuryLabels[String(answers.luxury_level)] || String(answers.luxury_level),
     });
   }

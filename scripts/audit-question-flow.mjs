@@ -7,6 +7,9 @@ import {
   normalizeTripAnswers,
   pruneStaleBranchAnswers,
   isRouteContextReady,
+  applySmartTripDefaults,
+  getNextHardConstraintQuestion,
+  isDraftFirstEligible,
 } from "../src/lib/tripFlow.js";
 import { VEHICLE_CHOICES, MULTI_VEHICLE_TRIP } from "../src/lib/tripFlow.js";
 import { needsFoodAllergyDetail } from "../src/lib/tripAccommodations.js";
@@ -28,7 +31,7 @@ const ROUTE_CONTEXTS = {
 
 const THIN_TRANSPORT = ["Boat", "Ferry", "Plane"];
 
-/** Car answers after travelers + party composition for a 2-adult, no-kids party. */
+/** Car answers after party composition for a 2-adult, no-kids party. */
 const CAR_TWO_TRAVELERS_PARTY = {
   travelers: "2",
   adult_count: 2,
@@ -39,21 +42,16 @@ function pickTripDetails(q, answers, variant) {
   if (variant === "defaults") {
     return {
       dietary: [],
-      stops_interests: [],
       accessibility: [],
       schedule_restrictions: [],
-      trip_budget: "No budget limit",
     };
   }
-  const hasDestInterests = q.sections?.some((s) => s.id === "stops_interests");
   return {
-    dietary: ["Halal"],
-    stops_interests: hasDestInterests ? ["Cities and culture"] : [],
+    dietary: ["Vegetarian"],
     accessibility: ["Wheelchair accessible lodging required"],
     schedule_restrictions: variant === "schedule"
       ? ["Drive only during specific hours — I will specify"]
       : ["No restrictions"],
-    trip_budget: "$500 to $1000",
   };
 }
 
@@ -63,6 +61,20 @@ function applyAnswer(q, answers, options) {
 
   if (q.type === "trip_details") {
     const patch = pickTripDetails(q, answers, variant === "schedule" ? "schedule" : variant === "defaults" ? "defaults" : "default");
+    return { ...answers, ...patch };
+  }
+  if (q.type === "multiselect_group") {
+    const patch = {};
+    for (const sec of q.sections || []) {
+      patch[sec.id] = [];
+    }
+    if (q.id === "what_matters") {
+      if (patch.preferences == null) patch.preferences = [];
+      if (patch.stops_interests == null) patch.stops_interests = [];
+      if (variant !== "defaults" && (q.sections || []).some((s) => s.id === "stops_interests")) {
+        patch.stops_interests = ["Cities and culture"];
+      }
+    }
     return { ...answers, ...patch };
   }
   if (q.type === "lodging_stay") {
@@ -93,12 +105,16 @@ function applyAnswer(q, answers, options) {
   if (q.id === "route_restrictions") return { ...answers, route_restrictions: ["No restrictions"] };
   if (q.id === "coordination_needs") return { ...answers, coordination_needs: ["Stay together the whole way"] };
   if (q.id === "preferences") return { ...answers, preferences: [] };
-  if (q.id === "stop_count") return { ...answers, stop_count: "A few (2-3)" };
   if (q.id === "stop_frequency") return { ...answers, stop_frequency: "Moderate" };
   if (q.id === "luxury_level") return { ...answers, luxury_level: "3" };
   if (q.id === "travelers") return { ...answers, travelers: "3 to 5 travelers" };
   if (q.type === "party_composition") {
-    return { ...answers, adult_count: 2, child_count: 1 };
+    return {
+      ...answers,
+      adult_count: 2,
+      child_count: 1,
+      travelers: "3 to 5 travelers",
+    };
   }
   if (q.id === "lodging" && q.type === "choice") {
     return { ...answers, lodging: "Mid-range hotel" };
@@ -215,8 +231,8 @@ function simulateFlow(vehicle, context, options = {}) {
 
   const effective = getEffectiveVehicle(answers);
   if (THIN_TRANSPORT.includes(vehicle) || (vehicle === MULTI_VEHICLE_TRIP && THIN_TRANSPORT.includes(multiPrimary))) {
-    if (!path.some((p) => p.id === "travelers")) {
-      issues.push({ severity: "critical", code: "THIN_NO_TRAVELERS", message: "Thin transport path skipped travelers" });
+    if (!path.some((p) => p.id === "party_composition") && !path.some((p) => p.id === "travelers")) {
+      issues.push({ severity: "critical", code: "THIN_NO_PARTY", message: "Thin transport path skipped party composition" });
     }
     if (!path.some((p) => p.id === "trip_details")) {
       issues.push({ severity: "critical", code: "THIN_NO_DETAILS", message: "Thin transport path skipped trip_details" });
@@ -226,16 +242,13 @@ function simulateFlow(vehicle, context, options = {}) {
     }
   }
 
-  if ((effective === "Plane" || effective === "Ferry") && path.some((p) => p.id === "trip_details")) {
-    const detailsStep = path.find((p) => p.id === "trip_details");
-    if (detailsStep && !answers.stops_interests?.length && variant !== "defaults") {
-      // destination interests optional if defaults variant
-    }
+  if ((effective === "Plane" || effective === "Ferry") && path.some((p) => p.id === "what_matters")) {
+    // destination interests collected on what_matters — optional when defaults variant
   }
 
   if (vehicle === MULTI_VEHICLE_TRIP && multiPrimary === "RV") {
     const ids = path.filter((p) => !p.done).map((p) => p.id);
-    const expectedPrefix = ["multi_vehicles", "primary_vehicle", "fuel_type", "travelers", "party_composition", "kids_ages", "stop_frequency", "luxury_level", "stop_count", "preferences"];
+    const expectedPrefix = ["multi_vehicles", "primary_vehicle", "fuel_type", "party_composition", "kids_ages", "stop_frequency", "luxury_level", "what_matters"];
     if (requiresMultipleDays(context)) expectedPrefix.push("trip_nights");
     expectedPrefix.push("trip_details");
     for (let i = 0; i < expectedPrefix.length; i += 1) {
@@ -327,16 +340,15 @@ for (const [contextKey, context] of Object.entries(ROUTE_CONTEXTS)) {
   }
 }
 
-const CAR_SEED_AFTER_TRAVELERS = {
+const CAR_SEED_AFTER_PARTY = {
   ...CAR_TWO_TRAVELERS_PARTY,
   stop_frequency: "Moderate",
   luxury_level: "3",
-  stop_count: "A few (2-3)",
 };
 
 // Medium trip must ask overnight (3.5hr threshold)
 const mediumNext = getNextFlowQuestion(
-  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_SEED_AFTER_TRAVELERS, preferences: [] },
+  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_SEED_AFTER_PARTY, preferences: [], stops_interests: [] },
   ROUTE_CONTEXTS.medium,
 );
 if (mediumNext.id !== "overnight_preference") {
@@ -355,8 +367,9 @@ const mediumNights = getNextFlowQuestion(
     vehicle: "Car",
     fuel_type: "Gasoline",
     towing: "No",
-    ...CAR_SEED_AFTER_TRAVELERS,
+    ...CAR_SEED_AFTER_PARTY,
     preferences: [],
+    stops_interests: [],
     overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
   },
   ROUTE_CONTEXTS.medium,
@@ -374,8 +387,9 @@ const mediumLodging = getNextFlowQuestion(
     vehicle: "Car",
     fuel_type: "Gasoline",
     towing: "No",
-    ...CAR_SEED_AFTER_TRAVELERS,
+    ...CAR_SEED_AFTER_PARTY,
     preferences: [],
+    stops_interests: [],
     overnight_preference: OVERNIGHT_PREFERENCE_OVERNIGHT,
     trip_nights: "2 nights",
   },
@@ -397,6 +411,7 @@ const mediumNoLodging = getNextFlowQuestion(
     towing: "No",
     ...CAR_TWO_TRAVELERS_PARTY,
     preferences: [],
+    stops_interests: [],
   },
   ROUTE_CONTEXTS.medium,
 );
@@ -411,7 +426,7 @@ if (mediumNoLodging.id === "lodging" || mediumNoLodging.type === "lodging_stay")
 
 // Route pending unlock simulation
 const pendingQ = getNextFlowQuestion(
-  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_SEED_AFTER_TRAVELERS, preferences: [] },
+  { vehicle: "Car", fuel_type: "Gasoline", towing: "No", ...CAR_SEED_AFTER_PARTY, preferences: [], stops_interests: [] },
   ROUTE_CONTEXTS.none,
 );
 if (!pendingQ.pendingRoute || pendingQ.id !== "overnight_preference") {
@@ -428,6 +443,7 @@ const unlockedQ = getNextFlowQuestion(
     towing: "No",
     ...CAR_TWO_TRAVELERS_PARTY,
     preferences: [],
+    stops_interests: [],
     route_context_unavailable: true,
   },
   ROUTE_CONTEXTS.none,
@@ -447,6 +463,41 @@ const pruned = pruneStaleBranchAnswers(
 );
 if (pruned.overnight_preference || pruned.lodging === "Luxury") {
   allIssues.push({ severity: "high", code: "PRUNE_FAILED", message: "Stale car lodging survived truck switch" });
+}
+
+// Draft-first primary path checks (do not inflate the 315 sequential sims)
+{
+  const draftAnswers = applySmartTripDefaults({ vehicle: "Car" });
+  const draftQ = getNextFlowQuestion(draftAnswers, ROUTE_CONTEXTS.long);
+  if (draftQ.id !== "trip_draft" || !isDraftFirstEligible(draftAnswers)) {
+    allIssues.push({
+      severity: "critical",
+      code: "DRAFT_FIRST_MISSING",
+      message: `Expected trip_draft after smart defaults — got "${draftQ.id}"`,
+    });
+  }
+  const evInterrupt = getNextHardConstraintQuestion(
+    applySmartTripDefaults({ vehicle: "Car", fuel_type: "Electric" }),
+    ROUTE_CONTEXTS.long,
+  );
+  if (evInterrupt?.id !== "ev_charging_network") {
+    allIssues.push({
+      severity: "critical",
+      code: "EV_INTERRUPT_MISSING",
+      message: `Expected ev_charging_network interrupt — got "${evInterrupt?.id}"`,
+    });
+  }
+  const overnightInterrupt = getNextHardConstraintQuestion(
+    applySmartTripDefaults({ vehicle: "Car" }),
+    ROUTE_CONTEXTS.long,
+  );
+  if (overnightInterrupt?.id !== "overnight_preference") {
+    allIssues.push({
+      severity: "critical",
+      code: "OVERNIGHT_INTERRUPT_MISSING",
+      message: `Expected overnight interrupt on long route — got "${overnightInterrupt?.id}"`,
+    });
+  }
 }
 
 // Truck path shape
@@ -519,6 +570,23 @@ walkPath("Multi → Truck", MULTI_VEHICLE_TRIP, long, { multiPrimary: "Semi Truc
 walkPath("Multi → RV", MULTI_VEHICLE_TRIP, long, { multiPrimary: "RV" });
 walkPath("Multi → Car", MULTI_VEHICLE_TRIP, long, { multiPrimary: "Car" });
 walkPath("Day trip Car", "Car", ROUTE_CONTEXTS.dayTrip);
+
+console.log("\n=== DRAFT-FIRST PATHS ===");
+{
+  const draftAnswers = applySmartTripDefaults({ vehicle: "Car" });
+  const draftQ = getNextFlowQuestion(draftAnswers, ROUTE_CONTEXTS.long);
+  console.log(`  Draft-first Car long: ${draftQ.id} (eligible=${isDraftFirstEligible(draftAnswers)})`);
+  const evInterrupt = getNextHardConstraintQuestion(
+    applySmartTripDefaults({ vehicle: "Car", fuel_type: "Electric" }),
+    ROUTE_CONTEXTS.long,
+  );
+  console.log(`  EV interrupt: ${evInterrupt?.id || "(none)"}`);
+  const overnightInterrupt = getNextHardConstraintQuestion(
+    applySmartTripDefaults({ vehicle: "Car" }),
+    ROUTE_CONTEXTS.long,
+  );
+  console.log(`  Overnight interrupt (>8hr): ${overnightInterrupt?.id || "(none)"}`);
+}
 
 console.log("\n=== QUESTION COUNTS BY VEHICLE (long route, default) ===");
 for (const v of ["Car", "Plane", "Boat", "Ferry", "Semi Truck (18-wheeler)", "RV"]) {

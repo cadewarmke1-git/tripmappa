@@ -15,6 +15,7 @@ import HighlightRouteLeg from "./map/HighlightRouteLeg.jsx";
 import NavigationCarMarker from "./map/NavigationCarMarker.jsx";
 import { getDirectionsPath } from "../lib/mapRoutePath.js";
 import { getRouteMapViewport } from "../lib/mapViewport.js";
+import { canShowStopPopup } from "../lib/mapMarkers.js";
 import { applyMapThemeStyles, getMapBackgroundColor, resolveMapStyles } from "../lib/mapStyles.js";
 
 function resolveRoadmapStyles(mapStyle, theme) {
@@ -275,12 +276,12 @@ export default function AppMap({
     mapRef.current.panTo({ lat: mapFocusTarget.lat, lng: mapFocusTarget.lng });
     const zoom = mapRef.current.getZoom?.() ?? 4;
     if (zoom < 10) mapRef.current.setZoom(11);
-    setSelectedMarker(mapFocusTarget);
+    setSelectedMarker(canShowStopPopup(mapFocusTarget) ? mapFocusTarget : null);
   }, [mapFocusTarget, mapRef]);
 
   function handleMarkerClick(marker) {
     suppressMapClearRef.current = true;
-    setSelectedMarker(marker);
+    setSelectedMarker(canShowStopPopup(marker) ? marker : null);
     onMarkerSelect?.(marker);
   }
 

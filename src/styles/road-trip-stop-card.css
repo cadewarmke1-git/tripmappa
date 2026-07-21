@@ -33,6 +33,7 @@
   --rtsc-primary-btn-ink: #3a1e0a;
 
   display: flex;
+  position: relative;
   align-items: stretch;
   gap: 16px;
   width: 100%;
@@ -42,6 +43,120 @@
   border-radius: 8px;
   background: var(--rtsc-bg);
   box-shadow: none;
+}
+
+.road-trip-stop-card:has(.result-card-remove-trigger) .road-trip-stop-card-body {
+  padding-right: 30px;
+}
+
+.result-card-remove-trigger {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rtsc-muted, currentColor);
+  cursor: pointer;
+}
+
+.result-card-remove-trigger:hover,
+.result-card-remove-trigger:focus-visible {
+  background: color-mix(in srgb, var(--rtsc-ink, currentColor) 9%, transparent);
+  color: var(--rtsc-ink, currentColor);
+}
+
+.result-card-remove-trigger:focus-visible {
+  outline: 2px solid var(--rtsc-accent, #FFD28C);
+  outline-offset: 2px;
+}
+
+.result-card-remove-trigger svg {
+  width: 16px;
+  height: 16px;
+}
+
+.result-card-remove-confirm {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  left: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 7px 5px 12px;
+  border: 1px solid var(--rtsc-border, rgba(160, 64, 16, 0.2));
+  border-radius: 8px;
+  background: var(--rtsc-bg, #FDF3E0);
+  color: var(--rtsc-ink, currentColor);
+  box-shadow: 0 4px 14px rgba(13, 10, 26, 0.16);
+}
+
+.lodging-card {
+  position: relative;
+}
+
+.road-trip-stop-card:has(.result-card-remove-confirm),
+.lodging-card:has(.result-card-remove-confirm) {
+  padding-top: 58px;
+}
+
+.result-card-remove-confirm-label {
+  margin-right: auto;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.result-card-remove-confirm-btn {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--rtsc-border, rgba(160, 64, 16, 0.2));
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.result-card-remove-confirm-btn--danger {
+  border-color: rgba(184, 55, 45, 0.45);
+  background: rgba(184, 55, 45, 0.12);
+  color: #9f2f28;
+}
+
+.app-wrap.night .result-card-remove-confirm-btn--danger {
+  color: #ffb3aa;
+}
+
+.result-card-remove-confirm-btn:focus-visible {
+  outline: 2px solid var(--rtsc-accent, #FFD28C);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .result-card-remove-trigger {
+    width: 40px;
+    height: 40px;
+    top: 5px;
+    right: 5px;
+  }
+
+  .result-card-remove-confirm {
+    flex-wrap: wrap;
+  }
 }
 
 .road-trip-stop-card--food {
@@ -64,16 +179,16 @@
   --rtsc-accent-rule: #5a9e96;
 }
 
-/* Night — warm dark #1A1228 cards on #0D0A1A surfaces */
+/* Night — night surface #1A0D2E cards on #0D0A1A shell */
 .app-wrap.night .road-trip-stop-card {
-  --rtsc-bg: #1A1228;
-  --rtsc-border: rgba(255, 255, 255, 0.06);
+  --rtsc-bg: #1A0D2E;
+  --rtsc-border: rgba(255, 210, 140, 0.22);
   --rtsc-ink: #F5E6C8;
-  --rtsc-muted: rgba(245, 230, 200, 0.5);
+  --rtsc-muted: rgba(245, 230, 200, 0.72);
   --rtsc-verified: #FFD28C;
-  --rtsc-secondary-btn-bg: rgba(245, 230, 200, 0.08);
+  --rtsc-secondary-btn-bg: rgba(245, 230, 200, 0.1);
   --rtsc-secondary-btn-ink: #F5E6C8;
-  --rtsc-primary-btn-ink: #1A1228;
+  --rtsc-primary-btn-ink: #0D0A1A;
 }
 
 .app-wrap.night .road-trip-stop-card--food {

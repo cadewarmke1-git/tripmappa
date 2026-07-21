@@ -56,6 +56,27 @@ function mapWaypointCategory(w, answers) {
   return "poi";
 }
 
+const NON_STOP_MARKER_ROLES = new Set(["origin", "destination", "home"]);
+
+/** Neon stop cards are only valid for categorized itinerary stops, not route endpoints. */
+export function canShowStopPopup(marker) {
+  if (!marker?.category) return false;
+  if (marker.isOrigin || marker.isDestination || marker.isHome) return false;
+
+  const roles = [
+    marker.category,
+    marker.kind,
+    marker.role,
+    marker.type,
+    marker.markerType,
+  ].map(value => String(value || "").trim().toLowerCase());
+
+  if (roles.some(value => NON_STOP_MARKER_ROLES.has(value))) return false;
+
+  const id = String(marker.id || marker.waypointId || "").trim().toLowerCase();
+  return !/^(origin|destination|home)(?:$|[-_:])/.test(id);
+}
+
 /** Numbered pins synced to itinerary waypoint order. */
 export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
   const markers = [];

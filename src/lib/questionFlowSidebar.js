@@ -23,6 +23,7 @@ export const QUESTION_SIDEBAR_LABELS = {
   trip_budget: "BUDGET",
   schedule_restrictions: "SCHEDULE",
   schedule_drive_hours: "HOURS",
+  what_matters: "MATTERS",
   preferences: "PREFS",
   hauling_type: "HAULING",
   sleeper_cab: "SLEEPER",

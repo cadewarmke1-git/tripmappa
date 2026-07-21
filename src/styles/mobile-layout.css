@@ -1014,10 +1014,40 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
     pointer-events: auto;
   }
 
-  /* Open profile dropdown must not intercept clicks on the plan panel beneath. */
-  .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-dropdown.is-open {
-    pointer-events: none;
-  }
+/* Open profile dropdown must not intercept clicks on the plan panel beneath. */
+.app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-dropdown.is-open {
+  pointer-events: none;
+}
+
+/* Plan-flow header overlay was intercepting Continue / route inputs at 1280×800. */
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow,
+.float-card--plan-flow:not(.collapsed) .plan-flow-header-bar,
+.float-card--plan-flow:not(.collapsed) .plan-flow-header-bar-main {
+  pointer-events: none !important;
+}
+
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow button,
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow a,
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow input,
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow [role="button"],
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow .profile-menu-trigger,
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow .float-card-collapse {
+  pointer-events: auto !important;
+}
+
+.float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow,
+.float-card--plan-flow:not(.collapsed) .plan-flow-action-dock,
+.float-card--plan-flow:not(.collapsed) .plan-route-setup {
+  position: relative;
+  z-index: 8;
+  pointer-events: auto;
+}
+
+.float-card--plan-flow:not(.collapsed) .plan-flow-dock-continue {
+  position: relative;
+  z-index: 9;
+  pointer-events: auto !important;
+}
 
   .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-trigger,
   .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-trigger-wrap {

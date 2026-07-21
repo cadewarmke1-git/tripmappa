@@ -213,7 +213,7 @@ export default function ReturningUserView({
               <div className="returning-user-actions" role="group" aria-label="Start planning or navigating">
                 <button
                   type="button"
-                  className="returning-user-action returning-user-action--plan"
+                  className="returning-user-action"
                   onClick={withHaptic(onStartPlan)}
                   disabled={planLaunching}
                 >
@@ -222,7 +222,7 @@ export default function ReturningUserView({
 
                 <button
                   type="button"
-                  className="returning-user-action returning-user-action--navigate"
+                  className="returning-user-action"
                   onClick={withHaptic(onStartNavigate)}
                   disabled={navigateLaunching}
                 >

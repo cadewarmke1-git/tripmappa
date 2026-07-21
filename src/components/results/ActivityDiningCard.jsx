@@ -5,7 +5,14 @@ import { parseRating } from "../../lib/ratings.js";
 import { roadStopToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
 import { buildDirectionsUrl, formatOffRouteDistance } from "../../lib/stopCardDistance.js";
 
-export default function ActivityDiningCard({ item, onAdd, added = false, onRoute = false, readOnly = false }) {
+export default function ActivityDiningCard({
+  item,
+  onAdd,
+  onRemove,
+  added = false,
+  onRoute = false,
+  readOnly = false,
+}) {
   const signCategory = roadStopToSignCategory(item.category || "food");
   const categoryLabel = signCategoryLabel(signCategory, item.category || "Activity");
   const includedOnRoute = onRoute || added;
@@ -42,6 +49,7 @@ export default function ActivityDiningCard({ item, onAdd, added = false, onRoute
       distance={distance}
       verified={hasGooglePlacesData(item)}
       actions={actions}
+      onRemove={!readOnly && onRemove ? () => onRemove(item) : null}
       photo={(
         <PlacePhotoOrIcon
           photoUrl={item.photoUrl}

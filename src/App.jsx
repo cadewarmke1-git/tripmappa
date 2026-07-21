@@ -12,7 +12,7 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility } from "./lib/tripFlow.js";
+import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, formatSmartDefaultsSummary, getNextHardConstraintQuestion } from "./lib/tripFlow.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
@@ -26,7 +26,11 @@ import { useItinerarySync } from "./hooks/useItinerarySync.js";
 import { computeDayRoutePaths } from "./lib/itineraryMap.js";
 import { consolidateAndCapAlerts } from "./lib/tripAlerts.js";
 import { buildPlanSnapshot, isPlanOutOfDate } from "./lib/planSnapshot.js";
-import { describePlanChanges } from "./lib/planSnapshotDiff.js";
+import {
+  computeExploreCorridor,
+  parseRouteDurationSeconds,
+  stopsInExploreCorridor,
+} from "./lib/exploreCorridor.js";
 import CollaborationPanel from "./components/CollaborationPanel.jsx";
 import { createAnswerChangeTracker, recordAnswerChange } from "./lib/answerIntent.js";
 import {
@@ -56,7 +60,6 @@ import {
   LazyUpgradeModal,
   LazyUserPreferencesPage,
 } from "./components/LazyModals.jsx";
-const LazyHeroExploreMap = lazy(() => import("./components/HeroExploreMap.jsx"));
 import { useTheme } from "./context/ThemeContext.jsx";
 import { saveHomeAddress, saveDisplayName, saveNotificationPrefs, saveEmergencyContact, uploadAvatar, getGuestHomeAddress, setGuestHomeAddress } from "./lib/profileApi.js";
 
@@ -115,6 +118,8 @@ function revertAnswerForHistoryEntry(newAnswers, entry) {
   if (q.id === "party_composition") {
     delete out.adult_count;
     delete out.child_count;
+    delete out.travelers;
+    delete out.kids_ages;
   }
   if (q.id === "vehicle") {
     delete out.fuel_type;
@@ -182,6 +187,8 @@ export default function App() {
   const navigateRouteSnapshotRef = useRef(null);
   const [routeSetupOriginError, setRouteSetupOriginError] = useState("");
   const [routeSetupDestError, setRouteSetupDestError] = useState("");
+  const [routeSetupCustomize, setRouteSetupCustomize] = useState(false);
+  const [routeSetupVehicle, setRouteSetupVehicle] = useState("Car");
   const [planLaunching, setPlanLaunching] = useState(false);
   const [navigateLaunching, setNavigateLaunching] = useState(false);
   const [navigateLocationDenied, setNavigateLocationDenied] = useState(false);
@@ -312,6 +319,14 @@ export default function App() {
     exploreSearchQuery,
     setExploreSearchQuery,
     exploreRangeAbortRef,
+    exploreCorridorPath,
+    setExploreCorridorPath,
+    exploreCorridorStops,
+    setExploreCorridorStops,
+    exploreStatusMessage,
+    setExploreStatusMessage,
+    exploreFromCoords,
+    setExploreFromCoords,
     mapStyle,
     setMapStyle,
     mapStyleOpen,
@@ -364,13 +379,8 @@ export default function App() {
     handleMapMarkerSelect,
     recenterMap,
     clearExploreRange,
-    loadExploreRangeIsoline,
     handleExploreRangeToggle,
     handleExploreRangeDriveTimeChange,
-    applyExploreRangeDestination,
-    handleExploreRangeMapClick,
-    handleExploreRangePlaceSelect,
-    handleExploreRangeSearch,
     focusMapOnStop,
     getDepartureTime,
     flushMapLayout,
@@ -569,10 +579,88 @@ export default function App() {
     [generated, savedPlanSnapshot, currentPlanSnapshot],
   );
 
-  const planChanges = useMemo(
-    () => describePlanChanges(savedPlanSnapshot, currentPlanSnapshot),
-    [savedPlanSnapshot, currentPlanSnapshot],
+  const exploreHasRoute = Boolean(
+    (routeInfo?.routePoints?.length > 1)
+    || (routePath?.length > 1)
+    || (truckRoutePath?.length > 1),
   );
+
+  useEffect(() => {
+    if (!exploreRangeEnabled) {
+      setExploreCorridorPath([]);
+      setExploreCorridorStops([]);
+      setExploreStatusMessage(null);
+      return undefined;
+    }
+    if (!exploreHasRoute) {
+      setExploreCorridorPath([]);
+      setExploreCorridorStops([]);
+      setExploreStatusMessage(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const routePoints = routeInfo?.routePoints?.length > 1
+      ? routeInfo.routePoints
+      : (truckRoutePath?.length > 1 ? truckRoutePath : routePath);
+
+    const applyCorridor = (fromLat, fromLng) => {
+      if (cancelled) return;
+      const totalDurationSeconds = parseRouteDurationSeconds(routeInfo?.duration)
+        ?? (parseHoursFromDuration(routeInfo?.duration) * 3600 || null);
+      const totalDistanceMeters = (() => {
+        const miles = parseMilesFromDistance(routeInfo?.distance);
+        return miles > 0 ? miles * 1609.34 : null;
+      })();
+      const corridor = computeExploreCorridor({
+        routePoints,
+        driveSeconds: exploreRangeDriveSeconds,
+        totalDurationSeconds,
+        totalDistanceMeters,
+        fromLat,
+        fromLng,
+      });
+      setExploreCorridorPath(corridor.path);
+      const planned = [
+        ...(stops || []),
+        ...(roadStops || []).filter((s) => s?.included !== false),
+      ];
+      const inRange = stopsInExploreCorridor(planned, corridor, routePoints);
+      setExploreCorridorStops(inRange);
+      const hours = Math.round(exploreRangeDriveSeconds / 3600);
+      setExploreStatusMessage(
+        inRange.length
+          ? `${hours}h along your route · ${inRange.length} stop${inRange.length === 1 ? "" : "s"} in range`
+          : `${hours}h along your route · no planned stops in this stretch`,
+      );
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => applyCorridor(pos.coords.latitude, pos.coords.longitude),
+        () => applyCorridor(routePoints?.[0]?.lat, routePoints?.[0]?.lng),
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+      );
+    } else {
+      applyCorridor(routePoints?.[0]?.lat, routePoints?.[0]?.lng);
+    }
+
+    return () => { cancelled = true; };
+  }, [
+    exploreRangeEnabled,
+    exploreHasRoute,
+    exploreRangeDriveSeconds,
+    routeInfo?.routePoints,
+    routeInfo?.duration,
+    routeInfo?.distance,
+    routePath,
+    truckRoutePath,
+    stops,
+    roadStops,
+    setExploreCorridorPath,
+    setExploreCorridorStops,
+    setExploreStatusMessage,
+  ]);
 
   const routeScoutLine = useMemo(() => {
     if (!routeInfo) return null;
@@ -947,9 +1035,30 @@ export default function App() {
     setTab("plan");
     setCardCollapsed(false);
     setReturnedFromResults(true);
-    setConvoComplete(true);
-    setQIndex(-2);
-    setCurrentQuestion(null);
+    setConvoComplete(false);
+    reAnswerFromEditRef.current = true;
+    setStepAnim(null);
+    if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
+
+    // Keep answers + history so previous choices stay visible; open at first step.
+    const firstEntry = questionHistory.find((h) => h?.question?.id);
+    if (firstEntry?.question) {
+      setCurrentQuestion(firstEntry.question);
+      setQIndex(0);
+      applyPrefDraftForQuestion(firstEntry.question, answers);
+    } else {
+      const ctx = buildQuestionContext(answers);
+      const first = getNextFlowQuestion({}, ctx);
+      if (first && !first.done && first.id) {
+        setCurrentQuestion(first);
+        setQIndex(0);
+        applyPrefDraftForQuestion(first, answers);
+      } else {
+        setCurrentQuestion(null);
+        setQIndex(-2);
+        setConvoComplete(true);
+      }
+    }
     scrollPlanToTop();
   }
 
@@ -1374,6 +1483,8 @@ export default function App() {
     setTripLegs([]);
     setPrefDraft(null);
     setStepAnim(null);
+    setRouteSetupCustomize(false);
+    setRouteSetupVehicle("Car");
     if (stepAnimTimer.current) clearTimeout(stepAnimTimer.current);
     return prefill;
   }
@@ -1611,8 +1722,40 @@ export default function App() {
     }]);
     // Pass overrides — React state origin/dest are still stale until next render,
     // and getNextFlowQuestion stays on route_setup until endpoints exist in context.
-    loadNextQuestion(answers, { originOverride: fromAddr, destOverride: toAddr });
-    fetchDirections("Car");
+    const seeded = { ...answers, vehicle: routeSetupVehicle || answers.vehicle || "Car" };
+    const nextAnswers = routeSetupCustomize
+      ? beginDraftFirstCustomize(seeded)
+      : applySmartTripDefaults(seeded);
+    setAnswers(nextAnswers);
+    setRouteSetupCustomize(false);
+    setCardCollapsed(false);
+    loadNextQuestion(nextAnswers, { originOverride: fromAddr, destOverride: toAddr });
+    fetchDirections(nextAnswers.vehicle || "Car");
+  }
+
+  function handleRouteSetupCustomize() {
+    setRouteSetupCustomize(true);
+  }
+
+  function handleRouteSetupVehicleChange(value) {
+    setRouteSetupVehicle(value);
+  }
+
+  function handleDraftGenerate() {
+    const ctx = buildQuestionContext(answers);
+    const interrupt = getNextHardConstraintQuestion(answers, ctx);
+    if (interrupt) {
+      setCurrentQuestion(interrupt);
+      setConvoComplete(false);
+      return;
+    }
+    generateTrip();
+  }
+
+  function handleDraftTuneAnswer(section, value, extraFields = {}, options = {}) {
+    const q = section?.question;
+    if (!q) return;
+    submitAnswer(value, extraFields, { ...options, question: q });
   }
 
   function handleRouteSetupOriginChange(value) {
@@ -1639,7 +1782,7 @@ export default function App() {
         draft[sec.id] = fromAnswers.length ? [...fromAnswers] : (fromPrefill.length ? [...fromPrefill] : []);
       }
       if (question.type === "trip_details") {
-        draft.trip_budget = newAnswers.trip_budget || prefillSource.trip_budget || "No budget limit";
+        // Spending is collected on luxury_level; trip_budget is derived at normalize time.
       }
       setPrefDraft(draft);
     } else if (question.type === "multiselect") {
@@ -1892,11 +2035,14 @@ export default function App() {
         } else if (activeQuestion.type === "lodging_stay") {
           patch = { ...answers, ...extraFields, lodging: value };
         } else if (activeQuestion.type === "party_composition" && value && typeof value === "object") {
+          const adults = value.adults;
+          const children = value.children;
           patch = {
             ...answers,
             ...extraFields,
-            adult_count: value.adults,
-            child_count: value.children,
+            adult_count: adults,
+            child_count: children,
+            travelers: deriveTravelersBand(adults, children),
           };
         } else {
           patch = { ...answers, ...extraFields, [activeQuestion.id]: value };
@@ -1927,9 +2073,11 @@ export default function App() {
         || activeQuestion.id === "vehicle"
         || activeQuestion.id === "primary_vehicle"
         || activeQuestion.id === "multi_vehicles"
+        || activeQuestion.id === "party_composition"
         || activeQuestion.id === "travelers"
         || activeQuestion.id === "overnight_preference"
         || activeQuestion.type === "trip_details"
+        || activeQuestion.id === "what_matters"
       );
       if (shouldPruneStale) {
         na = pruneStaleBranchAnswers(na, ctx);
@@ -1969,6 +2117,9 @@ export default function App() {
         fetchDirections(getEffectiveVehicle(na));
       }
       if (activeQuestion.id === "preferences" && originRef.current?.value && destRef.current?.value && na.vehicle) {
+        fetchDirections(getEffectiveVehicle(na));
+      }
+      if (activeQuestion.id === "what_matters" && originRef.current?.value && destRef.current?.value && na.vehicle) {
         fetchDirections(getEffectiveVehicle(na));
       }
     } catch (err) {
@@ -2101,7 +2252,10 @@ export default function App() {
       }
       toast_("Added to trip", {
         actionLabel: "Undo",
-        onAction: () => removeRoadStopFromTrip({ ...normalized, stopData: normalized }),
+        onAction: () => removeRoadStopFromTrip(
+          { ...normalized, stopData: normalized },
+          { showUndo: false },
+        ),
       });
       if (user && session?.access_token) {
         void recordUserStopPreferences(session.access_token, [normalized]);
@@ -2139,33 +2293,59 @@ export default function App() {
     });
     toast_("Added to trip", {
       actionLabel: "Undo",
-      onAction: () => removeRoadStopFromTrip({ ...normalized, stopData: normalized }),
+      onAction: () => removeRoadStopFromTrip(
+        { ...normalized, stopData: normalized },
+        { showUndo: false },
+      ),
     });
     if (user && session?.access_token) {
       void recordUserStopPreferences(session.access_token, [normalized]);
     }
   }
 
-  function removeRoadStopFromTrip(stop) {
+  function removeRoadStopFromTrip(stop, { showUndo = true } = {}) {
     const normalized = normalizeRoadStopEntry(stop?.stopData || stop);
-    if (!normalized) return;
+    if (!normalized) return null;
     const id = stop?.id || normalized.id || roadStopKey(normalized);
     if (generated && itinerarySync.itineraryWaypoints.length) {
-      itinerarySync.handleRemoveStop(id);
-      return;
+      const waypoint = itinerarySync.itineraryWaypoints.find(item => (
+        item.id === id
+        || item.stopData?.id === id
+        || item.stopData?.id === normalized.id
+        || (normalized.placeId && (item.stopData?.placeId === normalized.placeId || item.id === normalized.placeId))
+      ));
+      if (!waypoint) return null;
+      itinerarySync.handleToggleIncluded(waypoint.id, false);
+      const undo = () => itinerarySync.handleToggleIncluded(waypoint.id, true);
+      if (showUndo) {
+        toast_("Stop removed —", {
+          actionLabel: "Undo",
+          onAction: undo,
+          duration: 8000,
+        });
+      }
+      return undo;
     }
     const key = roadStopKey(normalized);
-    setRoadStops(prev => {
-      const idx = prev.findIndex(s => s.id === normalized.id || roadStopKey(s) === key);
-      if (idx < 0) return prev;
-      const target = prev[idx];
-      if (target.userAdded) {
+    const index = roadStops.findIndex(s => s.id === normalized.id || roadStopKey(s) === key);
+    if (index < 0) return null;
+    const removed = roadStops[index];
+    setRoadStops(prev => prev.filter((_, itemIndex) => itemIndex !== index));
+    const undo = () => {
+      setRoadStops(prev => {
         const next = [...prev];
-        next[idx] = { ...target, userAdded: false };
+        next.splice(Math.min(index, next.length), 0, removed);
         return next;
-      }
-      return prev.filter((_, i) => i !== idx);
-    });
+      });
+    };
+    if (showUndo) {
+      toast_("Stop removed —", {
+        actionLabel: "Undo",
+        onAction: undo,
+        duration: 8000,
+      });
+    }
+    return undo;
   }
 
   function addLodgingSelection(lodging) {
@@ -2869,7 +3049,6 @@ export default function App() {
             enrichingTrip={enrichingTrip || enrichingPlaces}
             enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
             planOutOfDate={planOutOfDate}
-            planChanges={planChanges}
             onRegenerateTrip={generateTrip}
             generateLoading={loading}
             onCancelEnrichment={cancelEnrichment}
@@ -3019,7 +3198,7 @@ export default function App() {
                       lat: marker.lat,
                       lng: marker.lng,
                       category: marker.category || "poi",
-                    }),
+                    }, { showUndo: false }),
                   });
                 } else if (action === "navigate" || action === "directions") {
                   handleResultsStopSelect({
@@ -3039,20 +3218,6 @@ export default function App() {
           </div>
         ) : (
         <div className="app">
-          {exploreRangeEnabled && exploreOriginCoords && exploreRangePolygon.length >= 3 && tab === "plan" && !generated && (
-            <Suspense fallback={<div className="plan-explore-map" aria-hidden="true" />}>
-              <div className="plan-explore-map">
-                <LazyHeroExploreMap
-                  isLoaded={isLoaded}
-                  center={exploreOriginCoords}
-                  polygon={exploreRangePolygon}
-                  theme={theme}
-                  onMapClick={handleExploreRangeMapClick}
-                  onPlaceSelect={handleExploreRangePlaceSelect}
-                />
-              </div>
-            </Suspense>
-          )}
           <ErrorBoundary
             key={mapBoundaryKey}
             label="map"
@@ -3113,7 +3278,7 @@ export default function App() {
                     lat: marker.lat,
                     lng: marker.lng,
                     category: marker.category || "poi",
-                  }),
+                  }, { showUndo: false }),
                 });
               } else if (action === "navigate" || action === "directions") {
                 handleResultsStopSelect({
@@ -3126,7 +3291,11 @@ export default function App() {
                 focusMapOnStop(marker);
               }
             }}
-            highlightedLegPath={generated ? itinerarySync.highlightedLegPath : []}
+            highlightedLegPath={
+              exploreRangeEnabled && exploreCorridorPath.length > 1
+                ? exploreCorridorPath
+                : (generated ? itinerarySync.highlightedLegPath : [])
+            }
             routeFocusMode={generated ? isNavigating : false}
             inAppNavigationOnly={generated}
           />
@@ -3226,6 +3395,13 @@ export default function App() {
                       onRouteSetupDestChange={handleRouteSetupDestChange}
                       onRouteSetupSwap={swapRouteCities}
                       onRouteSetupContinue={handleRouteSetupContinue}
+                      routeSetupCustomize={routeSetupCustomize}
+                      onRouteSetupCustomize={handleRouteSetupCustomize}
+                      routeSetupDefaultsSummary={formatSmartDefaultsSummary({ ...answers, vehicle: routeSetupVehicle || answers.vehicle })}
+                      routeSetupVehicle={routeSetupVehicle}
+                      onRouteSetupVehicleChange={handleRouteSetupVehicleChange}
+                      onDraftGenerate={handleDraftGenerate}
+                      onDraftTuneAnswer={handleDraftTuneAnswer}
                       routeSetupOriginRef={originRef}
                       routeSetupDestRef={destRef}
                       routeSetupOriginAcRef={heroOriginAcRef}
@@ -3233,7 +3409,6 @@ export default function App() {
                       routeError={routeError}
                       onRetryRoute={retryRouteCalculation}
                       planOutOfDate={planOutOfDate}
-                      planChanges={planChanges}
                       generationError={generationError}
                       onGenerateTrip={generateTrip}
                       onCancelGenerate={cancelGenerateTrip}
@@ -3309,11 +3484,9 @@ export default function App() {
                   onSetArriveByDate={setArriveByDate}
                   exploreRangeEnabled={exploreRangeEnabled}
                   exploreRangeDriveSeconds={exploreRangeDriveSeconds}
-                  exploreRangeLoading={exploreRangeLoading}
-                  exploreRangeError={exploreRangeError}
-                  exploreSearchQuery={exploreSearchQuery}
-                  onExploreSearchChange={setExploreSearchQuery}
-                  onExploreSearchSubmit={handleExploreRangeSearch}
+                  exploreHasRoute={exploreHasRoute}
+                  exploreCorridorStops={exploreCorridorStops}
+                  exploreStatusMessage={exploreStatusMessage}
                   onExploreRangeToggle={handleExploreRangeToggle}
                   onExploreRangeDriveTimeChange={handleExploreRangeDriveTimeChange}
                 />

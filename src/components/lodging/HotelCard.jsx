@@ -4,36 +4,44 @@ import RoadTripStopCard from "../results/RoadTripStopCard.jsx";
 import { resolvePlacePhotoUrl } from "../../lib/placePhotos.js";
 import { hasGooglePlacesData } from "../../lib/placesVerification.js";
 import { useOnScreen } from "../../hooks/useOnScreen.js";
-import { resolveHotelListingUrl } from "../../lib/lodgingBookingLinks.js";
 import { parseRating } from "../../lib/ratings.js";
 import { buildDirectionsUrl, formatOffRouteDistance } from "../../lib/stopCardDistance.js";
 
-export default function HotelCard({ hotel, city, onSave, onToast, readOnly = false }) {
+/** Build Booking.com search URL from hotel name + city. */
+function buildBookingSearchUrl(hotelName, city) {
+  const name = hotelName?.trim();
+  const cityName = city?.split(",")[0]?.trim() || city?.trim();
+  if (!name || !cityName) return null;
+  // BOOKING_COM_PLACEHOLDER — replace with affiliate API when ready
+  const ss = `${name}+${cityName}`.replace(/\s+/g, "+");
+  return `https://www.booking.com/search.html?ss=${ss}`;
+}
+
+export default function HotelCard({
+  hotel,
+  city,
+  onSave,
+  onToast,
+  onRemove,
+  readOnly = false,
+}) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const [photoRef, photoVisible] = useOnScreen();
   const photoSrc = photoFailed
     ? "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=192&q=80"
     : (photoVisible ? resolvePlacePhotoUrl(hotel.photo || hotel.photoUrl, 96) : null);
 
-  const listingUrl = resolveHotelListingUrl(hotel);
+  const bookingSearchUrl = buildBookingSearchUrl(hotel.name, city);
   const directionsUrl = buildDirectionsUrl(hotel.lat, hotel.lng);
-  const bookTitle = (hotel.bookingUrl || import.meta.env.VITE_BOOKING_AFFILIATE_ID)
-    ? "Opens Booking.com via TripMappa"
-    : "Opens hotel listing via TripMappa";
 
-  function handleBook() {
-    if (!listingUrl) return;
-    window.open(listingUrl, "_blank", "noopener,noreferrer");
+  function handleViewListing() {
+    if (!bookingSearchUrl) return;
+    window.open(bookingSearchUrl, "_blank", "noopener,noreferrer");
   }
 
   function handleChooseStay() {
-    const hotelName = hotel.name?.trim();
-    const cityName = city?.split(",")[0]?.trim() || city?.trim();
-    if (hotelName && cityName) {
-      // BOOKING_COM_PLACEHOLDER — replace with affiliate API when ready
-      const ss = `${hotelName}+${cityName}`.replace(/\s+/g, "+");
-      const bookingUrl = `https://www.booking.com/search.html?ss=${ss}`;
-      window.open(bookingUrl, "_blank", "noopener,noreferrer");
+    if (bookingSearchUrl) {
+      window.open(bookingSearchUrl, "_blank", "noopener,noreferrer");
     }
     onSave?.(hotel);
     onToast?.(`Saved ${hotel.name}`);
@@ -67,12 +75,12 @@ export default function HotelCard({ hotel, city, onSave, onToast, readOnly = fal
       onClick: handleChooseStay,
     });
   }
-  if (listingUrl) {
+  if (bookingSearchUrl) {
     actions.push({
       label: "View listing",
       variant: readOnly ? "primary" : "secondary",
-      onClick: handleBook,
-      title: bookTitle,
+      onClick: handleViewListing,
+      title: "Opens Booking.com search",
     });
   }
   if (directionsUrl) {
@@ -95,6 +103,8 @@ export default function HotelCard({ hotel, city, onSave, onToast, readOnly = fal
       verified={hasGooglePlacesData(hotel)}
       metaExtra={metaExtra}
       actions={actions}
+      onRemove={!readOnly && onRemove ? () => onRemove(hotel) : null}
+      removeLabel={`Remove ${hotel.name}`}
       photo={(
         <div ref={photoRef}>
           {photoSrc ? (

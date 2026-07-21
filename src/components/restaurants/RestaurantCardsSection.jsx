@@ -30,6 +30,9 @@ export default function RestaurantCardsSection({
   overnightMode = true,
   sectionLabel,
   onDirections = null,
+  readOnly = false,
+  isResultCardHidden,
+  onRemoveResultCard,
 }) {
   const hasPreload = preloaded !== undefined && preloaded !== null;
   const [loading, setLoading] = useState(!hasPreload);
@@ -113,6 +116,14 @@ export default function RestaurantCardsSection({
     missing: "Add a destination to see dining options.",
   }[status] || "No restaurants found nearby.";
 
+  const visibleRestaurants = restaurants.filter(
+    restaurant => !isResultCardHidden?.("restaurant", restaurant, city),
+  );
+
+  if (!loading && restaurants.length > 0 && visibleRestaurants.length === 0) {
+    return null;
+  }
+
   return (
     <div className="restaurant-section">
       <div className="restaurant-section-label">
@@ -122,16 +133,18 @@ export default function RestaurantCardsSection({
         <div className="restaurant-cards-scroll">
           {Array.from({ length: 3 }, (_, i) => <RestaurantCardSkeleton key={i} />)}
         </div>
-      ) : restaurants.length === 0 ? (
+      ) : visibleRestaurants.length === 0 ? (
         <div className={`restaurant-empty restaurant-empty-${status}`}>{emptyMessage}</div>
       ) : (
         <div className="restaurant-cards-scroll">
-          {restaurants.map(r => (
+          {visibleRestaurants.map(r => (
             <RestaurantCard
-              key={r.placeId}
+              key={r.placeId || r.id || r.name}
               restaurant={r}
               estimatedArrival={estimateArrival(estimatedArrival)}
               onDirections={onDirections}
+              onRemove={() => onRemoveResultCard?.("restaurant", r, city)}
+              readOnly={readOnly}
             />
           ))}
         </div>

@@ -19,11 +19,9 @@ export default function PlanPanelDock({
   onSetArriveByDate,
   exploreRangeEnabled = false,
   exploreRangeDriveSeconds = 7200,
-  exploreRangeLoading = false,
-  exploreRangeError = null,
-  exploreSearchQuery = "",
-  onExploreSearchChange,
-  onExploreSearchSubmit,
+  exploreHasRoute = false,
+  exploreCorridorStops = [],
+  exploreStatusMessage = null,
   onExploreRangeToggle,
   onExploreRangeDriveTimeChange,
 }) {
@@ -49,11 +47,9 @@ export default function PlanPanelDock({
         <HeroExploreRange
           enabled={exploreRangeEnabled}
           driveTimeSeconds={exploreRangeDriveSeconds}
-          loading={exploreRangeLoading}
-          error={exploreRangeError}
-          searchQuery={exploreSearchQuery}
-          onSearchChange={onExploreSearchChange}
-          onSearchSubmit={onExploreSearchSubmit}
+          hasRoute={exploreHasRoute}
+          corridorStops={exploreCorridorStops}
+          statusMessage={exploreStatusMessage}
           onToggle={onExploreRangeToggle}
           onDriveTimeChange={onExploreRangeDriveTimeChange}
         />

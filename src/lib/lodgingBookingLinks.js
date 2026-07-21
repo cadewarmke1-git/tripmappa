@@ -6,6 +6,10 @@ function bookingAffiliateId() {
   return import.meta.env.VITE_BOOKING_AFFILIATE_ID?.trim() || "";
 }
 
+function isGoogleMapsUrl(url) {
+  return /google\.com\/maps/i.test(String(url || ""));
+}
+
 /**
  * Build a Booking.com search URL for a property (affiliate aid when configured).
  * @param {{ name?: string, neighborhood?: string, lat?: number, lng?: number }} hotel
@@ -37,12 +41,13 @@ export function buildBookingAffiliateUrl(hotel) {
  * Resolve the listing URL for hotel cards — affiliate first, then property site, never Google Maps.
  */
 export function resolveHotelListingUrl(place = {}) {
-  if (place.bookingUrl?.trim()) return place.bookingUrl.trim();
-  if (place.bookUrl?.trim() && !/google\.com\/maps/i.test(place.bookUrl)) {
-    return place.bookUrl.trim();
-  }
+  const booking = place.bookingUrl?.trim();
+  if (booking && !isGoogleMapsUrl(booking)) return booking;
+  const book = place.bookUrl?.trim();
+  if (book && !isGoogleMapsUrl(book)) return book;
   const affiliate = buildBookingAffiliateUrl(place);
   if (affiliate) return affiliate;
-  if (place.website?.trim()) return place.website.trim();
+  const website = place.website?.trim();
+  if (website && !isGoogleMapsUrl(website)) return website;
   return null;
 }

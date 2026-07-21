@@ -1,4 +1,6 @@
-export default function RestAreaCard({ restArea, onSave, onToast, readOnly = false }) {
+import { ResultCardRemoveControl } from "../results/RoadTripStopCard.jsx";
+
+export default function RestAreaCard({ restArea, onSave, onToast, onRemove, readOnly = false }) {
   function handleSave() {
     onSave?.(restArea);
     onToast?.(`Saved ${restArea.name}`);
@@ -8,6 +10,10 @@ export default function RestAreaCard({ restArea, onSave, onToast, readOnly = fal
 
   return (
     <article className="lodging-card lodging-card-rest-area">
+      <ResultCardRemoveControl
+        onRemove={!readOnly && onRemove ? () => onRemove(restArea) : null}
+        label={`Remove ${restArea.name}`}
+      />
       <div className="lodging-card-photo-wrap lodging-card-photo-muted">
         <img
           className="lodging-card-photo"

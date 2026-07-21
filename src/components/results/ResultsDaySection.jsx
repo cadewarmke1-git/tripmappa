@@ -64,6 +64,8 @@ export default function ResultsDaySection({
   onRemoveRoadStop,
   isStopAdded,
   isStopOnRoute,
+  isResultCardHidden,
+  onRemoveResultCard,
   readOnly = false,
   sectionRef,
   highlightedStopId,
@@ -109,21 +111,23 @@ export default function ResultsDaySection({
     };
   }
 
-  const roadItems = day?.roadStops?.length
+  const roadItems = Array.isArray(day?.roadStops)
     ? day.roadStops
     : (simplified
-      ? roadStops.map((rs, i) => ({
-        id: rs.id || `road-${i}`,
-        title: rs.name,
-        category: rs.category,
-        rating: rs.rating,
-        distanceFromRoute: rs.distanceMiles ?? rs.distance,
-        photoUrl: rs.photoUrl,
-        lat: rs.lat,
-        lng: rs.lng,
-        stopData: rs,
-        nearbyRestaurants: rs.nearbyRestaurants,
-      }))
+      ? roadStops
+        .map((rs, i) => ({
+          id: rs.id || `road-${i}`,
+          title: rs.name,
+          category: rs.category,
+          rating: rs.rating,
+          distanceFromRoute: rs.distanceMiles ?? rs.distance,
+          photoUrl: rs.photoUrl,
+          lat: rs.lat,
+          lng: rs.lng,
+          stopData: rs,
+          nearbyRestaurants: rs.nearbyRestaurants,
+        }))
+        .filter(item => !isResultCardHidden?.("road", item, day?.overnightCity || dest))
       : []);
 
   const activities = (() => {
@@ -138,6 +142,9 @@ export default function ResultsDaySection({
       distanceMiles: r.distanceMiles,
     }));
   })();
+  const visibleActivities = activities.filter(
+    item => !isResultCardHidden?.("activity", item, day?.overnightCity || dest),
+  );
 
   const hasOvernight = tripIncludesOvernight(stops, answers);
   const showLodging = Boolean(day?.overnight) && !continuousDrive && (!simplified || hasOvernight);
@@ -150,6 +157,24 @@ export default function ResultsDaySection({
 
   const orderedStops = roadItems.map(stop => ({ kind: "road", stop }));
   const stopsLabel = continuousDrive ? "Fuel and rest stops on your route" : "Stops on your route";
+
+  function handleRoadRemove(stop) {
+    const undoRouteRemoval = isStopOnRoute?.(stop)
+      ? onRemoveRoadStop?.(stop, { showUndo: false })
+      : null;
+    onRemoveResultCard?.("road", stop, day?.overnightCity || dest, {
+      onUndo: undoRouteRemoval || undefined,
+    });
+  }
+
+  function handleActivityRemove(item) {
+    const undoRouteRemoval = isStopOnRoute?.(item)
+      ? onRemoveRoadStop?.(item, { showUndo: false })
+      : null;
+    onRemoveResultCard?.("activity", item, day?.overnightCity || dest, {
+      onUndo: undoRouteRemoval,
+    });
+  }
 
   return (
     <section
@@ -189,7 +214,7 @@ export default function ResultsDaySection({
                   staggerIndex={index}
                   cardEnter={cardEnter}
                   onAdd={onAddRoadStop}
-                  onRemove={onRemoveRoadStop}
+                  onRemove={handleRoadRemove}
                   onToast={onToast}
                   added={isStopAdded?.(item.stop)}
                   onRoute={isStopOnRoute?.(item.stop)}
@@ -210,7 +235,7 @@ export default function ResultsDaySection({
                     staggerIndex={index}
                     cardEnter={cardEnter}
                     onAdd={onAddRoadStop}
-                    onRemove={onRemoveRoadStop}
+                    onRemove={handleRoadRemove}
                     onToast={onToast}
                     added={isStopAdded?.(item.stop)}
                     onRoute={isStopOnRoute?.(item.stop)}
@@ -238,6 +263,8 @@ export default function ResultsDaySection({
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
             readOnly={readOnly}
+            isResultCardHidden={isResultCardHidden}
+            onRemoveResultCard={onRemoveResultCard}
           />
           <RestaurantCardsSection
             city={day.overnight.city}
@@ -247,6 +274,9 @@ export default function ResultsDaySection({
             preloaded={findCityData(restaurantsByCity, day.overnight.city)}
             onToast={onToast}
             onDirections={onStopSelect}
+            readOnly={readOnly}
+            isResultCardHidden={isResultCardHidden}
+            onRemoveResultCard={onRemoveResultCard}
           />
         </>
       )}
@@ -307,20 +337,24 @@ export default function ResultsDaySection({
               onToast={onToast}
               overnightMode
               onDirections={onStopSelect}
+              readOnly={readOnly}
+              isResultCardHidden={isResultCardHidden}
+              onRemoveResultCard={onRemoveResultCard}
             />
           </div>
         );
       })}
 
-      {activities.length > 0 && (
+      {visibleActivities.length > 0 && (
         <div className="results-subsection">
           <h3 className="results-subsection-label">Optional extras along the way</h3>
           <div className="results-activities-grid">
-            {activities.map(item => (
+            {visibleActivities.map(item => (
               <ActivityDiningCard
                 key={item.id || item.placeId || `${item.name}-${item.lat}-${item.lng}`}
                 item={item}
                 onAdd={onAddRoadStop}
+                onRemove={handleActivityRemove}
                 added={isStopAdded?.(item)}
                 onRoute={isStopOnRoute?.(item)}
                 readOnly={readOnly}

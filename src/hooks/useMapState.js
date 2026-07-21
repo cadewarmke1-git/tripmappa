@@ -13,12 +13,6 @@ import { parseMilesFromDistance, parseHoursFromDuration } from "../lib/parsing.j
 import { computeNightDrivingBlocks, computeLowFuelSegmentPath } from "../lib/tripMapSegments.js";
 import { fetchTruckRoute, shouldUseTruckRouting } from "../lib/truckRoutingApi.js";
 import { deriveCitiesAlongRoute, parseCityStateFromFormattedAddress } from "../lib/routeCities.js";
-import {
-  fetchIsoline,
-  pointInPolygon,
-  reverseGeocodeLatLng,
-  resolveHeroOriginCoords,
-} from "../lib/heroExplore.js";
 import { isTowingSelected, getFuelRangeMiles } from "../lib/tripAccommodations.js";
 import {
   buildRouteSignature,
@@ -55,6 +49,10 @@ export function useMapState({
   const [exploreOriginCoords, setExploreOriginCoords] = useState(null);
   const [exploreSearchQuery, setExploreSearchQuery] = useState("");
   const exploreRangeAbortRef = useRef(null);
+  const [exploreCorridorPath, setExploreCorridorPath] = useState([]);
+  const [exploreCorridorStops, setExploreCorridorStops] = useState([]);
+  const [exploreStatusMessage, setExploreStatusMessage] = useState(null);
+  const [exploreFromCoords, setExploreFromCoords] = useState(null);
 
   const [mapStyle, setMapStyle] = useState("standard");
   const [mapStyleOpen, setMapStyleOpen] = useState(false);
@@ -677,73 +675,18 @@ export function useMapState({
     setExploreRangePolygon([]);
     setExploreRangeLoading(false);
     setExploreRangeError(null);
+    setExploreCorridorPath([]);
+    setExploreCorridorStops([]);
+    setExploreStatusMessage(null);
+    setExploreOriginCoords(null);
+    setExploreFromCoords(null);
   }
 
-  const loadExploreRangeIsoline = useCallback(async (coords, driveSeconds) => {
-    if (!coords?.lat || !coords?.lng || !driveSeconds) return;
-    exploreRangeAbortRef.current?.abort();
-    const controller = new AbortController();
-    exploreRangeAbortRef.current = controller;
-    setExploreRangeLoading(true);
-    setExploreRangeError(null);
-    try {
-      const data = await fetchIsoline(coords.lat, coords.lng, driveSeconds, { signal: controller.signal });
-      if (controller.signal.aborted) return;
-      const polygon = data.polygon || [];
-      setExploreRangePolygon(polygon);
-      setExploreOriginCoords({ lat: coords.lat, lng: coords.lng });
-      if (polygon.length < 3) {
-        setExploreRangeError("Could not draw a range for this origin — try another city.");
-      }
-    } catch (err) {
-      if (err.name === "AbortError") return;
-      setExploreRangePolygon([]);
-      setExploreRangeError(err.message || "Could not load explore range");
-    } finally {
-      if (exploreRangeAbortRef.current === controller) {
-        setExploreRangeLoading(false);
-        exploreRangeAbortRef.current = null;
-      }
-    }
-  }, []);
-
   useEffect(() => {
-    if (!exploreRangeEnabled || tab !== "plan" || generated) {
+    if (!exploreRangeEnabled) {
       clearExploreRange();
-      return undefined;
     }
-    if (!isLoaded || !window.google) return undefined;
-
-    let cancelled = false;
-    (async () => {
-      const text = originRef.current?.value?.trim() || origin.trim();
-      const routeStart = routeInfo?.routePoints?.[0];
-      const coords = (routeStart?.lat != null && routeStart?.lng != null
-          ? { lat: routeStart.lat, lng: routeStart.lng }
-          : null)
-        || await resolveHeroOriginCoords(text, null);
-      if (cancelled) return;
-      if (!coords) {
-        setExploreRangePolygon([]);
-        setExploreRangeError("Enter a valid origin to explore your range");
-        setExploreRangeLoading(false);
-        return;
-      }
-      setExploreOriginCoords({ lat: coords.lat, lng: coords.lng });
-      await loadExploreRangeIsoline(coords, exploreRangeDriveSeconds);
-    })();
-
-    return () => { cancelled = true; };
-  }, [
-    exploreRangeEnabled,
-    exploreRangeDriveSeconds,
-    origin,
-    routeInfo?.routePoints,
-    tab,
-    generated,
-    isLoaded,
-    loadExploreRangeIsoline,
-  ]);
+  }, [exploreRangeEnabled]);
 
   function handleExploreRangeToggle(enabled) {
     setExploreRangeEnabled(enabled);
@@ -752,51 +695,6 @@ export function useMapState({
 
   function handleExploreRangeDriveTimeChange(seconds) {
     setExploreRangeDriveSeconds(seconds);
-  }
-
-  async function applyExploreRangeDestination(label) {
-    const value = label?.trim();
-    if (!value) return;
-    setDest(value);
-    if (destRef.current) destRef.current.value = value;
-    setRouteError(null);
-    setExploreRangeEnabled(false);
-    clearExploreRange();
-    if (isLoaded && window.google) fetchDirections(answers.vehicle);
-  }
-
-  async function handleExploreRangeMapClick({ lat, lng }) {
-    if (!exploreRangePolygon.length || !pointInPolygon(lat, lng, exploreRangePolygon)) return;
-    const address = await reverseGeocodeLatLng(lat, lng);
-    await applyExploreRangeDestination(address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-  }
-
-  async function handleExploreRangePlaceSelect(place) {
-    if (!place) return;
-    const label = place.address ? `${place.name}, ${place.address}` : place.name;
-    await applyExploreRangeDestination(label);
-  }
-
-  async function handleExploreRangeSearch(query) {
-    const text = query?.trim();
-    if (!text) return;
-    setExploreSearchQuery(text);
-    if (!exploreRangePolygon.length) {
-      setExploreRangeError("Drive range is still loading");
-      return;
-    }
-    const coords = await resolveHeroOriginCoords(text, null);
-    if (!coords) {
-      setExploreRangeError("Could not find that place");
-      return;
-    }
-    if (!pointInPolygon(coords.lat, coords.lng, exploreRangePolygon)) {
-      setExploreRangeError("That place is outside your drive range");
-      return;
-    }
-    setExploreRangeError(null);
-    await applyExploreRangeDestination(coords.address || text);
-    setExploreSearchQuery("");
   }
 
   const focusMapOnStop = useCallback((item) => {
@@ -880,6 +778,14 @@ export function useMapState({
     exploreSearchQuery,
     setExploreSearchQuery,
     exploreRangeAbortRef,
+    exploreCorridorPath,
+    setExploreCorridorPath,
+    exploreCorridorStops,
+    setExploreCorridorStops,
+    exploreStatusMessage,
+    setExploreStatusMessage,
+    exploreFromCoords,
+    setExploreFromCoords,
     mapStyle,
     setMapStyle,
     mapStyleOpen,
@@ -932,13 +838,8 @@ export function useMapState({
     handleMapMarkerSelect,
     recenterMap,
     clearExploreRange,
-    loadExploreRangeIsoline,
     handleExploreRangeToggle,
     handleExploreRangeDriveTimeChange,
-    applyExploreRangeDestination,
-    handleExploreRangeMapClick,
-    handleExploreRangePlaceSelect,
-    handleExploreRangeSearch,
     focusMapOnStop,
     getDepartureTime,
     flushMapLayout,

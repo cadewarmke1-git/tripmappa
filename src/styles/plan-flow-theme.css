@@ -1370,6 +1370,9 @@ html body .app-wrap.day .plan-star-slider-hint {
   padding: 12px 14px 14px;
   border-top: 1px solid var(--plan-flow-divider);
   background: var(--color-plan-panel-bg);
+  position: relative;
+  z-index: 60;
+  pointer-events: auto;
 }
 
 .plan-flow-dock-back {
@@ -1401,6 +1404,9 @@ html body .app-wrap.day .plan-star-slider-hint {
   font-size: 14px;
   font-weight: 700;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--plan-flow-gold) 35%, transparent);
+  position: relative;
+  z-index: 61;
+  pointer-events: auto;
 }
 
 .plan-flow-dock-skip {

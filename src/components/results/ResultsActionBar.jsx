@@ -38,7 +38,7 @@ export default function ResultsActionBar({ onStartNavigation, onShare, onEditTri
         <svg className="results-action-bar-tool-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0 0-3L16.5 4.5a2.1 2.1 0 0 0-3 0L3 15v5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="results-action-bar-tool-label">Edit</span>
+        <span className="results-action-bar-tool-label">Edit trip</span>
       </button>
     </footer>
   );

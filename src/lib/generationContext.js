@@ -7,6 +7,7 @@ import {
   formatTravelersLabel,
 } from "./vehicles.js";
 import { asArray } from "./tripAccommodations.js";
+import { isContinuousDrive } from "./driveMode.js";
 import {
   getScheduleRestrictionLabels,
   SCHEDULE_TRAVEL_SPECIFIC_HOURS,
@@ -161,15 +162,33 @@ export function formatStopFrequencyLine(answers = {}) {
 
 export function formatLuxuryLevelLine(answers = {}) {
   if (!answers.luxury_level) return "";
-  const tiers = {
-    1: "1-star Budget (under $80/night hotels, casual dining)",
-    2: "2-star Economy ($80–120/night, sit-down restaurants)",
-    3: "3-star Mid-range ($120–180/night, quality dining)",
-    4: "4-star Upscale ($180–250/night, fine dining)",
-    5: "5-star Luxury ($250+/night, premium lodging and dining)",
-  };
+  const hasOvernight = !isContinuousDrive(answers)
+    && answers.lodging !== "No overnight stay"
+    && answers.overnight_preference !== "Drive straight through"
+    && Boolean(
+      answers.lodging
+      || answers.trip_nights
+      || answers.overnight_preference === "Stop overnight along the way",
+    );
+  const tiers = hasOvernight
+    ? {
+      1: "1-star Budget (under $80/night hotels, casual dining)",
+      2: "2-star Economy ($80–120/night, sit-down restaurants)",
+      3: "3-star Mid-range ($120–180/night, quality dining)",
+      4: "4-star Upscale ($180–250/night, fine dining)",
+      5: "5-star Luxury ($250+/night, premium lodging and dining)",
+    }
+    : {
+      1: "1-star Budget (casual dining)",
+      2: "2-star Economy (sit-down restaurants)",
+      3: "3-star Mid-range (quality dining)",
+      4: "4-star Upscale (fine dining)",
+      5: "5-star Luxury (premium dining)",
+    };
   const label = tiers[String(answers.luxury_level)] || `${answers.luxury_level}-star`;
-  return `Hotel & restaurant budget level: ${label}. Use this luxury_level when selecting hotels and restaurants.`;
+  return hasOvernight
+    ? `Hotel & restaurant budget level: ${label}. Use this luxury_level when selecting hotels and restaurants.`
+    : `Restaurant budget level: ${label}. Use this luxury_level when selecting restaurants (no overnight lodging on this trip).`;
 }
 
 export function formatPetConstraintLine(answers = {}) {

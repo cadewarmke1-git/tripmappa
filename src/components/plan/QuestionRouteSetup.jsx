@@ -1,5 +1,11 @@
 import { Autocomplete } from "@react-google-maps/api";
 import { configurePlacesAutocomplete } from "../../lib/places.js";
+import { formatSmartDefaultsSummary, VEHICLE_GROUPS } from "../../lib/tripFlow.js";
+
+const ROUTE_SETUP_VEHICLES = VEHICLE_GROUPS
+  .flatMap(g => g.options)
+  .filter(o => o.value !== "Multi-Vehicle Trip")
+  .slice(0, 8);
 
 export default function QuestionRouteSetup({
   isLoaded,
@@ -15,7 +21,14 @@ export default function QuestionRouteSetup({
   onOriginChange,
   onDestChange,
   onSwap,
+  defaultsSummary = "",
+  customizeActive = false,
+  onCustomize,
+  vehicle = "Car",
+  onVehicleChange,
 }) {
+  const summary = defaultsSummary || formatSmartDefaultsSummary({ vehicle });
+
   return (
     <div className="plan-route-setup">
       <div className="plan-route-setup-grid">
@@ -120,6 +133,42 @@ export default function QuestionRouteSetup({
           </div>
           {destError && <p className="plan-route-setup-error" role="alert">{destError}</p>}
         </div>
+      </div>
+
+      <div className="plan-route-setup-vehicle">
+        <label className="plan-route-setup-label" htmlFor="plan-route-vehicle">Vehicle</label>
+        <select
+          id="plan-route-vehicle"
+          className="plan-route-setup-vehicle-select"
+          value={vehicle || "Car"}
+          disabled={frozen}
+          onChange={(e) => onVehicleChange?.(e.target.value)}
+        >
+          {ROUTE_SETUP_VEHICLES.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {String(opt.label).split("—")[0].trim()}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="plan-route-setup-defaults" aria-live="polite">
+        <p className="plan-route-setup-defaults-line">
+          <span className="plan-route-setup-defaults-label">Defaults:</span>
+          {" "}
+          {summary}
+          {customizeActive ? " · customizing" : ""}
+        </p>
+        {!customizeActive && (
+          <button
+            type="button"
+            className="plan-route-setup-customize"
+            disabled={frozen}
+            onClick={onCustomize}
+          >
+            Customize
+          </button>
+        )}
       </div>
     </div>
   );

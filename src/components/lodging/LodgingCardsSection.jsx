@@ -29,6 +29,8 @@ export default function LodgingCardsSection({
   onLodgingSelect,
   selectedLodging = [],
   readOnly = false,
+  isResultCardHidden,
+  onRemoveResultCard,
 }) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
@@ -111,6 +113,17 @@ export default function LodgingCardsSection({
       : `Added ${lodging.name} to budget`);
   }
 
+  function handleRemove(lodging) {
+    const wasSelected = selectedLodging.some(item => item.id === lodging.id);
+    if (wasSelected) onLodgingSelect?.(lodging);
+    onRemoveResultCard?.("lodging", lodging, city, {
+      onUndo: wasSelected ? () => onLodgingSelect?.(lodging) : null,
+    });
+  }
+
+  const visibleItems = items.filter(item => !isResultCardHidden?.("lodging", item, city));
+  const visibleRestAreas = restAreas.filter(item => !isResultCardHidden?.("lodging", item, city));
+
   if (showSleeperOnly) {
     return (
       <div className="lodging-section">
@@ -125,7 +138,7 @@ export default function LodgingCardsSection({
 
   // Hide lodging entirely when only placeholder/empty hotel data would show —
   // never put fake hotels next to verified stops.
-  if (!loading && lodgingType === "hotel" && items.length === 0) {
+  if (!loading && visibleItems.length === 0 && visibleRestAreas.length === 0) {
     return null;
   }
 
@@ -150,23 +163,23 @@ export default function LodgingCardsSection({
       ) : (
         <>
           <div className="lodging-cards-scroll">
-            {lodgingType === "hotel" && items.map(hotel => (
-              <HotelCard key={hotel.id} hotel={hotel} city={city} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
+            {lodgingType === "hotel" && visibleItems.map(hotel => (
+              <HotelCard key={hotel.id} hotel={hotel} city={city} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
             ))}
-            {lodgingType === "rv" && items.map(park => (
-              <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
+            {lodgingType === "rv" && visibleItems.map(park => (
+              <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
             ))}
-            {lodgingType === "truck" && items.map(stop => (
-              <TruckStopCard key={stop.id} stop={stop} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
+            {lodgingType === "truck" && visibleItems.map(stop => (
+              <TruckStopCard key={stop.id} stop={stop} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
             ))}
           </div>
 
-          {lodgingType === "truck" && restAreas.length > 0 && (
+          {lodgingType === "truck" && visibleRestAreas.length > 0 && (
             <>
               <div className="lodging-section-sublabel">Rest areas — backup option</div>
               <div className="lodging-cards-scroll lodging-cards-rest">
-                {restAreas.map(area => (
-                  <RestAreaCard key={area.id} restArea={area} onSave={handleSave} onToast={onToast} readOnly={readOnly} />
+                {visibleRestAreas.map(area => (
+                  <RestAreaCard key={area.id} restArea={area} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
                 ))}
               </div>
             </>

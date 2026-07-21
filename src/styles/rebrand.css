@@ -436,13 +436,18 @@ body {
 }
 
 .app-wrap.night .lodging-card,
+.app-wrap.night .lodging-card.lodging-card-hotel,
 .app-wrap.night .restaurant-card,
 .app-wrap.night .fuel-stop-card,
 .app-wrap.night .stop-card,
 .app-wrap.night .road-stop-card,
 .app-wrap.night .overnight-card {
-  background: var(--color-surface-elevated) !important;
-  border-color: rgba(168, 155, 207, 0.2) !important;
+  background: #1A0D2E !important;
+  border-color: rgba(255, 210, 140, 0.22) !important;
+}
+
+.app-wrap.night .lodging-card.lodging-card-hotel.road-trip-stop-card {
+  border-left-color: #FFD28C !important;
 }
 
 .app-wrap.night .budget-card {

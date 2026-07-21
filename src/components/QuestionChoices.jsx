@@ -12,7 +12,6 @@ import {
 } from "../lib/planFlowDisplay.js";
 
 const TRIP_DETAILS_MORE_SECTION_IDS = new Set([
-  "stops_interests",
   "accessibility",
   "schedule_restrictions",
 ]);
@@ -170,21 +169,6 @@ function isGroupDraft(prefDraft) {
   return prefDraft && typeof prefDraft === "object" && !Array.isArray(prefDraft);
 }
 
-/** Upper bound from travelers band answer already in flow (e.g. "3 to 5 travelers" → 5). */
-function parseTravelersBandMax(travelers) {
-  if (travelers == null || travelers === "") return null;
-  const t = String(travelers);
-  if (t === "1" || t === "Just me") return 1;
-  if (t === "2" || t === "2 travelers") return 2;
-  if (t === "3 to 5" || t === "3 to 5 travelers") return 5;
-  if (t === "6 or more" || t === "6 or more travelers") return 6;
-  const rangeMatch = t.match(/(\d+)\s*to\s*(\d+)/i);
-  if (rangeMatch) return Number(rangeMatch[2]);
-  const leading = t.match(/^(\d+)/);
-  if (leading) return Number(leading[1]);
-  return null;
-}
-
 function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false } = {}) {
   const hasWorkingDraft = isGroupDraft(prefDraft);
   const draft = (includePrefill || hasWorkingDraft) && hasWorkingDraft ? { ...prefDraft } : {};
@@ -194,7 +178,12 @@ function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false 
     }
   }
   if (currentQ?.type === "trip_details") {
-    draft.trip_budget = draft.trip_budget || answers?.trip_budget || "No budget limit";
+    if (draft.food_allergies == null) {
+      draft.food_allergies = answers?.food_allergies || "";
+    }
+    if (draft.schedule_drive_hours == null) {
+      draft.schedule_drive_hours = answers?.schedule_drive_hours || "";
+    }
   }
   return draft;
 }
@@ -233,11 +222,21 @@ function renderPlanOptionCard({
 
 function isTripDetailsDraftEmpty(draft) {
   const dietary = Array.isArray(draft.dietary) ? draft.dietary : [];
-  const stops = Array.isArray(draft.stops_interests) ? draft.stops_interests : [];
   const accessibility = Array.isArray(draft.accessibility) ? draft.accessibility : [];
   const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
-  const budget = draft.trip_budget || "No budget limit";
-  return !dietary.length && !stops.length && !accessibility.length && !schedule.length && budget === "No budget limit";
+  const allergies = String(draft.food_allergies || "").trim();
+  const hours = String(draft.schedule_drive_hours || "").trim();
+  return !dietary.length && !accessibility.length && !schedule.length
+    && (!allergies || allergies === "None specified")
+    && (!hours || hours === "Any reasonable hours");
+}
+
+function buildMultiselectGroupPayload(currentQ, draft) {
+  const payload = {};
+  for (const sec of currentQ?.sections || []) {
+    payload[sec.id] = Array.isArray(draft?.[sec.id]) ? draft[sec.id] : [];
+  }
+  return payload;
 }
 
 function continueWithHaptic(handler) {
@@ -278,6 +277,12 @@ export default function QuestionChoices({
   onRouteSetupDestChange,
   onRouteSetupSwap,
   onRouteSetupContinue,
+  routeSetupCustomize = false,
+  onRouteSetupCustomize,
+  routeSetupDefaultsSummary = "",
+  routeSetupVehicle = "Car",
+  onRouteSetupVehicleChange,
+  routeInfo = null,
 }) {
   const [loyaltyOverride, setLoyaltyOverride] = useState(null);
   const [groupOverride, setGroupOverride] = useState(null);
@@ -286,12 +291,7 @@ export default function QuestionChoices({
   const [moreOptionsExpandedQId, setMoreOptionsExpandedQId] = useState(null);
   const [vehicleTypesExpandedQId, setVehicleTypesExpandedQId] = useState(null);
   const [routeExpiredKey, setRouteExpiredKey] = useState(null);
-  const [budgetTouchedQId, setBudgetTouchedQId] = useState(null);
-
-  const partyMax = useMemo(
-    () => parseTravelersBandMax(answers?.travelers),
-    [answers?.travelers],
-  );
+  const [constraintOpenSections, setConstraintOpenSections] = useState({});
 
   const committed = committedAnswers ?? answers;
   const questionConfirmed = useMemo(
@@ -369,7 +369,10 @@ export default function QuestionChoices({
 
   const moreOptionsExpanded = moreOptionsExpandedQId === currentQ?.id;
   const vehicleTypesExpanded = vehicleTypesExpandedQId === currentQ?.id;
-  const budgetTouched = budgetTouchedQId === currentQ?.id;
+
+  useEffect(() => {
+    setConstraintOpenSections({});
+  }, [currentQ?.id]);
 
   useEffect(() => {
     if (!actionsInDock || !onDockActionsChange) return undefined;
@@ -397,22 +400,22 @@ export default function QuestionChoices({
     const submitTripDetails = () => {
       const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
       const empty = isTripDetailsDraftEmpty(draft);
+      const allergies = String(draft.food_allergies || "").trim();
+      const hours = String(draft.schedule_drive_hours || "").trim();
       pickInstant({
         dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
-        stops_interests: Array.isArray(draft.stops_interests) ? draft.stops_interests : [],
         accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
         schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
-        trip_budget: draft.trip_budget || "No budget limit",
+        ...(allergies ? { food_allergies: allergies } : {}),
+        ...(hours ? { schedule_drive_hours: hours } : {}),
       }, { trip_details_defaults_confirmed: empty });
     };
 
     const skipTripDetails = () => {
       pickInstant({
         dietary: [],
-        stops_interests: [],
         accessibility: [],
         schedule_restrictions: [],
-        trip_budget: "No budget limit",
       }, { trip_details_defaults_confirmed: true });
     };
 
@@ -455,18 +458,30 @@ export default function QuestionChoices({
     } else if (currentQ.type === "multiselect_group") {
       dock.showContinue = true;
       dock.continueDisabled = frozen;
-      dock.onContinue = continueWithHaptic(() => pickInstant({
-        dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
-        stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
-      }));
+      dock.onContinue = continueWithHaptic(() => pickInstant(buildMultiselectGroupPayload(currentQ, groupDraft)));
       dock.showSkip = true;
       dock.skipLabel = "Nothing special";
-      dock.onSkip = () => pickInstant({ dietary: [], stops_interests: [] });
+      dock.onSkip = () => {
+        const empty = {};
+        for (const sec of currentQ.sections || []) empty[sec.id] = [];
+        pickInstant(empty);
+      };
     } else if (currentQ.type === "text") {
       if (currentQ.id === "food_allergies" || currentQ.id === "schedule_drive_hours") {
+        dock.showContinue = true;
+        dock.continueDisabled = frozen;
+        dock.onContinue = continueWithHaptic(() => {
+          const input = document.querySelector(".question-text-input");
+          const val = input?.value?.trim();
+          if (val) pickInstant(val);
+          else pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours");
+        });
         dock.showSkip = true;
         dock.onSkip = () => pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours");
       }
+    } else if (currentQ.type === "trip_draft") {
+      dock.showContinue = false;
+      dock.showSkip = false;
     } else if (routePending && onSkipRoutePending) {
       dock.showSkip = true;
       dock.skipLabel = "Skip for now";
@@ -520,9 +535,9 @@ export default function QuestionChoices({
   const isSingleSelect = currentQ.type === "choice" || currentQ.type === "travelers";
   const isLodgingStay = currentQ.type === "lodging_stay";
   const isTripDetails = currentQ.type === "trip_details";
+  const isConstraintsPanel = isTripDetails && currentQ.layout === "constraints_panel";
   const routePending = Boolean(currentQ.pendingRoute);
   const routeLocked = routePending && !routePendingExpired;
-  const budgetDraft = groupDraft?.trip_budget || "No budget limit";
 
   function pickInstant(value, extraFields) {
     onPickAnswer(value, extraFields, { instant: true });
@@ -546,41 +561,33 @@ export default function QuestionChoices({
     onSetPrefDraft(next);
   }
 
+  function setGroupField(field, value) {
+    const base = groupDraft ?? buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
+    const next = { ...base, [field]: value };
+    setGroupOverride({ qId: currentQ.id, draft: next });
+    onSetPrefDraft(next);
+  }
+
   function submitTripDetails() {
     const draft = groupDraft || buildGroupDraft(currentQ, prefDraft, committed, { includePrefill: questionConfirmed });
     const empty = isTripDetailsDraftEmpty(draft);
+    const allergies = String(draft.food_allergies || "").trim();
+    const hours = String(draft.schedule_drive_hours || "").trim();
     pickInstant({
       dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
-      stops_interests: Array.isArray(draft.stops_interests) ? draft.stops_interests : [],
       accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
       schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
-      trip_budget: draft.trip_budget || "No budget limit",
+      ...(allergies ? { food_allergies: allergies } : {}),
+      ...(hours ? { schedule_drive_hours: hours } : {}),
     }, { trip_details_defaults_confirmed: empty });
   }
 
   function skipTripDetails() {
     pickInstant({
       dietary: [],
-      stops_interests: [],
       accessibility: [],
       schedule_restrictions: [],
-      trip_budget: "No budget limit",
     }, { trip_details_defaults_confirmed: true });
-  }
-
-  function setBudgetDraft(value) {
-    setBudgetTouchedQId(currentQ.id);
-    const base = groupDraft ?? buildGroupDraft(currentQ, {}, committed);
-    const current = base.trip_budget || "No budget limit";
-    const next = { ...base, trip_budget: current === value ? "No budget limit" : value };
-    setGroupOverride({ qId: currentQ.id, draft: next });
-    onSetPrefDraft(next);
-  }
-
-  function isBudgetSelected(value) {
-    if (budgetDraft !== value) return false;
-    if (value === "No budget limit") return budgetTouched;
-    return true;
   }
 
   function toggleMultiDraft(value) {
@@ -596,8 +603,6 @@ export default function QuestionChoices({
     const [min, max] = field === "adults"
       ? (currentQ.adultRange || [1, 8])
       : (currentQ.childRange || [0, 6]);
-    const currentTotal = Number(adultsBase) + Number(childrenBase);
-    if (delta > 0 && partyMax != null && currentTotal >= partyMax) return;
 
     const nextAdults = field === "adults"
       ? Math.min(max, Math.max(min, Number(adultsBase) + delta))
@@ -605,7 +610,6 @@ export default function QuestionChoices({
     const nextChildren = field === "children"
       ? Math.min(max, Math.max(min, Number(childrenBase) + delta))
       : childrenBase;
-    if (partyMax != null && nextAdults + nextChildren > partyMax) return;
 
     setPartyOverride({ qId: currentQ.id, adults: nextAdults, children: nextChildren });
     onSetPrefDraft({ adults: nextAdults, children: nextChildren });
@@ -616,6 +620,47 @@ export default function QuestionChoices({
       { adults: Number(partyAdults ?? 1), children: Number(partyChildren ?? 0) },
       {},
     );
+  }
+
+  function isConstraintSectionOpen(sectionId) {
+    if (constraintOpenSections[sectionId] != null) return constraintOpenSections[sectionId];
+    const values = groupDraftSets[sectionId];
+    return Boolean(values && values.size > 0);
+  }
+
+  function toggleConstraintSection(sectionId) {
+    setConstraintOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !isConstraintSectionOpen(sectionId),
+    }));
+  }
+
+  function renderConstraintInlineFollowups(sectionId) {
+    const followups = currentQ.inlineFollowups || {};
+    const nodes = [];
+    for (const [field, cfg] of Object.entries(followups)) {
+      if (cfg.whenSection !== sectionId) continue;
+      const selected = groupDraftSets[sectionId] || new Set();
+      const triggerValues = cfg.whenValues || (cfg.whenValue ? [cfg.whenValue] : []);
+      if (!triggerValues.some(v => selected.has(v))) continue;
+      nodes.push(
+        <div className="question-constraint-followup" key={field}>
+          <label className="question-constraint-followup-label" htmlFor={`constraint-${field}`}>
+            {field === "food_allergies" ? "Allergies" : "Drive hours"}
+          </label>
+          <input
+            id={`constraint-${field}`}
+            type="text"
+            className="question-text-input"
+            placeholder={cfg.placeholder || "Type details…"}
+            value={groupDraft?.[field] || ""}
+            disabled={frozen}
+            onChange={(e) => setGroupField(field, e.target.value)}
+          />
+        </div>,
+      );
+    }
+    return nodes;
   }
 
   // tall + standard both need an inner scrollport on mobile/desktop flex layouts;
@@ -658,6 +703,11 @@ export default function QuestionChoices({
           onOriginChange={onRouteSetupOriginChange}
           onDestChange={onRouteSetupDestChange}
           onSwap={onRouteSetupSwap}
+          defaultsSummary={routeSetupDefaultsSummary}
+          customizeActive={routeSetupCustomize}
+          onCustomize={onRouteSetupCustomize}
+          vehicle={routeSetupVehicle}
+          onVehicleChange={onRouteSetupVehicleChange}
         />
       )}
 
@@ -805,48 +855,80 @@ export default function QuestionChoices({
 
           {currentQ.type === "party_composition" && (
             <div className="party-composition-inputs">
-              {partyMax != null && (
-                <p className="party-composition-total" aria-live="polite" aria-atomic="true">
-                  Total: {Number(partyAdults ?? 1) + Number(partyChildren ?? 0)} / {partyMax}
-                </p>
-              )}
               {[
                 { field: "adults", label: "Adults", value: partyAdults ?? 1, range: currentQ.adultRange || [1, 8] },
                 { field: "children", label: "Children", value: partyChildren ?? 0, range: currentQ.childRange || [0, 6] },
-              ].map(({ field, label, value, range }) => {
-                const atPartyMax = partyMax != null
-                  && Number(partyAdults ?? 1) + Number(partyChildren ?? 0) >= partyMax;
+              ].map(({ field, label, value, range }) => (
+                <div className="party-composition-row" key={field}>
+                  <span className="party-composition-label">{label}</span>
+                  <div className="party-composition-stepper">
+                    <button
+                      type="button"
+                      className="party-composition-stepper-btn"
+                      disabled={frozen || value <= range[0]}
+                      onClick={() => adjustPartyCount(field, -1)}
+                      aria-label={`Fewer ${label.toLowerCase()}`}
+                    >
+                      −
+                    </button>
+                    <span className="party-composition-value" aria-live="polite" aria-atomic="true">{value}</span>
+                    <button
+                      type="button"
+                      className="party-composition-stepper-btn"
+                      disabled={frozen || value >= range[1]}
+                      onClick={() => adjustPartyCount(field, 1)}
+                      aria-label={`More ${label.toLowerCase()}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {isTripDetails && isConstraintsPanel && (
+            <div className="question-constraints-panel">
+              {(currentQ.sections || []).map(section => {
+                const open = isConstraintSectionOpen(section.id);
+                const selectedCount = groupDraftSets[section.id]?.size || 0;
                 return (
-                  <div className="party-composition-row" key={field}>
-                    <span className="party-composition-label">{label}</span>
-                    <div className="party-composition-stepper">
-                      <button
-                        type="button"
-                        className="party-composition-stepper-btn"
-                        disabled={frozen || value <= range[0]}
-                        onClick={() => adjustPartyCount(field, -1)}
-                        aria-label={`Fewer ${label.toLowerCase()}`}
-                      >
-                        −
-                      </button>
-                      <span className="party-composition-value" aria-live="polite" aria-atomic="true">{value}</span>
-                      <button
-                        type="button"
-                        className="party-composition-stepper-btn"
-                        disabled={frozen || value >= range[1] || atPartyMax}
-                        onClick={() => adjustPartyCount(field, 1)}
-                        aria-label={`More ${label.toLowerCase()}`}
-                      >
-                        +
-                      </button>
-                    </div>
+                  <div className={`question-constraint-section${open ? " is-open" : ""}`} key={section.id}>
+                    <button
+                      type="button"
+                      className="question-section-toggle question-constraint-toggle"
+                      aria-expanded={open}
+                      disabled={frozen}
+                      onClick={() => toggleConstraintSection(section.id)}
+                    >
+                      <span className="question-section-label">{section.label}</span>
+                      <span className="question-constraint-meta">
+                        {selectedCount > 0 ? `${selectedCount} selected` : "Optional"}
+                      </span>
+                      <span className="question-section-chevron" aria-hidden="true">{open ? "−" : "+"}</span>
+                    </button>
+                    {open && (
+                      <div className="question-constraint-body">
+                        {renderOptionGrid((section.choices || []).map(raw => {
+                          const { value, label } = normalizeChoice(raw);
+                          return renderPlanOptionCard({
+                            value: `${section.id}:${value}`,
+                            label,
+                            selected: groupDraftSets[section.id]?.has(value) ?? false,
+                            disabled: frozen,
+                            onSelect: () => toggleGroupSection(section.id, value),
+                          });
+                        }))}
+                        {renderConstraintInlineFollowups(section.id)}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
 
-          {isTripDetails && (
+          {isTripDetails && !isConstraintsPanel && (
             <>
               {(currentQ.sections || []).flatMap(section => {
                 if (section.id !== "dietary") return [];
@@ -866,21 +948,6 @@ export default function QuestionChoices({
                   </div>
                 )];
               })}
-              {Array.isArray(currentQ.budgetChoices) && currentQ.budgetChoices.length > 0 && (
-                <div className="question-group-section">
-                  <div className="question-section-label">Budget</div>
-                  {renderOptionGrid(currentQ.budgetChoices.map(raw => {
-                    const { value, label } = normalizeChoice(raw);
-                    return renderPlanOptionCard({
-                      value: `budget:${value}`,
-                      label,
-                      selected: isBudgetSelected(value),
-                      disabled: frozen,
-                      onSelect: () => setBudgetDraft(value),
-                    });
-                  }))}
-                </div>
-              )}
               {(currentQ.sections || []).some(section => TRIP_DETAILS_MORE_SECTION_IDS.has(section.id)) && (
                 <div className="question-group-section question-group-collapsible question-more-options">
                   <button
@@ -924,13 +991,16 @@ export default function QuestionChoices({
               {(currentQ.sections || []).map(section => (
                 <div className="question-group-section" key={section.id}>
                   <div className="question-section-label">{section.label}</div>
-                  {renderOptionGrid((section.choices || []).map(c => renderPlanOptionCard({
-                    value: `${section.id}:${c}`,
-                    label: c,
-                    selected: groupDraftSets[section.id]?.has(c) ?? false,
-                    disabled: frozen,
-                    onSelect: () => toggleGroupSection(section.id, c),
-                  })))}
+                  {renderOptionGrid((section.choices || []).map(c => {
+                    const { value, label } = normalizeChoice(c);
+                    return renderPlanOptionCard({
+                      value: `${section.id}:${value}`,
+                      label,
+                      selected: groupDraftSets[section.id]?.has(value) ?? false,
+                      disabled: frozen,
+                      onSelect: () => toggleGroupSection(section.id, value),
+                    });
+                  }))}
                 </div>
               ))}
             </>
@@ -955,22 +1025,29 @@ export default function QuestionChoices({
           />
           {!actionsInDock && (
           <div className={actionRowClass}>
-            {currentQ.id === "food_allergies" && (
+            <button
+              type="button"
+              className="btn-generate btn-generate-inline"
+              disabled={frozen}
+              onClick={continueWithHaptic(() => {
+                const input = document.querySelector(".question-text-input");
+                const val = input?.value?.trim();
+                if (val) {
+                  pickInstant(val);
+                  return;
+                }
+                if (currentQ.id === "food_allergies") pickInstant("None specified");
+                else if (currentQ.id === "schedule_drive_hours") pickInstant("Any reasonable hours");
+              })}
+            >
+              Continue
+            </button>
+            {(currentQ.id === "food_allergies" || currentQ.id === "schedule_drive_hours") && (
               <button
                 type="button"
                 className="convo-nav-btn"
                 disabled={frozen}
-                onClick={() => pickInstant("None specified")}
-              >
-                Skip
-              </button>
-            )}
-            {currentQ.id === "schedule_drive_hours" && (
-              <button
-                type="button"
-                className="convo-nav-btn"
-                disabled={frozen}
-                onClick={() => pickInstant("Any reasonable hours")}
+                onClick={() => pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours")}
               >
                 Skip
               </button>
@@ -1050,14 +1127,20 @@ export default function QuestionChoices({
             type="button"
             className="btn-generate btn-generate-inline"
             disabled={frozen}
-            onClick={continueWithHaptic(() => pickInstant({
-              dietary: Array.isArray(groupDraft?.dietary) ? groupDraft.dietary : [],
-              stops_interests: Array.isArray(groupDraft?.stops_interests) ? groupDraft.stops_interests : [],
-            }))}
+            onClick={continueWithHaptic(() => pickInstant(buildMultiselectGroupPayload(currentQ, groupDraft)))}
           >
             Continue
           </button>
-          <button type="button" className="convo-nav-btn" disabled={frozen} onClick={() => pickInstant({ dietary: [], stops_interests: [] })}>
+          <button
+            type="button"
+            className="convo-nav-btn"
+            disabled={frozen}
+            onClick={() => {
+              const empty = {};
+              for (const sec of currentQ.sections || []) empty[sec.id] = [];
+              pickInstant(empty);
+            }}
+          >
             Nothing special
           </button>
         </div>

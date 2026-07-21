@@ -17,6 +17,8 @@ export default function RestaurantCard({
   restaurant,
   estimatedArrival = null,
   onDirections = null,
+  onRemove = null,
+  readOnly = false,
 }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const status = dinnerOpenStatus(restaurant, estimatedArrival || new Date());
@@ -99,6 +101,8 @@ export default function RestaurantCard({
       verified={hasGooglePlacesData(restaurant)}
       metaExtra={metaExtra}
       actions={actions}
+      onRemove={!readOnly && onRemove ? () => onRemove(restaurant) : null}
+      removeLabel={`Remove ${restaurant.name}`}
       photo={(
         photoSrc && !photoFailed ? (
           <img
