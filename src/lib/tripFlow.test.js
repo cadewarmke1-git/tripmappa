@@ -602,6 +602,27 @@ describe("tripFlow UX", () => {
     expect(DRAFT_QUICK_CHOICES.every(g => g.options.length === 3)).toBe(true);
   });
 
+  it("applySmartTripDefaults is a no-op for RV, Camper Van, and Truck", () => {
+    for (const vehicle of ["RV", "Camper Van", "Semi Truck (18-wheeler)"]) {
+      const out = applySmartTripDefaults({ vehicle });
+      expect(out.fuel_type).toBeUndefined();
+      expect(out.stop_frequency).toBeUndefined();
+      expect(out._draftFirstFlow).toBeUndefined();
+      expect(out._smartDefaultsApplied).toBeUndefined();
+      const next = getNextFlowQuestion(out, {
+        ...routeEndpoints,
+        routeDistanceMiles: 1250,
+        routeDurationHours: 19,
+      });
+      expect(next.id).not.toBe("trip_draft");
+    }
+    expect(getNextFlowQuestion(applySmartTripDefaults({ vehicle: "RV" }), {
+      ...routeEndpoints,
+      routeDistanceMiles: 1250,
+      routeDurationHours: 19,
+    }).id).toBe("fuel_type");
+  });
+
   it("draft quick resolvers cover solo, family, fewer stops, and treat spend", () => {
     expect(resolveDraftQuickPartyId({ adult_count: 1, child_count: 0 })).toBe("solo");
     expect(resolveDraftQuickPartyId({ adult_count: 2, child_count: 2 })).toBe("family");

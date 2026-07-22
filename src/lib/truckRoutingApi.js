@@ -54,7 +54,11 @@ export async function fetchTruckRoute(origin, destination, answers = {}, { signa
     throw new Error("Invalid truck routing response");
   }
   if (!res.ok) {
-    throw new Error(data.error || "Truck routing failed");
+    throw new Error(
+      data.error && !/truck routing failed/i.test(String(data.error))
+        ? data.error
+        : "Truck-specific routing is unavailable right now",
+    );
   }
   return data;
 }

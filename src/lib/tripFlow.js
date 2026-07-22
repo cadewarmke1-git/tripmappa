@@ -387,10 +387,30 @@ export function formatSmartDefaultsSummary(answers = {}) {
 }
 
 /**
+ * Car / SUV / Motorcycle / Rental Car — eligible for draft-first + smart defaults.
+ * RV, Camper Van, Truck, Multi, Plane, and water vehicles use full sequential flow.
+ */
+export function canUseDraftFirstFlow(answers = {}) {
+  if (answers.vehicle === MULTI_VEHICLE_TRIP) return false;
+  const effective = getEffectiveVehicle(answers);
+  if (isTruckVehicle(effective) || isRvVehicle(effective)) return false;
+  if (effective === "Plane" || isWaterVehicle(effective)) return false;
+  return isPersonalVehicle(effective);
+}
+
+/**
  * Apply draft-first smart defaults for fields the user did not customize.
- * Does not set party composition, overnight strategy, EV networks, or truck/RV dimensions.
+ * No-op for RV, Camper Van, Truck, Multi, and other non–draft-first vehicles.
+ * Does not set overnight strategy, EV networks, or truck/RV dimensions.
  */
 export function applySmartTripDefaults(answers = {}) {
+  if (!canUseDraftFirstFlow(answers)) {
+    const out = { ...answers };
+    delete out._draftFirstFlow;
+    delete out._customizeTrip;
+    delete out._smartDefaultsApplied;
+    return out;
+  }
   const out = { ...answers };
   for (const [key, value] of Object.entries(SMART_TRIP_DEFAULTS)) {
     if (out[key] == null || out[key] === "") {
@@ -407,6 +427,13 @@ export function applySmartTripDefaults(answers = {}) {
 }
 
 export function beginDraftFirstCustomize(answers = {}) {
+  if (!canUseDraftFirstFlow(answers)) {
+    const out = { ...answers };
+    delete out._draftFirstFlow;
+    delete out._customizeTrip;
+    delete out._smartDefaultsApplied;
+    return out;
+  }
   return {
     ...answers,
     _draftFirstFlow: true,
@@ -415,26 +442,30 @@ export function beginDraftFirstCustomize(answers = {}) {
   };
 }
 
-/** Personal vehicles eligible for the draft-first primary path. */
+/** Personal vehicles currently on the draft-first primary path. */
 export function isDraftFirstEligible(answers = {}) {
   if (!answers._draftFirstFlow) return false;
-  if (answers.vehicle === MULTI_VEHICLE_TRIP) return false;
-  const effective = getEffectiveVehicle(answers);
-  if (isTruckVehicle(effective) || isRvVehicle(effective)) return false;
-  if (effective === "Plane" || isWaterVehicle(effective)) return false;
-  return isPersonalVehicle(effective);
+  return canUseDraftFirstFlow(answers);
 }
 
 const EV_CHARGING_QUESTION = {
   id: "ev_charging_network",
-  ask: "Which charging network should we prioritize?",
-  hint: "We'll place chargers that match your network along the route.",
+  ask: "Where can your car charge along the way?",
+  hint: "We'll suggest stops at chargers that work for your vehicle.",
   type: "choice",
   choices: [
-    "Any fast chargers",
-    "Tesla Superchargers",
-    "Electrify America",
-    "No preference",
+    {
+      value: "Tesla Superchargers",
+      label: "Tesla Superchargers (Tesla vehicles only)",
+    },
+    {
+      value: "Any public charger",
+      label: "Any public charger (non-Tesla EVs)",
+    },
+    {
+      value: "Both networks",
+      label: "Both networks (if vehicle supports it)",
+    },
   ],
 };
 
@@ -1346,6 +1377,12 @@ export function normalizeTripAnswers(answers, context = {}, options = {}) {
   if (out.fuel_type && !isTruckVehicle(effective)) out.fuel = mapFuelTypeToFuel(out.fuel_type);
   if (out.ev_charging_network === "Tesla Superchargers") {
     out.fuel_type = "Electric — Tesla Superchargers";
+    out.fuel = "Electric (EV)";
+  } else if (out.ev_charging_network === "Both networks") {
+    out.fuel_type = "Electric — Tesla and public chargers";
+    out.fuel = "Electric (EV)";
+  } else if (out.ev_charging_network === "Any public charger") {
+    out.fuel_type = "Electric — public chargers";
     out.fuel = "Electric (EV)";
   } else if (out.ev_charging_network && /electric/i.test(String(out.fuel_type || ""))) {
     out.fuel = "Electric (EV)";

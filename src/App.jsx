@@ -12,7 +12,7 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, formatSmartDefaultsSummary, getNextHardConstraintQuestion } from "./lib/tripFlow.js";
+import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, canUseDraftFirstFlow, formatSmartDefaultsSummary, getNextHardConstraintQuestion } from "./lib/tripFlow.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
@@ -1723,8 +1723,10 @@ export default function App() {
     // Pass overrides — React state origin/dest are still stale until next render,
     // and getNextFlowQuestion stays on route_setup until endpoints exist in context.
     const seeded = { ...answers, vehicle: routeSetupVehicle || answers.vehicle || "Car" };
-    const nextAnswers = routeSetupCustomize
-      ? beginDraftFirstCustomize(seeded)
+    // Smart defaults + draft-first only for Car / SUV / Motorcycle / Rental Car.
+    // RV, Camper Van, Truck, and Multi enter full sequential flow unanswered.
+    const nextAnswers = canUseDraftFirstFlow(seeded)
+      ? (routeSetupCustomize ? beginDraftFirstCustomize(seeded) : applySmartTripDefaults(seeded))
       : applySmartTripDefaults(seeded);
     setAnswers(nextAnswers);
     setRouteSetupCustomize(false);

@@ -1,11 +1,19 @@
 import { Autocomplete } from "@react-google-maps/api";
 import { configurePlacesAutocomplete } from "../../lib/places.js";
-import { formatSmartDefaultsSummary, VEHICLE_GROUPS } from "../../lib/tripFlow.js";
+import {
+  canUseDraftFirstFlow,
+  formatSmartDefaultsSummary,
+  MULTI_VEHICLE_TRIP,
+  VEHICLE_GROUPS,
+} from "../../lib/tripFlow.js";
 
-const ROUTE_SETUP_VEHICLES = VEHICLE_GROUPS
-  .flatMap(g => g.options)
-  .filter(o => o.value !== "Multi-Vehicle Trip")
-  .slice(0, 8);
+const ROUTE_SETUP_VEHICLES = [
+  ...VEHICLE_GROUPS
+    .flatMap(g => g.options)
+    .filter(o => o.value !== MULTI_VEHICLE_TRIP)
+    .slice(0, 8),
+  { value: MULTI_VEHICLE_TRIP, label: "Multi-Vehicle Trip" },
+];
 
 export default function QuestionRouteSetup({
   isLoaded,
@@ -27,6 +35,7 @@ export default function QuestionRouteSetup({
   vehicle = "Car",
   onVehicleChange,
 }) {
+  const draftFirst = canUseDraftFirstFlow({ vehicle });
   const summary = defaultsSummary || formatSmartDefaultsSummary({ vehicle });
 
   return (
@@ -152,24 +161,30 @@ export default function QuestionRouteSetup({
         </select>
       </div>
 
-      <div className="plan-route-setup-defaults" aria-live="polite">
-        <p className="plan-route-setup-defaults-line">
-          <span className="plan-route-setup-defaults-label">Defaults:</span>
-          {" "}
-          {summary}
-          {customizeActive ? " · customizing" : ""}
+      {draftFirst ? (
+        <div className="plan-route-setup-defaults" aria-live="polite">
+          <p className="plan-route-setup-defaults-line">
+            <span className="plan-route-setup-defaults-label">Defaults:</span>
+            {" "}
+            {summary}
+            {customizeActive ? " · customizing" : ""}
+          </p>
+          {!customizeActive && (
+            <button
+              type="button"
+              className="plan-route-setup-customize"
+              disabled={frozen}
+              onClick={onCustomize}
+            >
+              Customize
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="plan-route-setup-defaults-line" aria-live="polite">
+          We'll ask a few {vehicle === MULTI_VEHICLE_TRIP ? "convoy" : "vehicle"} questions next.
         </p>
-        {!customizeActive && (
-          <button
-            type="button"
-            className="plan-route-setup-customize"
-            disabled={frozen}
-            onClick={onCustomize}
-          >
-            Customize
-          </button>
-        )}
-      </div>
+      )}
     </div>
   );
 }

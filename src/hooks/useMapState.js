@@ -101,6 +101,8 @@ export function useMapState({
   }, [view]);
 
   const directionsFetchRef = useRef(null);
+  /** When HERE truck routing fails, retry once via standard Google driving directions. */
+  const skipTruckRoutingRef = useRef(false);
 
   const normalizeMapPoint = useCallback((point) => {
     if (!point) return null;
@@ -148,7 +150,7 @@ export function useMapState({
 
     const vehicle = vehicleType || answers.vehicle || "Car";
 
-    if (shouldUseTruckRouting({ ...answers, vehicle })) {
+    if (shouldUseTruckRouting({ ...answers, vehicle }) && !skipTruckRoutingRef.current) {
       setRouteLoading(true);
       setTrafficAlert(false);
       const requestKey = `truck|${originVal}|${destVal}|${vehicle}|${answers.truck_height}|${answers.truck_weight}|${answers.truck_hazmat}`;
@@ -210,16 +212,18 @@ export function useMapState({
 
           return { ok: true, routeInfo: nextRouteInfo };
         })
-        .catch((err) => {
+        .catch(() => {
+          // HERE unavailable — fall back to Google driving directions without a raw error banner.
           setRouteLoading(false);
-          const msg = err.message || "Could not calculate truck route. Check addresses and try again.";
-          setRouteError(msg);
-          setRouteInfo(null);
-          setRoutePath(null);
-          setTruckRoutePath(null);
-          setDirectionsResult(null);
-          toastFnRef.current?.(msg, { duration: 7000 });
-          return { ok: false };
+          setRouteError(null);
+          toastFnRef.current?.(
+            "Truck-specific routing is unavailable right now. Showing a standard driving route instead.",
+            { duration: 6000 },
+          );
+          skipTruckRoutingRef.current = true;
+          return fetchDirections(vehicle).finally(() => {
+            skipTruckRoutingRef.current = false;
+          });
         });
 
       directionsFetchRef.current = { key: requestKey, promise };
