@@ -1,138 +1,126 @@
-import { useMemo, useState } from "react";
-import QuestionChoices from "./QuestionChoices.jsx";
-import { formatSmartDefaultsSummary } from "../lib/tripFlow.js";
+import {
+  DRAFT_QUICK_CHOICES,
+  resolveDraftQuickPartyId,
+  resolveDraftQuickPaceId,
+  resolveDraftQuickSpendId,
+} from "../lib/tripFlow.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 
+const PARTY_QUESTION = { id: "party_composition", type: "party_composition" };
+const PACE_QUESTION = { id: "stop_frequency", type: "choice" };
+const SPEND_QUESTION = { id: "luxury_level", type: "choice" };
+
 /**
- * Draft-first plan surface: route summary + optional tune sections + Generate.
- * Tune sections reuse the same question definitions as the sequential flow.
+ * Draft-first plan surface: short summary, three one-tap choices, pinned Generate.
  */
 export default function TripDraftPanel({
   currentQ,
-  answers,
-  committedAnswers,
+  answers = {},
   routeInfo,
-  prefDraft,
-  questionHistory = [],
   frozen = false,
-  onSetPrefDraft,
   onApplyTuneAnswer,
   onGenerateTrip,
   generateDisabled = false,
 }) {
-  const [openSectionId, setOpenSectionId] = useState(
-    currentQ?.openCustomize ? "party" : null,
-  );
-  const [reviewedIds, setReviewedIds] = useState(() => new Set());
-
   const distance = routeInfo?.distance || null;
   const duration = routeInfo?.duration || null;
   const stopLabel = currentQ?.suggestedStopCount || "A few (2-3)";
-  const defaultsLine = formatSmartDefaultsSummary(answers);
-  const sections = Array.isArray(currentQ?.tuneSections) ? currentQ.tuneSections : [];
-  const reviewedCount = reviewedIds.size;
-  const sectionTotal = sections.length;
-
   const routeReady = Boolean(distance || duration);
+  const questions = Array.isArray(currentQ?.quickChoices) && currentQ.quickChoices.length
+    ? currentQ.quickChoices
+    : DRAFT_QUICK_CHOICES;
 
-  const activeSection = useMemo(
-    () => sections.find(s => s.id === openSectionId) || null,
-    [sections, openSectionId],
-  );
+  const selected = {
+    party: resolveDraftQuickPartyId(answers),
+    pace: resolveDraftQuickPaceId(answers),
+    spending: resolveDraftQuickSpendId(answers),
+  };
 
-  function toggleSection(id) {
-    setOpenSectionId(prev => (prev === id ? null : id));
+  function pickParty(option) {
+    if (frozen) return;
+    triggerPrimaryHaptic();
+    onApplyTuneAnswer?.(
+      { id: "party", question: PARTY_QUESTION },
+      { adults: option.adults, children: option.children },
+    );
   }
 
-  function handleTuneContinue(value, extraFields, options) {
-    const section = activeSection;
-    if (!section) return;
-    onApplyTuneAnswer?.(section, value, extraFields, options);
-    setReviewedIds(prev => {
-      const next = new Set(prev);
-      next.add(section.id);
-      return next;
-    });
-    setOpenSectionId(null);
+  function pickPace(option) {
+    if (frozen) return;
+    triggerPrimaryHaptic();
+    onApplyTuneAnswer?.(
+      { id: "pace", question: PACE_QUESTION },
+      option.stop_frequency,
+    );
+  }
+
+  function pickSpend(option) {
+    if (frozen) return;
+    triggerPrimaryHaptic();
+    onApplyTuneAnswer?.(
+      { id: "spending", question: SPEND_QUESTION },
+      option.luxury_level,
+    );
+  }
+
+  function onPick(groupId, option) {
+    if (groupId === "party") pickParty(option);
+    else if (groupId === "pace") pickPace(option);
+    else if (groupId === "spending") pickSpend(option);
   }
 
   return (
     <div className="trip-draft-panel">
-      <div className="trip-draft-summary">
-        <p className="trip-draft-eyebrow">Draft route</p>
-        <h2 className="trip-draft-title">
-          {routeReady ? "Here is your starting plan" : "Mapping your route…"}
-        </h2>
-        <div className="trip-draft-stats" aria-live="polite">
-          <div className="trip-draft-stat">
-            <span className="trip-draft-stat-label">Distance</span>
-            <span className="trip-draft-stat-value">{distance || "Calculating…"}</span>
+      <div className="trip-draft-scroll">
+        <div className="trip-draft-summary">
+          <h2 className="trip-draft-title">
+            {routeReady ? "Ready when you are" : "Mapping your route…"}
+          </h2>
+          <div className="trip-draft-stats" aria-live="polite">
+            <div className="trip-draft-stat">
+              <span className="trip-draft-stat-label">Distance</span>
+              <span className="trip-draft-stat-value">{distance || "Calculating…"}</span>
+            </div>
+            <div className="trip-draft-stat">
+              <span className="trip-draft-stat-label">Drive time</span>
+              <span className="trip-draft-stat-value">{duration || "Calculating…"}</span>
+            </div>
+            <div className="trip-draft-stat">
+              <span className="trip-draft-stat-label">Stops</span>
+              <span className="trip-draft-stat-value">{stopLabel}</span>
+            </div>
           </div>
-          <div className="trip-draft-stat">
-            <span className="trip-draft-stat-label">Drive time</span>
-            <span className="trip-draft-stat-value">{duration || "Calculating…"}</span>
-          </div>
-          <div className="trip-draft-stat">
-            <span className="trip-draft-stat-label">Suggested stops</span>
-            <span className="trip-draft-stat-value">{stopLabel}</span>
-          </div>
-        </div>
-        <p className="trip-draft-defaults">{defaultsLine}</p>
-      </div>
-
-      <div className="trip-draft-tune">
-        <div className="trip-draft-tune-header">
-          <h3 className="trip-draft-tune-title">Tune your trip</h3>
-          {sectionTotal > 0 && (
-            <p className="trip-draft-tune-progress">
-              {reviewedCount} of {sectionTotal} optional sections reviewed
-            </p>
-          )}
+          <p className="trip-draft-reassure">
+            We&apos;ll plan a comfortable drive with a few good stops. Change anything below if you want.
+          </p>
         </div>
 
-        <div className="trip-draft-tune-list">
-          {sections.map(section => {
-            const open = openSectionId === section.id;
-            const reviewed = reviewedIds.has(section.id);
-            return (
-              <div
-                key={section.id}
-                className={`trip-draft-tune-section${open ? " is-open" : ""}${reviewed ? " is-reviewed" : ""}`}
-              >
-                <button
-                  type="button"
-                  className="trip-draft-tune-toggle"
-                  aria-expanded={open}
-                  disabled={frozen}
-                  onClick={() => toggleSection(section.id)}
-                >
-                  <span>{section.label}</span>
-                  <span className="trip-draft-tune-chevron" aria-hidden="true">{open ? "−" : "+"}</span>
-                </button>
-                {open && section.question && (
-                  <div className="trip-draft-tune-body">
-                    <p className="trip-draft-tune-ask">{section.question.ask}</p>
-                    {section.question.hint && (
-                      <p className="trip-draft-tune-hint">{section.question.hint}</p>
-                    )}
-                    <QuestionChoices
-                      currentQ={section.question}
-                      answers={answers}
-                      committedAnswers={committedAnswers}
-                      prefDraft={prefDraft}
-                      questionHistory={questionHistory}
-                      questionHistoryLength={questionHistory.length}
-                      compact
-                      planFlowLayout="tall"
-                      actionsInDock={false}
-                      onPickAnswer={handleTuneContinue}
-                      onSetPrefDraft={onSetPrefDraft}
-                    />
-                  </div>
-                )}
+        <div className="trip-draft-tune">
+          <h3 className="trip-draft-tune-title">Want to adjust anything?</h3>
+          <div className="trip-draft-quick-list">
+            {questions.map(group => (
+              <div key={group.id} className="trip-draft-quick-group">
+                <p className="trip-draft-quick-ask">{group.ask}</p>
+                <div className="trip-draft-quick-options" role="group" aria-label={group.ask}>
+                  {group.options.map(option => {
+                    const isSelected = selected[group.id] === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`trip-draft-quick-btn${isSelected ? " is-selected" : ""}`}
+                        aria-pressed={isSelected}
+                        disabled={frozen}
+                        onClick={() => onPick(group.id, option)}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
 

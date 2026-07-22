@@ -10,6 +10,12 @@ import {
   isRouteContextReady,
   normalizeTripAnswers,
   TRUCK_LODGING_CHOICES,
+  applySmartTripDefaults,
+  buildTripDraftQuestion,
+  resolveDraftQuickPartyId,
+  resolveDraftQuickPaceId,
+  resolveDraftQuickSpendId,
+  DRAFT_QUICK_CHOICES,
 } from "./tripFlow.js";
 import { OVERNIGHT_PREFERENCE_OVERNIGHT } from "./driveMode.js";
 import { DIETARY_CHOICES } from "./tripAccommodations.js";
@@ -579,5 +585,27 @@ describe("tripFlow UX", () => {
     ]);
     expect(deduped).toHaveLength(2);
     expect(deduped[1].answer).toBe("2 nights");
+  });
+
+  it("draft quick choices map defaults to couple / a few stops / comfortable", () => {
+    const answers = applySmartTripDefaults({ vehicle: "Car" });
+    expect(resolveDraftQuickPartyId(answers)).toBe("couple");
+    expect(resolveDraftQuickPaceId(answers)).toBe("moderate");
+    expect(resolveDraftQuickSpendId(answers)).toBe("comfortable");
+    const draft = buildTripDraftQuestion(answers, {
+      ...routeEndpoints,
+      routeDistanceMiles: 195,
+      routeDurationHours: 3,
+    });
+    expect(draft.id).toBe("trip_draft");
+    expect(draft.quickChoices).toHaveLength(3);
+    expect(DRAFT_QUICK_CHOICES.every(g => g.options.length === 3)).toBe(true);
+  });
+
+  it("draft quick resolvers cover solo, family, fewer stops, and treat spend", () => {
+    expect(resolveDraftQuickPartyId({ adult_count: 1, child_count: 0 })).toBe("solo");
+    expect(resolveDraftQuickPartyId({ adult_count: 2, child_count: 2 })).toBe("family");
+    expect(resolveDraftQuickPaceId({ stop_frequency: "Minimal" })).toBe("minimal");
+    expect(resolveDraftQuickSpendId({ luxury_level: "5" })).toBe("treat");
   });
 });

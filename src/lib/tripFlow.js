@@ -520,12 +520,70 @@ export function buildTripDraftQuestion(answers, context = {}) {
     id: "trip_draft",
     type: "trip_draft",
     ask: snapshot ? `Your draft route (${snapshot})` : "Your draft route",
-    hint: "Tune anything below, or generate with defaults.",
+    hint: "We'll plan a comfortable drive with a few good stops. Change anything below if you want.",
     suggestedStopCount: stopLabel,
     pace,
     openCustomize: Boolean(answers._customizeTrip),
+    quickChoices: DRAFT_QUICK_CHOICES,
+    // Legacy accordion sections kept for any callers still reading tuneSections.
     tuneSections: getDraftTuneSections(answers, context),
   };
+}
+
+/** Three one-tap draft choices — plain language, no typing. */
+export const DRAFT_QUICK_CHOICES = [
+  {
+    id: "party",
+    ask: "Who's going?",
+    options: [
+      { id: "solo", label: "Just me", adults: 1, children: 0 },
+      { id: "couple", label: "Two adults", adults: 2, children: 0 },
+      { id: "family", label: "Family with kids", adults: 2, children: 2 },
+    ],
+  },
+  {
+    id: "pace",
+    ask: "How do you like to drive?",
+    options: [
+      { id: "minimal", label: "Fewer stops", stop_frequency: "Minimal" },
+      { id: "moderate", label: "A few stops", stop_frequency: "Moderate" },
+      { id: "frequent", label: "Lots of stops", stop_frequency: "Frequent" },
+    ],
+  },
+  {
+    id: "spending",
+    ask: "How do you like to spend?",
+    options: [
+      { id: "simple", label: "Keep it simple", luxury_level: "1" },
+      { id: "comfortable", label: "Comfortable", luxury_level: "3" },
+      { id: "treat", label: "Treat ourselves", luxury_level: "5" },
+    ],
+  },
+];
+
+export function resolveDraftQuickPartyId(answers = {}) {
+  const adults = Number(answers.adult_count);
+  const children = Number(answers.child_count);
+  if (adults === 1 && children === 0) return "solo";
+  if (adults === 2 && children >= 1) return "family";
+  if (adults === 2 && children === 0) return "couple";
+  if (adults >= 1 && children >= 1) return "family";
+  if (adults === 1) return "solo";
+  return "couple";
+}
+
+export function resolveDraftQuickPaceId(answers = {}) {
+  const pace = answers.stop_frequency || SMART_TRIP_DEFAULTS.stop_frequency;
+  if (pace === "Minimal") return "minimal";
+  if (pace === "Frequent") return "frequent";
+  return "moderate";
+}
+
+export function resolveDraftQuickSpendId(answers = {}) {
+  const level = String(answers.luxury_level || SMART_TRIP_DEFAULTS.luxury_level);
+  if (level === "1" || level === "2") return "simple";
+  if (level === "4" || level === "5") return "treat";
+  return "comfortable";
 }
 
 export function getDraftTuneSections(answers, context = {}) {

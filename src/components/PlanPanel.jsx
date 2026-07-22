@@ -92,7 +92,7 @@ export default function PlanPanel({
     && flowProgress?.phases?.length > 0
     && !isTripDraftStep;
   const showContinuousConfirm = Boolean(continuousDriveConfirm);
-  const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete;
+  const showQuestionHeader = inQuestionFlow && currentQuestion && !showContinuousConfirm && !convoComplete && !isTripDraftStep;
   const showReadySummary = inQuestionFlow && convoComplete && (questionHistory.length > 0 || assumedLodging);
   const actionsInDock = inQuestionFlow && !convoComplete;
 
@@ -300,12 +300,8 @@ export default function PlanPanel({
                           <TripDraftPanel
                             currentQ={currentQuestion}
                             answers={answers}
-                            committedAnswers={committedAnswers}
                             routeInfo={routeInfo}
-                            prefDraft={prefDraft}
-                            questionHistory={questionHistory}
                             frozen={false}
-                            onSetPrefDraft={onSetPrefDraft}
                             onApplyTuneAnswer={onDraftTuneAnswer}
                             onGenerateTrip={onDraftGenerate}
                           />
