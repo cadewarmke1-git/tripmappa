@@ -212,9 +212,9 @@ async function main() {
   const email =
     process.env.PLAYWRIGHT_ADMIN_EMAIL
     || env.PLAYWRIGHT_ADMIN_EMAIL
-    || process.env.ADMIN_EMAIL
-    || env.ADMIN_EMAIL
     || DEFAULT_PLAYWRIGHT_ADMIN_EMAIL;
+  // Do not fall back to ADMIN_EMAIL — that is the founder bypass address
+  // (cadewarmke@…), not the Playwright admin login (tripmappa@gmail.com).
   const password =
     process.env.PLAYWRIGHT_ADMIN_PASSWORD
     || env.PLAYWRIGHT_ADMIN_PASSWORD
