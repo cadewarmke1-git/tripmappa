@@ -72,8 +72,10 @@ export default function NavProfileMenu({
   const [menuPos, setMenuPos] = useState({ top: 0, right: 16 });
 
   const run = useCallback((action) => {
-    closeMenu();
+    // Invoke first — closing the native menu dialog synchronously can drop a
+    // same-tick setState that opens the auth modal if close runs first.
     action?.();
+    closeMenu();
   }, [closeMenu]);
 
   useEffect(() => {

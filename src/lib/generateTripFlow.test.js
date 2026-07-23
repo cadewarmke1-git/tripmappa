@@ -42,6 +42,18 @@ describe("generateTripFlow", () => {
     })).toEqual({ ok: true });
   });
 
+  it("draft Generate must pass fromDraft so stale convoComplete does not block", () => {
+    // Mirrors useGeneration.generateTrip({ fromDraft: true })
+    const convoComplete = false;
+    const fromDraft = true;
+    expect(canStartTripGeneration({
+      origin: "Dallas, TX",
+      dest: "El Paso, TX",
+      convoComplete: fromDraft || convoComplete,
+      unlimited: true,
+    })).toEqual({ ok: true });
+  });
+
   it("accepts real API stops, road stops, and client fallback with content", () => {
     const parsed = parseTripApiResponse(
       {

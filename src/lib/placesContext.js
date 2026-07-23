@@ -384,34 +384,47 @@ CRITICAL RULES:
 - Every road_stop and overnight stop city MUST lie on this corridor.`;
 }
 
+function formatPlaceName(p) {
+  const rating = p.rating ? ` (${p.rating}★)` : "";
+  const notes = Array.isArray(p.contextNotes) && p.contextNotes.length
+    ? ` [${p.contextNotes.join(",")}]`
+    : "";
+  const fill = p.preferFillHere ? " ★fill" : "";
+  return `${p.name}${rating}${fill}${notes}`;
+}
+
 export function formatPlacesContextForPrompt(ctx) {
   const lines = [];
   if (ctx?.boundary?.samples?.length) {
     lines.push(formatRouteBoundaryForPrompt(null, ctx.boundary));
   }
+  if (ctx?.segmentContextPrompt) {
+    lines.push("", ctx.segmentContextPrompt);
+  }
   if (!ctx?.corridor?.length && !ctx?.cities?.length) {
     lines.push("\n- placesContext: none available — use corridor GPS boundary only; keep names generic if unsure");
     return lines.join("\n");
   }
-  lines.push("\nVERIFIED PLACES CONTEXT (OSM + Google — corridor samples span the FULL route from origin to destination):");
+  lines.push("\nVERIFIED PLACES CONTEXT (OSM + Google — corridor samples span the FULL route from origin to destination; lists are context-scored at generation time):");
   ctx.corridor?.forEach((seg, i) => {
     lines.push(`Corridor sample ${i + 1} @ ${seg.lat?.toFixed(4)}, ${seg.lng?.toFixed(4)}:`);
-    if (seg.gasStations?.length) lines.push(`  Gas: ${seg.gasStations.map(g => `${g.name}${g.rating ? ` (${g.rating}★)` : ""}`).join(", ")}`);
+    if (seg.gasStations?.length) lines.push(`  Gas: ${seg.gasStations.map(formatPlaceName).join(", ")}`);
     if (seg.evStations?.length) lines.push(`  EV charging: ${seg.evStations.map(e => e.name).join(", ")}`);
-    if (seg.restaurants?.length) lines.push(`  Restaurants: ${seg.restaurants.map(r => `${r.name}${r.rating ? ` (${r.rating}★)` : ""}`).join(", ")}`);
-    if (seg.playgrounds?.length) lines.push(`  Parks/playgrounds: ${seg.playgrounds.map(p => p.name).join(", ")}`);
+    if (seg.restaurants?.length) lines.push(`  Restaurants: ${seg.restaurants.map(formatPlaceName).join(", ")}`);
+    if (seg.playgrounds?.length) lines.push(`  Parks/playgrounds: ${seg.playgrounds.map(formatPlaceName).join(", ")}`);
     if (seg.prayerFacilities?.length) lines.push(`  Prayer facilities: ${seg.prayerFacilities.map(p => p.name).join(", ")}`);
   });
   ctx.cities?.forEach(c => {
     if (c.hotels?.length) lines.push(`${c.city} hotels (on-route GPS): ${c.hotels.map(h => `${h.name}${h.rating ? ` (${h.rating}★)` : ""}`).join(", ")}`);
     if (c.dietaryRestaurants?.length) {
-      lines.push(`${c.city} dietary-match restaurants (VERIFIED PLACES): ${c.dietaryRestaurants.map(r => `${r.name}${r.rating ? ` (${r.rating}★)` : ""}`).join(", ")}`);
+      lines.push(`${c.city} dietary-match restaurants (VERIFIED PLACES): ${c.dietaryRestaurants.map(formatPlaceName).join(", ")}`);
     }
     if (c.medical?.pharmacies?.length) lines.push(`${c.city} pharmacies: ${c.medical.pharmacies.map(p => p.name).join(", ")}`);
     if (c.medical?.dialysis?.length) lines.push(`${c.city} dialysis: ${c.medical.dialysis.map(d => d.name).join(", ")}`);
     if (c.medical?.veterinary?.length) lines.push(`${c.city} vet care: ${c.medical.veterinary.map(v => v.name).join(", ")}`);
   });
   lines.push("- Do NOT invent business names when a verified name exists above for that corridor segment.");
+  lines.push("- When a place has context tags (heat, precip, cheaperFuel, afterDark, closed), reflect at most one short natural clause in that stop's reason — never announce context as a feature.");
   lines.push("- Mark each road_stop you derive from this list with \"fromLlm\": true only when you add narrative beyond these names; prefer copying verified names exactly.");
   return lines.join("\n");
 }

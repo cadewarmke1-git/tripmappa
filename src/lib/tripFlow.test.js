@@ -388,6 +388,12 @@ describe("tripFlow UX", () => {
     expect(DIETARY_CHOICES).not.toContain("Kosher");
   });
 
+  it("omits Halal and Kosher from onboarding dietary preference choices", async () => {
+    const { DIETARY_PREFERENCE_CHOICES } = await import("./tripAccommodations.js");
+    expect(DIETARY_PREFERENCE_CHOICES).not.toContain("Halal");
+    expect(DIETARY_PREFERENCE_CHOICES).not.toContain("Kosher");
+  });
+
   it("asks trip_nights on long RV routes after what matters", () => {
     const answers = {
       vehicle: "RV",

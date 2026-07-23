@@ -103,7 +103,10 @@ export function useAppAuth({
   }
 
   function applyPlanPreferencesSaved(prefs, meta) {
-    planPreferencesRef.current = prefs || {};
+    planPreferencesRef.current = {
+      ...(prefs || {}),
+      ...(meta?.stop_rejections ? { stop_rejections: meta.stop_rejections } : {}),
+    };
     if (meta?.generation_count != null) {
       setPlanGenerationCount(Number(meta.generation_count) || 0);
     }

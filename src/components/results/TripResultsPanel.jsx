@@ -59,6 +59,7 @@ export default function TripResultsPanel({
   onDaySelect,
   onAddRoadStop,
   onRemoveRoadStop,
+  onStopRejected,
   onAddFuelStop,
   onLodgingSelect,
   onShare,
@@ -102,10 +103,13 @@ export default function TripResultsPanel({
       next.add(key);
       return next;
     });
+    // Undo-safe: dislike is scheduled; Undo cancels before write.
+    const cancelRejection = onStopRejected?.(kind, item);
     onToast?.("Stop removed —", {
       actionLabel: "Undo",
       duration: 8000,
       onAction: () => {
+        if (typeof cancelRejection === "function") cancelRejection();
         setHiddenResultCardIds(previous => {
           const next = new Set(previous);
           next.delete(key);
@@ -114,7 +118,7 @@ export default function TripResultsPanel({
         options.onUndo?.();
       },
     });
-  }, [onToast]);
+  }, [onToast, onStopRejected]);
 
   const simplified = useMemo(
     () => isSimplifiedTrip({ answers, routeInfo, stops, tripFormat }),

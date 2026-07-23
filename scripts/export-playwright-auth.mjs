@@ -86,7 +86,10 @@ async function openSignInModal(page) {
   const trigger = page.locator(".profile-card-trigger").first();
   await trigger.waitFor({ state: "visible", timeout: 30_000 });
   await trigger.click();
-  await page.getByRole("button", { name: "Sign In", exact: true }).click({ timeout: 10_000 });
+  // NavProfileMenu label is "Sign in" (lowercase i)
+  const signIn = page.getByRole("button", { name: /^sign in$/i }).first();
+  await signIn.waitFor({ state: "visible", timeout: 10_000 });
+  await signIn.click();
 }
 
 /** Email/password via SignInModal — matches AuthContext.signIn → signInWithPassword. */
@@ -98,17 +101,19 @@ async function tryEmailPasswordSignIn(page, email, password) {
   }
 
   await openSignInModal(page);
+  await page.locator(".auth-modal, dialog.auth-modal-overlay").first().waitFor({ state: "attached", timeout: 20_000 });
   const emailInput = page.locator("#signin-email");
-  await emailInput.waitFor({ state: "visible", timeout: 10_000 });
-
-  await emailInput.fill(email);
-  await page.locator("#signin-password").fill(password);
-  await page.getByRole("button", { name: /Sign In/i }).click();
+  await emailInput.waitFor({ state: "attached", timeout: 20_000 });
+  // Native <dialog> can confuse visibility checks — fill attached inputs directly.
+  await emailInput.fill(email, { force: true });
+  await page.locator("#signin-password").fill(password, { force: true });
+  await page.locator(".auth-modal-submit, button[type=submit]").filter({ hasText: /Sign In/i }).first().click({ force: true });
 
   try {
-    await page.locator(".auth-modal").waitFor({ state: "hidden", timeout: 30_000 });
+    await page.locator(".auth-modal, dialog.auth-modal-overlay").first().waitFor({ state: "hidden", timeout: 30_000 }).catch(() => null);
+    await page.waitForTimeout(1500);
     await page.locator(".profile-card-trigger").first().click();
-    await page.locator(".profile-card-signout").waitFor({ state: "visible", timeout: 10_000 });
+    await page.locator(".profile-card-signout").waitFor({ state: "visible", timeout: 15_000 });
     return true;
   } catch {
     const authError = await page.locator(".auth-modal-error").textContent().catch(() => "");
@@ -207,6 +212,8 @@ async function main() {
   const email =
     process.env.PLAYWRIGHT_ADMIN_EMAIL
     || env.PLAYWRIGHT_ADMIN_EMAIL
+    || process.env.ADMIN_EMAIL
+    || env.ADMIN_EMAIL
     || DEFAULT_PLAYWRIGHT_ADMIN_EMAIL;
   const password =
     process.env.PLAYWRIGHT_ADMIN_PASSWORD

@@ -12,6 +12,7 @@ import { buildFallbackTripData, parseTripApiResponse, stripSessionOnlyAnswers } 
 import { persistAfterSuccessfulGeneration } from "../lib/postGenerationPersistence.js";
 import { enrichGeneratedTrip, enrichPlacesLayer } from "../lib/tripEnrichment.js";
 import { buildPlacesContext, formatPlacesContextForPrompt, shouldPrefetchPlacesContext } from "../lib/placesContext.js";
+import { applySegmentContextToPlaces } from "../lib/applySegmentContext.js";
 import { buildPlanSnapshot } from "../lib/planSnapshot.js";
 import { formatRegenerateDiffBlock } from "../lib/planSnapshotDiff.js";
 import { formatGenerationHints } from "../lib/tripConstraintsSummary.js";
@@ -313,7 +314,7 @@ export function useGeneration({
     void generateTrip();
   }
 
-  async function generateTrip() {
+  async function generateTrip(options = {}) {
     const tripOrigin = originRef.current?.value?.trim() || origin;
     const tripDest = destRef.current?.value?.trim() || dest;
 
@@ -328,7 +329,7 @@ export function useGeneration({
       inFlight: generateTripInFlightRef.current,
       origin: tripOrigin,
       dest: tripDest,
-      convoComplete,
+      convoComplete: Boolean(options.fromDraft) || convoComplete,
       creditsRemaining: status?.remaining,
       unlimited: status?.unlimited,
     });
@@ -468,8 +469,23 @@ export function useGeneration({
         setGenerationStream(buildGenerationPrepProgress("places", {
           cityNames: activeRouteInfo.citiesAlongRoute || [],
         }));
-        placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
-        placesContextPrompt = formatPlacesContextForPrompt(placesContext);
+        try {
+          placesContext = await buildPlacesContext(normalizedAnswers, activeRouteInfo);
+          try {
+            // Context scoring is per-trip — applied at read/generation time, never into corridor caches.
+            placesContext = await applySegmentContextToPlaces(placesContext, activeRouteInfo, {
+              departureTime: typeof getDepartureTime === "function" ? getDepartureTime() : new Date(),
+              answers: normalizedAnswers,
+            });
+          } catch (ctxErr) {
+            console.warn("segment context skipped — generation continues:", ctxErr?.message);
+          }
+          placesContextPrompt = formatPlacesContextForPrompt(placesContext);
+        } catch (placesErr) {
+          console.warn("places context failed — continuing without:", placesErr?.message);
+          placesContext = null;
+          placesContextPrompt = "";
+        }
       }
 
       const planPayload = {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDialogA11y } from "../hooks/useDialogA11y.js";
 import AuthSocialButtons, { SOCIAL_AUTH_UI_ENABLED } from "./auth/AuthSocialButtons.jsx";
 import { PhoneIcon } from "./auth/PhoneModal.jsx";
@@ -21,12 +21,23 @@ export default function EmailModal({
   lead = "",
   theme = "night",
 }) {
+  // Local draft so keystrokes don't force parent re-renders on every character.
+  const [emailDraft, setEmailDraft] = useState(email || "");
   const [password, setPassword] = useState("");
   const dialogRef = useDialogA11y(true, onClose, "signup-headline");
 
+  useEffect(() => {
+    setEmailDraft(email || "");
+  }, [email]);
+
+  function handleEmailChange(value) {
+    setEmailDraft(value);
+  }
+
   function handleSubmit(e) {
     e?.preventDefault();
-    onSignUp?.({ email, password });
+    onEmailChange?.(emailDraft);
+    onSignUp?.({ email: emailDraft, password });
   }
 
   return (
@@ -50,8 +61,8 @@ export default function EmailModal({
             type="email"
             className="auth-field-input"
             placeholder="you@example.com"
-            value={email}
-            onChange={e => onEmailChange(e.target.value)}
+            value={emailDraft}
+            onChange={e => handleEmailChange(e.target.value)}
             autoComplete="email"
             disabled={loading}
           />

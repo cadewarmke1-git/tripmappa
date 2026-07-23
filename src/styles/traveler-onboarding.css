@@ -5,17 +5,25 @@
   --onboarding-ink: #0d0a1a;
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  box-sizing: border-box;
   z-index: 300;
   display: flex;
   flex-direction: column;
   background: var(--onboarding-ink);
   color: var(--color-text-primary, #f4f6fb);
   padding: calc(var(--nav-h, 56px) + env(safe-area-inset-top, 0px) + 16px) 24px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
 }
 
 .traveler-onboarding--welcome-screen {
   padding: 0;
   background: var(--onboarding-ink);
+  overflow: hidden;
 }
 
 .traveler-onboarding-dots {
@@ -45,8 +53,10 @@
 .traveler-onboarding-stage {
   flex: 1;
   min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── Welcome screen (v0 highway hero) ── */
@@ -54,6 +64,8 @@
   position: relative;
   flex: 1;
   min-height: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;

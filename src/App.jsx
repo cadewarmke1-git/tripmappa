@@ -39,6 +39,7 @@ import {
   mergeDisplayAnswers,
   stripUnconfirmedPrefillFromAnswers,
 } from "./lib/generationContext.js";
+import { scheduleStopRejection, REJECTION_SOURCE } from "./lib/stopRejectionPreferences.js";
 import { formatCreditsDisplay } from "./lib/creditsDisplay.js";
 import { resolveHeroOriginCoords } from "./lib/heroExplore.js";
 import { roadStopKey, normalizeRoadStopEntry } from "./lib/roadStopKeys.js";
@@ -1751,7 +1752,12 @@ export default function App() {
       setConvoComplete(false);
       return;
     }
-    generateTrip();
+    setAnswers(normalizeTripAnswers(answers, ctx, { forGeneration: true }));
+    setCurrentQuestion(null);
+    setQIndex(-2);
+    setConvoComplete(true);
+    // State updates are async — pass fromDraft so the guard does not see stale convoComplete.
+    void generateTrip({ fromDraft: true });
   }
 
   function handleDraftTuneAnswer(section, value, extraFields = {}, options = {}) {
@@ -2318,7 +2324,18 @@ export default function App() {
       ));
       if (!waypoint) return null;
       itinerarySync.handleToggleIncluded(waypoint.id, false);
-      const undo = () => itinerarySync.handleToggleIncluded(waypoint.id, true);
+      let cancelRejection = null;
+      if (showUndo && user && session?.access_token) {
+        cancelRejection = scheduleStopRejection(session.access_token, normalized, {
+          kind: "road",
+          source: REJECTION_SOURCE.itinerary_remove,
+          planPreferencesRef,
+        });
+      }
+      const undo = () => {
+        cancelRejection?.();
+        itinerarySync.handleToggleIncluded(waypoint.id, true);
+      };
       if (showUndo) {
         toast_("Stop removed —", {
           actionLabel: "Undo",
@@ -2333,7 +2350,16 @@ export default function App() {
     if (index < 0) return null;
     const removed = roadStops[index];
     setRoadStops(prev => prev.filter((_, itemIndex) => itemIndex !== index));
+    let cancelRejection = null;
+    if (showUndo && user && session?.access_token) {
+      cancelRejection = scheduleStopRejection(session.access_token, normalized, {
+        kind: "road",
+        source: REJECTION_SOURCE.itinerary_remove,
+        planPreferencesRef,
+      });
+    }
     const undo = () => {
+      cancelRejection?.();
       setRoadStops(prev => {
         const next = [...prev];
         next.splice(Math.min(index, next.length), 0, removed);
@@ -2348,6 +2374,15 @@ export default function App() {
       });
     }
     return undo;
+  }
+
+  function handleStopRejected(kind, item) {
+    if (!user || !session?.access_token || !item) return () => {};
+    return scheduleStopRejection(session.access_token, item, {
+      kind,
+      source: REJECTION_SOURCE.card_hide,
+      planPreferencesRef,
+    });
   }
 
   function addLodgingSelection(lodging) {
@@ -3092,6 +3127,7 @@ export default function App() {
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
             onRemoveRoadStop={removeRoadStopFromTrip}
+            onStopRejected={handleStopRejected}
             onAddFuelStop={addFuelStopToTrip}
             onLodgingSelect={addLodgingSelection}
             onDismissAlert={dismissTripAlert}

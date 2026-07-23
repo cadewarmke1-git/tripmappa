@@ -21,14 +21,18 @@ export default function TravelerOnboarding({ onComplete }) {
   const [screen, setScreen] = useState("welcome");
   const [screenPhase, setScreenPhase] = useState("enter");
   const [dietary, setDietary] = useState([]);
+  const [dietaryOther, setDietaryOther] = useState("");
   const [foodAllergies, setFoodAllergies] = useState("");
   const [stopsInterests, setStopsInterests] = useState([]);
   const [busy, setBusy] = useState(false);
   const [photosFailed, setPhotosFailed] = useState(false);
 
   function buildProfile() {
+    const diet = [...dietary];
+    const other = dietaryOther.trim();
+    if (other && !diet.includes(other)) diet.push(other);
     return {
-      dietary: [...dietary],
+      dietary: diet,
       food_allergies: foodAllergies.trim(),
       stops_interests: [...stopsInterests],
     };
@@ -157,6 +161,17 @@ export default function TravelerOnboarding({ onComplete }) {
                 selected={dietary}
                 onToggle={value => setDietary(prev => togglePreferenceValue(prev, value))}
               />
+              <label className="traveler-onboarding-field">
+                <span className="preference-pill-group-label">Other (optional)</span>
+                <input
+                  type="text"
+                  className="traveler-onboarding-input"
+                  placeholder="Any other dietary preference…"
+                  value={dietaryOther}
+                  onChange={e => setDietaryOther(e.target.value)}
+                  autoComplete="off"
+                />
+              </label>
               <label className="traveler-onboarding-field">
                 <span className="preference-pill-group-label">Food allergies (optional)</span>
                 <input

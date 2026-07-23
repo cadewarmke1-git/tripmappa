@@ -106,6 +106,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("weather API error:", err);
     captureServerException(err);
-    return res.status(500).json({ error: "Failed to fetch weather" });
+    // Never block generation — callers degrade without weather signal.
+    return res.status(200).json({ weatherByCity: {}, severeAlerts: [], fallback: true });
   }
 }

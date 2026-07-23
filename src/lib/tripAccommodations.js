@@ -26,12 +26,8 @@ export const DIETARY_CHOICES = [
   "Drive-Through Only",
 ];
 
-/** Profile / saved preferences only — includes options removed from per-trip trip_details flow. */
-export const DIETARY_PREFERENCE_CHOICES = [
-  ...DIETARY_CHOICES,
-  "Halal",
-  "Kosher",
-];
+/** Profile / onboarding dietary pills — same set as per-trip; free-text "Other" is collected in UI. */
+export const DIETARY_PREFERENCE_CHOICES = [...DIETARY_CHOICES];
 
 export const ACCESSIBILITY_CHOICES = [
   "No special needs",

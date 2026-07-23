@@ -1,93 +1,12 @@
 /** Fuel price enrichment for Google-found gas stations (EIA regional averages). */
 import { guardProxyRoute } from "../lib/apiSecurity.js";
 import { captureServerException } from "../lib/sentry.js";
-
-const EIA_DATA_URL = "https://api.eia.gov/v2/petroleum/pri/gnd/data";
-const EIA_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const EIA_PRODUCTS = ["EPMR", "EPMP", "EPD2D"];
-
-const FALLBACK_EIA = {
-  regular: 3.45,
-  premium: 4.05,
-  diesel: 3.95,
-};
-
-let eiaPriceCache = null;
-
-function buildEIAQuery() {
-  const params = new URLSearchParams();
-  params.set("frequency", "weekly");
-  params.append("data[0]", "value");
-  params.append("facets[duoarea][]", "NUS");
-  EIA_PRODUCTS.forEach(product => params.append("facets[product][]", product));
-  params.set("sort[0][column]", "period");
-  params.set("sort[0][direction]", "desc");
-  params.set("length", "12");
-  return params;
-}
-
-function parseEIADataRows(rows = []) {
-  const byProduct = {};
-  for (const row of rows) {
-    if (!row?.product || byProduct[row.product]) continue;
-    const value = parseFloat(row.value);
-    if (!Number.isFinite(value)) continue;
-    byProduct[row.product] = { value, period: row.period };
-  }
-  return {
-    regular: byProduct.EPMR?.value ?? null,
-    premium: byProduct.EPMP?.value ?? null,
-    diesel: byProduct.EPD2D?.value ?? null,
-    period: byProduct.EPMR?.period || byProduct.EPD2D?.period || null,
-  };
-}
-
-function formatGalPrice(dollars) {
-  if (!Number.isFinite(dollars)) return null;
-  return `$${dollars.toFixed(2)}/gal`;
-}
-
-async function requestEIAPrices(apiKey) {
-  const params = buildEIAQuery();
-  if (apiKey) params.set("api_key", apiKey);
-  const res = await fetch(`${EIA_DATA_URL}?${params}`);
-  const json = await res.json();
-  return { res, json };
-}
-
-async function fetchEIAFuelPrices() {
-  if (eiaPriceCache && Date.now() - eiaPriceCache.fetchedAt < EIA_CACHE_TTL_MS) {
-    return eiaPriceCache;
-  }
-
-  try {
-    const apiKey = process.env.EIA_API_KEY?.trim() || "DEMO_KEY";
-    const { res, json } = await requestEIAPrices(apiKey);
-    if (!res.ok || json.error) {
-      console.warn("EIA fuel price fetch failed:", json.error?.message || res.status);
-      return eiaPriceCache || null;
-    }
-
-    const parsed = parseEIADataRows(json.response?.data);
-    if (parsed.regular == null && parsed.diesel == null) {
-      console.warn("EIA fuel price fetch returned no usable rows");
-      return eiaPriceCache || null;
-    }
-
-    eiaPriceCache = {
-      fetchedAt: Date.now(),
-      regular: parsed.regular ?? FALLBACK_EIA.regular,
-      premium: parsed.premium ?? (parsed.regular != null ? parsed.regular + 0.6 : FALLBACK_EIA.premium),
-      diesel: parsed.diesel ?? FALLBACK_EIA.diesel,
-      period: parsed.period,
-      source: "eia",
-    };
-    return eiaPriceCache;
-  } catch (err) {
-    console.warn("EIA fuel price fetch error:", err.message);
-    return eiaPriceCache || null;
-  }
-}
+import {
+  FALLBACK_EIA,
+  fetchEIAFuelPrices,
+  fetchRegionalPricesForPoints,
+  formatGalPrice,
+} from "../lib/eiaFuelPrices.js";
 
 function inferBrand(name) {
   const n = (name || "").toLowerCase();
@@ -146,7 +65,25 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (guardProxyRoute(req, res)) return undefined;
 
-  const { stations = [], mode = "gas" } = req.body;
+  const body = req.body || {};
+
+  // Regional corridor prices for pre-Claude segment scoring (not baked into place caches).
+  if (body.mode === "regional-prices") {
+    const points = Array.isArray(body.points) ? body.points.slice(0, 16) : [];
+    if (!points.length) {
+      return res.status(400).json({ error: "points array is required" });
+    }
+    try {
+      const pricesById = await fetchRegionalPricesForPoints(points);
+      return res.status(200).json({ pricesById, fallback: false });
+    } catch (err) {
+      console.warn("regional fuel prices error:", err.message);
+      captureServerException(err);
+      return res.status(200).json({ pricesById: {}, fallback: true });
+    }
+  }
+
+  const { stations = [], mode = "gas" } = body;
   if (!Array.isArray(stations) || !stations.length || stations.length > 30) {
     return res.status(400).json({ error: "Missing stations array from Google Places" });
   }

@@ -11,27 +11,39 @@ export function useDialogA11y(open, onClose, titleId, { modal = true } = {}) {
     const dialog = dialogRef.current;
     if (!dialog) return undefined;
     const isNativeDialog = typeof dialog.show === "function" && dialog.tagName === "DIALOG";
+    let ignoreCloseUntil = 0;
+
+    function armProgrammaticClose() {
+      programmaticCloseRef.current = true;
+      // Stay armed past Strict Mode remount + async `close` delivery so an
+      // effect-cleanup close never looks like a user dismiss.
+      ignoreCloseUntil = Date.now() + 100;
+      window.setTimeout(() => {
+        if (Date.now() >= ignoreCloseUntil) programmaticCloseRef.current = false;
+      }, 100);
+    }
 
     if (isNativeDialog) {
       if (open) {
         if (!dialog.open) {
+          armProgrammaticClose();
           if (modal) dialog.showModal();
           else dialog.show();
         }
       } else if (dialog.open) {
-        programmaticCloseRef.current = true;
+        armProgrammaticClose();
         dialog.close();
-        programmaticCloseRef.current = false;
       }
     }
 
     function handleCancel(e) {
       e.preventDefault();
+      if (programmaticCloseRef.current || Date.now() < ignoreCloseUntil) return;
       onCloseRef.current?.();
     }
 
     function handleClose() {
-      if (programmaticCloseRef.current) return;
+      if (programmaticCloseRef.current || Date.now() < ignoreCloseUntil) return;
       onCloseRef.current?.();
     }
 
@@ -41,24 +53,24 @@ export function useDialogA11y(open, onClose, titleId, { modal = true } = {}) {
     }
     return () => {
       if (isNativeDialog) {
+        armProgrammaticClose();
         dialog.removeEventListener("cancel", handleCancel);
         dialog.removeEventListener("close", handleClose);
-        if (dialog.open) {
-          programmaticCloseRef.current = true;
-          dialog.close();
-          programmaticCloseRef.current = false;
-        }
+        if (dialog.open) dialog.close();
       }
     };
   }, [open, modal]);
 
+  // Initial focus + Tab trap. Depend only on `open` so parent re-renders
+  // (new onClose / titleId refs, controlled input keystrokes) do not steal focus.
   useEffect(() => {
     if (!open) return undefined;
 
     const previousFocus = document.activeElement;
     const dialog = dialogRef.current;
+    // Prefer a text field so we don't bounce focus onto the close button.
     const focusTarget = dialog?.querySelector(
-      "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href]",
+      "input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [href]",
     );
     focusTarget?.focus();
 
@@ -87,9 +99,12 @@ export function useDialogA11y(open, onClose, titleId, { modal = true } = {}) {
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      if (previousFocus?.focus) previousFocus.focus();
+      // Don't yank focus out of a still-open modal dialog (Strict Mode cleanup
+      // used to restore outside focus while showModal was active).
+      const stillOpen = dialogRef.current?.open;
+      if (!stillOpen && previousFocus?.focus) previousFocus.focus();
     };
-  }, [open, onClose, titleId]);
+  }, [open]);
 
   return dialogRef;
 }
