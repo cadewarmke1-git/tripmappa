@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeStopRejections } from "../routes/plan-preferences.js";
+import { sanitizeStopRejections, sanitizePreferences } from "../routes/plan-preferences.js";
 
 describe("plan-preferences stop_rejections meta", () => {
   it("keeps category, type, and by_source maps", () => {
@@ -28,6 +28,19 @@ describe("plan-preferences stop_rejections meta", () => {
         itinerary_remove: { categories: {}, types: {} },
         card_hide: { categories: {}, types: {} },
       },
+    });
+  });
+});
+
+describe("plan-preferences ALLOWED_KEYS", () => {
+  it("persists luxury_level like trip_budget", () => {
+    expect(sanitizePreferences({
+      trip_budget: "Over $1000",
+      luxury_level: "4",
+      unknown_field: "drop-me",
+    })).toEqual({
+      trip_budget: "Over $1000",
+      luxury_level: "4",
     });
   });
 });

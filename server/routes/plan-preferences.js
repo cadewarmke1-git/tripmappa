@@ -10,6 +10,7 @@ const ALLOWED_KEYS = new Set([
   "stops_interests",
   "accessibility",
   "trip_budget",
+  "luxury_level",
   "dietary",
   "schedule_restrictions",
   "preferences",
@@ -61,7 +62,7 @@ export function sanitizeStopRejections(raw) {
   };
 }
 
-function sanitizePreferences(raw) {
+export function sanitizePreferences(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const out = {};
   for (const [key, value] of Object.entries(raw)) {
