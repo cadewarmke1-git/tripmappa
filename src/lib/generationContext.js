@@ -362,6 +362,9 @@ export function planPreferencesToFlowPrefill(planPrefs = {}) {
     out.schedule_restrictions = [...planPrefs.schedule_restrictions];
   }
   if (planPrefs.trip_budget) out.trip_budget = planPrefs.trip_budget;
+  if (planPrefs.luxury_level != null && planPrefs.luxury_level !== "") {
+    out.luxury_level = String(planPrefs.luxury_level);
+  }
   if (Array.isArray(planPrefs.stops_interests) && planPrefs.stops_interests.length) {
     out.stops_interests = [...planPrefs.stops_interests];
   }

@@ -14,6 +14,7 @@ export const PLAN_PREF_WRITE_BACK_KEYS = [
   "accessibility",
   "schedule_restrictions",
   "trip_budget",
+  "luxury_level",
   "lodging",
   "preferences",
 ];
@@ -24,6 +25,9 @@ export function extractWriteBackFields(answers = {}) {
   if (answers.fuel_type) out.fuel_type = answers.fuel_type;
   if (answers.travelers) out.travelers = answers.travelers;
   if (answers.trip_budget) out.trip_budget = answers.trip_budget;
+  if (answers.luxury_level != null && answers.luxury_level !== "") {
+    out.luxury_level = String(answers.luxury_level);
+  }
   if (answers.lodging) out.lodging = answers.lodging;
 
   const dietary = asArray(answers.dietary).filter(d => d && d !== "No restrictions");

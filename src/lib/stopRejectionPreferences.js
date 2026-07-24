@@ -167,6 +167,32 @@ export function rejectionIdentity(stop = {}, kind = null, source = null) {
 }
 
 /**
+ * Compressed memory line for Claude — token-efficient dislike signal from plan_preferences.meta.stop_rejections.
+ * Empty / missing history → "" (omit from prompt).
+ */
+export function formatStopRejectionsForPrompt(raw, { maxCategories = 4, maxTypes = 4 } = {}) {
+  const cleaned = sanitizeStopRejections(raw);
+  const cats = Object.entries(cleaned.categories || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxCategories);
+  const types = Object.entries(cleaned.types || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxTypes);
+  if (!cats.length && !types.length) return "";
+
+  const lines = [
+    "=== STOP REJECTIONS (learned dislikes — deprioritize these; never invent replacements from this list) ===",
+  ];
+  if (cats.length) {
+    lines.push(`Avoid categories: ${cats.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
+  }
+  if (types.length) {
+    lines.push(`Avoid types: ${types.map(([k, v]) => `${k} (${v}x)`).join(", ")}`);
+  }
+  return lines.join("\n");
+}
+
+/**
  * Defer write until undo window elapses. Returns cancel() — call from Undo.
  * Undone removals must never record a dislike.
  */

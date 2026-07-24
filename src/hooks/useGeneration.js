@@ -32,6 +32,7 @@ import {
   buildRecentTripsPreferencesRollup,
   buildTravelerDossier,
 } from "../lib/tripHistoryAnalysis.js";
+import { formatStopRejectionsForPrompt } from "../lib/stopRejectionPreferences.js";
 import { stopsToMapMarkers } from "../lib/mapMarkers.js";
 import { getEffectiveVehicle, inferFuelType, isScenicRoute } from "../lib/vehicles.js";
 import { normalizeTripAnswers } from "../lib/tripFlow.js";
@@ -444,6 +445,9 @@ export function useGeneration({
       const userTravelPatterns = buildUserPatternSummary(tripsForContext);
       const recentTripsPreferencesRollup = buildRecentTripsPreferencesRollup(tripsForContext, 3);
       const travelerDossier = buildTravelerDossier(tripsForContext, normalizedAnswers);
+      const stopRejectionsContext = formatStopRejectionsForPrompt(
+        planPreferencesRef.current?.stop_rejections,
+      );
       const answerConfidenceNotes = formatAnswerConfidenceNotes(
         answerChangeCountsRef.current,
         buildQuestionLabelMap(questionHistory),
@@ -512,6 +516,7 @@ export function useGeneration({
         recentTripsContext,
         recentTripsPreferencesRollup,
         travelerDossier,
+        stopRejectionsContext,
         userTravelPatterns,
         answerConfidenceNotes,
         gracefulDegradationNotes,

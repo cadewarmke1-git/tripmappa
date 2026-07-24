@@ -46,6 +46,17 @@ describe("generationContext flow prefill", () => {
     expect(prefill.preferences).toEqual(["Pet friendly", "Scenic route"]);
   });
 
+  it("maps luxury_level from plan preferences like trip_budget", () => {
+    const prefill = planPreferencesToFlowPrefill({
+      luxury_level: "4",
+      trip_budget: "Over $1000",
+      dietary: ["Vegan"],
+    });
+    expect(prefill.luxury_level).toBe("4");
+    expect(prefill.trip_budget).toBe("Over $1000");
+    expect(prefill.dietary).toEqual(["Vegan"]);
+  });
+
   it("isQuestionConfirmedInHistory tracks confirmed question ids", () => {
     expect(isQuestionConfirmedInHistory("fuel_type", [])).toBe(false);
     expect(isQuestionConfirmedInHistory("fuel_type", [{ question: { id: "vehicle" } }])).toBe(false);

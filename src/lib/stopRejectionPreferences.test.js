@@ -9,6 +9,7 @@ import {
   REJECTION_UNDO_DELAY_MS,
   sanitizeStopRejections,
   scheduleStopRejection,
+  formatStopRejectionsForPrompt,
 } from "./stopRejectionPreferences.js";
 
 describe("stopRejectionPreferences", () => {
@@ -77,6 +78,18 @@ describe("stopRejectionPreferences", () => {
         card_hide: { categories: { restaurant: 2 }, types: { Steakhouse: 1 } },
       },
     });
+  });
+
+  it("formats compressed stop-rejection context for Claude", () => {
+    expect(formatStopRejectionsForPrompt(null)).toBe("");
+    expect(formatStopRejectionsForPrompt({ categories: {}, types: {} })).toBe("");
+    const block = formatStopRejectionsForPrompt({
+      categories: { restaurant: 2, attraction: 1 },
+      types: { Steakhouse: 2, scenic: 1 },
+    });
+    expect(block).toContain("STOP REJECTIONS");
+    expect(block).toContain("Avoid categories: restaurant (2x), attraction (1x)");
+    expect(block).toContain("Avoid types: Steakhouse (2x), scenic (1x)");
   });
 
   it("is undo-safe: cancelled schedule never records", async () => {

@@ -14,14 +14,28 @@ describe("planPreferencesWriteBack", () => {
       accessibility: ["No special needs"],
       schedule_restrictions: ["No restrictions"],
       trip_budget: "Over $1000",
+      luxury_level: "4",
       lodging: "Mid-Range",
       preferences: ["Pet friendly", "Scenic route"],
     });
     expect(fields.vehicle).toBe("RV");
     expect(fields.preferences).toEqual(["Pet friendly", "Scenic route"]);
     expect(fields.dietary).toEqual(["Vegan"]);
+    expect(fields.luxury_level).toBe("4");
+    expect(fields.trip_budget).toBe("Over $1000");
     expect(fields.accessibility).toBeUndefined();
     expect(fields.schedule_restrictions).toBeUndefined();
+  });
+
+  it("writes luxury_level like trip_budget", () => {
+    const { preferences, meta } = mergePlanPreferencesFromGeneration(
+      {},
+      { last_generated_preferences: {}, generation_count: 0 },
+      { luxury_level: "4", trip_budget: "Over $1000" },
+    );
+    expect(preferences.luxury_level).toBe("4");
+    expect(preferences.trip_budget).toBe("Over $1000");
+    expect(meta.last_generated_preferences.luxury_level).toBe("4");
   });
 
   it("writes empty fields from generation", () => {

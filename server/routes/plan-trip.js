@@ -1006,6 +1006,7 @@ export default async function handler(req, res) {
     recentTripsPreferencesRollup: rawRecentTripsPreferencesRollup = "",
     userTravelPatterns: rawUserTravelPatterns = "",
     travelerDossier: rawTravelerDossier = "",
+    stopRejectionsContext: rawStopRejectionsContext = "",
     answerConfidenceNotes: rawAnswerConfidenceNotes = "",
     gracefulDegradationNotes: rawGracefulDegradationNotes = "",
     fallbackPreferences = null,
@@ -1019,6 +1020,7 @@ export default async function handler(req, res) {
   const recentTripsPreferencesRollup = clampString(rawRecentTripsPreferencesRollup, PROMPT_FIELD_MAX);
   const userTravelPatterns = clampString(rawUserTravelPatterns, PROMPT_FIELD_MAX);
   const travelerDossier = clampString(rawTravelerDossier, PROMPT_FIELD_MAX);
+  const stopRejectionsContext = clampString(rawStopRejectionsContext, PROMPT_FIELD_MAX);
   const answerConfidenceNotes = clampString(rawAnswerConfidenceNotes, PROMPT_FIELD_MAX);
   const gracefulDegradationNotes = clampString(rawGracefulDegradationNotes, PROMPT_FIELD_MAX);
 
@@ -1041,7 +1043,7 @@ export default async function handler(req, res) {
     prefsBlock = [prefsBlock, recentTripsPreferencesRollup.trim()].filter(Boolean).join("\n\n");
   }
 
-  const extraContext = [prefsBlock, travelerDossier, userTravelPatterns, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes, corridorDegradationNote]
+  const extraContext = [prefsBlock, travelerDossier, stopRejectionsContext, userTravelPatterns, recentTripsContext, answerConfidenceNotes, gracefulDegradationNotes, corridorDegradationNote]
     .filter(Boolean)
     .join("\n\n");
 
