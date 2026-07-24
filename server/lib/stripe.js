@@ -44,7 +44,7 @@ export function getStripeVoyagerAnnualPriceId() {
   return process.env.STRIPE_VOYAGER_ANNUAL_PRICE_ID?.trim() || null;
 }
 
-/** Monthly Trailblazer — $9.99/mo (sandbox price ID). */
+/** Monthly Trailblazer — $7.99/mo (sandbox price ID). */
 export function getStripeTrailblazerPriceId() {
   return process.env.STRIPE_TRAILBLAZER_PRICE_ID?.trim() || null;
 }
