@@ -413,6 +413,9 @@ export function applySmartTripDefaults(answers = {}) {
   }
   const out = { ...answers };
   for (const [key, value] of Object.entries(SMART_TRIP_DEFAULTS)) {
+    // luxury_level is learned via plan_preferences — leave unset so generation
+    // resolveAnswersWithFallback can apply the saved tier (same pattern as dietary []).
+    if (key === "luxury_level") continue;
     if (out[key] == null || out[key] === "") {
       out[key] = Array.isArray(value) ? [...value] : value;
     }

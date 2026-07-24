@@ -554,6 +554,16 @@ export function resolveAnswersWithFallback(answers = {}, prefs = null, options =
     merged.schedule_restrictions = fallback.schedule_restrictions;
   }
   if (!merged.trip_budget && fallback.trip_budget) merged.trip_budget = fallback.trip_budget;
+  if (
+    (merged.luxury_level == null || merged.luxury_level === "")
+    && fallback.luxury_level != null
+    && fallback.luxury_level !== ""
+  ) {
+    merged.luxury_level = String(fallback.luxury_level);
+  }
+  if (merged.luxury_level == null || merged.luxury_level === "") {
+    merged.luxury_level = "3";
+  }
 
   const inferredRestaurantHint = reconcileInferredRestaurantHint(prefs, answers, planPrefs);
   if (inferredRestaurantHint) {

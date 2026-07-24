@@ -115,6 +115,17 @@ describe("generationContext flow prefill", () => {
     expect(merged.travelers).toBe("2");
   });
 
+  it("resolveAnswersWithFallback applies plan luxury_level when answers omit it", () => {
+    const merged = resolveAnswersWithFallback(
+      { vehicle: "Car", _smartDefaultsApplied: true },
+      null,
+      { planPrefs: { luxury_level: "4", trip_budget: "Over $1000", dietary: ["Vegan"] } },
+    );
+    expect(merged.luxury_level).toBe("4");
+    expect(merged.dietary).toEqual(["Vegan"]);
+    expect(merged.trip_budget).toBe("Over $1000");
+  });
+
   it("buildFlowPrefillFromPreferences prefers explicit plan prefs over trip learning", () => {
     const prefill = buildFlowPrefillFromPreferences(
       { dietary: ["Halal"], travelers: "2" },

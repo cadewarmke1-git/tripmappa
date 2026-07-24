@@ -595,6 +595,7 @@ describe("tripFlow UX", () => {
 
   it("draft quick choices map defaults to couple / a few stops / comfortable", () => {
     const answers = applySmartTripDefaults({ vehicle: "Car" });
+    expect(answers.luxury_level).toBeUndefined();
     expect(resolveDraftQuickPartyId(answers)).toBe("couple");
     expect(resolveDraftQuickPaceId(answers)).toBe("moderate");
     expect(resolveDraftQuickSpendId(answers)).toBe("comfortable");
