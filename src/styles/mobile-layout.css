@@ -63,17 +63,17 @@
 
   html[data-layout="mobile"] .hero {
     min-height: 100dvh;
-    padding-top: var(--nav-h);
-    justify-content: flex-start;
-    padding-bottom: 24px;
+    padding-top: 0;
+    justify-content: center;
+    padding-bottom: 0;
     overflow-y: auto;
   }
 
-  /* Reserve upper viewport for live sky (sun, clouds, stars) */
+  /* Center title/CTA block in the hero — keep responsive type/spacing; no sky offset */
   html[data-layout="mobile"] .hero-content {
     padding: 8px 20px 0;
     max-width: 100%;
-    margin-top: clamp(120px, 22vh, 196px);
+    margin-top: 0;
   }
 
   html[data-layout="mobile"] .hero-title {
@@ -987,12 +987,16 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
   .float-card--plan-flow:not(.collapsed) .vehicle-tab,
   .float-card--plan-flow:not(.collapsed) .plan-option-card,
   .float-card--plan-flow:not(.collapsed) .plan-option-grid,
+  .float-card--plan-flow:not(.collapsed) .trip-draft-quick-btn,
+  .float-card--plan-flow:not(.collapsed) .trip-draft-generate,
   .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .btn-generate-inline,
   .float-card--plan-flow:not(.collapsed) .question-choices-shell-compact > .plan-flow-actions .convo-nav-btn,
   .float-card--plan-flow:not(.collapsed) .plan-flow-action-dock,
   .float-card--plan-flow:not(.collapsed) .plan-flow-dock-continue,
   .float-card--plan-flow:not(.collapsed) .plan-flow-dock-btn {
-    pointer-events: auto;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
   }
 
   /* Guest hint must not intercept taps on option cards beneath / adjacent */
@@ -1006,12 +1010,28 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
     pointer-events: none;
   }
 
+  /* Decorative progress never steals taps meant for draft picks / dock */
+  .float-card--plan-flow .question-progress-track,
+  .float-card--plan-flow .question-progress-fill,
+  .float-card--plan-flow .question-progress-phases {
+    pointer-events: none !important;
+  }
+
+  /* Form body scrolls content but must not outrank dock or option hit targets */
   html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-form-body,
-  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-option-card,
-  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-option-grid {
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .float-card-scroll {
     position: relative;
-    z-index: 2;
+    z-index: 1;
     pointer-events: auto;
+  }
+
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-option-card,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-option-grid,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .trip-draft-quick-btn,
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .trip-draft-generate {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
   }
 
 /* Open profile dropdown must not intercept clicks on the plan panel beneath. */
@@ -1031,21 +1051,30 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
 .float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow input,
 .float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow [role="button"],
 .float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow .profile-menu-trigger,
-.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow .float-card-collapse {
+.float-card--plan-flow:not(.collapsed) .float-card-header--plan-flow .float-card-collapse,
+.float-card--plan-flow:not(.collapsed) .plan-flow-header-bar-actions,
+.float-card--plan-flow:not(.collapsed) .plan-flow-header-bar-actions button {
   pointer-events: auto !important;
 }
 
 .float-card--plan-flow:not(.collapsed) .float-card-body--plan-flow,
-.float-card--plan-flow:not(.collapsed) .plan-flow-action-dock,
 .float-card--plan-flow:not(.collapsed) .plan-route-setup {
   position: relative;
   z-index: 8;
   pointer-events: auto;
 }
 
+/* Dock must win hit-testing over scroll/form-body empty regions */
+.float-card--plan-flow:not(.collapsed) .plan-flow-action-dock,
+.float-card--plan-flow:not(.collapsed) .plan-panel-dock {
+  position: relative;
+  z-index: 30;
+  pointer-events: auto !important;
+}
+
 .float-card--plan-flow:not(.collapsed) .plan-flow-dock-continue {
   position: relative;
-  z-index: 9;
+  z-index: 31;
   pointer-events: auto !important;
 }
 
