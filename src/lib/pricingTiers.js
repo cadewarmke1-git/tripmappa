@@ -22,7 +22,7 @@ export const PRICING_PLATE_TIERS = [
     name: "Voyager",
     tag: "Most popular",
     accentVar: "--cat-fuel",
-    allotment: "20 trips / month",
+    allotment: "6 trips / month",
     features: [
       "Everything in Wanderer",
       "Verified stop ratings",
@@ -38,7 +38,7 @@ export const PRICING_PLATE_TIERS = [
     name: "Trailblazer",
     tag: "Best value",
     accentVar: "--cat-food",
-    allotment: "100 trips / month",
+    allotment: "12 trips / month",
     features: [
       "Everything in Voyager",
       "Unlimited saved stops",

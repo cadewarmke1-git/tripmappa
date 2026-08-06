@@ -8,8 +8,8 @@ import { isUnlimitedUser } from "./adminAccess.js";
 import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
 export const FREE_LIFETIME_LIMIT = 3;
-export const VOYAGER_MONTHLY_LIMIT = 20;
-export const TRAILBLAZER_MONTHLY_LIMIT = 100;
+export const VOYAGER_MONTHLY_LIMIT = 6;
+export const TRAILBLAZER_MONTHLY_LIMIT = 12;
 
 export function firstOfNextMonthIso(date = new Date()) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);

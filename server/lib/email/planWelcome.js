@@ -5,11 +5,12 @@ import { formatEmailDate } from "../trials.js";
 
 const PLAN_BENEFITS = {
   voyager: [
-    "Unlimited Trip Generations",
+    "6 trip generations per month",
     "Live location sharing",
     "Offline maps",
   ],
   trailblazer: [
+    "12 trip generations per month",
     "Everything in Voyager",
     "Grocery delivery to your hotel",
     "Priority generation queue",

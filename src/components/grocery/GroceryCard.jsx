@@ -69,7 +69,7 @@ function GroceryCardLocked({ destination, onUpgrade, isGuest = false, onSignIn }
       </div>
       <ul className="grocery-locked-benefits">
         <li>{TRAILBLAZER_BENEFITS.find(b => b.toLowerCase().includes("grocery")) || TRAILBLAZER_BENEFITS[1]}</li>
-        <li>Unlimited Trip Generations</li>
+        <li>12 trip generations per month</li>
       </ul>
       <div className="grocery-meta-field">
         <span className="grocery-meta-label">Delivery address</span>

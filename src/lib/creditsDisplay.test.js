@@ -11,12 +11,12 @@ describe("formatCreditsDisplay", () => {
   it("shows voyager monthly counter", () => {
     const { label, nudge } = formatCreditsDisplay({
       tier: TIERS.VOYAGER,
-      remaining: 5,
-      limit: 20,
-      monthlyUsed: 17,
+      remaining: 2,
+      limit: 6,
+      monthlyUsed: 4,
       billingPeriod: "monthly",
     });
-    expect(label).toBe("5 of 20 remaining this month");
+    expect(label).toBe("2 of 6 remaining this month");
     expect(nudge).toMatch(/Running low/);
   });
 
@@ -33,9 +33,9 @@ describe("formatCreditsDisplay", () => {
   it("shows trailblazer monthly counter without marketing copy", () => {
     expect(formatCreditsDisplay({
       tier: TIERS.TRAILBLAZER,
-      remaining: 80,
-      limit: 100,
+      remaining: 8,
+      limit: 12,
       billingPeriod: "monthly",
-    }).label).toBe("80 of 100 remaining this month");
+    }).label).toBe("8 of 12 remaining this month");
   });
 });

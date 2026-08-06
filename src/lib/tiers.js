@@ -54,13 +54,13 @@ export const TIER_PRICING = {
 export const FOUNDER_MEMBER_LIMIT = 1000;
 
 export const VOYAGER_BENEFITS = [
-  "20 trip generations per month",
+  "6 trip generations per month",
   "Live location sharing",
   "Offline maps",
 ];
 
 export const TRAILBLAZER_BENEFITS = [
-  "100 trip generations per month",
+  "12 trip generations per month",
   "Everything in Voyager",
   "Grocery delivery to your hotel",
   "Priority generation queue",
@@ -69,7 +69,7 @@ export const TRAILBLAZER_BENEFITS = [
 
 /** Rows for the tier comparison table — single source for pricing UI. */
 export const TIER_FEATURE_COMPARISON = [
-  { id: "generations", label: "trip generations", wanderer: "3 total", voyager: "20 / month", trailblazer: "100 / month", founder: "100 / month (1 yr)" },
+  { id: "generations", label: "trip generations", wanderer: "3 total", voyager: "6 / month", trailblazer: "12 / month", founder: "12 / month (1 yr)" },
   { id: "saved_trips", label: "Saved trips", wanderer: true, voyager: true, trailblazer: true, founder: true },
   { id: "live_share", label: "Live location sharing", wanderer: false, voyager: true, trailblazer: true, founder: true },
   { id: "offline_maps", label: "Offline maps", wanderer: false, voyager: true, trailblazer: true, founder: true },

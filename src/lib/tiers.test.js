@@ -65,8 +65,8 @@ describe("tiers", () => {
 
   it("exposes tier feature comparison rows", () => {
     const gens = TIER_FEATURE_COMPARISON.find(r => r.id === "generations");
-    expect(gens.voyager).toBe("20 / month");
-    expect(gens.trailblazer).toBe("100 / month");
+    expect(gens.voyager).toBe("6 / month");
+    expect(gens.trailblazer).toBe("12 / month");
   });
 
   it("returns avatar tier badges for paid tiers", () => {

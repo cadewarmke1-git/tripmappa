@@ -69,7 +69,7 @@ describe("planTripStream client helpers", () => {
       billingPeriod: "monthly",
       resetDate: "2099-02-01",
       used: 8,
-      limit: 20,
+      limit: 6,
       monthlyUsed: 8,
     });
     expect(snap.monthly_generation_count).toBe(8);
