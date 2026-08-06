@@ -101,6 +101,39 @@ describe("normalizeTripResponse", () => {
     expect(out.personal_touches).toEqual(["Halal dining near overnight stops"]);
     expect(out.changes_made).toEqual(["Swapped lodging for RV hookups"]);
   });
+
+  it("orders same-city fuel before scenic rest even when claimed distance is inverted", () => {
+    const out = normalizeTripResponse({
+      trip_format: "simplified",
+      road_stops: [
+        {
+          location: "Amarillo, TX",
+          distance: "380 mi",
+          eta: "5h 40m",
+          category: "rest",
+          name: "Cadillac Ranch — Amarillo, TX",
+        },
+        {
+          location: "Amarillo, TX",
+          distance: "432 mi",
+          eta: "6h 25m",
+          category: "fuel",
+          name: "Exxon — Amarillo, TX",
+        },
+        {
+          location: "Childress, TX",
+          distance: "225 mi",
+          category: "fuel",
+          name: "TA Travel Center — Childress, TX",
+        },
+      ],
+    });
+    expect(out.road_stops.map((s) => s.name)).toEqual([
+      "TA Travel Center — Childress, TX",
+      "Exxon — Amarillo, TX",
+      "Cadillac Ranch — Amarillo, TX",
+    ]);
+  });
 });
 
 describe("collectVerifiedPlaceNames", () => {

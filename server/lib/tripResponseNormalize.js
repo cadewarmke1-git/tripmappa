@@ -321,10 +321,42 @@ function parseRoadStopDistanceMiles(value) {
   return m ? parseFloat(m[1].replace(/,/g, "")) : Number.NaN;
 }
 
+function normalizeRoadStopCity(stop) {
+  const raw = String(stop?.location || stop?.city || "").trim().toLowerCase();
+  if (!raw) return "";
+  // "Amarillo, TX" / "Amarillo TX" → "amarillo"
+  return raw.split(",")[0].replace(/\s+[a-z]{2}$/i, "").trim();
+}
+
+/** Within one city, prefer fuel → food → rest so scenic detours don't leapfrog corridor fuel. */
+function roadStopCategoryRank(stop) {
+  const cat = String(stop?.category || "").toLowerCase();
+  if (/fuel|gas|charg|diesel|ev/.test(cat)) return 0;
+  if (/food|restaurant|dining|meal|eat|cafe/.test(cat)) return 1;
+  if (/rest|scenic|viewpoint|park|attraction/.test(cat)) return 2;
+  return 3;
+}
+
+/**
+ * Sort road_stops by claimed distance from origin.
+ * Same-city ties (or claimed-distance inversions within one city) use category
+ * rank so e.g. east-side Amarillo fuel precedes west-side Cadillac Ranch scenic.
+ */
 function sortRoadStopsByDistance(stops = []) {
   return [...stops].sort((a, b) => {
+    const aCity = normalizeRoadStopCity(a);
+    const bCity = normalizeRoadStopCity(b);
     const aDist = parseRoadStopDistanceMiles(a?.distance);
     const bDist = parseRoadStopDistanceMiles(b?.distance);
+    const sameCity = Boolean(aCity && bCity && aCity === bCity);
+
+    if (sameCity) {
+      const rankDiff = roadStopCategoryRank(a) - roadStopCategoryRank(b);
+      if (rankDiff !== 0) return rankDiff;
+      if (!Number.isNaN(aDist) && !Number.isNaN(bDist) && aDist !== bDist) return aDist - bDist;
+      return 0;
+    }
+
     if (!Number.isNaN(aDist) && !Number.isNaN(bDist) && aDist !== bDist) return aDist - bDist;
     return 0;
   });

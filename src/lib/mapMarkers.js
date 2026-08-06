@@ -103,6 +103,7 @@ export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
 
     num += 1;
     const stopData = w.stopData || {};
+    const approx = Boolean(stopData.coordApprox || w.coordApprox);
     markers.push({
       id: w.id,
       waypointId: w.id,
@@ -111,7 +112,9 @@ export function waypointsToNumberedMarkers(waypoints = [], answers = null) {
       category: mapWaypointCategory(w, answers),
       pinNumber: num,
       title: w.title,
-      subtitle: w.city || "",
+      subtitle: approx
+        ? [w.city || "", "approx on route"].filter(Boolean).join(" · ")
+        : (w.city || ""),
       zIndex: 10 + num,
       action: w.action || "navigate",
       website: w.website || stopData.website || stopData.websiteUri,
@@ -148,13 +151,16 @@ export function stopsToMapMarkers(stops = [], roadStops = [], customStops = [], 
 
   roadStops.forEach((rs, i) => {
     if (rs.lat != null && rs.lng != null) {
+      const baseSub = rs.location || rs.distance || "";
       markers.push({
         id: rs.id || `road-${i}`,
         lat: rs.lat,
         lng: rs.lng,
         category: mapRoadStopCategory(rs),
         title: rs.name || rs.title,
-        subtitle: rs.location || rs.distance,
+        subtitle: rs.coordApprox
+          ? [baseSub, "approx on route"].filter(Boolean).join(" · ")
+          : baseSub,
         action: "add",
         website: rs.website || rs.websiteUri || rs.url,
         menuUrl: rs.menuUrl || rs.menu,

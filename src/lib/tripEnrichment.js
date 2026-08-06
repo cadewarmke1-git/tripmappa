@@ -33,6 +33,7 @@ import { isContinuousDrive } from "./driveMode.js";
 
 import { dedupePlaces, dedupeRoadStops } from "./placesDedup.js";
 import { resetPlacesBudget } from "./placesBudget.js";
+import { ensureRoadStopCoordinates } from "./roadStopCoordinates.js";
 
 const restaurantPreloadInFlight = new Set();
 const restaurantPreloadListeners = new Set();
@@ -352,6 +353,16 @@ export async function enrichGeneratedTrip({
   } else {
     safeRoadStops = dedupeRoadStops(safeRoadStops);
   }
+
+  // Geocode (or corridor-fallback) every itinerary road stop so map/nav/fuel
+  // never silently drop LLM stops that lack plan-trip lat/lng.
+  safeRoadStops = await ensureRoadStopCoordinates(safeRoadStops, {
+    routePoints: routeInfo?.routePoints || [],
+    totalMiles: parseMilesFromDistance(routeInfo?.distance),
+    geocode: fetchGeocode,
+    delay: placesApiDelay,
+    signal,
+  });
 
   if (continuousDrive) {
     safeRoadStops = safeRoadStops
