@@ -862,15 +862,69 @@ body {
   color: #fff;
 }
 
+/* Auth fields: warm night ink + gold border — never lavender/violet (#241C2C / 168,155,207).
+   Selectors intentionally do not require .app-wrap.night — dialog can sit outside theme wrappers. */
+.auth-modal-overlay .auth-modal .auth-field-input,
+.auth-modal .auth-field-input {
+  background: #15120E !important;
+  border-color: rgba(255, 210, 140, 0.28) !important;
+  color: #fff !important;
+}
+
+.auth-modal-overlay .auth-modal .auth-field-input::placeholder,
+.auth-modal .auth-field-input::placeholder {
+  color: rgba(253, 243, 224, 0.45) !important;
+}
+
+.auth-modal-overlay .auth-modal .auth-field-input:focus,
+.auth-modal .auth-field-input:focus {
+  border-color: rgba(255, 210, 140, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(255, 210, 140, 0.16) !important;
+}
+
+.auth-modal-overlay .auth-modal .auth-social-btn:not(.auth-social-btn--apple),
+.auth-modal .auth-social-btn:not(.auth-social-btn--apple) {
+  background: #15120E !important;
+  border-color: rgba(255, 210, 140, 0.28) !important;
+  color: #fff !important;
+}
+
+.auth-modal-overlay .auth-modal .auth-modal-submit.btn-generate,
+.auth-modal-overlay .auth-modal .auth-modal-submit:not(:disabled),
+.auth-modal .auth-modal-submit.btn-generate,
+.auth-modal .auth-modal-submit:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(255, 140, 66, 0.28) !important;
+}
+
+/* Day auth: keep cream paper, still no purple borders */
+.app-wrap.day .auth-modal-overlay .auth-modal .auth-field-input,
+.app-wrap.day .auth-modal .auth-field-input {
+  background: #FDF3E0 !important;
+  border-color: rgba(90, 42, 16, 0.22) !important;
+  color: #0D0A1A !important;
+}
+
+.app-wrap.day .auth-modal-overlay .auth-modal .auth-field-input::placeholder,
+.app-wrap.day .auth-modal .auth-field-input::placeholder {
+  color: rgba(90, 42, 16, 0.45) !important;
+}
+
+.app-wrap.day .auth-modal-overlay .auth-modal .auth-social-btn:not(.auth-social-btn--apple),
+.app-wrap.day .auth-modal .auth-social-btn:not(.auth-social-btn--apple) {
+  background: #FDF3E0 !important;
+  border-color: rgba(90, 42, 16, 0.22) !important;
+  color: #0D0A1A !important;
+}
+
 .app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-field-input {
-  background: var(--color-surface-elevated) !important;
-  border-color: rgba(168, 155, 207, 0.25) !important;
+  background: #15120E !important;
+  border-color: rgba(255, 210, 140, 0.28) !important;
   color: #fff !important;
 }
 
 .app-wrap.night .auth-modal-overlay:not(.tm-theme-day) .auth-social-btn:not(.auth-social-btn--apple) {
-  background: var(--color-surface-elevated) !important;
-  border-color: rgba(168, 155, 207, 0.25) !important;
+  background: #15120E !important;
+  border-color: rgba(255, 210, 140, 0.28) !important;
   color: #fff !important;
 }
 /* Responsive safeguards */

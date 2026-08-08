@@ -4920,8 +4920,10 @@
 
   /* ── Auth modals (sky-cycle CSS variables on body.theme-*) ── */
   .auth-modal-overlay {
-    background: color-mix(in srgb, var(--surface) 35%, rgba(0, 0, 0, 0.72));
-    backdrop-filter: blur(8px);
+    /* Solid scrim — no backdrop-filter (no glass; avoids night-sky purple bleed). */
+    background: rgba(13, 10, 26, 0.88);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   .auth-modal {
     position: relative;
@@ -4931,8 +4933,8 @@
     border-radius: 20px;
     background: #0D0A1A;
     color: var(--text-primary);
-    border: 1px solid var(--border);
-    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 210, 140, 0.22);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
     /* Fit inside overlay padding (nav clearance + safe areas) */
     max-height: min(calc(100vh - var(--nav-h, 56px) - 40px), 920px);
     max-height: min(calc(100dvh - var(--nav-h, 56px) - 40px), 920px);
