@@ -1,0 +1,238 @@
+{
+  "R30": {
+    "duoarea": "R30",
+    "label": "gulf",
+    "parsed": {
+      "regular": 3.588,
+      "premium": 4.451,
+      "diesel": 4.942,
+      "period": "2026-07-20",
+      "productsSeen": [
+        "EPMR",
+        "EPD2D",
+        "EPMP"
+      ]
+    },
+    "sampleRows": [
+      {
+        "product": "EPMR",
+        "duoarea": "R30",
+        "period": "2026-07-20",
+        "value": "3.588",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "R30",
+        "period": "2026-07-20",
+        "value": "4.942",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "R30",
+        "period": "2026-07-20",
+        "value": "4.451",
+        "product-name": "Premium Gasoline"
+      },
+      {
+        "product": "EPMR",
+        "duoarea": "R30",
+        "period": "2026-07-13",
+        "value": "3.423",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "R30",
+        "period": "2026-07-13",
+        "value": "4.546",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "R30",
+        "period": "2026-07-13",
+        "value": "4.289",
+        "product-name": "Premium Gasoline"
+      }
+    ]
+  },
+  "R40": {
+    "duoarea": "R40",
+    "label": "rockies",
+    "parsed": {
+      "regular": 3.956,
+      "premium": 4.618,
+      "diesel": 4.935,
+      "period": "2026-07-20",
+      "productsSeen": [
+        "EPMR",
+        "EPD2D",
+        "EPMP"
+      ]
+    },
+    "sampleRows": [
+      {
+        "product": "EPMR",
+        "duoarea": "R40",
+        "period": "2026-07-20",
+        "value": "3.956",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "R40",
+        "period": "2026-07-20",
+        "value": "4.935",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "R40",
+        "period": "2026-07-20",
+        "value": "4.618",
+        "product-name": "Premium Gasoline"
+      },
+      {
+        "product": "EPMR",
+        "duoarea": "R40",
+        "period": "2026-07-13",
+        "value": "3.823",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "R40",
+        "period": "2026-07-13",
+        "value": "4.6",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "R40",
+        "period": "2026-07-13",
+        "value": "4.474",
+        "product-name": "Premium Gasoline"
+      }
+    ]
+  },
+  "R10": {
+    "duoarea": "R10",
+    "label": "east",
+    "parsed": {
+      "regular": 3.924,
+      "premium": 4.797,
+      "diesel": 5.194,
+      "period": "2026-07-20",
+      "productsSeen": [
+        "EPMR",
+        "EPD2D",
+        "EPMP"
+      ]
+    },
+    "sampleRows": [
+      {
+        "product": "EPMR",
+        "duoarea": "R10",
+        "period": "2026-07-20",
+        "value": "3.924",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "R10",
+        "period": "2026-07-20",
+        "value": "5.194",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "R10",
+        "period": "2026-07-20",
+        "value": "4.797",
+        "product-name": "Premium Gasoline"
+      },
+      {
+        "product": "EPMR",
+        "duoarea": "R10",
+        "period": "2026-07-13",
+        "value": "3.765",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "R10",
+        "period": "2026-07-13",
+        "value": "4.894",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "R10",
+        "period": "2026-07-13",
+        "value": "4.651",
+        "product-name": "Premium Gasoline"
+      }
+    ]
+  },
+  "NUS": {
+    "duoarea": "NUS",
+    "label": "us",
+    "parsed": {
+      "regular": 4.001,
+      "premium": 4.961,
+      "diesel": 5.134,
+      "period": "2026-07-20",
+      "productsSeen": [
+        "EPMR",
+        "EPD2D",
+        "EPMP"
+      ]
+    },
+    "sampleRows": [
+      {
+        "product": "EPMR",
+        "duoarea": "NUS",
+        "period": "2026-07-20",
+        "value": "4.001",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "NUS",
+        "period": "2026-07-20",
+        "value": "5.134",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "NUS",
+        "period": "2026-07-20",
+        "value": "4.961",
+        "product-name": "Premium Gasoline"
+      },
+      {
+        "product": "EPMR",
+        "duoarea": "NUS",
+        "period": "2026-07-13",
+        "value": "3.855",
+        "product-name": "Regular Gasoline"
+      },
+      {
+        "product": "EPD2D",
+        "duoarea": "NUS",
+        "period": "2026-07-13",
+        "value": "4.796",
+        "product-name": "No 2 Diesel"
+      },
+      {
+        "product": "EPMP",
+        "duoarea": "NUS",
+        "period": "2026-07-13",
+        "value": "4.826",
+        "product-name": "Premium Gasoline"
+      }
+    ]
+  }
+}
