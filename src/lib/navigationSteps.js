@@ -1,4 +1,5 @@
 /** Parse Google DirectionsResult (and polyline fallbacks) into navigation steps. */
+import { parseHereRouteSteps, hereRouteHasGuidance } from "./hereNavigationSteps.js";
 
 function stripHtml(html = "") {
   return String(html).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -43,6 +44,19 @@ export function parseDirectionsSteps(directionsResult) {
     }
   }
   return steps;
+}
+
+/**
+ * Resolve cockpit steps: Google Directions → HERE actions → polyline fallback.
+ */
+export function resolveNavigationSteps({ directionsResult = null, hereRoute = null, routePoints = [] } = {}) {
+  const fromGoogle = parseDirectionsSteps(directionsResult);
+  if (fromGoogle.length) return fromGoogle;
+  if (hereRouteHasGuidance(hereRoute)) {
+    const fromHere = parseHereRouteSteps(hereRoute);
+    if (fromHere.length) return fromHere;
+  }
+  return buildPolylineSteps(routePoints);
 }
 
 /** Build simplified steps from a bare polyline (HERE truck / no Directions API). */

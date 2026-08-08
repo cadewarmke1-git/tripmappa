@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
-  parseDirectionsSteps,
-  buildPolylineSteps,
+  resolveNavigationSteps,
   buildRoutePolyline,
   simplifyNavigationInstruction,
   simplifyThenPreview,
@@ -70,6 +69,7 @@ function distanceToStepEndMeters(step, position) {
 export function useTurnByTurnNavigation({
   active = false,
   directionsResult = null,
+  hereRoute = null,
   routePoints = [],
   itineraryWaypoints = [],
   destination = "",
@@ -93,11 +93,10 @@ export function useTurnByTurnNavigation({
   const announcedArrivalRef = useRef(new Set());
   const watchIdRef = useRef(null);
 
-  const steps = useMemo(() => {
-    const parsed = parseDirectionsSteps(directionsResult);
-    if (parsed.length) return parsed;
-    return buildPolylineSteps(routePoints);
-  }, [directionsResult, routePoints]);
+  const steps = useMemo(
+    () => resolveNavigationSteps({ directionsResult, hereRoute, routePoints }),
+    [directionsResult, hereRoute, routePoints],
+  );
 
   const polyline = useMemo(
     () => buildRoutePolyline(directionsResult, routePoints),

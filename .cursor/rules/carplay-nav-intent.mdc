@@ -1,0 +1,12 @@
+---
+description: CarPlay own-nav roadmap intent for TripMappa navigation strategy
+alwaysApply: true
+---
+
+# CarPlay / in-house navigation intent
+
+Once Apple CarPlay entitlement is approved, TripMappa intends to implement **its own nav on CarPlay** (TripMappa cockpit on the dashboard), not permanently rely on handoff to Apple Maps / Google Maps / Waze.
+
+Near-term handoff choosers (if built) are a bridge for users who need dashboard nav **before** entitlement — not a replacement for first-party CarPlay nav.
+
+When discussing or designing navigation, CarPlay, or “Start Navigation” flows, preserve this end state: own CarPlay nav after approval.

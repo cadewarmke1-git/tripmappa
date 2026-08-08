@@ -199,6 +199,7 @@ export function useMapState({
             restrictions,
             weighStations: data.weighStations || [],
             herePolyline: data.polyline,
+            hereRoute: data.hereRoute || null,
           };
 
           setRouteInfo(nextRouteInfo);
@@ -360,6 +361,9 @@ export function useMapState({
             rvHeight: answers.rv_height,
             rvWeight: answers.rv_weight,
             rvTowing: answers.rv_towing,
+            routeProvider: "google",
+            hereRoute: null,
+            herePolyline: null,
           };
           setRouteInfo(nextRouteInfo);
           setOrigin(originVal);
@@ -464,9 +468,13 @@ export function useMapState({
             })),
             vehicleType: "Car",
             timingMode: "leave_now",
+            routeProvider: "google",
+            hereRoute: null,
+            truckSafe: false,
           };
           setRouteInfo(routeInfo);
           setRoutePath(route.overview_path);
+          setTruckRoutePath(null);
           setDirectionsResult(result);
           setCachedDirections(signature, buildDirectionsCacheEntry(result, {
             originVal,

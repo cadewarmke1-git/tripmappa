@@ -111,6 +111,14 @@ export function useItinerarySync({
         duration: result.routeInfo?.duration || prev?.duration,
         routePoints: result.routePoints || result.routeInfo?.routePoints || prev?.routePoints,
         routeLegs: legs,
+        routeProvider: result.provider || prev?.routeProvider,
+        hereRoute: result.provider === "here"
+          ? (result.truckData?.hereRoute || result.hereRoute || null)
+          : null,
+        herePolyline: result.provider === "here"
+          ? (result.truckData?.polyline || prev?.herePolyline || null)
+          : null,
+        truckSafe: result.provider === "here" ? true : prev?.truckSafe,
       }));
 
       if (result.provider === "here") {

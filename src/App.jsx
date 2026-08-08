@@ -70,6 +70,7 @@ import HeroView from "./components/HeroView.jsx";
 import ReturningUserView from "./components/ReturningUserView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TurnByTurnPanel from "./components/navigate/TurnByTurnPanel.jsx";
+import StartNavigationChooser from "./components/navigate/StartNavigationChooser.jsx";
 import TruckNavigateOnlyGate from "./components/navigate/TruckNavigateOnlyGate.jsx";
 import NavigationAlertToasts from "./components/navigate/NavigationAlertToasts.jsx";
 import { shouldUseTruckRouting } from "./lib/truckRoutingApi.js";
@@ -212,6 +213,8 @@ export default function App() {
   const [generated, setGenerated] = useState(false);
   const [lastTripPreview, setLastTripPreview] = useState(null);
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
+  const [startNavChooserOpen, setStartNavChooserOpen] = useState(false);
+  const startNavInAppRef = useRef(null);
   const [truckNavigateGateOpen, setTruckNavigateGateOpen] = useState(false);
   const pendingTruckPlanGateRef = useRef(null);
   const [stops, setStops] = useState([]);
@@ -1350,6 +1353,7 @@ export default function App() {
   const turnByTurn = useTurnByTurnNavigation({
     active: navContextActive,
     directionsResult,
+    hereRoute: routeInfo?.hereRoute || null,
     routePoints: routeInfo?.routePoints || truckRoutePath || [],
     itineraryWaypoints: itinerarySync.itineraryWaypoints,
     destination: dest,
@@ -1561,16 +1565,41 @@ export default function App() {
 
     if (skipIfLoaded && routeInfo?.routePoints?.length) {
       if (isNavigating) turnByTurn.resumeFollowing();
-      else recenterMap();
+      else {
+        openStartNavigationChooser(() => {
+          turnByTurn.startNavigation();
+          turnByTurn.resumeFollowing();
+        });
+      }
       return;
     }
     const ok = await fetchRouteBetween(fromVal, toVal, { skipFitBounds: true });
     if (ok) {
-      turnByTurn.startNavigation();
-      turnByTurn.resumeFollowing();
-      toast_("Route ready", true);
+      openStartNavigationChooser(() => {
+        turnByTurn.startNavigation();
+        turnByTurn.resumeFollowing();
+        toast_("Route ready", true);
+      });
     }
     else toast_("Could not calculate route — check addresses and try again", { isError: true });
+  }
+
+  function openStartNavigationChooser(startInApp) {
+    startNavInAppRef.current = typeof startInApp === "function" ? startInApp : null;
+    setStartNavChooserOpen(true);
+  }
+
+  function beginInAppNavigationFromResults() {
+    if (navigateOriginRef.current) navigateOriginRef.current.value = origin;
+    if (navigateDestRef.current) navigateDestRef.current.value = dest;
+    if (itinerarySync.itineraryWaypoints.length) {
+      itinerarySync.handleStartNavigation();
+    } else {
+      recenterMap();
+    }
+    turnByTurn.startNavigation();
+    setResultsView("map");
+    window.setTimeout(() => flushMapLayout(), 250);
   }
 
   function swapRouteCities() {
@@ -3266,16 +3295,7 @@ export default function App() {
               window.setTimeout(() => flushMapLayout(), 250);
             }}
             onStartNavigation={() => {
-              if (navigateOriginRef.current) navigateOriginRef.current.value = origin;
-              if (navigateDestRef.current) navigateDestRef.current.value = dest;
-              if (itinerarySync.itineraryWaypoints.length) {
-                itinerarySync.handleStartNavigation();
-              } else {
-                recenterMap();
-              }
-              turnByTurn.startNavigation();
-              setResultsView("map");
-              window.setTimeout(() => flushMapLayout(), 250);
+              openStartNavigationChooser(beginInAppNavigationFromResults);
             }}
             onDaySelect={setActiveDayIndex}
             onAddRoadStop={addRoadStopToTrip}
@@ -3748,6 +3768,24 @@ export default function App() {
         danger
         onConfirm={resetPlan}
         onCancel={() => setConfirmResetOpen(false)}
+      />
+      <StartNavigationChooser
+        open={startNavChooserOpen}
+        onClose={() => {
+          setStartNavChooserOpen(false);
+          startNavInAppRef.current = null;
+        }}
+        onStartInApp={() => {
+          const fn = startNavInAppRef.current;
+          startNavInAppRef.current = null;
+          setStartNavChooserOpen(false);
+          fn?.();
+        }}
+        answers={answers}
+        routeInfo={routeInfo}
+        routePoints={routeInfo?.routePoints || routePath}
+        truckRoutePath={truckRoutePath}
+        destinationLabel={dest}
       />
       <TruckNavigateOnlyGate
         open={truckNavigateGateOpen}
