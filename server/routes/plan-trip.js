@@ -30,6 +30,7 @@ import {
 } from "../../src/lib/vehicles.js";
 import { isTowingSelected } from "../../src/lib/tripAccommodations.js";
 import { buildGenerationLogRow, logGenerationUsage } from "../lib/generationLogs.js";
+import { createPlanTripReliabilityTracker } from "../lib/generationReliability.js";
 import { logPlanTripDev } from "../lib/apiLog.js";
 import {
   clampString,
@@ -876,12 +877,14 @@ function finalizeSuccessfulGeneration({
   routeInfo,
   isSimplifiedFormat,
   maxTokensTier,
+  reliability = null,
 }) {
   return (async () => {
     if (user && admin && tripResponseHasContent(parsed)) {
       try {
         const validation = await validateCreditsBeforeConsume(admin, user.id, user.email);
         if (!validation.ok) {
+          reliability?.finish({ outcome: "error", code: "no_credits" });
           writePlanTripSse(res, "error", {
             error: "No Trip Generations remaining",
             code: "no_credits",
@@ -910,6 +913,7 @@ function finalizeSuccessfulGeneration({
       }));
     }
 
+    reliability?.finish({ outcome: "success", code: "complete" });
     writePlanTripSse(res, "complete", parsed);
     res.end();
     return undefined;
@@ -1031,9 +1035,12 @@ export default async function handler(req, res) {
   const ctx = buildTripContext(pickPlanTripContextBody(req.body, mergedAnswers));
 
   const effectivePlacesPrompt = buildCorridorPlacesFallback(routeInfo, placesContextPrompt);
-  const corridorDegradationNote = !placesContextPrompt?.trim() && effectivePlacesPrompt
+  const corridorFallback = Boolean(!placesContextPrompt?.trim() && effectivePlacesPrompt);
+  const corridorDegradationNote = corridorFallback
     ? "=== GRACEFUL DEGRADATION (proceed with corridor geography only) ===\nNo verified placesContext was available for this request — anchor all named stops to cities along the route corridor."
     : "";
+  const reliability = createPlanTripReliabilityTracker({ userId: user.id });
+  reliability.setCorridorFallback(corridorFallback);
 
   let prefsBlock = preferenceContext;
   if (!prefsBlock) {
@@ -1142,6 +1149,7 @@ export default async function handler(req, res) {
         parsed = normalizeTripResponse(stitched, { placesContext: rawPlacesContext });
       } catch (stitchErr) {
         Sentry.captureException(stitchErr);
+        reliability.finish({ outcome: "error", code: "parse_failed" });
         writePlanTripSse(res, "error", {
           error: "Trip planner returned invalid data",
           code: "parse_failed",
@@ -1152,6 +1160,7 @@ export default async function handler(req, res) {
       }
 
       if (!tripResponseHasContent(parsed)) {
+        reliability.finish({ outcome: "error", code: "incomplete_response", emptyResponse: true });
         writePlanTripSse(res, "error", {
           error: "Trip planner returned incomplete results",
           code: "incomplete_response",
@@ -1175,11 +1184,13 @@ export default async function handler(req, res) {
         routeInfo,
         isSimplifiedFormat: false,
         maxTokensTier: segmentTokenBudget.tier,
+        reliability,
       });
     } catch (err) {
       console.error("Parallel plan trip error:", err);
       Sentry.captureException(err);
       await sseWriter.wait();
+      reliability.finish({ outcome: "error", code: "api_error" });
       writePlanTripSse(res, "error", {
         error: err?.message || "Failed to generate trip plan",
         code: "api_error",
@@ -1225,6 +1236,7 @@ export default async function handler(req, res) {
       if (streamResult.apiError || !streamResult.response.ok) {
         const retryable = streamResult.response?.status === 429 || (streamResult.response?.status ?? 0) >= 529;
         if (retryable && attempt === 0) continue;
+        reliability.finish({ outcome: "error", code: "api_error" });
         writePlanTripSse(res, "error", {
           error: streamResult.apiError || "API error",
           code: "api_error",
@@ -1239,6 +1251,7 @@ export default async function handler(req, res) {
       } catch (parseErr) {
         if (attempt === 0) continue;
         Sentry.captureException(parseErr);
+        reliability.finish({ outcome: "error", code: "parse_failed" });
         writePlanTripSse(res, "error", {
           error: "Trip planner returned invalid data",
           code: "parse_failed",
@@ -1252,6 +1265,7 @@ export default async function handler(req, res) {
 
       if (!tripResponseHasContent(parsed) && attempt === 0) continue;
       if (!tripResponseHasContent(parsed)) {
+        reliability.finish({ outcome: "error", code: "incomplete_response", emptyResponse: true });
         writePlanTripSse(res, "error", {
           error: "Trip planner returned incomplete results",
           code: "incomplete_response",
@@ -1274,10 +1288,12 @@ export default async function handler(req, res) {
       routeInfo,
       isSimplifiedFormat,
       maxTokensTier,
+      reliability,
     });
   } catch (err) {
     console.error("Plan trip error:", err);
     Sentry.captureException(err);
+    reliability.finish({ outcome: "error", code: "server_error" });
     if (!res.headersSent) {
       return res.status(500).json({ error: "Failed to generate trip plan" });
     }
