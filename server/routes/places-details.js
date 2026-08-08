@@ -10,11 +10,13 @@ export default async function handler(req, res) {
   const key = getGoogleMapsKey();
   if (!key) return res.status(503).json({ error: "Google Maps API key not configured" });
 
-  const { placeId } = req.body || {};
+  const { placeId, skipPhotos = false } = req.body || {};
   const id = String(placeId || "").trim();
   if (!id) return res.status(400).json({ error: "placeId is required" });
 
-  const { details, cached, apiError } = await fetchPlaceDetailsCached(key, id);
+  const { details, cached, apiError } = await fetchPlaceDetailsCached(key, id, {
+    skipPhotos: skipPhotos === true,
+  });
 
   if (apiError === "no_key") {
     return res.status(503).json({ error: "Google Maps API key not configured" });

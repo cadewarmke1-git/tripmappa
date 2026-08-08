@@ -1,4 +1,5 @@
 import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
+import { recordNearbyCalls } from "./placesBudget.js";
 
 /** Client fetch for /api/restaurants */
 export async function fetchRestaurantsForStop({ lat, lng, city, answers, roadStop = false, limit = 6 }) {
@@ -19,8 +20,11 @@ export async function fetchRestaurantsForStop({ lat, lng, city, answers, roadSto
       return { restaurants: [], error: "failed" };
     }
     const data = await res.json();
-    return { restaurants: data.restaurants || [], error: null };
+    const nearbyCallsBilled = Math.max(0, Number(data.nearbyCallsBilled) || 0);
+    // Server-side resolve Nearby counts toward the trip budget; do not gate on cap.
+    if (nearbyCallsBilled > 0) recordNearbyCalls(nearbyCallsBilled);
+    return { restaurants: data.restaurants || [], error: null, nearbyCallsBilled };
   } catch {
-    return { restaurants: [], error: "failed" };
+    return { restaurants: [], error: "failed", nearbyCallsBilled: 0 };
   }
 }

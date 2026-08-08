@@ -257,39 +257,56 @@ export default async function handler(req, res) {
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.userRatingsTotal ?? 0) - (a.userRatingsTotal ?? 0))
       .slice(0, limit);
 
+    const admin = getSupabaseAdmin();
     const withDetails = await Promise.all(
       sorted.map(async (place) => {
         if (place.source === "osm" && !place.placeId) {
-          const { details } = await resolvePlaceAtLocation(key, place.lat, place.lng, {
-            type: "restaurant",
-            keyword: "restaurant",
-          });
-          if (!details?.name || !details?.placeId) return null;
-          const detailShape = detailsResultFromCached(details);
-          return mapRestaurant(
-            { placeId: details.placeId, lat: place.lat, lng: place.lng },
-            detailShape,
-            latNum,
-            lngNum,
-            city,
+          const { details, nearbyCallsBilled: billed = 0 } = await resolvePlaceAtLocation(
+            key,
+            place.lat,
+            place.lng,
+            {
+              type: "restaurant",
+              keyword: "restaurant",
+              osmId: place.osmId || place.id || null,
+              admin,
+            },
           );
+          if (!details?.name || !details?.placeId) return { mapped: null, billed };
+          const detailShape = detailsResultFromCached(details);
+          return {
+            mapped: mapRestaurant(
+              { placeId: details.placeId, lat: place.lat, lng: place.lng },
+              detailShape,
+              latNum,
+              lngNum,
+              city,
+            ),
+            billed,
+          };
         }
-        if (!place.placeId) return null;
+        if (!place.placeId) return { mapped: null, billed: 0 };
         try {
           const details = await fetchDetails(place.placeId, key);
           const rawPlace = rawById.get(place.placeId);
           const mapped = mapRestaurant(rawPlace || { placeId: place.placeId }, details, latNum, lngNum, city);
-          if (!mapped?.name) return null;
-          return mapped;
+          if (!mapped?.name) return { mapped: null, billed: 0 };
+          return { mapped, billed: 0 };
         } catch (detailErr) {
           console.warn("restaurant details fetch failed:", place.placeId, detailErr.message);
-          return null;
+          return { mapped: null, billed: 0 };
         }
       }),
     );
 
-    const verified = withDetails.filter(Boolean);
-    return res.status(200).json({ restaurants: verified, city: city || null, empty: verified.length === 0 });
+    const nearbyCallsBilledTotal = withDetails.reduce((sum, row) => sum + (row?.billed || 0), 0);
+    const verified = withDetails.map((row) => row?.mapped).filter(Boolean);
+    return res.status(200).json({
+      restaurants: verified,
+      city: city || null,
+      empty: verified.length === 0,
+      nearbyCallsBilled: nearbyCallsBilledTotal,
+    });
   } catch (err) {
     console.error("restaurants API error:", err);
     captureServerException(err);

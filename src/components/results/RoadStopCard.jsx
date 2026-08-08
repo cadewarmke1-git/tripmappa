@@ -3,14 +3,9 @@ import RoadFoodStopRow from "../restaurants/RoadFoodStopRow.jsx";
 import RoadTripStopCard from "./RoadTripStopCard.jsx";
 import { parseRating } from "../../lib/ratings.js";
 import { hasGooglePlacesData } from "../../lib/placesVerification.js";
+import { prefersPhotoFallback } from "../../lib/photoDisplayPolicy.js";
 import { roadStopToSignCategory, signCategoryLabel } from "../../lib/neonSignCategory.js";
 import { buildDirectionsUrl, formatOffRouteDistance } from "../../lib/stopCardDistance.js";
-
-function prefersPhotoFallback(category, source) {
-  if (source === "osm") return true;
-  const cat = String(category || "").toLowerCase();
-  return !/fuel|gas|charg|truck|rest_area|diesel|ev/.test(cat);
-}
 
 function isFoodOrFuelCategory(category) {
   const signCategory = roadStopToSignCategory(category);

@@ -1,7 +1,7 @@
 import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 
 /** Cached Place Details via /api/places-details (Supabase-backed, 7-day TTL). */
-export async function fetchPlaceDetailsCached(placeId) {
+export async function fetchPlaceDetailsCached(placeId, { skipPhotos = false } = {}) {
   const id = String(placeId || "").trim();
   if (!id) return { details: null, cached: false, error: "missing-place-id" };
 
@@ -9,7 +9,7 @@ export async function fetchPlaceDetailsCached(placeId) {
     const res = await fetch("/api/places-details", {
       method: "POST",
       headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ placeId: id }),
+      body: JSON.stringify({ placeId: id, skipPhotos: skipPhotos === true }),
     });
     if (!res.ok) {
       return { details: null, cached: false, error: res.status === 400 ? "invalid-request" : "failed" };

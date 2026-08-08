@@ -6,6 +6,8 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
 
 export const PLACE_DETAILS_FIELDS = "name,geometry,photos,rating,price_level,place_id,types,vicinity";
+/** Same as full Details minus photos — for cards that never show Places photos. */
+export const PLACE_DETAILS_FIELDS_NO_PHOTOS = "name,geometry,rating,price_level,place_id,types,vicinity";
 
 export function cacheExpiresBefore() {
   return new Date(Date.now() - CACHE_TTL_MS).toISOString();
@@ -100,23 +102,38 @@ async function fetchGooglePlaceDetails(placeId, apiKey, fields = PLACE_DETAILS_F
 
 /**
  * Read Place Details from Supabase cache; fetch Google only on miss/expiry.
+ * skipPhotos: omit photos field on live fetch; strip photoReference on cache hit.
+ * No-photo live fetches are not written to the shared cache (avoids starving photo-needed callers).
+ *
  * @returns {{ details: object|null, cached: boolean, apiError: string|null }}
  */
-export async function fetchPlaceDetailsCached(apiKey, placeId, { fields = PLACE_DETAILS_FIELDS } = {}) {
+export async function fetchPlaceDetailsCached(apiKey, placeId, {
+  fields = null,
+  skipPhotos = false,
+} = {}) {
   const id = String(placeId || "").trim();
   if (!id) return { details: null, cached: false, apiError: "missing_place_id" };
+
+  const fieldList = fields
+    || (skipPhotos ? PLACE_DETAILS_FIELDS_NO_PHOTOS : PLACE_DETAILS_FIELDS);
 
   const admin = getSupabaseAdmin();
   const cached = await readCachedDetails(admin, id);
   if (cached?.placeId) {
-    return { details: cached, cached: true, apiError: null };
+    const details = skipPhotos
+      ? { ...cached, photoReference: null }
+      : cached;
+    return { details, cached: true, apiError: null };
   }
 
   if (!apiKey) return { details: null, cached: false, apiError: "no_key" };
 
-  const fresh = await fetchGooglePlaceDetails(id, apiKey, fields);
+  const fresh = await fetchGooglePlaceDetails(id, apiKey, fieldList);
   if (!fresh) return { details: null, cached: false, apiError: "places_error" };
 
-  await writeCachedDetails(admin, id, fresh);
+  if (!skipPhotos) {
+    await writeCachedDetails(admin, id, fresh);
+  }
+
   return { details: fresh, cached: false, apiError: null };
 }

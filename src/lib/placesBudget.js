@@ -31,6 +31,22 @@ export function recordNearbyCall() {
   if (nearbyCount >= MAX_NEARBY_PER_TRIP) logCapHit("Nearby Search");
 }
 
+/** Record N live (uncached) Nearby Search calls — e.g. server resolve billed count. */
+export function recordNearbyCalls(n) {
+  const count = Math.max(0, Math.floor(Number(n) || 0));
+  for (let i = 0; i < count; i++) recordNearbyCall();
+}
+
+export function getNearbyCallCount() {
+  return nearbyCount;
+}
+
+export function getDetailsCallCount() {
+  return detailsCount;
+}
+
+export { MAX_NEARBY_PER_TRIP, MAX_DETAILS_PER_TRIP };
+
 export function canMakeDetailsCall() {
   if (detailsCount >= MAX_DETAILS_PER_TRIP) {
     logCapHit("Place Details");

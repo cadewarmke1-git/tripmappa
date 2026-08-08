@@ -11,6 +11,7 @@ import { isTruckerTrip } from "./vehicles.js";
 import { fetchRestStopsForBbox } from "./restStopsClient.js";
 import { dedupePlaces, placeDedupKey } from "./placesDedup.js";
 import { ensureNamedEnrichedPlace } from "./osmPlaceEnrichment.js";
+import { prefersPhotoFallback } from "./photoDisplayPolicy.js";
 import {
   DENSE_SAMPLE_INTERVAL_MI,
   hasOsmPoisNear,
@@ -187,14 +188,20 @@ async function enrichStopsForDisplay(stops) {
       photoReference: stop.photoReference,
     };
 
-    const verified = await ensureNamedEnrichedPlace(place, stop.category);
+    const useFallbackPhoto = prefersPhotoFallback(stop.category, "google");
+    const verified = await ensureNamedEnrichedPlace(place, stop.category, {
+      skipPhotos: useFallbackPhoto,
+    });
     if (!verified) continue;
 
-    const photoUrl = await pickUniquePhoto(
-      { placeId: verified.placeId, photoUrl: verified.photoUrl, photoReference: verified.photoReference },
-      usedPhotoUrls,
-      verified,
-    );
+    // preferFallback cards never show Places photos — skip Photo URL / Details photo work.
+    const photoUrl = useFallbackPhoto
+      ? null
+      : await pickUniquePhoto(
+        { placeId: verified.placeId, photoUrl: verified.photoUrl, photoReference: verified.photoReference },
+        usedPhotoUrls,
+        verified,
+      );
 
     enriched.push({
       ...stop,
@@ -203,7 +210,7 @@ async function enrichStopsForDisplay(stops) {
       name: verified.name,
       rating: verified.rating,
       note: verified.rating ? `${verified.rating} / 5` : "",
-      photoUrl: photoUrl || verified.photoUrl || null,
+      photoUrl: photoUrl || (useFallbackPhoto ? null : verified.photoUrl) || null,
       source: "google",
     });
   }
