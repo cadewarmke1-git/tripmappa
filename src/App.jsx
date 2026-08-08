@@ -70,7 +70,9 @@ import HeroView from "./components/HeroView.jsx";
 import ReturningUserView from "./components/ReturningUserView.jsx";
 import NavigateRoutePanel from "./components/navigate/NavigateRoutePanel.jsx";
 import TurnByTurnPanel from "./components/navigate/TurnByTurnPanel.jsx";
+import TruckNavigateOnlyGate from "./components/navigate/TruckNavigateOnlyGate.jsx";
 import NavigationAlertToasts from "./components/navigate/NavigationAlertToasts.jsx";
+import { shouldUseTruckRouting } from "./lib/truckRoutingApi.js";
 import { useTurnByTurnNavigation } from "./hooks/useTurnByTurnNavigation.js";
 import { useNavigationTripContext } from "./hooks/useNavigationTripContext.js";
 import TravelerOnboarding from "./components/TravelerOnboarding.jsx";
@@ -210,6 +212,8 @@ export default function App() {
   const [generated, setGenerated] = useState(false);
   const [lastTripPreview, setLastTripPreview] = useState(null);
   const [resultsView, setResultsView] = useState("planning"); // planning | itinerary | map
+  const [truckNavigateGateOpen, setTruckNavigateGateOpen] = useState(false);
+  const pendingTruckPlanGateRef = useRef(null);
   const [stops, setStops] = useState([]);
   const [tripTips, setTripTips] = useState([]);
   const [personalTouches, setPersonalTouches] = useState([]);
@@ -1064,6 +1068,93 @@ export default function App() {
   }
 
 
+  function resolveNavigateTruckAnswers() {
+    const candidates = [
+      answers,
+      { ...answers, vehicle: routeSetupVehicle },
+      { ...answers, vehicle: flowPrefill?.vehicle },
+    ];
+    return candidates.find((a) => shouldUseTruckRouting(a)) || null;
+  }
+
+  function isNavigateOnlyTruckBlocked() {
+    return Boolean(resolveNavigateTruckAnswers());
+  }
+
+  async function enterPlanFlowFromTruckNavigateGate({
+    origin: fromVal = "",
+    dest: toVal = "",
+    vehicle = "Semi Truck (18-wheeler)",
+  } = {}) {
+    if (!isLoaded || !window.google) {
+      toast_("Map is still loading — try again in a moment");
+      return;
+    }
+
+    if (appMode === "navigate") {
+      navigateRouteSnapshotRef.current = captureRouteSession();
+    }
+    setAppMode("plan");
+    setPlanLaunching(true);
+    setRouteSetupOriginError("");
+    setRouteSetupDestError("");
+    setRouteInfo(null);
+    setRoutePath(null);
+    setTruckRoutePath(null);
+    setDirectionsResult(null);
+    setRouteError(null);
+
+    setOrigin(fromVal || "");
+    setDest(toVal || "");
+    if (originRef.current) originRef.current.value = fromVal || "";
+    if (destRef.current) destRef.current.value = toVal || "";
+
+    setView("app");
+    setTab("plan");
+    setCardCollapsed(false);
+    window.scrollTo(0, 0);
+
+    const prefill = await resetPlanFlowState();
+    const truckVehicle = isTruckVehicle(vehicle) ? vehicle : "Semi Truck (18-wheeler)";
+    setRouteSetupVehicle(truckVehicle);
+    setOrigin(fromVal || "");
+    setDest(toVal || "");
+    if (originRef.current) originRef.current.value = fromVal || "";
+    if (destRef.current) destRef.current.value = toVal || "";
+
+    const seeded = { vehicle: truckVehicle };
+    setAnswers(seeded);
+    loadNextQuestion(seeded, { flowPrefill: prefill });
+    setPlanLaunching(false);
+    requestAnimationFrame(() => scrollPlanToTop());
+    toast_("Truck routing needs a full plan — continue here for a truck-safe route", true);
+  }
+
+  function confirmTruckNavigateGate() {
+    const truckAnswers = resolveNavigateTruckAnswers() || answers;
+    const vehicle = getEffectiveVehicle(truckAnswers);
+    let fromVal = navigateOriginRef.current?.value?.trim() || origin.trim();
+    const toVal = navigateDestRef.current?.value?.trim() || dest.trim();
+    if (!fromVal) fromVal = applyHomeAsNavigateOrigin() || "";
+
+    setTruckNavigateGateOpen(false);
+    setRouteInfo(null);
+    setRoutePath(null);
+    setTruckRoutePath(null);
+    setDirectionsResult(null);
+
+    const payload = { origin: fromVal, dest: toVal, vehicle };
+    if (!user) {
+      pendingTruckPlanGateRef.current = payload;
+      pendingPlanAfterAuthRef.current = true;
+      openAuthModal("signup", {
+        lead: "Create an account to plan a truck-safe trip — Navigate Only cannot use truck routing.",
+      });
+      return;
+    }
+    void enterPlanFlowFromTruckNavigateGate(payload);
+  }
+
   async function runNavigateHome(home) {
     if (!home?.trim()) {
       setShowHomeAddressModal(true);
@@ -1071,6 +1162,12 @@ export default function App() {
     }
     if (!isLoaded || !window.google) {
       toast_("Map is still loading — try again in a moment");
+      return;
+    }
+    if (isNavigateOnlyTruckBlocked()) {
+      setDest(home.trim());
+      if (navigateDestRef.current) navigateDestRef.current.value = home.trim();
+      setTruckNavigateGateOpen(true);
       return;
     }
     setNavigateHomePending(true);
@@ -1429,6 +1526,23 @@ export default function App() {
       toast_("Enter a destination");
       return;
     }
+
+    // Truck vehicles cannot use Navigate Only Google car routing — steer to full plan.
+    // Check before origin/GPS requirements so location-off does not hide the safety gate.
+    if (isNavigateOnlyTruckBlocked()) {
+      setDest(toVal);
+      setTruckNavigateGateOpen(true);
+      if (typeof window !== "undefined") {
+        window.__TRIPMAPPA_TRUCK_NAV_GATE__ = {
+          open: true,
+          vehicle: getEffectiveVehicle(resolveNavigateTruckAnswers() || answers),
+          origin: fromVal || null,
+          dest: toVal,
+        };
+      }
+      return;
+    }
+
     if (!fromVal) {
       fromVal = applyHomeAsNavigateOrigin();
       if (!fromVal) {
@@ -1444,6 +1558,7 @@ export default function App() {
     }
     setOrigin(fromVal);
     setDest(toVal);
+
     if (skipIfLoaded && routeInfo?.routePoints?.length) {
       if (isNavigating) turnByTurn.resumeFollowing();
       else recenterMap();
@@ -1650,12 +1765,38 @@ export default function App() {
     await enterPlanFlowFromHero();
   }
 
-  // After signup/sign-in from the Plan your trip CTA, continue into route setup.
+  // After signup/sign-in from Plan CTA or truck Navigate Only gate, continue into plan flow.
   useEffect(() => {
     if (!user?.id || !pendingPlanAfterAuthRef.current) return;
     pendingPlanAfterAuthRef.current = false;
+    const gate = pendingTruckPlanGateRef.current;
+    if (gate) {
+      pendingTruckPlanGateRef.current = null;
+      void enterPlanFlowFromTruckNavigateGate(gate);
+      return;
+    }
     void enterPlanFlowFromHero();
   }, [user?.id]);
+
+  // E2E helpers: soft-open Navigate without goHome wiping answers; expose truck gate session.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.__TRIPMAPPA_E2E_AUTH__) return undefined;
+    window.__TRIPMAPPA_OPEN_NAVIGATE__ = (destPreset = "") => {
+      void startNavigateFromDashboard(destPreset || dest || "", { soft: true });
+    };
+    window.__TRIPMAPPA_NAV_SESSION__ = () => ({
+      vehicle: getEffectiveVehicle(answers),
+      routeSetupVehicle,
+      flowPrefillVehicle: flowPrefill?.vehicle || null,
+      truckBlocked: isNavigateOnlyTruckBlocked(),
+      dest,
+      origin,
+    });
+    return () => {
+      delete window.__TRIPMAPPA_OPEN_NAVIGATE__;
+      delete window.__TRIPMAPPA_NAV_SESSION__;
+    };
+  });
 
   // If auth is dismissed without a session, cancel the pending resume (debounce
   // so we don't clear while Supabase is still hydrating the new session).
@@ -1665,6 +1806,7 @@ export default function App() {
     const timer = window.setTimeout(() => {
       if (!user && !authModal && pendingPlanAfterAuthRef.current) {
         pendingPlanAfterAuthRef.current = false;
+        pendingTruckPlanGateRef.current = null;
       }
     }, 900);
     return () => window.clearTimeout(timer);
@@ -2969,6 +3111,17 @@ export default function App() {
             onClose={() => { setShowHomeAddressModal(false); setNavigateHomePending(false); }}
           />
         )}
+        <TruckNavigateOnlyGate
+          open={truckNavigateGateOpen}
+          vehicleLabel={getEffectiveVehicle(resolveNavigateTruckAnswers() || answers)}
+          onCancel={() => {
+            setTruckNavigateGateOpen(false);
+            if (typeof window !== "undefined") {
+              window.__TRIPMAPPA_TRUCK_NAV_GATE__ = { open: false };
+            }
+          }}
+          onPlanTrip={confirmTruckNavigateGate}
+        />
         <Toast
           message={toast}
           isGold={toastIsGold}
@@ -3595,6 +3748,17 @@ export default function App() {
         danger
         onConfirm={resetPlan}
         onCancel={() => setConfirmResetOpen(false)}
+      />
+      <TruckNavigateOnlyGate
+        open={truckNavigateGateOpen}
+        vehicleLabel={getEffectiveVehicle(resolveNavigateTruckAnswers() || answers)}
+        onCancel={() => {
+          setTruckNavigateGateOpen(false);
+          if (typeof window !== "undefined") {
+            window.__TRIPMAPPA_TRUCK_NAV_GATE__ = { open: false };
+          }
+        }}
+        onPlanTrip={confirmTruckNavigateGate}
       />
       <ConfirmDialog
         open={Boolean(confirmDeleteTripId)}
