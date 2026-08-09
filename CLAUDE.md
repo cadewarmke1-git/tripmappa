@@ -22,7 +22,7 @@ Status: Pre-launch, Phase 11 polish.
 - Wanderer: free, 3 lifetime trips
 - Voyager: $4.99/mo or $39.99/yr, 6 trips/month
 - Trailblazer: $7.99/mo or $79.99/yr, 12 trips/month
-- Founder: first 1,000 users, 1 year free Trailblazer + gold star badge
+- Founder: first 500 users, 1 year free Trailblazer + gold star badge
 
 ## Design System
 - Gold: #FFD28C (primary accent)

@@ -1,6 +1,10 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { captureServerException } from "../lib/sentry.js";
-import { FOUNDING_MEMBER_MAX, countFoundingMembers } from "../lib/foundingMembers.js";
+import {
+  FOUNDING_MEMBER_MAX,
+  countFoundingMembers,
+  countPublicFoundingMembers,
+} from "../lib/foundingMembers.js";
 
 /** GET /api/founding-slots — public Founder spot counter for hero page. */
 export default async function handler(req, res) {
@@ -14,12 +18,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const filled = await countFoundingMembers(admin);
-    const remaining = Math.max(0, FOUNDING_MEMBER_MAX - filled);
+    const [totalFilled, publicFilled] = await Promise.all([
+      countFoundingMembers(admin),
+      countPublicFoundingMembers(admin),
+    ]);
+    const remaining = Math.max(0, FOUNDING_MEMBER_MAX - publicFilled);
     return res.status(200).json({
       total: FOUNDING_MEMBER_MAX,
-      filled,
+      filled: publicFilled,
       remaining,
+      totalRows: totalFilled,
     });
   } catch (err) {
     console.error("founding-slots error:", err);

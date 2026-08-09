@@ -365,7 +365,7 @@ export default function ProfilePage({
               <div className="profile-plan-header">
                 <TierBadge tier={TIERS.FOUNDER} />
                 <span className="profile-plan-renewal profile-plan-founder-tag">
-                  Founder Member — 1 of 1,000 limited spots
+                  Founder Member — 1 of 500 limited spots
                   {creditStatus?.founderExpiresAt && (
                     <> · Trailblazer access until {formatRenewalDate(creditStatus.founderExpiresAt)}</>
                   )}

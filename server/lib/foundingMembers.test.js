@@ -6,11 +6,14 @@ const UUID_C = "33333333-3333-4333-8333-333333333333";
 
 describe("foundingMembers exempt list", () => {
   const original = process.env.ADMIN_USER_IDS;
+  const originalAdminEmail = process.env.ADMIN_EMAIL;
 
   afterEach(() => {
     vi.restoreAllMocks();
     if (original === undefined) delete process.env.ADMIN_USER_IDS;
     else process.env.ADMIN_USER_IDS = original;
+    if (originalAdminEmail === undefined) delete process.env.ADMIN_EMAIL;
+    else process.env.ADMIN_EMAIL = originalAdminEmail;
   });
 
   it("parses valid ADMIN_USER_IDS and drops invalid entries with a warning", async () => {
@@ -21,5 +24,15 @@ describe("foundingMembers exempt list", () => {
     expect(mod.isExemptFounderUser(UUID_B)).toBe(true);
     expect(mod.isExemptFounderUser("other")).toBe(false);
     expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it("caps the public Founder program at 500 and excludes founder-owned emails", async () => {
+    process.env.ADMIN_EMAIL = "cadewarmke@gmail.com";
+    const mod = await import("./foundingMembers.js?t=" + Date.now() + "-500");
+    expect(mod.FOUNDING_MEMBER_MAX).toBe(500);
+    expect(mod.isFounderOwnedSlotEmail("cadewarmke@gmail.com")).toBe(true);
+    expect(mod.isFounderOwnedSlotEmail("tripmappa@gmail.com")).toBe(true);
+    expect(mod.isFounderOwnedSlotEmail("smoke.p1.x@tripmappa.test")).toBe(true);
+    expect(mod.isFounderOwnedSlotEmail("traveler@example.com")).toBe(false);
   });
 });

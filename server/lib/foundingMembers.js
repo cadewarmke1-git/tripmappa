@@ -1,9 +1,19 @@
-/** Founding 1,000 program — Trailblazer access free for one year. */
+/** Founding 500 program — Trailblazer access free for one year. */
 import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
-export const FOUNDING_MEMBER_MAX = 1000;
+export const FOUNDING_MEMBER_MAX = 500;
 
 const PAID_TIERS = new Set(["voyager", "trailblazer", "premium", "traveler"]);
+
+/**
+ * Founder-owned / internal emails that may hold founding_members rows but do not
+ * consume the public 500-spot allotment (remaining counter + capacity check).
+ */
+const FOUNDER_OWNED_SLOT_EMAILS = new Set([
+  "cadewarmke@gmail.com",
+  "cadewarmke1@gmail.com",
+  "tripmappa@gmail.com",
+]);
 
 /** UUID v4 (Supabase auth user IDs). */
 const UUID_V4_REGEX =
@@ -33,6 +43,16 @@ export const EXEMPT_USER_IDS = parseExemptUserIds();
 
 export function isExemptFounderUser(userId) {
   return Boolean(userId && EXEMPT_USER_IDS.includes(userId));
+}
+
+export function isFounderOwnedSlotEmail(email) {
+  const e = String(email || "").trim().toLowerCase();
+  if (!e) return false;
+  if (FOUNDER_OWNED_SLOT_EMAILS.has(e)) return true;
+  if (e.endsWith("@tripmappa.test")) return true;
+  const adminEmail = String(process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  if (adminEmail && e === adminEmail) return true;
+  return false;
 }
 
 function hasPermanentAdminTrailblazer(profile) {
@@ -68,6 +88,31 @@ export async function countFoundingMembers(admin) {
     .select("*", { count: "exact", head: true });
   if (error) throw error;
   return count ?? 0;
+}
+
+/**
+ * Public Founder allotment used for remaining spots + "full" checks.
+ * Keeps founder-owned / smoke / admin rows in founding_members but does not
+ * subtract them from the 500 public spots.
+ */
+export async function countPublicFoundingMembers(admin) {
+  const { data: rows, error } = await admin
+    .from("founding_members")
+    .select("user_id");
+  if (error) throw error;
+  if (!rows?.length) return 0;
+
+  const flags = await Promise.all(
+    rows.map(async (row) => {
+      const { data, error: userErr } = await admin.auth.admin.getUserById(row.user_id);
+      if (userErr) {
+        // Unknown user — count toward public allotment so we never over-claim.
+        return true;
+      }
+      return !isFounderOwnedSlotEmail(data?.user?.email);
+    }),
+  );
+  return flags.filter(Boolean).length;
 }
 
 export async function isFoundingMember(admin, userId) {
@@ -141,8 +186,8 @@ export async function tryClaimFoundingSlot(admin, userId) {
     return { claimed: true, already: true };
   }
 
-  const filled = await countFoundingMembers(admin);
-  if (filled >= FOUNDING_MEMBER_MAX) {
+  const publicFilled = await countPublicFoundingMembers(admin);
+  if (publicFilled >= FOUNDING_MEMBER_MAX) {
     return { claimed: false, reason: "full" };
   }
 
@@ -158,7 +203,9 @@ export async function tryClaimFoundingSlot(admin, userId) {
     return { claimed: false, reason: "paid_tier" };
   }
 
-  const slotNumber = filled + 1;
+  // slot_number is unique table-wide (includes founder-owned rows).
+  const totalFilled = await countFoundingMembers(admin);
+  const slotNumber = totalFilled + 1;
   const founderExpiresAt = oneYearFromNow();
 
   const { error: insertErr } = await admin.from("founding_members").insert({

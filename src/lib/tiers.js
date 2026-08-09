@@ -45,13 +45,13 @@ export const TIER_PRICING = {
   },
   [TIERS.FOUNDER]: {
     label: "Founder",
-    priceLabel: "Founding 1,000",
+    priceLabel: "Founding 500",
     priceMonthly: 0,
     upgradeUrl: null,
   },
 };
 
-export const FOUNDER_MEMBER_LIMIT = 1000;
+export const FOUNDER_MEMBER_LIMIT = 500;
 
 export const VOYAGER_BENEFITS = [
   "6 trip generations per month",
