@@ -3310,6 +3310,7 @@ export default function App() {
             onStopSelect={handleResultsStopSelect}
             groceryAllowed={Boolean(creditStatus?.groceryDelivery)}
             accessToken={session?.access_token || null}
+            tripId={activeTripId}
             onUpgradeGrocery={openGroceryUpgrade}
             isGuest={!user}
             onGrocerySignIn={() => openAuthModal("signin")}

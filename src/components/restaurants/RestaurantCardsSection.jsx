@@ -33,6 +33,7 @@ export default function RestaurantCardsSection({
   readOnly = false,
   isResultCardHidden,
   onRemoveResultCard,
+  onReportStop = null,
 }) {
   const hasPreload = preloaded !== undefined && preloaded !== null;
   const [loading, setLoading] = useState(!hasPreload);
@@ -144,6 +145,7 @@ export default function RestaurantCardsSection({
               estimatedArrival={estimateArrival(estimatedArrival)}
               onDirections={onDirections}
               onRemove={() => onRemoveResultCard?.("restaurant", r, city)}
+              onReport={onReportStop ? item => onReportStop("restaurant", item, "Food") : null}
               readOnly={readOnly}
             />
           ))}

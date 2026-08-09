@@ -23,6 +23,7 @@ export default function HotelCard({
   onSave,
   onToast,
   onRemove,
+  onReport = null,
   readOnly = false,
 }) {
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -105,6 +106,8 @@ export default function HotelCard({
       actions={actions}
       onRemove={!readOnly && onRemove ? () => onRemove(hotel) : null}
       removeLabel={`Remove ${hotel.name}`}
+      onReport={onReport ? () => onReport(hotel) : null}
+      reportLabel={`Report ${hotel.name}`}
       photo={(
         <div ref={photoRef}>
           {photoSrc ? (

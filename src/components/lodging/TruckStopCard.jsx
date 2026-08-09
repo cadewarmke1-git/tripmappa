@@ -1,7 +1,7 @@
 import AmenityBadges from "./AmenityBadges.jsx";
-import { ResultCardRemoveControl } from "../results/RoadTripStopCard.jsx";
+import { ResultCardRemoveControl, ResultCardReportControl } from "../results/RoadTripStopCard.jsx";
 
-export default function TruckStopCard({ stop, onSave, onToast, onRemove, readOnly = false }) {
+export default function TruckStopCard({ stop, onSave, onToast, onRemove, onReport = null, readOnly = false }) {
   const bookLabel = "View on map";
 
   function handleReserve() {
@@ -16,6 +16,11 @@ export default function TruckStopCard({ stop, onSave, onToast, onRemove, readOnl
 
   return (
     <article className="lodging-card lodging-card-truck">
+      <ResultCardReportControl
+        onReport={onReport ? () => onReport(stop) : null}
+        label={`Report ${stop.name}`}
+        withRemove={!readOnly && Boolean(onRemove)}
+      />
       <ResultCardRemoveControl
         onRemove={!readOnly && onRemove ? () => onRemove(stop) : null}
         label={`Remove ${stop.name}`}

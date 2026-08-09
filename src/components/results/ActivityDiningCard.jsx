@@ -9,6 +9,7 @@ export default function ActivityDiningCard({
   item,
   onAdd,
   onRemove,
+  onReport = null,
   added = false,
   onRoute = false,
   readOnly = false,
@@ -50,6 +51,8 @@ export default function ActivityDiningCard({
       verified={hasGooglePlacesData(item)}
       actions={actions}
       onRemove={!readOnly && onRemove ? () => onRemove(item) : null}
+      onReport={onReport ? () => onReport(item) : null}
+      reportLabel={`Report ${item.name || "this stop"}`}
       photo={(
         <PlacePhotoOrIcon
           photoUrl={item.photoUrl}

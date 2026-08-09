@@ -9,6 +9,7 @@ export default function FuelStopsSection({
   stops,
   onAddFuelStop,
   onToast,
+  onReportStop = null,
   readOnly = false,
 }) {
   const mode = getFuelStopMode(answers);
@@ -46,6 +47,7 @@ export default function FuelStopsSection({
             segmentLabel={label}
             onAddStop={handleAdd}
             onToast={onToast}
+            onReportStop={onReportStop}
             readOnly={readOnly}
           />
         );

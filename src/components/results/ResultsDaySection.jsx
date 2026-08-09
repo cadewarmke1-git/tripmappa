@@ -85,6 +85,7 @@ export default function ResultsDaySection({
   onGrocerySignIn,
   simplified = false,
   cardEnter = false,
+  onReportStop = null,
 }) {
   const sectionEl = useRef(null);
 
@@ -215,6 +216,7 @@ export default function ResultsDaySection({
                   cardEnter={cardEnter}
                   onAdd={onAddRoadStop}
                   onRemove={handleRoadRemove}
+                  onReport={onReportStop ? stop => onReportStop("road", stop, stop.category || "Stop") : null}
                   onToast={onToast}
                   added={isStopAdded?.(item.stop)}
                   onRoute={isStopOnRoute?.(item.stop)}
@@ -236,6 +238,7 @@ export default function ResultsDaySection({
                     cardEnter={cardEnter}
                     onAdd={onAddRoadStop}
                     onRemove={handleRoadRemove}
+                    onReport={onReportStop ? stop => onReportStop("road", stop, stop.category || "Stop") : null}
                     onToast={onToast}
                     added={isStopAdded?.(item.stop)}
                     onRoute={isStopOnRoute?.(item.stop)}
@@ -265,6 +268,7 @@ export default function ResultsDaySection({
             readOnly={readOnly}
             isResultCardHidden={isResultCardHidden}
             onRemoveResultCard={onRemoveResultCard}
+            onReportStop={onReportStop}
           />
           <RestaurantCardsSection
             city={day.overnight.city}
@@ -277,6 +281,7 @@ export default function ResultsDaySection({
             readOnly={readOnly}
             isResultCardHidden={isResultCardHidden}
             onRemoveResultCard={onRemoveResultCard}
+            onReportStop={onReportStop}
           />
         </>
       )}
@@ -340,6 +345,7 @@ export default function ResultsDaySection({
               readOnly={readOnly}
               isResultCardHidden={isResultCardHidden}
               onRemoveResultCard={onRemoveResultCard}
+              onReportStop={onReportStop}
             />
           </div>
         );
@@ -355,6 +361,7 @@ export default function ResultsDaySection({
                 item={item}
                 onAdd={onAddRoadStop}
                 onRemove={handleActivityRemove}
+                onReport={onReportStop ? activity => onReportStop("activity", activity, activity.category || "Activity") : null}
                 added={isStopAdded?.(item)}
                 onRoute={isStopOnRoute?.(item)}
                 readOnly={readOnly}

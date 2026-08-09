@@ -11,6 +11,8 @@ import FuelStopsSection from "../fuel/FuelStopsSection.jsx";
 import StalePlanNotice from "../StalePlanNotice.jsx";
 import { SharedItineraryHeader, SharedItineraryFooter } from "./SharedItineraryChrome.jsx";
 import { detectPartialTripResults } from "../../lib/partialTripResults.js";
+import { LazyReportStopModal } from "../LazyModals.jsx";
+import { buildStopReportTarget } from "../../lib/stopReportApi.js";
 
 function resultCardIdentity(kind, item, context = "") {
   const id = item?.placeId
@@ -67,6 +69,7 @@ export default function TripResultsPanel({
   onStopSelect,
   groceryAllowed = false,
   accessToken = null,
+  tripId = null,
   onUpgradeGrocery,
   isGuest = false,
   onGrocerySignIn,
@@ -91,6 +94,12 @@ export default function TripResultsPanel({
   const scrollRef = useRef(null);
   const [cardEnter, setCardEnter] = useState(true);
   const [hiddenResultCardIds, setHiddenResultCardIds] = useState(() => new Set());
+  const [reportTarget, setReportTarget] = useState(null);
+
+  const handleReportStop = useCallback((sourceKind, item, categoryHint = null) => {
+    if (shareMode) return;
+    setReportTarget(buildStopReportTarget(sourceKind, item, categoryHint));
+  }, [shareMode]);
 
   const isResultCardHidden = useCallback((kind, item, context = "") => (
     hiddenResultCardIds.has(resultCardIdentity(kind, item, context))
@@ -278,6 +287,7 @@ export default function TripResultsPanel({
               stops={stops}
               onAddFuelStop={onAddFuelStop}
               onToast={onToast}
+              onReportStop={shareMode ? null : handleReportStop}
               readOnly={shareMode}
             />
           )}
@@ -319,6 +329,7 @@ export default function TripResultsPanel({
               onGrocerySignIn={onGrocerySignIn}
               cardEnter={cardEnter}
               simplified={simplified}
+              onReportStop={shareMode ? null : handleReportStop}
             />
           )}
         </div>
@@ -333,6 +344,18 @@ export default function TripResultsPanel({
           />
         )}
       </div>
+
+      {reportTarget ? (
+        <LazyReportStopModal
+          target={reportTarget}
+          tripId={tripId}
+          accessToken={accessToken}
+          onClose={() => setReportTarget(null)}
+          onSubmitted={() => {
+            onToast?.("Thanks — we logged this stop report.");
+          }}
+        />
+      ) : null}
     </div>
   );
 }

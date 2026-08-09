@@ -18,6 +18,7 @@ export default function RestaurantCard({
   estimatedArrival = null,
   onDirections = null,
   onRemove = null,
+  onReport = null,
   readOnly = false,
 }) {
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -103,6 +104,8 @@ export default function RestaurantCard({
       actions={actions}
       onRemove={!readOnly && onRemove ? () => onRemove(restaurant) : null}
       removeLabel={`Remove ${restaurant.name}`}
+      onReport={onReport ? () => onReport(restaurant) : null}
+      reportLabel={`Report ${restaurant.name}`}
       photo={(
         photoSrc && !photoFailed ? (
           <img

@@ -45,11 +45,18 @@
   box-shadow: none;
 }
 
-.road-trip-stop-card:has(.result-card-remove-trigger) .road-trip-stop-card-body {
+.road-trip-stop-card:has(.result-card-remove-trigger) .road-trip-stop-card-body,
+.road-trip-stop-card:has(.result-card-report-trigger) .road-trip-stop-card-body,
+.road-trip-stop-card--with-chrome .road-trip-stop-card-body {
   padding-right: 30px;
 }
 
-.result-card-remove-trigger {
+.road-trip-stop-card:has(.result-card-remove-trigger):has(.result-card-report-trigger) .road-trip-stop-card-body {
+  padding-right: 64px;
+}
+
+.result-card-remove-trigger,
+.result-card-report-trigger {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -67,18 +74,26 @@
   cursor: pointer;
 }
 
+.result-card-report-trigger--with-remove {
+  right: 40px;
+}
+
 .result-card-remove-trigger:hover,
-.result-card-remove-trigger:focus-visible {
+.result-card-remove-trigger:focus-visible,
+.result-card-report-trigger:hover,
+.result-card-report-trigger:focus-visible {
   background: color-mix(in srgb, var(--rtsc-ink, currentColor) 9%, transparent);
   color: var(--rtsc-ink, currentColor);
 }
 
-.result-card-remove-trigger:focus-visible {
+.result-card-remove-trigger:focus-visible,
+.result-card-report-trigger:focus-visible {
   outline: 2px solid var(--rtsc-accent, #FFD28C);
   outline-offset: 2px;
 }
 
-.result-card-remove-trigger svg {
+.result-card-remove-trigger svg,
+.result-card-report-trigger svg {
   width: 16px;
   height: 16px;
 }
@@ -147,11 +162,16 @@
 }
 
 @media (max-width: 600px) {
-  .result-card-remove-trigger {
+  .result-card-remove-trigger,
+  .result-card-report-trigger {
     width: 40px;
     height: 40px;
     top: 5px;
     right: 5px;
+  }
+
+  .result-card-report-trigger--with-remove {
+    right: 46px;
   }
 
   .result-card-remove-confirm {

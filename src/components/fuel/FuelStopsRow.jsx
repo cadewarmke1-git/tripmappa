@@ -37,6 +37,7 @@ export default function FuelStopsRow({
   segmentLabel,
   onAddStop,
   onToast,
+  onReportStop = null,
   readOnly = false,
 }) {
   const [loading, setLoading] = useState(true);
@@ -207,6 +208,13 @@ export default function FuelStopsRow({
                 type={stop.cardType}
                 required={point.required && stop.cardType === "ev"}
                 onAdd={handleAdd}
+                onReport={onReportStop
+                  ? (item, cardType) => onReportStop(
+                    "fuel",
+                    item,
+                    cardType === "ev" ? "EV charging" : cardType === "diesel" ? "Diesel" : "Fuel",
+                  )
+                  : null}
                 readOnly={readOnly}
               />
             ))}

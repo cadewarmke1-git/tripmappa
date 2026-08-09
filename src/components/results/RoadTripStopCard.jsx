@@ -175,6 +175,37 @@ export function ResultCardRemoveControl({
   );
 }
 
+export function ResultCardReportControl({
+  onReport,
+  label = "Report this stop",
+  withRemove = false,
+}) {
+  if (!onReport) return null;
+
+  return (
+    <button
+      type="button"
+      className={`result-card-report-trigger${withRemove ? " result-card-report-trigger--with-remove" : ""}`}
+      aria-label={label}
+      title={label}
+      onClick={event => {
+        event.stopPropagation();
+        onReport();
+      }}
+    >
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path
+          d="M5 3.5v13M5 3.5h8.2l-1.4 2.8 1.4 2.8H5"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
 /**
  * @typedef {Object} StopCardAction
  * @property {string} label
@@ -205,6 +236,8 @@ export default function RoadTripStopCard({
   cardEnter = false,
   onRemove = null,
   removeLabel = "Remove stop",
+  onReport = null,
+  reportLabel = "Report this stop",
 }) {
   const catClass = `road-trip-stop-card--${signCategory}`;
   const {
@@ -218,6 +251,7 @@ export default function RoadTripStopCard({
   } = useCardTilt(cardRef);
 
   const hasMeta = rating != null || distance || verified || metaExtra;
+  const hasCardChrome = Boolean(onRemove || onReport);
 
   const metaSegments = [];
   if (rating != null) {
@@ -253,7 +287,7 @@ export default function RoadTripStopCard({
         ...tiltStyle,
         ...(staggerIndex != null ? { "--stagger-index": staggerIndex } : {}),
       }}
-      className={`road-trip-stop-card road-stop-card results-place-card ${catClass}${highlighted ? " stop-highlighted" : ""}${tiltEnabled ? " road-trip-stop-card--tilt" : ""}${tiltHovering ? " is-tilt-hover" : ""}${cardEnter ? " results-stop-card-enter" : ""}${className ? ` ${className}` : ""}`}
+      className={`road-trip-stop-card road-stop-card results-place-card ${catClass}${highlighted ? " stop-highlighted" : ""}${tiltEnabled ? " road-trip-stop-card--tilt" : ""}${tiltHovering ? " is-tilt-hover" : ""}${cardEnter ? " results-stop-card-enter" : ""}${hasCardChrome ? " road-trip-stop-card--with-chrome" : ""}${className ? ` ${className}` : ""}`}
       onClick={onCardClick}
       onKeyDown={e => { if (e.key === "Enter") onCardClick?.(); }}
       onPointerEnter={onPointerEnter}
@@ -263,6 +297,11 @@ export default function RoadTripStopCard({
       tabIndex={onCardClick ? 0 : undefined}
       aria-label={ariaLabel || name}
     >
+      <ResultCardReportControl
+        onReport={onReport}
+        label={reportLabel}
+        withRemove={Boolean(onRemove)}
+      />
       <ResultCardRemoveControl onRemove={onRemove} label={removeLabel} />
 
       <div className="road-trip-stop-card-thumb road-stop-card-photo-wrap road-stop-card-photo-thumb">

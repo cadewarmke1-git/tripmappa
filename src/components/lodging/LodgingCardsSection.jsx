@@ -31,6 +31,7 @@ export default function LodgingCardsSection({
   readOnly = false,
   isResultCardHidden,
   onRemoveResultCard,
+  onReportStop = null,
 }) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
@@ -164,13 +165,38 @@ export default function LodgingCardsSection({
         <>
           <div className="lodging-cards-scroll">
             {lodgingType === "hotel" && visibleItems.map(hotel => (
-              <HotelCard key={hotel.id} hotel={hotel} city={city} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
+              <HotelCard
+                key={hotel.id}
+                hotel={hotel}
+                city={city}
+                onSave={handleSave}
+                onToast={onToast}
+                onRemove={handleRemove}
+                onReport={onReportStop ? item => onReportStop("lodging", item, "Lodging") : null}
+                readOnly={readOnly}
+              />
             ))}
             {lodgingType === "rv" && visibleItems.map(park => (
-              <RvParkCard key={park.id} park={park} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
+              <RvParkCard
+                key={park.id}
+                park={park}
+                onSave={handleSave}
+                onToast={onToast}
+                onRemove={handleRemove}
+                onReport={onReportStop ? item => onReportStop("lodging", item, "RV park") : null}
+                readOnly={readOnly}
+              />
             ))}
             {lodgingType === "truck" && visibleItems.map(stop => (
-              <TruckStopCard key={stop.id} stop={stop} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
+              <TruckStopCard
+                key={stop.id}
+                stop={stop}
+                onSave={handleSave}
+                onToast={onToast}
+                onRemove={handleRemove}
+                onReport={onReportStop ? item => onReportStop("lodging", item, "Truck stop") : null}
+                readOnly={readOnly}
+              />
             ))}
           </div>
 
@@ -179,7 +205,15 @@ export default function LodgingCardsSection({
               <div className="lodging-section-sublabel">Rest areas — backup option</div>
               <div className="lodging-cards-scroll lodging-cards-rest">
                 {visibleRestAreas.map(area => (
-                  <RestAreaCard key={area.id} restArea={area} onSave={handleSave} onToast={onToast} onRemove={handleRemove} readOnly={readOnly} />
+                  <RestAreaCard
+                    key={area.id}
+                    restArea={area}
+                    onSave={handleSave}
+                    onToast={onToast}
+                    onRemove={handleRemove}
+                    onReport={onReportStop ? item => onReportStop("lodging", item, "Rest area") : null}
+                    readOnly={readOnly}
+                  />
                 ))}
               </div>
             </>

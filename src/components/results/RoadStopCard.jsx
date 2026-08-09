@@ -17,6 +17,7 @@ export default function RoadStopCard({
   onAdd,
   onRemove,
   onSelect,
+  onReport = null,
   highlighted = false,
   cardRef,
   added = false,
@@ -134,6 +135,8 @@ export default function RoadStopCard({
       metaExtra={metaExtra}
       actions={actions}
       onRemove={!readOnly && onRemove ? () => onRemove(stop) : null}
+      onReport={onReport ? () => onReport(stop) : null}
+      reportLabel={`Report ${stop.title || "this stop"}`}
       photo={(
         <PlacePhotoOrIcon
           photoUrl={stop.photoUrl}

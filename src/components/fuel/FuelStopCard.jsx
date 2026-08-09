@@ -22,7 +22,7 @@ function getBrandInitials(brand, type) {
   return brand.slice(0, 2).toUpperCase();
 }
 
-export default function FuelStopCard({ stop, type, onAdd, required, readOnly = false }) {
+export default function FuelStopCard({ stop, type, onAdd, onReport = null, required, readOnly = false }) {
   const brand = stop.brand || stop.network || stop.name;
   const initials = getBrandInitials(brand, type);
   const dieselPrice = stop.dieselPrice || "$3.95/gal";
@@ -105,6 +105,18 @@ export default function FuelStopCard({ stop, type, onAdd, required, readOnly = f
           Add to Trip
         </button>
       )}
+      {onReport ? (
+        <button
+          type="button"
+          className="fuel-stop-report"
+          onClick={e => {
+            e.stopPropagation();
+            onReport(stop, type);
+          }}
+        >
+          Report this stop
+        </button>
+      ) : null}
     </article>
   );
 }

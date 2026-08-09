@@ -41,6 +41,7 @@ const ROUTES = {
   "send-sms-otp": () => import("../server/routes/send-sms-otp.js"),
   "share-trip": () => import("../server/routes/share-trip.js"),
   "sos-alert": () => import("../server/routes/sos-alert.js"),
+  "stop-report": () => import("../server/routes/stop-report.js"),
   "stripe/create-checkout-session": () => import("../server/routes/stripe/create-checkout-session.js"),
   "stripe/create-voyager-checkout-session": () => import("../server/routes/stripe/create-voyager-checkout-session.js"),
   "stripe/create-portal-session": () => import("../server/routes/stripe/create-portal-session.js"),
