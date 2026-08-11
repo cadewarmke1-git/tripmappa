@@ -27,7 +27,8 @@ export function normalizeTier(tier) {
 export function tierRank(tier) {
   const normalized = normalizeTier(tier);
   if (normalized === TIERS.FOUNDER) {
-    return TIER_ORDER.indexOf(TIERS.TRAILBLAZER);
+    // Founder grant is Voyager-equivalent for feature gates / trip caps.
+    return TIER_ORDER.indexOf(TIERS.VOYAGER);
   }
   const idx = TIER_ORDER.indexOf(normalized);
   return idx >= 0 ? idx : 0;
@@ -42,5 +43,5 @@ export function isFounderTier(tier) {
 }
 
 export function canUseGroceryDelivery(tier) {
-  return isFounderTier(tier) || isAtLeastTier(tier, TIERS.TRAILBLAZER);
+  return isAtLeastTier(tier, TIERS.TRAILBLAZER);
 }

@@ -82,7 +82,7 @@ export default function PricingPage() {
 
         <p className="pricing-page-footnote">
           Paid plans renew monthly or annually via Stripe. Cancel anytime from your profile.
-          Founder members receive one year of Trailblazer at no charge; the Founder badge stays on your profile permanently.
+          Founder members receive three months of Voyager at no charge; the Founder badge stays on your profile permanently.
         </p>
       </main>
     </div>

@@ -7,7 +7,7 @@ export const TIERS = {
   FOUNDER: "founder",
 };
 
-/** Display order low → high (Founder shares Trailblazer feature rank) */
+/** Display order low → high (Founder shares Voyager feature rank during the grant) */
 export const TIER_ORDER = [TIERS.WANDERER, TIERS.VOYAGER, TIERS.TRAILBLAZER];
 
 const LEGACY_TIER_MAP = {
@@ -45,13 +45,15 @@ export const TIER_PRICING = {
   },
   [TIERS.FOUNDER]: {
     label: "Founder",
-    priceLabel: "Founding 500",
+    priceLabel: "Founding 250",
     priceMonthly: 0,
     upgradeUrl: null,
   },
 };
 
-export const FOUNDER_MEMBER_LIMIT = 500;
+export const FOUNDER_MEMBER_LIMIT = 250;
+/** Free Voyager-equivalent access duration after Founder claim. */
+export const FOUNDER_BENEFIT_MONTHS = 3;
 
 export const VOYAGER_BENEFITS = [
   "6 trip generations per month",
@@ -69,13 +71,13 @@ export const TRAILBLAZER_BENEFITS = [
 
 /** Rows for the tier comparison table — single source for pricing UI. */
 export const TIER_FEATURE_COMPARISON = [
-  { id: "generations", label: "trip generations", wanderer: "3 total", voyager: "6 / month", trailblazer: "12 / month", founder: "12 / month (1 yr)" },
+  { id: "generations", label: "trip generations", wanderer: "3 total", voyager: "6 / month", trailblazer: "12 / month", founder: "6 / month (3 mo)" },
   { id: "saved_trips", label: "Saved trips", wanderer: true, voyager: true, trailblazer: true, founder: true },
   { id: "live_share", label: "Live location sharing", wanderer: false, voyager: true, trailblazer: true, founder: true },
   { id: "offline_maps", label: "Offline maps", wanderer: false, voyager: true, trailblazer: true, founder: true },
-  { id: "grocery", label: "Grocery delivery to hotel", wanderer: false, voyager: false, trailblazer: true, founder: true },
-  { id: "priority", label: "Priority generation queue", wanderer: false, voyager: false, trailblazer: true, founder: true },
-  { id: "voice_grocery", label: "Voice grocery ordering", wanderer: false, voyager: false, trailblazer: true, founder: true },
+  { id: "grocery", label: "Grocery delivery to hotel", wanderer: false, voyager: false, trailblazer: true, founder: false },
+  { id: "priority", label: "Priority generation queue", wanderer: false, voyager: false, trailblazer: true, founder: false },
+  { id: "voice_grocery", label: "Voice grocery ordering", wanderer: false, voyager: false, trailblazer: true, founder: false },
   { id: "founder_badge", label: "Founder badge", wanderer: false, voyager: false, trailblazer: false, founder: true },
 ];
 
@@ -83,8 +85,8 @@ export function formatTierPriceBlock(tier, billingInterval = "month") {
   const key = normalizeTier(tier);
   if (isFounderTier(tier)) {
     return {
-      primary: "Free for 1 year",
-      secondary: "Trailblazer access · limited offer",
+      primary: "Free for 3 months",
+      secondary: "Voyager access · limited offer",
       showSavings: false,
       billedAnnually: null,
     };
@@ -119,7 +121,7 @@ export function normalizeTier(tier) {
 export function tierRank(tier) {
   const normalized = normalizeTier(tier);
   if (normalized === TIERS.FOUNDER) {
-    return TIER_ORDER.indexOf(TIERS.TRAILBLAZER);
+    return TIER_ORDER.indexOf(TIERS.VOYAGER);
   }
   const idx = TIER_ORDER.indexOf(normalized);
   return idx >= 0 ? idx : 0;
@@ -160,7 +162,7 @@ export function hasUnlimitedTripGenerations(tier) {
 }
 
 export function canUseGroceryDelivery(tier) {
-  return isFounderTier(tier) || isAtLeastTier(tier, TIERS.TRAILBLAZER);
+  return isAtLeastTier(tier, TIERS.TRAILBLAZER);
 }
 
 /** Avatar corner star: founder, voyager, or trailblazer (paid tiers only). */

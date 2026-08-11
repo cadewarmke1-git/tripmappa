@@ -31,7 +31,7 @@ export default function FounderWelcomeOverlay({ firstName, onDismiss }) {
           Welcome, {displayName}
         </h1>
         <p className="founder-welcome-sub">
-          You&apos;re one of the first 500 members — enjoy one year of Trailblazer free.
+          You&apos;re one of the first 250 members — enjoy three months of Voyager free.
           Your Founder badge is yours permanently.
         </p>
         <p className="founder-welcome-hint">Tap anywhere to continue</p>

@@ -329,7 +329,7 @@ Ask Fable to return recommendations in this shape (reduces greenfield guessing):
 | Wanderer | Free / guest — limited trip generations |
 | Voyager | Paid — more generations + features |
 | Trailblazer | Higher tier |
-| Founder | Promotional Trailblazer-equivalent |
+| Founder | Promotional Voyager-equivalent (250 slots, 3 months) |
 
 Credits charged **only** on successful plan-trip completion. Guest credits tracked client-side with upgrade prompts.
 

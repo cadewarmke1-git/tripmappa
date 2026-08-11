@@ -1,4 +1,4 @@
-/** Public Founder 500 remaining slots counter. */
+/** Public Founder 250 remaining slots counter. */
 
 export async function fetchFoundingSlotsRemaining() {
   const res = await fetch("/api/founding-slots");

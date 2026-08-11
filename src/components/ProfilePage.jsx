@@ -150,7 +150,9 @@ export default function ProfilePage({
 
   const displayName = getDisplayName(user, profile);
   const rawTier = creditStatus?.tier || profile?.tier;
-  const isFounder = isFounderTier(rawTier) || creditStatus?.isFounder;
+  /** Active Voyager grant (tier still `founder`). Permanent badge may outlive the grant via creditStatus.isFounder. */
+  const isActiveFounder = isFounderTier(rawTier);
+  const hasFounderBadge = isActiveFounder || Boolean(creditStatus?.isFounder);
   const tier = normalizeTier(rawTier);
   const isTrailblazer = tier === TIERS.TRAILBLAZER;
   const isVoyager = tier === TIERS.VOYAGER;
@@ -360,22 +362,22 @@ export default function ProfilePage({
 
         <section id="profile-plans" className="profile-card profile-plan-card">
           <h2 className="profile-section-title">Current Plan</h2>
-          {isFounder ? (
+          {isActiveFounder ? (
             <>
               <div className="profile-plan-header">
                 <TierBadge tier={TIERS.FOUNDER} />
                 <span className="profile-plan-renewal profile-plan-founder-tag">
-                  Founder Member — 1 of 500 limited spots
+                  Founder Member — 1 of 250 limited spots
                   {creditStatus?.founderExpiresAt && (
-                    <> · Trailblazer access until {formatRenewalDate(creditStatus.founderExpiresAt)}</>
+                    <> · Voyager access until {formatRenewalDate(creditStatus.founderExpiresAt)}</>
                   )}
                 </span>
               </div>
               <p className="profile-plan-founder-explainer">
-                You received one year of Trailblazer free as an early member. Your Founder badge stays on your profile permanently.
+                You received three months of Voyager free as an early member. Your Founder badge stays on your profile permanently.
               </p>
               <ul className="profile-benefits-list">
-                {TRAILBLAZER_BENEFITS.map(b => <li key={b}>{b}</li>)}
+                {VOYAGER_BENEFITS.map(b => <li key={b}>{b}</li>)}
               </ul>
             </>
           ) : isTrailblazer ? (
@@ -439,6 +441,11 @@ export default function ProfilePage({
                 onUpgradeVoyager={onUpgradeVoyager}
                 onUpgradeTrailblazer={onUpgrade}
               />
+              {hasFounderBadge && (
+                <p className="profile-plan-founder-explainer">
+                  Your Founder badge stays on your profile permanently.
+                </p>
+              )}
               <p className="profile-plan-pricing-link">
                 <a href="/pricing">View full pricing page</a>
               </p>

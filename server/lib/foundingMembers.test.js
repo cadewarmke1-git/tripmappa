@@ -26,10 +26,11 @@ describe("foundingMembers exempt list", () => {
     expect(warn).toHaveBeenCalledTimes(2);
   });
 
-  it("caps the public Founder program at 500 and excludes founder-owned emails", async () => {
+  it("caps the public Founder program at 250 and excludes founder-owned emails", async () => {
     process.env.ADMIN_EMAIL = "cadewarmke@gmail.com";
-    const mod = await import("./foundingMembers.js?t=" + Date.now() + "-500");
-    expect(mod.FOUNDING_MEMBER_MAX).toBe(500);
+    const mod = await import("./foundingMembers.js?t=" + Date.now() + "-250");
+    expect(mod.FOUNDING_MEMBER_MAX).toBe(250);
+    expect(mod.FOUNDING_BENEFIT_MONTHS).toBe(3);
     expect(mod.isFounderOwnedSlotEmail("cadewarmke@gmail.com")).toBe(true);
     expect(mod.isFounderOwnedSlotEmail("tripmappa@gmail.com")).toBe(true);
     expect(mod.isFounderOwnedSlotEmail("smoke.p1.x@tripmappa.test")).toBe(true);

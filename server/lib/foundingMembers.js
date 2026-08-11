@@ -1,13 +1,15 @@
-/** Founding 500 program — Trailblazer access free for one year. */
+/** Founding 250 program — Voyager access free for three months + permanent badge. */
 import { buildUserProfileUpsertRow } from "./userProfileDefaults.js";
 
-export const FOUNDING_MEMBER_MAX = 500;
+export const FOUNDING_MEMBER_MAX = 250;
+/** Free Voyager-equivalent access duration after claim. */
+export const FOUNDING_BENEFIT_MONTHS = 3;
 
 const PAID_TIERS = new Set(["voyager", "trailblazer", "premium", "traveler"]);
 
 /**
  * Founder-owned / internal emails that may hold founding_members rows but do not
- * consume the public 500-spot allotment (remaining counter + capacity check).
+ * consume the public 250-spot allotment (remaining counter + capacity check).
  */
 const FOUNDER_OWNED_SLOT_EMAILS = new Set([
   "cadewarmke@gmail.com",
@@ -93,7 +95,7 @@ export async function countFoundingMembers(admin) {
 /**
  * Public Founder allotment used for remaining spots + "full" checks.
  * Keeps founder-owned / smoke / admin rows in founding_members but does not
- * subtract them from the 500 public spots.
+ * subtract them from the 250 public spots.
  */
 export async function countPublicFoundingMembers(admin) {
   const { data: rows, error } = await admin
@@ -125,13 +127,13 @@ export async function isFoundingMember(admin, userId) {
   return Boolean(data);
 }
 
-function oneYearFromNow() {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() + 1);
+export function threeMonthsFromNow(from = new Date()) {
+  const d = new Date(from);
+  d.setMonth(d.getMonth() + FOUNDING_BENEFIT_MONTHS);
   return d.toISOString();
 }
 
-/** After founder year ends: Trailblazer if Stripe sub active, otherwise Wanderer. */
+/** After founder Voyager window ends: keep Stripe tier if subscribed, otherwise Wanderer. Badge stays via founding_members. */
 export async function expireFounderIfNeeded(admin, profile) {
   if (!profile || profile.tier !== "founder") return profile;
 
@@ -206,7 +208,7 @@ export async function tryClaimFoundingSlot(admin, userId) {
   // slot_number is unique table-wide (includes founder-owned rows).
   const totalFilled = await countFoundingMembers(admin);
   const slotNumber = totalFilled + 1;
-  const founderExpiresAt = oneYearFromNow();
+  const founderExpiresAt = threeMonthsFromNow();
 
   const { error: insertErr } = await admin.from("founding_members").insert({
     user_id: userId,

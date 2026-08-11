@@ -1,6 +1,6 @@
 /** Server-side trip generation credit limits by subscription tier. */
 import { canUseGroceryDelivery, isFounderTier, TIERS, normalizeTier } from "./tiers.js";
-import { expireFounderIfNeeded } from "./foundingMembers.js";
+import { expireFounderIfNeeded, isFoundingMember } from "./foundingMembers.js";
 import { expireTrialIfNeeded } from "./trials.js";
 import { getEffectiveTier } from "./tierEffective.js";
 import { buildReferralLink } from "./referrals.js";
@@ -47,8 +47,8 @@ export function ensureMonthlyGenerationPrefs(planPrefs = {}) {
 
 function monthlyLimitForTier(effectiveTier) {
   const normalized = normalizeTier(effectiveTier);
-  if (normalized === TIERS.VOYAGER) return VOYAGER_MONTHLY_LIMIT;
-  if (normalized === TIERS.TRAILBLAZER || isFounderTier(effectiveTier)) return TRAILBLAZER_MONTHLY_LIMIT;
+  if (normalized === TIERS.VOYAGER || isFounderTier(effectiveTier)) return VOYAGER_MONTHLY_LIMIT;
+  if (normalized === TIERS.TRAILBLAZER) return TRAILBLAZER_MONTHLY_LIMIT;
   return null;
 }
 
@@ -172,7 +172,12 @@ export function getCreditStatus(profile, userId = null, userEmail = null) {
 
 export async function fetchCreditStatus(admin, userId, userEmail = null) {
   const profile = await getOrCreateProfile(admin, userId);
-  return getCreditStatus(profile, userId, userEmail);
+  const status = getCreditStatus(profile, userId, userEmail);
+  // Permanent Founder badge: founding_members row survives after Voyager grant expires.
+  if (!status.isFounder && await isFoundingMember(admin, userId)) {
+    status.isFounder = true;
+  }
+  return status;
 }
 
 /** Fast pre-flight from client cache — no DB read. Returns null to fall back to DB. */

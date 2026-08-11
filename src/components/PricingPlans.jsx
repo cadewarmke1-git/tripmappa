@@ -136,7 +136,7 @@ function FounderPlate({ isCurrent, onClaim }) {
         <p className="pricing-plate-founder-kicker">Founding member</p>
         <h3 className="pricing-plate-name">Founder</h3>
         <p className="pricing-plate-founder-desc">
-          First 500 travelers get <strong>1 full year of Trailblazer free</strong> plus a permanent gold star badge on your profile.
+          First 250 travelers get <strong>3 months of Voyager free</strong> plus a permanent gold star badge on your profile.
         </p>
       </div>
 

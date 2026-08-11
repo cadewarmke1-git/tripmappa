@@ -20,7 +20,8 @@ describe("tiers", () => {
     expect(isAtLeastTier(TIERS.VOYAGER, TIERS.VOYAGER)).toBe(true);
     expect(isAtLeastTier(TIERS.TRAILBLAZER, TIERS.VOYAGER)).toBe(true);
     expect(isAtLeastTier(TIERS.VOYAGER, TIERS.TRAILBLAZER)).toBe(false);
-    expect(isAtLeastTier(TIERS.FOUNDER, TIERS.TRAILBLAZER)).toBe(true);
+    expect(isAtLeastTier(TIERS.FOUNDER, TIERS.VOYAGER)).toBe(true);
+    expect(isAtLeastTier(TIERS.FOUNDER, TIERS.TRAILBLAZER)).toBe(false);
   });
 
   it("maps legacy tier slugs", () => {
@@ -29,11 +30,11 @@ describe("tiers", () => {
     expect(normalizeTier("traveler")).toBe(TIERS.VOYAGER);
   });
 
-  it("gates grocery to Trailblazer and Founder", () => {
+  it("gates grocery to Trailblazer only", () => {
     expect(canUseGroceryDelivery(TIERS.WANDERER)).toBe(false);
     expect(canUseGroceryDelivery(TIERS.VOYAGER)).toBe(false);
     expect(canUseGroceryDelivery(TIERS.TRAILBLAZER)).toBe(true);
-    expect(canUseGroceryDelivery(TIERS.FOUNDER)).toBe(true);
+    expect(canUseGroceryDelivery(TIERS.FOUNDER)).toBe(false);
   });
 
   it("gives unlimited generations to Voyager and above", () => {
@@ -50,6 +51,7 @@ describe("tiers", () => {
     expect(getTierPriceLabel(TIERS.VOYAGER, "year")).toBe("$39.99/yr");
     expect(getTierAnnualMonthlyEquivalent(TIERS.TRAILBLAZER)).toBe("6.67");
     expect(getTierLabel(TIERS.FOUNDER)).toBe("Founder");
+    expect(getTierPriceLabel(TIERS.FOUNDER)).toBe("Founding 250");
   });
 
   it("formats annual prices with monthly equivalent", () => {
@@ -61,12 +63,19 @@ describe("tiers", () => {
     const trailblazerMonthly = formatTierPriceBlock(TIERS.TRAILBLAZER, "month");
     expect(trailblazerMonthly.primary).toBe("$7.99/mo");
     expect(trailblazerMonthly.billedAnnually).toBeNull();
+
+    const founder = formatTierPriceBlock(TIERS.FOUNDER, "month");
+    expect(founder.primary).toBe("Free for 3 months");
+    expect(founder.secondary).toBe("Voyager access · limited offer");
   });
 
   it("exposes tier feature comparison rows", () => {
     const gens = TIER_FEATURE_COMPARISON.find(r => r.id === "generations");
     expect(gens.voyager).toBe("6 / month");
     expect(gens.trailblazer).toBe("12 / month");
+    expect(gens.founder).toBe("6 / month (3 mo)");
+    const grocery = TIER_FEATURE_COMPARISON.find(r => r.id === "grocery");
+    expect(grocery.founder).toBe(false);
   });
 
   it("returns avatar tier badges for paid tiers", () => {

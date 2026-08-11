@@ -40,7 +40,7 @@ export default function FoundingSlotsCounter({ variant = "hero", className = "" 
           <strong>{spots.toLocaleString()}</strong> of {FOUNDER_MEMBER_LIMIT.toLocaleString()} spots left
         </span>
         <span className="pricing-founder-counter-sub">
-          {claimed.toLocaleString()} founding members joined · 1 year Trailblazer free
+          {claimed.toLocaleString()} founding members joined · 3 months Voyager free
         </span>
       </div>
     );
