@@ -80,6 +80,7 @@ async function main() {
       email: TEST_EMAIL,
       password: TEST_PASSWORD,
       email_confirm: true,
+      user_metadata: { full_name: "Cade Tester" },
     });
     if (createErr) throw createErr;
     userId = created.user.id;
@@ -109,10 +110,28 @@ async function main() {
     if (!firstBody?.founder?.welcomeEmail) {
       throw new Error("Expected founder.welcomeEmail in claim response (deploy may be stale)");
     }
-    const fromUsed = firstBody.founder.welcomeEmail.from;
+    const welcome = firstBody.founder.welcomeEmail;
+    const fromUsed = welcome.from;
     if (!fromUsed || !/^TripMappa\s+</i.test(fromUsed)) {
       throw new Error(`Expected From display name TripMappa, got ${JSON.stringify(fromUsed)}`);
     }
+    if (welcome.subject !== "Welcome to TripMappa, Founding Member") {
+      throw new Error(`Unexpected subject (deploy may be stale): ${JSON.stringify(welcome.subject)}`);
+    }
+    console.log(
+      JSON.stringify(
+        {
+          personalization: welcome.personalized ? "used_firstName" : "fell_back_to_Welcome",
+          firstName: welcome.firstName || null,
+          subject: welcome.subject,
+          from: fromUsed,
+          sent: welcome.sent,
+          id: welcome.id || null,
+        },
+        null,
+        2,
+      ),
+    );
 
     const secondRes = await fetch(`${SITE}/api/account-onboarding`, {
       method: "POST",

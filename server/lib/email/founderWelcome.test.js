@@ -2,23 +2,39 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { welcomeFounderEmail, welcomePlanEmail } from "./templates.js";
 
 describe("welcomeFounderEmail", () => {
-  it("uses Founder-specific subject and placeholder body, not paid-upgrade copy", () => {
+  it("uses final Founder copy with firstName and support contact, not paid-upgrade copy", () => {
     const paid = welcomePlanEmail({
       planName: "Voyager",
       benefits: ["6 trip generations per month"],
       billingDate: "September 1, 2026",
     });
-    const founder = welcomeFounderEmail({ expiresLabel: "November 11, 2026" });
+    const founder = welcomeFounderEmail({
+      firstName: "Cade",
+      expiresLabel: "November 11, 2026",
+    });
 
-    expect(founder.subject).toContain("PLACEHOLDER");
-    expect(founder.subject).toContain("Founder");
+    expect(founder.subject).toBe("Welcome to TripMappa, Founding Member");
+    expect(founder.subject).not.toContain("PLACEHOLDER");
     expect(founder.subject).not.toBe(paid.subject);
-    expect(founder.html).toContain("PLACEHOLDER");
-    expect(founder.html).toContain("first 250");
+    expect(founder.html).not.toContain("PLACEHOLDER");
+    expect(founder.html).toContain("Welcome, Cade");
+    expect(founder.html).toContain("first 250 Founding Members");
     expect(founder.html).toContain("November 11, 2026");
-    expect(founder.html).toContain("Founder badge");
+    expect(founder.html).toContain("support@tripmappa.com");
+    expect(founder.html).toContain("Report this stop");
+    expect(founder.html).toContain("Cade<br />Founder, TripMappa");
+    expect(founder.html).toContain("Open TripMappa");
     expect(founder.html).not.toContain("Thank you for subscribing");
-    expect(founder.text).toContain("PLACEHOLDER");
+    expect(founder.text).toContain("Welcome, Cade");
+    expect(founder.text).toContain("support@tripmappa.com");
+    expect(founder.text).not.toContain("PLACEHOLDER");
+  });
+
+  it("falls back to Welcome heading when firstName is missing", () => {
+    const founder = welcomeFounderEmail({ expiresLabel: "November 11, 2026" });
+    expect(founder.html).toContain(">Welcome<");
+    expect(founder.html).not.toContain("Welcome,");
+    expect(founder.text.startsWith("Welcome\n")).toBe(true);
   });
 });
 
@@ -29,23 +45,48 @@ describe("sendFounderWelcomeEmail", () => {
     vi.unmock("./sendEmail.js");
   });
 
-  it("sends via Resend helpers with the Founder template", async () => {
-    const sendTripmappaEmail = vi.fn(async () => ({ sent: true }));
+  it("sends via Resend helpers with the Founder template and resolved firstName", async () => {
+    const sendTripmappaEmail = vi.fn(async () => ({ sent: true, from: "TripMappa <hello@tripmappa.com>" }));
     vi.doMock("./sendEmail.js", () => ({
       getUserEmail: vi.fn(async () => "founder.test@tripmappa.test"),
       sendTripmappaEmail,
     }));
 
+    const admin = {
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  maybeSingle: async () => ({ data: { display_name: "Alex Rivera" }, error: null }),
+                };
+              },
+            };
+          },
+        };
+      },
+      auth: {
+        admin: {
+          getUserById: async () => ({ data: { user: {} }, error: null }),
+        },
+      },
+    };
+
     const { sendFounderWelcomeEmail } = await import("./founderWelcome.js?mock=" + Date.now());
-    const result = await sendFounderWelcomeEmail({}, "user-1", {
+    const result = await sendFounderWelcomeEmail(admin, "user-1", {
       founderExpiresAt: "2026-11-11T00:00:00.000Z",
     });
 
     expect(result.sent).toBe(true);
+    expect(result.personalized).toBe(true);
+    expect(result.firstName).toBe("Alex");
     expect(sendTripmappaEmail).toHaveBeenCalledTimes(1);
     const arg = sendTripmappaEmail.mock.calls[0][0];
     expect(arg.to).toBe("founder.test@tripmappa.test");
-    expect(arg.subject).toContain("Founder");
-    expect(arg.html).toContain("PLACEHOLDER");
+    expect(arg.subject).toBe("Welcome to TripMappa, Founding Member");
+    expect(arg.html).toContain("Welcome, Alex");
+    expect(arg.html).toContain("support@tripmappa.com");
+    expect(arg.html).not.toContain("PLACEHOLDER");
   });
 });

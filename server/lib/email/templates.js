@@ -68,32 +68,58 @@ export function welcomePlanEmail({ planName, benefits, billingDate }) {
   };
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 /**
  * Founder-slot claim welcome (not the paid-upgrade template).
- * PLACEHOLDER COPY — founder will provide final wording for subject + body.
- * Keep structure (title, Voyager window, badge, first-250 framing) when rewriting.
+ * firstName: optional greeting name; omit / empty → heading is "Welcome" (no placeholder).
  */
-export function welcomeFounderEmail({ expiresLabel } = {}) {
-  const title = "Welcome, Founding Member";
-  const accessLine = expiresLabel
-    ? `Your Voyager access runs through <strong style="color:#FFD28C;">${expiresLabel}</strong>.`
-    : "Your Voyager access runs for three months from today.";
-  // PLACEHOLDER: replace subject/body below with final Founder onboarding copy.
+export function welcomeFounderEmail({ firstName, expiresLabel } = {}) {
+  const name = String(firstName || "").trim();
+  const title = name ? `Welcome, ${escapeHtml(name)}` : "Welcome";
+  const accessHtml = expiresLabel
+    ? `effective through <strong style="color:#FFD28C;">${escapeHtml(expiresLabel)}</strong>`
+    : "effective for three months from today";
+  const accessText = expiresLabel
+    ? `effective through ${expiresLabel}`
+    : "effective for three months from today";
   const bodyHtml = `
-    <p style="margin:0 0 16px;">[PLACEHOLDER — founder to supply final copy] You claimed one of the first 250 Founder spots.</p>
-    <p style="margin:0 0 16px;">[PLACEHOLDER] You get three months of Voyager free. ${accessLine}</p>
-    <p style="margin:0;">[PLACEHOLDER] Your Founder badge stays on your profile permanently.</p>
+    <p style="margin:0 0 16px;">Thank you for joining TripMappa as one of our first 250 Founding Members. I wanted to personally welcome you.</p>
+    <p style="margin:0 0 16px;">As a Founding Member, you will receive three months of Voyager access, complimentary, ${accessHtml}.</p>
+    <p style="margin:0 0 16px;">Your Founder status is permanent and will remain on your profile going forward.</p>
+    <p style="margin:0 0 16px;">If you ever notice anything off with a suggested stop, please use the &quot;Report this stop&quot; option — all reports are reviewed personally.</p>
+    <p style="margin:0 0 16px;">If you have any other questions or concerns, feel free to reach out anytime at <a href="mailto:support@tripmappa.com" style="color:#FFD28C;text-decoration:underline;">support@tripmappa.com</a>.</p>
+    <p style="margin:0 0 16px;">Thank you again for your early support.</p>
+    <p style="margin:0;">Cade<br />Founder, TripMappa</p>
   `;
   return {
-    subject: "[PLACEHOLDER] Welcome to TripMappa Founder",
+    subject: "Welcome to TripMappa, Founding Member",
     html: layout({ title, bodyHtml }),
     text: [
-      "[PLACEHOLDER — founder to supply final copy] You claimed one of the first 250 Founder spots.",
-      expiresLabel
-        ? `Your Voyager access runs through ${expiresLabel}.`
-        : "Your Voyager access runs for three months from today.",
-      "Your Founder badge stays on your profile permanently.",
+      title,
+      "",
+      "Thank you for joining TripMappa as one of our first 250 Founding Members. I wanted to personally welcome you.",
+      "",
+      `As a Founding Member, you will receive three months of Voyager access, complimentary, ${accessText}.`,
+      "",
+      "Your Founder status is permanent and will remain on your profile going forward.",
+      "",
+      'If you ever notice anything off with a suggested stop, please use the "Report this stop" option — all reports are reviewed personally.',
+      "",
+      "If you have any other questions or concerns, feel free to reach out anytime at support@tripmappa.com.",
+      "",
+      "Thank you again for your early support.",
+      "",
+      "Cade",
+      "Founder, TripMappa",
+      "",
       `Open TripMappa: ${SITE_URL}`,
-    ].join("\n\n"),
+    ].join("\n"),
   };
 }
