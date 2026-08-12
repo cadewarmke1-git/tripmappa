@@ -232,5 +232,13 @@ export async function tryClaimFoundingSlot(admin, userId) {
 
   if (updateErr) throw updateErr;
 
+  // Once per user: only this fresh-claim path sends; already/full/paid/exempt skip it.
+  try {
+    const { sendFounderWelcomeEmail } = await import("./email/founderWelcome.js");
+    await sendFounderWelcomeEmail(admin, userId, { founderExpiresAt });
+  } catch (err) {
+    console.error("[foundingMembers] Founder welcome email failed:", err);
+  }
+
   return { claimed: true, slotNumber, founderExpiresAt };
 }

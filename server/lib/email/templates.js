@@ -67,3 +67,33 @@ export function welcomePlanEmail({ planName, benefits, billingDate }) {
     text: `Welcome to ${planName}. Next billing: ${billingDate}. Visit ${SITE_URL}`,
   };
 }
+
+/**
+ * Founder-slot claim welcome (not the paid-upgrade template).
+ * PLACEHOLDER COPY — founder will provide final wording for subject + body.
+ * Keep structure (title, Voyager window, badge, first-250 framing) when rewriting.
+ */
+export function welcomeFounderEmail({ expiresLabel } = {}) {
+  const title = "Welcome, Founding Member";
+  const accessLine = expiresLabel
+    ? `Your Voyager access runs through <strong style="color:#FFD28C;">${expiresLabel}</strong>.`
+    : "Your Voyager access runs for three months from today.";
+  // PLACEHOLDER: replace subject/body below with final Founder onboarding copy.
+  const bodyHtml = `
+    <p style="margin:0 0 16px;">[PLACEHOLDER — founder to supply final copy] You claimed one of the first 250 Founder spots.</p>
+    <p style="margin:0 0 16px;">[PLACEHOLDER] You get three months of Voyager free. ${accessLine}</p>
+    <p style="margin:0;">[PLACEHOLDER] Your Founder badge stays on your profile permanently.</p>
+  `;
+  return {
+    subject: "[PLACEHOLDER] Welcome to TripMappa Founder",
+    html: layout({ title, bodyHtml }),
+    text: [
+      "[PLACEHOLDER — founder to supply final copy] You claimed one of the first 250 Founder spots.",
+      expiresLabel
+        ? `Your Voyager access runs through ${expiresLabel}.`
+        : "Your Voyager access runs for three months from today.",
+      "Your Founder badge stays on your profile permanently.",
+      `Open TripMappa: ${SITE_URL}`,
+    ].join("\n\n"),
+  };
+}
