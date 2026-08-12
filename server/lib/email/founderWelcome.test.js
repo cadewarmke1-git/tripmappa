@@ -29,6 +29,11 @@ describe("welcomeFounderEmail", () => {
     expect(founder.html).toContain("November 11, 2026");
     expect(founder.html).toContain("support@tripmappa.com");
     expect(founder.html).toContain("Report this stop");
+    expect(founder.html).toContain(
+      'please use the &quot;Report this stop&quot; option.</p>',
+    );
+    expect(founder.html).not.toContain("reviewed personally");
+    expect(founder.text).not.toContain("reviewed personally");
     expect(founder.html).toContain("Cade<br />Founder, TripMappa");
     expect(founder.html).toContain("Open TripMappa");
     expect(founder.html).not.toContain("Thank you for subscribing");

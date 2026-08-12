@@ -109,7 +109,7 @@ export function welcomeFounderEmail({ firstName, expiresLabel } = {}) {
     <p style="margin:0 0 16px;color:${EMAIL.cream};">Thank you for joining TripMappa as one of our first 250 Founding Members. I wanted to personally welcome you.</p>
     <p style="margin:0 0 16px;color:${EMAIL.cream};">As a Founding Member, you will receive three months of Voyager access, complimentary, ${accessHtml}.</p>
     <p style="margin:0 0 16px;color:${EMAIL.cream};">Your Founder status is permanent and will remain on your profile going forward.</p>
-    <p style="margin:0 0 16px;color:${EMAIL.cream};">If you ever notice anything off with a suggested stop, please use the &quot;Report this stop&quot; option — all reports are reviewed personally.</p>
+    <p style="margin:0 0 16px;color:${EMAIL.cream};">If you ever notice anything off with a suggested stop, please use the &quot;Report this stop&quot; option.</p>
     <p style="margin:0 0 16px;color:${EMAIL.cream};">If you have any other questions or concerns, feel free to reach out anytime at <a href="mailto:support@tripmappa.com" style="color:${EMAIL.gold};text-decoration:underline;">support@tripmappa.com</a>.</p>
     <p style="margin:0 0 16px;color:${EMAIL.cream};">Thank you again for your early support.</p>
     <p style="margin:0;color:${EMAIL.cream};">Cade<br />Founder, TripMappa</p>
@@ -126,7 +126,7 @@ export function welcomeFounderEmail({ firstName, expiresLabel } = {}) {
       "",
       "Your Founder status is permanent and will remain on your profile going forward.",
       "",
-      'If you ever notice anything off with a suggested stop, please use the "Report this stop" option — all reports are reviewed personally.',
+      'If you ever notice anything off with a suggested stop, please use the "Report this stop" option.',
       "",
       "If you have any other questions or concerns, feel free to reach out anytime at support@tripmappa.com.",
       "",
