@@ -3,9 +3,28 @@
  * Requires RESEND_API_KEY and TRIPMAPPA_EMAIL_FROM in environment.
  */
 
+/** Ensure Resend `from` shows as "TripMappa" rather than the mailbox local-part (e.g. "hello"). */
+export function formatTripmappaFromAddress(rawFrom) {
+  const value = String(rawFrom || "").trim();
+  if (!value) return "";
+
+  const angled = value.match(/^(.*)<([^>]+)>\s*$/);
+  if (angled) {
+    const name = angled[1].trim().replace(/^["']|["']$/g, "");
+    const email = angled[2].trim();
+    if (!email) return "";
+    // Already has a non-empty display name — keep it.
+    if (name) return `${name} <${email}>`;
+    return `TripMappa <${email}>`;
+  }
+
+  return `TripMappa <${value}>`;
+}
+
 export async function sendTripmappaEmail({ to, subject, html, text }) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.TRIPMAPPA_EMAIL_FROM || process.env.EMAIL_FROM;
+  const rawFrom = process.env.TRIPMAPPA_EMAIL_FROM || process.env.EMAIL_FROM;
+  const from = formatTripmappaFromAddress(rawFrom);
   if (!apiKey || !from) {
     console.warn("tripmappa email: RESEND_API_KEY or TRIPMAPPA_EMAIL_FROM not set");
     return { sent: false, skipped: true, reason: "missing_resend_env" };
@@ -41,6 +60,7 @@ export async function sendTripmappaEmail({ to, subject, html, text }) {
       sent: false,
       error: "send_failed",
       status: res.status,
+      from,
       resend: bodyJson,
       raw: bodyText?.slice?.(0, 500) || bodyText || null,
     };
@@ -50,6 +70,7 @@ export async function sendTripmappaEmail({ to, subject, html, text }) {
     sent: true,
     status: res.status,
     id: bodyJson?.id || null,
+    from,
     resend: bodyJson,
   };
 }

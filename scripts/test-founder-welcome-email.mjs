@@ -109,6 +109,10 @@ async function main() {
     if (!firstBody?.founder?.welcomeEmail) {
       throw new Error("Expected founder.welcomeEmail in claim response (deploy may be stale)");
     }
+    const fromUsed = firstBody.founder.welcomeEmail.from;
+    if (!fromUsed || !/^TripMappa\s+</i.test(fromUsed)) {
+      throw new Error(`Expected From display name TripMappa, got ${JSON.stringify(fromUsed)}`);
+    }
 
     const secondRes = await fetch(`${SITE}/api/account-onboarding`, {
       method: "POST",
