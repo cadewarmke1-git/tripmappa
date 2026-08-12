@@ -100,10 +100,14 @@ async function main() {
       body: JSON.stringify({}),
     });
     const firstBody = await firstRes.json();
-    console.log("first_onboarding", firstRes.status, firstBody);
+    console.log("first_onboarding", firstRes.status, JSON.stringify(firstBody, null, 2));
     if (!firstRes.ok) throw new Error(`onboarding failed: ${JSON.stringify(firstBody)}`);
     if (!(firstBody?.founder?.claimed && !firstBody?.founder?.already)) {
       throw new Error(`Expected fresh Founder claim, got ${JSON.stringify(firstBody.founder)}`);
+    }
+    console.log("welcomeEmail", JSON.stringify(firstBody?.founder?.welcomeEmail ?? null, null, 2));
+    if (!firstBody?.founder?.welcomeEmail) {
+      throw new Error("Expected founder.welcomeEmail in claim response (deploy may be stale)");
     }
 
     const secondRes = await fetch(`${SITE}/api/account-onboarding`, {
