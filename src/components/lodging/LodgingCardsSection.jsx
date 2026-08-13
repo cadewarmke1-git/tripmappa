@@ -6,12 +6,7 @@ import {
 } from "../../lib/commercialLodgingPlaces.js";
 import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
 import { processLodgingResults } from "../../lib/lodgingPlaces.js";
-import {
-  getRvParksForStop,
-  getTruckStopsForStop,
-  getRestAreasForStop,
-  saveLodgingToTrips,
-} from "../../lib/lodgingData.js";
+import { saveLodgingToTrips } from "../../lib/lodgingData.js";
 import { isTruckerTrip, isRvTrip } from "../../lib/vehicles.js";
 import HotelCard from "./HotelCard.jsx";
 import RvParkCard from "./RvParkCard.jsx";
@@ -61,8 +56,9 @@ export default function LodgingCardsSection({
             return;
           }
         }
+        // Honest empty state — never fall back to fake PLACEHOLDER RV parks.
         if (!cancelled) {
-          setItems(getRvParksForStop(city));
+          setItems([]);
           setRestAreas([]);
         }
       } else if (isTrucker) {
@@ -72,16 +68,17 @@ export default function LodgingCardsSection({
             fetchTruckStopsForCity(geo.lat, geo.lng, answers),
             fetchRestAreasForCity(geo.lat, geo.lng, answers),
           ]);
-          if (!cancelled && stops.length) {
+          if (!cancelled && (stops.length || areas.length)) {
             setItems(stops);
-            setRestAreas(areas.length ? areas : getRestAreasForStop(city));
+            setRestAreas(areas);
             setLoading(false);
             return;
           }
         }
+        // Honest empty state — never fall back to fake PLACEHOLDER truck stops.
         if (!cancelled) {
-          setItems(getTruckStopsForStop(city, answers));
-          setRestAreas(getRestAreasForStop(city));
+          setItems([]);
+          setRestAreas([]);
         }
       } else {
         setLodgingType("hotel");

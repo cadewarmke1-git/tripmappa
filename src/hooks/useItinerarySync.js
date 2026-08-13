@@ -118,7 +118,8 @@ export function useItinerarySync({
         herePolyline: result.provider === "here"
           ? (result.truckData?.polyline || prev?.herePolyline || null)
           : null,
-        truckSafe: result.provider === "here" ? true : prev?.truckSafe,
+        // Only HERE truck-aware routing is truck-safe — never preserve a stale Google true.
+        truckSafe: result.provider === "here",
       }));
 
       if (result.provider === "here") {

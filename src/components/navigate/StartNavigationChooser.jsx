@@ -28,7 +28,8 @@ export default function StartNavigationChooser({
   const dialogRef = useDialogA11y(open, onClose, "start-nav-chooser-title");
 
   const isTruck = shouldUseTruckRouting(answers);
-  const hasHereTruckRoute = routeInfo?.routeProvider === "here" || routeInfo?.truckSafe === true;
+  // Require real HERE provider — truckSafe alone used to lie on Google fallbacks.
+  const hasHereTruckRoute = routeInfo?.routeProvider === "here";
   const available = useMemo(() => detectNavApps(), []);
   const destCoords = useMemo(
     () => resolveDestinationCoords({ routeInfo, routePoints, truckRoutePath }),
