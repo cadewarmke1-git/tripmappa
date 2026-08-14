@@ -11,6 +11,7 @@ import { resolveApiRoute } from "./resolveApiRoute.js";
 
 const ROUTES = {
   "account-onboarding": () => import("../server/routes/account-onboarding.js"),
+  "auth-throttle": () => import("../server/routes/auth-throttle.js"),
   "client-error": () => import("../server/routes/client-error.js"),
   "collaboration": () => import("../server/routes/collaboration.js"),
   "corridor-osm": () => import("../server/routes/corridor-osm.js"),
@@ -60,7 +61,14 @@ const ROUTES = {
 async function ensureRequestBody(req, route) {
   if (req.method === "GET" || req.method === "HEAD") return;
 
+  const MAX_BODY_BYTES = route === "plan-trip" ? 900_000 : 1_500_000;
+
   if (req.rawBody !== undefined) {
+    if (Buffer.byteLength(req.rawBody) > MAX_BODY_BYTES) {
+      const err = new Error("Payload too large");
+      err.statusCode = 413;
+      throw err;
+    }
     if (route === "stripe/webhook") return;
     if (req.body === undefined) {
       if (!req.rawBody.length) {
@@ -78,7 +86,7 @@ async function ensureRequestBody(req, route) {
 
   if (req.body !== undefined) return;
 
-  const raw = await readRawBody(req);
+  const raw = await readRawBody(req, { maxBytes: MAX_BODY_BYTES });
   req.rawBody = raw;
 
   if (route === "stripe/webhook") return;
@@ -101,10 +109,13 @@ export default async function handler(req, res) {
 
   try {
     await ensureRequestBody(req, route);
-  } catch {
-    logApiRequest(route || "unknown", { method: req.method, status: 400, ms: Date.now() - started });
+  } catch (err) {
+    const status = err?.statusCode === 413 ? 413 : 400;
+    logApiRequest(route || "unknown", { method: req.method, status, ms: Date.now() - started });
     if (!res.headersSent) {
-      return res.status(400).json({ error: "Invalid request body" });
+      return res.status(status).json({
+        error: status === 413 ? "Payload too large" : "Invalid request body",
+      });
     }
     return undefined;
   }

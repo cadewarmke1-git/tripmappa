@@ -148,7 +148,7 @@ async function main() {
     }
 
     console.log(
-      "OK: production claim sent Founder welcome once (check inbox for PLACEHOLDER subject); second call was already.",
+      "OK: production claim sent Founder welcome once; second call was already.",
     );
   } finally {
     await cleanup();

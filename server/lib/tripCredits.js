@@ -124,7 +124,6 @@ export function getCreditStatus(profile, userId = null, userEmail = null) {
     unlimited: isAdmin,
     used: profile.generations_used,
     groceryDelivery,
-    stripeCustomerId: profile.stripe_customer_id || null,
     isFounder,
     founderExpiresAt: profile.founder_expires_at || null,
     voyagerBonusUntil: profile.voyager_bonus_until || null,

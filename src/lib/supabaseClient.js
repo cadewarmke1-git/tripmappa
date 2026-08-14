@@ -13,6 +13,8 @@ export const supabase = url && anonKey
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      // PKCE reduces token exposure in URL fragments vs implicit flow (SPA-safe).
+      flowType: "pkce",
     },
   })
   : null;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDialogA11y } from "../hooks/useDialogA11y.js";
+import AuthBotGuard, { isTurnstileConfigured } from "./auth/AuthBotGuard.jsx";
 import AuthSocialButtons, { SOCIAL_AUTH_UI_ENABLED } from "./auth/AuthSocialButtons.jsx";
 import { PhoneIcon } from "./auth/PhoneModal.jsx";
 import ModalCloseButton from "./ModalCloseButton.jsx";
@@ -24,6 +25,8 @@ export default function EmailModal({
   // Local draft so keystrokes don't force parent re-renders on every character.
   const [emailDraft, setEmailDraft] = useState(email || "");
   const [password, setPassword] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const dialogRef = useDialogA11y(true, onClose, "signup-headline");
 
   useEffect(() => {
@@ -36,8 +39,11 @@ export default function EmailModal({
 
   function handleSubmit(e) {
     e?.preventDefault();
+    if (isTurnstileConfigured() && !captchaToken) {
+      return;
+    }
     onEmailChange?.(emailDraft);
-    onSignUp?.({ email: emailDraft, password });
+    onSignUp?.({ email: emailDraft, password, honeypot, captchaToken });
   }
 
   return (
@@ -78,8 +84,19 @@ export default function EmailModal({
             minLength={8}
             disabled={loading}
           />
+          <AuthBotGuard
+            inputId="auth-company-website-signup"
+            honeypotValue={honeypot}
+            onHoneypotChange={setHoneypot}
+            onCaptchaToken={setCaptchaToken}
+            disabled={loading}
+          />
           {error && <p className="auth-modal-error">{error}</p>}
-          <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-generate auth-modal-submit"
+            disabled={loading || (isTurnstileConfigured() && !captchaToken)}
+          >
             {loading ? <GoldSpinner size="button" /> : "Create My Account →"}
           </button>
           <p className="auth-modal-footer">

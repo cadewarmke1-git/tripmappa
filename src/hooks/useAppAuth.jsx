@@ -139,7 +139,7 @@ export function useAppAuth({
     }
   }
 
-  async function handleEmailSignUp({ email, password }) {
+  async function handleEmailSignUp({ email, password, honeypot = "", captchaToken = "" }) {
     if (!email?.trim()) {
       setAuthError("Enter your email");
       return;
@@ -155,7 +155,7 @@ export function useAppAuth({
     setAuthBusy(true);
     setAuthError("");
     try {
-      const { session } = await signUp(email, password);
+      const { session } = await signUp(email, password, { honeypot, captchaToken });
       if (session) {
         toast_("Welcome to TripMappa!", true);
         setAuthModal(null);
@@ -172,7 +172,7 @@ export function useAppAuth({
     }
   }
 
-  async function handleSignInSubmit({ email, password }) {
+  async function handleSignInSubmit({ email, password, honeypot = "", captchaToken = "" }) {
     if (!email?.trim() || !password) {
       setAuthError("Enter email and password");
       return;
@@ -184,7 +184,7 @@ export function useAppAuth({
     setAuthBusy(true);
     setAuthError("");
     try {
-      await signIn(email, password);
+      await signIn(email, password, { honeypot, captchaToken });
       toast_("Signed in", true);
       setAuthModal(null);
       setAuthModalLead("");
@@ -196,7 +196,7 @@ export function useAppAuth({
     }
   }
 
-  async function handleForgotPassword(email) {
+  async function handleForgotPassword(email, { honeypot = "", captchaToken = "" } = {}) {
     if (!email?.trim()) {
       toast_("Enter your email first");
       return;
@@ -206,7 +206,7 @@ export function useAppAuth({
       return;
     }
     try {
-      await resetPassword(email);
+      await resetPassword(email, { honeypot, captchaToken });
       toast_("Password reset email sent — check your inbox", true);
     } catch (err) {
       toast_(err.message || "Could not send reset email");

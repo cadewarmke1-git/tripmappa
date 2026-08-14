@@ -149,16 +149,25 @@ export default async function handler(req, res) {
       if (existingRaw[key] != null && stored[key] == null) preserved[key] = existingRaw[key];
     }
 
-    const { error } = await admin
-      .from("user_profiles")
-      .upsert(
-        buildUserProfileUpsertRow(authUser.id, { plan_preferences: { ...preserved, ...stored } }),
-        { onConflict: "user_id" },
-      );
-    if (error) return res.status(500).json({ error: error.message });
+    const nextPrefs = { ...preserved, ...stored };
+
+    // Update-only for existing rows — never upsert with wanderer/0 defaults (wipes paid tier).
+    if (existingRow) {
+      const { error } = await admin
+        .from("user_profiles")
+        .update({ plan_preferences: nextPrefs })
+        .eq("user_id", authUser.id);
+      if (error) return res.status(500).json({ error: error.message });
+    } else {
+      const { error } = await admin
+        .from("user_profiles")
+        .insert(buildUserProfileUpsertRow(authUser.id, { plan_preferences: nextPrefs }));
+      if (error) return res.status(500).json({ error: error.message });
+    }
+
     return res.status(200).json({
       preferences: sanitizePreferences(stored),
-      meta: extractMetadata({ ...preserved, ...stored }),
+      meta: extractMetadata(nextPrefs),
     });
   }
 

@@ -8,11 +8,40 @@ import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { getUserFromRequest } from "../lib/authFromRequest.js";
 import { getOrCreateProfile } from "../lib/tripCredits.js";
 import { canUseGroceryDelivery } from "../lib/tiers.js";
+import { clampString, guardProxyRoute } from "../lib/apiSecurity.js";
+
+const MAX_ITEMS = 40;
+const MAX_ITEM_LEN = 120;
+const MAX_ADDRESS_FIELD = 200;
+const MAX_HOTEL_NAME = 200;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function clipText(value, max) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, max);
+}
 
 function parseScheduledTime(value) {
   if (!value) return new Date(Date.now() + 60 * 60 * 1000);
+  if (typeof value !== "string" && typeof value !== "number") {
+    return new Date(Date.now() + 60 * 60 * 1000);
+  }
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? new Date(Date.now() + 60 * 60 * 1000) : d;
+}
+
+function sanitizeAddress(raw) {
+  const address = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    address_line_1: clipText(address.address_line_1 || address.line1, MAX_ADDRESS_FIELD) || "",
+    address_line_2: clipText(address.address_line_2 || address.line2, MAX_ADDRESS_FIELD) || "",
+    postal_code: clipText(address.postal_code || address.postal, 20) || "",
+    city: clipText(address.city, 80) || "",
+    state: clipText(address.state, 40) || "",
+    country: clipText(address.country, 40) || "US",
+  };
 }
 
 function buildInstacartDeliveryPayload({
@@ -31,19 +60,19 @@ function buildInstacartDeliveryPayload({
     order_id: orderId,
     location_code: locationCode,
     address: {
-      address_line_1: address?.address_line_1 || address?.line1 || "",
-      address_line_2: address?.address_line_2 || address?.line2 || "",
-      postal_code: address?.postal_code || address?.postal || "",
-      city: address?.city || "",
-      state: address?.state || "",
-      country: address?.country || "US",
+      address_line_1: address.address_line_1,
+      address_line_2: address.address_line_2,
+      postal_code: address.postal_code,
+      city: address.city,
+      state: address.state,
+      country: address.country || "US",
     },
     items: (items || []).map((name, index) => ({
       item: {
         upc: `STUB-UPC-${index + 1}`,
       },
       count: 1,
-      special_instructions: String(name),
+      special_instructions: String(name).slice(0, MAX_ITEM_LEN),
     })),
     user: {
       id: tripId || "anonymous-trip",
@@ -55,7 +84,7 @@ function buildInstacartDeliveryPayload({
       hotelName ? `Deliver to hotel: ${hotelName}` : null,
       `Scheduled for ${scheduled.toISOString()}`,
       fulfillmentMode === "pickup" ? "Customer switched to store pickup." : null,
-    ].filter(Boolean).join(" "),
+    ].filter(Boolean).join(" ").slice(0, 1000),
     fulfillment_type: fulfillmentMode === "pickup" ? "pickup" : "delivery",
     requested_delivery_time: scheduled.toISOString(),
   };
@@ -105,6 +134,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  if (guardProxyRoute(req, res, "grocery")) return undefined;
+
   const user = await getUserFromRequest(req);
   if (!user) {
     return res.status(401).json({ error: "Sign in required for grocery delivery" });
@@ -123,24 +154,28 @@ export default async function handler(req, res) {
     });
   }
 
-  const {
-    items = [],
-    address = {},
-    scheduledTime = null,
-    tripId = null,
-    fulfillmentMode = "delivery",
-    hotelName = null,
-  } = req.body || {};
+  const body = req.body || {};
+  const items = Array.isArray(body.items) ? body.items : [];
+  const fulfillmentMode = body.fulfillmentMode === "pickup" ? "pickup" : "delivery";
+  const hotelName = clipText(body.hotelName, MAX_HOTEL_NAME);
+  const rawTripId = typeof body.tripId === "string" ? body.tripId.trim() : "";
+  const tripId = UUID_RE.test(rawTripId) ? rawTripId : null;
+  const address = sanitizeAddress(body.address);
+  const scheduledTime = body.scheduledTime == null ? null : clampString(String(body.scheduledTime), 64);
 
-  const cleanedItems = (items || [])
-    .map(item => String(item || "").trim())
+  if (items.length > MAX_ITEMS) {
+    return res.status(400).json({ error: `At most ${MAX_ITEMS} grocery items allowed` });
+  }
+
+  const cleanedItems = items
+    .map((item) => clipText(typeof item === "string" ? item : String(item || ""), MAX_ITEM_LEN))
     .filter(Boolean);
 
   if (!cleanedItems.length) {
     return res.status(400).json({ error: "At least one grocery item is required" });
   }
 
-  if (!address?.address_line_1 && !address?.line1 && !address?.city) {
+  if (!address.address_line_1 && !address.city) {
     return res.status(400).json({ error: "Delivery address is required" });
   }
 

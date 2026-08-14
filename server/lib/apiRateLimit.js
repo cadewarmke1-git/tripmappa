@@ -10,6 +10,8 @@ const BUCKETS = {
   collaboration: { hourMax: 80, burstMax: 20, burstWindowMs: TEN_MIN_MS },
   token_write: { hourMax: 60, burstMax: 15, burstWindowMs: TEN_MIN_MS },
   claude: { hourMax: 30, burstMax: 8, burstWindowMs: TEN_MIN_MS },
+  grocery: { hourMax: 30, burstMax: 8, burstWindowMs: TEN_MIN_MS },
+  stop_report: { hourMax: 40, burstMax: 12, burstWindowMs: TEN_MIN_MS },
 };
 
 /** @type {Map<string, number[]>} */

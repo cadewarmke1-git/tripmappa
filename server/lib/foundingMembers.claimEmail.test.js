@@ -81,7 +81,13 @@ describe("tryClaimFoundingSlot Founder welcome email", () => {
     expect(calls.upsert).toBe(1);
     expect(sendFounderWelcomeEmail).toHaveBeenCalledTimes(1);
     expect(sendFounderWelcomeEmail.mock.calls[0][1]).toBe(USER_ID);
-    expect(result.welcomeEmail).toEqual({ sent: true });
+    expect(result.welcomeEmail).toEqual({
+      sent: true,
+      skipped: false,
+      personalized: false,
+      firstName: null,
+      error: null,
+    });
   });
 
   it("does not send when the user already has a founding slot", async () => {

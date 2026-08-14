@@ -5219,6 +5219,15 @@
   }
   .auth-forgot-link { display: flex; justify-content: flex-end; text-align: right; margin: 0 0 8px; font-size: 14px; }
   .auth-modal-form { margin-bottom: 4px; }
+  .auth-honeypot {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .auth-turnstile { margin: 8px 0 12px; min-height: 65px; }
   .auth-modal-error { font-size: 13px; color: var(--error); margin: 0 0 12px; line-height: 1.4; }
   .auth-modal-alt-btn {
     display: inline-flex;

@@ -9,6 +9,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "message or label required" });
   }
 
-  logClientError({ label, message, url, stack: stack ? String(stack).slice(0, 500) : null });
+  logClientError({
+    label: label != null ? String(label).slice(0, 120) : null,
+    message: message != null ? String(message).slice(0, 1000) : null,
+    url: url != null ? String(url).slice(0, 500) : null,
+    stack: stack ? String(stack).slice(0, 500) : null,
+  });
   return res.status(204).end();
 }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { assertEmailAuthThrottle } from "../lib/authThrottleApi.js";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient.js";
 
 /*
@@ -77,21 +78,27 @@ export function AuthProvider({ children }) {
     session,
     loading,
     isConfigured: isSupabaseConfigured(),
-    async signUp(email, password) {
+    async signUp(email, password, { honeypot = "", captchaToken = "" } = {}) {
       if (!supabase) throw new Error("Supabase is not configured");
+      await assertEmailAuthThrottle("signup", email, { honeypot });
+      const options = { emailRedirectTo: `${window.location.origin}/` };
+      if (captchaToken) options.captchaToken = captchaToken;
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { emailRedirectTo: `${window.location.origin}/` },
+        options,
       });
       if (error) throw error;
       return data;
     },
-    async signIn(email, password) {
+    async signIn(email, password, { honeypot = "", captchaToken = "" } = {}) {
       if (!supabase) throw new Error("Supabase is not configured");
+      await assertEmailAuthThrottle("signin", email, { honeypot });
+      const options = captchaToken ? { captchaToken } : undefined;
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
+        options,
       });
       if (error) throw error;
       return data;
@@ -103,14 +110,28 @@ export function AuthProvider({ children }) {
         const { error: localError } = await supabase.auth.signOut({ scope: "local" });
         if (localError) throw localError;
       }
+      // Defense-in-depth: scrub any leftover Supabase auth keys from web storage.
+      try {
+        for (const store of [localStorage, sessionStorage]) {
+          const keys = [];
+          for (let i = 0; i < store.length; i += 1) {
+            const key = store.key(i);
+            if (key && (key.startsWith("sb-") || key.includes("supabase.auth"))) keys.push(key);
+          }
+          keys.forEach((key) => store.removeItem(key));
+        }
+      } catch {
+        /* ignore storage access errors */
+      }
       setSession(null);
       setUser(null);
     },
-    async resetPassword(email) {
+    async resetPassword(email, { honeypot = "", captchaToken = "" } = {}) {
       if (!supabase) throw new Error("Supabase is not configured");
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/`,
-      });
+      await assertEmailAuthThrottle("recover", email, { honeypot });
+      const options = { redirectTo: `${window.location.origin}/` };
+      if (captchaToken) options.captchaToken = captchaToken;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), options);
       if (error) throw error;
     },
     async signInWithOAuth(provider) {

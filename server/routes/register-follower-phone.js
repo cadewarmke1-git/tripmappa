@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    return res.status(200).json({ ok: true, phone: validation.phone });
+    return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("register-follower-phone error:", err);
     captureServerException(err);

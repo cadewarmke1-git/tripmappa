@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDialogA11y } from "../../hooks/useDialogA11y.js";
+import AuthBotGuard, { isTurnstileConfigured } from "./AuthBotGuard.jsx";
 import AuthSocialButtons, { SOCIAL_AUTH_UI_ENABLED } from "./AuthSocialButtons.jsx";
 import { PhoneIcon } from "./PhoneModal.jsx";
 import ModalCloseButton from "../ModalCloseButton.jsx";
@@ -21,11 +22,16 @@ export default function SignInModal({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const dialogRef = useDialogA11y(true, onClose, "signin-headline");
 
   function handleSubmit(e) {
     e?.preventDefault();
-    onSignIn?.({ email, password });
+    if (isTurnstileConfigured() && !captchaToken) {
+      return;
+    }
+    onSignIn?.({ email, password, honeypot, captchaToken });
   }
 
   return (
@@ -65,11 +71,22 @@ export default function SignInModal({
             autoComplete="current-password"
             disabled={loading}
           />
-          <button type="button" className="auth-forgot-link" onClick={() => onForgotPassword?.(email)} disabled={loading}>
+          <AuthBotGuard
+            inputId="auth-company-website-signin"
+            honeypotValue={honeypot}
+            onHoneypotChange={setHoneypot}
+            onCaptchaToken={setCaptchaToken}
+            disabled={loading}
+          />
+          <button type="button" className="auth-forgot-link" onClick={() => onForgotPassword?.(email, { honeypot, captchaToken })} disabled={loading}>
             Forgot password?
           </button>
           {error && <p className="auth-modal-error">{error}</p>}
-          <button type="submit" className="btn-generate auth-modal-submit" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-generate auth-modal-submit"
+            disabled={loading || (isTurnstileConfigured() && !captchaToken)}
+          >
             {loading ? <GoldSpinner size="button" /> : "Sign In →"}
           </button>
           <p className="auth-modal-footer">

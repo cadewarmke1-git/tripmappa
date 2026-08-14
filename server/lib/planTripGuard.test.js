@@ -59,4 +59,28 @@ describe("planTripGuard", () => {
     expect(getStatus()).toBe(400);
     expect(getBody()?.code).toBe("missing_vehicle");
   });
+
+  it("rejects oversized answers payloads", () => {
+    const { res, getStatus, getBody } = mockRes();
+    const answers = { vehicle: "Car", notes: "x".repeat(60_000) };
+    const rejected = validatePlanTripPayload(
+      { origin: "Austin, TX", destination: "Dallas, TX", answers },
+      res,
+    );
+    expect(rejected).toBe(true);
+    expect(getStatus()).toBe(400);
+    expect(getBody()?.code).toBe("answers_too_large");
+  });
+
+  it("clips answer strings in place when valid", () => {
+    const { res } = mockRes();
+    const body = {
+      origin: "  Austin, TX  ",
+      destination: "Dallas, TX",
+      answers: { vehicle: "Car", notes: "y".repeat(800) },
+    };
+    expect(validatePlanTripPayload(body, res)).toBeNull();
+    expect(body.origin).toBe("Austin, TX");
+    expect(body.answers.notes.length).toBe(500);
+  });
 });

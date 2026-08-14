@@ -1,4 +1,5 @@
 /** Client API for grocery order submission. */
+import { tripMappaApiHeaders } from "./tripmappaHeaders.js";
 
 export async function submitGroceryOrder({
   items,
@@ -9,7 +10,7 @@ export async function submitGroceryOrder({
   hotelName = null,
   accessToken = null,
 }) {
-  const headers = { "Content-Type": "application/json" };
+  const headers = tripMappaApiHeaders({ "Content-Type": "application/json" });
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
   }

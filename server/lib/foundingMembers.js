@@ -236,10 +236,18 @@ export async function tryClaimFoundingSlot(admin, userId) {
   let welcomeEmail = null;
   try {
     const { sendFounderWelcomeEmail } = await import("./email/founderWelcome.js");
-    welcomeEmail = await sendFounderWelcomeEmail(admin, userId, { founderExpiresAt });
+    const sendResult = await sendFounderWelcomeEmail(admin, userId, { founderExpiresAt });
+    // Do not leak Resend ids / from / recipient / raw provider payload to the client.
+    welcomeEmail = {
+      sent: Boolean(sendResult?.sent),
+      skipped: Boolean(sendResult?.skipped),
+      personalized: Boolean(sendResult?.personalized),
+      firstName: sendResult?.firstName || null,
+      error: sendResult?.error || null,
+    };
   } catch (err) {
     console.error("[foundingMembers] Founder welcome email failed:", err);
-    welcomeEmail = { sent: false, error: "exception", message: err?.message || String(err) };
+    welcomeEmail = { sent: false, error: "exception" };
   }
 
   return { claimed: true, slotNumber, founderExpiresAt, welcomeEmail };
