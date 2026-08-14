@@ -100,3 +100,10 @@ export function checkArrival({ destEta, arrivedAt, now = new Date() }) {
 export function googleMapsLink(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
+
+/** Strip owner PII before returning a live trip to share-token / convoy clients. */
+export function publicLiveTripRow(row) {
+  if (!row) return null;
+  const { follower_phones: _phones, user_id: _uid, ...rest } = row;
+  return rest;
+}

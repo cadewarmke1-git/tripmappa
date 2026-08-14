@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { captureServerException } from "../lib/sentry.js";
 import { getGoogleMapsKey } from "../lib/googleKey.js";
-import { mphFromSpeedMps } from "../lib/liveTripHelpers.js";
+import { mphFromSpeedMps, publicLiveTripRow } from "../lib/liveTripHelpers.js";
 import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
 
 async function fetchMatrixEta(originLat, originLng, destination) {
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
       .single();
 
     if (error) throw error;
-    return res.status(200).json({ liveTrip: data });
+    return res.status(200).json({ liveTrip: publicLiveTripRow(data) });
   } catch (err) {
     console.error("update-convoy-location error:", err);
     captureServerException(err);

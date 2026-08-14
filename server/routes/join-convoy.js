@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { captureServerException } from "../lib/sentry.js";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
-import { assignConvoyColor } from "../lib/liveTripHelpers.js";
+import { assignConvoyColor, publicLiveTripRow } from "../lib/liveTripHelpers.js";
 import { guardTokenWriteRoute, isValidShareToken } from "../lib/apiSecurity.js";
 
 /** POST /api/join-convoy — register a convoy member on an active live trip. */
@@ -65,7 +65,7 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    return res.status(200).json({ member, liveTrip: data });
+    return res.status(200).json({ member, liveTrip: publicLiveTripRow(data) });
   } catch (err) {
     console.error("join-convoy error:", err);
     captureServerException(err);

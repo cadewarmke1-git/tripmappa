@@ -1,12 +1,7 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { captureServerException } from "../lib/sentry.js";
 import { guardProxyRoute, isValidShareToken } from "../lib/apiSecurity.js";
-
-function publicLiveTripRow(row) {
-  if (!row) return null;
-  const { follower_phones: _phones, user_id: _uid, ...rest } = row;
-  return rest;
-}
+import { publicLiveTripRow } from "../lib/liveTripHelpers.js";
 
 /** GET /api/live-trip?token= — read one live trip by share token (no enumeration). */
 export default async function handler(req, res) {
