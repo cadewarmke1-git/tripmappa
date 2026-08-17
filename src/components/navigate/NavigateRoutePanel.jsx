@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { configurePlacesAutocomplete } from "../../lib/places.js";
+import { configurePlacesAutocomplete, PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS } from "../../lib/places.js";
 import GoldSpinner from "../GoldSpinner.jsx";
 import SearchBarAnimated from "../SearchBarAnimated.jsx";
 
@@ -23,9 +23,7 @@ export default function NavigateRoutePanel({
 
   useEffect(() => {
     if (!isLoaded || !window.google?.maps?.places || !destRef?.current) return undefined;
-    const ac = new window.google.maps.places.Autocomplete(destRef.current, {
-      types: ["geocode", "establishment"],
-    });
+    const ac = new window.google.maps.places.Autocomplete(destRef.current, PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS);
     configurePlacesAutocomplete(ac);
     const listener = ac.addListener("place_changed", () => {
       const next = destRef.current?.value || "";
@@ -72,7 +70,8 @@ export default function NavigateRoutePanel({
             placeholder="Where to?"
             ariaLabel="Where to?"
             className="navigate-where-search"
-            defaultExpanded={Boolean(dest) || locationDenied}
+            alwaysExpanded
+            defaultExpanded
           />
         </div>
 

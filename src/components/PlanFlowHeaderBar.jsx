@@ -9,6 +9,7 @@ export default function PlanFlowHeaderBar({
   helpButton = null,
   onExpand,
   onCollapse,
+  allowCollapse = true,
   showProgress = true,
 }) {
   const showProgressBar = showProgress && flowProgress?.phases?.length > 0;
@@ -46,17 +47,19 @@ export default function PlanFlowHeaderBar({
       </div>
       <div className="plan-flow-header-bar-actions" onClick={e => e.stopPropagation()}>
         {helpButton}
-        <button
-          type="button"
-          className={`float-card-chevron-btn plan-flow-collapse-btn${collapsed ? " is-collapsed-tab" : " open"}`}
-          onClick={collapsed ? onExpand : onCollapse}
-          aria-label={collapsed ? "Show panel" : "Collapse plan panel to show map"}
-        >
-          {collapsed && <span className="plan-flow-expand-label">Show panel</span>}
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {allowCollapse && (
+          <button
+            type="button"
+            className={`float-card-chevron-btn plan-flow-collapse-btn${collapsed ? " is-collapsed-tab" : " open"}`}
+            onClick={collapsed ? onExpand : onCollapse}
+            aria-label={collapsed ? "Show panel" : "Collapse plan panel to show map"}
+          >
+            {collapsed && <span className="plan-flow-expand-label">Show panel</span>}
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

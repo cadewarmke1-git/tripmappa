@@ -36,6 +36,21 @@ function getPlaceDetails(placeId) {
   });
 }
 
+function getPlacePredictionsOnce(service, request) {
+  return new Promise((resolve) => {
+    service.getPlacePredictions(request, (predictions, status) => {
+      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions?.length) {
+        resolve(null);
+        return;
+      }
+      resolve(predictions);
+    });
+  });
+}
+
+/** Legacy Autocomplete allows only one type — mixing geocode+establishment is INVALID_REQUEST. */
+export const PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS = { types: ["geocode"] };
+
 /** Hide Google Places dropdowns appended to document.body (pac-container). */
 export function dismissGooglePlacesDropdown() {
   if (typeof document === "undefined") return;
@@ -52,6 +67,23 @@ export function configurePlacesAutocomplete(autocompleteInstance) {
     "place_id",
     "name",
   ]);
+}
+
+/** Google Directions waypoint from a resolved place, falling back to free text. */
+export function toDirectionsWaypoint(resolved, fallbackText) {
+  if (resolved?.placeId) return { placeId: resolved.placeId };
+  return resolved?.formattedAddress || fallbackText;
+}
+
+export function isSameResolvedPlace(fromPlace, toPlace, fromText, toText) {
+  if (fromPlace?.placeId && toPlace?.placeId && fromPlace.placeId === toPlace.placeId) return true;
+  const from = normalizePlaceText(fromPlace?.formattedAddress || fromText);
+  const to = normalizePlaceText(toPlace?.formattedAddress || toText);
+  return Boolean(from && to && from === to);
+}
+
+export function looksLikeLatLng(text) {
+  return /^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(String(text || "").trim());
 }
 
 /** Resolve free-text or Autocomplete selection to a verified Places result. */
@@ -72,21 +104,16 @@ export function resolvePlaceFromAutocomplete(input, autocompleteInstance) {
     }
   }
 
-  return new Promise((resolve) => {
+  return (async () => {
     const service = new window.google.maps.places.AutocompleteService();
-    service.getPlacePredictions(
-      { input: text, types: ["geocode", "establishment"] },
-      async (predictions, status) => {
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions?.length) {
-          resolve(null);
-          return;
-        }
+    let predictions = await getPlacePredictionsOnce(service, { input: text, types: ["geocode"] });
+    if (!predictions) {
+      predictions = await getPlacePredictionsOnce(service, { input: text });
+    }
+    if (!predictions?.length) return null;
 
-        const exact = predictions.find(p => normalizePlaceText(p.description) === normalizePlaceText(text));
-        const match = exact || predictions[0];
-        const details = await getPlaceDetails(match.place_id);
-        resolve(details);
-      },
-    );
-  });
+    const exact = predictions.find(p => normalizePlaceText(p.description) === normalizePlaceText(text));
+    const match = exact || predictions[0];
+    return getPlaceDetails(match.place_id);
+  })();
 }

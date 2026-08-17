@@ -40,6 +40,26 @@ function jsonByteLength(value) {
   }
 }
 
+function downsampleRouteInfo(routeInfo) {
+  if (routeInfo == null || typeof routeInfo !== "object" || Array.isArray(routeInfo)) return routeInfo;
+  if (jsonByteLength(routeInfo) <= MAX_ROUTE_INFO_JSON_BYTES) return routeInfo;
+
+  const points = Array.isArray(routeInfo.routePoints) ? routeInfo.routePoints : [];
+  let routePoints = points;
+  if (points.length > 400) {
+    const step = Math.ceil(points.length / 400);
+    routePoints = points.filter((_, i) => i === 0 || i === points.length - 1 || i % step === 0);
+  }
+  const slim = { ...routeInfo, routePoints };
+  if (jsonByteLength(slim) > MAX_ROUTE_INFO_JSON_BYTES && slim.hereRoute) {
+    slim.hereRoute = null;
+  }
+  if (typeof slim.herePolyline === "string" && slim.herePolyline.length > 20_000) {
+    slim.herePolyline = slim.herePolyline.slice(0, 20_000);
+  }
+  return slim;
+}
+
 function sanitizeAnswersTree(value, depth = 0) {
   if (depth > 6) return null;
   if (value == null) return value;
@@ -82,8 +102,8 @@ export function validatePlanTripPayload(body, res) {
   if (jsonByteLength(answers) > MAX_ANSWERS_JSON_BYTES) {
     return rejectPlanTripRequest(res, 400, "Trip answers payload is too large", { code: "answers_too_large" });
   }
-  if (routeInfo != null && typeof routeInfo === "object" && jsonByteLength(routeInfo) > MAX_ROUTE_INFO_JSON_BYTES) {
-    return rejectPlanTripRequest(res, 400, "Route info payload is too large", { code: "route_info_too_large" });
+  if (routeInfo != null && typeof routeInfo === "object") {
+    body.routeInfo = downsampleRouteInfo(routeInfo);
   }
   if (legs != null) {
     if (!Array.isArray(legs) || legs.length > MAX_LEGS) {
@@ -91,8 +111,11 @@ export function validatePlanTripPayload(body, res) {
     }
   }
 
+  // placesContext is a corridor object used by normalizeTripResponse — not a prompt string.
+  // Oversize prompt strings are clamped (same as plan-trip.js) instead of 400'ing real trips.
   const contextFields = [
     "placesContext",
+    "placesContextPrompt",
     "generationHints",
     "preferenceContext",
     "recentTripsContext",
@@ -106,11 +129,10 @@ export function validatePlanTripPayload(body, res) {
   for (const field of contextFields) {
     const value = body?.[field];
     if (value == null) continue;
-    if (typeof value !== "string") {
-      return rejectPlanTripRequest(res, 400, `${field} must be a string`, { code: "invalid_context" });
-    }
+    if (field === "placesContext" && typeof value === "object") continue;
+    if (typeof value !== "string") continue;
     if (value.length > MAX_PROMPT_CONTEXT_LEN) {
-      return rejectPlanTripRequest(res, 400, `${field} is too long`, { code: "context_too_large" });
+      body[field] = value.slice(0, MAX_PROMPT_CONTEXT_LEN);
     }
   }
 

@@ -598,7 +598,7 @@ describe("tripFlow UX", () => {
     expect(answers.luxury_level).toBeUndefined();
     expect(resolveDraftQuickPartyId(answers)).toBe("couple");
     expect(resolveDraftQuickPaceId(answers)).toBe("moderate");
-    expect(resolveDraftQuickSpendId(answers)).toBe("comfortable");
+    expect(resolveDraftQuickSpendId(answers)).toBe("star3");
     const draft = buildTripDraftQuestion(answers, {
       ...routeEndpoints,
       routeDistanceMiles: 195,
@@ -606,7 +606,9 @@ describe("tripFlow UX", () => {
     });
     expect(draft.id).toBe("trip_draft");
     expect(draft.quickChoices).toHaveLength(3);
-    expect(DRAFT_QUICK_CHOICES.every(g => g.options.length === 3)).toBe(true);
+    const spending = DRAFT_QUICK_CHOICES.find(g => g.id === "spending");
+    expect(spending.options).toHaveLength(5);
+    expect(DRAFT_QUICK_CHOICES.filter(g => g.id !== "spending").every(g => g.options.length === 3)).toBe(true);
   });
 
   it("applySmartTripDefaults is a no-op for RV, Camper Van, and Truck", () => {
@@ -634,6 +636,21 @@ describe("tripFlow UX", () => {
     expect(resolveDraftQuickPartyId({ adult_count: 1, child_count: 0 })).toBe("solo");
     expect(resolveDraftQuickPartyId({ adult_count: 2, child_count: 2 })).toBe("family");
     expect(resolveDraftQuickPaceId({ stop_frequency: "Minimal" })).toBe("minimal");
-    expect(resolveDraftQuickSpendId({ luxury_level: "5" })).toBe("treat");
+    expect(resolveDraftQuickSpendId({ luxury_level: "5" })).toBe("star5");
+  });
+
+  it("draft-first progress is 2 steps, not 4", () => {
+    const route = getFlowProgress({ vehicle: "Car" }, {}, { currentQuestionId: "route_setup" });
+    expect(route.stepIndex).toBe(1);
+    expect(route.stepTotal).toBe(2);
+    expect(route.phaseLabel).toBe("Route");
+    const ready = getFlowProgress(
+      { vehicle: "Car", _draftFirstFlow: true },
+      {},
+      { currentQuestionId: "trip_draft" },
+    );
+    expect(ready.stepIndex).toBe(2);
+    expect(ready.stepTotal).toBe(2);
+    expect(ready.phaseLabel).toBe("Ready");
   });
 });

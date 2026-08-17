@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Autocomplete } from "@react-google-maps/api";
-import { configurePlacesAutocomplete } from "../lib/places.js";
+import { configurePlacesAutocomplete, PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS } from "../lib/places.js";
 import { getTierLabel, TIERS } from "../lib/tiers.js";
 
 const SETTINGS_GROUPS = [
@@ -216,7 +216,7 @@ export default function SettingsPage({
                   onPlaceChanged={() => {
                     if (homeInputRef.current) setHomeDraft(homeInputRef.current.value);
                   }}
-                  options={{ types: ["geocode", "establishment"] }}
+                  options={PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS}
                 >
                   <input
                     ref={homeInputRef}

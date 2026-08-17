@@ -698,6 +698,16 @@ export default function App() {
   const showPlanPanelDock = tab === "plan" && !cardCollapsed && !inQuestionFlow;
   const showPlanFlowActionDock = tab === "plan" && !cardCollapsed && inQuestionFlow && !convoComplete;
 
+  useEffect(() => {
+    if (!inQuestionFlow) return undefined;
+    function expandIfMobile() {
+      if (window.matchMedia("(max-width: 768px)").matches) setCardCollapsed(false);
+    }
+    expandIfMobile();
+    window.addEventListener("resize", expandIfMobile);
+    return () => window.removeEventListener("resize", expandIfMobile);
+  }, [inQuestionFlow]);
+
   // Float-card width/height transitions run ~350ms; resize map after panel settles so tiles fill the viewport.
   useEffect(() => {
     if ((view !== "app" && !(view === "hero" && appMode === "navigate")) || !mapReady) return undefined;
@@ -1343,7 +1353,9 @@ export default function App() {
     );
     if (!hasRoute) return false;
     if (view === "hero" && appMode === "navigate") return true;
-    if (generated && resultsView === "map" && itinerarySync.routeFocusMode) return true;
+    // Keep guidance alive once the user starts in-app nav — do not require
+    // map view AND routeFocusMode together (missing waypoints used to kill TBT).
+    if (generated && (resultsView === "map" || itinerarySync.routeFocusMode)) return true;
     return false;
   }, [
     view, appMode, routeInfo?.routePoints?.length, truckRoutePath?.length,
@@ -1590,6 +1602,7 @@ export default function App() {
   }
 
   function beginInAppNavigationFromResults() {
+    itinerarySync.setRouteFocusMode(true);
     if (navigateOriginRef.current) navigateOriginRef.current.value = origin;
     if (navigateDestRef.current) navigateDestRef.current.value = dest;
     if (itinerarySync.itineraryWaypoints.length) {
@@ -1597,8 +1610,8 @@ export default function App() {
     } else {
       recenterMap();
     }
-    turnByTurn.startNavigation();
     setResultsView("map");
+    turnByTurn.startNavigation();
     window.setTimeout(() => flushMapLayout(), 250);
   }
 
@@ -1878,6 +1891,11 @@ export default function App() {
       invalid = true;
     }
     if (invalid) return;
+    if (fromPlace.placeId && toPlace.placeId && fromPlace.placeId === toPlace.placeId) {
+      setRouteSetupOriginError("From and To need to be different places.");
+      setRouteSetupDestError("From and To need to be different places.");
+      return;
+    }
 
     const fromAddr = fromPlace.formattedAddress;
     const toAddr = toPlace.formattedAddress;
@@ -3429,7 +3447,7 @@ export default function App() {
             {turnByTurnPanel}
           </div>
         ) : (
-        <div className="app">
+        <div className={`app${inQuestionFlow ? " app--question-flow" : ""}`}>
           <ErrorBoundary
             key={mapBoundaryKey}
             label="map"
@@ -3538,7 +3556,11 @@ export default function App() {
                   frozen={!!stepAnim}
                   helpButton={planPanelHelpButton}
                   onExpand={() => setCardCollapsed(false)}
-                  onCollapse={() => setCardCollapsed(true)}
+                  onCollapse={() => {
+                    if (window.matchMedia("(max-width: 768px)").matches) return;
+                    setCardCollapsed(true);
+                  }}
+                  allowCollapse
                   showProgress={false}
                 />
               ) : (

@@ -491,7 +491,7 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     column-gap: 6px;
-    padding: 0 10px 0 8px;
+    padding: var(--safe-top, 0px) 10px 0 8px;
     justify-content: initial;
   }
 
@@ -1023,13 +1023,19 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
   }
 }
 
-/* Plan flow: hide map + full-width panel — mobile layout only, ≤767px */
-@media (max-width: 767px) {
-  html[data-layout="mobile"] .app:has(.float-card--plan-flow) .map-full {
+/* Plan flow: hide map + full-width panel on narrow screens (any data-layout) */
+@media (max-width: 768px) {
+  .app.app--question-flow .map-full,
+  .app:has(.float-card--plan-flow) .map-full {
     display: none !important;
   }
 
-  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) {
+  .float-card--plan-flow .plan-flow-collapse-btn {
+    display: none !important;
+  }
+
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed),
+  .float-card--plan-flow:not(.collapsed) {
     top: var(--nav-h) !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -1140,5 +1146,23 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
   .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-trigger,
   .app-wrap:has(.float-card--plan-flow:not(.collapsed)) .profile-card-trigger-wrap {
     pointer-events: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  /* iOS Safari zooms focused inputs below 16px — keep form fields at 16px. */
+  .plan-route-setup-input,
+  .hero-input,
+  .search-bar-animated-input,
+  .auth-field-input,
+  .question-text-input,
+  .answer-input,
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="tel"],
+  textarea,
+  select {
+    font-size: 16px !important;
   }
 }

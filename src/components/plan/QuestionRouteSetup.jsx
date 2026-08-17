@@ -1,5 +1,5 @@
 import { Autocomplete } from "@react-google-maps/api";
-import { configurePlacesAutocomplete } from "../../lib/places.js";
+import { configurePlacesAutocomplete, PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS } from "../../lib/places.js";
 import {
   canUseDraftFirstFlow,
   formatSmartDefaultsSummary,
@@ -53,7 +53,7 @@ export default function QuestionRouteSetup({
                 onPlaceChanged={() => {
                   if (originRef?.current) onOriginChange?.(originRef.current.value);
                 }}
-                options={{ types: ["geocode", "establishment"] }}
+                options={PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS}
               >
                 <input
                   id="plan-route-origin"
@@ -110,7 +110,7 @@ export default function QuestionRouteSetup({
                 onPlaceChanged={() => {
                   if (destRef?.current) onDestChange?.(destRef.current.value);
                 }}
-                options={{ types: ["geocode", "establishment"] }}
+                options={PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS}
               >
                 <input
                   id="plan-route-dest"

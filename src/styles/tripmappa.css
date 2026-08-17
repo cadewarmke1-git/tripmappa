@@ -2,7 +2,9 @@
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;700&display=swap');
   /* impeccable-disable overused-font: Fraunces + Inter are approved TripMappa brand typefaces (see DESIGN.md). */
   :root {
-    --nav-h: 64px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --nav-bar-inner: 64px;
+    --nav-h: calc(var(--nav-bar-inner) + var(--safe-top));
     --r: 12px;
     --r-lg: 16px;
     --r-xl: 20px;
@@ -892,7 +894,7 @@
   .hero-input {
     outline: none;
     font-family: 'Inter', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 400;
     color: #ffffff;
     background: transparent;
@@ -2263,8 +2265,13 @@
   }
 
   /* Mobile — plan flow: full-width panel, map hidden */
-  @media (max-width: 767px) {
-    html[data-layout="mobile"] .app:has(.float-card--plan-flow) .map-full {
+  @media (max-width: 768px) {
+    .app.app--question-flow .map-full,
+    .app:has(.float-card--plan-flow) .map-full {
+      display: none !important;
+    }
+
+    .float-card--plan-flow .plan-flow-collapse-btn {
       display: none !important;
     }
 
@@ -7759,14 +7766,14 @@
     right: 0;
     z-index: 210;
     height: var(--nav-h);
-    min-height: unset;
-    max-height: var(--nav-h);
+    min-height: var(--nav-h);
+    max-height: none;
     flex-direction: row;
     flex-wrap: nowrap;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px 0 16px;
+    padding: var(--safe-top, 0px) 20px 0 16px;
     background: var(--color-nav-bg-app, #1A0D00);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -7780,8 +7787,8 @@
 
   /* Never inherit full-page hero layout onto the nav shell */
   nav.app-nav-bar {
-    min-height: unset !important;
-    max-height: var(--nav-h) !important;
+    min-height: var(--nav-h) !important;
+    max-height: none !important;
     height: var(--nav-h) !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -7981,17 +7988,16 @@
     align-items: center;
   }
 
-  .navigate-where-search.search-bar-animated {
-    width: 48px;
+  .navigate-where-search.search-bar-animated,
+  .navigate-where-search.search-bar-animated.is-expanded,
+  .navigate-where-search.search-bar-animated.is-always-expanded {
+    width: 100%;
     max-width: 100%;
+    border-radius: 10px;
     --search-bar-bg: #0D0A1A;
     --search-bar-border: #FFD28C;
     --search-bar-text: #FDF3E0;
     --search-bar-placeholder: rgba(253, 243, 224, 0.45);
-  }
-
-  .navigate-where-search.search-bar-animated.is-expanded {
-    width: 100%;
   }
 
   .navigate-route-cell {
@@ -8317,6 +8323,20 @@
     gap: 8px;
   }
 
+  .trip-draft-quick-options--stars {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .trip-draft-quick-options--stars .trip-draft-quick-btn {
+    min-width: 0;
+    flex: none;
+    padding: 10px 4px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+
   .trip-draft-quick-btn {
     flex: 1 1 auto;
     min-width: min(100%, 8.5rem);
@@ -8364,10 +8384,6 @@
   }
 
   @media (max-width: 720px) {
-    .trip-draft-stats {
-      grid-template-columns: 1fr;
-    }
-
     .trip-draft-quick-btn {
       min-width: calc(50% - 4px);
     }
@@ -8457,7 +8473,7 @@
     background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
     color: inherit;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     box-sizing: border-box;
   }
 
@@ -8515,7 +8531,7 @@
     .plan-route-setup-input {
       min-height: 44px;
       padding: 10px 12px;
-      font-size: 13px;
+      font-size: 16px;
       box-sizing: border-box;
     }
   }
@@ -11361,35 +11377,35 @@
 
   .plan-generation-error {
     margin: 0 0 12px; padding: 10px 14px; border-radius: 10px;
-    border: 1px solid rgba(248,113,113,0.4); background: rgba(248,113,113,0.1);
-    font-size: 12px; line-height: 1.45; color: #fecaca;
+    border: 1px solid #991b1b; background: #7f1d1d;
+    font-size: 13px; line-height: 1.45; color: #fff7ed;
   }
   .plan-generation-error--prominent,
   .plan-generation-error--ready {
     padding: 14px 16px;
     border-radius: 12px;
-    border: 1px solid rgba(248,113,113,0.55);
-    background: rgba(248,113,113,0.16);
+    border: 1px solid #991b1b;
+    background: #7f1d1d;
   }
   .plan-generation-error-title {
     margin: 0 0 6px;
     font-size: 15px;
     font-weight: 700;
-    color: #fecaca;
+    color: #fff7ed;
   }
   .plan-generation-error-text {
     margin: 0 0 12px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.45;
-    color: #fecaca;
+    color: #fff7ed;
   }
   .plan-generation-error-retry {
     width: 100%;
     margin-top: 4px;
   }
 
-  .plan-route-card-error { border-color: rgba(248,113,113,0.35); }
-  .plan-route-card-error-text { font-size: 11px; color: #f87171; line-height: 1.35; }
+  .plan-route-card-error { border-color: #991b1b; background: #7f1d1d; }
+  .plan-route-card-error-text { font-size: 13px; color: #fff7ed; line-height: 1.35; font-weight: 600; }
   .plan-route-retry-btn {
     margin-top: 8px; padding: 6px 12px; border-radius: 8px;
     border: 1px solid rgba(255,210,140,0.35); background: rgba(255,210,140,0.1);

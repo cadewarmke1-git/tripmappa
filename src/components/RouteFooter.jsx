@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Autocomplete } from "@react-google-maps/api";
 import { isWaterVehicle } from "../lib/vehicles.js";
+import { PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS } from "../lib/places.js";
 
 export default function RouteFooter({
   isLoaded,
@@ -72,7 +73,7 @@ export default function RouteFooter({
         <div className="route-input-wrap">
           <div className="route-dot"/>
           {isLoaded ? (
-            <Autocomplete onPlaceChanged={() => answers.vehicle && onFetchDirections(answers.vehicle)} options={{ types: ["geocode", "establishment"] }}>
+            <Autocomplete onPlaceChanged={() => answers.vehicle && onFetchDirections(answers.vehicle)} options={PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS}>
               <input ref={originRef} className="route-input" placeholder="Starting from…" defaultValue={origin}/>
             </Autocomplete>
           ) : (
@@ -86,7 +87,7 @@ export default function RouteFooter({
         <div className="route-input-wrap">
           <div className="route-dot dest"/>
           {isLoaded ? (
-            <Autocomplete onPlaceChanged={() => answers.vehicle && onFetchDirections(answers.vehicle)} options={{ types: ["geocode", "establishment"] }}>
+            <Autocomplete onPlaceChanged={() => answers.vehicle && onFetchDirections(answers.vehicle)} options={PLACES_ADDRESS_AUTOCOMPLETE_OPTIONS}>
               <input ref={destRef} className="route-input" placeholder="Going to…" defaultValue={dest}/>
             </Autocomplete>
           ) : (

@@ -186,9 +186,10 @@ export function formatLuxuryLevelLine(answers = {}) {
       5: "5-star Luxury (premium dining)",
     };
   const label = tiers[String(answers.luxury_level)] || `${answers.luxury_level}-star`;
+  const qualityRule = "Match lodging and dining to this star quality using Google rating and price level — not just the cheapest nearby option.";
   return hasOvernight
-    ? `Hotel & restaurant budget level: ${label}. Use this luxury_level when selecting hotels and restaurants.`
-    : `Restaurant budget level: ${label}. Use this luxury_level when selecting restaurants (no overnight lodging on this trip).`;
+    ? `Hotel & restaurant quality: ${label}. ${qualityRule}`
+    : `Restaurant quality: ${label} (no overnight lodging on this trip). ${qualityRule}`;
 }
 
 export function formatPetConstraintLine(answers = {}) {

@@ -35,12 +35,14 @@ export default function SearchBarAnimated({
   disabled = false,
   inputRef: inputRefProp = null,
   defaultExpanded = false,
+  alwaysExpanded = false,
 }) {
   const autoId = useId();
   const inputId = idProp || autoId;
   const rootRef = useRef(null);
   const inputRef = useRef(null);
-  const [expanded, setExpanded] = useState(() => defaultExpanded || Boolean(value));
+  const [expanded, setExpanded] = useState(() => alwaysExpanded || defaultExpanded || Boolean(value));
+  const isExpanded = alwaysExpanded || expanded;
 
   const setInputNode = useCallback((node) => {
     inputRef.current = node;
@@ -48,19 +50,24 @@ export default function SearchBarAnimated({
   }, [inputRefProp]);
 
   const collapse = useCallback(() => {
+    if (alwaysExpanded) return;
     setExpanded(false);
-  }, []);
+  }, [alwaysExpanded]);
 
-  useClickOutside(rootRef, collapse, expanded);
+  useClickOutside(rootRef, collapse, isExpanded && !alwaysExpanded);
 
   useEffect(() => {
-    if (!expanded) return undefined;
+    if (alwaysExpanded) setExpanded(true);
+  }, [alwaysExpanded]);
+
+  useEffect(() => {
+    if (!isExpanded || alwaysExpanded) return undefined;
     const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
-  }, [expanded]);
+  }, [isExpanded, alwaysExpanded]);
 
   function handleToggle() {
-    if (disabled) return;
+    if (disabled || alwaysExpanded) return;
     setExpanded(prev => !prev);
   }
 
@@ -71,7 +78,7 @@ export default function SearchBarAnimated({
     }
     if (event.key === "Escape") {
       event.preventDefault();
-      collapse();
+      if (!alwaysExpanded) collapse();
       inputRef.current?.blur();
     }
   }
@@ -79,15 +86,16 @@ export default function SearchBarAnimated({
   return (
     <div
       ref={rootRef}
-      className={`search-bar-animated${expanded ? " is-expanded" : ""}${disabled ? " is-disabled" : ""}${className ? ` ${className}` : ""}`}
+      className={`search-bar-animated${isExpanded ? " is-expanded" : ""}${alwaysExpanded ? " is-always-expanded" : ""}${disabled ? " is-disabled" : ""}${className ? ` ${className}` : ""}`}
     >
       <button
         type="button"
         className="search-bar-animated-toggle"
-        aria-label={expanded ? "Close search" : "Open search"}
-        aria-expanded={expanded}
+        aria-label={alwaysExpanded ? ariaLabel : (isExpanded ? "Close search" : "Open search")}
+        aria-expanded={isExpanded}
         aria-controls={inputId}
         disabled={disabled}
+        tabIndex={alwaysExpanded ? -1 : 0}
         onClick={handleToggle}
       >
         <SearchIcon />
@@ -102,7 +110,7 @@ export default function SearchBarAnimated({
         placeholder={placeholder}
         aria-label={ariaLabel}
         disabled={disabled}
-        tabIndex={expanded ? 0 : -1}
+        tabIndex={isExpanded ? 0 : -1}
         onChange={(e) => onChange?.(e.target.value)}
         onKeyDown={handleKeyDown}
       />

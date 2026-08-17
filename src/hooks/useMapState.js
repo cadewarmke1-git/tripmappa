@@ -20,6 +20,12 @@ import {
   setCachedDirections,
   buildDirectionsCacheEntry,
 } from "../lib/directionsCache.js";
+import {
+  isSameResolvedPlace,
+  looksLikeLatLng,
+  resolvePlaceFromAutocomplete,
+  toDirectionsWaypoint,
+} from "../lib/places.js";
 
 /**
  * Map / routing state and effects for App.
@@ -143,11 +149,7 @@ export function useMapState({
     });
   }, []);
 
-  const fetchDirections = useCallback((vehicleType) => {
-    const originVal = originRef.current?.value?.trim() || origin?.trim();
-    const destVal = destRef.current?.value?.trim() || dest?.trim();
-    if (!originVal || !destVal) return Promise.resolve({ ok: false });
-
+  const fetchDirectionsWithEndpoints = useCallback((vehicleType, originVal, destVal, originWp, destWp) => {
     const vehicle = vehicleType || answers.vehicle || "Car";
 
     if (shouldUseTruckRouting({ ...answers, vehicle }) && !skipTruckRoutingRef.current) {
@@ -275,8 +277,8 @@ export function useMapState({
     setTrafficAlert(false);
 
     const routeRequest = {
-      origin: originVal,
-      destination: destVal,
+      origin: originWp || originVal,
+      destination: destWp || destVal,
       travelMode: window.google.maps.TravelMode.DRIVING,
     };
 
@@ -424,76 +426,135 @@ export function useMapState({
     return promise;
   }, [timingMode, arriveByDate, answers, origin, dest, setOrigin, setDest, toastFnRef, scheduleFitBounds]);
 
+  const fetchDirections = useCallback((vehicleType) => {
+    const originRaw = originRef.current?.value?.trim() || origin?.trim();
+    const destRaw = destRef.current?.value?.trim() || dest?.trim();
+    if (!originRaw || !destRaw) return Promise.resolve({ ok: false });
+
+    return (async () => {
+      let originVal = originRaw;
+      let destVal = destRaw;
+      let originWp = originRaw;
+      let destWp = destRaw;
+      if (window.google?.maps?.places) {
+        const [fromPlace, toPlace] = await Promise.all([
+          looksLikeLatLng(originRaw) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(originRaw, heroOriginAcRef.current),
+          looksLikeLatLng(destRaw) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(destRaw, heroDestAcRef.current),
+        ]);
+        if (!looksLikeLatLng(originRaw) && !looksLikeLatLng(destRaw)
+          && isSameResolvedPlace(fromPlace, toPlace, originRaw, destRaw)) {
+          const msg = "From and To need to be different places.";
+          setRouteLoading(false);
+          setRouteError(msg);
+          setRouteInfo(null);
+          setRoutePath(null);
+          setTruckRoutePath(null);
+          setDirectionsResult(null);
+          toastFnRef.current?.(msg, { duration: 7000 });
+          return { ok: false };
+        }
+        originVal = fromPlace?.formattedAddress || originRaw;
+        destVal = toPlace?.formattedAddress || destRaw;
+        originWp = toDirectionsWaypoint(fromPlace, originVal);
+        destWp = toDirectionsWaypoint(toPlace, destVal);
+        if (originRef.current && fromPlace?.formattedAddress) originRef.current.value = originVal;
+        if (destRef.current && toPlace?.formattedAddress) destRef.current.value = destVal;
+      }
+
+      return fetchDirectionsWithEndpoints(vehicleType, originVal, destVal, originWp, destWp);
+    })();
+  }, [
+    timingMode, arriveByDate, answers, origin, dest, setOrigin, setDest,
+    toastFnRef, scheduleFitBounds, fetchDirectionsWithEndpoints,
+  ]);
+
   const fetchRouteBetween = useCallback((originVal, destVal, { skipFitBounds = false } = {}) => {
     if (!originVal || !destVal || !window.google) return Promise.resolve(false);
 
-    const signature = buildRouteSignature({ origin: originVal, destination: destVal });
-    const cached = getCachedDirections(signature);
-    if (cached) {
-      setRouteInfo(cached.routeInfo);
-      setRoutePath(cached.routePath);
-      setDirectionsResult(cached.directionsResult);
-      if (!skipFitBounds) scheduleFitBounds(cached.routePoints, 60);
-      return Promise.resolve(true);
-    }
+    return (async () => {
+      let originText = originVal;
+      let destText = destVal;
+      let originWp = originVal;
+      let destWp = destVal;
+      if (window.google?.maps?.places) {
+        const [fromPlace, toPlace] = await Promise.all([
+          looksLikeLatLng(originVal) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(originVal, heroOriginAcRef.current),
+          looksLikeLatLng(destVal) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(destVal, heroDestAcRef.current),
+        ]);
+        originText = fromPlace?.formattedAddress || originVal;
+        destText = toPlace?.formattedAddress || destVal;
+        originWp = toDirectionsWaypoint(fromPlace, originText);
+        destWp = toDirectionsWaypoint(toPlace, destText);
+      }
 
-    setRouteLoading(true);
-    setTrafficAlert(false);
+      const signature = buildRouteSignature({ origin: originText, destination: destText });
+      const cached = getCachedDirections(signature);
+      if (cached) {
+        setRouteInfo(cached.routeInfo);
+        setRoutePath(cached.routePath);
+        setDirectionsResult(cached.directionsResult);
+        if (!skipFitBounds) scheduleFitBounds(cached.routePoints, 60);
+        return true;
+      }
 
-    const routeRequest = {
-      origin: originVal,
-      destination: destVal,
-      travelMode: window.google.maps.TravelMode.DRIVING,
-      drivingOptions: {
-        departureTime: new Date(),
-        trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
-      },
-    };
+      setRouteLoading(true);
+      setTrafficAlert(false);
 
-    const service = new window.google.maps.DirectionsService();
-    return new Promise((resolve) => {
-      service.route(routeRequest, (result, status) => {
-        setRouteLoading(false);
-        if (status === "OK") {
-          const route = result.routes[0];
-          const leg = route.legs[0];
-          const routeInfo = {
-            distance: leg.distance.text,
-            duration: leg.duration.text,
-            start: leg.start_address.split(",")[0],
-            end: leg.end_address.split(",")[0],
-            origin: originVal,
-            destination: destVal,
-            originLat: typeof leg.start_location.lat === "function" ? leg.start_location.lat() : leg.start_location.lat,
-            originLng: typeof leg.start_location.lng === "function" ? leg.start_location.lng() : leg.start_location.lng,
-            destLat: typeof leg.end_location.lat === "function" ? leg.end_location.lat() : leg.end_location.lat,
-            destLng: typeof leg.end_location.lng === "function" ? leg.end_location.lng() : leg.end_location.lng,
-            routePoints: route.overview_path.map(p => ({
-              lat: typeof p.lat === "function" ? p.lat() : p.lat,
-              lng: typeof p.lng === "function" ? p.lng() : p.lng,
-            })),
-            vehicleType: "Car",
-            timingMode: "leave_now",
-            routeProvider: "google",
-            hereRoute: null,
-            truckSafe: false,
-          };
-          setRouteInfo(routeInfo);
-          setRoutePath(route.overview_path);
-          setTruckRoutePath(null);
-          setDirectionsResult(result);
-          setCachedDirections(signature, buildDirectionsCacheEntry(result, {
-            originVal,
-            destVal,
-            routeInfoExtras: { vehicleType: "Car", timingMode: "leave_now" },
-          }));
-          if (!skipFitBounds) scheduleFitBounds(routeInfo.routePoints, 60);
-          resolve(true);
-        } else {
-          resolve(false);
-        }
+      const routeRequest = {
+        origin: originWp,
+        destination: destWp,
+        travelMode: window.google.maps.TravelMode.DRIVING,
+        drivingOptions: {
+          departureTime: new Date(),
+          trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
+        },
+      };
+
+      const service = new window.google.maps.DirectionsService();
+      return new Promise((resolve) => {
+        service.route(routeRequest, (result, status) => {
+          setRouteLoading(false);
+          if (status === "OK") {
+            const route = result.routes[0];
+            const leg = route.legs[0];
+            const routeInfo = {
+              distance: leg.distance.text,
+              duration: leg.duration.text,
+              start: leg.start_address.split(",")[0],
+              end: leg.end_address.split(",")[0],
+              origin: originText,
+              destination: destText,
+              originLat: typeof leg.start_location.lat === "function" ? leg.start_location.lat() : leg.start_location.lat,
+              originLng: typeof leg.start_location.lng === "function" ? leg.start_location.lng() : leg.start_location.lng,
+              destLat: typeof leg.end_location.lat === "function" ? leg.end_location.lat() : leg.end_location.lat,
+              destLng: typeof leg.end_location.lng === "function" ? leg.end_location.lng() : leg.end_location.lng,
+              routePoints: route.overview_path.map(p => ({
+                lat: typeof p.lat === "function" ? p.lat() : p.lat,
+                lng: typeof p.lng === "function" ? p.lng() : p.lng,
+              })),
+              vehicleType: "Car",
+              timingMode: "leave_now",
+              routeProvider: "google",
+              hereRoute: null,
+              truckSafe: false,
+            };
+            setRouteInfo(routeInfo);
+            setRoutePath(route.overview_path);
+            setTruckRoutePath(null);
+            setDirectionsResult(result);
+            setCachedDirections(signature, buildDirectionsCacheEntry(result, {
+              originVal: originText,
+              destVal: destText,
+              routeInfoExtras: { vehicleType: "Car", timingMode: "leave_now" },
+            }));
+            if (!skipFitBounds) scheduleFitBounds(routeInfo.routePoints, 60);
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        });
       });
-    });
+    })();
   }, [scheduleFitBounds]);
 
   function highlightStop(stopId) {

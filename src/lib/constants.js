@@ -21,7 +21,7 @@ import {
   MAP_DAY_WATER,
 } from "./palette.js";
 
-export const GOOGLE_LIBRARIES = ["places", "routes", "geometry"];
+export const GOOGLE_LIBRARIES = ["places", "geometry"];
 
 export const STANDARD_MAP_STYLES = [
   { featureType: "poi", stylers: [{ visibility: "off" }] },

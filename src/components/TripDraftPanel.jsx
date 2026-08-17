@@ -101,7 +101,11 @@ export default function TripDraftPanel({
             {questions.map(group => (
               <div key={group.id} className="trip-draft-quick-group">
                 <p className="trip-draft-quick-ask">{group.ask}</p>
-                <div className="trip-draft-quick-options" role="group" aria-label={group.ask}>
+                <div
+                  className={`trip-draft-quick-options${group.id === "spending" ? " trip-draft-quick-options--stars" : ""}`}
+                  role="group"
+                  aria-label={group.ask}
+                >
                   {group.options.map(option => {
                     const isSelected = selected[group.id] === option.id;
                     return (
@@ -110,6 +114,7 @@ export default function TripDraftPanel({
                         type="button"
                         className={`trip-draft-quick-btn${isSelected ? " is-selected" : ""}`}
                         aria-pressed={isSelected}
+                        aria-label={option.ariaLabel || option.label}
                         disabled={frozen}
                         onClick={() => onPick(group.id, option)}
                       >

@@ -586,11 +586,13 @@ export const DRAFT_QUICK_CHOICES = [
   },
   {
     id: "spending",
-    ask: "How do you like to spend?",
+    ask: "Hotel and restaurant quality?",
     options: [
-      { id: "simple", label: "Keep it simple", luxury_level: "1" },
-      { id: "comfortable", label: "Comfortable", luxury_level: "3" },
-      { id: "treat", label: "Treat ourselves", luxury_level: "5" },
+      { id: "star1", label: "★", luxury_level: "1", ariaLabel: "1-star budget" },
+      { id: "star2", label: "★★", luxury_level: "2", ariaLabel: "2-star economy" },
+      { id: "star3", label: "★★★", luxury_level: "3", ariaLabel: "3-star mid-range" },
+      { id: "star4", label: "★★★★", luxury_level: "4", ariaLabel: "4-star upscale" },
+      { id: "star5", label: "★★★★★", luxury_level: "5", ariaLabel: "5-star luxury" },
     ],
   },
 ];
@@ -615,9 +617,10 @@ export function resolveDraftQuickPaceId(answers = {}) {
 
 export function resolveDraftQuickSpendId(answers = {}) {
   const level = String(answers.luxury_level || SMART_TRIP_DEFAULTS.luxury_level);
-  if (level === "1" || level === "2") return "simple";
-  if (level === "4" || level === "5") return "treat";
-  return "comfortable";
+  if (level === "1" || level === "2" || level === "3" || level === "4" || level === "5") {
+    return `star${level}`;
+  }
+  return "star3";
 }
 
 export function getDraftTuneSections(answers, context = {}) {
@@ -1545,9 +1548,36 @@ function dummyAnswerForQuestion(q) {
   return "Yes";
 }
 
+export const DRAFT_FLOW_PHASES = [
+  { id: "route", label: "Route" },
+  { id: "ready", label: "Ready" },
+];
+
 /** Phase-based progress for the plan flow indicator. */
 export function getFlowProgress(answers, context = {}, options = {}) {
   const { convoComplete = false, currentQuestionId = null } = options;
+  const vehicleHint = answers.vehicle || "Car";
+  const isDraftPath = !answers._customizeTrip
+    && canUseDraftFirstFlow({ ...answers, vehicle: vehicleHint })
+    && (
+      currentQuestionId === "route_setup"
+      || currentQuestionId === "trip_draft"
+      || currentQuestionId === "done"
+      || Boolean(answers._draftFirstFlow && (convoComplete || currentQuestionId === "trip_draft"))
+    );
+
+  if (isDraftPath) {
+    const onReady = convoComplete || currentQuestionId === "trip_draft" || currentQuestionId === "done";
+    return {
+      phases: DRAFT_FLOW_PHASES,
+      currentPhaseId: onReady ? "ready" : "route",
+      progressPercent: convoComplete ? 100 : (onReady ? 80 : 40),
+      phaseLabel: onReady ? "Ready" : "Route",
+      stepIndex: onReady ? 2 : 1,
+      stepTotal: 2,
+    };
+  }
+
   const phaseId = getFlowPhaseId(currentQuestionId, convoComplete);
   const phaseIndex = FLOW_PHASES.findIndex(p => p.id === phaseId);
   const progressPercent = convoComplete

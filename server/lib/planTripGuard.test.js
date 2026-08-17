@@ -83,4 +83,30 @@ describe("planTripGuard", () => {
     expect(body.origin).toBe("Austin, TX");
     expect(body.answers.notes.length).toBe(500);
   });
+
+  it("accepts placesContext as a corridor object (client always sends an object)", () => {
+    const { res } = mockRes();
+    const body = {
+      origin: "Austin, TX",
+      destination: "Dallas, TX",
+      answers: { vehicle: "Car" },
+      placesContext: { cities: ["Austin", "Waco", "Dallas"], corridor: [{ lat: 30.2, lng: -97.7 }] },
+      placesContextPrompt: "=== VERIFIED PLACES ===",
+    };
+    expect(validatePlanTripPayload(body, res)).toBeNull();
+    expect(body.placesContext.cities).toEqual(["Austin", "Waco", "Dallas"]);
+  });
+
+  it("clamps oversize prompt strings instead of rejecting the trip", () => {
+    const { res, getStatus } = mockRes();
+    const body = {
+      origin: "Austin, TX",
+      destination: "Dallas, TX",
+      answers: { vehicle: "Car" },
+      generationHints: "x".repeat(9000),
+    };
+    expect(validatePlanTripPayload(body, res)).toBeNull();
+    expect(getStatus()).toBe(200);
+    expect(body.generationHints.length).toBe(8000);
+  });
 });
