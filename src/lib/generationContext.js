@@ -197,6 +197,33 @@ export function formatPetConstraintLine(answers = {}) {
   return "Traveling with a pet — all stop and lodging recommendations must be pet-friendly";
 }
 
+export function formatTripPurposeLine(answers = {}) {
+  const purpose = String(answers.trip_purpose || "").trim();
+  if (!purpose) return "";
+  return `Trip purpose: ${purpose}`;
+}
+
+export function formatRouteStyleLine(answers = {}) {
+  const style = String(answers.route_style || "").trim();
+  if (!style || style === "No preference") return "";
+  if (style === "Fastest route") {
+    return "Route priority: fastest direct route (highways OK)";
+  }
+  return `Route priority: ${style}`;
+}
+
+export function formatTripNotesLine(answers = {}) {
+  const notes = String(answers.trip_notes || "").trim();
+  if (!notes) return "";
+  return `Must-include for this trip: ${notes}`;
+}
+
+export function formatStatesToAvoidLine(answers = {}) {
+  const states = String(answers.states_to_avoid || "").trim();
+  if (!states) return "";
+  return `States to avoid: ${states}`;
+}
+
 /** Truck-specific block for commercial routes — hauling, sleeper, stops, HOS. */
 export function formatTruckContextBlock(answers = {}) {
   const effective = getEffectiveVehicle(answers);

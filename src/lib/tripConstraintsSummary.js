@@ -13,6 +13,10 @@ import {
   formatStopFrequencyLine,
   formatLuxuryLevelLine,
   formatPetConstraintLine,
+  formatTripPurposeLine,
+  formatRouteStyleLine,
+  formatTripNotesLine,
+  formatStatesToAvoidLine,
   formatScheduleConstraintForHints,
 } from "./generationContext.js";
 import {
@@ -39,6 +43,15 @@ export function buildTripConstraints(answers = {}, routeInfo = null) {
   if (answers.food_allergies?.trim() && answers.food_allergies !== "None specified") {
     items.push({ id: "allergies", label: "Allergies", value: answers.food_allergies.trim() });
   }
+
+  const purpose = String(answers.trip_purpose || "").trim();
+  if (purpose) items.push({ id: "trip_purpose", label: "Trip purpose", value: purpose });
+
+  const notes = String(answers.trip_notes || "").trim();
+  if (notes) items.push({ id: "trip_notes", label: "Must-include", value: notes });
+
+  const statesAvoid = String(answers.states_to_avoid || "").trim();
+  if (statesAvoid) items.push({ id: "states_to_avoid", label: "States to avoid", value: statesAvoid });
 
   const accessibility = asArray(answers.accessibility).filter(a => a && a !== "No special needs");
   if (accessibility.length) items.push({ id: "accessibility", label: "Access & medical", value: accessibility.join(", ") });
@@ -166,6 +179,18 @@ export function formatGenerationHints(answers = {}, routeInfo = null, options = 
 
   const petLine = formatPetConstraintLine(answers);
   if (petLine) lines.push(petLine);
+
+  const purposeLine = formatTripPurposeLine(answers);
+  if (purposeLine) lines.push(purposeLine);
+
+  const routeStyleLine = formatRouteStyleLine(answers);
+  if (routeStyleLine) lines.push(routeStyleLine);
+
+  const notesLine = formatTripNotesLine(answers);
+  if (notesLine) lines.push(notesLine);
+
+  const statesLine = formatStatesToAvoidLine(answers);
+  if (statesLine) lines.push(statesLine);
 
   for (const signal of formatTripDetailsDefaultSignals(answers)) {
     lines.push(signal);

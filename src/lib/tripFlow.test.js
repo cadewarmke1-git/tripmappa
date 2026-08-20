@@ -18,6 +18,8 @@ import {
   resolveDraftQuickPartyId,
   resolveDraftQuickPaceId,
   resolveDraftQuickSpendId,
+  resolveDraftPetSelected,
+  applyDraftPetPreference,
   DRAFT_QUICK_CHOICES,
   VEHICLE_CHOICES,
 } from "./tripFlow.js";
@@ -750,5 +752,63 @@ describe("tripFlow UX", () => {
     );
     expect(rvFuel.stepIndex).toBe(2);
     expect(rvFuel.stepTotal).toBeGreaterThan(4);
+  });
+
+  it("draft pet chip toggles Pet friendly in preferences", () => {
+    expect(resolveDraftPetSelected({ preferences: [] })).toBe(false);
+    const withPet = applyDraftPetPreference({ preferences: [] }, true);
+    expect(resolveDraftPetSelected(withPet)).toBe(true);
+    expect(withPet.preferences).toContain("Pet friendly");
+    const withoutPet = applyDraftPetPreference(withPet, false);
+    expect(resolveDraftPetSelected(withoutPet)).toBe(false);
+  });
+
+  it("applySmartTripDefaults merges saved pet preference prefill", () => {
+    const out = applySmartTripDefaults({ vehicle: "Car" }, { preferences: ["Pet friendly"] });
+    expect(out.preferences).toContain("Pet friendly");
+  });
+
+  it("fires kids ages interrupt on draft-first family trips", () => {
+    const answers = applySmartTripDefaults({
+      vehicle: "Car",
+      adult_count: 2,
+      child_count: 2,
+    });
+    const q = getNextHardConstraintQuestion(answers, {
+      ...routeEndpoints,
+      routeDistanceMiles: 200,
+      routeDurationHours: 3,
+    });
+    expect(q?.id).toBe("kids_ages");
+  });
+
+  it("Customize path asks trip purpose after party", () => {
+    const next = getNextFlowQuestion({
+      vehicle: "Car",
+      _draftFirstFlow: true,
+      _customizeTrip: true,
+      fuel_type: "Gasoline",
+      towing: "No",
+      adult_count: 2,
+      child_count: 0,
+      travelers: "2",
+    }, routeEndpoints);
+    expect(next.id).toBe("trip_purpose");
+  });
+
+  it("Customize path asks route style after pace", () => {
+    const next = getNextFlowQuestion({
+      vehicle: "Car",
+      _draftFirstFlow: true,
+      _customizeTrip: true,
+      fuel_type: "Gasoline",
+      towing: "No",
+      adult_count: 2,
+      child_count: 0,
+      travelers: "2",
+      trip_purpose: "Vacation",
+      stop_frequency: "Moderate",
+    }, routeEndpoints);
+    expect(next.id).toBe("route_style");
   });
 });

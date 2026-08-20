@@ -48,6 +48,7 @@ export const FLOW_QUESTION_IDS = [
   "overnight_preference", "lodging", "trip_nights", "loyalty_program", "dietary", "food_allergies", "accessibility",
   "stops_interests", "trip_budget", "schedule_restrictions", "schedule_drive_hours", "preferences", "what_matters",
   "hauling_type", "sleeper_cab", "truck_stop_brand", "route_restrictions", "coordination_needs", "kids_ages",
+  "trip_purpose", "route_style", "trip_notes", "states_to_avoid",
 ];
 
 export const VEHICLE_GROUPS = [
@@ -141,7 +142,7 @@ const ABOUT_QUESTION_IDS = new Set([
   "route_setup", "vehicle", "fuel_type", "towing", "travelers", "party_composition",
   "stop_frequency", "trip_pace", "luxury_level", "multi_vehicles", "primary_vehicle",
   "hauling_type", "sleeper_cab", "truck_stop_brand", "trip_draft", "ev_charging_network",
-  "rv_dimensions", "truck_dimensions",
+  "rv_dimensions", "truck_dimensions", "trip_purpose", "route_style", "trip_notes",
 ]);
 const ROUTE_QUESTION_IDS = new Set([
   "preferences", "what_matters", "overnight_preference", "lodging", "trip_nights", "_route_loading",
@@ -434,7 +435,7 @@ export function canUseDraftFirstFlow(answers = {}) {
  * No-op for RV, Camper Van, Truck, Multi, and other non–draft-first vehicles.
  * Does not set overnight strategy, EV networks, or truck/RV dimensions.
  */
-export function applySmartTripDefaults(answers = {}) {
+export function applySmartTripDefaults(answers = {}, prefill = {}) {
   if (!canUseDraftFirstFlow(answers)) {
     const out = { ...answers };
     delete out._draftFirstFlow;
@@ -451,6 +452,7 @@ export function applySmartTripDefaults(answers = {}) {
       out[key] = Array.isArray(value) ? [...value] : value;
     }
   }
+  mergePersistentPrefill(out, prefill);
   out._smartDefaultsApplied = true;
   out._draftFirstFlow = true;
   delete out._customizeTrip;
@@ -458,6 +460,18 @@ export function applySmartTripDefaults(answers = {}) {
     out.travelers = deriveTravelersBand(out.adult_count, out.child_count);
   }
   return out;
+}
+
+/** Silent Settings defaults for draft chips and Customize prefill — trip-scoped fields excluded. */
+function mergePersistentPrefill(out, prefill = {}) {
+  if (!prefill || typeof prefill !== "object") return;
+  const prefKeys = ["preferences", "dietary", "accessibility", "schedule_restrictions"];
+  for (const key of prefKeys) {
+    const fromPref = prefill[key];
+    if (!Array.isArray(fromPref) || !fromPref.length) continue;
+    const current = asArray(out[key]);
+    if (!current.length) out[key] = [...fromPref];
+  }
 }
 
 export function beginDraftFirstCustomize(answers = {}) {
@@ -489,7 +503,35 @@ export const FLOW_INTERRUPT_QUESTION_IDS = new Set([
   "overnight_preference",
   "rv_dimensions",
   "truck_dimensions",
+  "kids_ages",
 ]);
+
+const TRIP_PURPOSE_QUESTION = {
+  id: "trip_purpose",
+  ask: "What's the main reason for this trip?",
+  hint: "Optional — helps us match the tone of stops and lodging.",
+  type: "choice",
+  choices: ["Vacation", "Visit family or friends", "Relocation", "Work", "Other"],
+  optional: true,
+};
+
+const ROUTE_STYLE_QUESTION = {
+  id: "route_style",
+  ask: "Scenic route or fastest way there?",
+  hint: "We'll favor backroads and views, or highways and direct miles.",
+  type: "choice",
+  choices: ["Scenic route", "Fastest route", "No preference"],
+  optional: true,
+};
+
+const TRIP_NOTES_QUESTION = {
+  id: "trip_notes",
+  ask: "Anything we must work in?",
+  hint: "Optional — a must-see stop, event, or note for this trip.",
+  type: "text",
+  placeholder: "e.g. Stop at the world's largest ball of twine",
+  optional: true,
+};
 
 const EV_CHARGING_QUESTION = {
   id: "ev_charging_network",
@@ -585,6 +627,13 @@ export function getNextHardConstraintQuestion(answers, context = {}) {
       interrupt: true,
     };
   }
+  if (
+    isDraftFirstEligible(answers)
+    && needsKidsAgesDetail(answers)
+    && !isQuestionDone("kids_ages", answers, context)
+  ) {
+    return { done: false, ...KIDS_AGES_QUESTION, interrupt: true };
+  }
   return null;
 }
 
@@ -663,6 +712,17 @@ export function resolveDraftQuickSpendId(answers = {}) {
     return `star${level}`;
   }
   return "star3";
+}
+
+export function resolveDraftPetSelected(answers = {}) {
+  return asArray(answers.preferences).includes("Pet friendly");
+}
+
+/** Toggle pet-friendly preference for the draft chip without leaving the draft screen. */
+export function applyDraftPetPreference(answers = {}, withPet = false) {
+  const prefs = asArray(answers.preferences).filter(p => p !== "Pet friendly");
+  if (withPet) prefs.push("Pet friendly");
+  return { ...answers, preferences: prefs };
 }
 
 export function getDraftTuneSections(answers, context = {}) {
@@ -943,6 +1003,7 @@ function needsWhatMattersQuestion(answers, context = {}) {
 function buildTripDetailsQuestion(answers) {
   const effective = getEffectiveVehicle(answers);
   const isTruck = isTruckVehicle(effective);
+  const showStatesAvoid = Boolean(answers._customizeTrip);
   return {
     id: "trip_details",
     pageTitle: "Any constraints?",
@@ -958,6 +1019,14 @@ function buildTripDetailsQuestion(answers) {
       { id: "accessibility", label: "Accessibility & medical", choices: ACCESSIBILITY_CHOICES, toggle: true },
       { id: "schedule_restrictions", label: "Schedule", choices: getScheduleChoicesForContext(answers), toggle: true },
     ],
+    textFields: showStatesAvoid ? [
+      {
+        id: "states_to_avoid",
+        label: "States to avoid",
+        placeholder: "e.g. Oklahoma, Kansas",
+        hint: "Optional — list any states you'd rather not drive through.",
+      },
+    ] : [],
     inlineFollowups: {
       food_allergies: {
         whenSection: "dietary",
@@ -1213,6 +1282,21 @@ function getNextCommercialQuestion(answers, context = {}) {
   return null;
 }
 
+function needsTripPurposeQuestion(answers, context = {}) {
+  if (!answers._customizeTrip) return false;
+  return !isQuestionDone("trip_purpose", answers, context);
+}
+
+function needsRouteStyleQuestion(answers, context = {}) {
+  if (!answers._customizeTrip) return false;
+  return !isQuestionDone("route_style", answers, context);
+}
+
+function needsTripNotesQuestion(answers, context = {}) {
+  if (!answers._customizeTrip) return false;
+  return !isQuestionDone("trip_notes", answers, context);
+}
+
 function getNextPartyAndKidsFollowups(answers, context = {}) {
   if (needsPartyCompositionQuestion(answers) && !isQuestionDone("party_composition", answers, context)) {
     return { done: false, ...PARTY_COMPOSITION_QUESTION };
@@ -1255,7 +1339,9 @@ function getNextPersonalBranchQuestion(answers, context) {
   }
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
+  if (needsTripPurposeQuestion(answers, context)) return { done: false, ...TRIP_PURPOSE_QUESTION };
   if (needsStopFrequencyQuestion(answers, context)) return { done: false, ...STOP_FREQUENCY_QUESTION };
+  if (needsRouteStyleQuestion(answers, context)) return { done: false, ...ROUTE_STYLE_QUESTION };
   if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...buildLuxuryLevelQuestion(answers) };
   if (needsWhatMattersQuestion(answers, context)) {
     return { done: false, ...buildWhatMattersQuestion(answers, context) };
@@ -1285,6 +1371,8 @@ function getNextPersonalBranchQuestion(answers, context) {
     return { done: false, ...buildLodgingQuestion(context) };
   }
 
+  if (needsTripNotesQuestion(answers, context)) return { done: false, ...TRIP_NOTES_QUESTION };
+
   const tail = getNextTailQuestions(answers, context);
   if (tail) return tail;
   return null;
@@ -1297,7 +1385,9 @@ function getNextRvBranchQuestion(answers, context) {
   }
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
+  if (needsTripPurposeQuestion(answers, context)) return { done: false, ...TRIP_PURPOSE_QUESTION };
   if (needsStopFrequencyQuestion(answers, context)) return { done: false, ...STOP_FREQUENCY_QUESTION };
+  if (needsRouteStyleQuestion(answers, context)) return { done: false, ...ROUTE_STYLE_QUESTION };
   if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...buildLuxuryLevelQuestion(answers) };
   if (needsWhatMattersQuestion(answers, context)) {
     return { done: false, ...buildWhatMattersQuestion(answers, context) };
@@ -1305,6 +1395,7 @@ function getNextRvBranchQuestion(answers, context) {
   if (needsRvTripNightsQuestion(answers, context) && !isQuestionDone("trip_nights", answers, context)) {
     return { done: false, ...TRIP_NIGHTS_QUESTION };
   }
+  if (needsTripNotesQuestion(answers, context)) return { done: false, ...TRIP_NOTES_QUESTION };
   return getNextTailQuestions(answers, context);
 }
 
@@ -1415,6 +1506,16 @@ export function normalizeTripAnswers(answers, context = {}, options = {}) {
     if (out[k] == null) return;
     if (!Array.isArray(out[k])) out[k] = [out[k]];
   });
+
+  if (typeof out.trip_purpose === "string") out.trip_purpose = out.trip_purpose.trim();
+  if (typeof out.trip_notes === "string") out.trip_notes = out.trip_notes.trim();
+  if (typeof out.states_to_avoid === "string") out.states_to_avoid = out.states_to_avoid.trim();
+  if (out.route_style === "Scenic route") {
+    const prefs = asArray(out.preferences);
+    if (!prefs.includes("Scenic route")) out.preferences = [...prefs, "Scenic route"];
+  } else if (out.route_style === "Fastest route") {
+    out.preferences = asArray(out.preferences).filter(p => p !== "Scenic route");
+  }
 
   if (out.adult_count != null && out.child_count != null) {
     out.travelers = deriveTravelersBand(out.adult_count, out.child_count);

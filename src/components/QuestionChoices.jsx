@@ -184,6 +184,11 @@ function buildGroupDraft(currentQ, prefDraft, answers, { includePrefill = false 
     if (draft.schedule_drive_hours == null) {
       draft.schedule_drive_hours = answers?.schedule_drive_hours || "";
     }
+    for (const field of currentQ?.textFields || []) {
+      if (draft[field.id] == null) {
+        draft[field.id] = answers?.[field.id] || "";
+      }
+    }
   }
   return draft;
 }
@@ -226,9 +231,11 @@ function isTripDetailsDraftEmpty(draft) {
   const schedule = Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [];
   const allergies = String(draft.food_allergies || "").trim();
   const hours = String(draft.schedule_drive_hours || "").trim();
+  const statesAvoid = String(draft.states_to_avoid || "").trim();
   return !dietary.length && !accessibility.length && !schedule.length
     && (!allergies || allergies === "None specified")
-    && (!hours || hours === "Any reasonable hours");
+    && (!hours || hours === "Any reasonable hours")
+    && !statesAvoid;
 }
 
 function buildMultiselectGroupPayload(currentQ, draft) {
@@ -402,12 +409,14 @@ export default function QuestionChoices({
       const empty = isTripDetailsDraftEmpty(draft);
       const allergies = String(draft.food_allergies || "").trim();
       const hours = String(draft.schedule_drive_hours || "").trim();
+      const statesAvoid = String(draft.states_to_avoid || "").trim();
       pickInstant({
         dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
         accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
         schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
         ...(allergies ? { food_allergies: allergies } : {}),
         ...(hours ? { schedule_drive_hours: hours } : {}),
+        ...(statesAvoid ? { states_to_avoid: statesAvoid } : {}),
       }, { trip_details_defaults_confirmed: empty });
     };
 
@@ -478,7 +487,21 @@ export default function QuestionChoices({
         });
         dock.showSkip = true;
         dock.onSkip = () => pickInstant(currentQ.id === "food_allergies" ? "None specified" : "Any reasonable hours");
+      } else if (currentQ.id === "trip_notes") {
+        dock.showContinue = true;
+        dock.continueDisabled = frozen;
+        dock.onContinue = continueWithHaptic(() => {
+          const input = document.querySelector(".question-text-input");
+          const val = input?.value?.trim();
+          pickInstant(val || "");
+        });
+        dock.showSkip = true;
+        dock.onSkip = () => pickInstant("");
       }
+    } else if (currentQ.type === "choice" && currentQ.optional) {
+      dock.showSkip = true;
+      dock.skipLabel = "Skip";
+      dock.onSkip = () => pickInstant("");
     } else if (currentQ.type === "trip_draft") {
       dock.showContinue = false;
       dock.showSkip = false;
@@ -573,12 +596,14 @@ export default function QuestionChoices({
     const empty = isTripDetailsDraftEmpty(draft);
     const allergies = String(draft.food_allergies || "").trim();
     const hours = String(draft.schedule_drive_hours || "").trim();
+    const statesAvoid = String(draft.states_to_avoid || "").trim();
     pickInstant({
       dietary: Array.isArray(draft.dietary) ? draft.dietary : [],
       accessibility: Array.isArray(draft.accessibility) ? draft.accessibility : [],
       schedule_restrictions: Array.isArray(draft.schedule_restrictions) ? draft.schedule_restrictions : [],
       ...(allergies ? { food_allergies: allergies } : {}),
       ...(hours ? { schedule_drive_hours: hours } : {}),
+      ...(statesAvoid ? { states_to_avoid: statesAvoid } : {}),
     }, { trip_details_defaults_confirmed: empty });
   }
 
@@ -925,6 +950,25 @@ export default function QuestionChoices({
                   </div>
                 );
               })}
+              {(currentQ.textFields || []).map(field => (
+                <div className="question-constraint-text-field" key={field.id}>
+                  <label className="question-constraint-followup-label" htmlFor={`constraint-${field.id}`}>
+                    {field.label}
+                  </label>
+                  {field.hint && (
+                    <p className="question-constraint-text-hint">{field.hint}</p>
+                  )}
+                  <input
+                    id={`constraint-${field.id}`}
+                    type="text"
+                    className="question-text-input"
+                    placeholder={field.placeholder || "Type details…"}
+                    value={groupDraft?.[field.id] || ""}
+                    disabled={frozen}
+                    onChange={(e) => setGroupField(field.id, e.target.value)}
+                  />
+                </div>
+              ))}
             </div>
           )}
 

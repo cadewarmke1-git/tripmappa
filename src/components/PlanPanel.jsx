@@ -50,6 +50,7 @@ export default function PlanPanel({
   onRouteSetupVehicleChange,
   onDraftGenerate,
   onDraftTuneAnswer,
+  onDraftPetToggle,
   routeSetupOriginRef,
   routeSetupDestRef,
   routeSetupOriginAcRef,
@@ -303,6 +304,7 @@ export default function PlanPanel({
                             routeInfo={routeInfo}
                             frozen={false}
                             onApplyTuneAnswer={onDraftTuneAnswer}
+                            onApplyPetToggle={onDraftPetToggle}
                             onGenerateTrip={onDraftGenerate}
                           />
                         ) : (

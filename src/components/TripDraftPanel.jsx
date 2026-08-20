@@ -3,6 +3,7 @@ import {
   resolveDraftQuickPartyId,
   resolveDraftQuickPaceId,
   resolveDraftQuickSpendId,
+  resolveDraftPetSelected,
 } from "../lib/tripFlow.js";
 import { triggerPrimaryHaptic } from "../lib/haptic.js";
 
@@ -19,6 +20,7 @@ export default function TripDraftPanel({
   routeInfo,
   frozen = false,
   onApplyTuneAnswer,
+  onApplyPetToggle,
   onGenerateTrip,
   generateDisabled = false,
 }) {
@@ -34,6 +36,7 @@ export default function TripDraftPanel({
     party: resolveDraftQuickPartyId(answers),
     pace: resolveDraftQuickPaceId(answers),
     spending: resolveDraftQuickSpendId(answers),
+    pet: resolveDraftPetSelected(answers),
   };
 
   function pickParty(option) {
@@ -61,6 +64,12 @@ export default function TripDraftPanel({
       { id: "spending", question: SPEND_QUESTION },
       option.luxury_level,
     );
+  }
+
+  function pickPet(withPet) {
+    if (frozen) return;
+    triggerPrimaryHaptic();
+    onApplyPetToggle?.(withPet);
   }
 
   function onPick(groupId, option) {
@@ -125,6 +134,29 @@ export default function TripDraftPanel({
                 </div>
               </div>
             ))}
+            <div className="trip-draft-quick-group">
+              <p className="trip-draft-quick-ask">Bringing a pet?</p>
+              <div className="trip-draft-quick-options" role="group" aria-label="Bringing a pet?">
+                {[
+                  { id: "no", label: "No", withPet: false },
+                  { id: "yes", label: "Yes", withPet: true },
+                ].map(option => {
+                  const isSelected = selected.pet === option.withPet;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`trip-draft-quick-btn${isSelected ? " is-selected" : ""}`}
+                      aria-pressed={isSelected}
+                      disabled={frozen}
+                      onClick={() => pickPet(option.withPet)}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>

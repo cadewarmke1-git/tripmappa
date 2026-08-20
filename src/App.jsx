@@ -12,7 +12,7 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, canUseDraftFirstFlow, formatSmartDefaultsSummary, getNextHardConstraintQuestion, FLOW_INTERRUPT_QUESTION_IDS } from "./lib/tripFlow.js";
+import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, canUseDraftFirstFlow, formatSmartDefaultsSummary, getNextHardConstraintQuestion, FLOW_INTERRUPT_QUESTION_IDS, applyDraftPetPreference } from "./lib/tripFlow.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
@@ -1920,8 +1920,10 @@ export default function App() {
     // Smart defaults + draft-first only for Car / SUV / Motorcycle / Rental Car.
     // RV, Camper Van, Truck, and Multi enter full sequential flow unanswered.
     const nextAnswers = canUseDraftFirstFlow(seeded)
-      ? (routeSetupCustomize ? beginDraftFirstCustomize(seeded) : applySmartTripDefaults(seeded))
-      : applySmartTripDefaults(seeded);
+      ? (routeSetupCustomize
+        ? beginDraftFirstCustomize(applySmartTripDefaults(seeded, flowPrefill))
+        : applySmartTripDefaults(seeded, flowPrefill))
+      : applySmartTripDefaults(seeded, flowPrefill);
     setAnswers(nextAnswers);
     setRouteSetupCustomize(false);
     setCardCollapsed(false);
@@ -1952,6 +1954,14 @@ export default function App() {
     setConvoComplete(true);
     // State updates are async — pass fromDraft so the guard does not see stale convoComplete.
     void generateTrip({ fromDraft: true });
+  }
+
+  function handleDraftPetToggle(withPet) {
+    const patch = applyDraftPetPreference(answersRef.current, withPet);
+    const ctx = buildQuestionContext(patch);
+    const na = normalizeTripAnswers(patch, ctx);
+    setAnswers(na);
+    loadNextQuestion(na);
   }
 
   function handleDraftTuneAnswer(section, value, extraFields = {}, options = {}) {
@@ -3646,6 +3656,7 @@ export default function App() {
                       onRouteSetupVehicleChange={handleRouteSetupVehicleChange}
                       onDraftGenerate={handleDraftGenerate}
                       onDraftTuneAnswer={handleDraftTuneAnswer}
+                      onDraftPetToggle={handleDraftPetToggle}
                       routeSetupOriginRef={originRef}
                       routeSetupDestRef={destRef}
                       routeSetupOriginAcRef={heroOriginAcRef}

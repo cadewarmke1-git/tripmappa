@@ -91,6 +91,7 @@ export default function UserPreferencesPage({
     dietary: [],
     schedule_restrictions: [],
     trip_budget: "",
+    preferences: [],
   });
 
   useEffect(() => {
@@ -110,6 +111,7 @@ export default function UserPreferencesPage({
             accessibility: data.accessibility || [],
             dietary: data.dietary || [],
             schedule_restrictions: data.schedule_restrictions || [],
+            preferences: data.preferences || [],
           }));
         }
       } catch (err) {
@@ -218,6 +220,22 @@ export default function UserPreferencesPage({
                   options={TRAVELER_DIETARY_OPTIONS}
                   selected={prefs.dietary}
                   onToggle={value => setField("dietary", togglePreferenceValue(prefs.dietary, value))}
+                />
+              </section>
+
+              <section className="user-preferences-primary user-preferences-pill-section">
+                <h2 className="user-preferences-section-title">Travel companions</h2>
+                <p className="user-preferences-section-hint">Defaults the pet chip on new trip drafts.</p>
+                <ChoiceGrid
+                  choices={["Pet friendly"]}
+                  selected={Array.isArray(prefs.preferences) && prefs.preferences.includes("Pet friendly") ? "Pet friendly" : ""}
+                  onSelect={value => {
+                    const current = Array.isArray(prefs.preferences) ? prefs.preferences : [];
+                    const next = current.includes(value)
+                      ? current.filter(v => v !== value)
+                      : [...current, value];
+                    setField("preferences", next);
+                  }}
                 />
               </section>
 

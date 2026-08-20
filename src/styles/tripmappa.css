@@ -11976,6 +11976,18 @@
     font-size: 0.9em;
     color: var(--color-text-secondary, #8a7f6e);
   }
+  .question-constraint-text-field {
+    margin-top: 14px;
+    padding: 0 12px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .question-constraint-text-hint {
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--color-text-secondary, #8a7f6e);
+  }
   .question-collapsible-panel {
     display: grid;
     grid-template-rows: 0fr;
