@@ -2,9 +2,14 @@ function normalizePlaceText(value) {
   return value?.trim().toLowerCase().replace(/\s+/g, " ") || "";
 }
 
+function cityKey(text) {
+  return normalizePlaceText(text).split(",")[0].trim();
+}
+
 function placeMatchesInput(place, input) {
   const needle = normalizePlaceText(input);
   if (!needle) return false;
+  const needleCity = cityKey(needle);
   const candidates = [
     place.formatted_address,
     place.name,
@@ -12,7 +17,12 @@ function placeMatchesInput(place, input) {
   ].filter(Boolean);
   return candidates.some(c => {
     const hay = normalizePlaceText(c);
-    return hay === needle || hay.includes(needle) || needle.includes(hay.split(",")[0]);
+    if (!hay) return false;
+    if (hay === needle || hay.includes(needle) || needle.includes(hay)) return true;
+    const hayCity = cityKey(hay);
+    if (needleCity.length >= 4 && hayCity.startsWith(needleCity)) return true;
+    if (hayCity.length >= 4 && needleCity.startsWith(hayCity)) return true;
+    return false;
   });
 }
 
@@ -76,6 +86,11 @@ export function toDirectionsWaypoint(resolved, fallbackText) {
 }
 
 export function isSameResolvedPlace(fromPlace, toPlace, fromText, toText) {
+  const fromCity = cityKey(fromText);
+  const toCity = cityKey(toText);
+  // Typed/visible city names differ — never treat as the same place, even if a
+  // stale Autocomplete getPlace() reused one placeId for both fields.
+  if (fromCity && toCity && fromCity !== toCity) return false;
   if (fromPlace?.placeId && toPlace?.placeId && fromPlace.placeId === toPlace.placeId) return true;
   const from = normalizePlaceText(fromPlace?.formattedAddress || fromText);
   const to = normalizePlaceText(toPlace?.formattedAddress || toText);

@@ -11,11 +11,15 @@ import {
   normalizeTripAnswers,
   TRUCK_LODGING_CHOICES,
   applySmartTripDefaults,
+  beginDraftFirstCustomize,
+  isDraftFirstEligible,
+  getNextHardConstraintQuestion,
   buildTripDraftQuestion,
   resolveDraftQuickPartyId,
   resolveDraftQuickPaceId,
   resolveDraftQuickSpendId,
   DRAFT_QUICK_CHOICES,
+  VEHICLE_CHOICES,
 } from "./tripFlow.js";
 import { OVERNIGHT_PREFERENCE_OVERNIGHT } from "./driveMode.js";
 import { DIETARY_CHOICES } from "./tripAccommodations.js";
@@ -239,13 +243,17 @@ describe("tripFlow UX", () => {
     expect(getNextFlowQuestion(answers, mediumContext).id).toBe("overnight_preference");
   });
 
-  it("uses phase-based progress labels", () => {
-    const progress = getFlowProgress({}, {}, { currentQuestionId: "party_composition" });
+  it("uses question-count progress on sequential paths, not a fake 1 of 4", () => {
+    const progress = getFlowProgress(
+      { vehicle: "Car", fuel_type: "Gasoline", towing: "No" },
+      { origin: "Dallas, TX", destination: "Denver, CO", routeDistanceMiles: 790, routeDurationHours: 12 },
+      { currentQuestionId: "party_composition" },
+    );
     expect(progress.phases).toHaveLength(4);
     expect(progress.currentPhaseId).toBe("about");
     expect(progress.phaseLabel).toBe("Your trip");
     expect(progress.stepIndex).toBe(1);
-    expect(progress.stepTotal).toBe(4);
+    expect(progress.stepTotal).toBeGreaterThan(4);
   });
 
   it("shows pending overnight instead of skipping before drive time is known", () => {
@@ -652,5 +660,95 @@ describe("tripFlow UX", () => {
     expect(ready.stepIndex).toBe(2);
     expect(ready.stepTotal).toBe(2);
     expect(ready.phaseLabel).toBe("Ready");
+  });
+
+  it("selectable vehicles are driving types only", () => {
+    expect(VEHICLE_CHOICES).toEqual([
+      "Car",
+      "Motorcycle",
+      "SUV or Van",
+      "Rental Car",
+      "RV",
+      "Camper Van",
+      "Semi Truck (18-wheeler)",
+      "Flatbed",
+      "Tanker",
+      "Box Truck",
+      "Multi-Vehicle Trip",
+    ]);
+    expect(VEHICLE_CHOICES).not.toEqual(expect.arrayContaining(["Boat", "Ferry", "Plane"]));
+  });
+
+  it("Customize leaves the 3-tap draft and opens sequential questions", () => {
+    const answers = beginDraftFirstCustomize({ vehicle: "Car" });
+    expect(isDraftFirstEligible(answers)).toBe(false);
+    const next = getNextFlowQuestion(answers, routeEndpoints);
+    expect(next.id).toBe("fuel_type");
+    expect(next.id).not.toBe("trip_draft");
+  });
+
+  it("asks EV charging after Electric on the Customize sequential path", () => {
+    const next = getNextFlowQuestion({
+      vehicle: "Car",
+      _draftFirstFlow: true,
+      _customizeTrip: true,
+      fuel_type: "Electric",
+    }, routeEndpoints);
+    expect(next.id).toBe("ev_charging_network");
+  });
+
+  it("fires overnight interrupt on long mileage even when hours are missing", () => {
+    const answers = applySmartTripDefaults({ vehicle: "Car" });
+    const q = getNextHardConstraintQuestion(answers, {
+      ...routeEndpoints,
+      destination: "Denver, CO",
+      routeDistanceMiles: 790,
+    });
+    expect(q?.id).toBe("overnight_preference");
+  });
+
+  it("fires EV interrupt on first Generate when fuel is Electric", () => {
+    const answers = applySmartTripDefaults({ vehicle: "Car", fuel_type: "Electric" });
+    const q = getNextHardConstraintQuestion(answers, {
+      ...routeEndpoints,
+      routeDistanceMiles: 200,
+      routeDurationHours: 3,
+    });
+    expect(q?.id).toBe("ev_charging_network");
+  });
+
+  it("uses RV park copy and choice cards instead of hotel star ratings", () => {
+    const next = getNextFlowQuestion({
+      vehicle: "RV",
+      fuel_type: "Gasoline",
+      adult_count: 2,
+      child_count: 0,
+      travelers: "2",
+      stop_frequency: "Moderate",
+    }, longTripContext);
+    expect(next.id).toBe("luxury_level");
+    expect(next.display).not.toBe("star_rating");
+    expect(next.ask).toMatch(/RV parks|campground/i);
+  });
+
+  it("counts RV route setup against the real sequential length, not 1 of 2", () => {
+    const rvRoute = getFlowProgress(
+      {},
+      {},
+      { currentQuestionId: "route_setup", routeSetupVehicle: "RV" },
+    );
+    expect(rvRoute.stepIndex).toBe(1);
+    expect(rvRoute.stepTotal).toBeGreaterThan(2);
+    const rvFuel = getFlowProgress(
+      { vehicle: "RV" },
+      { origin: "Dallas, TX", destination: "Denver, CO", routeDistanceMiles: 790, routeDurationHours: 12 },
+      {
+        currentQuestionId: "fuel_type",
+        routeSetupVehicle: "RV",
+        questionHistory: [{ question: { id: "route_setup" }, answer: "Dallas → Denver" }],
+      },
+    );
+    expect(rvFuel.stepIndex).toBe(2);
+    expect(rvFuel.stepTotal).toBeGreaterThan(4);
   });
 });

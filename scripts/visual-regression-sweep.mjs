@@ -44,9 +44,6 @@ const VEHICLES = [
   { key: "Flatbed", value: "Flatbed", tab: "Commercial", button: "Flatbed" },
   { key: "Tanker", value: "Tanker", tab: "Commercial", button: "Tanker" },
   { key: "Box-Truck", value: "Box Truck", tab: "Commercial", button: "Box Truck" },
-  { key: "Boat", value: "Boat", tab: "Other", button: "Boat" },
-  { key: "Ferry", value: "Ferry", tab: "Other", button: "Ferry" },
-  { key: "Plane", value: "Plane", tab: "Other", button: "Plane" },
   { key: "Multi-Vehicle", value: MULTI_VEHICLE_TRIP, tab: "More", button: "Multi-Vehicle Trip" },
 ];
 

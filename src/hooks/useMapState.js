@@ -438,8 +438,14 @@ export function useMapState({
       let destWp = destRaw;
       if (window.google?.maps?.places) {
         const [fromPlace, toPlace] = await Promise.all([
-          looksLikeLatLng(originRaw) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(originRaw, heroOriginAcRef.current),
-          looksLikeLatLng(destRaw) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(destRaw, heroDestAcRef.current),
+          looksLikeLatLng(originRaw) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(
+            originRaw,
+            originRef.current ? heroOriginAcRef.current : null,
+          ),
+          looksLikeLatLng(destRaw) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(
+            destRaw,
+            destRef.current ? heroDestAcRef.current : null,
+          ),
         ]);
         if (!looksLikeLatLng(originRaw) && !looksLikeLatLng(destRaw)
           && isSameResolvedPlace(fromPlace, toPlace, originRaw, destRaw)) {
@@ -478,8 +484,14 @@ export function useMapState({
       let destWp = destVal;
       if (window.google?.maps?.places) {
         const [fromPlace, toPlace] = await Promise.all([
-          looksLikeLatLng(originVal) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(originVal, heroOriginAcRef.current),
-          looksLikeLatLng(destVal) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(destVal, heroDestAcRef.current),
+          looksLikeLatLng(originVal) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(
+            originVal,
+            originRef.current ? heroOriginAcRef.current : null,
+          ),
+          looksLikeLatLng(destVal) ? Promise.resolve(null) : resolvePlaceFromAutocomplete(
+            destVal,
+            destRef.current ? heroDestAcRef.current : null,
+          ),
         ]);
         originText = fromPlace?.formattedAddress || originVal;
         destText = toPlace?.formattedAddress || destVal;

@@ -77,14 +77,6 @@ export const VEHICLE_GROUPS = [
     ],
   },
   {
-    label: "Other",
-    options: [
-      { value: "Boat", label: "Boat" },
-      { value: "Ferry", label: "Ferry" },
-      { value: "Plane", label: "Plane" },
-    ],
-  },
-  {
     label: "",
     options: [{ value: MULTI_VEHICLE_TRIP, label: "Multi-Vehicle Trip" }],
   },
@@ -339,6 +331,45 @@ const LUXURY_LEVEL_QUESTION = {
   choices: LUXURY_LEVEL_CHOICES,
 };
 
+const RV_LUXURY_LEVEL_QUESTION = {
+  id: "luxury_level",
+  ask: "What kind of RV parks and campgrounds do you want?",
+  hint: "RV trips stay in parks and campgrounds — not hotels. We'll match hookups and amenities to this level.",
+  type: "choice",
+  choices: [
+    {
+      value: "1",
+      label: "Budget campgrounds",
+      description: "Basic sites and dry camping — keep overnight costs low",
+    },
+    {
+      value: "2",
+      label: "Standard parks",
+      description: "Reliable water and electric hookups",
+    },
+    {
+      value: "3",
+      label: "Full-hookup parks",
+      description: "Water, electric, sewer, and dump access at overnight stops",
+    },
+    {
+      value: "4",
+      label: "Upscale parks",
+      description: "Pull-through sites and extra amenities",
+    },
+    {
+      value: "5",
+      label: "Resort parks",
+      description: "Premium RV resorts with pools, full hookups, and services",
+    },
+  ],
+};
+
+function buildLuxuryLevelQuestion(answers = {}) {
+  if (isRvVehicle(getEffectiveVehicle(answers))) return RV_LUXURY_LEVEL_QUESTION;
+  return LUXURY_LEVEL_QUESTION;
+}
+
 function needsStopFrequencyQuestion(answers, context = {}) {
   const effective = getEffectiveVehicle(answers);
   if (isTruckVehicle(effective) || isThinTransportVehicle(effective)) return false;
@@ -388,7 +419,7 @@ export function formatSmartDefaultsSummary(answers = {}) {
 
 /**
  * Car / SUV / Motorcycle / Rental Car — eligible for draft-first + smart defaults.
- * RV, Camper Van, Truck, Multi, Plane, and water vehicles use full sequential flow.
+ * RV, Camper Van, Truck, and Multi use full sequential flow.
  */
 export function canUseDraftFirstFlow(answers = {}) {
   if (answers.vehicle === MULTI_VEHICLE_TRIP) return false;
@@ -445,11 +476,20 @@ export function beginDraftFirstCustomize(answers = {}) {
   };
 }
 
-/** Personal vehicles currently on the draft-first primary path. */
+/** Personal vehicles currently on the draft-first primary path (not Customize). */
 export function isDraftFirstEligible(answers = {}) {
   if (!answers._draftFirstFlow) return false;
+  if (answers._customizeTrip) return false;
   return canUseDraftFirstFlow(answers);
 }
+
+export const FLOW_INTERRUPT_QUESTION_IDS = new Set([
+  "fuel_type",
+  "ev_charging_network",
+  "overnight_preference",
+  "rv_dimensions",
+  "truck_dimensions",
+]);
 
 const EV_CHARGING_QUESTION = {
   id: "ev_charging_network",
@@ -498,7 +538,9 @@ function needsEvChargingInterrupt(answers, context = {}) {
 
 function needsOvernightHardInterrupt(answers, context = {}) {
   const hours = context?.routeDurationHours ?? parseHoursFromDuration(context?.routeDuration);
-  if (hours == null || hours < 8) return false;
+  const miles = getRouteDistanceMiles(context);
+  const longEnough = (hours != null && hours >= 8) || (miles != null && miles >= 450);
+  if (!longEnough) return false;
   if (isDayTripByDistance(context)) return false;
   if (isQuestionDone("overnight_preference", answers, context)) return false;
   const effective = getEffectiveVehicle(answers);
@@ -1205,13 +1247,16 @@ function getNextPersonalBranchQuestion(answers, context) {
       && !answers._customizeTrip;
     if (!skipCarFuel) return { done: false, ...FUEL_TYPE_QUESTION };
   }
+  if (needsEvChargingInterrupt(answers, context)) {
+    return { done: false, ...EV_CHARGING_QUESTION };
+  }
   if (needsTowingQuestion(answers, context) && !isQuestionDone("towing", answers, context)) {
     return { done: false, ...buildTowingQuestion(answers) };
   }
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
   if (needsStopFrequencyQuestion(answers, context)) return { done: false, ...STOP_FREQUENCY_QUESTION };
-  if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...LUXURY_LEVEL_QUESTION };
+  if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...buildLuxuryLevelQuestion(answers) };
   if (needsWhatMattersQuestion(answers, context)) {
     return { done: false, ...buildWhatMattersQuestion(answers, context) };
   }
@@ -1247,10 +1292,13 @@ function getNextPersonalBranchQuestion(answers, context) {
 
 function getNextRvBranchQuestion(answers, context) {
   if (!isQuestionDone("fuel_type", answers, context)) return { done: false, ...FUEL_TYPE_QUESTION };
+  if (needsEvChargingInterrupt(answers, context)) {
+    return { done: false, ...EV_CHARGING_QUESTION };
+  }
   const partyKids = getNextPartyAndKidsFollowups(answers, context);
   if (partyKids) return partyKids;
   if (needsStopFrequencyQuestion(answers, context)) return { done: false, ...STOP_FREQUENCY_QUESTION };
-  if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...LUXURY_LEVEL_QUESTION };
+  if (needsLuxuryLevelQuestion(answers, context)) return { done: false, ...buildLuxuryLevelQuestion(answers) };
   if (needsWhatMattersQuestion(answers, context)) {
     return { done: false, ...buildWhatMattersQuestion(answers, context) };
   }
@@ -1553,17 +1601,51 @@ export const DRAFT_FLOW_PHASES = [
   { id: "ready", label: "Ready" },
 ];
 
+function listUpcomingQuestionIds(answers, context, currentQuestionId) {
+  const ids = [];
+  if (currentQuestionId === "route_setup") ids.push("route_setup");
+  const sim = { ...answers };
+  const simCtx = {
+    ...context,
+    origin: context.origin || "Origin",
+    destination: context.destination || "Destination",
+    routeDistanceMiles: context.routeDistanceMiles ?? 500,
+    routeDurationHours: context.routeDurationHours ?? 8,
+    questionHistory: [],
+  };
+  let lastId = null;
+  for (let i = 0; i < 32; i += 1) {
+    const next = getNextFlowQuestion(sim, simCtx);
+    if (!next || next.done || !next.id) break;
+    if (next.id === lastId) break;
+    lastId = next.id;
+    if (!ids.includes(next.id)) ids.push(next.id);
+    if (next.type === "loading" || next.pendingRoute) break;
+    applyDummyAnswer(sim, next);
+  }
+  if (currentQuestionId && !ids.includes(currentQuestionId)) {
+    ids.unshift(currentQuestionId);
+  }
+  return ids;
+}
+
 /** Phase-based progress for the plan flow indicator. */
 export function getFlowProgress(answers, context = {}, options = {}) {
-  const { convoComplete = false, currentQuestionId = null } = options;
-  const vehicleHint = answers.vehicle || "Car";
-  const isDraftPath = !answers._customizeTrip
-    && canUseDraftFirstFlow({ ...answers, vehicle: vehicleHint })
+  const {
+    convoComplete = false,
+    currentQuestionId = null,
+    routeSetupVehicle = null,
+    questionHistory = [],
+  } = options;
+  const vehicleHint = routeSetupVehicle || answers.vehicle || "Car";
+  const progressAnswers = { ...answers, vehicle: vehicleHint };
+  const isDraftPath = !progressAnswers._customizeTrip
+    && canUseDraftFirstFlow(progressAnswers)
     && (
       currentQuestionId === "route_setup"
       || currentQuestionId === "trip_draft"
       || currentQuestionId === "done"
-      || Boolean(answers._draftFirstFlow && (convoComplete || currentQuestionId === "trip_draft"))
+      || Boolean(progressAnswers._draftFirstFlow && (convoComplete || currentQuestionId === "trip_draft"))
     );
 
   if (isDraftPath) {
@@ -1578,20 +1660,26 @@ export function getFlowProgress(answers, context = {}, options = {}) {
     };
   }
 
+  const upcoming = listUpcomingQuestionIds(progressAnswers, context, currentQuestionId);
+  const historyCount = (Array.isArray(questionHistory) ? questionHistory : [])
+    .filter(entry => entry?.question?.id && entry.question.id !== currentQuestionId)
+    .length;
+  const stepTotal = Math.max(1, historyCount + Math.max(1, upcoming.length));
+  const stepIndex = convoComplete ? stepTotal : Math.min(stepTotal, historyCount + 1);
   const phaseId = getFlowPhaseId(currentQuestionId, convoComplete);
   const phaseIndex = FLOW_PHASES.findIndex(p => p.id === phaseId);
   const progressPercent = convoComplete
     ? 100
-    : ((Math.max(0, phaseIndex) + 0.35) / Math.max(1, FLOW_PHASES.length - 1)) * 100;
-
+    : (stepIndex / stepTotal) * 100;
   const safeIndex = Math.max(0, phaseIndex);
+
   return {
     phases: FLOW_PHASES,
     currentPhaseId: phaseId,
     progressPercent,
     phaseLabel: FLOW_PHASES[safeIndex]?.label || FLOW_PHASES[0].label,
-    stepIndex: safeIndex + 1,
-    stepTotal: FLOW_PHASES.length,
+    stepIndex,
+    stepTotal,
   };
 }
 

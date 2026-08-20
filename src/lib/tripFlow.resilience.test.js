@@ -47,6 +47,7 @@ describe("tripFlow resilience", () => {
       luxury_level: "3",
       stop_count: "A few (2-3)",
       preferences: [],
+      stops_interests: [],
     };
     const next = getNextFlowQuestion(answers, { ...longTripContext, routeFailed: true });
     expect(next.id).toBe("overnight_preference");

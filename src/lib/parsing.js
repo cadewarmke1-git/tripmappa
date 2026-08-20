@@ -9,9 +9,13 @@ export function parseMilesFromDistance(distanceStr) {
 
 export function parseHoursFromDuration(durationStr) {
   if (!durationStr) return null;
-  const h = String(durationStr).match(/(\d+)\s*h/i);
-  const m = String(durationStr).match(/(\d+)\s*m/i);
-  const hours = h ? parseInt(h[1], 10) : 0;
-  const mins = m ? parseInt(m[1], 10) : 0;
-  return hours + mins / 60 || null;
+  const s = String(durationStr);
+  const days = s.match(/(\d+)\s*d(?:ays?)?/i);
+  const hoursMatch = s.match(/(\d+)\s*h(?:ours?)?/i);
+  const minsMatch = s.match(/(\d+)\s*mins?\b/i) || s.match(/(\d+)\s*minutes?\b/i);
+  const hours = (days ? parseInt(days[1], 10) * 24 : 0)
+    + (hoursMatch ? parseInt(hoursMatch[1], 10) : 0);
+  const mins = minsMatch ? parseInt(minsMatch[1], 10) : 0;
+  const total = hours + mins / 60;
+  return total > 0 ? total : null;
 }

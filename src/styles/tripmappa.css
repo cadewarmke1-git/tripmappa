@@ -8514,15 +8514,15 @@
   }
 
   @media (max-width: 560px) {
-    /* Keep FROM + swap + TO on one row at 390px so both fields show on first paint */
+    /* Stack FROM, swap, TO so full place names are visible on a 375px screen. */
     .plan-route-setup-grid {
-      grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
-      gap: 8px;
-      align-items: end;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: stretch;
     }
     .plan-route-setup-swap {
       justify-self: center;
-      margin: 0 0 2px;
+      margin: 0;
       width: 44px;
       height: 44px;
       min-width: 44px;
@@ -8533,6 +8533,9 @@
       padding: 10px 12px;
       font-size: 16px;
       box-sizing: border-box;
+      overflow: visible;
+      text-overflow: unset;
+      white-space: nowrap;
     }
   }
 

@@ -12,12 +12,12 @@ import {
   inferFuelType,
   getEffectiveVehicle,
 } from "./lib/vehicles.js";
-import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, canUseDraftFirstFlow, formatSmartDefaultsSummary, getNextHardConstraintQuestion } from "./lib/tripFlow.js";
+import { buildTruckLodgingQuestion, getNextFlowQuestion, getFlowCompleteMessage, normalizeTripAnswers, getFlowProgress, isRouteContextReady, pruneStaleBranchAnswers, pruneRouteDependentAnswers, warnContinuousDriveFeasibility, deriveTravelersBand, applySmartTripDefaults, beginDraftFirstCustomize, canUseDraftFirstFlow, formatSmartDefaultsSummary, getNextHardConstraintQuestion, FLOW_INTERRUPT_QUESTION_IDS } from "./lib/tripFlow.js";
 import { parseMilesFromDistance, parseHoursFromDuration } from "./lib/parsing.js";
 import { OVERNIGHT_PREFERENCE_CONTINUOUS } from "./lib/driveMode.js";
 import { preloadGenerationStreamOverlay, shouldPreloadGenerationLoader } from "./lib/preloadGenerationLoader.js";
 import { stripSessionOnlyAnswers } from "./lib/tripHandlers.js";
-import { dismissGooglePlacesDropdown, resolvePlaceFromAutocomplete } from "./lib/places.js";
+import { dismissGooglePlacesDropdown, resolvePlaceFromAutocomplete, isSameResolvedPlace } from "./lib/places.js";
 import { getItineraryOverview, isIncludedRoadStop } from "./lib/itineraryDays.js";
 import { isTowingSelected, getTripBudgetCap, getFuelRangeMiles } from "./lib/tripAccommodations.js";
 import { computeBudgetEstimate } from "./lib/budget.js";
@@ -485,6 +485,8 @@ export default function App() {
   answersRef.current = answers;
   const questionHistoryRef = useRef(questionHistory);
   questionHistoryRef.current = questionHistory;
+  const currentQuestionRef = useRef(currentQuestion);
+  currentQuestionRef.current = currentQuestion;
 
   const buildQuestionContext = useCallback((newAnswers) => ({
     origin: origin?.trim() || routeInfo?.origin || "",
@@ -562,7 +564,9 @@ export default function App() {
   const flowProgress = useMemo(() => getFlowProgress(answers, buildQuestionContext(answers), {
     convoComplete,
     currentQuestionId: convoComplete ? "done" : (currentQuestion?.id || "vehicle"),
-  }), [answers, buildQuestionContext, convoComplete, currentQuestion?.id]);
+    routeSetupVehicle,
+    questionHistory,
+  }), [answers, buildQuestionContext, convoComplete, currentQuestion?.id, routeSetupVehicle, questionHistory]);
 
   const displayAnswers = useMemo(
     () => mergeDisplayAnswers(answers, flowPrefill, questionHistory),
@@ -1891,7 +1895,7 @@ export default function App() {
       invalid = true;
     }
     if (invalid) return;
-    if (fromPlace.placeId && toPlace.placeId && fromPlace.placeId === toPlace.placeId) {
+    if (isSameResolvedPlace(fromPlace, toPlace, from, to)) {
       setRouteSetupOriginError("From and To need to be different places.");
       setRouteSetupDestError("From and To need to be different places.");
       return;
@@ -1934,14 +1938,15 @@ export default function App() {
   }
 
   function handleDraftGenerate() {
-    const ctx = buildQuestionContext(answers);
-    const interrupt = getNextHardConstraintQuestion(answers, ctx);
+    const liveAnswers = answersRef.current;
+    const ctx = buildQuestionContext(liveAnswers);
+    const interrupt = getNextHardConstraintQuestion(liveAnswers, ctx);
     if (interrupt) {
       setCurrentQuestion(interrupt);
       setConvoComplete(false);
       return;
     }
-    setAnswers(normalizeTripAnswers(answers, ctx, { forGeneration: true }));
+    setAnswers(normalizeTripAnswers(liveAnswers, ctx, { forGeneration: true }));
     setCurrentQuestion(null);
     setQIndex(-2);
     setConvoComplete(true);
@@ -2113,7 +2118,12 @@ export default function App() {
         ...(options.originOverride != null ? { origin: String(options.originOverride).trim() } : {}),
         ...(options.destOverride != null ? { destination: String(options.destOverride).trim() } : {}),
       };
-      const result = getNextFlowQuestion(newAnswers, ctx);
+      const prevQuestion = currentQuestionRef.current;
+      let result = getNextFlowQuestion(newAnswers, ctx);
+      if (prevQuestion && FLOW_INTERRUPT_QUESTION_IDS.has(prevQuestion.id)) {
+        const chained = getNextHardConstraintQuestion(newAnswers, ctx);
+        if (chained) result = chained;
+      }
       if (!result || result.done) {
         setCurrentQuestion(null);
         setQIndex(-2);

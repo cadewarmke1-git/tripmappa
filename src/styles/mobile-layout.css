@@ -955,9 +955,9 @@ html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed) .plan-flow-for
   }
 
   html[data-layout="mobile"] .plan-route-setup-grid {
-    grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
-    gap: 8px;
-    align-items: end;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    align-items: stretch;
   }
 
   html[data-layout="mobile"] .plan-route-setup-swap {

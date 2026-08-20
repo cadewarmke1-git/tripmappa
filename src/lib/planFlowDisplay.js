@@ -11,14 +11,11 @@ export const VEHICLE_OPTION_DESCRIPTIONS = {
   Flatbed: "Open deck commercial",
   Tanker: "Liquid or bulk cargo",
   "Box Truck": "Straight truck, local/regional",
-  Boat: "Trailered or marina legs",
-  Ferry: "Water crossing segment",
-  Plane: "Fly + drive combo",
   "Multi-Vehicle Trip": "Several vehicles, one convoy",
 };
 
 /** Vehicle groups hidden until "+ More vehicle types" is expanded. */
-export const VEHICLE_EXPANDER_GROUP_LABELS = new Set(["Commercial", "Other", ""]);
+export const VEHICLE_EXPANDER_GROUP_LABELS = new Set(["Commercial", ""]);
 
 export function vehicleOptionDescription(value, label) {
   if (VEHICLE_OPTION_DESCRIPTIONS[value]) return VEHICLE_OPTION_DESCRIPTIONS[value];

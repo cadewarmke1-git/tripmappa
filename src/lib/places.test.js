@@ -21,6 +21,15 @@ describe("places address helpers", () => {
     )).toBe(true);
   });
 
+  it("does not treat Dallas and Denver as the same place even if placeIds match", () => {
+    expect(isSameResolvedPlace(
+      { placeId: "stale-same", formattedAddress: "Dallas, TX, USA" },
+      { placeId: "stale-same", formattedAddress: "Dallas, TX, USA" },
+      "Dallas, TX",
+      "Denver, CO",
+    )).toBe(false);
+  });
+
   it("does not treat different cities as the same place", () => {
     expect(isSameResolvedPlace(
       { placeId: "okc", formattedAddress: "Oklahoma City, OK, USA" },

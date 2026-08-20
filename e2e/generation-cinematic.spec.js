@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 import {
   clickGenerate,
   completeCarFlow,
-  completeThinTransportFlow,
   expectGenerationCompletes,
   expectGenerationOverlay,
   expectOverlayRouteLoader,
@@ -52,29 +51,6 @@ test.describe("generation cinematic loader runthroughs", () => {
     expect(box?.width ?? 0).toBeGreaterThanOrEqual((viewport?.width ?? 0) - 4);
     expect(box?.height ?? 0).toBeGreaterThanOrEqual((viewport?.height ?? 0) * 0.9);
 
-    await expectGenerationCompletes(page);
-  });
-
-  test("plane: thin transport flow uses overlay and completes", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await installMockPlanTrip(page, { routeSummary: "Dallas to Austin flight", stopName: "Austin Bergstrom area" });
-    await startPlanFlow(page);
-    await completeThinTransportFlow(page, "Plane");
-
-    await clickGenerate(page);
-    await expectGenerationOverlay(page);
-    await expectOverlayShowsRoute(page, /Dallas.*Austin/i);
-    await expectGenerationCompletes(page);
-  });
-
-  test("boat: thin transport flow uses overlay and completes", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await installMockPlanTrip(page, { routeSummary: "Dallas to Austin cruise", stopName: "Galveston Port" });
-    await startPlanFlow(page);
-    await completeThinTransportFlow(page, "Boat");
-
-    await clickGenerate(page);
-    await expectGenerationOverlay(page);
     await expectGenerationCompletes(page);
   });
 

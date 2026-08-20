@@ -31,9 +31,6 @@ const VEHICLES = [
   { key: "Flatbed", tab: "Commercial", label: "Flatbed", kind: "truck" },
   { key: "Tanker", tab: "Commercial", label: "Tanker", kind: "truck" },
   { key: "Box-Truck", tab: "Commercial", label: "Box Truck", kind: "truck" },
-  { key: "Boat", tab: "Other", label: "Boat", kind: "thin" },
-  { key: "Ferry", tab: "Other", label: "Ferry", kind: "thin" },
-  { key: "Plane", tab: "Other", label: "Plane", kind: "thin" },
   { key: "Multi-Vehicle", tab: "More", label: "Multi-Vehicle Trip", kind: "multi" },
 ];
 

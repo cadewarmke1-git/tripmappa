@@ -10,8 +10,7 @@ import {
 const ROUTE_SETUP_VEHICLES = [
   ...VEHICLE_GROUPS
     .flatMap(g => g.options)
-    .filter(o => o.value !== MULTI_VEHICLE_TRIP)
-    .slice(0, 8),
+    .filter(o => o.value !== MULTI_VEHICLE_TRIP),
   { value: MULTI_VEHICLE_TRIP, label: "Multi-Vehicle Trip" },
 ];
 
