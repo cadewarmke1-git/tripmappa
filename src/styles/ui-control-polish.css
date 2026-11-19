@@ -1,0 +1,99 @@
+/* UI control polish — native selects + dropdown chrome.
+   Overrides under-styled controls without rewriting tripmappa.css internals.
+   Brand tokens: gold, night, day (see tripmappa-themes.css). */
+
+/* ── Shared select chevron (gold on night, ink on day) ── */
+.plan-route-setup-vehicle-select,
+.auth-phone-country,
+.collab-panel-label select,
+.truck-pill-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.plan-route-setup-vehicle-select,
+.auth-phone-country,
+.collab-panel-label select,
+.truck-pill-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23FFD28C' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+}
+
+.app-wrap.day .plan-route-setup-vehicle-select,
+.app-wrap.day .auth-phone-country,
+.app-wrap.day .collab-panel-label select,
+body.theme-day .auth-phone-country {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231A0D00' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+}
+
+/* Plan-flow vehicle select */
+.plan-route-setup-vehicle-select {
+  min-height: 44px;
+  padding: 10px 36px 10px 12px;
+  background-color: var(--color-card-bg);
+  background-position: right 12px center;
+  border: 1px solid var(--color-card-border);
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  font: inherit;
+  width: 100%;
+}
+
+.plan-route-setup-vehicle-select:focus-visible {
+  outline: 2px solid var(--color-focus-ring, var(--gold-primary));
+  outline-offset: 2px;
+}
+
+/* Native option list — brand tokens when the browser honors them */
+.plan-route-setup-vehicle-select option,
+.auth-phone-country option,
+.collab-panel-label select option,
+.truck-pill-select option {
+  background-color: var(--color-base);
+  color: var(--color-text-primary);
+}
+
+/* Auth phone country */
+.auth-phone-country {
+  flex: 0 0 96px;
+  min-height: 44px;
+  padding: 12px 28px 12px 10px;
+  background-color: var(--card);
+  background-position: right 10px center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Collab suggest-near-stop select */
+.collab-panel-label select {
+  min-height: 44px;
+  padding: 10px 36px 10px 12px;
+  background-color: var(--card);
+  background-position: right 12px center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Truck dimension pills — keep existing fill; add chevron room */
+.truck-pill-select {
+  padding: 7px 28px 7px 10px;
+  background-position: right 10px center;
+}
+
+/* Profile menu — 44px touch targets on primary rows */
+.profile-card-nav-link {
+  min-height: 44px;
+  padding: 12px 8px;
+}
+
+/* Timing + help menus — brand night, not blue-night */
+.timing-menu-fixed,
+.help-menu {
+  background: var(--color-base, #0D0A1A);
+  border: 1px solid color-mix(in srgb, var(--gold-primary) 28%, transparent);
+}

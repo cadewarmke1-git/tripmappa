@@ -1,16 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { waitPlanStepReady } from "./helpers/planFlowHelpers.js";
-
-async function closeAutocomplete(page) {
-  await page.keyboard.press("Escape");
-  await page.locator(".hero-title").first().click({ force: true }).catch(() => {});
-  await page.waitForTimeout(200);
-}
+import {
+  closeAutocomplete,
+  clickStartPlanCta,
+  waitPlanStepReady,
+} from "./helpers/planFlowHelpers.js";
 
 async function startPlanFlow(page) {
   await page.goto("/?skyHour=12&skyTest=0");
   await page.waitForTimeout(1000);
-  await page.locator(".hero-plan-cta, .returning-user-action--plan").first().click();
+  await clickStartPlanCta(page);
   await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
   await page.locator("#plan-route-origin").fill("Dallas, TX");
   await closeAutocomplete(page);
