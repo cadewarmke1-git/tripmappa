@@ -86,6 +86,6 @@ describe("generateTripFlow", () => {
   it("returns a user-facing message for planner failures", () => {
     expect(generationFailureMessage(new Error("Trip planner returned incomplete results")))
       .toMatch(/complete trip plan/i);
-    expect(generationFailureMessage(new Error("network"))).toMatch(/try again/i);
+    expect(generationFailureMessage(new Error("network"))).toMatch(/snag planning your route/i);
   });
 });

@@ -232,6 +232,7 @@ export default function TripResultsPanel({
             selectedLodging={selectedLodging}
             restaurantsByCity={restaurantsByCity}
             waypoints={waypoints}
+            enriching={enrichingTrip}
           />
         </div>
 
@@ -270,15 +271,17 @@ export default function TripResultsPanel({
             </div>
           ) : null}
 
-          <EnrichmentNotice
-            limited={enrichmentLimited}
-            onDismiss={onDismissEnrichmentNotice}
-            onRetry={onRetryEnrichment}
-            enriching={enrichingTrip}
-            onCancel={onCancelEnrichment}
-          />
-
-          {enrichingTrip && <ResultsEnrichmentSkeleton theme={theme} />}
+          {enrichingTrip ? (
+            <ResultsEnrichmentSkeleton theme={theme} onCancel={onCancelEnrichment} />
+          ) : (
+            <EnrichmentNotice
+              limited={enrichmentLimited}
+              onDismiss={onDismissEnrichmentNotice}
+              onRetry={onRetryEnrichment}
+              enriching={false}
+              onCancel={onCancelEnrichment}
+            />
+          )}
 
           {continuousDrive && (
             <FuelStopsSection

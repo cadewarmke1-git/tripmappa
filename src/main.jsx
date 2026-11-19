@@ -39,6 +39,7 @@ import "./styles/preference-pills.css";
 import "./styles/neon-sign-popup.css";
 import "./styles/road-trip-stop-card.css";
 import "./styles/micro-animations.css";
+import "./styles/results-layout-density.css";
 
 function SentryAppFallback({ error, resetError }) {
   return (
