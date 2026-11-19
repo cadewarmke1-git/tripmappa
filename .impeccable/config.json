@@ -1,0 +1,10 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "src/styles/tripmappa.css",
+      "src/styles/tripmappa-themes.css"
+    ],
+    "ignoreValues": []
+  }
+}
