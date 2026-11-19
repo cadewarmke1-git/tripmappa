@@ -4,6 +4,7 @@ import { isContinuousDrive } from "../../lib/driveMode.js";
 import TripOverviewHero from "./TripOverviewHero.jsx";
 import ResultsDaySection from "./ResultsDaySection.jsx";
 import PlannedForYouSection from "./PlannedForYouSection.jsx";
+import TripTipsSection from "./TripTipsSection.jsx";
 import ResultsActionBar from "./ResultsActionBar.jsx";
 import ResultsEnrichmentSkeleton from "./ResultsEnrichmentSkeleton.jsx";
 import EnrichmentNotice from "./EnrichmentNotice.jsx";
@@ -36,6 +37,7 @@ export default function TripResultsPanel({
   recommendations = [],
   selectedLodging = [],
   personalTouches = [],
+  tripTips = [],
   changesMade = [],
   enrichingTrip = false,
   enrichmentLimited = false,
@@ -255,6 +257,7 @@ export default function TripResultsPanel({
 
         <div className="trip-results-scroll" ref={scrollRef}>
           <PlannedForYouSection touches={personalTouches} changesMade={changesMade} />
+          <TripTipsSection tips={tripTips} />
 
           {tripUsedFallback && (
             <div className="trip-fallback-notice" role="status">

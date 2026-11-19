@@ -256,6 +256,27 @@ export default function ResultsDaySection({
 
       {showLodging && (
         <>
+          <div className="results-overnight-stop results-subsection" data-overnight-city={day.overnight.city}>
+            <h3 className="results-subsection-label">Overnight stop</h3>
+            <RoadStopCard
+              stop={{
+                id: day.overnight.id || `overnight-${day.overnight.city}`,
+                name: day.overnight.title || String(day.overnight.city || "").split(",")[0] || "Overnight",
+                category: "Lodging",
+                note: day.overnight.description,
+                rating: day.overnight.rating,
+                lat: day.overnight.lat,
+                lng: day.overnight.lng,
+                verified: day.overnight.verified,
+                stopData: day.overnight.stopData,
+              }}
+              onSelect={onStopSelect}
+              onReport={onReportStop ? stop => onReportStop("lodging", stop, "Lodging") : null}
+              readOnly={readOnly}
+              highlighted={highlightedStopId === day.overnight.id}
+              cardRef={setStopRef(day.overnight.id)}
+            />
+          </div>
           <LodgingCardsSection
             city={day.overnight.city}
             answers={answers}
@@ -263,6 +284,7 @@ export default function ResultsDaySection({
             dest={dest}
             routeInfo={routeInfo}
             selectedLodging={selectedLodging}
+            plannedHotels={day.overnight.stopData?.hotels || []}
             onLodgingSelect={onLodgingSelect}
             onToast={onToast}
             readOnly={readOnly}

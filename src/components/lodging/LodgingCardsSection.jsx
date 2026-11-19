@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   fetchTruckStopsForCity,
   fetchRvParksForCity,
@@ -6,6 +6,7 @@ import {
 } from "../../lib/commercialLodgingPlaces.js";
 import { geocodeCity, searchLodging } from "../../lib/placesSearch.js";
 import { processLodgingResults } from "../../lib/lodgingPlaces.js";
+import { mapPlannedHotelsToCards } from "../../lib/plannedLodging.js";
 import { saveLodgingToTrips } from "../../lib/lodgingData.js";
 import { isTruckerTrip, isRvTrip } from "../../lib/vehicles.js";
 import HotelCard from "./HotelCard.jsx";
@@ -23,6 +24,7 @@ export default function LodgingCardsSection({
   onToast,
   onLodgingSelect,
   selectedLodging = [],
+  plannedHotels = [],
   readOnly = false,
   isResultCardHidden,
   onRemoveResultCard,
@@ -36,6 +38,10 @@ export default function LodgingCardsSection({
   const isTrucker = isTruckerTrip(answers);
   const isRv = isRvTrip(answers);
   const showSleeperOnly = isTrucker && answers?.lodging === "Sleeper cab — no hotel needed";
+  const plannerHotelFallback = useMemo(
+    () => mapPlannedHotelsToCards(plannedHotels, city),
+    [plannedHotels, city],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -92,8 +98,10 @@ export default function LodgingCardsSection({
             return;
           }
         }
+        // Prefer planner overnight hotels when Places is unavailable / empty.
         if (!cancelled) {
-          setItems([]);
+          setItems(plannerHotelFallback);
+          setRestAreas([]);
         }
       }
       if (!cancelled) setLoading(false);
@@ -101,7 +109,7 @@ export default function LodgingCardsSection({
 
     load();
     return () => { cancelled = true; };
-  }, [city, answers, isRv, isTrucker, routeInfo]);
+  }, [city, answers, isRv, isTrucker, routeInfo, plannerHotelFallback]);
 
   function handleSave(lodging) {
     saveLodgingToTrips(lodging, city, origin, dest);

@@ -3302,6 +3302,7 @@ export default function App() {
             recommendations={recommendations}
             selectedLodging={selectedLodging}
             personalTouches={personalTouches}
+            tripTips={tripTips}
             changesMade={changesMade}
             enrichingTrip={enrichingTrip || enrichingPlaces}
             enrichmentLimited={enrichmentLimited && !enrichmentNoticeDismissed}
