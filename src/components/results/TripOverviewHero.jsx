@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { computeBudgetEstimate } from "../../lib/budget.js";
 import { getItineraryOverview } from "../../lib/itineraryDays.js";
 
-export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false, waypoints = null }) {
+export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadStops, answers, tripLegs, selectedLodging, restaurantsByCity = {}, routeOptimized = false, waypoints = null, enriching = false }) {
   const budget = useMemo(
     () => computeBudgetEstimate(answers, routeInfo, tripLegs, { roadStops, selectedLodging, restaurantsByCity }),
     [answers, routeInfo, tripLegs, roadStops, selectedLodging, restaurantsByCity],
@@ -12,6 +12,10 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
     origin, dest, routeInfo, stops, roadStops, budgetTotal: budget.total, waypoints,
   });
 
+  const readyLine = enriching
+    ? `Route mapped · ${overview.stopCount} stops planned · Adding nearby details…`
+    : `Route mapped · ${overview.stopCount} stops planned · Ready to drive`;
+
   return (
     <header className="trip-overview-hero">
       <div className="trip-overview-hero-accent" aria-hidden="true"/>
@@ -20,9 +24,9 @@ export default function TripOverviewHero({ origin, dest, routeInfo, stops, roadS
           Overnight stops were reordered for a shorter drive — review each day before you go.
         </div>
       )}
-      <p className="trip-overview-hero-eyebrow">Your route is ready</p>
-      <p className="trip-overview-hero-ready-line" role="status">
-        Route mapped · {overview.stopCount} stops planned · Ready to drive
+      <p className="trip-overview-hero-eyebrow">{enriching ? "Your route is shaping up" : "Your route is ready"}</p>
+      <p className={`trip-overview-hero-ready-line${enriching ? " trip-overview-hero-ready-line--enriching" : ""}`} role="status">
+        {readyLine}
       </p>
       <h1 className="trip-overview-hero-title">{overview.tripName}</h1>
       <div className="trip-overview-hero-stats">
