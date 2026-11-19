@@ -607,7 +607,6 @@ export function useGeneration({
             message: "Your trip is ready",
             cityNames: activeRouteInfo.citiesAlongRoute || [],
           });
-          await new Promise(resolve => setTimeout(resolve, 520));
           return;
         } catch (err) {
           lastErr = err;
