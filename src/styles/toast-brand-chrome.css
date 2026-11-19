@@ -1,0 +1,100 @@
+/**
+ * Toast brand chrome — Fix for white/empty night pills.
+ *
+ * `.toast` used `background: var(--ink)`, but themes remap
+ * `--ink` → `--color-text-primary` (cream on night). That paints a
+ * near-white capsule with `#fff` text — Cade’s plan-flow / results
+ * “white oval” with no readable copy.
+ *
+ * Tokens: cade-preferences night #0D0A1A / day #FDF3E0 / gold #FFD28C.
+ * No glass, no purple, no Tailwind.
+ */
+
+.toast {
+  background: var(--color-base, #0D0A1A) !important;
+  color: var(--color-text-primary, #F5E6C8) !important;
+  border: 1px solid color-mix(in srgb, var(--gold-primary, #FFD28C) 30%, transparent) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-surface-theme="day"] .toast,
+body.theme-day .toast,
+.app-wrap.day .toast {
+  background: var(--color-plan-panel-bg, #FDF3E0) !important;
+  color: var(--deep-dark, #1A0D00) !important;
+  border-color: rgba(26, 13, 0, 0.14) !important;
+  box-shadow: 0 8px 28px rgba(58, 26, 8, 0.14) !important;
+}
+
+/* Gold success stays accent; keep readable ink on gold */
+.toast.toast-gold {
+  background: var(--gold-primary, #FFD28C) !important;
+  color: var(--deep-dark, #1A0D00) !important;
+  border-color: rgba(255, 210, 140, 0.55) !important;
+}
+
+.toast.toast-error {
+  background: rgba(40, 20, 20, 0.96) !important;
+  color: #f8f4ec !important;
+  border-color: rgba(248, 113, 113, 0.55) !important;
+}
+
+/* Plan-flow: keep toast above dock; results bar lift stays in results-layout-density */
+.app:has(.float-card--plan-flow:not(.collapsed)) .toast,
+.app.app--question-flow .toast {
+  bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+  z-index: 400;
+}
+
+/* Soften Google Maps white error dialog when plan panel is open (dev-key / billing) */
+.app:has(.float-card--plan-flow) .dismissButton {
+  background: var(--color-base, #0D0A1A) !important;
+  color: var(--gold-primary, #FFD28C) !important;
+  border: 1px solid color-mix(in srgb, var(--gold-primary, #FFD28C) 35%, transparent) !important;
+  border-radius: 999px !important;
+}
+
+/* Default Google location control — brand night when our stack is present */
+.map-full .gm-control-active[style*="background"],
+.map-full button.gm-control-active {
+  background: var(--color-base, #0D0A1A) !important;
+  border-color: color-mix(in srgb, var(--gold-primary, #FFD28C) 28%, transparent) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.app-wrap.day .map-full button.gm-control-active {
+  background: var(--color-plan-panel-bg, #FDF3E0) !important;
+  border-color: rgba(26, 13, 0, 0.14) !important;
+}
+
+/* Route-loading pill base was rgba(255,255,255,0.96) — brand fill when loader override misses */
+.route-loading-pill:not(.route-loading-pill--loader) {
+  background: var(--color-base, #0D0A1A) !important;
+  color: var(--color-text-primary, #F5E6C8) !important;
+  border-color: color-mix(in srgb, var(--gold-primary, #FFD28C) 28%, transparent) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.app-wrap.day .route-loading-pill:not(.route-loading-pill--loader) {
+  background: var(--color-plan-panel-bg, #FDF3E0) !important;
+  color: var(--deep-dark, #1A0D00) !important;
+}
+
+/* Mobile sheet handle — gold-tint on night, ink on day (not raw white) */
+@media (max-width: 600px) {
+  .float-card-handle {
+    background: color-mix(in srgb, var(--gold-primary, #FFD28C) 45%, transparent) !important;
+  }
+  .float-card.day .float-card-handle {
+    background: rgba(26, 13, 0, 0.28) !important;
+  }
+}
+
+/* Mobile plan-flow sparse: keep action dock on-screen */
+@media (max-width: 768px) {
+  html[data-layout="mobile"] .float-card--plan-flow:not(.collapsed):has(.plan-flow-layout--sparse) {
+    max-height: calc(var(--app-height, 100dvh) - var(--nav-h, 56px) - 8px) !important;
+    overflow: hidden !important;
+  }
+}

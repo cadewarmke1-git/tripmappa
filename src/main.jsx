@@ -33,6 +33,7 @@ import "./styles/hero-desktop.css";
 import "./styles/hero-palette.css";
 import "./styles/hero-surface.css";
 import "./styles/plan-flow-theme.css";
+import "./styles/toast-brand-chrome.css";
 import "./styles/search-bar-animated.css";
 import "./styles/pricing-plates.css";
 import "./styles/preference-pills.css";
