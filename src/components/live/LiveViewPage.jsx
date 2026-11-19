@@ -49,7 +49,13 @@ export default function LiveViewPage({ shareToken, toast }) {
   const [convoyMember, setConvoyMember] = useState(() => {
     try {
       const raw = localStorage.getItem(`${CONVOY_MEMBER_KEY}-${shareToken}`);
-      return raw ? JSON.parse(raw) : null;
+      const parsed = raw ? JSON.parse(raw) : null;
+      // Pre-secret local sessions cannot update GPS — force a clean rejoin.
+      if (parsed?.id && !parsed.location_secret) {
+        localStorage.removeItem(`${CONVOY_MEMBER_KEY}-${shareToken}`);
+        return null;
+      }
+      return parsed;
     } catch { return null; }
   });
   const [joinName, setJoinName] = useState("");
@@ -127,9 +133,10 @@ export default function LiveViewPage({ shareToken, toast }) {
   }, [shareToken, liveTrip?.isActive, convoyMember?.name]);
 
   useConvoyBroadcast({
-    active: Boolean(convoyMember?.id && liveTrip?.isActive),
+    active: Boolean(convoyMember?.id && convoyMember?.location_secret && liveTrip?.isActive),
     shareToken,
     memberId: convoyMember?.id,
+    locationSecret: convoyMember?.location_secret,
     onLocationUpdate: result => {
       if (result?.liveTrip) setLiveTrip(mapLiveTripRow(result.liveTrip));
     },
@@ -169,6 +176,7 @@ export default function LiveViewPage({ shareToken, toast }) {
         shareToken,
         displayName: joinName.trim(),
         memberId: convoyMember?.id,
+        locationSecret: convoyMember?.location_secret,
       });
       setConvoyMember(result.member);
       localStorage.setItem(`${CONVOY_MEMBER_KEY}-${shareToken}`, JSON.stringify(result.member));
@@ -187,7 +195,8 @@ export default function LiveViewPage({ shareToken, toast }) {
       return;
     }
     try {
-      await registerFollowerPhone({ shareToken, phone: followerPhone });
+      // OTP proof is required by the API; UI stays gated until SMS alerts ship.
+      await registerFollowerPhone({ shareToken, phone: followerPhone, otpCode: "" });
       notify("SMS alerts coming soon — Twilio verification pending", true);
       setFollowerPhone("");
     } catch (err) {

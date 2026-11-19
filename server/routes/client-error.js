@@ -1,8 +1,10 @@
 /** POST /api/client-error — client-side error reports for production debugging. */
 import { logClientError } from "../lib/apiLog.js";
+import { guardTokenWriteRoute } from "../lib/apiSecurity.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (guardTokenWriteRoute(req, res, "client_error")) return undefined;
 
   const { label, message, url, stack } = req.body || {};
   if (!message && !label) {

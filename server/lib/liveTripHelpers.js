@@ -101,9 +101,22 @@ export function googleMapsLink(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
 
-/** Strip owner PII before returning a live trip to share-token / convoy clients. */
+/** Strip secrets from convoy members before public / share-token responses. */
+export function publicConvoyMembers(members) {
+  if (!Array.isArray(members)) return [];
+  return members.map((member) => {
+    if (!member || typeof member !== "object") return member;
+    const { location_secret: _secret, ...safe } = member;
+    return safe;
+  });
+}
+
+/** Strip owner PII and convoy write secrets before share-token / convoy clients. */
 export function publicLiveTripRow(row) {
   if (!row) return null;
-  const { follower_phones: _phones, user_id: _uid, ...rest } = row;
-  return rest;
+  const { follower_phones: _phones, user_id: _uid, convoy_members, ...rest } = row;
+  return {
+    ...rest,
+    convoy_members: publicConvoyMembers(convoy_members),
+  };
 }
