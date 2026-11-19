@@ -753,7 +753,7 @@ body.theme-day,
   border-color: rgba(255,255,255,0.45) !important;
 }
 .app-wrap.night .route-loading-pill {
-  background: rgba(15,20,40,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
+  background: rgba(13,10,26,0.92); border-color: rgba(255,210,140,0.15); color: #fff;
 }
 .app-wrap.night .spinner-dark {
   border-color: rgba(255,255,255,0.15); border-top-color: var(--gold-primary);

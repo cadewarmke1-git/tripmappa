@@ -1735,7 +1735,7 @@
   .app-wrap.day .map-style-btn {
     background: #FDF3E0; border-color: rgba(0,0,0,0.14); color: var(--deep-dark);
   }
-  .map-style-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.4); background: #161222; }
+  .map-style-btn:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.4); background: #141018; }
   .app-wrap.day .map-style-btn:hover { background: #FFF8EC; }
   .map-style-menu {
     position: absolute; bottom: calc(100% + 8px); right: 0; min-width: 140px;
@@ -2086,7 +2086,7 @@
   .map-full .spinner-dark { border-top-color: rgba(0,0,0,0.35); }
   .route-info-bar {
     position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-    background: rgba(15, 20, 40, 0.75); backdrop-filter: blur(24px) saturate(1.2);
+    background: rgba(13, 10, 26, 0.75); backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
     border-radius: 14px; padding: 12px 22px;
     display: flex; gap: 20px; align-items: center;
@@ -7014,7 +7014,7 @@
     color: var(--color-text-secondary, rgba(245, 230, 200, 0.5)); letter-spacing: 0.01em;
   }
   .trip-results-panel--shared {
-    background: linear-gradient(180deg, #0d0a1a 0%, #0f1428 42%, #0d0a1a 100%);
+    background: linear-gradient(180deg, #0d0a1a 0%, #12101a 42%, #0d0a1a 100%);
   }
   .shared-itinerary-header {
     padding: 20px 20px 12px; text-align: center;
@@ -7176,7 +7176,7 @@
     padding: 11px 18px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.35);
-    background: rgba(18, 20, 32, 0.88);
+    background: rgba(13, 10, 26, 0.88);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     color: var(--gold-primary);
@@ -7192,7 +7192,7 @@
     border-color: rgba(0,0,0,0.14);
     color: var(--gold-primary);
   }
-  .map-back-to-trip-btn:hover { background: rgba(18, 20, 32, 0.96); }
+  .map-back-to-trip-btn:hover { background: rgba(13, 10, 26, 0.96); }
   .app-wrap.day .map-back-to-trip-btn:hover { background: rgba(255,255,255,0.98); }
   .trip-map-fullscreen .map-controls-stack {
     bottom: max(24px, env(safe-area-inset-bottom, 0px));
@@ -7207,7 +7207,7 @@
   .app-wrap.day .map-float-pill {
     background: #FDF3E0; border-color: rgba(0,0,0,0.14); color: var(--gold-primary);
   }
-  .map-float-pill:hover { background: #161222; }
+  .map-float-pill:hover { background: #141018; }
   .app-wrap.day .map-float-pill:hover { background: #FFF8EC; }
 
   .nav-navigate-home {
@@ -7242,11 +7242,12 @@
     pointer-events: auto;
   }
   .app-wrap.day .navigate-home-float {
-    background: rgba(18, 20, 32, 0.88);
-    border-color: rgba(255,255,255,0.35);
+    background: #FDF3E0;
+    border-color: rgba(0,0,0,0.14);
     color: var(--gold-primary);
   }
-  .navigate-home-float:hover:not(:disabled) { background: rgba(18, 20, 32, 0.96); }
+  .navigate-home-float:hover:not(:disabled) { background: #141018; }
+  .app-wrap.day .navigate-home-float:hover:not(:disabled) { background: #FFF8EC; }
   .navigate-home-float:disabled { opacity: 0.6; cursor: wait; }
 
   .always-free-badge {
@@ -7428,7 +7429,7 @@
     gap: 8px;
     transition: background 0.2s var(--ease);
   }
-  .navigate-home-map:hover:not(:disabled) { background: rgba(15, 20, 40, 0.96); }
+  .navigate-home-map:hover:not(:disabled) { background: rgba(13, 10, 26, 0.96); }
   .navigate-home-map:disabled { opacity: 0.6; cursor: wait; }
   .map-route-pill-wrap.has-navigate-home .map-route-pill {
     width: 100%;
@@ -7500,7 +7501,7 @@
     padding: 0;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.35);
-    background: rgba(18, 20, 32, 0.78);
+    background: rgba(13, 10, 26, 0.78);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     color: var(--gold-primary);
@@ -7518,7 +7519,7 @@
     background: rgba(255,255,255,0.9);
   }
   .app-wrap.day .map-recenter-btn svg { color: var(--gold-primary); }
-  .map-recenter-btn:hover { background: rgba(18, 20, 32, 0.9); }
+  .map-recenter-btn:hover { background: rgba(13, 10, 26, 0.9); }
   .app-wrap.day .map-recenter-btn:hover { background: rgba(255,255,255,0.96); }
 
   .map-zoom-controls {
@@ -7530,7 +7531,7 @@
   .map-zoom-btn {
     width: 40px; height: 40px; padding: 0; border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.35);
-    background: rgba(18, 20, 32, 0.78);
+    background: rgba(13, 10, 26, 0.78);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 4px 20px rgba(0,0,0,0.35);
     color: var(--gold-primary); cursor: pointer;
@@ -7542,7 +7543,7 @@
     border-color: rgba(0,0,0,0.14);
     color: var(--gold-primary);
   }
-  .map-zoom-btn:hover { background: rgba(18, 20, 32, 0.9); }
+  .map-zoom-btn:hover { background: rgba(13, 10, 26, 0.9); }
   .app-wrap.day .map-zoom-btn:hover { background: rgba(255,255,255,0.96); }
 
   /* Account badge */
@@ -7705,7 +7706,7 @@
     position: absolute; top: 12px; right: 12px; z-index: 2;
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 10px; border-radius: 99px;
-    background: rgba(15, 20, 40, 0.82); border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(13, 10, 26, 0.82); border: 1px solid rgba(255,255,255,0.15);
     font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #fff;
   }
   .overnight-weather-temp { color: var(--gold-primary); }
@@ -7722,7 +7723,7 @@
   .simple-trip-weather-badge {
     display: inline-flex; align-items: center; gap: 8px;
     margin-bottom: 12px; padding: 8px 12px; border-radius: 99px;
-    background: rgba(15, 20, 40, 0.72); border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(13, 10, 26, 0.72); border: 1px solid rgba(255,255,255,0.12);
     font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
   }
   .simple-trip-weather-city { color: rgba(255,255,255,0.65); font-weight: 500; }
@@ -7859,7 +7860,7 @@
     flex-shrink: 0;
     padding: 10px 14px 12px;
     border-bottom: 1px solid color-mix(in srgb, var(--gold-primary) 22%, transparent);
-    background: color-mix(in srgb, var(--color-bg-primary, #0f1428) 88%, transparent);
+    background: color-mix(in srgb, var(--color-bg-primary, #0D0A1A) 88%, transparent);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
