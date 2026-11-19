@@ -147,7 +147,7 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
   let parallelLegProgress = null;
 
   let timedOut = false;
-  const timeoutId = window.setTimeout(() => {
+  const timeoutId = globalThis.setTimeout(() => {
     timedOut = true;
     reader.cancel().catch(() => undefined);
   }, GENERATION_SSE_TIMEOUT_MS);
@@ -227,7 +227,7 @@ export async function readPlanTripSseStream(response, signal, onProgress) {
       }
     }
   } finally {
-    window.clearTimeout(timeoutId);
+    globalThis.clearTimeout(timeoutId);
     signal?.removeEventListener("abort", abortOnSignal);
   }
 

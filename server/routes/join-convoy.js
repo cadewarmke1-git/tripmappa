@@ -17,12 +17,18 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
-  const { shareToken, displayName, memberId: existingMemberId } = req.body || {};
+  const {
+    shareToken,
+    displayName,
+    memberId: existingMemberId,
+    locationSecret: providedSecretRaw,
+  } = req.body || {};
   if (!isValidShareToken(shareToken)) {
     return res.status(400).json({ error: "Missing shareToken" });
   }
 
   const name = (displayName || "Convoy Member").trim().slice(0, 40);
+  const providedSecret = String(providedSecretRaw || "").trim();
 
   try {
     const { data: trip, error: fetchErr } = await admin
@@ -39,7 +45,18 @@ export default async function handler(req, res) {
     }
 
     const members = Array.isArray(trip.convoy_members) ? [...trip.convoy_members] : [];
-    let member = members.find(m => m.id === existingMemberId);
+    let member = null;
+
+    if (existingMemberId) {
+      const existing = members.find(m => m.id === existingMemberId);
+      // Reclaim only with the write secret — member ids are visible on the share map.
+      if (existing?.location_secret && providedSecret && existing.location_secret === providedSecret) {
+        member = existing;
+        member.name = name;
+      } else if (existing) {
+        return res.status(403).json({ error: "Invalid convoy member credentials" });
+      }
+    }
 
     if (!member) {
       if (members.length >= 5) {
@@ -47,13 +64,12 @@ export default async function handler(req, res) {
       }
       member = {
         id: crypto.randomBytes(8).toString("hex"),
+        location_secret: crypto.randomBytes(16).toString("hex"),
         name,
         color: assignConvoyColor(members),
         joined_at: new Date().toISOString(),
       };
       members.push(member);
-    } else {
-      member.name = name;
     }
 
     const { data, error } = await admin

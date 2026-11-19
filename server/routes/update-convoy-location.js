@@ -34,13 +34,29 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
-  const { shareToken, memberId, latitude, longitude, speedMps = null } = req.body || {};
-  if (!isValidShareToken(shareToken) || !memberId || latitude == null || longitude == null) {
-    return res.status(400).json({ error: "Missing shareToken, memberId, latitude, or longitude" });
+  const {
+    shareToken,
+    memberId,
+    locationSecret,
+    latitude,
+    longitude,
+    speedMps = null,
+  } = req.body || {};
+  if (
+    !isValidShareToken(shareToken)
+    || !memberId
+    || !locationSecret
+    || latitude == null
+    || longitude == null
+  ) {
+    return res.status(400).json({
+      error: "Missing shareToken, memberId, locationSecret, latitude, or longitude",
+    });
   }
 
   const lat = Number(latitude);
   const lng = Number(longitude);
+  const secret = String(locationSecret).trim();
 
   try {
     const { data: trip, error: fetchErr } = await admin
@@ -55,6 +71,14 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "Convoy trip not found" });
     }
 
+    const target = (trip.convoy_members || []).find(m => m.id === memberId);
+    if (!target) {
+      return res.status(404).json({ error: "Convoy member not found" });
+    }
+    if (!target.location_secret || target.location_secret !== secret) {
+      return res.status(403).json({ error: "Invalid convoy member credentials" });
+    }
+
     const destEta = await fetchMatrixEta(lat, lng, trip.destination);
     const members = (trip.convoy_members || []).map(m => {
       if (m.id !== memberId) return m;
@@ -67,10 +91,6 @@ export default async function handler(req, res) {
         last_updated: new Date().toISOString(),
       };
     });
-
-    if (!members.some(m => m.id === memberId)) {
-      return res.status(404).json({ error: "Convoy member not found" });
-    }
 
     const { data, error } = await admin
       .from("live_trips")

@@ -4,7 +4,14 @@ import { updateConvoyLocation } from "../lib/liveShareApi.js";
 const UPDATE_INTERVAL_MS = 30_000;
 
 /** Broadcast convoy member GPS every 30s. */
-export function useConvoyBroadcast({ active, shareToken, memberId, onLocationUpdate, onError }) {
+export function useConvoyBroadcast({
+  active,
+  shareToken,
+  memberId,
+  locationSecret,
+  onLocationUpdate,
+  onError,
+}) {
   const watchIdRef = useRef(null);
   const intervalRef = useRef(null);
   const positionRef = useRef(null);
@@ -12,12 +19,13 @@ export function useConvoyBroadcast({ active, shareToken, memberId, onLocationUpd
 
   const sendUpdate = useCallback(async () => {
     const pos = positionRef.current;
-    if (!shareToken || !memberId || !pos || sendingRef.current) return;
+    if (!shareToken || !memberId || !locationSecret || !pos || sendingRef.current) return;
     sendingRef.current = true;
     try {
       const result = await updateConvoyLocation({
         shareToken,
         memberId,
+        locationSecret,
         latitude: pos.lat,
         longitude: pos.lng,
         speedMps: pos.speedMps,
@@ -28,10 +36,10 @@ export function useConvoyBroadcast({ active, shareToken, memberId, onLocationUpd
     } finally {
       sendingRef.current = false;
     }
-  }, [shareToken, memberId, onLocationUpdate, onError]);
+  }, [shareToken, memberId, locationSecret, onLocationUpdate, onError]);
 
   useEffect(() => {
-    if (!active || !shareToken || !memberId) return undefined;
+    if (!active || !shareToken || !memberId || !locationSecret) return undefined;
     if (!navigator.geolocation) {
       onError?.(new Error("Geolocation is not supported"));
       return undefined;
@@ -57,7 +65,7 @@ export function useConvoyBroadcast({ active, shareToken, memberId, onLocationUpd
       if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [active, shareToken, memberId, sendUpdate, onError]);
+  }, [active, shareToken, memberId, locationSecret, sendUpdate, onError]);
 
   return { sendUpdate };
 }

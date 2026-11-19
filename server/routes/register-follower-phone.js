@@ -1,9 +1,9 @@
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import { captureServerException } from "../lib/sentry.js";
-import { validateUsPhone } from "../lib/phoneOtp.js";
+import { validateUsPhone, verifyStoredOtp } from "../lib/phoneOtp.js";
 import { guardTokenWriteRoute, isValidShareToken, MAX_FOLLOWER_PHONES } from "../lib/apiSecurity.js";
 
-/** POST /api/register-follower-phone — follower opts in to ETA SMS alerts. */
+/** POST /api/register-follower-phone — follower opts in to ETA SMS after OTP proof. */
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
-  const { shareToken, phone: rawPhone } = req.body || {};
+  const { shareToken, phone: rawPhone, otpCode } = req.body || {};
   if (!isValidShareToken(shareToken) || !rawPhone) {
     return res.status(400).json({ error: "Missing shareToken or phone" });
   }
@@ -26,7 +26,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: validation.error });
   }
 
+  const trimmedCode = String(otpCode || "").trim();
+  if (!/^\d{6}$/.test(trimmedCode)) {
+    return res.status(400).json({
+      error: "SMS verification code required before registering a follower phone",
+      code: "otp_required",
+    });
+  }
+
   try {
+    const otpResult = await verifyStoredOtp(admin, validation.phone, trimmedCode);
+    if (!otpResult.ok) {
+      const status = otpResult.error === "expired" ? 410 : 401;
+      return res.status(status).json({ error: otpResult.message, code: otpResult.error });
+    }
+
     const { data: trip, error: fetchErr } = await admin
       .from("live_trips")
       .select("follower_phones")

@@ -26,7 +26,7 @@ export function isTripPlanComplete(parsed) {
 }
 
 export const GENERATION_TIMEOUT_MESSAGE = "Your route is taking longer than expected";
-export const GENERATION_API_ERROR_MESSAGE = "We hit a snag planning your route";
+export const GENERATION_API_ERROR_MESSAGE = "We hit a snag planning your route. Please try again.";
 
 export function generationFailureMessage(err) {
   if (err?.code === "generation_timeout") {

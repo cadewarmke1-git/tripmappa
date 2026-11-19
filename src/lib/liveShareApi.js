@@ -29,33 +29,40 @@ export async function updateLiveLocation({ shareToken, latitude, longitude, stop
   return data;
 }
 
-export async function joinConvoy({ shareToken, displayName, memberId }) {
+export async function joinConvoy({ shareToken, displayName, memberId, locationSecret }) {
   const res = await fetch("/api/join-convoy", {
     method: "POST",
     headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ shareToken, displayName, memberId }),
+    body: JSON.stringify({ shareToken, displayName, memberId, locationSecret }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Could not join convoy");
   return data;
 }
 
-export async function updateConvoyLocation({ shareToken, memberId, latitude, longitude, speedMps }) {
+export async function updateConvoyLocation({
+  shareToken,
+  memberId,
+  locationSecret,
+  latitude,
+  longitude,
+  speedMps,
+}) {
   const res = await fetch("/api/update-convoy-location", {
     method: "POST",
     headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ shareToken, memberId, latitude, longitude, speedMps }),
+    body: JSON.stringify({ shareToken, memberId, locationSecret, latitude, longitude, speedMps }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Could not update convoy location");
   return data;
 }
 
-export async function registerFollowerPhone({ shareToken, phone }) {
+export async function registerFollowerPhone({ shareToken, phone, otpCode }) {
   const res = await fetch("/api/register-follower-phone", {
     method: "POST",
     headers: tripMappaApiHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ shareToken, phone }),
+    body: JSON.stringify({ shareToken, phone, otpCode }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Could not register phone");
