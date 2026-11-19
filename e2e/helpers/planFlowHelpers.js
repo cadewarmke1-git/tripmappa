@@ -6,12 +6,23 @@ export async function closeAutocomplete(page) {
   await page.waitForTimeout(200);
 }
 
+/** Click hero or returning-user plan CTA (class --plan modifier was never shipped). */
+export async function clickStartPlanCta(page) {
+  const planByRole = page.getByRole("button", { name: /Plan a new trip/i }).first();
+  if (await planByRole.isVisible({ timeout: 8_000 }).catch(() => false)) {
+    await expect(planByRole).toBeEnabled({ timeout: 90_000 });
+    await planByRole.click();
+    return;
+  }
+  const heroCta = page.locator(".hero-plan-cta").first();
+  await expect(heroCta).toBeEnabled({ timeout: 90_000 });
+  await heroCta.click();
+}
+
 export async function startPlanFlow(page, { origin = "Dallas, TX", dest = "Austin, TX" } = {}) {
   await page.goto("/?skyHour=12&skyTest=0");
   await page.waitForTimeout(1000);
-  const heroCta = page.locator(".hero-plan-cta, .returning-user-action--plan").first();
-  await expect(heroCta).toBeEnabled({ timeout: 90_000 });
-  await heroCta.click();
+  await clickStartPlanCta(page);
   await expect(page.locator(".float-card--plan-flow")).toBeVisible({ timeout: 45_000 });
   await expect(page.locator(".plan-flow-question-title")).toContainText("Where are you headed", { timeout: 15_000 });
   await page.locator("#plan-route-origin").fill(origin);
